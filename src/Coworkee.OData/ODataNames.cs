@@ -52,11 +52,117 @@ internal static partial class ODataNames
     }
 
     /// <summary>
-    /// An OData filter in CLR names in the model's names: every property path outside literals that starts at <paramref name="root"/>. Lambda variables
-    /// (<c>b: b/Size</c>) and type casts are left as they are; facet filters have none.
+    /// An OData filter in CLR names in the model's names: every property path outside literals, from <paramref name="root"/>, from the element type
+    /// of the collection a lambda variable ranges over (<c>Bins/any(b: b/Size gt 1)</c>), and through type casts (<c>Featured/Ns.Bin/Size</c>).
+    /// Function names, keywords, typed literals and what it cannot resolve stay as they are.
     /// </summary>
-    public static string Filter(IEdmModel model, IEdmStructuredType root, string filter) =>
-        Token().Replace(filter, m => m.Value[0] == '\'' || Find(model, root, m.Value.Split('/')[0]) is null ? m.Value : Path(model, root, m.Value));
+    public static string Filter(IEdmModel model, IEdmStructuredType root, string filter)
+    {
+        var text = new System.Text.StringBuilder(filter.Length);
+        var variables = new List<(string Name, IEdmStructuredType Type, int Depth)>();
+        IEdmStructuredType? lambda = null;
+        var depth = 0;
+        for (var i = 0; i < filter.Length;)
+        {
+            var c = filter[i];
+            if (c == '\'')
+            {
+                var literal = Literal().Match(filter, i);
+                text.Append(literal.Value);
+                i += Math.Max(1, literal.Length);
+                continue;
+            }
+
+            if (c == '(')
+            {
+                depth++;
+                text.Append(c);
+                i++;
+                if (lambda is not null && Variable().Match(filter, i) is { Success: true } variable)
+                {
+                    variables.Add((variable.Groups[1].Value, lambda, depth));
+                    text.Append(variable.Value);
+                    i += variable.Length;
+                }
+
+                lambda = null;
+                continue;
+            }
+
+            if (c == ')')
+            {
+                variables.RemoveAll(v => v.Depth == depth);
+                depth--;
+            }
+
+            var path = i > 0 && IsPart(filter[i - 1]) ? Match.Empty : PathToken().Match(filter, i);
+            if (!path.Success || path.Index != i || path.Length == 0)
+            {
+                text.Append(c);
+                i++;
+                continue;
+            }
+
+            i += path.Length;
+            var next = i < filter.Length ? filter[i] : '\0';
+            var segments = path.Value.Split('/');
+            if (next is '\'' or '-' || (segments.Length == 1 && (Keywords.Contains(path.Value) || next == '(')))
+            {
+                text.Append(path.Value); // a typed literal, guid, keyword or function
+                continue;
+            }
+
+            // Bins/any( : the path to the collection, and the lambda that follows ranges over its elements
+            var any = next == '(' && segments[^1] is "any" or "all";
+            var resolved = segments[..^(any ? 1 : 0)];
+            var variableOf = variables.LastOrDefault(v => v.Name == resolved[0]);
+            var (translated, type) = Resolve(model, variableOf.Type ?? root, resolved, skipFirst: variableOf.Type is not null);
+            text.Append(translated).Append(any ? "/" + segments[^1] : string.Empty);
+            lambda = any ? type : null;
+        }
+
+        return text.ToString();
+    }
+
+    private static readonly HashSet<string> Keywords = new(StringComparer.Ordinal)
+    {
+        "eq", "ne", "gt", "ge", "lt", "le", "and", "or", "not", "has", "in", "add", "sub", "mul", "div", "mod", "true", "false", "null", "$it", "$this", "$root",
+    };
+
+    // segments through properties and casts, from the type; what it cannot resolve stays, and so does the rest after it
+    private static (string Text, IEdmStructuredType? Type) Resolve(IEdmModel model, IEdmStructuredType? type, string[] segments, bool skipFirst)
+    {
+        var names = new List<string>(segments.Length);
+        for (var i = 0; i < segments.Length; i++)
+        {
+            var segment = segments[i];
+            if ((i == 0 && skipFirst) || type is null)
+            {
+                names.Add(segment);
+                continue;
+            }
+
+            if (segment.Contains('.'))
+            {
+                type = model.FindDeclaredType(segment) as IEdmStructuredType;
+                names.Add(segment);
+                continue;
+            }
+
+            var property = Find(model, type, segment);
+            type = property?.Type.Definition.AsElementType() as IEdmStructuredType;
+            names.Add(property?.Name ?? segment);
+            if (property is null)
+            {
+                names.AddRange(segments[(i + 1)..]);
+                break;
+            }
+        }
+
+        return (string.Join('/', names), type);
+    }
+
+    private static bool IsPart(char c) => char.IsLetterOrDigit(c) || c is '_' or '.' or '@' or '$' or '\'' or '-';
 
     private static IEdmProperty? Find(IEdmModel model, IEdmStructuredType type, string clrName) =>
         type.Properties().FirstOrDefault(p => Clr(model, p) == clrName)
@@ -65,7 +171,12 @@ internal static partial class ODataNames
     [GeneratedRegex(@"[A-Za-z_]\w*")]
     private static partial Regex Segment();
 
-    // a quoted literal, or a path not part of a number, guid, qualified name, typed literal or function call
-    [GeneratedRegex(@"'(?:[^']|'')*'|(?<![\w.@$'-])[A-Za-z_]\w*(?:/[A-Za-z_]\w*)*(?![\w(.'-])")]
-    private static partial Regex Token();
+    [GeneratedRegex(@"\G[A-Za-z_$][\w.]*(?:/[A-Za-z_$][\w.]*)*")]
+    private static partial Regex PathToken();
+
+    [GeneratedRegex(@"\G'(?:[^']|'')*'?")]
+    private static partial Regex Literal();
+
+    [GeneratedRegex(@"\G\s*([A-Za-z_]\w*)\s*:")]
+    private static partial Regex Variable();
 }

@@ -23,6 +23,11 @@ public sealed class ODataRoutes
 
     internal ODataRouteProfile Add(string prefix)
     {
+        if (string.IsNullOrWhiteSpace(prefix.Trim('/')))
+        {
+            throw new ArgumentException("An OData route needs a prefix, e.g. rt/odata.", nameof(prefix));
+        }
+
         if (Find(prefix) is not null)
         {
             throw new InvalidOperationException($"The OData route {prefix} is added twice.");

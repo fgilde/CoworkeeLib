@@ -3,6 +3,8 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Coworkee.Contracts.Data;
 using Coworkee.Contracts.Identity;
+using Coworkee.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.OData.Tests;
@@ -87,7 +89,7 @@ public sealed class RouteProfileTests(ODataApp app) : IAsyncLifetime
 
         var row = page.GetProperty("value").EnumerateArray().Single();
         row.GetProperty("name").GetString().ShouldBe("Late");
-        row.GetProperty("creationTime").GetString().ShouldStartWith("2026-06-01T00:00:00"); // a DateTime column: SQLite reads it back without a kind
+        row.GetProperty("creationTime").GetString().ShouldStartWith("2026-06-01T"); // a DateTime column: providers read it back with other kinds
         (await GetAsync(Admin, "/rt/odata/Parcels?$top=1")).GetProperty("value")[0].TryGetProperty("lastModificationTime", out _).ShouldBeTrue();
         (await Admin.GetAsync("/rt/odata/Parcels?$filter=month(dateCreatedUtc) gt 3", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await GetAsync(Admin, "/odata/Parcels?$filter=month(DateCreatedUtc) gt 3")).GetProperty("value").GetArrayLength().ShouldBe(1);
@@ -171,6 +173,65 @@ public sealed class RouteProfileTests(ODataApp app) : IAsyncLifetime
         (await GetAsync(Admin, "/odata/Parcels?$search=zeta")).GetProperty("value").GetArrayLength().ShouldBe(0);
         (await GetAsync(Admin, "/rt/odata/Parcels?$search=late")).GetProperty("value").GetArrayLength().ShouldBe(1);
         (await Admin.GetStringAsync("/api/v1/data/Parcels/export?format=csv&$search=zeta", Ct)).ShouldNotContain("Late");
+    }
+
+    [Fact]
+    public async Task Names_match_only_in_the_routes_case_when_case_insensitivity_is_off()
+    {
+        await using var strict = await app.StartAnotherAsync(new Dictionary<string, string> { ["Coworkee:OData:CaseInsensitive"] = "false" });
+        var client = strict.GetTestClient().AsUser(_setup.AdminUserId, _setup.TenantId);
+
+        (await client.GetAsync("/rt/odata/Gadgets?$filter=name eq 'Drill'&$orderby=price&$select=name", Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        foreach (var query in new[] { "$filter=Name eq 'Drill'", "$orderby=Price", "$select=Name" })
+        {
+            (await client.GetAsync($"/rt/odata/Gadgets?{query}", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest, query);
+        }
+    }
+
+    [Fact]
+    public async Task An_alias_with_the_name_of_a_hidden_member_reads_the_aliased_member_only()
+    {
+        // hidden/odata calls Name "SerialCode"; the hidden SerialCode stays out of reach
+        var rows = (await GetAsync(Admin, "/hidden/odata/Gadgets?$orderby=SerialCode")).GetProperty("value");
+        rows.EnumerateArray().Select(r => r.GetProperty("SerialCode").GetString()).ShouldBe(["Drill", "Lamp"]);
+        rows.ToString().ShouldNotContain("SN-777");
+        (await GetAsync(Admin, "/hidden/odata/Gadgets?$filter=SerialCode eq 'SN-777'")).GetProperty("value").GetArrayLength().ShouldBe(0);
+        (await GetAsync(Admin, "/hidden/odata/Gadgets?$search=777")).GetProperty("value").GetArrayLength().ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task A_facet_filter_with_the_clr_name_of_an_aliased_member_is_invalid_on_the_alias_route()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/alias/odata/Gadgets");
+        request.Headers.Add(FacetContextDto.Header, new FacetContextDto("Category eq 'Tools'", new Dictionary<string, string>()).Encode());
+        (await Admin.SendAsync(request, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        using var group = new HttpRequestMessage(HttpMethod.Get, "/alias/odata/Gadgets");
+        group.Headers.Add(FacetContextDto.Header, new FacetContextDto(null, new Dictionary<string, string> { ["category"] = "Category eq 'Tools'" }).Encode());
+        (await Admin.SendAsync(group, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public void A_route_needs_a_prefix()
+    {
+        foreach (var prefix in new[] { "", " ", "/", "//" })
+        {
+            Should.Throw<ArgumentException>(() => new ServiceCollection().AddCoworkeeODataRoute(prefix, p => p.CamelCase()), prefix);
+        }
+    }
+
+    [Theory]
+    [InlineData("Featured/Size gt 0 and Bins/any(b: b/Size gt 1)", "Highlight/Capacity gt 0 and Bins/any(b: b/Capacity gt 1)")]
+    [InlineData("Bins/any(name: name/Name eq 'Size') or Name eq 'Featured/Size'", "Bins/any(name: name/Name eq 'Size') or Name eq 'Featured/Size'")]
+    [InlineData("Featured/Coworkee.OData.Tests.Bin/Size ge 2", "Highlight/Coworkee.OData.Tests.Bin/Capacity ge 2")]
+    [InlineData("Bins/all(x: x/Labels/any(l: l/Text ne null) and x/Size lt 9) and contains(Name, 'size')", "Bins/all(x: x/Labels/any(l: l/Text ne null) and x/Capacity lt 9) and contains(Name, 'size')")]
+    [InlineData("Featured eq null or FeaturedId eq 0197a000-0000-7000-8000-00000000000a", "Highlight eq null or FeaturedId eq 0197a000-0000-7000-8000-00000000000a")]
+    public void Facet_filters_are_translated_through_lambdas_and_casts(string clr, string route)
+    {
+        var model = app.App.Services.GetRequiredService<ODataModels>().Of("alias/odata");
+        var root = (Microsoft.OData.Edm.IEdmStructuredType)model.FindDeclaredType(typeof(Shelf).FullName);
+
+        ODataNames.Filter(model, root, clr).ShouldBe(route);
+        ODataQueryGuard.Options(app.App.Services, typeof(Shelf), Microsoft.AspNetCore.Http.QueryString.Create("$filter", route), "alias/odata").Filter.FilterClause.ShouldNotBeNull();
     }
 
     [Fact]

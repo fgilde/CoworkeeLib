@@ -106,11 +106,104 @@ public sealed class ODataQueriesTests(ODataApp app) : IAsyncLifetime
         (await InProcessAsync<Gadget>(_viewer, "odata", "Gadgets", "$filter=Category eq 'Tools'")).Error!.Kind.ShouldBe(ErrorKind.Forbidden);
     }
 
-    private async Task<Result<ODataQueryResult<T>>> InProcessAsync<T>(Guid? user, string route, string set, string? query, bool facets = false)
+    [Fact]
+    public async Task Members_behind_fields_are_cleared_on_typed_rows()
+    {
+        await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            db.AddRange(Locket.Create("A", "note a", "code a", _setup.TenantId), Locket.Create("B", "note b", "code b", _setup.TenantId));
+            return await db.SaveChangesAsync();
+        });
+
+        // by convention neither getter is in the model: both are cleared, through the fields EF reads them from
+        var rows = (await InProcessAsync<Locket>(_setup.AdminUserId, "odata", "Lockets", "$orderby=Name")).Ok().Rows;
+        rows.Select(l => (l.Name, l.Note, l.Code)).ShouldBe([("A", null, null), ("B", null, null)]);
+
+        // from the EF model the protected one is in it: kept for users with the permission, cleared for others; the hidden one never shows
+        await using var efApp = await app.StartAnotherAsync(new Dictionary<string, string> { ["Coworkee:OData:ModelFromEntityFramework"] = "true" });
+        (await InProcessAsync<Locket>(_setup.AdminUserId, "odata", "Lockets", "$orderby=Name", efApp.Services)).Ok().Rows
+            .Select(l => (l.Note, l.Code)).ShouldBe([(null, "code a"), (null, "code b")]);
+        (await InProcessAsync<Locket>(_viewer, "odata", "Lockets", "$orderby=Name", efApp.Services)).Ok().Rows
+            .Select(l => (l.Note, l.Code)).ShouldBe([(null, null), (null, null)]);
+    }
+
+    [Fact]
+    public async Task An_entity_with_a_member_that_cannot_be_cleared_comes_back_shaped()
+    {
+        await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            db.Add(new Ledger { Name = "Books", TenantId = _setup.TenantId });
+            return await db.SaveChangesAsync();
+        });
+
+        var page = (await InProcessAsync<Ledger>(_setup.AdminUserId, "rt/odata", "Ledgers", null)).Ok();
+
+        page.Rows.ShouldBeEmpty();
+        page.Shaped!.Single()["name"].ShouldBe("Books");
+        page.Shaped!.Single().Keys.ShouldNotContain("summary");
+        page.Shaped!.Single().Keys.ShouldNotContain("Summary");
+    }
+
+    [Fact]
+    public async Task A_query_the_database_cannot_run_fails_without_its_message()
+    {
+        await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            db.Add(Locket.Create("A", "n", "c", _setup.TenantId));
+            return await db.SaveChangesAsync();
+        });
+
+        var error = (await InProcessAsync<Locket>(_setup.AdminUserId, "odata", "Lockets", "$filter=Peek eq 'A'")).Error!;
+
+        error.Kind.ShouldBe(ErrorKind.Validation);
+        error.Message.ShouldBe("The query could not be run.");
+        app.Logs.Warnings.ShouldContain(w => w.Contains("in-process OData query on odata/Lockets"));
+    }
+
+    [Fact]
+    public async Task The_page_size_of_the_model_pages_like_the_route()
+    {
+        await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            db.AddRange(Locket.Create("A", "n", "c", _setup.TenantId), Locket.Create("B", "n", "c", _setup.TenantId), Locket.Create("C", "n", "c", _setup.TenantId));
+            return await db.SaveChangesAsync();
+        });
+
+        var http = await Admin.GetFromJsonAsync<JsonElement>("/odata/Lockets?$orderby=Name&$count=true", Ct);
+        var page = (await InProcessAsync<Locket>(_setup.AdminUserId, "odata", "Lockets", "$orderby=Name&$count=true")).Ok();
+
+        http.GetProperty("value").GetArrayLength().ShouldBe(2);
+        http.TryGetProperty("@odata.nextLink", out _).ShouldBeTrue();
+        page.Rows.Select(l => l.Name).ShouldBe(["A", "B"]);
+        page.Count.ShouldBe(3);
+    }
+
+    [Fact]
+    public async Task The_group_selection_narrows_the_rows_like_the_list()
+    {
+        await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            db.AddRange(new Crate { Name = "Box A", UnitId = FakeGroupScope.A, TenantId = _setup.TenantId }, new Crate { Name = "Box B", UnitId = FakeGroupScope.B, TenantId = _setup.TenantId });
+            return await db.SaveChangesAsync();
+        });
+        app.App.Services.GetRequiredService<FakeGroupScope>().Stored = [FakeGroupScope.A];
+
+        var http = await Admin.GetFromJsonAsync<JsonElement>("/odata/Crates?$count=true", Ct);
+        using (Coworkee.Application.Groups.GroupScope.Selection([FakeGroupScope.A]))
+        {
+            var page = (await InProcessAsync<Crate>(_setup.AdminUserId, "odata", "Crates", "$count=true")).Ok();
+            page.Rows.Select(c => c.Name).ShouldBe(["Box A"]);
+            page.Count.ShouldBe(http.GetProperty("@odata.count").GetInt64());
+        }
+
+        (await InProcessAsync<Crate>(_setup.AdminUserId, "odata", "Crates", "$count=true")).Ok().Count.ShouldBe(2, "no selection outside a request");
+    }
+
+    private async Task<Result<ODataQueryResult<T>>> InProcessAsync<T>(Guid? user, string route, string set, string? query, IServiceProvider? services = null, bool facets = false)
         where T : class
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(user, _setup.TenantId));
-        await using var scope = app.App.Services.CreateAsyncScope();
+        await using var scope = (services ?? app.App.Services).CreateAsyncScope();
         return await scope.ServiceProvider.GetRequiredService<IODataQueries>().QueryAsync<T>(route, set, query, facets, Ct);
     }
 

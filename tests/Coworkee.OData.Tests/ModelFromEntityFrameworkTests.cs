@@ -41,6 +41,16 @@ public sealed class ModelFromEntityFrameworkTests(ODataApp app)
         heavy.GetProperty("DoubleWeight").GetInt32().ShouldBe(20);
         heavy.GetProperty("Pallets").EnumerateArray().Select(p => p.GetProperty("PalletId").GetInt32()).ShouldBe([8, 9]);
         heavy.GetProperty("Pallets")[0].TryGetProperty("Id", out _).ShouldBeTrue();
+
+        // members without a public setter join registered sets only, where Hide reaches them; every one is logged
+        heavy.GetProperty("Pallets")[0].TryGetProperty("Secret", out _).ShouldBeFalse("pallets have no set that could hide it");
+        var full = (await client.GetFromJsonAsync<JsonElement>("/odata/Consignments?$top=1", Ct)).GetProperty("value")[0];
+        full.TryGetProperty("Memo", out _).ShouldBeFalse("hidden by the set");
+        full.TryGetProperty("DoubleWeight", out _).ShouldBeTrue();
+        (await client.GetAsync("/odata/Consignments?$filter=Memo ne null", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await client.GetAsync("/odata/Consignments?$expand=Pallets($filter=Secret ne null)", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        app.Logs.Warnings.ShouldContain(w => w.Contains("Consignment.DoubleWeight"));
+        app.Logs.Warnings.ShouldNotContain(w => w.Contains(".Memo") || w.Contains(".Secret"));
         var pallet = (Microsoft.OData.Edm.IEdmEntityType)efApp.Services.GetRequiredService<Microsoft.OData.Edm.IEdmModel>().FindDeclaredType(typeof(Pallet).FullName);
         pallet.DeclaredKey.Select(k => k.Name).ShouldBe(["Id"]);
 

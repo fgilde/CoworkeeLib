@@ -32,6 +32,9 @@ public sealed class Consignment
     public int DoubleWeight { get; private set; }
 
     public List<Pallet> Pallets { get; set; } = [];
+
+    /// <summary>Read only in C#, hidden by the set.</summary>
+    public string? Memo { get; private set; } = "internal memo";
 }
 
 public abstract class ExternalRow
@@ -47,6 +50,9 @@ public sealed class Pallet : ExternalRow
     public required string Label { get; set; }
 
     public Guid ConsignmentId { get; set; }
+
+    /// <summary>Read only in C#; pallets have no set that could hide it.</summary>
+    public string Secret { get; private set; } = "pallet secret";
 }
 
 public sealed class ParcelDbContext(DbContextOptions<ParcelDbContext> options) : DbContext(options)

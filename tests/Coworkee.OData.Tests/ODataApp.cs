@@ -223,6 +223,13 @@ internal sealed class GadgetModelContributor : IModelContributor
         modelBuilder.Entity<Bag>();
         modelBuilder.Entity<Sticker>(sticker => sticker.ToTable("Stickers"));
         modelBuilder.Entity<Country>(country => country.ToTable("Countries").HasKey(c => c.IsoCode));
+        modelBuilder.Entity<Locket>(locket =>
+        {
+            locket.ToTable("Lockets");
+            locket.Property(l => l.Note).HasField("_note");
+            locket.Property(l => l.Code).HasField("_code");
+        });
+        modelBuilder.Entity<Ledger>(ledger => ledger.ToTable("Ledgers"));
         modelBuilder.Entity<Rank>(rank =>
         {
             rank.ToTable("Ranks").HasKey(r => r.Number);
@@ -296,7 +303,10 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddScoped<IODataEntityFilter<Parcel>, HideSecretParcels>();
         context.Services.AddSingleton<Coworkee.OData.Computed.IODataComputedPropertySource, ParcelLabel>();
         context.Services.AddGlobalSearch<Parcel>(s => s.Fields(p => p.Name).Page("/parcels"));
-        context.Services.AddODataEntity<Consignment>("Consignments", ODataApp.ViewGadgets);
+        context.Services.AddODataEntity<Consignment>("Consignments", ODataApp.ViewGadgets, o => o.Hide(c => c.Memo));
+        context.Services.AddODataEntity<Locket>("Lockets", ODataApp.ViewGadgets, o => o.Hide(l => l.Note).HideUnless(l => l.Code, ODataApp.SeeCategories));
+        context.Services.AddSingleton<Coworkee.OData.Computed.IODataComputedPropertySource, LocketPeek>();
+        context.Services.AddODataEntity<Ledger>("Ledgers", ODataApp.ViewGadgets, o => o.Hide(l => l.Summary));
         context.Services.Configure<ClientEntityOptions>(o => o.For<Parcel>(s => s.ChangedAt = [nameof(Parcel.DateCreatedUtc), nameof(Parcel.DateUpdatedUtc)]));
 
         // the suites run on /odata and again on rt/odata, which renames every property; alias/odata renames protected and hidden-adjacent members
@@ -309,6 +319,7 @@ public sealed class GadgetModule : CoworkeeModule
             .Alias<Shelf>(s => s.Featured, "Highlight")
             .Alias<Coworkee.Domain.IAuditable>(e => e.CreatedBy, "Author")
             .FacetsOnWildcardPrefer(false));
+        context.Services.AddCoworkeeODataRoute("hidden/odata", p => p.Alias<Gadget>(g => g.Name, "SerialCode"));
     }
 }
 

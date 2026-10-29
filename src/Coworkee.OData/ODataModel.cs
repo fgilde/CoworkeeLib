@@ -44,7 +44,7 @@ internal static class ODataModel
         {
             if (entityFramework is not null)
             {
-                PropertiesFromEntityFramework(b, registry, entityFramework);
+                PropertiesFromEntityFramework(b, registry, entityFramework, findShared ? logger : null);
             }
 
             if (profile.LowerCamelCase)
@@ -143,10 +143,13 @@ internal static class ODataModel
         }
     }
 
-    /// <summary>Properties EF maps that the convention leaves out (no public setter: read only or computed in C#), as long as no set hides them.</summary>
-    private static void PropertiesFromEntityFramework(ODataConventionModelBuilder builder, ODataEntityRegistry registry, Func<Type, IEntityType?> entityFramework)
+    /// <summary>
+    /// Properties EF maps that the convention leaves out (no public setter: read only or computed in C#), on the types of registered sets only: their
+    /// registration can hide them. Navigation targets without a set keep the convention's members. Each one added is logged.
+    /// </summary>
+    private static void PropertiesFromEntityFramework(ODataConventionModelBuilder builder, ODataEntityRegistry registry, Func<Type, IEntityType?> entityFramework, ILogger? logger)
     {
-        foreach (var configuration in builder.StructuralTypes.ToList())
+        foreach (var configuration in builder.StructuralTypes.Where(t => registry.Find(t.ClrType) is not null).ToList())
         {
             if (entityFramework(configuration.ClrType) is not { } type)
             {
@@ -163,16 +166,22 @@ internal static class ODataModel
                     continue;
                 }
 
-                // a property of a mapped base type goes onto the base, once
-                var owner = builder.StructuralTypes.FirstOrDefault(t => t.ClrType == info.DeclaringType) ?? configuration;
+                // a base type the model maps on its own would carry it to types without a set
+                if (builder.StructuralTypes.Any(t => t.ClrType == info.DeclaringType && t != configuration))
+                {
+                    continue;
+                }
+
                 if (clr.IsEnum)
                 {
-                    owner.AddEnumProperty(info);
+                    configuration.AddEnumProperty(info);
                 }
                 else
                 {
-                    owner.AddProperty(info);
+                    configuration.AddProperty(info);
                 }
+
+                logger?.LogWarning("OData model from EF: {Type}.{Property} has no public setter and is in the model now; hide it if users must not see it.", configuration.ClrType.Name, info.Name);
             }
         }
     }
