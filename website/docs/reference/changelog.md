@@ -11,6 +11,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 ### Changed
 
 - OData: the service document (`/odata`) and `$metadata` need a sign-in on every route (`/odata` and every `AddCoworkeeODataRoute`), anonymous requests get `401`; they listed every set and property name of the model to anyone. Both are served on every host now (before only where MVC's part discovery found OData's assembly). `Coworkee:OData:AnonymousMetadata` (`CoworkeeODataOptions.AnonymousMetadata`, default `false`) opens them again. Clients that read `$metadata` anonymously send a token or set the option. See [OData](../web/odata.md).
+- The log and trace redaction of `AddCoworkee` and `AddCoworkeeBff` (`SecretPaths`) masks secrets in query strings too: `access_token` (SignalR WebSockets), `id_token`, `id_token_hint`, `refresh_token`, `token`, `code`, `code_verifier`, `client_secret`, `client_assertion` and `password` show `***` in the request lines of `Microsoft.AspNetCore.Hosting.Diagnostics`, HttpClient and YARP logs and the url tags of activities. See [files](../modules/files.md#temporary-links).
 
 ## 0.0.1.43 (2026-10-29)
 
