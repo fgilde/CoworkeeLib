@@ -302,6 +302,44 @@ internal sealed class PermissionChecker(
         return definitions.Expand(names);
     }
 
+    // ponytail: the role, group and direct grant ids are loaded into lists; one query with subqueries when a tenant has many thousands of grants
+    public async Task<Contracts.PagedResult<Guid>> UsersGrantedAsync(string permission, Guid? groupId, Contracts.PageRequest page, CancellationToken cancellationToken)
+    {
+        var tenantId = currentUser.TenantId;
+        var names = definitions.All.Select(d => d.Name).Where(n => definitions.Expand([n]).Contains(permission)).Append(permission).Distinct(StringComparer.Ordinal).ToList();
+        var grants = db.Set<PermissionGrant>().Where(g => names.Contains(g.Name) && (g.TenantId == null || g.TenantId == tenantId));
+        var roleIds = await grants.Where(g => g.ProviderType == PermissionProviderType.Role).Select(g => g.ProviderKey).ToListAsync(cancellationToken);
+        roleIds.AddRange(await db.Set<Role>().Where(r => r.IsSystem && r.Name == SystemRoles.Admin).Select(r => r.Id).ToListAsync(cancellationToken));
+        var direct = await grants.Where(g => g.ProviderType == PermissionProviderType.User).Select(g => g.ProviderKey).ToListAsync(cancellationToken);
+        var groupIds = await db.Set<UserGroup>()
+            .Where(g => grants.Any(x => x.ProviderType == PermissionProviderType.Group && x.ProviderKey == g.Id)
+                        || db.Set<UserGroupRole>().Any(r => r.GroupId == g.Id && roleIds.Contains(r.RoleId)))
+            .Select(g => g.Id).ToListAsync(cancellationToken);
+
+        var users = db.Set<User>().AsNoTracking().Where(u => u.TenantId == tenantId && u.IsActive)
+            .Where(u => direct.Contains(u.Id)
+                        || db.Set<IdentityUserRole<Guid>>().Any(r => r.UserId == u.Id && roleIds.Contains(r.RoleId))
+                        || db.Set<UserGroupMember>().Any(m => m.UserId == u.Id && groupIds.Contains(m.GroupId)));
+        if (groupId is { } group)
+        {
+            var code = await db.Set<UserGroup>().Where(g => g.Id == group).Select(g => g.Code).SingleOrDefaultAsync(cancellationToken);
+            var subtree = db.Set<UserGroup>().Where(g => g.Id == group || (code != null && g.Code!.StartsWith(code + "."))).Select(g => g.Id);
+            users = users.Where(u => db.Set<UserGroupMember>().Any(m => m.UserId == u.Id && subtree.Contains(m.GroupId)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(page.Search))
+        {
+            var search = page.Search.Trim().ToLowerInvariant();
+            users = users.Where(u => u.Email!.ToLower().Contains(search)
+                                     || (u.FirstName ?? string.Empty).ToLower().Contains(search)
+                                     || (u.LastName ?? string.Empty).ToLower().Contains(search));
+        }
+
+        var total = await users.CountAsync(cancellationToken);
+        var ids = await users.OrderBy(u => u.Email).ThenBy(u => u.Id).Skip((page.Page - 1) * page.PageSize).Take(page.PageSize).Select(u => u.Id).ToListAsync(cancellationToken);
+        return new Contracts.PagedResult<Guid>(ids, total, page.Page, page.PageSize);
+    }
+
     private Task<bool> IsActiveMemberAsync(Guid userId, Guid? tenantId, CancellationToken cancellationToken) =>
         db.Set<User>().AnyAsync(u => u.Id == userId && u.TenantId == tenantId && u.IsActive, cancellationToken);
 
