@@ -32,6 +32,8 @@ The search sees exactly what the OData list of the set returns: its permission, 
 
 Fields may read through a navigation (`t => t.Customer!.Name`): they are read in the query and follow the [navigation rules](odata.md#navigations-follow-their-target), so a hidden target neither matches nor shows. `Title`, `Subtitle`, `Url` and `Thumbnail` run on the loaded row, which has no navigations; use fields for values of other rows.
 
+`$search` on the set's OData list (and its exports) looks in the same fields, unless the entity names its own with `ISearchable`; list a field here when the table's search box should find it.
+
 | Option | Default |
 |---|---|
 | `Fields(...)` | required; the first is the title |
