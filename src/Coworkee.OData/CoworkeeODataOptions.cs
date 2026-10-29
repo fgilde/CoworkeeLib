@@ -14,6 +14,13 @@ public sealed class CoworkeeODataOptions
     /// <summary>Property, set and function names in URIs match regardless of case (<c>$filter=name eq 'x'</c>, <c>$orderby=price</c>), e.g. for camelCase clients.</summary>
     public bool CaseInsensitive { get; set; } = true;
 
+    /// <summary>
+    /// The model takes keys and properties from the EF model of each set's DbContext (external ones too) instead of the CLR conventions: the EF primary
+    /// key of every type the sets reach (a <c>{Type}Id</c> property is no key then), and properties without a public setter EF maps. Off by default,
+    /// because it adds properties that were not in the model before; hide what users must not see.
+    /// </summary>
+    public bool ModelFromEntityFramework { get; set; }
+
     /// <summary>Running and queued exports one user may have at a time; another streamed export answers 429.</summary>
     public int MaxConcurrentExports { get; set; } = 2;
 

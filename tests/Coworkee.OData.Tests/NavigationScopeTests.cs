@@ -10,8 +10,13 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Coworkee.OData.Tests;
 
 /// <summary>Navigations show only the rows their target set lists for the user: $expand, $filter through them, $count, exports and the data tools.</summary>
-public sealed class NavigationScopeTests(ODataApp app) : IAsyncLifetime
+public class NavigationScopeTests(ODataApp app) : IAsyncLifetime
 {
+    /// <summary>The OData route the requests go to; <see cref="CamelCaseRoute"/> runs the suite again on a route that renames every property.</summary>
+    protected virtual string Route => CoworkeeODataModule.RoutePrefix;
+
+    private HttpClient As(Guid userId, Guid tenantId) => app.As(userId, tenantId, Route);
+
     private SetupResultDto _setup = null!;
     private Guid _open;
     private Guid _featuresSecret;
@@ -42,7 +47,7 @@ public sealed class NavigationScopeTests(ODataApp app) : IAsyncLifetime
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private HttpClient Admin => app.As(_setup.AdminUserId, _setup.TenantId);
+    private HttpClient Admin => As(_setup.AdminUserId, _setup.TenantId);
 
     private Task<JsonElement> GetAsync(string url) => Admin.GetFromJsonAsync<JsonElement>(url, Ct);
 
@@ -96,7 +101,7 @@ public sealed class NavigationScopeTests(ODataApp app) : IAsyncLifetime
     [Fact]
     public async Task Expanding_a_set_without_its_permission_is_forbidden()
     {
-        var viewer = app.As(await UserWithAsync(ODataApp.ViewGadgets), _setup.TenantId);
+        var viewer = As(await UserWithAsync(ODataApp.ViewGadgets), _setup.TenantId);
 
         (await viewer.GetAsync("/odata/Shelves", Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
         foreach (var expand in new[] { "Bins", "Featured", "Bins($select=Labels)" })
@@ -113,7 +118,7 @@ public sealed class NavigationScopeTests(ODataApp app) : IAsyncLifetime
     [Fact]
     public async Task Protected_properties_of_an_expanded_set_stay_hidden()
     {
-        var viewer = app.As(await UserWithAsync(ODataApp.ViewGadgets, ODataApp.ViewBins), _setup.TenantId);
+        var viewer = As(await UserWithAsync(ODataApp.ViewGadgets, ODataApp.ViewBins), _setup.TenantId);
 
         var shelf = await viewer.GetFromJsonAsync<JsonElement>($"/odata/Shelves({_open})?$expand=Bins", Ct);
         shelf.GetProperty("Bins")[0].TryGetProperty("Size", out _).ShouldBeFalse();

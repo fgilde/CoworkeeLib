@@ -64,7 +64,10 @@ internal static class FacetResponse
             result.Add(await ComputedAsync(property, own ? await FilterAsync(visible, context!.Without(property.Name), http, cancellationToken) : filtered, http, cancellationToken));
         }
 
-        return result;
+        // the facets are built in CLR names; a route that renames properties gets its own names, which its filters understand
+        return services.GetRequiredService<ODataRoutes>().Find(http.ODataFeature().RoutePrefix) is { RenamesProperties: true } route
+            ? ODataNames.ToRoute(result, services.GetRequiredService<ODataModels>().Of(route), typeof(T))
+            : result;
     }
 
     // ponytail: one count per option; fine for the handful of workflow states, group in the database if options get many
@@ -74,7 +77,7 @@ internal static class FacetResponse
         var options = new List<FacetOptionDto>();
         foreach (var option in property.Facet!.Options)
         {
-            var count = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(await FilterAsync(rows, option.OData, http, cancellationToken), cancellationToken);
+            var count = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(await FilterAsync(rows, option.OData, http, cancellationToken, clrNames: true), cancellationToken);
             options.Add(new FacetOptionDto(JsonSerializer.SerializeToElement(option.Value), option.Label, count > 0, count, option.OData)
             {
                 Meta = option.Color is null ? null : new Dictionary<string, string> { ["color"] = option.Color },
@@ -186,8 +189,11 @@ internal static class FacetResponse
     private static ODataNavigationScope ScopeOf<T>(HttpContext http) =>
         http.Items[ScopedEnableQueryAttribute.ScopeItem] as ODataNavigationScope ?? ODataNavigationScope.For(http.RequestServices, typeof(T));
 
-    /// <summary>The rows matching an OData $filter, read the way the entity set's own list reads it, navigations included.</summary>
-    public static async Task<IQueryable<T>> FilterAsync<T>(IQueryable<T> rows, string? filter, HttpContext request, CancellationToken cancellationToken)
+    /// <summary>
+    /// The rows matching an OData $filter, read the way the entity set's own list reads it, navigations included: a client's filter in the names of the
+    /// request's route, one the app wrote (<paramref name="clrNames"/>) in CLR names.
+    /// </summary>
+    public static async Task<IQueryable<T>> FilterAsync<T>(IQueryable<T> rows, string? filter, HttpContext request, CancellationToken cancellationToken, bool clrNames = false)
         where T : class
     {
         if (string.IsNullOrWhiteSpace(filter))
@@ -196,9 +202,8 @@ internal static class FacetResponse
         }
 
         var services = request.RequestServices;
-        var http = new DefaultHttpContext { RequestServices = services };
-        http.ODataFeature().RoutePrefix = CoworkeeODataModule.RoutePrefix;
-        http.Request.QueryString = QueryString.Create("$filter", filter);
-        return await ScopeOf<T>(request).ApplyAsync(rows.ApplyODataFilter(http.Request.ODataQueryOptions<T>(services.GetRequiredService<IEdmModel>())), cancellationToken);
+        var prefix = clrNames ? null : request.ODataFeature().RoutePrefix;
+        var parsed = ODataQueryGuard.Request(services, QueryString.Create("$filter", filter), prefix).ODataQueryOptions<T>(services.GetRequiredService<ODataModels>().Of(prefix));
+        return await ScopeOf<T>(request).ApplyAsync(rows.ApplyODataFilter(parsed), cancellationToken);
     }
 }

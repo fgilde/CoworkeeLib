@@ -12,8 +12,13 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Coworkee.OData.Tests;
 
 /// <summary>Gadget.Category is registered with HideUnless(Gadgets.Categories): a viewer with Gadgets.View only must not reach it anywhere.</summary>
-public sealed class ProtectedPropertyTests(ODataApp app) : IAsyncLifetime
+public class ProtectedPropertyTests(ODataApp app) : IAsyncLifetime
 {
+    /// <summary>The OData route the requests go to; <see cref="CamelCaseRoute"/> runs the suite again on a route that renames every property.</summary>
+    protected virtual string Route => CoworkeeODataModule.RoutePrefix;
+
+    private HttpClient As(Guid userId, Guid tenantId) => app.As(userId, tenantId, Route);
+
     private SetupResultDto _setup = null!;
     private Guid _viewer;
 
@@ -34,9 +39,9 @@ public sealed class ProtectedPropertyTests(ODataApp app) : IAsyncLifetime
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private HttpClient Admin => app.As(_setup.AdminUserId, _setup.TenantId);
+    private HttpClient Admin => As(_setup.AdminUserId, _setup.TenantId);
 
-    private HttpClient Viewer => app.As(_viewer, _setup.TenantId);
+    private HttpClient Viewer => As(_viewer, _setup.TenantId);
 
     [Fact]
     public async Task Lists_leave_the_property_out_and_refuse_queries_on_it()

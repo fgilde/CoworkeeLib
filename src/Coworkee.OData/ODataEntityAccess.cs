@@ -87,7 +87,7 @@ public static class ODataEntityAccess
 
     /// <summary>
     /// $search over the string properties of the set the user may read (Nextended's default is every string property, an ISearchable entity
-    /// names its own, also computed or through navigations): a field is left out when any member it reads is hidden, or listed by
+    /// names its own, also computed or through navigations; the fields of AddGlobalSearch otherwise): a field is left out when any member it reads is hidden, or listed by
     /// <paramref name="denied"/> for the type it is read from (<see cref="DeniedByTypeAsync"/>), or reached through a navigation whose target
     /// the <paramref name="scope"/> narrows. So a search is no oracle on what the user may not read.
     /// </summary>
@@ -109,7 +109,7 @@ public static class ODataEntityAccess
             .Any(e => e.HiddenProperties.Contains(name) || (denied.TryGetValue(e.EntityType.FullName!, out var names) && names.Contains(name)));
 
         var fields = new List<System.Linq.Expressions.Expression<Func<TEntity, string?>>>();
-        foreach (var field in Nextended.Core.Contracts.ISearchable<TEntity>.GetSearchProperties())
+        foreach (var field in registry.SearchFields<TEntity>())
         {
             var members = new Members();
             members.Visit(field.Body);
@@ -195,10 +195,8 @@ public static class ODataEntityAccess
             return visible;
         }
 
-        var http = new DefaultHttpContext { RequestServices = services };
-        http.ODataFeature().RoutePrefix = CoworkeeODataModule.RoutePrefix;
-        http.Request.QueryString = QueryString.Create("$filter", filter);
-        var filtered = visible.ApplyODataFilter(http.Request.ODataQueryOptions<TEntity>(services.GetRequiredService<IEdmModel>()));
+        var request = ODataQueryGuard.Request(services, QueryString.Create("$filter", filter));
+        var filtered = visible.ApplyODataFilter(request.ODataQueryOptions<TEntity>(services.GetRequiredService<IEdmModel>()));
         return await (scope ?? ODataNavigationScope.For(services, typeof(TEntity))).ApplyAsync(filtered, cancellationToken);
     }
 }

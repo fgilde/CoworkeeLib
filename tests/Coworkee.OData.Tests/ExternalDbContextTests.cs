@@ -13,8 +13,13 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Coworkee.OData.Tests;
 
 /// <summary>Entities of a second, plain DbContext on a database the app does not own (<see cref="ParcelDbContext"/>).</summary>
-public sealed class ExternalDbContextTests(ODataApp app) : IAsyncLifetime
+public class ExternalDbContextTests(ODataApp app) : IAsyncLifetime
 {
+    /// <summary>The OData route the requests go to; <see cref="CamelCaseRoute"/> runs the suite again on a route that renames every property.</summary>
+    protected virtual string Route => CoworkeeODataModule.RoutePrefix;
+
+    private HttpClient As(Guid userId, Guid tenantId) => app.As(userId, tenantId, Route);
+
     private SetupResultDto _setup = null!;
 
     public async ValueTask InitializeAsync()
@@ -35,7 +40,7 @@ public sealed class ExternalDbContextTests(ODataApp app) : IAsyncLifetime
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private HttpClient Admin => app.As(_setup.AdminUserId, _setup.TenantId);
+    private HttpClient Admin => As(_setup.AdminUserId, _setup.TenantId);
 
     private async Task InParcelsAsync(Func<ParcelDbContext, Task> action)
     {
@@ -66,7 +71,7 @@ public sealed class ExternalDbContextTests(ODataApp app) : IAsyncLifetime
     {
         var email = $"viewer-{Guid.NewGuid():N}@acme.test";
         var user = await (await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest(email, "Passw0rd!x", null, null), Ct)).Content.ReadFromJsonAsync<UserDto>(Ct);
-        var viewer = app.As(user!.Id, _setup.TenantId);
+        var viewer = As(user!.Id, _setup.TenantId);
 
         (await viewer.GetAsync("/odata/Parcels", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await viewer.GetAsync("/api/v1/client-entities/Parcels/changes", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);

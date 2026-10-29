@@ -6,8 +6,13 @@ using Microsoft.AspNetCore.TestHost;
 
 namespace Coworkee.OData.Tests;
 
-public sealed class EntityODataTests(ODataApp app) : IAsyncLifetime
+public class EntityODataTests(ODataApp app) : IAsyncLifetime
 {
+    /// <summary>The OData route the requests go to; <see cref="CamelCaseRoute"/> runs the suite again on a route that renames every property.</summary>
+    protected virtual string Route => CoworkeeODataModule.RoutePrefix;
+
+    private HttpClient As(Guid userId, Guid tenantId) => app.As(userId, tenantId, Route);
+
     private SetupResultDto _setup = null!;
 
     public async ValueTask InitializeAsync()
@@ -34,7 +39,7 @@ public sealed class EntityODataTests(ODataApp app) : IAsyncLifetime
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private HttpClient Admin => app.As(_setup.AdminUserId, _setup.TenantId);
+    private HttpClient Admin => As(_setup.AdminUserId, _setup.TenantId);
 
     [Fact]
     public async Task Filters_sorts_and_counts_within_the_tenant()
@@ -127,7 +132,7 @@ public sealed class EntityODataTests(ODataApp app) : IAsyncLifetime
         var email = $"viewer-{Guid.NewGuid():N}@acme.test";
         var user = await (await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest(email, "Passw0rd!x", null, null), Ct)).Content.ReadFromJsonAsync<UserDto>(Ct);
 
-        (await app.As(user!.Id, _setup.TenantId).GetAsync("/odata/Gadgets", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await As(user!.Id, _setup.TenantId).GetAsync("/odata/Gadgets", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await app.App.GetTestClient().GetAsync("/odata/Gadgets", Ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 }

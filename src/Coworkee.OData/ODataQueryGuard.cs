@@ -48,17 +48,24 @@ internal sealed class ODataQueryGuard
         return guard._found;
     }
 
-    /// <summary>Whether an OData $filter on <paramref name="entityType"/> reads a denied member.</summary>
-    public static bool Denies(IServiceProvider services, Type entityType, string? filter, IReadOnlyDictionary<string, IReadOnlySet<string>> denied) =>
-        !string.IsNullOrWhiteSpace(filter) && Denies(Options(services, entityType, QueryString.Create("$filter", filter)), denied);
+    /// <summary>Whether an OData $filter on <paramref name="entityType"/> reads a denied member; the filter in the names of the route <paramref name="prefix"/> (default: <c>/odata</c>).</summary>
+    public static bool Denies(IServiceProvider services, Type entityType, string? filter, IReadOnlyDictionary<string, IReadOnlySet<string>> denied, string? prefix = null) =>
+        !string.IsNullOrWhiteSpace(filter) && Denies(Options(services, entityType, QueryString.Create("$filter", filter), prefix), denied);
 
-    /// <summary>Query options of a set read from a query string outside a request of the set's own route (exports, reports, the data tools).</summary>
-    public static ODataQueryOptions Options(IServiceProvider services, Type entityType, QueryString query)
+    /// <summary>
+    /// Query options of a set read from a query string outside a request of the set's own route (exports, reports, the data tools, facet filters), with
+    /// the model and route services of the route <paramref name="prefix"/> (default: <c>/odata</c>).
+    /// </summary>
+    public static ODataQueryOptions Options(IServiceProvider services, Type entityType, QueryString query, string? prefix = null) =>
+        new(new ODataQueryContext(services.GetRequiredService<ODataModels>().Of(prefix), entityType, new ODataPath()), Request(services, query, prefix));
+
+    /// <summary>A request of the route <paramref name="prefix"/> (default: <c>/odata</c>) for parsing options outside an OData request.</summary>
+    public static HttpRequest Request(IServiceProvider services, QueryString query, string? prefix = null)
     {
         var http = new DefaultHttpContext { RequestServices = services };
-        http.ODataFeature().RoutePrefix = CoworkeeODataModule.RoutePrefix;
+        http.ODataFeature().RoutePrefix = prefix ?? CoworkeeODataModule.RoutePrefix;
         http.Request.QueryString = query;
-        return new ODataQueryOptions(new ODataQueryContext(services.GetRequiredService<IEdmModel>(), entityType, new ODataPath()), http.Request);
+        return http.Request;
     }
 
     private void Select(SelectExpandClause? clause, IEdmStructuredType? type)
@@ -212,6 +219,8 @@ internal sealed class ODataQueryGuard
             types.AddRange(_model.FindAllDerivedTypes(type));
         }
 
-        _found |= types.Any(t => _denied.TryGetValue(t.FullTypeName(), out var names) && names.Contains(property.Name));
+        // by CLR name: a route that renames the property (alias, lower camel case) denies it the same
+        var name = ODataNames.Clr(_model, property);
+        _found |= types.Any(t => _denied.TryGetValue(t.FullTypeName(), out var names) && names.Contains(name));
     }
 }

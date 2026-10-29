@@ -8,8 +8,13 @@ using Microsoft.OData.Edm;
 namespace Coworkee.OData.Tests;
 
 /// <summary>Hide and HideUnless on members a base class declares: boxes hide them, bags of the same base keep them.</summary>
-public sealed class InheritedMemberTests(ODataApp app) : IAsyncLifetime
+public class InheritedMemberTests(ODataApp app) : IAsyncLifetime
 {
+    /// <summary>The OData route the requests go to; <see cref="CamelCaseRoute"/> runs the suite again on a route that renames every property.</summary>
+    protected virtual string Route => CoworkeeODataModule.RoutePrefix;
+
+    private HttpClient As(Guid userId, Guid tenantId) => app.As(userId, tenantId, Route);
+
     private SetupResultDto _setup = null!;
 
     public async ValueTask InitializeAsync()
@@ -29,7 +34,7 @@ public sealed class InheritedMemberTests(ODataApp app) : IAsyncLifetime
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private HttpClient Admin => app.As(_setup.AdminUserId, _setup.TenantId);
+    private HttpClient Admin => As(_setup.AdminUserId, _setup.TenantId);
 
     [Fact]
     public async Task Hidden_members_of_a_base_class_are_hidden_on_their_set_only()
@@ -142,7 +147,7 @@ public sealed class InheritedMemberTests(ODataApp app) : IAsyncLifetime
         var role = await (await Admin.PostAsJsonAsync("/api/v1/identity/roles", new RoleRequest("Viewers " + Guid.NewGuid().ToString("N")[..6], null), Ct)).Content.ReadFromJsonAsync<Guid>(Ct);
         (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest(permissions), Ct)).EnsureSuccessStatusCode();
         (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{user!.Id}/roles", new IdListRequest([role]), Ct)).EnsureSuccessStatusCode();
-        return app.As(user.Id, _setup.TenantId);
+        return As(user.Id, _setup.TenantId);
     }
 
     [Fact]
@@ -153,7 +158,7 @@ public sealed class InheritedMemberTests(ODataApp app) : IAsyncLifetime
         var role = await (await Admin.PostAsJsonAsync("/api/v1/identity/roles", new RoleRequest("Viewers " + Guid.NewGuid().ToString("N")[..6], null), Ct)).Content.ReadFromJsonAsync<Guid>(Ct);
         (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest([ODataApp.ViewGadgets]), Ct)).EnsureSuccessStatusCode();
         (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{user!.Id}/roles", new IdListRequest([role]), Ct)).EnsureSuccessStatusCode();
-        var viewer = app.As(user.Id, _setup.TenantId);
+        var viewer = As(user.Id, _setup.TenantId);
 
         (await viewer.GetFromJsonAsync<JsonElement>("/odata/Boxes", Ct)).GetProperty("value")[0].TryGetProperty("Note", out _).ShouldBeFalse();
         (await viewer.GetAsync("/odata/Boxes?$filter=Note eq 'fragile'", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);

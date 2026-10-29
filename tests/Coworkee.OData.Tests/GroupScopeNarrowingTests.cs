@@ -12,8 +12,13 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Coworkee.OData.Tests;
 
 /// <summary>The selected units narrow what lists show, never what a user may open.</summary>
-public sealed class GroupScopeNarrowingTests(ODataApp app) : IAsyncLifetime
+public class GroupScopeNarrowingTests(ODataApp app) : IAsyncLifetime
 {
+    /// <summary>The OData route the requests go to; <see cref="CamelCaseRoute"/> runs the suite again on a route that renames every property.</summary>
+    protected virtual string Route => CoworkeeODataModule.RoutePrefix;
+
+    private HttpClient As(Guid userId, Guid tenantId) => app.As(userId, tenantId, Route);
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
     private SetupResultDto _setup = null!;
     private Guid _boxB;
@@ -39,7 +44,7 @@ public sealed class GroupScopeNarrowingTests(ODataApp app) : IAsyncLifetime
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private HttpClient Admin => app.As(_setup.AdminUserId, _setup.TenantId);
+    private HttpClient Admin => As(_setup.AdminUserId, _setup.TenantId);
 
     private FakeGroupScope Scope => app.App.Services.GetRequiredService<FakeGroupScope>();
 
