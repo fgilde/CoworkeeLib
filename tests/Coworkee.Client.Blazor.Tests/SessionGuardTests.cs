@@ -15,7 +15,7 @@ public sealed class SessionGuardTests : ClientTestBase
 
     public SessionGuardTests()
     {
-        AddAuthorization().SetAuthorized("Ada").SetClaims(new Claim("sub", _me.ToString()));
+        AddAuthorization().SetAuthorized("Ada").SetClaims(new Claim("sub", _me.ToString()), new Claim("sid", "mine"));
         Api.LogoutAsync(Arg.Any<CancellationToken>()).Returns(new BffLogoutDto("https://auth.test/connect/endsession"));
     }
 
@@ -32,6 +32,20 @@ public sealed class SessionGuardTests : ClientTestBase
         await Api.Received(1).LogoutAsync(Arg.Any<CancellationToken>());
         await dialogs.FindAll("button").Last().ClickAsync(new());
         dialogs.WaitForAssertion(() => Services.GetRequiredService<NavigationManager>().Uri.ShouldBe("https://auth.test/connect/endsession"));
+    }
+
+    [Fact]
+    public async Task A_new_password_of_this_session_keeps_it_one_of_another_ends_it()
+    {
+        Render<MudBlazor.MudDialogProvider>();
+        Render<SessionGuard>();
+        var realtime = Services.GetRequiredService<FakeRealtimeConnection>();
+
+        realtime.Push(RealtimeTopics.User(_me), RealtimeEventTypes.SessionRevoked, new SessionRevokedPayload("password-changed", "mine"));
+        await Api.DidNotReceive().LogoutAsync(Arg.Any<CancellationToken>());
+
+        realtime.Push(RealtimeTopics.User(_me), RealtimeEventTypes.SessionRevoked, new SessionRevokedPayload("password-changed", "other"));
+        await Api.Received(1).LogoutAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]

@@ -37,8 +37,9 @@ public partial class SessionGuard : IAsyncDisposable
         var sid = user?.FindFirst("sid")?.Value;
         if (ClientUser.From(user).TryGetUserId(out var userId))
         {
+            // a new password of this very session ends the others, not this one
             _subscription = await Realtime.SubscribeAsync(RealtimeTopics.User(userId), envelope =>
-                envelope.Type == RealtimeEventTypes.SessionRevoked ? InvokeAsync(() => EndAsync(envelope)) : Task.CompletedTask);
+                envelope.Type == RealtimeEventTypes.SessionRevoked && !IsKept(envelope, sid) ? InvokeAsync(() => EndAsync(envelope)) : Task.CompletedTask);
         }
 
         // the impersonation of this session ended elsewhere (another tab, another app, its expiry): the sign-in goes back to the auth server, which knows who is signed in now
@@ -48,6 +49,9 @@ public partial class SessionGuard : IAsyncDisposable
                 envelope => envelope.Type == RealtimeEventTypes.ImpersonationEnded ? InvokeAsync(SignInAgain) : Task.CompletedTask);
         }
     }
+
+    private static bool IsKept(RealtimeEnvelope envelope, string? sid) =>
+        sid is { Length: > 0 } && envelope.Payload.Deserialize<SessionRevokedPayload>(JsonSerializerOptions.Web)?.KeptSessionId == sid;
 
     private void SignInAgain()
     {

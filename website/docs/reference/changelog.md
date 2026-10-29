@@ -15,6 +15,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Changed
 
+- `SessionRevokedPayload` has `KeptSessionId`: after a password change it names the session that goes on, `SessionGuard` of that session ignores the message; single-page apps ignore a `SessionRevoked` carrying the `sid` of their own token.
 - The BFF removes `Access-Control-*` headers from its answers, so CORS headers the API sets for single-page apps never apply to the cookie session forwarded through the web host.
 - PKCE takes only `S256` challenges: the auth server accepted `plain` (and a challenge without method) before; clients that send `plain` get `invalid_request`.
 - A wrong current password of `POST /api/v1/identity/me/email` counts towards the lockout again (the failed attempt was not saved).

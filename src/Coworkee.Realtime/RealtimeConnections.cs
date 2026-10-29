@@ -58,7 +58,7 @@ public sealed class RealtimeConnections(IHubContext<RealtimeHub> hub, IServiceSc
 
     /// <summary>Sends <see cref="RealtimeEventTypes.SessionRevoked"/> to the user's connections <paramref name="keep"/> refuses and closes them.</summary>
     // ponytail: scans every connection of the instance; an index per user when an instance holds many thousands
-    public async Task EndAsync(Guid userId, Func<ClaimsPrincipal, Task<bool>> keep, string reason, CancellationToken cancellationToken)
+    public async Task EndAsync(Guid userId, Func<ClaimsPrincipal, Task<bool>> keep, string reason, CancellationToken cancellationToken, string? keptSessionId = null)
     {
         var subject = userId.ToString();
         var ended = new List<HubCallerContext>();
@@ -76,7 +76,7 @@ public sealed class RealtimeConnections(IHubContext<RealtimeHub> hub, IServiceSc
         }
 
         var envelope = new RealtimeEnvelope(RealtimeTopics.User(userId), RealtimeEventTypes.SessionRevoked,
-            JsonSerializer.SerializeToElement(new SessionRevokedPayload(reason), JsonSerializerOptions.Web));
+            JsonSerializer.SerializeToElement(new SessionRevokedPayload(reason, keptSessionId), JsonSerializerOptions.Web));
         await hub.Clients.Clients(ended.Select(c => c.ConnectionId).ToList()).SendAsync(RealtimeHubMethods.OnEvent, envelope, cancellationToken);
         _ = Task.Delay(Grace, CancellationToken.None).ContinueWith(_ => ended.ForEach(c => c.Abort()), CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
     }
