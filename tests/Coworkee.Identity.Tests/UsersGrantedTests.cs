@@ -98,11 +98,17 @@ public sealed class UsersGrantedTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task The_list_needs_users_view_and_a_known_permission()
+    public async Task The_list_needs_users_view_and_roles_view_and_a_known_permission()
     {
         var gina = await UserAsync("gina@acme.test");
+        var hank = await UserAsync("hank@acme.test");
+        await PutAsync($"/api/v1/identity/permissions/grants/User/{hank}", new NameListRequest([IdentityPermissions.Users.View]));
+        var ivy = await UserAsync("ivy@acme.test");
+        await PutAsync($"/api/v1/identity/permissions/grants/User/{ivy}", new NameListRequest([IdentityPermissions.Users.View, IdentityPermissions.Roles.View]));
 
         (await app.As(gina, _setup.TenantId).GetAsync($"/api/v1/identity/users/granted?permission={Permission}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await app.As(hank, _setup.TenantId).GetAsync($"/api/v1/identity/users/granted?permission={Permission}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await app.As(ivy, _setup.TenantId).GetAsync($"/api/v1/identity/users/granted?permission={Permission}", Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await Admin.GetAsync("/api/v1/identity/users/granted?permission=Nope.Nothing", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await Admin.GetAsync($"/api/v1/identity/users/granted?permission={Permission}&groupId={Guid.CreateVersion7()}", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
