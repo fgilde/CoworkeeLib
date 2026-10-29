@@ -24,7 +24,9 @@ internal sealed class ChangeMyEmailHandler(CoworkeeDbContext db, ICurrentUser cu
 
         if (user.PasswordHash is not null && (await users.IsLockedOutAsync(user) || !await users.CheckPasswordAsync(user, command.CurrentPassword ?? string.Empty)))
         {
+            // a failed command is not saved by the pipeline, the count of failed attempts has to be
             await users.AccessFailedAsync(user);
+            await db.SaveChangesAsync(cancellationToken);
             return WrongPassword;
         }
 

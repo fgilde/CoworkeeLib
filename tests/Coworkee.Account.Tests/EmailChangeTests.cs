@@ -67,6 +67,7 @@ public sealed class EmailChangeTests(AccountApp app) : IAsyncLifetime
         var asEve = app.As(eve.Id, _setup.TenantId);
 
         (await asEve.PostAsJsonAsync("/api/v1/identity/me/email", new ChangeEmailRequest("eve@new.test", "wrong"), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await UserAsync(eve.Id)).AccessFailedCount.ShouldBe(1);
         (await asEve.PostAsJsonAsync("/api/v1/identity/me/email", new ChangeEmailRequest("EVE@acme.test", "Passw0rd!x"), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         app.Mails.Sent.ShouldBeEmpty();
 

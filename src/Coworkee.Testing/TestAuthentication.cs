@@ -33,6 +33,9 @@ public sealed class TestAuthHandler(IOptionsMonitor<AuthenticationSchemeOptions>
             claims.Add(new Claim("exp", parts[2]));
         }
 
+        // further parts are claims of their own: "Test {user};{tenant};;sid=abc;impersonator={id}"
+        claims.AddRange(parts.Skip(3).Select(p => p.Split('=', 2)).Where(p => p.Length == 2).Select(p => new Claim(p[0], p[1])));
+
         var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, SchemeName));
         return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(principal, SchemeName)));
     }
