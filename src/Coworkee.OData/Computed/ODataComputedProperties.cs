@@ -6,22 +6,24 @@ namespace Coworkee.OData.Computed;
 public sealed class ODataComputedProperties(ODataEntityRegistry registry, IEnumerable<IODataComputedPropertySource> sources)
 {
     private readonly Lazy<IReadOnlyList<ODataComputedProperty>> _all = new(() => [.. sources.SelectMany(s => s.Properties(registry))]);
-    private readonly Dictionary<IEdmProperty, ODataComputedProperty> _edm = [];
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<IEdmProperty, ODataComputedProperty> _edm = new();
 
     public IReadOnlyList<ODataComputedProperty> All => _all.Value;
 
     public IEnumerable<ODataComputedProperty> Of(Type entityType) => All.Where(p => p.EntityType == entityType);
 
+    // the properties of every route's model
     internal ODataComputedProperty? Find(IEdmProperty property) => _edm.GetValueOrDefault(property);
 
-    internal void AddTo(EdmModel model)
+    /// <param name="name">The property's name on the route (lower camel case on some).</param>
+    internal void AddTo(EdmModel model, Func<string, string> name)
     {
         foreach (var property in All)
         {
             if (model.FindDeclaredType(property.EntityType.FullName) is EdmEntityType type)
             {
                 var kind = EdmCoreModel.Instance.GetPrimitiveType(Kind(property.Type));
-                _edm[type.AddStructuralProperty(property.Name, new EdmPrimitiveTypeReference(kind, true))] = property;
+                _edm[type.AddStructuralProperty(name(property.Name), new EdmPrimitiveTypeReference(kind, true))] = property;
             }
         }
     }

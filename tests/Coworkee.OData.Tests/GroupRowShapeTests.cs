@@ -7,8 +7,13 @@ using Coworkee.Contracts.Identity;
 namespace Coworkee.OData.Tests;
 
 /// <summary>What the groups page reads from the real Groups and Users sets: the roles of a group, no member list, members counted on Users.</summary>
-public sealed class GroupRowShapeTests(ODataApp app) : IAsyncLifetime
+public class GroupRowShapeTests(ODataApp app) : IAsyncLifetime
 {
+    /// <summary>The OData route the requests go to; <see cref="CamelCaseRoute"/> runs the suite again on a route that renames every property.</summary>
+    protected virtual string Route => CoworkeeODataModule.RoutePrefix;
+
+    private HttpClient As(Guid userId, Guid tenantId) => app.As(userId, tenantId, Route);
+
     private static readonly JsonSerializerOptions Web = new(JsonSerializerDefaults.Web);
     private SetupResultDto _setup = null!;
 
@@ -18,7 +23,7 @@ public sealed class GroupRowShapeTests(ODataApp app) : IAsyncLifetime
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private HttpClient Admin => app.As(_setup.AdminUserId, _setup.TenantId);
+    private HttpClient Admin => As(_setup.AdminUserId, _setup.TenantId);
 
     [Fact]
     public async Task Groups_carry_their_roles_and_no_member_list_and_users_count_the_members()

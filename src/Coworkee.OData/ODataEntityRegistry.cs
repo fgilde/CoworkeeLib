@@ -5,6 +5,7 @@ public sealed class ODataEntityRegistry
     private readonly List<ODataEntityRegistration> _entities = [];
     private readonly List<Transfer.ODataImportRegistration> _imports = [];
     private readonly Dictionary<(Type, string), Contracts.Data.FacetBehaviorAttribute> _facets = [];
+    private readonly Dictionary<Type, System.Linq.Expressions.LambdaExpression[]> _searchFields = [];
 
     public IReadOnlyList<ODataEntityRegistration> Entities => _entities;
 
@@ -30,6 +31,17 @@ public sealed class ODataEntityRegistry
     }
 
     internal void Configure(Type entityType, string property, Contracts.Data.FacetBehaviorAttribute behavior) => _facets[(entityType, property)] = behavior;
+
+    internal void SearchFields(Type entityType, System.Linq.Expressions.LambdaExpression[] fields) => _searchFields[entityType] = fields;
+
+    /// <summary>
+    /// The fields <c>$search</c> looks in: the entity's own (ISearchable), else the fields of its global search (AddGlobalSearch), else every string property.
+    /// </summary>
+    internal System.Linq.Expressions.Expression<Func<TEntity, string?>>[] SearchFields<TEntity>()
+        where TEntity : class =>
+        !typeof(Nextended.Core.Contracts.ISearchable<TEntity>).IsAssignableFrom(typeof(TEntity)) && _searchFields.TryGetValue(typeof(TEntity), out var fields)
+            ? [.. fields.Cast<System.Linq.Expressions.Expression<Func<TEntity, string?>>>()]
+            : Nextended.Core.Contracts.ISearchable<TEntity>.GetSearchProperties();
 
     internal void Add(ODataEntityRegistration registration)
     {

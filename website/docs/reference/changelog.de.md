@@ -2,6 +2,18 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- OData-Routen mit anderen Namen: `services.AddCoworkeeODataRoute("rt/odata", route => route.CamelCase().Alias<IAudited>(e => e.DateCreatedUtc, "creationTime"))` bildet eine zweite Route über dieselben Sets mit eigenem Modell ab (Namen in lower camel case, Aliase pro Typ, Basisklasse oder Interface; `FacetsOnWildcardPrefer(false)` baut Facetten nur für `"cn.facets"`). Jede Prüfung von `/odata` läuft dort genauso: Berechtigungen der Sets, Zeilenfilter, `Hide`/`HideUnless`, berechnete Eigenschaften, der Navigationsbereich, die Abfrageprüfungen, `$search` und Facetten, deren Felder, Wertpfade und Optionsfilter in den Namen der Route kommen. `ODataRoutes` listet die Routen; `ODataRouteProfile.AliasOf(type, property)` liefert den Alias für eigenes JSON. Siehe [OData](../web/odata.md#routen-mit-anderen-namen).
+- `IODataQueries.QueryAsync<T>(route, entitySet, query, facets)` führt eine OData-Listenabfrage einer Route im Prozess für den aktuellen Benutzer aus, durch die Schritte der HTTP-Route: typisierte Zeilen (Member, die die Route nicht schreiben würde, auf ihrem Standardwert) oder umgeformte Zeilen mit den Namen der Route, die Anzahl und die Facetten; Abweisungen kommen als Fehler `Forbidden`, `Validation` oder `Unauthorized`. Siehe [OData](../web/odata.md#abfragen-im-code).
+- `Coworkee:OData:ModelFromEntityFramework` (`CoworkeeODataOptions.ModelFromEntityFramework`, Standard `false`): Schlüssel und Eigenschaften des OData-Modells kommen aus dem EF-Modell des DbContexts jedes Sets, externe eingeschlossen. Typen, die die Sets erreichen, bekommen ihren EF-Primärschlüssel (eine Eigenschaft `{Type}Id` neben einer geerbten `Id` macht den Typ nicht mehr zum komplexen Typ), und Eigenschaften, die EF ohne öffentlichen Setter abbildet, sind im Modell registrierter Sets, jede beim Start protokolliert. Siehe [OData](../web/odata.md#das-modell-aus-ef).
+
+### Geändert
+
+- OData-`$search` auf einem Set mit globaler Suche (`AddGlobalSearch<T>(s => s.Fields(...))`) sucht nur in diesen Feldern, nicht mehr in jeder Text-Eigenschaft; eine `ISearchable`-Entity behält ihre eigenen Felder. Ein Feld, das das Suchfeld der Tabelle finden soll, gehört dort hinein. Siehe [Globale Suche](../web/global-search.md).
+
 ## 0.0.1.42 (2026-10-28)
 
 - Benachrichtigungen: Ein Typ kann eine Mail-Vorlage nennen (`mailTemplate`, `NotificationType.MailTemplate`), die das neue `NotificationMessage.MailModel` neben `user` und `notification` rendert; das Modell wird als JSON mit der wartenden Mail gespeichert, verzögerte und zusammengefasste Mails rendern also das neueste. `resolveEmailDelay` (`NotificationType.ResolveEmailDelay`) nimmt die Mail-Verzögerung beim Veröffentlichen von der Organisation des Absenders (ein Feature, eine Einstellung); `emailDelay` bleibt der Standard. `NotificationMailModel.Sample(model)` ist das Beispiel für Vorschau und Testmail einer solchen Vorlage. Mail-Modelle dürfen Dictionaries oder JSON-Objekte sein. Ein Modell mit einem reservierten Namen auf oberster Ebene (`user`, `notification`, Variablen des Layouts, Scriban-Builtins) oder größer als 32 KB wird mit einer `ArgumentException` abgewiesen; eine Vorlage, die sich nicht rendern lässt, fällt auf die allgemeine Mail zurück, ein scheiternder Verzögerungs-Resolver auf `emailDelay`, ohne den Befehl scheitern zu lassen. Typen ohne Vorlage und Mails ohne Modell mailen wie bisher. Apps brauchen eine Migration. Siehe [Echtzeit](../modules/realtime.md#mail-vorlagen-pro-typ-und-verzogerung-pro-organisation).

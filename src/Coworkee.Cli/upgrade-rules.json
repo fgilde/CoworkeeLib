@@ -391,6 +391,21 @@
           ]
         }
       ]
+    },
+    {
+      "version": "0.0.1.43",
+      "breaking": [
+        "OData $search on a set with AddGlobalSearch<T>(s => s.Fields(...)) looks in those fields only, not in every string property; an ISearchable entity keeps its own fields."
+      ],
+      "manual": [
+        {
+          "text": "Check that the Fields(...) of AddGlobalSearch name everything the table's search box of the set should find; $search on the OData list uses them now (or implement ISearchable on the entity for other fields).",
+          "find": "AddGlobalSearch<",
+          "files": [
+            "src/**/*.cs"
+          ]
+        }
+      ]
     }
   ]
 }

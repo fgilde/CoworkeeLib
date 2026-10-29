@@ -77,6 +77,30 @@ public static class ODataServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>
+    /// A second OData route over the same sets, e.g. <c>services.AddCoworkeeODataRoute("rt/odata", p =&gt; p.CamelCase().Alias&lt;IAudited&gt;(e =&gt; e.DateCreatedUtc, "creationTime"))</c>:
+    /// its own model with the profile's names, and everything else of <c>/odata</c> (permissions, hidden and protected properties, row filters, navigation
+    /// scope, query checks, search and facets).
+    /// </summary>
+    public static IServiceCollection AddCoworkeeODataRoute(this IServiceCollection services, string prefix, Action<ODataRouteProfile> configure)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(prefix);
+        configure(services.Routes().Add(prefix));
+        return services;
+    }
+
+    internal static ODataRoutes Routes(this IServiceCollection services)
+    {
+        if (services.FirstOrDefault(d => d.ServiceType == typeof(ODataRoutes))?.ImplementationInstance is ODataRoutes routes)
+        {
+            return routes;
+        }
+
+        routes = new ODataRoutes();
+        services.AddSingleton(routes);
+        return routes;
+    }
+
     internal static string PropertyName<TEntity>(Expression<Func<TEntity, object?>> property) =>
         (property.Body is UnaryExpression { Operand: MemberExpression boxed } ? boxed : property.Body as MemberExpression)?.Member.Name
         ?? throw new ArgumentException($"{property} does not select a property.", nameof(property));

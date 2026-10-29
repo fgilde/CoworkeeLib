@@ -48,27 +48,31 @@ internal sealed class ComputedResourceSerializer(IODataSerializerProvider provid
     public override SelectExpandNode CreateSelectExpandNode(ResourceContext resourceContext)
     {
         var node = base.CreateSelectExpandNode(resourceContext);
-        if (Denied(resourceContext) is not { Count: > 0 } denied)
+        if (Denied(resourceContext) is not { Count: > 0 } names)
         {
             return node;
         }
 
-        foreach (var property in node.SelectedStructuralProperties?.Where(p => denied.Contains(p.Name)).ToList() ?? [])
+        // by CLR name, as the rules name them: a route may rename the property
+        var model = resourceContext.EdmModel;
+        bool Hides(IEdmProperty property) => names.Contains(ODataNames.Clr(model, property));
+
+        foreach (var property in node.SelectedStructuralProperties?.Where(Hides).ToList() ?? [])
         {
             node.SelectedStructuralProperties!.Remove(property);
         }
 
-        foreach (var navigation in node.SelectedNavigationProperties?.Where(p => denied.Contains(p.Name)).ToList() ?? [])
+        foreach (var navigation in node.SelectedNavigationProperties?.Where(Hides).ToList() ?? [])
         {
             node.SelectedNavigationProperties!.Remove(navigation);
         }
 
-        foreach (var navigation in node.ExpandedProperties?.Keys.Where(p => denied.Contains(p.Name)).ToList() ?? [])
+        foreach (var navigation in node.ExpandedProperties?.Keys.Where(Hides).ToList() ?? [])
         {
             node.ExpandedProperties!.Remove(navigation);
         }
 
-        foreach (var navigation in node.ReferencedProperties?.Keys.Where(p => denied.Contains(p.Name)).ToList() ?? [])
+        foreach (var navigation in node.ReferencedProperties?.Keys.Where(Hides).ToList() ?? [])
         {
             node.ReferencedProperties!.Remove(navigation);
         }

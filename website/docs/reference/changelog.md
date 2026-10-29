@@ -2,6 +2,18 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- OData routes with other names: `services.AddCoworkeeODataRoute("rt/odata", route => route.CamelCase().Alias<IAudited>(e => e.DateCreatedUtc, "creationTime"))` maps a second route over the same sets with its own model (lower camel case names, aliases per type, base class or interface; `FacetsOnWildcardPrefer(false)` builds facets for `"cn.facets"` only). Every check of `/odata` runs on it the same way: set permissions, row filters, `Hide`/`HideUnless`, computed properties, the navigation scope, the query checks, `$search` and facets, whose fields, value paths and option filters come in the route's names. `ODataRoutes` lists the routes; `ODataRouteProfile.AliasOf(type, property)` gives the alias for own JSON. See [OData](../web/odata.md#routes-with-other-names).
+- `IODataQueries.QueryAsync<T>(route, entitySet, query, facets)` runs an OData list query of a route in process for the current user, through the steps of the HTTP route: typed rows (members the route would not write at their default) or shaped rows by the route's names, the count and the facets; refusals come back as `Forbidden`, `Validation` or `Unauthorized` errors. See [OData](../web/odata.md#queries-in-code).
+- `Coworkee:OData:ModelFromEntityFramework` (`CoworkeeODataOptions.ModelFromEntityFramework`, default `false`): keys and properties of the OData model come from the EF model of each set's DbContext, external ones included. Types the sets reach are keyed by their EF primary key (a `{Type}Id` property next to an inherited `Id` no longer turns the type into a complex type), and properties EF maps without a public setter are in the model of registered sets, each logged at startup. See [OData](../web/odata.md#the-model-from-ef).
+
+### Changed
+
+- OData `$search` on a set with a global search (`AddGlobalSearch<T>(s => s.Fields(...))`) looks in those fields only, not in every string property; an `ISearchable` entity keeps its own fields. List a field there when the table's search box should find it. See [global search](../web/global-search.md).
+
 ## 0.0.1.42 (2026-10-28)
 
 - Notifications: a type can name a mail template (`mailTemplate`, `NotificationType.MailTemplate`) that renders the new `NotificationMessage.MailModel` next to `user` and `notification`; the model is stored as JSON with the waiting mail, so delayed and debounced mails render the latest one. `resolveEmailDelay` (`NotificationType.ResolveEmailDelay`) takes the mail delay from the sender's tenant (a feature, a setting) when a notification is published; `emailDelay` stays the default. `NotificationMailModel.Sample(model)` is the sample for the preview and test mail of such a template. Mail models may be dictionaries or JSON objects. A model with a reserved top-level name (`user`, `notification`, layout variables, Scriban builtins) or larger than 32 KB is refused with an `ArgumentException`; a template that fails to render falls back to the generic mail, and a failing delay resolver to `emailDelay`, without failing the command. Types without a template, and mails without a model, mail as before. Apps need a migration. See [realtime](../modules/realtime.md#mail-templates-per-type-and-delay-per-tenant).

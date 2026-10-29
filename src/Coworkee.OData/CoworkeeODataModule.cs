@@ -8,9 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.OData;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.OData.Edm;
-using Microsoft.OData.ModelBuilder;
 using Nextended.Core.Facets;
 
 namespace Coworkee.OData;
@@ -27,7 +25,10 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         services.AddMessagingFromAssembly(typeof(CoworkeeODataModule).Assembly);
         services.AddSingleton<Computed.ODataComputedProperties>();
         services.AddSingleton<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, Computed.ComputedQueryRoots>();
-        services.AddSingleton<IEdmModel>(sp => BuildModel(registry, sp.GetRequiredService<Computed.ODataComputedProperties>(), sp.GetService<ILoggerFactory>()?.CreateLogger<CoworkeeODataModule>()));
+        services.Routes();
+        services.AddSingleton<ODataModels>();
+        services.AddSingleton<IEdmModel>(sp => sp.GetRequiredService<ODataModels>().Of((string?)null));
+        services.AddScoped<IODataQueries, ODataQueries>();
         services.AddSingleton<Microsoft.Extensions.Options.IConfigureOptions<ODataOptions>, Computed.ODataRoute>();
         services.AddTransient<IFacetBuilder>(sp => new FacetBuilder(sp.GetRequiredService<IServiceScopeFactory>(), FacetLiterals.Options(), new FacetLiterals()));
         services.Configure<CoworkeeODataOptions>(context.Configuration.GetSection(CoworkeeODataOptions.Section));
@@ -47,38 +48,5 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         app.MapDataTransferEndpoints();
         app.MapClientEntityEndpoints();
         GlobalSearch.GlobalSearchEndpoints.MapGlobalSearchEndpoints(app);
-    }
-
-    private static IEdmModel BuildModel(ODataEntityRegistry registry, Computed.ODataComputedProperties computed, ILogger? logger)
-    {
-        var builder = new ODataConventionModelBuilder();
-        foreach (var entity in registry.Entities)
-        {
-            FacetResponse.RefuseCollectionPaths(entity.EntityType);
-            var type = builder.AddEntityType(entity.EntityType);
-            type.HasKey(entity.EntityType.GetProperty(entity.Key) ?? throw new InvalidOperationException($"{entity.EntityType.Name} needs a {entity.Key} property as the key of its OData set."));
-            foreach (var hidden in entity.HiddenProperties)
-            {
-                type.RemoveProperty(entity.EntityType.GetProperty(hidden)!);
-            }
-
-            builder.AddEntitySet(entity.EntitySet, type);
-        }
-
-        var model = (EdmModel)builder.GetEdmModel();
-        foreach (var entity in registry.Entities)
-        {
-            var type = (IEdmStructuredType)model.FindDeclaredType(entity.EntityType.FullName);
-            foreach (var hidden in entity.HiddenProperties.Where(h => type.FindProperty(h) is not null))
-            {
-                entity.SharedHidden.Add(hidden);
-                logger?.LogWarning(
-                    "{Set}: {Property} is declared on {Base}, a type the OData model shares with other sets, so Hide cannot remove it; it stays in the model and is refused on {Set} for everyone.",
-                    entity.EntitySet, hidden, type.FindProperty(hidden).DeclaringType.FullTypeName(), entity.EntitySet);
-            }
-        }
-
-        computed.AddTo(model);
-        return model;
     }
 }

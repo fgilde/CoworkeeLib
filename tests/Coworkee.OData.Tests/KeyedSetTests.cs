@@ -11,8 +11,13 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Coworkee.OData.Tests;
 
 /// <summary>Sets keyed by another property than a Guid Id: Countries by a text, Ranks by a number.</summary>
-public sealed class KeyedSetTests(ODataApp app) : IAsyncLifetime
+public class KeyedSetTests(ODataApp app) : IAsyncLifetime
 {
+    /// <summary>The OData route the requests go to; <see cref="CamelCaseRoute"/> runs the suite again on a route that renames every property.</summary>
+    protected virtual string Route => CoworkeeODataModule.RoutePrefix;
+
+    private HttpClient As(Guid userId, Guid tenantId) => app.As(userId, tenantId, Route);
+
     private SetupResultDto _setup = null!;
 
     public async ValueTask InitializeAsync()
@@ -34,7 +39,7 @@ public sealed class KeyedSetTests(ODataApp app) : IAsyncLifetime
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private HttpClient Admin => app.As(_setup.AdminUserId, _setup.TenantId);
+    private HttpClient Admin => As(_setup.AdminUserId, _setup.TenantId);
 
     [Fact]
     public async Task A_text_key_lists_counts_and_reads_by_key()

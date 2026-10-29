@@ -32,6 +32,8 @@ Die Suche sieht genau das, was die OData-Liste des Sets liefert: ihre Berechtigu
 
 Felder dürfen über eine Navigation lesen (`t => t.Customer!.Name`): sie werden in der Abfrage gelesen und folgen den [Navigationsregeln](odata.md#navigationen-folgen-ihrem-ziel), ein ausgeblendetes Ziel passt also weder noch erscheint es. `Title`, `Subtitle`, `Url` und `Thumbnail` laufen auf der geladenen Zeile, die keine Navigationen hat; Werte anderer Zeilen gehören in Felder.
 
+`$search` auf der OData-Liste des Sets (und ihren Exporten) sucht in denselben Feldern, außer die Entität nennt mit `ISearchable` eigene; ein Feld, das das Suchfeld der Tabelle finden soll, gehört hierher.
+
 | Option | Standard |
 |---|---|
 | `Fields(...)` | Pflicht; das erste ist der Titel |

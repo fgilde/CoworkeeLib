@@ -27,7 +27,10 @@ public sealed class ODataSearchOptions<T>
 
     internal double Boost { get; private set; } = 1;
 
-    /// <summary>The text columns searched: exact and prefix first, then anywhere. The first one is the title unless <see cref="Title"/> says otherwise.</summary>
+    /// <summary>
+    /// The text columns searched: exact and prefix first, then anywhere. The first one is the title unless <see cref="Title"/> says otherwise.
+    /// <c>$search</c> on the OData set looks in these fields only (unless the entity names its own with ISearchable).
+    /// </summary>
     public ODataSearchOptions<T> Fields(params Expression<Func<T, string?>>[] fields)
     {
         SearchFields.AddRange(fields);
@@ -82,6 +85,8 @@ public static class ODataGlobalSearchServiceCollectionExtensions
             throw new ArgumentException($"The global search of {typeof(T).Name} needs at least one field.", nameof(configure));
         }
 
+        // $search on the set looks in the same fields
+        services.Registry().SearchFields(typeof(T), [.. options.SearchFields]);
         return services.AddSingleton<IGlobalSearchProvider>(sp => new ODataSearchProvider<T>(sp.GetRequiredService<ODataEntityRegistry>(), options));
     }
 }

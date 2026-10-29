@@ -13,8 +13,13 @@ namespace Coworkee.OData.Tests;
 /// The checks of an OData query read the options as OData parses them, and every way a query reaches other rows goes through the navigation
 /// scope: spelled keys, aliases, [AutoExpand], facets and their labels, computed properties behind navigations, two filtered levels, search titles.
 /// </summary>
-public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
+public class QueryCheckTests(ODataApp app) : IAsyncLifetime
 {
+    /// <summary>The OData route the requests go to; <see cref="CamelCaseRoute"/> runs the suite again on a route that renames every property.</summary>
+    protected virtual string Route => CoworkeeODataModule.RoutePrefix;
+
+    private HttpClient As(Guid userId, Guid tenantId) => app.As(userId, tenantId, Route);
+
     private SetupResultDto _setup = null!;
     private Guid _plain;
     private Guid _secret;
@@ -49,7 +54,7 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private HttpClient Admin => app.As(_setup.AdminUserId, _setup.TenantId);
+    private HttpClient Admin => As(_setup.AdminUserId, _setup.TenantId);
 
     private async Task<JsonElement> GetAsync(string url)
     {
@@ -65,7 +70,7 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
     [Fact]
     public async Task Option_keys_with_spaces_and_aliases_do_not_pass_the_checks()
     {
-        var viewer = app.As(await UserWithAsync(ODataApp.ViewGadgets), _setup.TenantId);
+        var viewer = As(await UserWithAsync(ODataApp.ViewGadgets), _setup.TenantId);
         foreach (var query in new[] { "+$expand=Bins", "%20$expand=Bins", "$expand=Bins+" })
         {
             (await viewer.GetAsync($"/odata/Shelves?{query}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden, query);
@@ -73,7 +78,7 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
 
         (await GetAsync("/odata/Shelves?+$filter=Bins/any(b: b/Name eq 'Secret')&$count=true")).GetProperty("@odata.count").GetInt32().ShouldBe(0);
 
-        var binViewer = app.As(await UserWithAsync(ODataApp.ViewGadgets, ODataApp.ViewBins), _setup.TenantId);
+        var binViewer = As(await UserWithAsync(ODataApp.ViewGadgets, ODataApp.ViewBins), _setup.TenantId);
         foreach (var query in new[] { "+$filter=Size gt 5", "+$orderby=Size", "+$select=Volume", "%20$select=Name,Volume" })
         {
             (await binViewer.GetAsync($"/odata/Bins?{query}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden, query);
@@ -94,7 +99,7 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
     public async Task The_checks_read_the_bound_query_whatever_its_spelling()
     {
         var viewer = await UserWithAsync(ODataApp.ViewGadgets, ODataApp.ViewBins);
-        var binViewer = app.As(viewer, _setup.TenantId);
+        var binViewer = As(viewer, _setup.TenantId);
         foreach (var query in new[]
                  {
                      "$compute=Featured/ Size as S&$select=Name,S", "$filter=Featured/ Volume gt 0", "$orderby=Featured/ Size", "$filter=Bins/any(b: b/ Size gt 1)",
@@ -161,7 +166,7 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
         }
 
         // the foreign key is protected: the facet reads the target's key, which the user may read there, as $expand=Main($select=Id) shows it
-        var viewer = app.As(await UserWithAsync(ODataApp.ViewGadgets, ODataApp.ViewBins), _setup.TenantId);
+        var viewer = As(await UserWithAsync(ODataApp.ViewGadgets, ODataApp.ViewBins), _setup.TenantId);
         (await FacetsAsync(viewer, "$top=0", "Hooks")).Facets.Single(f => f.Field == "Main").Options.Single().Value.GetString().ShouldBe(_plain.ToString(), StringCompareShould.IgnoreCase);
 
         // a collection cannot be grouped by: refused when the model is built
@@ -198,7 +203,7 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
         trays[1].GetProperty("Bin").ValueKind.ShouldBe(JsonValueKind.Null);
 
         // a set the user may not read is not expanded behind his back, and the list stays readable
-        var viewer = app.As(await UserWithAsync(ODataApp.ViewGadgets), _setup.TenantId);
+        var viewer = As(await UserWithAsync(ODataApp.ViewGadgets), _setup.TenantId);
         var page = await viewer.GetFromJsonAsync<JsonElement>("/odata/Trays", Ct);
         page.GetProperty("value").EnumerateArray().ShouldAllBe(t => t.GetProperty("Bin").ValueKind == JsonValueKind.Null);
     }
@@ -219,7 +224,7 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
         featured.Select(o => o.Label.ToLowerInvariant()).ShouldBe(["plain", "visible", _secret.ToString()], ignoreOrder: true);
 
         // bins are not readable at all: no label names one
-        var viewer = app.As(await UserWithAsync(ODataApp.ViewGadgets), _setup.TenantId);
+        var viewer = As(await UserWithAsync(ODataApp.ViewGadgets), _setup.TenantId);
         var hidden = (await FacetsAsync(viewer, "$top=0")).Facets.Single(f => f.Field == "FeaturedId").Options;
         hidden.Count.ShouldBe(3);
         hidden.Select(o => Guid.TryParse(o.Label, out var id)).ShouldAllBe(parsed => parsed);
@@ -248,7 +253,7 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
         request.Headers.Add("Prefer", "odata.include-annotations=\"cn.facets\"");
         request.Headers.Add(FacetContextDto.Header, new FacetContextDto(null, new Dictionary<string, string> { ["featured"] = "Featured/Name eq 'Plain'" }).Encode());
         using var response = await Admin.SendAsync(request, Ct);
-        var facets = (await response.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("@cn.facets").Deserialize<List<FacetGroupDto>>(JsonSerializerOptions.Web)!;
+        var facets = Facets((await response.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("@cn.facets"));
         facets.Single(f => f.Field == "Featured").Options.Select(o => (o.Label, o.Count)).ShouldBe([("Plain", 1), ("Visible", 1)], ignoreOrder: true);
         facets.Single(f => f.Field == "Name").Options.Where(o => o.Count > 0).Select(o => o.Label).ShouldBe(["Open"]);
 
@@ -266,7 +271,7 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
         hooks.Single(f => f.Field == "Front").Options.Select(o => o.Label.ToLowerInvariant()).ShouldBe(["plain", _secret.ToString()], ignoreOrder: true);
 
         // a target the user may not read and one whose filter is no Where leave the group out, also through an owned type
-        var viewer = app.As(await UserWithAsync(ODataApp.ViewGadgets), _setup.TenantId);
+        var viewer = As(await UserWithAsync(ODataApp.ViewGadgets), _setup.TenantId);
         (await FacetsAsync(viewer, "$top=0")).Facets.ShouldNotContain(f => f.Field == "Featured");
         (await FacetsAsync(viewer, "$top=0", "Hooks")).Facets.ShouldNotContain(f => f.Field == "Back");
         // a value type read through that target is null in a filter too (EF folded the constant test and failed)
@@ -286,7 +291,7 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
     [Fact]
     public async Task Facets_need_every_member_their_value_and_label_read()
     {
-        var viewer = app.As(await UserWithAsync(ODataApp.ViewGadgets, ODataApp.ViewBins), _setup.TenantId);
+        var viewer = As(await UserWithAsync(ODataApp.ViewGadgets, ODataApp.ViewBins), _setup.TenantId);
 
         // the label reads Bin/Size, which needs SeeCategories
         (await FacetsAsync(Admin, "$top=0", "Trays")).Facets.ShouldContain(f => f.Field == "BinId");
@@ -328,7 +333,7 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
     [Fact]
     public async Task Computed_properties_behind_a_navigation_need_their_permission()
     {
-        var viewer = app.As(await UserWithAsync(ODataApp.ViewGadgets, ODataApp.ViewBins), _setup.TenantId);
+        var viewer = As(await UserWithAsync(ODataApp.ViewGadgets, ODataApp.ViewBins), _setup.TenantId);
         foreach (var query in new[] { "$expand=Bins($select=Volume)", "$expand=Featured($select=Name,Volume)", "$filter=Featured/Volume gt 0", "$filter=Bins/any(b: b/Volume gt 0)", "$orderby=Featured/Volume" })
         {
             (await viewer.GetAsync($"/odata/Shelves?{query}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden, query);
@@ -428,8 +433,12 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
         var page = JsonDocument.Parse(body).RootElement;
         return ([.. page.GetProperty("value").EnumerateArray().Select(r => r.GetProperty("Name").GetString()!)],
-            page.GetProperty("@cn.facets").Deserialize<List<FacetGroupDto>>(new JsonSerializerOptions(JsonSerializerDefaults.Web))!);
+            Facets(page.GetProperty("@cn.facets")));
     }
+
+    // facets name fields as the route names them; read in CLR case like the rows
+    private static List<FacetGroupDto> Facets(JsonElement facets) =>
+        [.. facets.Deserialize<List<FacetGroupDto>>(JsonSerializerOptions.Web)!.Select(f => f with { Field = char.ToUpperInvariant(f.Field[0]) + f.Field[1..] })];
 
     private async Task<Guid> UserWithAsync(params string[] permissions)
     {

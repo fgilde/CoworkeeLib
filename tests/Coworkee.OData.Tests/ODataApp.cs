@@ -112,6 +112,66 @@ public sealed class ODataApp : DatabaseFixture
 
     public HttpClient As(Guid userId, Guid tenantId) => App.GetTestClient().AsUser(userId, tenantId);
 
+    /// <summary>
+    /// The user's client on another OData route: <c>/odata/</c> in a request goes to <paramref name="route"/>, and the route's lower camel case names come
+    /// back with an upper case first letter, so one test reads both routes alike.
+    /// </summary>
+    public HttpClient As(Guid userId, Guid tenantId, string route) => route == CoworkeeODataModule.RoutePrefix
+        ? As(userId, tenantId)
+        : new HttpClient(new OnRoute(route) { InnerHandler = App.GetTestServer().CreateHandler() }) { BaseAddress = App.GetTestClient().BaseAddress }.AsUser(userId, tenantId);
+
+    private sealed class OnRoute(string route) : DelegatingHandler
+    {
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var uri = request.RequestUri!;
+            if (!uri.AbsolutePath.StartsWith("/odata/", StringComparison.Ordinal))
+            {
+                return await base.SendAsync(request, cancellationToken);
+            }
+
+            request.RequestUri = new UriBuilder(uri) { Path = $"/{route}/{uri.AbsolutePath["/odata/".Length..]}" }.Uri;
+            var response = await base.SendAsync(request, cancellationToken);
+            if (response.Content.Headers.ContentType?.MediaType != "application/json")
+            {
+                return response;
+            }
+
+            var body = System.Text.Json.Nodes.JsonNode.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+            response.Content = new StringContent(Upper(body, top: true)?.ToJsonString() ?? "null", System.Text.Encoding.UTF8, "application/json");
+            return response;
+        }
+
+        // the names of rows; annotations (@odata.count, @cn.facets) and the list's "value" stay
+        private static System.Text.Json.Nodes.JsonNode? Upper(System.Text.Json.Nodes.JsonNode? node, bool top = false)
+        {
+            switch (node)
+            {
+                case System.Text.Json.Nodes.JsonObject row:
+                    var copy = new System.Text.Json.Nodes.JsonObject();
+                    foreach (var (key, value) in row.ToList())
+                    {
+                        row.Remove(key);
+                        var name = key.StartsWith('@') || (top && key == "value") ? key : char.ToUpperInvariant(key[0]) + key[1..];
+                        copy[name] = key.StartsWith('@') ? value : Upper(value);
+                    }
+
+                    return copy;
+                case System.Text.Json.Nodes.JsonArray items:
+                    var list = new System.Text.Json.Nodes.JsonArray();
+                    foreach (var item in items.ToList())
+                    {
+                        items.Remove(item);
+                        list.Add(Upper(item));
+                    }
+
+                    return list;
+                default:
+                    return node;
+            }
+        }
+    }
+
     public async Task<T> InDbAsync<T>(Guid? tenantId, Func<GadgetDbContext, Task<T>> action)
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, tenantId));
@@ -163,6 +223,13 @@ internal sealed class GadgetModelContributor : IModelContributor
         modelBuilder.Entity<Bag>();
         modelBuilder.Entity<Sticker>(sticker => sticker.ToTable("Stickers"));
         modelBuilder.Entity<Country>(country => country.ToTable("Countries").HasKey(c => c.IsoCode));
+        modelBuilder.Entity<Locket>(locket =>
+        {
+            locket.ToTable("Lockets");
+            locket.Property(l => l.Note).HasField("_note");
+            locket.Property(l => l.Code).HasField("_code");
+        });
+        modelBuilder.Entity<Ledger>(ledger => ledger.ToTable("Ledgers"));
         modelBuilder.Entity<Rank>(rank =>
         {
             rank.ToTable("Ranks").HasKey(r => r.Number);
@@ -236,7 +303,23 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddScoped<IODataEntityFilter<Parcel>, HideSecretParcels>();
         context.Services.AddSingleton<Coworkee.OData.Computed.IODataComputedPropertySource, ParcelLabel>();
         context.Services.AddGlobalSearch<Parcel>(s => s.Fields(p => p.Name).Page("/parcels"));
+        context.Services.AddODataEntity<Consignment>("Consignments", ODataApp.ViewGadgets, o => o.Hide(c => c.Memo));
+        context.Services.AddODataEntity<Locket>("Lockets", ODataApp.ViewGadgets, o => o.Hide(l => l.Note).HideUnless(l => l.Code, ODataApp.SeeCategories));
+        context.Services.AddSingleton<Coworkee.OData.Computed.IODataComputedPropertySource, LocketPeek>();
+        context.Services.AddODataEntity<Ledger>("Ledgers", ODataApp.ViewGadgets, o => o.Hide(l => l.Summary));
         context.Services.Configure<ClientEntityOptions>(o => o.For<Parcel>(s => s.ChangedAt = [nameof(Parcel.DateCreatedUtc), nameof(Parcel.DateUpdatedUtc)]));
+
+        // the suites run on /odata and again on rt/odata, which renames every property; alias/odata renames protected and hidden-adjacent members
+        context.Services.AddCoworkeeODataRoute("rt/odata", p => p.CamelCase()
+            .Alias<Parcel>(x => x.DateCreatedUtc, "creationTime")
+            .Alias<Parcel>(x => x.DateUpdatedUtc, "lastModificationTime"));
+        context.Services.AddCoworkeeODataRoute("alias/odata", p => p
+            .Alias<Gadget>(g => g.Category, "Kind")
+            .Alias<Bin>(b => b.Size, "Capacity")
+            .Alias<Shelf>(s => s.Featured, "Highlight")
+            .Alias<Coworkee.Domain.IAuditable>(e => e.CreatedBy, "Author")
+            .FacetsOnWildcardPrefer(false));
+        context.Services.AddCoworkeeODataRoute("hidden/odata", p => p.Alias<Gadget>(g => g.Name, "SerialCode"));
     }
 }
 
