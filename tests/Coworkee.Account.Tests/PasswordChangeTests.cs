@@ -44,6 +44,41 @@ public sealed class PasswordChangeTests(AccountApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_locked_account_is_refused_like_a_wrong_password_without_counting()
+    {
+        var eve = await CreateAsync();
+        await app.InScopeAsync(null, _setup.TenantId, async sp =>
+        {
+            var db = sp.GetRequiredService<Coworkee.Infrastructure.Persistence.CoworkeeDbContext>();
+            var user = await db.Set<User>().SingleAsync(u => u.Id == eve, Ct);
+            user.LockoutEnabled = true;
+            user.LockoutEnd = DateTimeOffset.UtcNow.AddHours(1);
+            user.AccessFailedCount = 2;
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        var locked = await As(eve).PutAsJsonAsync(Path, new ChangePasswordRequest(Password, "N3w-passw0rd!"), Ct);
+
+        locked.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await Errors(locked))["CurrentPassword"].ShouldBe(["The current password is not correct."]);
+        (await UserAsync(eve)).AccessFailedCount.ShouldBe(2);
+        (await ChecksAsync(eve, Password)).ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task A_service_client_gets_a_clean_refusal()
+    {
+        var client = await app.App.GetTestClient().SendAsync(new HttpRequestMessage(HttpMethod.Put, Path)
+        {
+            Content = JsonContent.Create(new ChangePasswordRequest(Password, "N3w-passw0rd!")),
+            Headers = { Authorization = new AuthenticationHeaderValue(TestAuthHandler.SchemeName, $"partner;{_setup.TenantId};;client_id=partner") },
+        }, Ct);
+
+        client.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await client.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("code").GetString().ShouldBe("account.own_sign_in_required");
+    }
+
+    [Fact]
     public async Task The_password_rules_and_the_history_apply()
     {
         var eve = await CreateAsync();

@@ -18,11 +18,12 @@ internal sealed class ChangeMyPasswordHandler(
 
     private static readonly Error NoPassword = Error.Conflict("account.no_password", "The account signs in without a password; choose one through the password reset.");
 
-    private static readonly Error OwnSignIn = Error.Forbidden("account.own_sign_in_required", "Change the password with your own sign-in, not with an API key.");
+    private static readonly Error OwnSignIn = Error.Forbidden("account.own_sign_in_required", "Change the password with your own sign-in, not with an API key or a service client.");
 
     public async Task<Result> HandleAsync(ChangeMyPassword command, CancellationToken cancellationToken)
     {
-        if (currentUser.ApiKeyId is not null)
+        // service clients (client credentials) have no user; API keys must not take over the user's credentials
+        if (currentUser.ApiKeyId is not null || currentUser.UserId is null)
         {
             return OwnSignIn;
         }
@@ -38,7 +39,13 @@ internal sealed class ChangeMyPasswordHandler(
         }
 
         await policy.ApplyLockoutAsync(users, cancellationToken);
-        if (await users.IsLockedOutAsync(user) || !await users.CheckPasswordAsync(user, command.CurrentPassword))
+        // a locked account answers like a wrong password, without counting, so the answer does not tell that it is locked
+        if (await users.IsLockedOutAsync(user))
+        {
+            return WrongPassword;
+        }
+
+        if (!await users.CheckPasswordAsync(user, command.CurrentPassword))
         {
             // a failed command is not saved by the pipeline, the count of failed attempts has to be
             await users.AccessFailedAsync(user);
