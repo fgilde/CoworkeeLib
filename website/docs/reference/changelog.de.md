@@ -15,6 +15,7 @@
 
 ### Geändert
 
+- Der KI-Tool-Katalog nimmt Requests mit mehreren `[RequiresPermission]`-Attributen (das Tool braucht alle); vorher brach ein solcher Request Assistent und MCP mit einer `AmbiguousMatchException`.
 - `SessionRevokedPayload` hat `KeptSessionId`: Nach einer Passwortänderung nennt es die Sitzung, die weiterläuft, `SessionGuard` dieser Sitzung ignoriert die Nachricht; Single-Page-Apps ignorieren ein `SessionRevoked` mit der `sid` ihres eigenen Tokens.
 - Der BFF entfernt `Access-Control-*`-Header aus seinen Antworten, CORS-Header, die die API für Single-Page-Apps setzt, gelten also nie für die über den Web-Host weitergeleitete Cookie-Sitzung.
 - PKCE nimmt nur noch `S256`-Challenges: Der Auth-Server nahm vorher auch `plain` (und eine Challenge ohne Methode); Clients, die `plain` schicken, bekommen `invalid_request`.

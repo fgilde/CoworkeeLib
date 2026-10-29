@@ -37,7 +37,7 @@ public sealed partial class AiToolCatalog
         foreach (var type in assembly.GetExportedTypes().Where(t => t is { IsClass: true, IsAbstract: false, IsGenericTypeDefinition: false }))
         {
             var marker = type.GetCustomAttribute<AiToolAttribute>();
-            if (marker?.Exclude == true || (marker is null && type.GetCustomAttribute<RequiresPermissionAttribute>() is null))
+            if (marker?.Exclude == true || (marker is null && !type.IsDefined(typeof(RequiresPermissionAttribute))))
             {
                 continue;
             }
