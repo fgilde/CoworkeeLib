@@ -14,6 +14,7 @@ namespace Coworkee.Client.Blazor.Components;
 public partial class SessionGuard : IAsyncDisposable
 {
     private IAsyncDisposable? _subscription;
+    private IAsyncDisposable? _session;
     private bool _ended;
 
     [Inject] private RealtimeClient Realtime { get; set; } = null!;
@@ -33,21 +34,20 @@ public partial class SessionGuard : IAsyncDisposable
     protected override async Task OnInitializedAsync()
     {
         var user = AuthenticationState is null ? null : (await AuthenticationState).User;
-        var impersonator = user?.FindFirst(ImpersonationClaims.Impersonator)?.Value;
+        var sid = user?.FindFirst("sid")?.Value;
         if (ClientUser.From(user).TryGetUserId(out var userId))
         {
-            _subscription = await Realtime.SubscribeAsync(RealtimeTopics.User(userId), envelope => envelope.Type switch
-            {
-                RealtimeEventTypes.SessionRevoked => InvokeAsync(() => EndAsync(envelope)),
-                RealtimeEventTypes.ImpersonationEnded when Ended(envelope, impersonator) => InvokeAsync(SignInAgain),
-                _ => Task.CompletedTask,
-            });
+            _subscription = await Realtime.SubscribeAsync(RealtimeTopics.User(userId), envelope =>
+                envelope.Type == RealtimeEventTypes.SessionRevoked ? InvokeAsync(() => EndAsync(envelope)) : Task.CompletedTask);
+        }
+
+        // the impersonation of this session ended elsewhere (another tab, another app, its expiry): the sign-in goes back to the auth server, which knows who is signed in now
+        if (sid is { Length: > 0 } && user!.HasClaim(c => c.Type == ImpersonationClaims.Impersonator))
+        {
+            _session = await Realtime.SubscribeAsync(RealtimeTopics.Session(sid),
+                envelope => envelope.Type == RealtimeEventTypes.ImpersonationEnded ? InvokeAsync(SignInAgain) : Task.CompletedTask);
         }
     }
-
-    // the impersonation of this session ended elsewhere (another tab, another app, its expiry): the sign-in goes back to the auth server, which knows who is signed in now
-    private static bool Ended(RealtimeEnvelope envelope, string? impersonator) =>
-        impersonator is not null && envelope.Payload.Deserialize<ImpersonationEndedPayload>(JsonSerializerOptions.Web)?.ImpersonatorId.ToString() == impersonator;
 
     private void SignInAgain()
     {
@@ -90,6 +90,11 @@ public partial class SessionGuard : IAsyncDisposable
         if (_subscription is not null)
         {
             await _subscription.DisposeAsync();
+        }
+
+        if (_session is not null)
+        {
+            await _session.DisposeAsync();
         }
     }
 }

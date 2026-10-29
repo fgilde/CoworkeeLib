@@ -72,6 +72,9 @@ public sealed class SpaClientTests(AuthApp app) : IAsyncLifetime
 
         var access = new JwtSecurityTokenHandler().ReadJwtToken(tokens.GetProperty("access_token").GetString());
         access.Audiences.ShouldBe(["test_api"]);
+        // the client follows its own session's realtime topic with the session id of the ID token
+        var id = new JwtSecurityTokenHandler().ReadJwtToken(tokens.GetProperty("id_token").GetString());
+        id.Claims.Single(c => c.Type == "sid").Value.ShouldBe(access.Claims.Single(c => c.Type == "sid").Value);
         (await flow.RefreshAsync(tokens)).StatusCode.ShouldBe(HttpStatusCode.OK);
         using var api = new HttpRequestMessage(HttpMethod.Get, "/test/api");
         api.Headers.Authorization = new("Bearer", tokens.GetProperty("access_token").GetString());

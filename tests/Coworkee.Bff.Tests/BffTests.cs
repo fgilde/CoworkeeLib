@@ -41,7 +41,7 @@ public sealed class BffTests : IAsyncLifetime
         _app.MapGet("/test/page", () => "page").RequireAuthorization("perm:Identity.Roles.View");
         _app.MapGet("/test/signin", (HttpContext context) => context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(new ClaimsIdentity(
             [new Claim("sub", Guid.CreateVersion7().ToString()), new Claim("name", "Bob"), new Claim(ImpersonationClaims.Impersonator, Impersonator.ToString()),
-             new Claim(ImpersonationClaims.ImpersonatorName, "Ada Admin")], "test", "name", "role"))));
+             new Claim(ImpersonationClaims.ImpersonatorName, "Ada Admin"), new Claim("sid", "session-1")], "test", "name", "role"))));
         await _app.StartAsync();
         _client = _app.GetTestClient();
     }
@@ -140,7 +140,7 @@ public sealed class BffTests : IAsyncLifetime
 
         var user = await browser.GetFromJsonAsync<BffUserDto>("/bff/user", TestContext.Current.CancellationToken);
 
-        (user!.Name, user.ImpersonatorId, user.ImpersonatorName, user.ManageUrl).ShouldBe(("Bob", Impersonator, "Ada Admin", null));
+        (user!.Name, user.ImpersonatorId, user.ImpersonatorName, user.ManageUrl, user.SessionId).ShouldBe(("Bob", Impersonator, "Ada Admin", null, "session-1"));
     }
 
     [Fact]

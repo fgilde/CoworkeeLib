@@ -120,7 +120,7 @@ public sealed class ImpersonationTests(AuthApp app) : IAsyncLifetime
 
         stopped.StatusCode.ShouldBe(HttpStatusCode.Redirect);
         stopped.Headers.Location!.ToString().ShouldBe("/");
-        (await EndedAsync()).ShouldBe([new ImpersonationEnded(bob, _setup.AdminUserId)]);
+        (await EndedAsync()).ShouldBe([(bob, _setup.AdminUserId)]);
         var refreshed = await flow.RefreshAsync(tokens);
         refreshed.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await refreshed.Content.ReadAsStringAsync(Ct)).ShouldContain("invalid_grant");
@@ -203,7 +203,7 @@ public sealed class ImpersonationTests(AuthApp app) : IAsyncLifetime
         app.Clock.Shift = TimeSpan.FromHours(8.1);
 
         (await flow.RefreshAsync(renewed)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await EndedAsync()).ShouldBe([new ImpersonationEnded(_bob, await HelperIdAsync())]);
+        (await EndedAsync()).ShouldBe([(_bob, await HelperIdAsync())]);
     }
 
     [Fact]
@@ -214,7 +214,7 @@ public sealed class ImpersonationTests(AuthApp app) : IAsyncLifetime
         (await flow.Browser.GetAsync("/Account/Logout", Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         (await flow.RefreshAsync(tokens)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await EndedAsync()).ShouldBe([new ImpersonationEnded(_bob, await HelperIdAsync())]);
+        (await EndedAsync()).ShouldBe([(_bob, await HelperIdAsync())]);
     }
 
     [Fact]
@@ -372,10 +372,15 @@ public sealed class ImpersonationTests(AuthApp app) : IAsyncLifetime
         (await flow.AuthorizeAsync()).Headers.Location!.ToString().ShouldContain("/Account/Login");
     }
 
-    // what the auth server told the api through the outbox
-    private Task<List<ImpersonationEnded>> EndedAsync() => app.InDbAsync(async db =>
-        (await db.Set<Coworkee.Infrastructure.Outbox.OutboxMessage>().Where(m => m.Type == typeof(ImpersonationEnded).AssemblyQualifiedName).Select(m => m.Payload).ToListAsync(Ct))
-        .Select(p => JsonSerializer.Deserialize<ImpersonationEnded>(p)!).ToList());
+    // what the auth server told the api through the outbox; always for the impersonating sign-in's session, never the target
+    private async Task<List<(Guid, Guid)>> EndedAsync()
+    {
+        var ended = await app.InDbAsync(async db =>
+            (await db.Set<Coworkee.Infrastructure.Outbox.OutboxMessage>().Where(m => m.Type == typeof(ImpersonationEnded).AssemblyQualifiedName).Select(m => m.Payload).ToListAsync(Ct))
+            .Select(p => JsonSerializer.Deserialize<ImpersonationEnded>(p)!).ToList());
+        ended.ShouldAllBe(e => e.SessionId.Length > 0);
+        return [.. ended.Select(e => (e.TargetId, e.ImpersonatorId))];
+    }
 
     private Task<Guid> HelperIdAsync() => app.InDbAsync(db => db.Set<Coworkee.Identity.Domain.User>().Where(u => u.Email == "helper@acme.test").Select(u => u.Id).SingleAsync(Ct));
 

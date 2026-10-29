@@ -284,7 +284,8 @@ internal static class AuthEndpoints
 
         identity.SetScopes(scopes);
         identity.SetResources(await ResourcesAsync(services, scopes, options));
-        identity.SetDestinations(claim => claim.Type is SessionStamp.ClaimType or SessionStamp.SessionClaimType or ImpersonationClaims.ImpersonatorStamp or ImpersonationClaims.Started
+        // the session id goes into the ID token as well: clients follow their own session's realtime topic with it
+        identity.SetDestinations(claim => claim.Type is SessionStamp.ClaimType or ImpersonationClaims.ImpersonatorStamp or ImpersonationClaims.Started
             ? [Destinations.AccessToken]
             : [Destinations.AccessToken, Destinations.IdentityToken]);
         return new ClaimsPrincipal(identity);

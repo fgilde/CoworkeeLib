@@ -136,10 +136,10 @@ public sealed class ImpersonationRules(CoworkeeDbContext db, IPermissionChecker 
 public sealed record ImpersonationTicket(Guid ImpersonatorId, Guid TargetId, Guid? TenantId);
 
 /// <summary>
-/// The auth server ended "Log in as" (stop, expiry, revocation); it writes the event to the outbox, the host that processes the outbox (the api)
-/// puts <see cref="RealtimeEventTypes.ImpersonationEnded"/> on the target's user topic.
+/// The auth server ended "Log in as" (stop, expiry, revocation) of the sign-in <paramref name="SessionId"/>; it writes the event to the outbox, the host that
+/// processes the outbox (the api) puts <see cref="RealtimeEventTypes.ImpersonationEnded"/> on that session's topic, so the target's own sessions learn nothing.
 /// </summary>
-public sealed record ImpersonationEnded(Guid TargetId, Guid ImpersonatorId) : IDomainEvent
+public sealed record ImpersonationEnded(Guid TargetId, Guid ImpersonatorId, string SessionId) : IDomainEvent
 {
     public OutboxMessage ToOutbox(DateTimeOffset now) => new()
     {
@@ -154,7 +154,7 @@ internal sealed class ImpersonationEndedHandler(IServiceProvider services) : IDo
 {
     // hosts without the realtime module have nobody to tell
     public Task HandleAsync(ImpersonationEnded domainEvent, CancellationToken cancellationToken) =>
-        services.GetService<IRealtimePublisher>()?.PublishAsync(null, RealtimeTopics.User(domainEvent.TargetId), RealtimeEventTypes.ImpersonationEnded,
+        services.GetService<IRealtimePublisher>()?.PublishAsync(null, RealtimeTopics.Session(domainEvent.SessionId), RealtimeEventTypes.ImpersonationEnded,
             new ImpersonationEndedPayload(domainEvent.TargetId, domainEvent.ImpersonatorId), cancellationToken) ?? Task.CompletedTask;
 }
 

@@ -147,11 +147,11 @@ internal static class AuthImpersonation
 
     /// <summary>
     /// Revokes the authorizations and tokens the sign-in <paramref name="sid"/> got while impersonating <paramref name="userId"/> and announces the end
-    /// (<see cref="ImpersonationEnded"/> through the outbox) to the clients signed in as him; returns how many authorizations it revoked.
+    /// (<see cref="ImpersonationEnded"/> through the outbox) to the clients of that sign-in; returns how many authorizations it revoked.
     /// </summary>
     public static async Task<int> RevokeAsync(IServiceProvider services, ClaimsPrincipal principal, string userId, string? sid, CancellationToken cancellationToken)
     {
-        await AnnounceEndAsync(services, principal, userId, cancellationToken);
+        await AnnounceEndAsync(services, principal, userId, sid, cancellationToken);
         var authorizations = services.GetRequiredService<IOpenIddictAuthorizationManager>();
         var tokens = services.GetRequiredService<IOpenIddictTokenManager>();
         var revoked = 0;
@@ -170,16 +170,17 @@ internal static class AuthImpersonation
     }
 
     // a scope of its own: the caller's unit of work may hold changes that are not meant to be saved here
-    private static async Task AnnounceEndAsync(IServiceProvider services, ClaimsPrincipal principal, string userId, CancellationToken cancellationToken)
+    private static async Task AnnounceEndAsync(IServiceProvider services, ClaimsPrincipal principal, string userId, string? sid, CancellationToken cancellationToken)
     {
-        if (!Guid.TryParse(principal.FindFirstValue(ImpersonationClaims.Impersonator), out var impersonator) || !Guid.TryParse(userId, out var target))
+        // without a session id there is no topic only the impersonating session follows
+        if (sid is not { Length: > 0 } || !Guid.TryParse(principal.FindFirstValue(ImpersonationClaims.Impersonator), out var impersonator) || !Guid.TryParse(userId, out var target))
         {
             return;
         }
 
         await using var scope = services.GetRequiredService<IServiceScopeFactory>().CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<CoworkeeDbContext>();
-        db.Add(new ImpersonationEnded(target, impersonator).ToOutbox(services.GetRequiredService<TimeProvider>().GetUtcNow()));
+        db.Add(new ImpersonationEnded(target, impersonator, sid).ToOutbox(services.GetRequiredService<TimeProvider>().GetUtcNow()));
         await db.SaveChangesAsync(cancellationToken);
     }
 

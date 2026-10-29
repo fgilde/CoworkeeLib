@@ -101,7 +101,7 @@ public sealed class RealtimeConnections(IHubContext<RealtimeHub> hub, IServiceSc
             var authorizers = scope.ServiceProvider.GetServices<IRealtimeTopicAuthorizer>().ToList();
             foreach (var topic in followed.Keys)
             {
-                if (!await RealtimeHub.IsAllowedAsync(authorizers, topic, cancellationToken))
+                if (!await RealtimeHub.IsAllowedAsync(authorizers, context.User, topic, cancellationToken))
                 {
                     followed.TryRemove(topic, out _);
                     await hub.Groups.RemoveFromGroupAsync(connectionId, RealtimeGroups.For(tenant, topic), cancellationToken);

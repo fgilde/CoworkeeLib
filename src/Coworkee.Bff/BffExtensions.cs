@@ -262,7 +262,8 @@ public static class BffExtensions
                 options.WebAppUrl is { Length: > 0 } web ? web.TrimEnd('/') : null,
                 launcher,
                 Guid.TryParse(user.FindFirstValue(ImpersonationClaims.Impersonator), out var impersonator) ? impersonator : null,
-                user.FindFirstValue(ImpersonationClaims.ImpersonatorName))
+                user.FindFirstValue(ImpersonationClaims.ImpersonatorName),
+                user.FindFirstValue("sid"))
             : BffUserDto.Anonymous with { Launcher = launcher });
 
         // the assistant may think and call tools for minutes before the first byte of its answer
