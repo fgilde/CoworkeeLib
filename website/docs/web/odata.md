@@ -49,7 +49,7 @@ services.AddCoworkeeODataRoute("rt/odata", route => route
 
 `/rt/odata/Shipments?$filter=creationTime gt 2026-01-01T00:00:00Z&$orderby=creationTime&$select=name,creationTime&$expand=customer` works and answers with these names; the C# name of an aliased property is unknown on that route. The route has its own model built from the same registrations and runs exactly the steps of `/odata`: the set's permission, row filters, `Hide` and `HideUnless`, computed properties and their permissions, the navigation scope, the query checks, `$search` and facets. The rules follow the C# member whatever it is called, so an aliased `HideUnless` property is refused and left out like under its own name. Facets on the route name their field, value path and option filters in the route's names, so their filters work as `$filter` there; the facet context header is read in them too. `ODataRoutes.Find("rt/odata").AliasOf(type, "DateCreatedUtc")` gives the alias for own JSON that should match the route. Two members of one type that end up with the same name (case does not count) fail at startup.
 
-`/odata` stays as it is: the Blazor client, exports, reports, `query_data` and client entities use it.
+`/odata` stays as it is: the Blazor client, exports, reports, `query_data` and client entities use it. Exports (`/api/v1/data/{set}/export`), `query_data`, reports and the global search take C# names only, whatever route the client reads: an alias or a lower camel case name that differs from the C# name answers `400` there (an unknown property), so a client of a renaming route translates names back before it calls them.
 
 ### Queries in code
 
@@ -61,7 +61,7 @@ if (!page.IsSuccess) return page.Error.ToHttpResult();
 var (rows, shaped, count, facets) = page.Value;
 ```
 
-`Rows` are the entities when the query does not shape them; what the route would not write (hidden or protected properties, members outside the model) is left at its default. With `$select`, `$expand`, `$apply` or an `[AutoExpand]` navigation the rows are in `Shaped` instead: dictionaries by the route's names, expanded navigations nested, members the user may not read left out. `Count` is set with `$count=true`, `Facets` when asked for, in the route's names. A query the route refuses comes back as a `Forbidden` or `Validation` error, a user who is not signed in as `Unauthorized`.
+`Rows` are the entities when the query does not shape them; what the route would not write (hidden or protected properties, members outside the model) is cleared to its default, through the setter, the field EF reads the member from, or the field of an auto-property. With `$select`, `$expand`, `$apply` or an `[AutoExpand]` navigation the rows are in `Shaped` instead: dictionaries by the route's names, expanded navigations nested, members the user may not read left out. A hidden or protected member, or one EF maps, that can be cleared none of these ways (a getter over a field EF does not know) puts the whole page into `Shaped` too: no entity is handed out with it. `Count` is set with `$count=true`, `Facets` when asked for, in the route's names; a page size of the model (`[Page(PageSize = 50)]`) cuts the rows as on the route. A query the route refuses comes back as a `Forbidden` or `Validation` error, a user who is not signed in as `Unauthorized`; a query the database cannot run is logged and comes back as a `Validation` error without its message, which could quote row filters.
 
 ### The model from EF
 
@@ -70,7 +70,7 @@ By convention the OData model takes every public property with a public setter a
 - every entity type the sets reach through EF navigations is keyed by its EF primary key, so a `PackLineId` column next to an inherited `Id` is a plain property and `$expand=PackLines` works (by convention both are key candidates, the type gets none and becomes a complex type);
 - properties EF maps without a public setter (`public int State { get; private set; }`, a computed column) are in the model and can be filtered, sorted and selected.
 
-It is off by default because it adds properties that were not in the model before: `Hide` or `HideUnless` what users must not see before you turn it on. Properties a set hides stay out.
+Such properties join only the types of registered sets, where `Hide` and `HideUnless` reach them; a type reached only through navigations keeps its conventional members (and gets its EF key). The app logs a warning at startup for every property it adds. It is off by default because it adds properties that were not in the model before: `Hide` or `HideUnless` what users must not see before you turn it on. Properties a set hides stay out.
 
 ## Facets
 
