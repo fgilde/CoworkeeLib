@@ -5,14 +5,15 @@ namespace Aspire.Hosting;
 
 public sealed partial class CoworkeeApp
 {
-    private int _corsOrigins;
+    private readonly List<ReferenceExpression> _spaOrigins = [];
 
     /// <summary>
     /// A single-page app (a JavaScript resource or a container) that signs in at the auth server itself and calls the apis with its access token, without a BFF:
     /// a public client <paramref name="clientId"/> with PKCE whose redirect and post-logout address is the address of <paramref name="endpointName"/> (exactly,
     /// plus <paramref name="redirectPath"/>), the scope of the app's api plus <paramref name="scopes"/>, each of <paramref name="apiScopeAliases"/> as another
-    /// name of the api's audience, and the origin allowed in the CORS policy of the auth server and of every api added so far (<c>Coworkee:Cors:Origins</c>).
-    /// <paramref name="allowImpersonation"/>: "Log in as" works there. In a deployment the address is the parameter <c>{app}-{resource}-url</c>. Add it after the api.
+    /// name of the api's audience, and the origin allowed in the CORS policy of the auth server and of every api
+    /// (<c>Coworkee:Cors:Origins</c>, also of apis added later). <paramref name="allowImpersonation"/>: "Log in as" works there. In a deployment the address is
+    /// the parameter <c>{app}-{resource}-url</c>. Add it after the api.
     /// </summary>
     public IResourceBuilder<T> AddSpaClient<T>(
         string clientId,
@@ -48,12 +49,17 @@ public sealed partial class CoworkeeApp
             auth.WithSetting(s => s.Coworkee.Auth.ApiScopes[alias], ApiAudience);
         }
 
-        var origin = _corsOrigins++;
-        foreach (var service in _apis.Prepend(auth))
-        {
-            service.WithSetting(s => s.Coworkee.Cors.Origins[origin], url);
-        }
-
+        _spaOrigins.Add(url);
         return resource;
     }
+
+    // read when the app host starts or publishes, so apis added after AddSpaClient get the origins too
+    private void WithSpaOrigins(IResourceBuilder<ProjectResource> service) =>
+        service.WithEnvironment(context =>
+        {
+            for (var i = 0; i < _spaOrigins.Count; i++)
+            {
+                context.EnvironmentVariables[$"{SettingPath.Of(s => s.Coworkee.Cors.Origins)}__{i}"] = _spaOrigins[i];
+            }
+        });
 }

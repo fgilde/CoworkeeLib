@@ -84,6 +84,7 @@ public sealed partial class CoworkeeApp
     {
         var auth = Exposed(Service<TProject>(suffix));
         AuthServer = auth;
+        WithSpaOrigins(auth);
         auth.WithSetting(s => s.Coworkee.Jobs.RunServer, false)
             .WithSetting(s => s.Coworkee.Account.PublicAuthUrl, PublicUrl(auth))
             .WithSetting(s => s.Coworkee.Auth.DisplayName, Options.DisplayName ?? Name);
@@ -133,6 +134,7 @@ public sealed partial class CoworkeeApp
         }
 
         AnnounceSetup(api);
+        WithSpaOrigins(api);
 
         AddKeycloakSignInSettings(api);
         WithSignInDesign(api);

@@ -89,7 +89,7 @@ app.AddSpaClient("spa", spa, scopes: ["files"], apiScopeAliases: ["Shop"], allow
 | Scopes | der Scope der API `{name}_api`, die übergebenen `scopes` und die Aliase |
 | API-Scope-Aliase | jeder Alias ist ein weiterer Scope mit der Audience der API (`Coworkee:Auth:ApiScopes:Shop = shop_api`), für Apps, die einen Scope mit eigenem Namen anfordern |
 | Übernahme | `allowImpersonation: true` lässt [Anmelden als](../features/identity.md#als-anderer-benutzer-anmelden) die App erreichen |
-| CORS | der Origin kommt in `Coworkee:Cors:Origins` des Auth-Servers und jeder bis dahin hinzugefügten API (siehe [CORS](../security/clients.md#aufrufe-von-anderen-origins-cors)) |
+| CORS | der Origin kommt in `Coworkee:Cors:Origins` des Auth-Servers und jeder API, auch später hinzugefügter (siehe [CORS](../security/clients.md#aufrufe-von-anderen-origins-cors)) |
 
 In einem Deployment kommt die Adresse aus dem Parameter `{name}-{resource}-url` (z. B. `https://spa.example.com`), wie die öffentlichen Adressen der Dienste. Die App selbst braucht die Adressen von Auth-Server und API; gib sie ihr so mit, wie sie sie liest (`WithEnvironment`).
 

@@ -206,6 +206,24 @@ public sealed class CoworkeeAppTests : IDisposable
     }
 
     [Fact]
+    public async Task Apis_added_after_a_spa_client_allow_its_origin_too()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo");
+        app.AddAuthServer<FakeProjects.Auth>();
+        app.AddApi<FakeProjects.Api>();
+        app.AddSpaClient("one", builder.AddContainer("one", "node").WithHttpEndpoint(port: 4201, name: "http"));
+
+        var later = app.AddApi<FakeProjects.Api>("reports");
+        app.AddSpaClient("two", builder.AddContainer("two", "node").WithHttpEndpoint(port: 4202, name: "http"));
+
+        var settings = await Environment(later.Resource);
+        settings["Coworkee__Cors__Origins__0"].ShouldBe("{one.bindings.http.url}");
+        settings["Coworkee__Cors__Origins__1"].ShouldBe("{two.bindings.http.url}");
+        (await Environment(app.AuthServer!.Resource))["Coworkee__Cors__Origins__1"].ShouldBe("{two.bindings.http.url}");
+    }
+
+    [Fact]
     public void A_spa_client_needs_the_api()
     {
         var builder = DistributedApplication.CreateBuilder();

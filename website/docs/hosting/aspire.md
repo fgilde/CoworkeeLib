@@ -89,7 +89,7 @@ app.AddSpaClient("spa", spa, scopes: ["files"], apiScopeAliases: ["Shop"], allow
 | Scopes | the api's scope `{name}_api`, the `scopes` you pass and the aliases |
 | API scope aliases | each alias is a further scope with the api's audience (`Coworkee:Auth:ApiScopes:Shop = shop_api`), for apps that ask for a scope of their own name |
 | Impersonation | `allowImpersonation: true` lets [Log in as](../features/identity.md#log-in-as-another-user) reach the app |
-| CORS | the origin goes into `Coworkee:Cors:Origins` of the auth server and of every api added so far (see [CORS](../security/clients.md#cross-origin-calls-cors)) |
+| CORS | the origin goes into `Coworkee:Cors:Origins` of the auth server and of every api, also of apis added later (see [CORS](../security/clients.md#cross-origin-calls-cors)) |
 
 In a deployment the address comes from the parameter `{name}-{resource}-url` (e.g. `https://spa.example.com`), like the public addresses of the services. The app itself needs the addresses of the auth server and the api; pass them as you need (`WithEnvironment`).
 
