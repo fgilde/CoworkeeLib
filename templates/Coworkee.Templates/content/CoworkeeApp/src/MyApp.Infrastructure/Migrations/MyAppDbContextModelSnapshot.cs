@@ -2094,6 +2094,10 @@ namespace MyApp.Infrastructure.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
+                    b.PrimitiveCollection<List<Guid>>("GroupIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]");
+
                     b.Property<string>("Icon")
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
@@ -5310,6 +5314,10 @@ namespace MyApp.Infrastructure.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
+
+                    b.PrimitiveCollection<List<Guid>>("GroupIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]");
 
                     b.Property<string>("Icon")
                         .HasMaxLength(4000)

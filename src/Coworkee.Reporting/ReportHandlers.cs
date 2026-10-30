@@ -19,6 +19,7 @@ internal sealed class ReportHandlers(CoworkeeDbContext db, ReportAccess access, 
       IHandler<DuplicateReportCommand, Result<ReportDto>>,
       IHandler<SetReportFavoriteCommand, Result>,
       IHandler<GetReportRolesQuery, Result<IReadOnlyList<ReportRoleDto>>>,
+      IHandler<GetReportGroupsQuery, Result<IReadOnlyList<ReportGroupDto>>>,
       IHandler<GetReportSourcesQuery, Result<IReadOnlyList<ReportSourceDto>>>,
       IHandler<RunReportQuery, Result<ReportQueryResult>>
 {
@@ -27,6 +28,7 @@ internal sealed class ReportHandlers(CoworkeeDbContext db, ReportAccess access, 
     private static readonly Error NotFound = Error.NotFound("reports.not_found", "The report does not exist or is not shared with you.");
     private static readonly Error NotOwner = Error.Forbidden("reports.not_owner", "Only the owner changes a report; duplicate it to make your own.");
     private static readonly Error NoShare = Error.Forbidden("reports.no_share", "Sharing reports needs the permission Reports.Share.");
+    private static readonly Error ForeignGroup = Error.Forbidden("reports.foreign_group", "Share reports only with your groups and the groups below them.");
 
     public async Task<Result<IReadOnlyList<ReportSummaryDto>>> HandleAsync(GetReportsQuery query, CancellationToken cancellationToken)
     {
@@ -158,6 +160,12 @@ internal sealed class ReportHandlers(CoworkeeDbContext db, ReportAccess access, 
             .Select(r => new ReportRoleDto(r.Id, r.Name!))
             .ToListAsync(cancellationToken);
 
+    public async Task<Result<IReadOnlyList<ReportGroupDto>>> HandleAsync(GetReportGroupsQuery query, CancellationToken cancellationToken) =>
+        (await access.GroupNodesAsync(await access.ShareableGroupsAsync(cancellationToken), cancellationToken))
+            .Select(g => new ReportGroupDto(g.Id, g.ParentId, g.Code, g.Name))
+            .OrderBy(g => g.Code, StringComparer.Ordinal)
+            .ToList();
+
     public async Task<Result<IReadOnlyList<ReportSourceDto>>> HandleAsync(GetReportSourcesQuery query, CancellationToken cancellationToken) =>
         (await queries.SourcesAsync(cancellationToken))
             .Select(s => new ReportSourceDto(s.EntitySet, s.Label, [.. s.Fields.Select(f => f.ToDto())],
@@ -168,14 +176,22 @@ internal sealed class ReportHandlers(CoworkeeDbContext db, ReportAccess access, 
 
     public Task<Result<ReportQueryResult>> HandleAsync(RunReportQuery query, CancellationToken cancellationToken) => queries.RunAsync(query.Request, cancellationToken);
 
-    /// <summary>Sharing needs its permission, and every widget has to work for the author.</summary>
+    /// <summary>Sharing needs its permission and, with groups, groups of the author; every widget has to work for the author.</summary>
     private async Task<Error?> CheckAsync(SaveReportRequest request, Report? existing, CancellationToken cancellationToken)
     {
+        var groups = GroupsOf(request);
         var sharing = request.Visibility != ReportVisibility.Private
-            && (existing is null || existing.Visibility != request.Visibility || !existing.RoleIds.Order().SequenceEqual(request.RoleIds.Order()));
+            && (existing is null || existing.Visibility != request.Visibility || !existing.RoleIds.Order().SequenceEqual(request.RoleIds.Order())
+                || !existing.GroupIds.Order().SequenceEqual(groups.Order()));
         if (sharing && !await access.MayShareAsync(cancellationToken))
         {
             return NoShare;
+        }
+
+        // groups shared before stay, even when the author has left one of them
+        if (sharing && groups.Except(existing?.GroupIds ?? []).Except(await access.ShareableGroupsAsync(cancellationToken)).Any())
+        {
+            return ForeignGroup;
         }
 
         return (await check.WidgetsAsync(request.Definition, stopAtFirst: true, cancellationToken)).FirstOrDefault();
@@ -188,8 +204,12 @@ internal sealed class ReportHandlers(CoworkeeDbContext db, ReportAccess access, 
         report.Icon = request.Icon;
         report.Visibility = request.Visibility;
         report.RoleIds = request.Visibility == ReportVisibility.Roles ? [.. request.RoleIds.Distinct()] : [];
+        report.GroupIds = GroupsOf(request);
         report.Definition = Write(request.Definition);
     }
+
+    private static List<Guid> GroupsOf(SaveReportRequest request) =>
+        request.Visibility == ReportVisibility.Groups ? [.. (request.GroupIds ?? []).Distinct()] : [];
 
     private async Task<Report?> FindAsync(Guid id, CancellationToken cancellationToken) =>
         await (await access.VisibleAsync(cancellationToken)).FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
@@ -206,7 +226,7 @@ internal sealed class ReportHandlers(CoworkeeDbContext db, ReportAccess access, 
         var favorite = await Favorites([report.Id]).AnyAsync(cancellationToken);
         var owners = await OwnerNamesAsync([report], cancellationToken);
         return new ReportDto(report.Id, report.Name, report.Description, report.Icon, report.Visibility, report.RoleIds, owners.GetValueOrDefault(report.OwnerId),
-            access.Owns(report), favorite, Read(report), report.ModifiedAt ?? report.CreatedAt);
+            access.Owns(report), favorite, Read(report), report.ModifiedAt ?? report.CreatedAt, report.GroupIds);
     }
 
     private async Task<IReadOnlyDictionary<Guid, string>> OwnerNamesAsync(IReadOnlyCollection<Report> reports, CancellationToken cancellationToken) =>

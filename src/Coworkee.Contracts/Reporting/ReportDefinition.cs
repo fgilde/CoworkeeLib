@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Coworkee.Contracts.Data;
 
@@ -61,6 +62,9 @@ public sealed class ReportWidget
     public WidgetQuery? Query { get; set; }
 
     public WidgetOptions Options { get; set; } = new();
+
+    /// <summary>Data an app or another client keeps with the widget, e.g. its own settings of it; reports neither read nor change it.</summary>
+    public Dictionary<string, JsonElement>? AppData { get; set; }
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter<WidgetType>))]

@@ -53,7 +53,7 @@ Widget types: KPI with trend and target, charts (bar, line, area, pie, donut, sc
 
 Each group comes back from the server with an OData filter for exactly its rows. Click a bar or a pie slice and that filter narrows the other widgets on the same set; click *Open the data* and it lands on the page you registered with `DrillDown`, already filtered to the rows behind the number.
 
-A report is private, shared with roles, or shared with the organisation (`Reports.Share`). Others can duplicate it, only the owner changes it, and a saved change reaches everyone who has it open. Export goes to PNG, PDF via the print dialog, or CSV and Excel per widget.
+A report is private, shared with roles, with groups (their members and those of the groups above; a group selection narrows the list) or with the organisation (`Reports.Share`). Others can duplicate it, only the owner changes it, and a saved change reaches everyone who has it open. Export goes to PNG, PDF via the print dialog, or CSV and Excel per widget.
 
 ## The sales report of the demo, step by step
 

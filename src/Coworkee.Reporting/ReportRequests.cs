@@ -51,6 +51,10 @@ public sealed record SetOrganisationDashboardReportCommand(Guid? ReportId) : ICo
 [AiTool(Exclude = true)]
 public sealed record GetReportRolesQuery : IQuery<Result<IReadOnlyList<ReportRoleDto>>>;
 
+[RequiresPermission(ReportPermissions.Share)]
+[AiTool(Exclude = true)]
+public sealed record GetReportGroupsQuery : IQuery<Result<IReadOnlyList<ReportGroupDto>>>;
+
 [RequiresPermission(ReportPermissions.View)]
 [Description("Lists the data sets reports can show, with their fields, kinds and enum values.")]
 public sealed record GetReportSourcesQuery : IQuery<Result<IReadOnlyList<ReportSourceDto>>>;
@@ -94,6 +98,8 @@ internal sealed class SaveReportValidator : AbstractValidator<SaveReportRequest>
         RuleFor(r => r.Description).MaximumLength(ReportLimits.DescriptionLength);
         RuleFor(r => r.Icon).MaximumLength(ReportLimits.IconLength);
         RuleFor(r => r.RoleIds).NotEmpty().When(r => r.Visibility == ReportVisibility.Roles).WithMessage("Choose the roles to share with.");
+        RuleFor(r => r.GroupIds).NotEmpty().When(r => r.Visibility == ReportVisibility.Groups).WithMessage("Choose the groups to share with.");
+        RuleFor(r => r.GroupIds).Must(g => g is null || g.Count <= ReportLimits.Groups).WithMessage($"At most {ReportLimits.Groups} groups.");
         RuleFor(r => r.Definition).NotNull();
         RuleFor(r => r.Definition.RefreshSeconds).Must(s => s == 0 || s is >= 10 and <= 86_400).WithMessage("Refresh every 10 seconds to a day, or never.");
         RuleFor(r => r.Definition.Widgets).Must(w => w.Count <= ReportLimits.Widgets).WithMessage($"At most {ReportLimits.Widgets} widgets.");
@@ -107,6 +113,8 @@ internal sealed class SaveReportValidator : AbstractValidator<SaveReportRequest>
             widget.RuleFor(w => w.Y).InclusiveBetween(0, 1000);
             widget.RuleFor(w => w.H).InclusiveBetween(1, 40);
             widget.RuleFor(w => w.Options.Text).MaximumLength(ReportLimits.TextLength);
+            widget.RuleFor(w => w.AppData).Must(d => d is null || System.Text.Json.JsonSerializer.Serialize(d).Length <= ReportLimits.AppDataLength)
+                .WithMessage($"At most {ReportLimits.AppDataLength} characters of app data.");
             widget.RuleFor(w => w.Options.Url).Must(SafeUrl).WithMessage("Use an http or https address.");
             widget.RuleFor(w => w.Options.Metrics).Must(m => m.Count <= ReportViews.Max).WithMessage($"At most {ReportViews.Max} values to switch to.");
             widget.RuleFor(w => w.Options.Buckets).Must(b => b.Count <= ReportViews.Max).WithMessage($"At most {ReportViews.Max} groupings to switch to.");

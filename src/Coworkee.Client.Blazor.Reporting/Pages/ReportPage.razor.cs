@@ -65,7 +65,7 @@ public partial class ReportPage : IAsyncDisposable
         {
             var sources = Api.GetSourcesAsync();
             var draft = IsNew ? Drafts.Take() ?? new SaveReportRequest(L["New report"], null, null, ReportVisibility.Private, [], new ReportDefinition()) : null;
-            _report = draft is null ? await Api.GetReportAsync(Id) : new ReportDto(Id, draft.Name, draft.Description, draft.Icon, draft.Visibility, draft.RoleIds, null, true, false, new ReportDefinition(), null);
+            _report = draft is null ? await Api.GetReportAsync(Id) : new ReportDto(Id, draft.Name, draft.Description, draft.Icon, draft.Visibility, draft.RoleIds, null, true, false, new ReportDefinition(), null, draft.GroupIds);
             _definition = Clone(_report.Definition);
             _state = new ReportState(_definition, await sources);
             _editing = (Edit || IsNew) && _report.CanEdit;
@@ -120,7 +120,7 @@ public partial class ReportPage : IAsyncDisposable
         _saving = true;
         try
         {
-            var request = new SaveReportRequest(_report!.Name, _report.Description, _report.Icon, _report.Visibility, _report.RoleIds, _definition!);
+            var request = new SaveReportRequest(_report!.Name, _report.Description, _report.Icon, _report.Visibility, _report.RoleIds, _definition!, _report.GroupIds);
             if (IsNew)
             {
                 var created = await Api.CreateAsync(request);
@@ -155,12 +155,13 @@ public partial class ReportPage : IAsyncDisposable
             RefreshSeconds = _definition!.RefreshSeconds,
             Visibility = _report.Visibility,
             RoleIds = [.. _report.RoleIds],
+            GroupIds = [.. _report.GroupIds ?? []],
         });
         if (settings is not null)
         {
             Remember();
             _definition.RefreshSeconds = settings.RefreshSeconds;
-            _report = _report with { Name = settings.Name, Description = settings.Description, Icon = settings.Icon, Visibility = settings.Visibility, RoleIds = settings.RoleIds };
+            _report = _report with { Name = settings.Name, Description = settings.Description, Icon = settings.Icon, Visibility = settings.Visibility, RoleIds = settings.RoleIds, GroupIds = settings.GroupIds };
         }
     }
 

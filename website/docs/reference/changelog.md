@@ -2,6 +2,13 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- Reports can be shared with groups (`ReportVisibility.Groups`, `SaveReportRequest.GroupIds`, `ReportDto.GroupIds`): the members of those groups and of the groups above them see the report, through the user's active groups, so a group selection narrows the report list. The owner shares only with own groups and those below them (`GET /api/v1/reports/groups`, `Reports.Share`); the report settings offer the groups. **Action:** a migration for the new column `cw.Reports.GroupIds` (`coworkee migrations add <Name>`). A client that saves a report it read passes `GroupIds` along, or a report shared with groups is refused (no groups chosen). See [reporting](../modules/reporting.md#sharing-and-permissions).
+- `ReportWidget.AppData`: JSON an app or a second client keeps with a widget; reports neither read nor change it (at most 20,000 characters per widget).
+
 ## 0.0.1.48 (2026-10-30)
 
 ### Changed

@@ -20,6 +20,8 @@ public sealed class Report : AuditedEntity, IMultiTenant
 
     public List<Guid> RoleIds { get; set; } = [];
 
+    public List<Guid> GroupIds { get; set; } = [];
+
     /// <summary>The <see cref="ReportDefinition"/> as JSON.</summary>
     public required string Definition { get; set; }
 }

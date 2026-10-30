@@ -54,6 +54,81 @@ public sealed class SharingTests(ReportingApp app) : ReportingTestBase(app)
     }
 
     [Fact]
+    public async Task Group_reports_reach_the_members_of_the_group_and_of_the_groups_above_and_a_selection_narrows_them()
+    {
+        var parent = await GroupAsync("Parent");
+        var child = await GroupAsync("Child", parent);
+        var other = await GroupAsync("Other");
+        var erin = await CreateUserAsync("erin@acme.test", ReportPermissions.View);
+        var frank = await CreateUserAsync("frank@acme.test", ReportPermissions.View);
+        var gina = await CreateUserAsync("gina@acme.test", ReportPermissions.View);
+        await AddMembersAsync(parent, erin.Id, Setup.AdminUserId);
+        await AddMembersAsync(other, erin.Id);
+        await AddMembersAsync(child, frank.Id);
+
+        var report = await CreateAsync(Admin, Request("Child team") with { Visibility = ReportVisibility.Groups, GroupIds = [child] });
+
+        report.GroupIds.ShouldBe([child]);
+        (await ListAsync(App.As(erin.Id, Setup.TenantId))).Select(r => r.Name).ShouldBe(["Child team"]);
+        (await ListAsync(App.As(frank.Id, Setup.TenantId))).Select(r => r.Name).ShouldBe(["Child team"]);
+        (await ListAsync(App.As(gina.Id, Setup.TenantId))).ShouldBeEmpty();
+        (await App.As(gina.Id, Setup.TenantId).GetAsync($"/api/v1/reports/{report.Id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        (await App.As(erin.Id, Setup.TenantId).PutAsJsonAsync("/api/v1/identity/groups/mine/selection", new Contracts.Identity.IdListRequest([other]), Ct)).EnsureSuccessStatusCode();
+        (await ListAsync(App.As(erin.Id, Setup.TenantId))).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Reports_are_shared_only_with_groups_of_the_author_and_with_the_share_permission()
+    {
+        var parent = await GroupAsync("Parent");
+        var child = await GroupAsync("Child", parent);
+        var maker = await CreateUserAsync("maker@acme.test", ReportPermissions.Manage, ReportPermissions.Share, ReportingApp.ViewSales);
+        var plain = App.As((await CreateUserAsync("plain@acme.test", ReportPermissions.Manage, ReportingApp.ViewSales)).Id, Setup.TenantId);
+        await AddMembersAsync(child, maker.Id);
+        var asMaker = App.As(maker.Id, Setup.TenantId);
+
+        (await asMaker.GetFromJsonAsync<List<ReportGroupDto>>("/api/v1/reports/groups", Ct))!.Select(g => g.Id).ShouldBe([child]);
+        (await plain.GetAsync("/api/v1/reports/groups", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await asMaker.PostAsJsonAsync("/api/v1/reports", Request("Up") with { Visibility = ReportVisibility.Groups, GroupIds = [parent] }, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await asMaker.PostAsJsonAsync("/api/v1/reports", Request("None") with { Visibility = ReportVisibility.Groups, GroupIds = [] }, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await plain.PostAsJsonAsync("/api/v1/reports", Request("No share") with { Visibility = ReportVisibility.Groups, GroupIds = [child] }, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        var mine = await CreateAsync(asMaker, Request("Mine") with { Visibility = ReportVisibility.Groups, GroupIds = [child] });
+
+        // a save keeps the groups; going private clears them
+        var renamed = (await (await asMaker.PutAsJsonAsync($"/api/v1/reports/{mine.Id}", Request("Renamed") with { Visibility = ReportVisibility.Groups, GroupIds = [child], Definition = mine.Definition }, Ct))
+            .Content.ReadFromJsonAsync<ReportDto>(Ct))!;
+        (renamed.Name, renamed.GroupIds!.Single()).ShouldBe(("Renamed", child));
+        var closed = (await (await asMaker.PutAsJsonAsync($"/api/v1/reports/{mine.Id}", Request("Closed") with { GroupIds = [child], Definition = mine.Definition }, Ct))
+            .Content.ReadFromJsonAsync<ReportDto>(Ct))!;
+        (closed.Visibility, closed.GroupIds!.Count).ShouldBe((ReportVisibility.Private, 0));
+    }
+
+    [Fact]
+    public async Task App_data_of_a_widget_comes_back_as_saved()
+    {
+        var request = Request("With app data");
+        request.Definition.Widgets[0].AppData = new() { ["client"] = System.Text.Json.JsonDocument.Parse("""{"type":7,"config":{"rowLink":"/x/{Id}"}}""").RootElement.Clone() };
+
+        var report = await CreateAsync(Admin, request);
+
+        var read = (await Admin.GetFromJsonAsync<ReportDto>($"/api/v1/reports/{report.Id}", Ct))!;
+        read.Definition.Widgets[0].AppData!["client"].GetProperty("config").GetProperty("rowLink").GetString().ShouldBe("/x/{Id}");
+        request.Definition.Widgets[0].AppData!["client"] = System.Text.Json.JsonDocument.Parse($"\"{new string('x', 20_001)}\"").RootElement.Clone();
+        (await Admin.PostAsJsonAsync("/api/v1/reports", request, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    private async Task<Guid> GroupAsync(string name, Guid? parent = null)
+    {
+        var response = await Admin.PostAsJsonAsync("/api/v1/identity/groups", new Contracts.Identity.GroupRequest(name, null, parent), Ct);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<Guid>(Ct);
+    }
+
+    private async Task AddMembersAsync(Guid group, params Guid[] users) =>
+        (await Admin.PostAsJsonAsync($"/api/v1/identity/groups/{group}/members/add", new Contracts.Identity.IdListRequest(users), Ct)).EnsureSuccessStatusCode();
+
+    [Fact]
     public async Task Only_owners_change_reports_and_sharing_needs_its_permission()
     {
         var maker = await CreateUserAsync("maker@acme.test", ReportPermissions.Manage, ReportingApp.ViewSales);

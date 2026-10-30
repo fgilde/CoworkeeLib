@@ -1091,6 +1091,7 @@
   "Selected": "已选",
   "Shared with": "共享给",
   "Shared with me": "与我共享",
+  "Members of these groups and of the groups above them see the report.": "这些组及其上级组的成员可以查看该报表。",
   "Sharing reports needs the permission Reports.Share.": "共享报表需要 Reports.Share 权限。",
   "Sort by": "排序依据",
   "Subtitle": "副标题",

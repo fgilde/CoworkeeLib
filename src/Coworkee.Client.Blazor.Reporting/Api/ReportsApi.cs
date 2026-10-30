@@ -36,6 +36,9 @@ internal sealed class ReportsApi(HttpClient http) : ApiClientBase(http), IReport
     public async Task<IReadOnlyList<ReportRoleDto>> GetRolesAsync(CancellationToken cancellationToken = default) =>
         await GetAsync<ReportRoleDto[]>($"{Root}/roles", cancellationToken);
 
+    public async Task<IReadOnlyList<ReportGroupDto>> GetGroupsAsync(CancellationToken cancellationToken = default) =>
+        await GetAsync<ReportGroupDto[]>($"{Root}/groups", cancellationToken);
+
     // typed clients are transient: the cache lives as long as the page that asked
     public async Task<IReadOnlyList<ReportSourceDto>> GetSourcesAsync(CancellationToken cancellationToken = default) =>
         _sources ??= await GetAsync<ReportSourceDto[]>($"{Root}/sources", cancellationToken);

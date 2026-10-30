@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261028111205_Initial")]
+    [Migration("20261030210704_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -2097,6 +2097,10 @@ namespace MyApp.Infrastructure.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
+                    b.PrimitiveCollection<List<Guid>>("GroupIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]");
+
                     b.Property<string>("Icon")
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
@@ -3308,7 +3312,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261028111205_Initial")]
+    [Migration("20261030210704_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -5316,6 +5320,10 @@ namespace MyApp.Infrastructure.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
+
+                    b.PrimitiveCollection<List<Guid>>("GroupIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]");
 
                     b.Property<string>("Icon")
                         .HasMaxLength(4000)

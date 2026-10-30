@@ -2,6 +2,13 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- Berichte lassen sich mit Gruppen teilen (`ReportVisibility.Groups`, `SaveReportRequest.GroupIds`, `ReportDto.GroupIds`): die Mitglieder dieser Gruppen und der Gruppen darüber sehen den Bericht, über die aktiven Gruppen des Benutzers, eine Gruppenauswahl grenzt die Berichtsliste also ein. Der Besitzer teilt nur mit seinen Gruppen und denen darunter (`GET /api/v1/reports/groups`, `Reports.Share`); die Berichtseinstellungen bieten die Gruppen an. **Zu tun:** eine Migration für die neue Spalte `cw.Reports.GroupIds` (`coworkee migrations add <Name>`). Ein Client, der einen gelesenen Bericht speichert, gibt `GroupIds` mit, sonst wird ein mit Gruppen geteilter Bericht abgelehnt (keine Gruppen gewählt). Siehe [Berichte](../modules/reporting.md#freigabe-und-berechtigungen).
+- `ReportWidget.AppData`: JSON, das eine App oder ein zweiter Client mit einem Widget aufbewahrt; Berichte lesen und ändern es nicht (höchstens 20.000 Zeichen je Widget).
+
 ## 0.0.1.48 (2026-10-30)
 
 ### Geändert

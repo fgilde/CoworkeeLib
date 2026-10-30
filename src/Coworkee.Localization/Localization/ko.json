@@ -1091,6 +1091,7 @@
   "Selected": "선택됨",
   "Shared with": "공유 대상",
   "Shared with me": "나와 공유됨",
+  "Members of these groups and of the groups above them see the report.": "이 그룹과 상위 그룹의 구성원이 보고서를 볼 수 있습니다.",
   "Sharing reports needs the permission Reports.Share.": "보고서를 공유하려면 Reports.Share 권한이 필요합니다.",
   "Sort by": "정렬 기준",
   "Subtitle": "부제목",

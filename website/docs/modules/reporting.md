@@ -1,6 +1,6 @@
 # Reporting
 
-`Coworkee.Reporting` (server) and `Coworkee.Client.Blazor.Reporting` (client) add dashboards over the OData entity sets of your app. Users arrange widgets on a grid, filter them together, click a bar to narrow the rest and share the result with roles or the whole organisation. Every number is aggregated by the database, so a dashboard over 100,000 rows answers in a few milliseconds.
+`Coworkee.Reporting` (server) and `Coworkee.Client.Blazor.Reporting` (client) add dashboards over the OData entity sets of your app. Users arrange widgets on a grid, filter them together, click a bar to narrow the rest and share the result with roles, groups or the whole organisation. Every number is aggregated by the database, so a dashboard over 100,000 rows answers in a few milliseconds.
 
 ![A sales dashboard with KPIs, charts, a pivot and a table](../assets/screenshots/reporting-dashboard.png){ .shot }
 
@@ -194,6 +194,8 @@ new ReportWidget
 
 ## Thresholds
 
+A widget can carry `AppData`, a JSON object per key that an app or a second client keeps with it (e.g. its own settings of the widget); reports neither read nor change it, it is copied with the report and limited to 20,000 characters per widget.
+
 *Thresholds* in the widget panel colour a value by bands (`WidgetOptions.Thresholds`, a list of `ThresholdStop`): each stop has a start value, a colour and a label, and a value takes the band of the highest stop it reaches (values below the first stop keep their own colour). Colours are the theme's `success`, `warning`, `error` and `info` (they follow custom themes and dark mode) or an own `#rrggbb`; anything else is refused on save.
 
 | Widget | What the bands colour |
@@ -230,11 +232,11 @@ A widget's rows are narrowed by, in this order: its own query builder rules and 
 |---|---|
 | `Reports.View` | open reports shared with you, favorites |
 | `Reports.Manage` | create reports, change and delete your own, duplicate any you can open |
-| `Reports.Share` | share with roles or the organisation |
+| `Reports.Share` | share with roles, groups or the organisation |
 | `Reports.Dashboard` | choose the organisation's dashboard |
 | `Reports.Subscriptions` | see and end the report subscriptions of the organisation |
 
-A report is *private*, shared with *roles* (holders of one of them, directly or through groups) or with the *organisation*. Only the owner changes it; others duplicate it into a private copy. A change reaches everyone who has the report open, over the [realtime hub](realtime.md).
+A report is *private*, shared with *roles* (holders of one of them, directly or through groups), with *groups* or with the *organisation*. Shared with groups, it reaches the members of those groups and of the groups above them: the user's active groups (`IGroupScope.ActiveAsync`), so a group selection narrows the report list like it narrows the data. The owner shares only with own groups and the groups below them (`GET /api/v1/reports/groups`); groups shared before stay when the owner leaves one. The owner always sees the report. Only the owner changes it; others duplicate it into a private copy. A change reaches everyone who has the report open, over the [realtime hub](realtime.md).
 
 ## Subscriptions by mail
 
@@ -282,7 +284,7 @@ The template's dashboard page (*Personal > Dashboard*, above *Reports*) does thi
 | `GET /api/v1/reports` | reports you can open, favorites first |
 | `POST /api/v1/reports`, `PUT /api/v1/reports/{id}`, `DELETE /api/v1/reports/{id}` | create, change, delete |
 | `POST /api/v1/reports/{id}/duplicate`, `PUT /api/v1/reports/{id}/favorite` | copy, favorite |
-| `GET /api/v1/reports/sources`, `GET /api/v1/reports/roles` | fields per set, roles to share with |
+| `GET /api/v1/reports/sources`, `GET /api/v1/reports/roles`, `GET /api/v1/reports/groups` | fields per set, roles and groups to share with |
 | `POST /api/v1/reports/query` | aggregate |
 | `POST /api/v1/reports/rows` | rows of an own source, for tables |
 | `POST /api/v1/reports/sheet` | rows to an Excel workbook |
