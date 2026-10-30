@@ -144,6 +144,52 @@ public sealed class BehaviorTests
     }
 
     [Fact]
+    public async Task A_failed_load_reaches_every_request_that_waited_on_it_as_the_failure()
+    {
+        var gate = new Gate();
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddCoworkeeModules<TestModule>(new ConfigurationBuilder().Build());
+        services.AddSingleton<ICurrentUser>(new ImpersonatedUser(Guid.CreateVersion7(), Guid.CreateVersion7()));
+        services.AddSingleton(gate);
+        await using var root = services.BuildServiceProvider();
+
+        var first = SendAsync();
+        await gate.Entered.Task.WaitAsync(TimeSpan.FromSeconds(10), Ct);
+        var second = SendAsync();
+        await Task.Delay(100, Ct); // the second request joins the load
+        gate.Released.SetResult();
+
+        foreach (var result in await Task.WhenAll(first, second).WaitAsync(TimeSpan.FromSeconds(10), Ct))
+        {
+            result.Error!.Code.ShouldBe("held.failed");
+        }
+
+        async Task<Result<string>> SendAsync()
+        {
+            await using var scope = root.CreateAsyncScope();
+            return await scope.ServiceProvider.GetRequiredService<IDispatcher>().SendAsync(new HeldFailure(), Ct);
+        }
+    }
+
+    public sealed record HeldFailure : IQuery<Result<string>>, ICachedQuery
+    {
+        public string CacheKey => "held-failure";
+
+        public IReadOnlyList<string> CacheTags => [];
+    }
+
+    internal sealed class HeldFailureHandler(Gate gate) : IHandler<HeldFailure, Result<string>>
+    {
+        public async Task<Result<string>> HandleAsync(HeldFailure request, CancellationToken cancellationToken)
+        {
+            gate.Entered.TrySetResult();
+            await gate.Released.Task.WaitAsync(cancellationToken);
+            return Error.Conflict("held.failed", "The load failed.");
+        }
+    }
+
+    [Fact]
     public async Task Failures_are_not_cached()
     {
         var counter = new Counter { FailNext = true };
