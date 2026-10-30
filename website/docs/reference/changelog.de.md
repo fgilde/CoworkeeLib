@@ -16,6 +16,7 @@
 
 - Anfragen, die auf dasselbe kalte Laden in den Cache warteten (die Berechtigungen eines Benutzers oder Clients, Einstellungen, Features, Texte, Branding und Clients des Auth-Servers, gecachte Queries), scheiterten mit `500` („Connection is not open", ein verworfener Kontext, ein abgebrochener Task), wenn die Anfrage, die das Laden begann, zuerst endete, etwa weil der Browser sie beim Navigieren abbrach. Jedes geteilte Laden läuft jetzt in einem eigenen Scope.
 - Eine gescheiterte gecachte Query erreichte die anderen darauf wartenden Anfragen als Erfolg mit leerem Wert; sie bekommen jetzt den Fehler.
+- `SelectGroups` (`PUT /api/v1/identity/groups/mine/selection`) zweimal gleichzeitig für einen Benutzer: Dieselbe Auswahl scheiterte mit `500` am Primärschlüssel, verschiedene konnten gemischt gespeichert werden oder mit `500` scheitern. Sie laufen jetzt nacheinander: Beide gelingen, die spätere bleibt.
 
 ## 0.0.1.44 (2026-10-29)
 

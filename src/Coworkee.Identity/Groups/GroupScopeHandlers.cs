@@ -55,11 +55,21 @@ internal sealed class GroupScopeHandlers(CoworkeeDbContext db, ICurrentUser curr
             return NotSelectable;
         }
 
+        // selections of one user at once (a browser sends its first one twice) run one after the other: the user's row is locked first, so the later
+        // one reads what the earlier one stored; the result is the later selection, never a mix of both or a key clash (L65)
+        await using var transaction = db.Database.CurrentTransaction is null ? await db.Database.BeginTransactionAsync(cancellationToken) : null;
+        await db.Set<User>().IgnoreQueryFilters().Where(u => u.Id == me)
+            .ExecuteUpdateAsync(u => u.SetProperty(x => x.ConcurrencyStamp, x => x.ConcurrencyStamp), cancellationToken);
         var stored = await db.Set<GroupSelection>().Where(s => s.UserId == me).ToListAsync(cancellationToken);
         db.RemoveRange(stored.Where(s => !ids.Contains(s.GroupId)));
         db.AddRange(ids.Where(id => stored.All(s => s.GroupId != id)).Select(id => new GroupSelection { UserId = me, GroupId = id }));
         // saved here so other tabs reload only after the commit, as profile changes do
         await db.SaveChangesAsync(cancellationToken);
+        if (transaction is not null)
+        {
+            await transaction.CommitAsync(cancellationToken);
+        }
+
         if (services.GetService<IRealtimePublisher>() is { } realtime)
         {
             await realtime.PublishAsync(currentUser.TenantId, RealtimeTopics.User(me), GroupSelectionEvents.Changed, new { groupIds = ids }, cancellationToken);
