@@ -113,7 +113,7 @@ var stats = await cache.GetOrCreateInScopeAsync(services, new ImpersonatedUser(n
     (services, ct) => services.GetRequiredService<CatalogDbContext>().Products.CountAsync(ct), cancellationToken: cancellationToken);
 ```
 
-`services` sind die des Aufrufers, `actor` ist, als wer das Laden handelt: Es kann ohne den Kontext des Aufrufers auf einem Pool-Thread laufen. `CurrentUserScope.Capture(currentUser)` hält dafür den ganzen aktuellen Benutzer fest.
+`services` sind die des Aufrufers, `actor` ist, als wer das Laden handelt: Es läuft immer auf einem Pool-Thread ohne die Umgebungswerte des Aufrufers (`AsyncLocal`s, den HTTP-Kontext). `CurrentUserScope.Capture(currentUser)` hält dafür den ganzen aktuellen Benutzer fest.
 
 In einer offenen Transaktion des DbContext der App (`IUnitOfWork.InTransaction`) umgehen beide den Cache: Eine gecachte Query läuft in der Pipeline des Aufrufers, ein Laden im Scope des Aufrufers, und das Ergebnis wird nicht gecacht. Eine andere Verbindung sähe nicht, was die Transaktion schrieb (oder wartete auf ihre Sperren), und sie kann noch zurückgerollt werden.
 

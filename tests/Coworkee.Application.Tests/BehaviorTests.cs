@@ -189,6 +189,26 @@ public sealed class BehaviorTests
         }
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task A_shared_load_runs_without_the_callers_ambient_values_as_its_actor(bool cancellable)
+    {
+        var dispatcher = Build(_ => { });
+        await using var scope = Root.CreateAsyncScope();
+        var actor = new ImpersonatedUser(Guid.CreateVersion7(), null);
+        using var token = new CancellationTokenSource();
+        Ambient.Value = "caller";
+
+        // HybridCache runs a load inline when the caller cannot cancel, else on the pool: the load sees the same either way
+        var seen = await dispatcher.Cache.GetOrCreateInScopeAsync(scope.ServiceProvider, actor, Guid.CreateVersion7().ToString(),
+            (_, _) => Task.FromResult($"{Ambient.Value ?? "none"}|{CurrentUserScope.Current?.UserId}"), cancellationToken: cancellable ? token.Token : CancellationToken.None);
+
+        seen.ShouldBe($"none|{actor.UserId}");
+    }
+
+    private static readonly ServiceProvider Root = new ServiceCollection().BuildServiceProvider();
+
     [Fact]
     public async Task Failures_are_not_cached()
     {

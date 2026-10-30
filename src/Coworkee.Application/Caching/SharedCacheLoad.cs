@@ -25,12 +25,20 @@ public static class SharedCacheLoad
             return new ValueTask<T>(InCallerScopeAsync());
         }
 
-        return cache.GetOrCreateAsync(key, (scopes: services.GetRequiredService<IServiceScopeFactory>(), actor, factory), static async (state, ct) =>
+        return cache.GetOrCreateAsync(key, (scopes: services.GetRequiredService<IServiceScopeFactory>(), actor, factory), static (state, ct) =>
         {
-            using var acting = CurrentUserScope.Begin(state.actor);
-            await using var scope = state.scopes.CreateAsyncScope();
-            return await state.factory(scope.ServiceProvider, ct);
+            // HybridCache runs a load inline (in the caller's context) when the caller cannot cancel, else on the pool (in none): always on the pool
+            // without the caller's ambient values, so the load sees the same whoever starts it
+            using var suppressed = ExecutionContext.IsFlowSuppressed() ? default(AsyncFlowControl?) : ExecutionContext.SuppressFlow();
+            return new ValueTask<T>(Task.Run(() => LoadAsync(state.scopes, state.actor, state.factory, ct), CancellationToken.None));
         }, options, tags, cancellationToken);
+
+        static async Task<T> LoadAsync(IServiceScopeFactory scopes, ICurrentUser actor, Func<IServiceProvider, CancellationToken, Task<T>> factory, CancellationToken ct)
+        {
+            using var acting = CurrentUserScope.Begin(actor);
+            await using var scope = scopes.CreateAsyncScope();
+            return await factory(scope.ServiceProvider, ct);
+        }
 
         async Task<T> InCallerScopeAsync()
         {

@@ -113,7 +113,7 @@ var stats = await cache.GetOrCreateInScopeAsync(services, new ImpersonatedUser(n
     (services, ct) => services.GetRequiredService<CatalogDbContext>().Products.CountAsync(ct), cancellationToken: cancellationToken);
 ```
 
-`services` are the caller's, `actor` is who the load acts as: it may run on a pool thread without the caller's context. `CurrentUserScope.Capture(currentUser)` keeps the whole current user for it.
+`services` are the caller's, `actor` is who the load acts as: it always runs on a pool thread without the caller's ambient values (`AsyncLocal`s, the HTTP context). `CurrentUserScope.Capture(currentUser)` keeps the whole current user for it.
 
 Inside an open transaction of the app's DbContext (`IUnitOfWork.InTransaction`) both skip the cache: a cached query runs in the caller's pipeline, a load in the caller's scope, and the result is not cached. Another connection would not see what the transaction wrote (or wait on its locks), and it may still be rolled back.
 
