@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Geändert
+
+- Eine Facettenanfrage zählt das gefilterte Set einmal vor ihren Facetten (wenn `FacetRowLimit` oder `MaxFacetRows` an ist), und das Lesen im Speicher hat kein `TOP` mehr: ein `TOP` über mehr Zeilen, als passen, ließ SQL Server auf früh gefundene Zeilen planen und die ganze Tabelle lesen (28 s statt 4 s für 12.000 von 1,2 Millionen Zeilen). `MaxFacetRows` prüft mit dieser Zählung. Nichts zu tun.
+
 ## 0.0.1.47 (2026-10-30)
 
 ### Hinzugefügt

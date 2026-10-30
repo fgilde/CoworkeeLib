@@ -78,11 +78,11 @@ public sealed class FacetPassTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task A_bounded_set_reads_its_facets_in_at_most_two_statements()
+    public async Task A_bounded_set_reads_its_facets_in_at_most_three_statements()
     {
-        // one read of the row's members, one query for the group through the maker
-        (await FacetStatementsAsync("Pumps")).ShouldBeLessThanOrEqualTo(2);
-        (await FacetStatementsAsync("Widgets")).ShouldBe(1);
+        // one count of the set, one read of the row's members, one query for the group through the maker (Widgets has none)
+        (await FacetStatementsAsync("Pumps")).ShouldBeLessThanOrEqualTo(3);
+        (await FacetStatementsAsync("Widgets")).ShouldBe(2);
     }
 
     [Fact]
@@ -93,11 +93,11 @@ public sealed class FacetPassTests(ODataApp app) : IAsyncLifetime
 
         Shape(await FacetsAsync(bounded, "Pumps", null)).ShouldBe(Shape(await FacetsAsync(database, "Pumps", null)));
         (await FacetStatementsAsync("Pumps", bounded)).ShouldBeGreaterThan(5, "five rows are more than four: ranges and computed options query the database");
-        (await FacetStatementsAsync("Pumps", bounded, "Active eq true")).ShouldBeLessThanOrEqualTo(2, "four rows are not");
+        (await FacetStatementsAsync("Pumps", bounded, "Active eq true")).ShouldBeLessThanOrEqualTo(3, "four rows are not");
     }
 
     [Fact]
-    public async Task A_set_above_the_facet_cap_gets_no_facets_for_one_bounded_count()
+    public async Task A_set_above_the_facet_cap_gets_no_facets_for_one_count()
     {
         await using var capped = await app.StartAnotherAsync(new Dictionary<string, string> { ["Coworkee:OData:MaxFacetRows"] = "4" });
 

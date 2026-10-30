@@ -48,8 +48,8 @@ internal static class FacetCounts
     public static bool IsRange(FacetGroup group) => group.Type is FacetType.Range or FacetType.DateRange;
 
     /// <summary>
-    /// The rows of a bounded set with the members the groups and computed options read: null when there are more than the limit, nothing to count
-    /// locally, or the row cannot be built. Reads <paramref name="filtered"/>, which the navigation scope rewrote already: the members are the row's own,
+    /// The rows of a bounded set with the members the groups and computed options read: null when the limit is off, nothing to count locally, or the
+    /// row cannot be built. The caller reads only a set it counted within <see cref="CoworkeeODataOptions.FacetRowLimit"/>. Reads <paramref name="filtered"/>, which the navigation scope rewrote already: the members are the row's own,
     /// and the options' filters come scoped from <see cref="FacetResponse.FilterAsync{T}"/>.
     /// </summary>
     public static async Task<Read<T>?> ReadAsync<T>(HttpContext http, IQueryable<T> filtered, IReadOnlyList<FacetGroup> groups, IReadOnlyList<ODataComputedProperty> computed,
@@ -92,13 +92,8 @@ internal static class FacetCounts
         var row = Expression.MemberInit(Expression.New(create), members.Select(m => Expression.Bind(m, Expression.Property(it, m))));
         var matches = Expression.NewArrayInit(typeof(bool), options.SelectMany(o => o.Filters).Select(f => ReplacingExpressionVisitor.Replace(f.Parameters[0], it, f.Body)));
         var shape = Expression.Lambda<Func<T, Row<T>>>(Expression.New(typeof(Row<T>).GetConstructors()[0], row, matches), it);
-        // ponytail: a set above the limit pays this read of limit + 1 rows before the database counts; a COUNT first would cost every bounded set a statement.
-        // No OrderBy: which rows come first does not matter (EF logs its Take-without-OrderBy warning once, as for the list union)
-        var loaded = await filtered.Select(shape).Take(limit + 1).ToListAsync(cancellationToken);
-        if (loaded.Count > limit)
-        {
-            return null;
-        }
+        // no TOP: the caller counted the set already, and a TOP of more rows than match is a row goal that may scan the whole table
+        var loaded = await filtered.Select(shape).ToListAsync(cancellationToken);
 
         var items = loaded.Select(r => r.Item).ToList();
         var counted = new List<Counted>();
