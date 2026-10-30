@@ -42,8 +42,43 @@ public sealed class QueryLimitTests(ODataApp app) : IAsyncLifetime
         (await QueryAsync(raised, Search(400))).Error!.Kind.ShouldBe(ErrorKind.Validation);
     }
 
-    private async Task<HttpStatusCode> GetAsync(WebApplication web, string query) =>
-        (await web.GetTestClient().AsUser(_setup.AdminUserId, _setup.TenantId).GetAsync($"/odata/Gadgets?{query}", Ct)).StatusCode;
+    public static TheoryData<string, string, string> Siblings => new()
+    {
+        { "Shelves?$filter=Bins/any(b: b/Labels/any(l: l/Text eq 'x'))", "MaxAnyAllExpressionDepth", "2" },
+        { "Parts?$expand=Parent($expand=Parent($expand=Parent))", "MaxExpansionDepth", "3" },
+        { "Gadgets?$orderby=Name,Price,Id,Category,TenantId,IsDeleted", "MaxOrderByNodeCount", "6" },
+    };
+
+    [Theory]
+    [MemberData(nameof(Siblings))]
+    public async Task The_other_limits_refuse_by_default_and_follow_their_option(string url, string option, string raisedTo)
+    {
+        (await GetUrlAsync(app.App, url)).ShouldBe(HttpStatusCode.BadRequest);
+
+        await using var raised = await app.StartAnotherAsync(new Dictionary<string, string> { [$"Coworkee:OData:{option}"] = raisedTo });
+
+        (await GetUrlAsync(raised, url)).ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Theory]
+    [InlineData("MaxNodeCount", "0")]
+    [InlineData("MaxAnyAllExpressionDepth", "0")]
+    [InlineData("MaxOrderByNodeCount", "0")]
+    [InlineData("MaxExpansionDepth", "-1")]
+    public async Task A_limit_out_of_range_stops_the_start(string option, string value)
+    {
+        var refused = await Should.ThrowAsync<Microsoft.Extensions.Options.OptionsValidationException>(async () =>
+        {
+            await using var app2 = await app.StartAnotherAsync(new Dictionary<string, string> { [$"Coworkee:OData:{option}"] = value });
+        });
+
+        refused.Message.ShouldContain(option);
+    }
+
+    private Task<HttpStatusCode> GetAsync(WebApplication web, string query) => GetUrlAsync(web, $"Gadgets?{query}");
+
+    private async Task<HttpStatusCode> GetUrlAsync(WebApplication web, string url) =>
+        (await web.GetTestClient().AsUser(_setup.AdminUserId, _setup.TenantId).GetAsync($"/odata/{url}", Ct)).StatusCode;
 
     private async Task<Result<ODataQueryResult<Gadget>>> QueryAsync(WebApplication web, string query)
     {

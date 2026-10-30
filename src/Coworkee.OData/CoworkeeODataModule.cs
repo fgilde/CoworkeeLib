@@ -31,7 +31,12 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         services.AddScoped<IODataQueries, ODataQueries>();
         services.AddSingleton<Microsoft.Extensions.Options.IConfigureOptions<ODataOptions>, Computed.ODataRoute>();
         services.AddTransient<IFacetBuilder>(sp => new FacetBuilder(sp.GetRequiredService<IServiceScopeFactory>(), FacetLiterals.Options(), new FacetLiterals()));
-        services.Configure<CoworkeeODataOptions>(context.Configuration.GetSection(CoworkeeODataOptions.Section));
+        services.AddOptions<CoworkeeODataOptions>().Bind(context.Configuration.GetSection(CoworkeeODataOptions.Section))
+            .Validate(o => o.MaxNodeCount >= 1, "Coworkee:OData:MaxNodeCount is at least 1.")
+            .Validate(o => o.MaxAnyAllExpressionDepth >= 1, "Coworkee:OData:MaxAnyAllExpressionDepth is at least 1.")
+            .Validate(o => o.MaxOrderByNodeCount >= 1, "Coworkee:OData:MaxOrderByNodeCount is at least 1.")
+            .Validate(o => o.MaxExpansionDepth >= 0, "Coworkee:OData:MaxExpansionDepth is at least 0.")
+            .ValidateOnStart();
         services.AddDataTransfer();
         services.Configure<ClientEntityOptions>(context.Configuration.GetSection(ClientEntityOptions.Section));
         services.AddSingleton<Microsoft.Extensions.Options.IPostConfigureOptions<ClientEntityOptions>, ServiceClientEntities>();
