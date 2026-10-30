@@ -49,6 +49,7 @@ public static class DataExport
         }
 
         var options = http.Request.ODataQueryOptions<TEntity>(model);
+        ODataLimits.Check(options, services);
         var denied = await ODataEntityAccess.DeniedPropertiesAsync(services, typeof(TEntity), cancellationToken);
         var deniedByType = await ODataEntityAccess.DeniedByTypeAsync(services, cancellationToken);
         if (ODataQueryGuard.Denies(options, deniedByType))

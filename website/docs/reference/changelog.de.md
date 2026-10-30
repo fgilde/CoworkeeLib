@@ -6,7 +6,7 @@
 
 ### Hinzugefügt
 
-- `Coworkee:OData:MaxNodeCount`, `MaxAnyAllExpressionDepth`, `MaxExpansionDepth` und `MaxOrderByNodeCount` (`CoworkeeODataOptions`, Standard die Werte von OData: 100, 1, 2 und 5): die Abfragegrenzen von OData auf jeder Route und in `IODataQueries`, etwa für eine Suche, die `contains` über viele Felder mit `or` verknüpft; ein Wert unter 1 (unter 0 bei `MaxExpansionDepth`) verhindert den Start. Siehe [OData](../web/odata.md).
+- `Coworkee:OData:MaxNodeCount`, `MaxAnyAllExpressionDepth`, `MaxExpansionDepth` und `MaxOrderByNodeCount` (`CoworkeeODataOptions`, Standard die Werte von OData: 100, 1, 2 und 5): die Abfragegrenzen von OData für die Entity-Sets jeder Route, in `IODataQueries`, Exporten, `query_data`, Facettenfiltern, Zeilenfiltern aus Code (`ODataEntityAccess.FilteredAsync`) und Berichten (samt berechneter Quellen; `ODataLimits.Check(options, services)` für eigenen Code), etwa für eine Suche, die `contains` über viele Felder mit `or` verknüpft; ein Wert unter 1 (unter 0 bei `MaxExpansionDepth`) verhindert den Start. Siehe [OData](../web/odata.md).
 - `HybridCache.GetOrCreateInScopeAsync(services, actor, key, (services, ct) => ...)` (`SharedCacheLoad`): ein Laden in den Cache, das Scoped-Services liest, in einem eigenen Service-Scope als `actor`; `CurrentUserScope.Capture(user)` hält einen Benutzer über seine Anfrage hinaus fest. Siehe [Messaging](../fundamentals/messaging.md#caching).
 
 ### Geändert

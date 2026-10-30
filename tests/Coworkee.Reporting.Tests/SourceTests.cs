@@ -25,6 +25,19 @@ public sealed class SourceTests(ReportingApp app) : ReportingTestBase(app)
         numbers.Fields.Single(f => f.Path == "Mood").MemberLabels.ShouldBe(["Calm", "Very busy"]);
     }
 
+    [Theory]
+    [InlineData("MonthlyNumbers", "Team")]
+    [InlineData("Sales", "Region")]
+    public async Task A_filter_beyond_the_node_limit_is_refused(string source, string field)
+    {
+        var filter = string.Join(" or ", Enumerable.Range(0, 40).Select(i => $"contains({field},'t{i}')"));
+
+        var response = await Admin.PostAsJsonAsync("/api/v1/reports/query", new ReportQueryRequest(source, filter, Aggregates: [new()]), Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync(Ct)).ShouldContain("node count");
+    }
+
     [Fact]
     public async Task A_kpi_sums_the_filtered_rows()
     {

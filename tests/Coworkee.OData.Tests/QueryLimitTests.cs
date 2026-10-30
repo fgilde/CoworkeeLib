@@ -1,5 +1,9 @@
 using System.Net;
+using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Identity;
+using Coworkee.OData.Transfer;
+using Microsoft.AspNetCore.Http;
+using Microsoft.OData;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
 using Coworkee.Testing;
@@ -42,6 +46,28 @@ public sealed class QueryLimitTests(ODataApp app) : IAsyncLifetime
         (await QueryAsync(raised, Search(400))).Error!.Kind.ShouldBe(ErrorKind.Validation);
     }
 
+    [Fact]
+    public async Task Every_place_that_reads_a_callers_filter_keeps_the_node_limit()
+    {
+        var filter = Search(40)["$filter=".Length..];
+        var admin = app.As(_setup.AdminUserId, _setup.TenantId);
+
+        // the list with facets, the export, query_data (MCP and the assistant), the filters of code (mail recipients, reports) and facet filters
+        using var withFacets = new HttpRequestMessage(HttpMethod.Get, $"/odata/Gadgets?{Search(40)}");
+        withFacets.Headers.Add("Prefer", "odata.include-annotations=\"cn.facets\"");
+        (await admin.SendAsync(withFacets, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await QueryAsync(app.App, Search(40), facets: true)).Error!.Kind.ShouldBe(ErrorKind.Validation);
+        (await admin.GetAsync($"/api/v1/data/Gadgets/export?{Search(40)}", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(_setup.AdminUserId, _setup.TenantId));
+        await using var scope = app.App.Services.CreateAsyncScope();
+        var services = scope.ServiceProvider;
+        (await services.GetRequiredService<IDispatcher>().SendAsync(new QueryDataQuery("Gadgets", filter), Ct)).Error!.Kind.ShouldBe(ErrorKind.Validation);
+        await Should.ThrowAsync<ODataException>(() => ODataEntityAccess.FilteredAsync<Gadget>(services, filter, Ct));
+        await Should.ThrowAsync<ODataException>(() =>
+            FacetResponse.FilterAsync(services.GetRequiredService<GadgetDbContext>().Set<Gadget>(), filter, new DefaultHttpContext { RequestServices = services }, Ct, clrNames: true));
+    }
+
     public static TheoryData<string, string, string> Siblings => new()
     {
         { "Shelves?$filter=Bins/any(b: b/Labels/any(l: l/Text eq 'x'))", "MaxAnyAllExpressionDepth", "2" },
@@ -80,10 +106,10 @@ public sealed class QueryLimitTests(ODataApp app) : IAsyncLifetime
     private async Task<HttpStatusCode> GetUrlAsync(WebApplication web, string url) =>
         (await web.GetTestClient().AsUser(_setup.AdminUserId, _setup.TenantId).GetAsync($"/odata/{url}", Ct)).StatusCode;
 
-    private async Task<Result<ODataQueryResult<Gadget>>> QueryAsync(WebApplication web, string query)
+    private async Task<Result<ODataQueryResult<Gadget>>> QueryAsync(WebApplication web, string query, bool facets = false)
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(_setup.AdminUserId, _setup.TenantId));
         await using var scope = web.Services.CreateAsyncScope();
-        return await scope.ServiceProvider.GetRequiredService<IODataQueries>().QueryAsync<Gadget>("rt/odata", "Gadgets", query, cancellationToken: Ct);
+        return await scope.ServiceProvider.GetRequiredService<IODataQueries>().QueryAsync<Gadget>("rt/odata", "Gadgets", query, facets, Ct);
     }
 }

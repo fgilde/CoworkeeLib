@@ -6,7 +6,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Added
 
-- `Coworkee:OData:MaxNodeCount`, `MaxAnyAllExpressionDepth`, `MaxExpansionDepth` and `MaxOrderByNodeCount` (`CoworkeeODataOptions`, defaults OData's 100, 1, 2 and 5): OData's query limits on every route and in `IODataQueries`, e.g. for a search that ORs `contains` over many fields; a value below 1 (below 0 for `MaxExpansionDepth`) stops the start. See [OData](../web/odata.md).
+- `Coworkee:OData:MaxNodeCount`, `MaxAnyAllExpressionDepth`, `MaxExpansionDepth` and `MaxOrderByNodeCount` (`CoworkeeODataOptions`, defaults OData's 100, 1, 2 and 5): OData's query limits on the entity sets of every route, in `IODataQueries`, exports, `query_data`, facet filters, row filters of code (`ODataEntityAccess.FilteredAsync`) and reports (computed sources included; `ODataLimits.Check(options, services)` for own code), e.g. for a search that ORs `contains` over many fields; a value below 1 (below 0 for `MaxExpansionDepth`) stops the start. See [OData](../web/odata.md).
 - `HybridCache.GetOrCreateInScopeAsync(services, actor, key, (services, ct) => ...)` (`SharedCacheLoad`): a cache load that reads scoped services, in a service scope of its own as `actor`; `CurrentUserScope.Capture(user)` keeps a user beyond his request. See [messaging](../fundamentals/messaging.md#caching).
 
 ### Changed

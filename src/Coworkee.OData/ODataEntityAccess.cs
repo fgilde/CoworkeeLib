@@ -195,8 +195,9 @@ public static class ODataEntityAccess
             return visible;
         }
 
-        var request = ODataQueryGuard.Request(services, QueryString.Create("$filter", filter));
-        var filtered = visible.ApplyODataFilter(request.ODataQueryOptions<TEntity>(services.GetRequiredService<IEdmModel>()));
+        var options = ODataQueryGuard.Request(services, QueryString.Create("$filter", filter)).ODataQueryOptions<TEntity>(services.GetRequiredService<IEdmModel>());
+        ODataLimits.Check(options, services);
+        var filtered = visible.ApplyODataFilter(options);
         return await (scope ?? ODataNavigationScope.For(services, typeof(TEntity))).ApplyAsync(filtered, cancellationToken);
     }
 }
