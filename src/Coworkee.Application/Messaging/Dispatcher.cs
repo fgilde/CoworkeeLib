@@ -25,9 +25,12 @@ internal abstract class RequestInvoker<TResult>
 internal sealed class RequestInvoker<TRequest, TResult> : RequestInvoker<TResult>
     where TRequest : IRequest<TResult>
 {
-    public override Task<TResult> InvokeAsync(object request, IServiceProvider services, CancellationToken cancellationToken)
+    public override Task<TResult> InvokeAsync(object request, IServiceProvider services, CancellationToken cancellationToken) =>
+        Pipeline((TRequest)request, services, cancellationToken, int.MinValue)();
+
+    /// <summary>The handler with its behaviors and the middlewares ordered after <paramref name="after"/>, from <paramref name="services"/>.</summary>
+    internal static RequestHandlerDelegate<TResult> Pipeline(TRequest typed, IServiceProvider services, CancellationToken cancellationToken, int after)
     {
-        var typed = (TRequest)request;
         var handler = services.GetService<IHandler<TRequest, TResult>>()
             ?? throw new InvalidOperationException($"No handler registered for '{typeof(TRequest).Name}'.");
 
@@ -38,12 +41,12 @@ internal sealed class RequestInvoker<TRequest, TResult> : RequestInvoker<TResult
             pipeline = () => behavior.HandleAsync(typed, inner, cancellationToken);
         }
 
-        foreach (var middleware in services.GetServices<IRequestMiddleware>().OrderByDescending(m => m.Order))
+        foreach (var middleware in services.GetServices<IRequestMiddleware>().Where(m => m.Order > after).OrderByDescending(m => m.Order))
         {
             var next = pipeline;
             pipeline = () => middleware.InvokeAsync(typed, next, cancellationToken);
         }
 
-        return pipeline();
+        return pipeline;
     }
 }

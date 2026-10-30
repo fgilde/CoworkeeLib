@@ -61,6 +61,38 @@ public sealed class BehaviorTests
     }
 
     [Fact]
+    public async Task A_caller_that_aborts_a_shared_load_leaves_the_others_their_answer()
+    {
+        var gate = new Gate();
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddCoworkeeModules<TestModule>(new ConfigurationBuilder().Build());
+        services.AddSingleton<ICurrentUser>(new ImpersonatedUser(Guid.CreateVersion7(), Guid.CreateVersion7()));
+        services.AddSingleton(gate);
+        services.AddScoped<Probe>();
+        await using var root = services.BuildServiceProvider();
+        using var aborted = CancellationTokenSource.CreateLinkedTokenSource(Ct);
+
+        // the first request starts the load and is held in it; the second joins it
+        var first = Task.Run(() => SendAsync(aborted.Token), Ct);
+        await gate.Entered.Task.WaitAsync(TimeSpan.FromSeconds(10), Ct);
+        var second = SendAsync(Ct);
+
+        // the first request is aborted and its services disposed
+        await aborted.CancelAsync();
+        await Should.ThrowAsync<OperationCanceledException>(first);
+        gate.Released.SetResult();
+
+        (await second.WaitAsync(TimeSpan.FromSeconds(10), Ct)).Value.ShouldBe("loaded");
+
+        async Task<Result<string>> SendAsync(CancellationToken cancellationToken)
+        {
+            await using var scope = root.CreateAsyncScope();
+            return await scope.ServiceProvider.GetRequiredService<IDispatcher>().SendAsync(new Held(), cancellationToken);
+        }
+    }
+
+    [Fact]
     public async Task Failures_are_not_cached()
     {
         var counter = new Counter { FailNext = true };
@@ -140,6 +172,37 @@ public sealed class BehaviorTests
     internal sealed class ReadAmbientHandler : IHandler<ReadAmbient, Result<string>>
     {
         public Task<Result<string>> HandleAsync(ReadAmbient request, CancellationToken cancellationToken) => Task.FromResult(Result<string>.Success(Ambient.Value ?? "none"));
+    }
+
+    public sealed class Gate
+    {
+        public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource Released { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    }
+
+    public sealed class Probe : IDisposable
+    {
+        public bool Disposed { get; private set; }
+
+        public void Dispose() => Disposed = true;
+    }
+
+    public sealed record Held : IQuery<Result<string>>, ICachedQuery
+    {
+        public string CacheKey => "held";
+
+        public IReadOnlyList<string> CacheTags => [];
+    }
+
+    internal sealed class HeldHandler(Gate gate, Probe probe) : IHandler<Held, Result<string>>
+    {
+        public async Task<Result<string>> HandleAsync(Held request, CancellationToken cancellationToken)
+        {
+            gate.Entered.TrySetResult();
+            await gate.Released.Task.WaitAsync(cancellationToken);
+            return probe.Disposed ? Error.Conflict("held.disposed", "The services of the load were disposed.") : Result<string>.Success("loaded");
+        }
     }
 
     public sealed record Bump : ICommand<Result>, IInvalidatesCache

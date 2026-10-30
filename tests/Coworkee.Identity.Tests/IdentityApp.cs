@@ -49,6 +49,7 @@ public sealed class IdentityApp : DatabaseFixture
         });
         builder.Services.AddScoped<Coworkee.Application.Setup.ISetupStep, RecordingSetupStep>();
         builder.Services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, RaceInjector>();
+        builder.Services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, CommandGate>();
         builder.Services.AddSingleton<Coworkee.Realtime.IRealtimePublisher>(RecordingRealtimePublisher.Instance);
         builder.Services.AddComputedPermission(ComputedPermissionTests.Permission, (c, _) => Task.FromResult(ComputedPermissionTests.Leaders.ContainsKey(c.UserId)));
         App = builder.Build();
@@ -163,5 +164,36 @@ public sealed class RaceInjector : Microsoft.EntityFrameworkCore.Diagnostics.Sav
         }
 
         return result;
+    }
+}
+
+/// <summary>Holds the next query that has <see cref="Held.Parameter"/> among its parameters until the test releases it: a slow load other requests wait on.</summary>
+public sealed class CommandGate : Microsoft.EntityFrameworkCore.Diagnostics.DbCommandInterceptor
+{
+    private static Held? _next;
+
+    public static Held Arm(object parameter) => _next = new Held(parameter);
+
+    public override async ValueTask<Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult<System.Data.Common.DbDataReader>> ReaderExecutingAsync(
+        System.Data.Common.DbCommand command, Microsoft.EntityFrameworkCore.Diagnostics.CommandEventData eventData,
+        Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult<System.Data.Common.DbDataReader> result, CancellationToken cancellationToken = default)
+    {
+        if (_next is { } held && command.Parameters.Cast<System.Data.Common.DbParameter>().Any(p => Equals(p.Value, held.Parameter))
+            && Interlocked.CompareExchange(ref _next, null, held) == held)
+        {
+            held.Entered.TrySetResult();
+            await held.Released.Task.WaitAsync(TimeSpan.FromSeconds(30), CancellationToken.None);
+        }
+
+        return result;
+    }
+
+    public sealed class Held(object parameter)
+    {
+        public object Parameter { get; } = parameter;
+
+        public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource Released { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
     }
 }

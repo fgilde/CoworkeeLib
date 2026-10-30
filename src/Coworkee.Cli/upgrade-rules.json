@@ -434,6 +434,19 @@
           ]
         }
       ]
+    },
+    {
+      "version": "0.0.1.45",
+      "breaking": [
+        "The handler of an ICachedQuery runs in a service scope of its own, as the calling user, with the cache's cancellation token: scoped state the request set before the query is not visible to it."
+      ],
+      "manual": [
+        {
+          "text": "A cached query whose handler reads scoped state the request set before (a scoped holder filled by a middleware, an endpoint or an earlier handler) takes that value as a property of the query instead (and in its CacheKey when it changes the answer).",
+          "find": "\\bICachedQuery\\b",
+          "files": [ "src/**/*.cs" ]
+        }
+      ]
     }
   ]
 }

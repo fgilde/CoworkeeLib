@@ -1,11 +1,13 @@
 using System.Globalization;
 using System.Security.Cryptography;
+using Coworkee.Application.Caching;
 using Coworkee.Contracts.Settings;
 using Coworkee.Core.Security;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Coworkee.Settings;
@@ -25,11 +27,11 @@ public interface ISettingProvider
 internal sealed record StoredSetting(string Name, SettingScope Scope, string? Value);
 
 internal sealed class SettingProvider(
-    CoworkeeDbContext db,
     ICurrentUser currentUser,
     ISettingDefinitionManager definitions,
     HybridCache cache,
-    SettingProtector protector) : ISettingProvider
+    SettingProtector protector,
+    IServiceScopeFactory scopes) : ISettingProvider
 {
     internal const string CacheTag = "coworkee:settings";
 
@@ -72,9 +74,11 @@ internal sealed class SettingProvider(
     {
         var tenantId = currentUser.TenantId;
         var userId = currentUser.UserId;
-        return await cache.GetOrCreateAsync(
+        return await cache.GetOrCreateInScopeAsync(
+            scopes,
+            new ImpersonatedUser(userId, tenantId),
             $"coworkee:settings:{tenantId}:{userId}",
-            async token => await db.Set<SettingValue>().AsNoTracking()
+            async (scope, token) => await scope.GetRequiredService<CoworkeeDbContext>().Set<SettingValue>().AsNoTracking()
                 .Where(s => (s.Scope == SettingScope.Global && s.ScopeKey == null)
                     || (s.Scope == SettingScope.Tenant && s.ScopeKey == tenantId && tenantId != null)
                     || (s.Scope == SettingScope.User && s.ScopeKey == userId && userId != null))

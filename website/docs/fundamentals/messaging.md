@@ -106,6 +106,15 @@ public sealed record GetDashboardQuery : IQuery<Result<DashboardDto>>, ICachedQu
 
 `CacheScope` decides who shares an entry: `Tenant` (default), `User` or `Global`. Failures are never cached. Commands that change the underlying data list the same tag in `IInvalidatesCache.CacheTags`.
 
+Requests that ask for an entry while it loads wait on that one load. So the handler of a cached query runs in a service scope of its own, as the calling user, with the cache's cancellation (canceled only when every waiting request is): the request that started the load may end first, a browser aborting it on navigation, without failing the others. The handler sees none of the request's scoped state; what it needs belongs in the query. Own `HybridCache` loads that read scoped services (a DbContext, `IDispatcher`) do the same with `GetOrCreateInScopeAsync`:
+
+```csharp
+var stats = await cache.GetOrCreateInScopeAsync(scopes, new ImpersonatedUser(null, tenantId), $"stats:{tenantId}",
+    (services, ct) => services.GetRequiredService<CatalogDbContext>().Products.CountAsync(ct), cancellationToken: cancellationToken);
+```
+
+`actor` is who the load acts as: it may run on a pool thread without the caller's context. `CurrentUserScope.Capture(currentUser)` keeps the whole current user for it.
+
 ## Domain events
 
 Aggregates raise events; handlers run after the transaction committed, through the outbox, as the user who caused them.

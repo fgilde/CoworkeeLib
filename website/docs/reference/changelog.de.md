@@ -2,6 +2,21 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- `HybridCache.GetOrCreateInScopeAsync(scopes, actor, key, (services, ct) => ...)` (`SharedCacheLoad`): ein Laden in den Cache, das Scoped-Services liest, in einem eigenen Service-Scope als `actor`; `CurrentUserScope.Capture(user)` hält einen Benutzer über seine Anfrage hinaus fest. Siehe [Messaging](../fundamentals/messaging.md#caching).
+
+### Geändert
+
+- Der Handler einer `ICachedQuery` läuft in einem eigenen Service-Scope, als der aufrufende Benutzer, mit dem Abbruch-Token des Caches (abgebrochen erst, wenn jede wartende Anfrage abbricht): Scoped-Zustand, den die Anfrage vor der Query gesetzt hat, sieht er nicht. Siehe [Messaging](../fundamentals/messaging.md#caching).
+
+### Behoben
+
+- Anfragen, die auf dasselbe kalte Laden in den Cache warteten (die Berechtigungen eines Benutzers oder Clients, Einstellungen, Features, Texte, Branding und Clients des Auth-Servers, gecachte Queries), scheiterten mit `500` („Connection is not open", ein verworfener Kontext, ein abgebrochener Task), wenn die Anfrage, die das Laden begann, zuerst endete, etwa weil der Browser sie beim Navigieren abbrach. Jedes geteilte Laden läuft jetzt in einem eigenen Scope.
+- Eine gescheiterte gecachte Query erreichte die anderen darauf wartenden Anfragen als Erfolg mit leerem Wert; sie bekommen jetzt den Fehler.
+
 ## 0.0.1.44 (2026-10-29)
 
 ### Hinzugefügt

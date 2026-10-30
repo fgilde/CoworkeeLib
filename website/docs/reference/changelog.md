@@ -2,6 +2,21 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- `HybridCache.GetOrCreateInScopeAsync(scopes, actor, key, (services, ct) => ...)` (`SharedCacheLoad`): a cache load that reads scoped services, in a service scope of its own as `actor`; `CurrentUserScope.Capture(user)` keeps a user beyond his request. See [messaging](../fundamentals/messaging.md#caching).
+
+### Changed
+
+- The handler of an `ICachedQuery` runs in a service scope of its own, as the calling user, with the cache's cancellation token (canceled only when every waiting request is): scoped state the request set before the query is not visible to it. See [messaging](../fundamentals/messaging.md#caching).
+
+### Fixed
+
+- Requests waiting on the same cold cache load (a user's or a client's permissions, settings, features, texts, the auth server's branding and clients, cached queries) failed with `500` ("Connection is not open", a disposed context, a canceled task) when the request that started the load ended first, e.g. a browser aborting it on navigation. Every shared load runs in a scope of its own now.
+- A failed cached query reached the other requests waiting on it as a success with an empty value; they get the failure now.
+
 ## 0.0.1.44 (2026-10-29)
 
 ### Added
