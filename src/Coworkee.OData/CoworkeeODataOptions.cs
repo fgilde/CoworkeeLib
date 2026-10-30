@@ -7,6 +7,21 @@ public sealed class CoworkeeODataOptions
     public int MaxTop { get; set; } = 1000;
 
     /// <summary>
+    /// Nodes a <c>$filter</c> or <c>$orderby</c> may have (each operator, property, literal and function call counts): a search that ORs
+    /// <c>contains</c> over 20 fields exceeds 100. Larger limits let users send more expensive queries.
+    /// </summary>
+    public int MaxNodeCount { get; set; } = 100;
+
+    /// <summary>How deep <c>any</c>/<c>all</c> may nest in <c>$filter</c>.</summary>
+    public int MaxAnyAllExpressionDepth { get; set; } = 1;
+
+    /// <summary>How deep <c>$expand</c> may nest; 0 allows any depth.</summary>
+    public int MaxExpansionDepth { get; set; } = 2;
+
+    /// <summary>Properties <c>$orderby</c> may sort by.</summary>
+    public int MaxOrderByNodeCount { get; set; } = 5;
+
+    /// <summary>
     /// The service document (<c>/odata</c>) and <c>$metadata</c> of every route answer without sign-in. Off by default: both name every set and property
     /// of the model, for any role.
     /// </summary>

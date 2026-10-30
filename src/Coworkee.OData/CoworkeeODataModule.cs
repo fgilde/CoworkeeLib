@@ -37,7 +37,7 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         services.AddSingleton<Microsoft.Extensions.Options.IPostConfigureOptions<ClientEntityOptions>, ServiceClientEntities>();
         services.AddSingleton<Microsoft.Extensions.Options.IPostConfigureOptions<ODataOptions>, ODataQueryLimits>();
         services.AddSingleton<Microsoft.AspNetCore.Mvc.ApplicationModels.IApplicationModelProvider>(provider =>
-            new EntityODataControllerNameProvider(registry, provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<CoworkeeODataOptions>>().Value.AnonymousMetadata));
+            new EntityODataControllerNameProvider(registry, provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<CoworkeeODataOptions>>().Value));
         services.AddControllers()
             .ConfigureApplicationPartManager(parts => parts.FeatureProviders.Add(new EntityODataControllerFeatureProvider(registry)))
             .AddOData();

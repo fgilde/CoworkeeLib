@@ -23,6 +23,8 @@ public sealed class MyAppCatalogModule : CoworkeeModule
 
 The permission of the set is checked on every call, tenants and soft delete filters apply as everywhere. `$top` is capped at 1000 (`Coworkee:OData:MaxTop`); invalid queries answer `400` with problem details.
 
+OData's other query limits are options of `Coworkee:OData` too, on every route and in `IODataQueries`: `MaxNodeCount` (nodes of `$filter` and `$orderby`, default 100, which a search ORing `contains` over many fields soon exceeds), `MaxAnyAllExpressionDepth` (nested `any`/`all`, default 1), `MaxExpansionDepth` (nested `$expand`, default 2) and `MaxOrderByNodeCount` (properties in `$orderby`, default 5). Raise them only as far as a client needs: larger limits let every user send more expensive queries.
+
 The service document (`GET /odata`) and `GET /odata/$metadata` list every set and property name of the model, so they need a sign-in on every route (`401` without one), whatever the user's permissions. `Coworkee:OData:AnonymousMetadata` (`CoworkeeODataOptions.AnonymousMetadata`, default `false`) opens both again for clients that read the model anonymously; the sets keep their checks.
 
 ### Keys other than `Id`
