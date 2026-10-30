@@ -114,6 +114,36 @@ public sealed class BehaviorTests
     }
 
     [Fact]
+    public async Task A_middleware_ordered_like_caching_runs_once_in_a_cached_load()
+    {
+        var calls = new List<string>();
+        var dispatcher = Build(services =>
+        {
+            services.AddSingleton(calls);
+            services.AddSingleton(new Counter());
+            // registered before the caching middleware: it sorts inside it
+            services.Insert(0, ServiceDescriptor.Scoped<IRequestMiddleware, SameOrderAsCaching>());
+        });
+
+        (await dispatcher.SendAsync(new Count(), Ct)).Value.ShouldBe(1);
+        (await dispatcher.SendAsync(new Count(), Ct)).Value.ShouldBe(1);
+
+        calls.ShouldBe(["Count"]);
+    }
+
+    public sealed class SameOrderAsCaching(List<string> calls) : IRequestMiddleware
+    {
+        public int Order => MiddlewareOrder.Caching;
+
+        public Task<TResult> InvokeAsync<TRequest, TResult>(TRequest request, RequestHandlerDelegate<TResult> next, CancellationToken cancellationToken)
+            where TRequest : IRequest<TResult>
+        {
+            calls.Add(typeof(TRequest).Name);
+            return next();
+        }
+    }
+
+    [Fact]
     public async Task Failures_are_not_cached()
     {
         var counter = new Counter { FailNext = true };

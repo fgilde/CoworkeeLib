@@ -26,10 +26,13 @@ internal sealed class RequestInvoker<TRequest, TResult> : RequestInvoker<TResult
     where TRequest : IRequest<TResult>
 {
     public override Task<TResult> InvokeAsync(object request, IServiceProvider services, CancellationToken cancellationToken) =>
-        Pipeline((TRequest)request, services, cancellationToken, int.MinValue)();
+        Pipeline((TRequest)request, services, cancellationToken)();
 
-    /// <summary>The handler with its behaviors and the middlewares ordered after <paramref name="after"/>, from <paramref name="services"/>.</summary>
-    internal static RequestHandlerDelegate<TResult> Pipeline(TRequest typed, IServiceProvider services, CancellationToken cancellationToken, int after)
+    /// <summary>
+    /// The handler with its behaviors and middlewares from <paramref name="services"/>; with <paramref name="inside"/> only the middlewares that run
+    /// inside that one, by their place in the pipeline (an equal order sorts by registration).
+    /// </summary>
+    internal static RequestHandlerDelegate<TResult> Pipeline(TRequest typed, IServiceProvider services, CancellationToken cancellationToken, Type? inside = null)
     {
         var handler = services.GetService<IHandler<TRequest, TResult>>()
             ?? throw new InvalidOperationException($"No handler registered for '{typeof(TRequest).Name}'.");
@@ -41,7 +44,8 @@ internal sealed class RequestInvoker<TRequest, TResult> : RequestInvoker<TResult
             pipeline = () => behavior.HandleAsync(typed, inner, cancellationToken);
         }
 
-        foreach (var middleware in services.GetServices<IRequestMiddleware>().Where(m => m.Order > after).OrderByDescending(m => m.Order))
+        var middlewares = services.GetServices<IRequestMiddleware>().OrderByDescending(m => m.Order);
+        foreach (var middleware in inside is null ? middlewares : middlewares.TakeWhile(m => m.GetType() != inside))
         {
             var next = pipeline;
             pipeline = () => middleware.InvokeAsync(typed, next, cancellationToken);

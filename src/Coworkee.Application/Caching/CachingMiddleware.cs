@@ -25,7 +25,7 @@ internal sealed class CachingMiddleware(HybridCache cache, ICurrentUser currentU
             {
                 using var acting = CurrentUserScope.Begin(caller);
                 await using var scope = scopes.CreateAsyncScope();
-                return await RequestInvoker<TRequest, TResult>.Pipeline(request, scope.ServiceProvider, ct, Order)();
+                return await RequestInvoker<TRequest, TResult>.Pipeline(request, scope.ServiceProvider, ct, GetType())();
             }, cancellationToken);
         }
 
