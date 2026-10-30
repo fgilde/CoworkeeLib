@@ -96,6 +96,14 @@ public sealed class Product : AuditedEntity, IMultiTenant
 
 When the request asks for them with `Prefer: odata.include-annotations="cn.facets"` (or `"*"`, unless the route turns that off), the page carries the facet groups under `@cn.facets`: every option with label, count and the OData filter fragment to apply. The counts follow the current filter, the same way shop filters do. Enum options carry the member name as value and filter (`Status eq 'Shipped'`) and their `[Display]` name as label; `[Flags]` enums list each flag (`Options has 'Express'`). Number ranges and dates come with their smallest and largest value and a histogram of buckets. `[FacetBehavior]` next to `[ProvideFacet]`, or `services.ConfigureFacet<T>(...)`, sets the view and how values combine (*any of*, *all of*, single, with exclusion). With the `Coworkee-Facets` header a group counts without its own choice. [`CoworkeeDataTable`](../ui/data-table.md#facets) shows them in views that fit their values.
 
+### How facets are counted
+
+A filtered set of at most `Coworkee:OData:FacetRowLimit` rows (default 50,000) is read once, with only the members its facets need, and counted in memory: list groups of the row's own properties (text, enum, yes/no, whole numbers), number and date ranges with their histogram, and the options of [computed properties](#computed-properties) (their filters run in that read). The rest stays a database query, one for all list groups together: groups whose value or label is read through a navigation (`LabelPath = "it.Customer.Name"`), `Guid`, date or decimal values in list groups, `double` and `float` ranges, a group the user chose in the `Coworkee-Facets` header (it counts without its own choice), and every group of a set with more rows than the limit, plus three queries per range there. So a list of a few thousand rows answers its facets with one or two statements instead of one per group. The read goes through the same row filters, navigation scope and checks as the database queries. `0` turns it off. In memory values group exactly (a case-insensitive collation, such as SQL Server's default, would merge `Red` and `red`).
+
+```json
+{ "Coworkee": { "OData": { "FacetRowLimit": 50000 } } }
+```
+
 ![Brand facet with counts](../assets/screenshots/products.png){ .shot }
 
 ## Row level rules

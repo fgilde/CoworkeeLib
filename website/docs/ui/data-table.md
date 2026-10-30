@@ -111,6 +111,8 @@ With `AllowExclude` a value can also be excluded: the &#8856; button in lists, a
 
 Counts follow the other choices but leave a group's own choice out, the way shop filters do: after picking *Open*, *Shipped* still shows how many rows it would add. The table sends the choice apart from the rest of the filter in the `Coworkee-Facets` header; [client entities](client-entities.md) count the same way in the browser. *All of* groups count with their own choice, since every further value narrows.
 
+The facets come in a request of their own (`$top=0`, no `$count`, no `$expand`), so the rows show without waiting for them. The table asks for them when the filter, the search, the facet choice or the group selection changes, and after `ReloadAsync()` (a change of the rows, a live update), not for another page or sort; a newer filter cancels the request before. A failed facet request leaves the rows alone and is asked again with the next load. How the server counts them, and which groups stay database queries: [OData and facets](../web/odata.md#how-facets-are-counted).
+
 ### Configuring a facet
 
 On the server, next to `[ProvideFacet]`:

@@ -2,6 +2,21 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## 0.0.1.46 (unveröffentlicht)
+
+### Hinzugefügt
+
+- `Coworkee:OData:FacetRowLimit` (`CoworkeeODataOptions.FacetRowLimit`, Standard 50.000; 0 schaltet es ab, unter 0 verhindert den Start): Facetten eines gefilterten Sets mit höchstens so vielen Zeilen kommen aus einem Lesen der Member, die sie brauchen, und werden im Speicher gezählt (Listengruppen auf eigenen Eigenschaften der Zeile, Bereiche, berechnete Optionen) statt mit einer Abfrage je Gruppe. Gruppen über eine Navigation, `Guid`-, Datums- und Dezimalwerte in Listen, `double`/`float`-Bereiche, gewählte Gruppen und größere Sets bleiben Datenbankabfragen, alle Listengruppen in einer. Siehe [OData](../web/odata.md#wie-facetten-gezahlt-werden).
+
+### Geändert
+
+- `CoworkeeDataTable` lädt seine Facetten in einem eigenen Request (`$top=0`, ohne `$count`, ohne `$expand`): die Zeilen warten nicht mehr auf sie, und eine andere Seite oder Sortierung berechnet sie nicht neu; eine Änderung von Filter, Suche, Facette oder Gruppe und `ReloadAsync()` fragen sie neu an. Die Zeilen-Requests tragen kein `Facets` und keinen Facetten-Kontext mehr: ein `IODataClient` oder eine `ITableDataSource`, die Facetten mit den Zeilen beantwortet hat, bekommt sie in der eigenen Abfrage mit `Top = 0`. Siehe [Datentabellen](../ui/data-table.md#facetten).
+- Der Server zählt die Datums-Voreinstellungen von Nextended (`FacetRangeDefinition.Presets`) nicht mehr, die nie in der Antwort ankamen, und zählt keine Facettengruppe, die der Benutzer nicht bekommt (verweigert oder abgelehnt).
+
+### Behoben
+
+- Eine Datumsbereich-Facette auf einer `DateTime`-Eigenschaft (`FacetType.DateRange`) ließ jeden Facetten-Request ihres Sets mit `500` scheitern.
+
 ## 0.0.1.45 (2026-10-30)
 
 ### Hinzugefügt
