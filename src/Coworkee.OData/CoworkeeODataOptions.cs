@@ -33,6 +33,12 @@ public sealed class CoworkeeODataOptions
     /// </summary>
     public int FacetRowLimit { get; set; } = 50_000;
 
+    /// <summary>
+    /// A filtered set of more rows than this gets no facets: every group would read all of it. Checked with one count that stops after this many rows,
+    /// before any facet query. 0 (the default) counts the facets of every set.
+    /// </summary>
+    public int MaxFacetRows { get; set; }
+
     public int MaxExportRows { get; set; } = 100_000;
 
     /// <summary>Exports of more rows run as a background job; the user gets a download link when the file is ready.</summary>

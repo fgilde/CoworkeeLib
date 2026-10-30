@@ -37,6 +37,7 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
             .Validate(o => o.MaxOrderByNodeCount >= 1, "Coworkee:OData:MaxOrderByNodeCount is at least 1.")
             .Validate(o => o.MaxExpansionDepth >= 0, "Coworkee:OData:MaxExpansionDepth is at least 0.")
             .Validate(o => o.FacetRowLimit >= 0, "Coworkee:OData:FacetRowLimit is at least 0.")
+            .Validate(o => o.MaxFacetRows >= 0, "Coworkee:OData:MaxFacetRows is at least 0.")
             .ValidateOnStart();
         services.AddDataTransfer();
         services.Configure<ClientEntityOptions>(context.Configuration.GetSection(ClientEntityOptions.Section));
