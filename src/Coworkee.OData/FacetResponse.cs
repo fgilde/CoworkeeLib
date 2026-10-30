@@ -17,51 +17,64 @@ namespace Coworkee.OData;
 /// </summary>
 internal static class FacetResponse
 {
-    public static async Task<List<FacetGroupDto>> BuildAsync<T>(HttpContext http, IQueryable<T> visible, IQueryable<T> filtered, IReadOnlyList<FacetGroup> facets,
-        CancellationToken cancellationToken)
+    public static async Task<List<FacetGroupDto>> BuildAsync<T>(HttpContext http, IQueryable<T> visible, IQueryable<T> filtered, CancellationToken cancellationToken)
         where T : class
     {
         var services = http.RequestServices;
         var registry = services.GetRequiredService<ODataEntityRegistry>();
         var context = FacetContextDto.Decode(http.Request.Headers[FacetContextDto.Header]);
-        var result = new List<FacetGroupDto>(facets.Count);
         var denied = http.Items[ODataEntityAccess.DeniedItem] is Dictionary<string, IReadOnlySet<string>> byType
             ? byType.GetValueOrDefault(typeof(T).FullName!) ?? new HashSet<string>()
             : await ODataEntityAccess.DeniedPropertiesAsync(services, typeof(T), cancellationToken);
 
         var scoped = await ScopedAsync(http, filtered, cancellationToken);
         var prepared = Paths(typeof(T));
-        foreach (var facet in facets.Where(f => !denied.Contains(f.Field)))
+        // the groups as the builder declares them, without its counts: FacetCounts counts only the groups the user gets (its date presets never reached him)
+        var declared = await services.GetRequiredService<IFacetBuilder>().WithOptions(new FacetBuilderOptions { BuildLiterals = true, ComputeDynamicLists = false })
+            .BuildAsync(scoped, cancellationToken);
+        var groups = new List<(FacetGroup Group, bool Own)>();
+        foreach (var facet in declared.Where(f => !denied.Contains(f.Field)))
         {
-            if (!Checked(facet, prepared) || await RefusedAsync(visible, facet, http, cancellationToken))
+            if (Checked(facet, prepared) && !await RefusedAsync(visible, facet, http, cancellationToken))
             {
-                continue;
+                groups.Add((facet, context is not null && context.Groups.ContainsKey(facet.Key) && context.Combines?.GetValueOrDefault(facet.Key) != FacetCombine.All));
             }
+        }
 
-            var own = context is not null && context.Groups.ContainsKey(facet.Key) && context.Combines?.GetValueOrDefault(facet.Key) != FacetCombine.All;
+        var computed = services.GetRequiredService<Computed.ODataComputedProperties>().Of(typeof(T)).Where(p => p.Facet is not null && !denied.Contains(p.Name))
+            .Select(p => (Property: p, Own: context is not null && context.Groups.ContainsKey(p.Name))).ToList();
+
+        // a bounded set counts the groups of the row's own members in memory; the others, and all of a larger set, count in the database
+        var read = await FacetCounts.ReadAsync(http, filtered, [.. groups.Where(g => !g.Own).Select(g => g.Group)], [.. computed.Where(c => !c.Own).Select(c => c.Property)],
+            cancellationToken);
+        await FacetCounts.FromDatabaseAsync(scoped, [.. groups.Where(g => !g.Own && FacetCounts.IsList(g.Group) && read?.Lists.Contains(g.Group) != true).Select(g => g.Group)],
+            cancellationToken);
+
+        var result = new List<FacetGroupDto>(groups.Count + computed.Count);
+        foreach (var (facet, own) in groups)
+        {
             var rows = own ? ScopedQueryProvider.Wrap(await FilterAsync(visible, context!.Without(facet.Key), http, cancellationToken), ScopeOf<T>(http)) : scoped;
-            var group = facet;
-            if (own && facet.Type is not (FacetType.Range or FacetType.DateRange))
+            if (own && FacetCounts.IsList(facet))
             {
-                // ponytail: one build per chosen group computes every group; build only the asked group when facets get many
-                var rebuilt = await services.GetRequiredService<IFacetBuilder>().BuildAsync(rows, cancellationToken);
-                group = rebuilt.FirstOrDefault(g => g.Key == facet.Key) ?? facet;
+                await FacetCounts.FromDatabaseAsync(rows, [facet], cancellationToken);
             }
 
-            var dto = FacetDtos.From(group, typeof(T), registry);
-            if (dto.ValueKind is FacetValueKind.Number or FacetValueKind.Date && facet.Type is FacetType.Range or FacetType.DateRange)
+            var dto = FacetDtos.From(facet, typeof(T), registry);
+            if (dto.ValueKind is FacetValueKind.Number or FacetValueKind.Date && FacetCounts.IsRange(facet))
             {
                 var property = typeof(T).GetProperty(facet.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-                dto = await FacetRanges.AddAsync(dto, rows, property is null ? 12 : registry.FacetBehavior(typeof(T), property)?.Buckets ?? 12, cancellationToken);
+                dto = await FacetRanges.AddAsync(dto, read?.Ranges.Contains(facet) == true ? read.Rows : rows,
+                    property is null ? 12 : registry.FacetBehavior(typeof(T), property)?.Buckets ?? 12, cancellationToken);
             }
 
             result.Add(dto);
         }
 
-        foreach (var property in services.GetRequiredService<Computed.ODataComputedProperties>().Of(typeof(T)).Where(p => p.Facet is not null && !denied.Contains(p.Name)))
+        foreach (var (property, own) in computed)
         {
-            var own = context is not null && context.Groups.ContainsKey(property.Name);
-            result.Add(await ComputedAsync(property, own ? await FilterAsync(visible, context!.Without(property.Name), http, cancellationToken) : filtered, http, cancellationToken));
+            result.Add(!own && read?.Computed.GetValueOrDefault(property.Name) is { } counts
+                ? ComputedGroup(property, counts)
+                : await ComputedAsync(property, own ? await FilterAsync(visible, context!.Without(property.Name), http, cancellationToken) : filtered, http, cancellationToken));
         }
 
         // the facets are built in CLR names; a route that renames properties gets its own names, which its filters understand
@@ -70,20 +83,25 @@ internal static class FacetResponse
             : result;
     }
 
-    // ponytail: one count per option; fine for the handful of workflow states, group in the database if options get many
+    // ponytail: one count per option for a chosen group or a set above the facet row limit; fine for the handful of workflow states
     private static async Task<FacetGroupDto> ComputedAsync<T>(Computed.ODataComputedProperty property, IQueryable<T> rows, HttpContext http, CancellationToken cancellationToken)
         where T : class
     {
-        var options = new List<FacetOptionDto>();
+        var counts = new List<int>();
         foreach (var option in property.Facet!.Options)
         {
-            var count = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(await FilterAsync(rows, option.OData, http, cancellationToken, clrNames: true), cancellationToken);
-            options.Add(new FacetOptionDto(JsonSerializer.SerializeToElement(option.Value), option.Label, count > 0, count, option.OData)
-            {
-                Meta = option.Color is null ? null : new Dictionary<string, string> { ["color"] = option.Color },
-            });
+            counts.Add(await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(await FilterAsync(rows, option.OData, http, cancellationToken, clrNames: true), cancellationToken));
         }
 
+        return ComputedGroup(property, [.. counts]);
+    }
+
+    private static FacetGroupDto ComputedGroup(Computed.ODataComputedProperty property, int[] counts)
+    {
+        var options = property.Facet!.Options.Select((option, i) => new FacetOptionDto(JsonSerializer.SerializeToElement(option.Value), option.Label, counts[i] > 0, counts[i], option.OData)
+        {
+            Meta = option.Color is null ? null : new Dictionary<string, string> { ["color"] = option.Color },
+        }).ToList();
         return new FacetGroupDto(property.Name, property.Facet.Label, property.Name, FacetKind.CheckboxList, FacetOperator.Or, options, true, int.MaxValue)
         {
             ValuePath = property.Name,
