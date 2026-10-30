@@ -92,6 +92,8 @@ internal static class FacetCounts
         var row = Expression.MemberInit(Expression.New(create), members.Select(m => Expression.Bind(m, Expression.Property(it, m))));
         var matches = Expression.NewArrayInit(typeof(bool), options.SelectMany(o => o.Filters).Select(f => ReplacingExpressionVisitor.Replace(f.Parameters[0], it, f.Body)));
         var shape = Expression.Lambda<Func<T, Row<T>>>(Expression.New(typeof(Row<T>).GetConstructors()[0], row, matches), it);
+        // ponytail: a set above the limit pays this read of limit + 1 rows before the database counts; a COUNT first would cost every bounded set a statement.
+        // No OrderBy: which rows come first does not matter (EF logs its Take-without-OrderBy warning once, as for the list union)
         var loaded = await filtered.Select(shape).Take(limit + 1).ToListAsync(cancellationToken);
         if (loaded.Count > limit)
         {
