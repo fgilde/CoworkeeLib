@@ -280,6 +280,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
     {
         _selection.Changed -= Reload;
         _live?.Cancel();
+        _facetLoad?.Cancel();
         if (Themes is { } themes)
         {
             themes.Changed -= FollowSettings;
@@ -294,6 +295,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
     public Task ReloadAsync()
     {
         _pages?.Clear();
+        _facetKey = null; // rows changed, or the group selection: the counts too
         return _grid?.ReloadServerData() ?? Task.CompletedTask;
     }
 
@@ -407,25 +409,10 @@ public partial class CoworkeeDataTable<T> : IDisposable
     private async Task<GridData<T>> LoadAsync(GridState<T> state, CancellationToken cancellationToken)
     {
         _orderBy = OrderBy(state.SortDefinitions);
-        var query = new ODataQuery
-        {
-            Filter = CurrentFilter,
-            OrderBy = _orderBy,
-            Expand = Expand,
-            Top = state.PageSize,
-            Skip = state.Page * state.PageSize,
-            Facets = Facets,
-            FacetContext = Facets ? _selection.Context(BaseFilter, _facets) : null,
-        };
-        var page = await QueryAsync(query, cancellationToken);
+        var filter = CurrentFilter;
+        LoadFacets(filter, Facets ? _selection.Context(BaseFilter, _facets) : null);
+        var page = await QueryAsync(new ODataQuery { Filter = filter, OrderBy = _orderBy, Expand = Expand, Top = state.PageSize, Skip = state.Page * state.PageSize }, cancellationToken);
         await OnLoaded.InvokeAsync(page.Items);
-        if (Facets)
-        {
-            ShowFacets(page.Facets);
-            MarkFacetColumns();
-            StateHasChanged();
-        }
-
         return new GridData<T> { Items = page.Items, TotalItems = (int)(page.Count ?? page.Items.Count) };
     }
 

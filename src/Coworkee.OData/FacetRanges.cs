@@ -29,7 +29,7 @@ internal static class FacetRanges
         CancellationToken cancellationToken)
     {
         var values = rows.Select(Expression.Lambda<Func<T, decimal?>>(Expression.Convert(member, typeof(decimal?)), it));
-        if (await values.MinAsync(cancellationToken) is not { } min || await values.MaxAsync(cancellationToken) is not { } max)
+        if (await Run(values, () => values.MinAsync(cancellationToken), values.Min) is not { } min || await Run(values, () => values.MaxAsync(cancellationToken), values.Max) is not { } max)
         {
             return group with { Options = [] };
         }
@@ -54,7 +54,7 @@ internal static class FacetRanges
         where TValue : struct
     {
         var values = rows.Select(Expression.Lambda<Func<T, TValue?>>(member.Type == typeof(TValue?) ? member : Expression.Convert(member, typeof(TValue?)), it));
-        if (await values.MinAsync(cancellationToken) is not { } min || await values.MaxAsync(cancellationToken) is not { } max)
+        if (await Run(values, () => values.MinAsync(cancellationToken), values.Min) is not { } min || await Run(values, () => values.MaxAsync(cancellationToken), values.Max) is not { } max)
         {
             return group with { Options = [] };
         }
@@ -88,10 +88,10 @@ internal static class FacetRanges
             index = Expression.Condition(Expression.LessThan(value, Expression.Constant(uppers[i], typeof(TValue?))), Expression.Constant(i), index);
         }
 
-        var counts = await values.Where(Expression.Lambda<Func<TValue?, bool>>(Expression.NotEqual(value, Expression.Constant(null, typeof(TValue?))), value))
+        var grouped = values.Where(Expression.Lambda<Func<TValue?, bool>>(Expression.NotEqual(value, Expression.Constant(null, typeof(TValue?))), value))
             .GroupBy(Expression.Lambda<Func<TValue?, int>>(index, value))
-            .Select(g => new { g.Key, Count = g.Count() })
-            .ToListAsync(cancellationToken);
+            .Select(g => new { g.Key, Count = g.Count() });
+        var counts = await Run(grouped, () => grouped.ToListAsync(cancellationToken), grouped.ToList);
         var result = new int[uppers.Count + 1];
         foreach (var count in counts)
         {
@@ -100,6 +100,10 @@ internal static class FacetRanges
 
         return result;
     }
+
+    // the rows of a bounded set are in memory (FacetCounts), which has no async queries
+    private static Task<TResult> Run<TResult>(IQueryable rows, Func<Task<TResult>> database, Func<TResult> memory) =>
+        rows.Provider is Microsoft.EntityFrameworkCore.Query.IAsyncQueryProvider ? database() : Task.FromResult(memory());
 
     private static TValue Value<TValue>(DateTime day) => (TValue)(object)(typeof(TValue) == typeof(DateTimeOffset) ? new DateTimeOffset(day, TimeSpan.Zero)
         : typeof(TValue) == typeof(DateOnly) ? DateOnly.FromDateTime(day) : DateTime.SpecifyKind(day, DateTimeKind.Utc));

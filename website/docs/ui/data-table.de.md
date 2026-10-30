@@ -111,6 +111,8 @@ Mit `AllowExclude` lässt sich ein Wert auch ausschließen: die Schaltfläche &#
 
 Die Anzahlen folgen den anderen Auswahlen, lassen aber die eigene Auswahl einer Gruppe weg, wie in Shop-Filtern: nach *Offen* zeigt *Unterwegs* weiter, wie viele Zeilen es hinzufügen würde. Die Tabelle schickt die Auswahl getrennt vom übrigen Filter im Header `Coworkee-Facets`; [Client-Entities](client-entities.md) zählen im Browser genauso. Gruppen mit *alle von* zählen mit ihrer eigenen Auswahl, weil jeder weitere Wert einschränkt.
 
+Die Facetten kommen in einem eigenen Request (`$top=0`, ohne `$count`, ohne `$expand`), die Zeilen erscheinen also, ohne auf sie zu warten. Die Tabelle fragt sie an, wenn sich Filter, Suche, Facettenauswahl oder Gruppenauswahl ändern, und nach `ReloadAsync()` (geänderte Zeilen, ein Live-Update), nicht für eine andere Seite oder Sortierung; ein neuerer Filter bricht den vorigen Request ab. Ein fehlgeschlagener Facetten-Request lässt die Zeilen in Ruhe und wird beim nächsten Laden wiederholt. Wie der Server sie zählt und welche Gruppen Datenbankabfragen bleiben: [OData und Facetten](../web/odata.md#wie-facetten-gezahlt-werden).
+
 ### Eine Facette einstellen
 
 Auf dem Server, neben `[ProvideFacet]`:

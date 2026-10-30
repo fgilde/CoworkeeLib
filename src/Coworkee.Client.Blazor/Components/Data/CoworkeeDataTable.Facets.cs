@@ -13,6 +13,8 @@ public partial class CoworkeeDataTable<T>
     private IReadOnlyList<QueryField>? _queryFields;
     private string? _lastAdvanced;
     private bool _advancedOpen;
+    private string? _facetKey;
+    private CancellationTokenSource? _facetLoad;
 
     /// <summary>The page's say per facet group key: view, "any of / all of", exclusion, hiding. Wins over the server's [FacetBehavior].</summary>
     [Parameter] public IReadOnlyDictionary<string, FacetSettings>? FacetSettings { get; set; }
@@ -50,6 +52,44 @@ public partial class CoworkeeDataTable<T>
     {
         _facets = Shape(groups);
         _queryFields = null;
+    }
+
+    /// <summary>
+    /// The facets of the rows' filter in a request of their own ($top=0, no count, no expand), so the rows do not wait for them: asked when filter, search,
+    /// choice or group selection changed or the table reloads, not for another page or sort. A newer filter cancels the request before.
+    /// </summary>
+    private void LoadFacets(string? filter, FacetContextDto? context)
+    {
+        var key = $"{filter}\n{context?.Encode()}";
+        if (!Facets || key == _facetKey)
+        {
+            return;
+        }
+
+        _facetKey = key;
+        _facetLoad?.Cancel();
+        var cancel = _facetLoad = new CancellationTokenSource();
+        _ = InvokeAsync(async () =>
+        {
+            try
+            {
+                var page = await QueryAsync(new ODataQuery { Filter = filter, Top = 0, Count = false, Facets = true, FacetContext = context }, cancel.Token);
+                if (!cancel.IsCancellationRequested)
+                {
+                    ShowFacets(page.Facets);
+                    MarkFacetColumns();
+                    StateHasChanged();
+                }
+            }
+            catch (Exception exception) when (exception is OperationCanceledException or Api.ApiException or HttpRequestException)
+            {
+                // the rows work without them; the next load asks again
+                if (_facetKey == key)
+                {
+                    _facetKey = null;
+                }
+            }
+        });
     }
 
     private Task AdvancedChangedAsync(QueryGroup query)

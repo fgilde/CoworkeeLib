@@ -96,6 +96,14 @@ public sealed class Product : AuditedEntity, IMultiTenant
 
 Fragt der Request mit `Prefer: odata.include-annotations="cn.facets"` danach (oder mit `"*"`, außer die Route schaltet das ab), enthält die Seite die Facettengruppen unter `@cn.facets`: jede Option mit Beschriftung, Anzahl und dem OData-Filterfragment, das sie setzt. Die Zahlen folgen dem aktuellen Filter, wie man es von Shop-Filtern kennt. Enum-Optionen tragen den Membernamen als Wert und Filter (`Status eq 'Shipped'`) und ihren `[Display]`-Namen als Beschriftung; `[Flags]`-Enums listen jedes Flag einzeln (`Options has 'Express'`). Zahlenbereiche und Datumswerte kommen mit kleinstem und größtem Wert und einem Histogramm. `[FacetBehavior]` neben `[ProvideFacet]` oder `services.ConfigureFacet<T>(...)` legt die Ansicht fest und wie Werte verknüpft werden (*eines von*, *alle von*, einzeln, mit Ausschluss). Mit dem Header `Coworkee-Facets` zählt eine Gruppe ohne ihre eigene Auswahl. [`CoworkeeDataTable`](../ui/data-table.md#facetten) zeigt sie in Ansichten passend zu ihren Werten.
 
+### Wie Facetten gezählt werden
+
+Ein gefiltertes Set mit höchstens `Coworkee:OData:FacetRowLimit` Zeilen (Standard 50.000) wird einmal gelesen, nur mit den Membern, die seine Facetten brauchen, und im Speicher gezählt: Listengruppen auf eigenen Eigenschaften der Zeile (Text, Enum, ja/nein, ganze Zahlen), Zahlen- und Datumsbereiche mit ihrem Histogramm und die Optionen [berechneter Eigenschaften](#berechnete-eigenschaften) (ihre Filter laufen in diesem Lesen mit). Der Rest bleibt eine Datenbankabfrage, eine für alle Listengruppen zusammen: Gruppen, deren Wert oder Beschriftung über eine Navigation gelesen wird (`LabelPath = "it.Customer.Name"`), `Guid`-, Datums- oder Dezimalwerte in Listengruppen, `double`- und `float`-Bereiche, eine Gruppe, die der Benutzer im Header `Coworkee-Facets` gewählt hat (sie zählt ohne ihre eigene Auswahl), und jede Gruppe eines Sets mit mehr Zeilen als dem Limit, dort dazu drei Abfragen je Bereich. Eine Liste mit einigen tausend Zeilen beantwortet ihre Facetten so mit ein oder zwei Statements statt einem je Gruppe. Das Lesen geht durch dieselben Zeilenfilter, denselben Navigations-Scope und dieselben Prüfungen wie die Datenbankabfragen. `0` schaltet es ab. Im Speicher werden Werte exakt gruppiert (eine Collation ohne Groß-/Kleinschreibung wie die Standard-Collation von SQL Server würde `Red` und `red` zusammenfassen).
+
+```json
+{ "Coworkee": { "OData": { "FacetRowLimit": 50000 } } }
+```
+
 ![Marken-Facette mit Anzahlen](../assets/screenshots/products.png){ .shot }
 
 ## Regeln pro Zeile

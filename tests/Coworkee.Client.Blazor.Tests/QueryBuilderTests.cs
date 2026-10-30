@@ -94,7 +94,7 @@ public sealed class QueryBuilderTests : ClientTestBase
     {
         var odata = new FakeODataClient().With("Gadgets", new DataTableTests.Gadget(Guid.NewGuid(), "Drill", "Tools"));
         ODataQuery? last = null;
-        odata.Queried += (_, q) => last = q;
+        odata.Queried += (_, q) => last = q.Facets ? q : last;
         Services.AddSingleton<IODataClient>(odata);
         AddAuthorization().SetAuthorized("Ada");
         Render<MudPopoverProvider>();
@@ -127,7 +127,7 @@ public sealed class QueryBuilderTests : ClientTestBase
             [new(System.Text.Json.JsonSerializer.SerializeToElement("Shipped"), "On the way", true, 2, "Status eq 'Shipped'")], true, 0) { ValueKind = FacetValueKind.Enum };
         var odata = new FakeODataClient().With("Gadgets", new DataTableTests.Gadget(Guid.NewGuid(), "Drill", "Tools")).WithFacets(status);
         ODataQuery? last = null;
-        odata.Queried += (_, q) => last = q;
+        odata.Queried += (_, q) => last = q.Facets ? q : last;
         Services.AddSingleton<IODataClient>(odata);
         AddAuthorization().SetAuthorized("Ada");
         var popovers = Render<MudPopoverProvider>();

@@ -2,6 +2,21 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## 0.0.1.46 (unreleased)
+
+### Added
+
+- `Coworkee:OData:FacetRowLimit` (`CoworkeeODataOptions.FacetRowLimit`, default 50,000; 0 turns it off, below 0 stops the start): facets of a filtered set of at most that many rows come from one read of the members they need and are counted in memory (list groups of the row's own properties, ranges, computed options) instead of one query per group. Groups through a navigation, `Guid`, date and decimal list values, `double`/`float` ranges, chosen groups and larger sets stay database queries, all list groups in one. See [OData](../web/odata.md#how-facets-are-counted).
+
+### Changed
+
+- `CoworkeeDataTable` loads its facets in a request of their own (`$top=0`, no `$count`, no `$expand`): the rows no longer wait for them, and another page or sort no longer recomputes them; a filter, search, facet or group change and `ReloadAsync()` ask again. Its row requests carry no `Facets` and no facet context any more: an `IODataClient` or `ITableDataSource` that answered facets with the rows gets them in the separate `Top = 0` query. See [data tables](../ui/data-table.md#facets).
+- The server no longer counts Nextended's date presets (`FacetRangeDefinition.Presets`), which never reached the response, and counts no facet group the user does not get (denied or refused).
+
+### Fixed
+
+- A date range facet on a `DateTime` property (`FacetType.DateRange`) failed every facet request of its set with `500`.
+
 ## 0.0.1.45 (2026-10-30)
 
 ### Added

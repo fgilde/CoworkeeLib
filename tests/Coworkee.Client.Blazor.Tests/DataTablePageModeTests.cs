@@ -28,7 +28,8 @@ public sealed class DataTablePageModeTests : ClientTestBase
 
         table.WaitForAssertion(() => table.Find("[data-testid='table-total']").TextContent.ShouldContain("500"));
         table.FindAll(".mud-table-pagination-actions").ShouldBeEmpty();
-        _odata.Queries.ShouldContain(q => q.Skip == 0 && q.Top == 50 && q.Count && q.Facets);
+        _odata.Queries.ShouldContain(q => q.Skip == 0 && q.Top == 50 && q.Count && !q.Facets);
+        _odata.Queries.ShouldContain(q => q.Top == 0 && q.Facets && !q.Count, "the facets come in a request of their own");
         _odata.Queries.Where(q => q.Skip == 0).Count(q => q.Count).ShouldBe(1, "a page is loaded once per query");
         table.Find(".mud-table-body-virtualized");
     }

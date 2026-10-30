@@ -57,7 +57,7 @@ public sealed class RecordingLoggerProvider : ILoggerProvider
         {
             if (IsEnabled(logLevel))
             {
-                owner.Warnings.Enqueue(formatter(state, exception));
+                owner.Warnings.Enqueue(formatter(state, exception) + (exception is null ? "" : "\n" + exception));
             }
         }
     }

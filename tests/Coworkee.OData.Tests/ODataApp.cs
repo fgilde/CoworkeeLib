@@ -40,6 +40,9 @@ public sealed class ODataApp : DatabaseFixture
     /// <summary>The warnings the app logged.</summary>
     public RecordingLoggerProvider Logs { get; } = new();
 
+    /// <summary>The SQL statements the app ran.</summary>
+    public CommandRecorder Commands { get; } = new();
+
     public override async ValueTask InitializeAsync()
     {
         await base.InitializeAsync();
@@ -76,6 +79,7 @@ public sealed class ODataApp : DatabaseFixture
         builder.AddCoworkee<GadgetModule>();
         builder.Services.AddTestAuthentication();
         builder.Logging.AddProvider(Logs);
+        builder.Services.AddSingleton<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor>(Commands);
         builder.Services.AddSingleton(provider => new InlineBackgroundJobs.Root(provider));
         builder.Services.AddScoped<Coworkee.BackgroundJobs.IBackgroundJobs, InlineBackgroundJobs>();
         builder.Services.AddSingleton<Transfer.IExportMailer>(Mails);
@@ -189,6 +193,7 @@ internal sealed class GadgetModelContributor : IModelContributor
     {
         modelBuilder.Entity<Gadget>(gadget => gadget.ToTable("Gadgets"));
         modelBuilder.Entity<Widget>(widget => widget.ToTable("Widgets"));
+        modelBuilder.Entity<Pump>(pump => pump.ToTable("Pumps"));
         modelBuilder.Entity<Part>(part => part.ToTable("Parts"));
         modelBuilder.Entity<Crate>(crate => crate.ToTable("Crates"));
         modelBuilder.Entity<Shelf>(shelf =>
@@ -258,6 +263,8 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddGlobalSearch<Gadget>(s => s.Fields(g => g.Name, g => g.Category).Subtitle(g => g.Category).Page("/gadgets"));
         context.Services.AddODataEntity<Widget>("Widgets", ODataApp.ViewGadgets);
         context.Services.ConfigureFacet<Widget>(w => w.Color, f => f.View = Contracts.Data.FacetView.Buttons);
+        context.Services.AddODataEntity<Pump>("Pumps", ODataApp.ViewGadgets);
+        context.Services.AddSingleton<Coworkee.OData.Computed.IODataComputedPropertySource, PumpSize>();
         context.Services.AddMessagingFromAssembly(typeof(GadgetModule).Assembly);
         context.Services.AddODataImport<AddGadgetCommand>("Gadgets");
         context.Services.AddODataEntity<Part>("Parts", ODataApp.ViewGadgets);

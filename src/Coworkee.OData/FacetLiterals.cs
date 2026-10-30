@@ -15,7 +15,10 @@ internal sealed class FacetLiterals : IODataLiteralFormatter
         DefaultODataLiteralFormatter.ToSimpleLiteral(value, type);
 
     public string RangeClause(string field, object fromInclusive, object toExclusive, Type type) =>
-        $"({field} ge {ToLiteral(fromInclusive, type)} and {field} lt {ToLiteral(toExclusive, type)})";
+        $"({field} ge {ToLiteral(Of(fromInclusive, type), type)} and {field} lt {ToLiteral(Of(toExclusive, type), type)})";
+
+    // the date presets of a DateTime come as DateTimeOffsets, which do not convert to DateTime
+    private static object Of(object value, Type type) => value is DateTimeOffset offset && type == typeof(DateTime) ? offset.UtcDateTime : value;
 
     /// <summary>A boolean as databases return it: "true", "True" or "1".</summary>
     public static bool Flag(string text) =>

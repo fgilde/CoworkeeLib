@@ -131,11 +131,7 @@ internal static class ODataPipeline
         {
             // Nextended's own build would count on the filter without the navigation scope: an oracle on hidden rows
             var filtered = await scope.ApplyAsync(visible.ApplyODataFilter(Options<TEntity>(http.Request)), cancellationToken);
-            var options = FacetLiterals.Options();
-            var builder = http.RequestServices.GetRequiredService<IFacetBuilder>().WithOptions(options);
-            var source = await FacetResponse.ScopedAsync(http, options.IsDisjunctiveBuild ? filtered : visible, cancellationToken);
-            var facets = options.IsDisjunctiveBuild ? await builder.BuildAsync(_ => Task.FromResult(source), [], cancellationToken) : await builder.BuildAsync(source, cancellationToken);
-            http.Items[FacetResourceSetSerializer.FacetsAnnotationName] = await FacetResponse.BuildAsync(http, visible, filtered, facets, cancellationToken);
+            http.Items[FacetResourceSetSerializer.FacetsAnnotationName] = await FacetResponse.BuildAsync(http, visible, filtered, cancellationToken);
         }
 
         return rows;

@@ -64,26 +64,17 @@ public partial class CoworkeeDataTable<T>
         var key = string.Join('\n', filter, _orderBy, Expand, System.Text.Json.JsonSerializer.Serialize(context));
         var fresh = false;
         var pages = Pages;
+        LoadFacets(filter, context);
         var items = await pages.GetAsync(key, state.StartIndex, state.Count, async (skip, top, first) =>
         {
             fresh |= first;
-            var page = await QueryAsync(new ODataQuery
-            {
-                Filter = filter, OrderBy = _orderBy, Expand = Expand, Top = top, Skip = skip, Count = first, Facets = Facets && first, FacetContext = first ? context : null,
-            }, cancellationToken);
+            var page = await QueryAsync(new ODataQuery { Filter = filter, OrderBy = _orderBy, Expand = Expand, Top = top, Skip = skip, Count = first }, cancellationToken);
             await OnLoaded.InvokeAsync(page.Items);
-            // a load the grid gave up on (newer query) leaves the facets alone
-            if (Facets && first && !cancellationToken.IsCancellationRequested)
-            {
-                ShowFacets(page.Facets);
-                MarkFacetColumns();
-            }
-
             return page;
         });
         if (fresh)
         {
-            // the total below the rows and the facets of the new query
+            // the total below the rows
             StateHasChanged();
         }
 

@@ -448,6 +448,20 @@
           "files": [ "src/**/*.cs" ]
         }
       ]
+    },
+    {
+      "version": "0.0.1.46",
+      "breaking": [
+        "CoworkeeDataTable loads its facets in a request of their own ($top=0, no $count, no $expand); its row requests carry no Facets and no FacetContext any more.",
+        "Facets of a filtered set of at most Coworkee:OData:FacetRowLimit rows (default 50,000) are counted in memory from one read; list groups group values exactly there, where a case-insensitive collation merged them before."
+      ],
+      "manual": [
+        {
+          "text": "An own IODataClient or ITableDataSource that answered facets together with the rows (or a workaround that loaded them in the background, such as a deferred facets client) gets them in a separate query with Top = 0 and Facets = true now; drop the workaround and answer that query.",
+          "find": "\\bFacets\\s*=\\s*(true|false)|ITableDataSource<|: IODataClient\\b",
+          "files": [ "src/**/*.cs" ]
+        }
+      ]
     }
   ]
 }

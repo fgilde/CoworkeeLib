@@ -27,6 +27,12 @@ public sealed class CoworkeeODataOptions
     /// </summary>
     public bool AnonymousMetadata { get; set; }
 
+    /// <summary>
+    /// Facets of a filtered set of at most this many rows are counted from one read of the members they need, in memory, instead of one query per
+    /// group. Groups through a navigation and the user's chosen groups stay database queries, and so does everything for a larger set. 0 turns the read off.
+    /// </summary>
+    public int FacetRowLimit { get; set; } = 50_000;
+
     public int MaxExportRows { get; set; } = 100_000;
 
     /// <summary>Exports of more rows run as a background job; the user gets a download link when the file is ready.</summary>
