@@ -96,6 +96,16 @@ public sealed class FacetPassTests(ODataApp app) : IAsyncLifetime
         (await FacetStatementsAsync("Pumps", bounded, "Active eq true")).ShouldBeLessThanOrEqualTo(2, "four rows are not");
     }
 
+    [Fact]
+    public async Task A_set_above_the_facet_cap_gets_no_facets_for_one_bounded_count()
+    {
+        await using var capped = await app.StartAnotherAsync(new Dictionary<string, string> { ["Coworkee:OData:MaxFacetRows"] = "4" });
+
+        (await FacetsAsync(capped, "Pumps", null)).ShouldBeEmpty("five rows are more than four");
+        (await FacetStatementsAsync("Pumps", capped)).ShouldBe(1);
+        Shape(await FacetsAsync(capped, "Pumps", "Active eq true")).ShouldBe(Shape(await FacetsAsync(app.App, "Pumps", "Active eq true")), "four rows are not");
+    }
+
     // the statements a facet request runs on top of the same request without facets
     private async Task<int> FacetStatementsAsync(string set, WebApplication? on = null, string? filter = null)
     {

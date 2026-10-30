@@ -5,6 +5,7 @@ using Coworkee.Contracts.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData.Extensions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.OData.Edm;
 using Nextended.Core.Facets;
 using Nextended.Web.OData;
@@ -21,6 +22,12 @@ internal static class FacetResponse
         where T : class
     {
         var services = http.RequestServices;
+        if (services.GetRequiredService<IOptions<CoworkeeODataOptions>>().Value.MaxFacetRows is > 0 and var max
+            && await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(filtered.Take(max + 1), cancellationToken) > max)
+        {
+            return [];
+        }
+
         var registry = services.GetRequiredService<ODataEntityRegistry>();
         var context = FacetContextDto.Decode(http.Request.Headers[FacetContextDto.Header]);
         var denied = http.Items[ODataEntityAccess.DeniedItem] is Dictionary<string, IReadOnlySet<string>> byType

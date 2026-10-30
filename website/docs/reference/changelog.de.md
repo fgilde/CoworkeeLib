@@ -2,7 +2,13 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
-## 0.0.1.46 (unveröffentlicht)
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- `Coworkee:OData:MaxFacetRows` (`CoworkeeODataOptions.MaxFacetRows`, Standard 0 = aus; unter 0 verhindert den Start): ein gefiltertes Set mit mehr Zeilen bekommt keine Facetten, geprüft mit einer Zählung, die nach so vielen Zeilen aufhört. Für Listen, die die ganze Datenbank erreichen können, wo jede Facettengruppe alles lesen würde. Siehe [OData](../web/odata.md#wie-facetten-gezahlt-werden).
+
+## 0.0.1.46 (2026-10-30)
 
 ### Hinzugefügt
 

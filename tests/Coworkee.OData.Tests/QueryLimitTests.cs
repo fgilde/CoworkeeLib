@@ -91,6 +91,8 @@ public sealed class QueryLimitTests(ODataApp app) : IAsyncLifetime
     [InlineData("MaxAnyAllExpressionDepth", "0")]
     [InlineData("MaxOrderByNodeCount", "0")]
     [InlineData("MaxExpansionDepth", "-1")]
+    [InlineData("FacetRowLimit", "-1")]
+    [InlineData("MaxFacetRows", "-1")]
     public async Task A_limit_out_of_range_stops_the_start(string option, string value)
     {
         var refused = await Should.ThrowAsync<Microsoft.Extensions.Options.OptionsValidationException>(async () =>

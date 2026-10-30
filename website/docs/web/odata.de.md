@@ -104,6 +104,12 @@ Ein gefiltertes Set mit höchstens `Coworkee:OData:FacetRowLimit` Zeilen (Standa
 { "Coworkee": { "OData": { "FacetRowLimit": 50000 } } }
 ```
 
+Eine Liste, die die ganze Datenbank erreichen kann, kann ihre Facetten ab einer Größe auslassen: mit `Coworkee:OData:MaxFacetRows` bekommt ein gefiltertes Set mit mehr Zeilen keine (eine leere Liste), geprüft mit einer Zählung, die nach so vielen Zeilen aufhört, vor jeder Facettenabfrage. Der Client kann sagen, warum (etwa „Filter enger wählen“); seine Zeilen kommen trotzdem. `0` (Standard) zählt die Facetten jedes Sets.
+
+```json
+{ "Coworkee": { "OData": { "MaxFacetRows": 20000 } } }
+```
+
 ![Marken-Facette mit Anzahlen](../assets/screenshots/products.png){ .shot }
 
 ## Regeln pro Zeile

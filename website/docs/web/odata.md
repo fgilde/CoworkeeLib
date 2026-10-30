@@ -104,6 +104,12 @@ A filtered set of at most `Coworkee:OData:FacetRowLimit` rows (default 50,000) i
 { "Coworkee": { "OData": { "FacetRowLimit": 50000 } } }
 ```
 
+A list that may reach the whole database can skip its facets above a size: with `Coworkee:OData:MaxFacetRows` set, a filtered set of more rows gets none (an empty list), checked with one count that stops after that many rows, before any facet query. The client can say why (for example "pick a narrower filter"); its rows still come. `0` (the default) counts the facets of every set.
+
+```json
+{ "Coworkee": { "OData": { "MaxFacetRows": 20000 } } }
+```
+
 ![Brand facet with counts](../assets/screenshots/products.png){ .shot }
 
 ## Row level rules

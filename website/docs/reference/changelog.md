@@ -2,7 +2,13 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
-## 0.0.1.46 (unreleased)
+## Unreleased
+
+### Added
+
+- `Coworkee:OData:MaxFacetRows` (`CoworkeeODataOptions.MaxFacetRows`, default 0 = off; below 0 stops the start): a filtered set of more rows than this gets no facets, checked with one count that stops after that many rows. For lists that may reach the whole database, where every facet group would read all of it. See [OData](../web/odata.md#how-facets-are-counted).
+
+## 0.0.1.46 (2026-10-30)
 
 ### Added
 
