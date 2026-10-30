@@ -18,6 +18,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 - Requests waiting on the same cold cache load (a user's or a client's permissions, settings, features, texts, the auth server's branding and clients, cached queries) failed with `500` ("Connection is not open", a disposed context, a canceled task) when the request that started the load ended first, e.g. a browser aborting it on navigation. Every shared load runs in a scope of its own now.
 - A failed cached query reached the other requests waiting on it as a success with an empty value; they get the failure now.
 - `SelectGroups` (`PUT /api/v1/identity/groups/mine/selection`) twice at once for one user: the same selection failed with `500` on the primary key, different ones could be stored mixed or fail with `500`. They run one after the other now: both succeed, the later one stays.
+- A cached query whose load outlived the request that started it computed with the user's full rights instead of the API key's scopes, and `CacheScope.User` entries were shared by a user's session, his API keys and a "Log in as" session. `HttpCurrentUser` takes the key and its scopes from the captured caller once the request is gone (a key's limits are never dropped), a user's entry is kept per key or session and per impersonator, and the group selection applies to a captured session (`ICurrentUser.IsInteractive`, new, default `false`).
 
 ## 0.0.1.44 (2026-10-29)
 

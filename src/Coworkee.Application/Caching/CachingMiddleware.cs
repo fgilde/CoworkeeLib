@@ -101,10 +101,14 @@ internal sealed class CachingMiddleware(HybridCache cache, ICurrentUser currentU
 
     private string Key(ICachedQuery query, Type requestType) => query.CacheScope switch
     {
-        CacheScope.User => $"coworkee:query:{currentUser.TenantId}:{currentUser.UserId}:{requestType.FullName}:{query.CacheKey}",
+        // a key (its scopes) and a "Log in as" session may see less than the user's own session
+        CacheScope.User => $"coworkee:query:{currentUser.TenantId}:{currentUser.UserId}:{Credential()}:{requestType.FullName}:{query.CacheKey}",
         CacheScope.Global => $"coworkee:query:global:{requestType.FullName}:{query.CacheKey}",
         _ => $"coworkee:query:{currentUser.TenantId?.ToString() ?? "anonymous"}:{requestType.FullName}:{query.CacheKey}",
     };
+
+    private string Credential() =>
+        (currentUser.ApiKeyId is { } key ? $"key-{key}" : "session") + (currentUser.ImpersonatorId is { } impersonator ? $"-as-{impersonator}" : string.Empty);
 
     private string Tag(string tag) => $"coworkee:{currentUser.TenantId?.ToString() ?? "anonymous"}:{tag}";
 

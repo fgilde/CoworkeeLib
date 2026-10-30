@@ -104,7 +104,7 @@ public sealed record GetDashboardQuery : IQuery<Result<DashboardDto>>, ICachedQu
 }
 ```
 
-`CacheScope` decides who shares an entry: `Tenant` (default), `User` or `Global`. Failures are never cached. Commands that change the underlying data list the same tag in `IInvalidatesCache.CacheTags`.
+`CacheScope` decides who shares an entry: `Tenant` (default), `User` (apart for each API key, the session and a "Log in as" session) or `Global`. Failures are never cached. Commands that change the underlying data list the same tag in `IInvalidatesCache.CacheTags`.
 
 Requests that ask for an entry while it loads wait on that one load. So the handler of a cached query runs in a service scope of its own, as the calling user, with the cache's cancellation (canceled only when every waiting request is): the request that started the load may end first, a browser aborting it on navigation, without failing the others. The handler sees none of the request's scoped state; what it needs belongs in the query. Own `HybridCache` loads that read scoped services (a DbContext, `IDispatcher`) do the same with `GetOrCreateInScopeAsync`:
 

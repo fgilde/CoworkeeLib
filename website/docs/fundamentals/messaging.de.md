@@ -104,7 +104,7 @@ public sealed record GetDashboardQuery : IQuery<Result<DashboardDto>>, ICachedQu
 }
 ```
 
-`CacheScope` legt fest, wer einen Eintrag teilt: `Tenant` (Standard), `User` oder `Global`. Fehler werden nie gecacht. Commands, die die zugrunde liegenden Daten ändern, nennen dasselbe Tag in `IInvalidatesCache.CacheTags`.
+`CacheScope` legt fest, wer einen Eintrag teilt: `Tenant` (Standard), `User` (getrennt je API-Schlüssel, Sitzung und „Anmelden als"-Sitzung) oder `Global`. Fehler werden nie gecacht. Commands, die die zugrunde liegenden Daten ändern, nennen dasselbe Tag in `IInvalidatesCache.CacheTags`.
 
 Anfragen, die einen Eintrag verlangen, während er lädt, warten auf dieses eine Laden. Deshalb läuft der Handler einer gecachten Query in einem eigenen Service-Scope, als der aufrufende Benutzer, mit dem Abbruch des Caches (abgebrochen erst, wenn jede wartende Anfrage abbricht): Die Anfrage, die das Laden begann, darf zuerst enden, etwa weil der Browser sie beim Navigieren abbricht, ohne dass die anderen scheitern. Der Handler sieht keinen Scoped-Zustand der Anfrage; was er braucht, gehört in die Query. Eigene Ladevorgänge über `HybridCache`, die Scoped-Services lesen (einen DbContext, `IDispatcher`), machen es ebenso mit `GetOrCreateInScopeAsync`:
 

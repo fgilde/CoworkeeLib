@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using Coworkee.Application.Authorization;
+using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore;
 using Coworkee.Contracts.Identity;
 using Coworkee.Core.Modularity;
@@ -106,6 +107,7 @@ public sealed class TestAppModule : CoworkeeModule
 {
     public override void ConfigureServices(ModuleServiceContext context)
     {
+        context.Services.AddMessagingFromAssembly(typeof(IdentityApp).Assembly);
         context.Services.AddSingleton<Coworkee.Application.Authorization.IResourceHierarchy>(TestFolderHierarchy.Instance);
         context.Services.AddSingleton<Coworkee.Application.Authorization.IResourceRestriction>(TestFolderRestriction.Instance);
         context.Services.AddCoworkeeDbContext<IdentityTestDbContext>((provider, options) =>

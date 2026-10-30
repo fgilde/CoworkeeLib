@@ -24,11 +24,11 @@ public static class CurrentUserScope
     /// which ends.
     /// </summary>
     public static ICurrentUser Capture(ICurrentUser user) => new CapturedUser(user.UserId, user.TenantId, user.IsAuthenticated, [.. user.Roles], user.ClientId,
-        [.. user.ClientPermissions], user.ApiKeyId, user.PermissionScopes is { } scopes ? [.. scopes] : null, user.ImpersonatorId);
+        [.. user.ClientPermissions], user.ApiKeyId, user.PermissionScopes is { } scopes ? [.. scopes] : null, user.ImpersonatorId, user.IsInteractive);
 
     private sealed record CapturedUser(
         Guid? UserId, Guid? TenantId, bool IsAuthenticated, IReadOnlyCollection<string> Roles, string? ClientId, IReadOnlyCollection<string> ClientPermissions,
-        Guid? ApiKeyId, IReadOnlyCollection<string>? PermissionScopes, Guid? ImpersonatorId) : ICurrentUser;
+        Guid? ApiKeyId, IReadOnlyCollection<string>? PermissionScopes, Guid? ImpersonatorId, bool IsInteractive) : ICurrentUser;
 
     private sealed class Restore(ICurrentUser? previous) : IDisposable
     {
