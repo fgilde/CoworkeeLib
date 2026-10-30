@@ -127,7 +127,8 @@ public sealed class DataTableTests : ClientTestBase
             .Add(t => t.Columns, Columns()));
 
         table.WaitForAssertion(() => table.Markup.ShouldContain("Drill"));
-        (_odata.LastSet, _odata.LastQuery!.Filter, _odata.LastQuery.Facets).ShouldBe(("Gadgets", null as string, true));
+        (_odata.LastSet, _odata.LastQuery!.Filter).ShouldBe(("Gadgets", null as string));
+        table.WaitForAssertion(() => _odata.FacetLoads.ShouldBe(1));
         await table.Find("[data-facet='category'] button").ClickAsync(new());
         await popovers.WaitForElement("[data-option=\"Category eq 'Tools'\"]").ClickAsync(new());
 
@@ -237,20 +238,79 @@ public sealed class DataTableTests : ClientTestBase
 
     public sealed record Gadget(Guid Id, string Name, string Category);
 
+    [Fact]
+    public async Task Facets_come_in_a_request_of_their_own_once_per_filter_and_the_rows_do_not_wait()
+    {
+        var odata = new GatedOData();
+        Services.AddSingleton<IODataClient>(odata);
+        var table = Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.SearchFields, ["Name"]).Add(t => t.Columns, Columns()));
+
+        // the rows show while the facets are still on their way
+        table.WaitForAssertion(() => table.Markup.ShouldContain("Drill"));
+        table.FindAll("[data-facet='category']").ShouldBeEmpty();
+        odata.Queries.Where(q => q.Top != 0).ShouldAllBe(q => !q.Facets && q.FacetContext == null);
+        odata.Queries.Single(q => q.Facets).ShouldSatisfyAllConditions(q => q.Top.ShouldBe(0), q => q.Count.ShouldBeFalse(), q => q.Expand.ShouldBeNull(), q => q.OrderBy.ShouldBeNull());
+        odata.Facets.SetResult();
+        table.WaitForAssertion(() => table.Find("[data-facet='category']"));
+
+        // another sort or page: rows only
+        var grid = table.FindComponent<MudDataGrid<Gadget>>().Instance;
+        await table.InvokeAsync(() => grid.SetSortAsync("Name", MudBlazor.SortDirection.Descending, g => g.Name));
+        await table.InvokeAsync(() => grid.NavigateTo(Page.Next));
+        table.WaitForAssertion(() => odata.Queries.ShouldContain(q => q.OrderBy == "Name desc" && q.Skip == 25));
+        odata.Queries.Count(q => q.Facets).ShouldBe(1);
+
+        // another filter: the facets again
+        table.Find("input[data-testid='table-search'], [data-testid='table-search'] input").Input("dri");
+        table.WaitForAssertion(() => odata.Queries.Count(q => q.Facets).ShouldBe(2), TimeSpan.FromSeconds(3));
+        odata.Queries.Last(q => q.Facets).Filter.ShouldBe("contains(tolower(Name),'dri')");
+    }
+
     private sealed class FakeOData : IODataClient
     {
         public string? LastSet { get; private set; }
 
+        /// <summary>The last query for rows; facets come in queries of their own.</summary>
         public ODataQuery? LastQuery { get; private set; }
 
         public int Loads { get; private set; }
 
+        public int FacetLoads { get; private set; }
+
         public Task<ODataPage<T>> QueryAsync<T>(string entitySet, ODataQuery query, CancellationToken cancellationToken = default)
         {
-            (LastSet, LastQuery) = (entitySet, query);
-            Loads++;
+            LastSet = entitySet;
+            if (query.Top == 0)
+            {
+                FacetLoads++;
+            }
+            else
+            {
+                (LastQuery, Loads) = (query, Loads + 1);
+            }
+
             IReadOnlyList<T> items = (IReadOnlyList<T>)(object)new List<Gadget> { new(Guid.CreateVersion7(), "Drill", "Tools"), new(Guid.CreateVersion7(), "Lamp", "Light") };
-            return Task.FromResult(new ODataPage<T>(items, 2, [Category]));
+            return Task.FromResult(new ODataPage<T>(items, 2, query.Facets ? [Category] : []));
+        }
+    }
+
+    // facets wait until the test lets them through; 100 rows, so there is a second page
+    private sealed class GatedOData : IODataClient
+    {
+        public TaskCompletionSource Facets { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public System.Collections.Concurrent.ConcurrentQueue<ODataQuery> Queries { get; } = new();
+
+        public async Task<ODataPage<T>> QueryAsync<T>(string entitySet, ODataQuery query, CancellationToken cancellationToken = default)
+        {
+            Queries.Enqueue(query);
+            if (query.Facets)
+            {
+                await Facets.Task.WaitAsync(cancellationToken);
+            }
+
+            IReadOnlyList<T> items = (IReadOnlyList<T>)(object)new List<Gadget> { new(Guid.CreateVersion7(), "Drill", "Tools"), new(Guid.CreateVersion7(), "Lamp", "Light") };
+            return new ODataPage<T>(items, 100, query.Facets ? [Category] : []);
         }
     }
 }

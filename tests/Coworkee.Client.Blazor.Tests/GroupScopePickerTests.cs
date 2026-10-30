@@ -36,8 +36,14 @@ public sealed class GroupScopePickerTests : ClientTestBase
         Services.AddSingleton<IODataClient>(_odata);
         Services.AddSingleton(_cache);
         Services.AddScoped<GroupScopeState>();
-        _odata.Queried += (_, _) =>
+        // the rows; the facets come in a request of their own
+        _odata.Queried += (_, query) =>
         {
+            if (query.Top == 0)
+            {
+                return;
+            }
+
             _loads++;
             _calls.Add("query");
         };
