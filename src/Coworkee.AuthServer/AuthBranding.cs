@@ -32,7 +32,7 @@ public sealed record AuthBranding(string AppName, string? LogoUrl, string? Css, 
     public bool MediaIsVideo => Design.MediaUrl is { } url && VideoExtensions.Any(e => url.Split('?', '#')[0].EndsWith(e, StringComparison.OrdinalIgnoreCase));
 }
 
-public sealed partial class AuthBrandingProvider(IServiceScopeFactory scopes, HybridCache cache, IOptionsMonitor<AuthServerOptions> options, Settings.ISettingProvider settings)
+public sealed partial class AuthBrandingProvider(IServiceProvider services, HybridCache cache, IOptionsMonitor<AuthServerOptions> options, Settings.ISettingProvider settings)
 {
     private static readonly HybridCacheEntryOptions Entry = new() { Expiration = TimeSpan.FromMinutes(1), LocalCacheExpiration = TimeSpan.FromMinutes(1) };
 
@@ -44,7 +44,7 @@ public sealed partial class AuthBrandingProvider(IServiceScopeFactory scopes, Hy
 
     // the theme part waits for the cache; the design follows the configuration at once, which picks up changes made in the app with its next reload
     public async ValueTask<AuthBranding> GetAsync(CancellationToken cancellationToken) =>
-        await cache.GetOrCreateInScopeAsync(scopes, new ImpersonatedUser(null, null), "coworkee:auth-branding", LoadAsync, Entry, cancellationToken: cancellationToken)
+        await cache.GetOrCreateInScopeAsync(services, new ImpersonatedUser(null, null), "coworkee:auth-branding", LoadAsync, Entry, cancellationToken: cancellationToken)
             with { Design = Checked(options.CurrentValue.Design) };
 
     /// <summary>"light", "dark" or "system": the color mode setting of the user, else of the installation.</summary>

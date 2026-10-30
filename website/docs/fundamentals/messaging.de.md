@@ -109,11 +109,13 @@ public sealed record GetDashboardQuery : IQuery<Result<DashboardDto>>, ICachedQu
 Anfragen, die einen Eintrag verlangen, während er lädt, warten auf dieses eine Laden. Deshalb läuft der Handler einer gecachten Query in einem eigenen Service-Scope, als der aufrufende Benutzer, mit dem Abbruch des Caches (abgebrochen erst, wenn jede wartende Anfrage abbricht): Die Anfrage, die das Laden begann, darf zuerst enden, etwa weil der Browser sie beim Navigieren abbricht, ohne dass die anderen scheitern. Der Handler sieht keinen Scoped-Zustand der Anfrage; was er braucht, gehört in die Query. Eigene Ladevorgänge über `HybridCache`, die Scoped-Services lesen (einen DbContext, `IDispatcher`), machen es ebenso mit `GetOrCreateInScopeAsync`:
 
 ```csharp
-var stats = await cache.GetOrCreateInScopeAsync(scopes, new ImpersonatedUser(null, tenantId), $"stats:{tenantId}",
+var stats = await cache.GetOrCreateInScopeAsync(services, new ImpersonatedUser(null, tenantId), $"stats:{tenantId}",
     (services, ct) => services.GetRequiredService<CatalogDbContext>().Products.CountAsync(ct), cancellationToken: cancellationToken);
 ```
 
-`actor` ist, als wer das Laden handelt: Es kann ohne den Kontext des Aufrufers auf einem Pool-Thread laufen. `CurrentUserScope.Capture(currentUser)` hält dafür den ganzen aktuellen Benutzer fest.
+`services` sind die des Aufrufers, `actor` ist, als wer das Laden handelt: Es kann ohne den Kontext des Aufrufers auf einem Pool-Thread laufen. `CurrentUserScope.Capture(currentUser)` hält dafür den ganzen aktuellen Benutzer fest.
+
+In einer offenen Transaktion des DbContext der App (`IUnitOfWork.InTransaction`) umgehen beide den Cache: Eine gecachte Query läuft in der Pipeline des Aufrufers, ein Laden im Scope des Aufrufers, und das Ergebnis wird nicht gecacht. Eine andere Verbindung sähe nicht, was die Transaktion schrieb (oder wartete auf ihre Sperren), und sie kann noch zurückgerollt werden.
 
 ## Domain-Events
 

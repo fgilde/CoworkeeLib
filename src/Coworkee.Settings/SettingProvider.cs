@@ -31,7 +31,7 @@ internal sealed class SettingProvider(
     ISettingDefinitionManager definitions,
     HybridCache cache,
     SettingProtector protector,
-    IServiceScopeFactory scopes) : ISettingProvider
+    IServiceProvider services) : ISettingProvider
 {
     internal const string CacheTag = "coworkee:settings";
 
@@ -75,7 +75,7 @@ internal sealed class SettingProvider(
         var tenantId = currentUser.TenantId;
         var userId = currentUser.UserId;
         return await cache.GetOrCreateInScopeAsync(
-            scopes,
+            services,
             new ImpersonatedUser(userId, tenantId),
             $"coworkee:settings:{tenantId}:{userId}",
             async (scope, token) => await scope.GetRequiredService<CoworkeeDbContext>().Set<SettingValue>().AsNoTracking()

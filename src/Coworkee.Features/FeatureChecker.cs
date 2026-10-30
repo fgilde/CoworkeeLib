@@ -17,7 +17,7 @@ public interface IFeatureChecker
     Task<IReadOnlyDictionary<string, string?>> GetAllAsync(CancellationToken cancellationToken = default);
 }
 
-internal sealed class FeatureChecker(ICurrentUser currentUser, IFeatureDefinitionManager definitions, HybridCache cache, IServiceScopeFactory scopes) : IFeatureChecker
+internal sealed class FeatureChecker(ICurrentUser currentUser, IFeatureDefinitionManager definitions, HybridCache cache, IServiceProvider services) : IFeatureChecker
 {
     internal const string CacheTag = "coworkee:features";
 
@@ -44,7 +44,7 @@ internal sealed class FeatureChecker(ICurrentUser currentUser, IFeatureDefinitio
         }
 
         return await cache.GetOrCreateInScopeAsync(
-            scopes,
+            services,
             new ImpersonatedUser(null, tenantId),
             $"{CacheTag}:{tenantId}",
             async (scope, token) =>

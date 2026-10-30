@@ -184,7 +184,7 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
     private static async Task<StoredClients> LoadStoredClientsAsync(Microsoft.AspNetCore.Http.HttpContext context) =>
         await Coworkee.Application.Caching.SharedCacheLoad.GetOrCreateInScopeAsync(
             context.RequestServices.GetRequiredService<Microsoft.Extensions.Caching.Hybrid.HybridCache>(),
-            context.RequestServices.GetRequiredService<IServiceScopeFactory>(),
+            context.RequestServices,
             new Coworkee.Core.Security.ImpersonatedUser(null, null),
             "coworkee:auth-clients",
             async (scope, ct) =>

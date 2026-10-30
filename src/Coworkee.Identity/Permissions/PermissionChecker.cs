@@ -44,7 +44,7 @@ internal sealed class PermissionChecker(
     {
         var tenantId = currentUser.TenantId;
         return await cache.GetOrCreateInScopeAsync(
-            Scopes,
+            services,
             new ImpersonatedUser(userId, tenantId),
             $"coworkee:permissions:{tenantId}:{userId}:{(narrow ? "active" : "all")}",
             (scope, ct) => Own(scope).LoadAsync(userId, tenantId, narrow, ct),
@@ -52,10 +52,8 @@ internal sealed class PermissionChecker(
             cancellationToken: cancellationToken);
     }
 
-    // a shared load reads through a checker of its own scope: the request that started it may end first (L64)
+    // a shared load reads through a checker of the scope it gets: its own, as the request that started it may end first (L64)
     private static PermissionChecker Own(IServiceProvider scope) => ActivatorUtilities.CreateInstance<PermissionChecker>(scope);
-
-    private IServiceScopeFactory Scopes => services.GetRequiredService<IServiceScopeFactory>();
 
     private async Task<bool> InScopeAsync(Guid userId, string permission, CancellationToken cancellationToken) =>
         currentUser.PermissionScopes is not { } scopes
@@ -67,7 +65,7 @@ internal sealed class PermissionChecker(
         var tenantId = currentUser.TenantId;
         var roles = currentUser.Roles.Order(StringComparer.Ordinal).ToArray();
         var fromRoles = await cache.GetOrCreateInScopeAsync(
-            Scopes,
+            services,
             new ImpersonatedUser(null, tenantId),
             $"coworkee:permissions:roles:{tenantId}:{string.Join(',', roles)}",
             (scope, ct) => Own(scope).ClientRoleGrantsAsync(roles, tenantId, ct),

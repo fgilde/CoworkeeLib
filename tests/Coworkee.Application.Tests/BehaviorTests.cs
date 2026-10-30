@@ -93,6 +93,27 @@ public sealed class BehaviorTests
     }
 
     [Fact]
+    public async Task Inside_an_open_transaction_cached_queries_read_through_and_are_not_cached()
+    {
+        var counter = new Counter();
+        var dispatcher = Build(services =>
+        {
+            services.AddSingleton(counter);
+            services.AddScoped<IUnitOfWork>(_ => new OpenTransaction());
+        });
+
+        (await dispatcher.SendAsync(new Count(), Ct)).Value.ShouldBe(1);
+        (await dispatcher.SendAsync(new Count(), Ct)).Value.ShouldBe(2);
+    }
+
+    private sealed class OpenTransaction : IUnitOfWork
+    {
+        public bool InTransaction => true;
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+
+    [Fact]
     public async Task Failures_are_not_cached()
     {
         var counter = new Counter { FailNext = true };

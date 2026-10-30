@@ -7,15 +7,17 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Application.Caching;
 
-internal sealed class CachingMiddleware(HybridCache cache, ICurrentUser currentUser, IServiceScopeFactory scopes) : IRequestMiddleware
+internal sealed class CachingMiddleware(HybridCache cache, ICurrentUser currentUser, IServiceProvider services) : IRequestMiddleware
 {
     public int Order => MiddlewareOrder.Caching;
 
     public async Task<TResult> InvokeAsync<TRequest, TResult>(TRequest request, RequestHandlerDelegate<TResult> next, CancellationToken cancellationToken)
         where TRequest : IRequest<TResult>
     {
-        if (request is ICachedQuery query && (query.CacheScope != CacheScope.User || currentUser.UserId is not null))
+        // inside an open transaction the query reads through it and is not cached: it may see writes that are rolled back
+        if (request is ICachedQuery query && (query.CacheScope != CacheScope.User || currentUser.UserId is not null) && services.GetService<IUnitOfWork>() is not { InTransaction: true })
         {
+            var scopes = services.GetRequiredService<IServiceScopeFactory>();
             // every request asking while it loads waits on this load: it runs the rest of the pipeline in a scope of its own, as the caller, with the
             // cache's token, so the request that started it may end (or be aborted) first (L64)
             var caller = CurrentUserScope.Capture(currentUser);

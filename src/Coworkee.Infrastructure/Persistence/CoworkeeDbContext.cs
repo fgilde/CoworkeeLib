@@ -21,6 +21,8 @@ public abstract class CoworkeeDbContext(DbContextOptions options, ICurrentUser c
 
     public Guid? CurrentTenantId => currentUser.TenantId;
 
+    bool IUnitOfWork.InTransaction => Database.CurrentTransaction is not null;
+
     async Task IUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken)
     {
         try

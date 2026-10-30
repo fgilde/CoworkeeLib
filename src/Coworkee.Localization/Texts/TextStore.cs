@@ -10,12 +10,12 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Coworkee.Localization.Texts;
 
 /// <summary>Texts of a culture: module resources, then the edits of the administrators.</summary>
-public sealed class TextStore(LocalizationResources resources, HybridCache cache, IServiceScopeFactory scopes)
+public sealed class TextStore(LocalizationResources resources, HybridCache cache, IServiceProvider services)
 {
     public const string CacheTag = "coworkee:localization";
 
     public async Task<IReadOnlyDictionary<string, string>> GetAsync(string culture, CancellationToken cancellationToken) =>
-        await cache.GetOrCreateInScopeAsync(scopes, new ImpersonatedUser(null, null), $"coworkee:texts:{culture.ToLowerInvariant()}",
+        await cache.GetOrCreateInScopeAsync(services, new ImpersonatedUser(null, null), $"coworkee:texts:{culture.ToLowerInvariant()}",
             (scope, token) => LoadAsync(scope.GetRequiredService<CoworkeeDbContext>(), culture, token),
             new HybridCacheEntryOptions { Expiration = TimeSpan.FromHours(1) }, [CacheTag], cancellationToken);
 

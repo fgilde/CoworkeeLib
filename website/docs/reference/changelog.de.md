@@ -7,11 +7,11 @@
 ### Hinzugefügt
 
 - `Coworkee:OData:MaxNodeCount`, `MaxAnyAllExpressionDepth`, `MaxExpansionDepth` und `MaxOrderByNodeCount` (`CoworkeeODataOptions`, Standard die Werte von OData: 100, 1, 2 und 5): die Abfragegrenzen von OData auf jeder Route und in `IODataQueries`, etwa für eine Suche, die `contains` über viele Felder mit `or` verknüpft. Siehe [OData](../web/odata.md).
-- `HybridCache.GetOrCreateInScopeAsync(scopes, actor, key, (services, ct) => ...)` (`SharedCacheLoad`): ein Laden in den Cache, das Scoped-Services liest, in einem eigenen Service-Scope als `actor`; `CurrentUserScope.Capture(user)` hält einen Benutzer über seine Anfrage hinaus fest. Siehe [Messaging](../fundamentals/messaging.md#caching).
+- `HybridCache.GetOrCreateInScopeAsync(services, actor, key, (services, ct) => ...)` (`SharedCacheLoad`): ein Laden in den Cache, das Scoped-Services liest, in einem eigenen Service-Scope als `actor`; `CurrentUserScope.Capture(user)` hält einen Benutzer über seine Anfrage hinaus fest. Siehe [Messaging](../fundamentals/messaging.md#caching).
 
 ### Geändert
 
-- Der Handler einer `ICachedQuery` läuft in einem eigenen Service-Scope, als der aufrufende Benutzer, mit dem Abbruch-Token des Caches (abgebrochen erst, wenn jede wartende Anfrage abbricht): Scoped-Zustand, den die Anfrage vor der Query gesetzt hat, sieht er nicht. Siehe [Messaging](../fundamentals/messaging.md#caching).
+- Der Handler einer `ICachedQuery` läuft in einem eigenen Service-Scope, als der aufrufende Benutzer, mit dem Abbruch-Token des Caches (abgebrochen erst, wenn jede wartende Anfrage abbricht): Scoped-Zustand, den die Anfrage vor der Query gesetzt hat, sieht er nicht. In einer offenen Transaktion des DbContext der App (`IUnitOfWork.InTransaction`, neu, Standard `false`) umgehen gecachte Queries und das geteilte Laden von Berechtigungen, Einstellungen, Features und Texten den Cache: Sie lesen durch den Kontext und die Transaktion des Aufrufers, sodass eine zuvor in der Transaktion geschriebene Berechtigung zählt, und nichts davon wird gecacht. Siehe [Messaging](../fundamentals/messaging.md#caching).
 
 ### Behoben
 

@@ -7,11 +7,11 @@ Changes that need action in apps built on Coworkee. Newest first.
 ### Added
 
 - `Coworkee:OData:MaxNodeCount`, `MaxAnyAllExpressionDepth`, `MaxExpansionDepth` and `MaxOrderByNodeCount` (`CoworkeeODataOptions`, defaults OData's 100, 1, 2 and 5): OData's query limits on every route and in `IODataQueries`, e.g. for a search that ORs `contains` over many fields. See [OData](../web/odata.md).
-- `HybridCache.GetOrCreateInScopeAsync(scopes, actor, key, (services, ct) => ...)` (`SharedCacheLoad`): a cache load that reads scoped services, in a service scope of its own as `actor`; `CurrentUserScope.Capture(user)` keeps a user beyond his request. See [messaging](../fundamentals/messaging.md#caching).
+- `HybridCache.GetOrCreateInScopeAsync(services, actor, key, (services, ct) => ...)` (`SharedCacheLoad`): a cache load that reads scoped services, in a service scope of its own as `actor`; `CurrentUserScope.Capture(user)` keeps a user beyond his request. See [messaging](../fundamentals/messaging.md#caching).
 
 ### Changed
 
-- The handler of an `ICachedQuery` runs in a service scope of its own, as the calling user, with the cache's cancellation token (canceled only when every waiting request is): scoped state the request set before the query is not visible to it. See [messaging](../fundamentals/messaging.md#caching).
+- The handler of an `ICachedQuery` runs in a service scope of its own, as the calling user, with the cache's cancellation token (canceled only when every waiting request is): scoped state the request set before the query is not visible to it. Inside an open transaction of the app's DbContext (`IUnitOfWork.InTransaction`, new, default `false`) cached queries and the shared loads of permissions, settings, features and texts skip the cache: they read through the caller's context and transaction, so a grant written earlier in the transaction counts, and nothing of it is cached. See [messaging](../fundamentals/messaging.md#caching).
 
 ### Fixed
 
