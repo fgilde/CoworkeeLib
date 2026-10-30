@@ -462,6 +462,28 @@
           "files": [ "src/**/*.cs" ]
         }
       ]
+    },
+    {
+      "version": "0.0.1.49",
+      "breaking": [
+        "Reports: a report shared with groups (ReportVisibility.Groups) needs SaveReportRequest.GroupIds; a client that saves a report it read passes ReportDto.GroupIds along."
+      ],
+      "manual": [
+        {
+          "text": "Add a migration for the new column cw.Reports.GroupIds (coworkee migrations add CoworkeeLib049).",
+          "find": "CoworkeeReportingModule",
+          "files": [
+            "src/**/*.cs"
+          ]
+        },
+        {
+          "text": "Own code that saves a report it read (new SaveReportRequest(...) from a ReportDto) passes GroupIds along, or reports shared with groups are refused.",
+          "find": "new SaveReportRequest\\(",
+          "files": [
+            "src/**/*.cs"
+          ]
+        }
+      ]
     }
   ]
 }

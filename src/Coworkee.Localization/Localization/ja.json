@@ -1091,6 +1091,7 @@
   "Selected": "選択中",
   "Shared with": "共有先",
   "Shared with me": "自分と共有",
+  "Members of these groups and of the groups above them see the report.": "これらのグループとその上位グループのメンバーがレポートを閲覧できます。",
   "Sharing reports needs the permission Reports.Share.": "レポートを共有するには、権限 Reports.Share が必要です。",
   "Sort by": "並べ替え",
   "Subtitle": "サブタイトル",

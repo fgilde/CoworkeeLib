@@ -19,6 +19,9 @@ public enum ReportVisibility
     Private,
     Roles,
     Organisation,
+
+    /// <summary>The members of its groups and of the groups above them (<c>IGroupScope.ActiveAsync</c>: a group selection narrows it).</summary>
+    Groups,
 }
 
 public sealed record ReportSummaryDto(
@@ -45,15 +48,18 @@ public sealed record ReportDto(
     bool CanEdit,
     bool IsFavorite,
     ReportDefinition Definition,
-    DateTimeOffset? ModifiedAt);
+    DateTimeOffset? ModifiedAt,
+    IReadOnlyList<Guid>? GroupIds = null);
 
+/// <param name="GroupIds">The groups of <see cref="ReportVisibility.Groups"/>.</param>
 public sealed record SaveReportRequest(
     string Name,
     string? Description,
     string? Icon,
     ReportVisibility Visibility,
     IReadOnlyList<Guid> RoleIds,
-    ReportDefinition Definition);
+    ReportDefinition Definition,
+    IReadOnlyList<Guid>? GroupIds = null);
 
 public sealed record FavoriteReportRequest(bool Favorite);
 
@@ -64,6 +70,9 @@ public sealed record DashboardReportDto(Guid? ReportId, Guid? Mine, Guid? Organi
 public sealed record SetDashboardReportRequest(Guid? ReportId);
 
 public sealed record ReportRoleDto(Guid Id, string Name);
+
+/// <summary>A group a report can be shared with; <see cref="Code"/> orders the tree (a parent's code starts its children's).</summary>
+public sealed record ReportGroupDto(Guid Id, Guid? ParentId, string Code, string Name);
 
 /// <summary>The file a report is exported to and imported from.</summary>
 public sealed record ReportFile(string Name, string? Description, string? Icon, ReportDefinition Definition)

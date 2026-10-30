@@ -22,6 +22,10 @@
             <MudRadioGroup T="ReportVisibility" @bind-Value="Model.Visibility" Disabled="!CanShare">
                 <MudRadio Value="ReportVisibility.Private" Color="Color.Primary">@L["Only me"]</MudRadio>
                 <MudRadio Value="ReportVisibility.Roles" Color="Color.Primary">@L["Roles"]</MudRadio>
+                @if (_groups.Count > 0 || Model.Visibility == ReportVisibility.Groups)
+                {
+                    <MudRadio Value="ReportVisibility.Groups" Color="Color.Primary">@L["Groups"]</MudRadio>
+                }
                 <MudRadio Value="ReportVisibility.Organisation" Color="Color.Primary">@L["Everybody in the organisation"]</MudRadio>
             </MudRadioGroup>
             @if (Model.Visibility == ReportVisibility.Roles)
@@ -31,6 +35,17 @@
                     @foreach (var role in _roles)
                     {
                         <MudSelectItem Value="role.Id">@role.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            @if (Model.Visibility == ReportVisibility.Groups)
+            {
+                <MudSelect T="Guid" SelectedValues="Model.GroupIds" SelectedValuesChanged="v => Model.GroupIds = [.. v]" MultiSelection="true" Label="@L["Groups"]" Variant="Variant.Outlined"
+                           HelperText="@L["Members of these groups and of the groups above them see the report."]"
+                           MultiSelectionTextFunc="@(ids => GroupNames(ids))" Disabled="!CanShare" data-testid="report-groups">
+                    @foreach (var group in _groups)
+                    {
+                        <MudSelectItem Value="group.Id">@(Indent(group) + group.Name)</MudSelectItem>
                     }
                 </MudSelect>
             }

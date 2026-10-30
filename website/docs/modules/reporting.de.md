@@ -1,6 +1,6 @@
 # Berichte
 
-`Coworkee.Reporting` (Server) und `Coworkee.Client.Blazor.Reporting` (Client) ergänzen Dashboards über die OData-Entitätsmengen deiner App. Benutzer ordnen Widgets auf einem Raster an, filtern sie gemeinsam, klicken auf einen Balken, um die übrigen einzugrenzen, und teilen das Ergebnis mit Rollen oder der ganzen Organisation. Jede Zahl aggregiert die Datenbank, ein Dashboard über 100.000 Zeilen antwortet in wenigen Millisekunden.
+`Coworkee.Reporting` (Server) und `Coworkee.Client.Blazor.Reporting` (Client) ergänzen Dashboards über die OData-Entitätsmengen deiner App. Benutzer ordnen Widgets auf einem Raster an, filtern sie gemeinsam, klicken auf einen Balken, um die übrigen einzugrenzen, und teilen das Ergebnis mit Rollen, Gruppen oder der ganzen Organisation. Jede Zahl aggregiert die Datenbank, ein Dashboard über 100.000 Zeilen antwortet in wenigen Millisekunden.
 
 ![Ein Vertriebs-Dashboard mit Kennzahlen, Diagrammen, Pivot und Tabelle](../assets/screenshots/reporting-dashboard.png){ .shot }
 
@@ -194,6 +194,10 @@ new ReportWidget
 
 ## Schwellenwerte
 
+Ein Widget kann `AppData` tragen, je Schlüssel ein JSON-Objekt, das eine App oder ein zweiter Client mit ihm aufbewahrt (z. B. eigene Einstellungen des Widgets); Berichte lesen und ändern es nicht, es wird mit dem Bericht kopiert und ist auf 20.000 Zeichen je Widget begrenzt.
+
+Ein Widget kann `AppData` tragen, je Schlüssel ein JSON-Objekt, das eine App oder ein zweiter Client mit ihm aufbewahrt (z. B. eigene Einstellungen des Widgets); Berichte lesen und ändern es nicht, es wird mit dem Bericht kopiert und ist auf 20.000 Zeichen je Widget begrenzt.
+
 *Schwellenwerte* im Widget-Bereich färben einen Wert nach Bändern (`WidgetOptions.Thresholds`, eine Liste von `ThresholdStop`): jeder Schwellenwert hat einen Startwert, eine Farbe und eine Bezeichnung, und ein Wert nimmt das Band des höchsten Schwellenwerts, den er erreicht (Werte unter dem ersten behalten ihre eigene Farbe). Farben sind `success`, `warning`, `error` und `info` des Themes (sie folgen eigenen Themes und dem Dunkelmodus) oder ein eigenes `#rrggbb`; alles andere wird beim Speichern abgelehnt.
 
 | Widget | Was die Bänder färben |
@@ -230,11 +234,11 @@ Die Zeilen eines Widgets grenzen in dieser Reihenfolge ein: seine eigenen Query-
 |---|---|
 | `Reports.View` | mit dir geteilte Berichte öffnen, Favoriten |
 | `Reports.Manage` | Berichte anlegen, eigene ändern und löschen, jeden sichtbaren duplizieren |
-| `Reports.Share` | mit Rollen oder der Organisation teilen |
+| `Reports.Share` | mit Rollen, Gruppen oder der Organisation teilen |
 | `Reports.Dashboard` | das Dashboard der Organisation wählen |
 | `Reports.Subscriptions` | die Berichtsabos der Organisation sehen und beenden |
 
-Ein Bericht ist *privat*, mit *Rollen* geteilt (Inhaber einer davon, direkt oder über Gruppen) oder mit der *Organisation*. Nur der Besitzer ändert ihn; andere duplizieren ihn in eine private Kopie. Eine Änderung erreicht über den [Realtime-Hub](realtime.md) jeden, der den Bericht geöffnet hat.
+Ein Bericht ist *privat*, mit *Rollen* geteilt (Inhaber einer davon, direkt oder über Gruppen), mit *Gruppen* oder mit der *Organisation*. Mit Gruppen geteilt erreicht er die Mitglieder dieser Gruppen und der Gruppen darüber: die aktiven Gruppen des Benutzers (`IGroupScope.ActiveAsync`), eine Gruppenauswahl grenzt die Berichtsliste also ein wie die Daten. Der Besitzer teilt nur mit seinen Gruppen und den Gruppen darunter (`GET /api/v1/reports/groups`); früher geteilte Gruppen bleiben, wenn er eine verlässt. Der Besitzer sieht den Bericht immer. Nur der Besitzer ändert ihn; andere duplizieren ihn in eine private Kopie. Eine Änderung erreicht über den [Realtime-Hub](realtime.md) jeden, der den Bericht geöffnet hat.
 
 ## Abos per Mail
 
@@ -282,7 +286,7 @@ Die Dashboard-Seite des Templates (*Persönlich > Dashboard*, über *Berichte*) 
 | `GET /api/v1/reports` | Berichte, die du öffnen kannst, Favoriten zuerst |
 | `POST /api/v1/reports`, `PUT /api/v1/reports/{id}`, `DELETE /api/v1/reports/{id}` | anlegen, ändern, löschen |
 | `POST /api/v1/reports/{id}/duplicate`, `PUT /api/v1/reports/{id}/favorite` | kopieren, Favorit |
-| `GET /api/v1/reports/sources`, `GET /api/v1/reports/roles` | Felder je Menge, Rollen zum Teilen |
+| `GET /api/v1/reports/sources`, `GET /api/v1/reports/roles`, `GET /api/v1/reports/groups` | Felder je Menge, Rollen und Gruppen zum Teilen |
 | `POST /api/v1/reports/query` | aggregieren |
 | `POST /api/v1/reports/rows` | Zeilen einer eigenen Quelle, für Tabellen |
 | `POST /api/v1/reports/sheet` | Zeilen als Excel-Arbeitsmappe |

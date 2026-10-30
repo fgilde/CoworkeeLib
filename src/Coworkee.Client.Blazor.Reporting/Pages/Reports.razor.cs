@@ -67,6 +67,7 @@ public partial class Reports
     {
         ReportVisibility.Organisation => Icons.Material.Outlined.Public,
         ReportVisibility.Roles => Icons.Material.Outlined.Groups,
+        ReportVisibility.Groups => Icons.Material.Outlined.AccountTree,
         _ => Icons.Material.Outlined.Lock,
     };
 
@@ -74,6 +75,7 @@ public partial class Reports
     {
         ReportVisibility.Organisation => "Organisation",
         ReportVisibility.Roles => "Roles",
+        ReportVisibility.Groups => "Groups",
         _ => "Private",
     };
 
@@ -87,7 +89,7 @@ public partial class Reports
         await RunAsync(async () =>
         {
             var report = await Api.CreateAsync(new SaveReportRequest(settings.Name, settings.Description, settings.Icon, settings.Visibility, settings.RoleIds,
-                new ReportDefinition { RefreshSeconds = settings.RefreshSeconds }));
+                new ReportDefinition { RefreshSeconds = settings.RefreshSeconds }, settings.GroupIds));
             Nav.NavigateTo($"reports/{report.Id}?edit=true");
         });
     }

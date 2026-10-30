@@ -19,7 +19,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Coworkee.Reporting;
 
-/// <summary>Reports and dashboards over the app's OData entity sets and own sources (AddReportSource), aggregated on the server, shared with roles or the organisation.</summary>
+/// <summary>Reports and dashboards over the app's OData entity sets and own sources (AddReportSource), aggregated on the server, shared with roles, groups or the organisation.</summary>
 [DependsOn(typeof(CoworkeeIdentityModule), typeof(CoworkeeRealtimeModule), typeof(CoworkeeODataModule), typeof(Mailing.CoworkeeMailingModule))]
 public sealed class CoworkeeReportingModule : CoworkeeModule, IWebModule
 {
@@ -50,6 +50,7 @@ public sealed class CoworkeeReportingModule : CoworkeeModule, IWebModule
         reports.MapPost("/", (SaveReportRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new CreateReportCommand(body), ct).ToHttpResult());
         reports.MapGet("/sources", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetReportSourcesQuery(), ct).ToHttpResult());
         reports.MapGet("/roles", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetReportRolesQuery(), ct).ToHttpResult());
+        reports.MapGet("/groups", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetReportGroupsQuery(), ct).ToHttpResult());
         reports.MapPost("/query", (ReportQueryRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new RunReportQuery(body), ct).ToHttpResult());
         reports.MapGet("/ai", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetReportAiStatusQuery(), ct).ToHttpResult());
         reports.MapPost("/generate", (GenerateReportRequest body, IDispatcher d, CancellationToken ct) =>

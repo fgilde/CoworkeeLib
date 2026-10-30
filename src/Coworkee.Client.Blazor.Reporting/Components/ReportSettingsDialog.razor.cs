@@ -22,6 +22,8 @@ public partial class ReportSettingsDialog
 
     private IReadOnlyList<ReportRoleDto> _roles = [];
 
+    private IReadOnlyList<ReportGroupDto> _groups = [];
+
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
     [Inject] private IReportsApi Api { get; set; } = null!;
@@ -42,12 +44,19 @@ public partial class ReportSettingsDialog
             try
             {
                 _roles = await Api.GetRolesAsync();
+                _groups = await Api.GetGroupsAsync();
             }
             catch (ApiException)
             {
             }
         }
     }
+
+    // a group indents by the depth of its code (00001.00002 is a child of 00001)
+    private static string Indent(ReportGroupDto group) => new(' ', 4 * group.Code.Count(c => c == '.'));
+
+    private string GroupNames(IReadOnlyList<string> ids) =>
+        string.Join(", ", ids.Select(id => _groups.FirstOrDefault(g => g.Id.ToString() == id)?.Name ?? id));
 
     public static async Task<ReportSettings?> ShowAsync(IDialogService dialogs, string title, ReportSettings model)
     {
@@ -70,4 +79,6 @@ public sealed class ReportSettings
     public ReportVisibility Visibility { get; set; }
 
     public List<Guid> RoleIds { get; set; } = [];
+
+    public List<Guid> GroupIds { get; set; } = [];
 }

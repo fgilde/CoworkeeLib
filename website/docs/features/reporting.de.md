@@ -53,7 +53,7 @@ Widget-Typen: Kennzahl mit Trend und Ziel, Diagramme (Balken, Linie, Fläche, To
 
 Jede Gruppe kommt vom Server mit einem OData-Filter für genau ihre Zeilen zurück. Ein Klick auf einen Balken oder ein Tortenstück grenzt damit die anderen Widgets derselben Menge ein; *Daten öffnen* springt auf die Seite, die du mit `DrillDown` registriert hast, schon gefiltert auf die Zeilen hinter der Zahl.
 
-Ein Bericht ist privat, für Rollen oder für die ganze Organisation freigegeben (`Reports.Share`). Andere können ihn duplizieren, ändern darf ihn nur der Besitzer, und eine gespeicherte Änderung erreicht alle, die ihn gerade offen haben. Exportieren lässt er sich als PNG, als PDF über den Druckdialog oder je Widget als CSV und Excel.
+Ein Bericht ist privat, für Rollen, für Gruppen (deren Mitglieder und die der Gruppen darüber; eine Gruppenauswahl grenzt die Liste ein) oder für die ganze Organisation freigegeben (`Reports.Share`). Andere können ihn duplizieren, ändern darf ihn nur der Besitzer, und eine gespeicherte Änderung erreicht alle, die ihn gerade offen haben. Exportieren lässt er sich als PNG, als PDF über den Druckdialog oder je Widget als CSV und Excel.
 
 ## Der Vertriebsbericht der Demo, Schritt für Schritt
 

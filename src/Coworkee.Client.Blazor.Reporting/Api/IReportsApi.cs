@@ -25,6 +25,8 @@ public interface IReportsApi
 
     Task<IReadOnlyList<ReportRoleDto>> GetRolesAsync(CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<ReportGroupDto>> GetGroupsAsync(CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<ReportSourceDto>> GetSourcesAsync(CancellationToken cancellationToken = default);
 
     Task<ReportQueryResult> QueryAsync(ReportQueryRequest request, CancellationToken cancellationToken = default);
