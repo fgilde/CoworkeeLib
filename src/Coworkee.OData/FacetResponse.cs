@@ -22,8 +22,13 @@ internal static class FacetResponse
         where T : class
     {
         var services = http.RequestServices;
-        if (services.GetRequiredService<IOptions<CoworkeeODataOptions>>().Value.MaxFacetRows is > 0 and var max
-            && await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(filtered.Take(max + 1), cancellationToken) > max)
+        var limits = services.GetRequiredService<IOptions<CoworkeeODataOptions>>().Value;
+        // one exact count decides both limits: a TOP n read or count of a set with fewer rows plans for n rows found early (a row goal) and may scan
+        // every row of the table to find them (28 s instead of 4 s for 12,000 of 1.2 million rows on SQL Server)
+        long? size = limits.MaxFacetRows > 0 || limits.FacetRowLimit > 0
+            ? await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.LongCountAsync(filtered, cancellationToken)
+            : null;
+        if (limits.MaxFacetRows > 0 && size > limits.MaxFacetRows)
         {
             return [];
         }
@@ -52,7 +57,7 @@ internal static class FacetResponse
             .Select(p => (Property: p, Own: context is not null && context.Groups.ContainsKey(p.Name))).ToList();
 
         // a bounded set counts the groups of the row's own members in memory; the others, and all of a larger set, count in the database
-        var read = await FacetCounts.ReadAsync(http, filtered, [.. groups.Where(g => !g.Own).Select(g => g.Group)], [.. computed.Where(c => !c.Own).Select(c => c.Property)],
+        var read = size > limits.FacetRowLimit ? null : await FacetCounts.ReadAsync(http, filtered, [.. groups.Where(g => !g.Own).Select(g => g.Group)], [.. computed.Where(c => !c.Own).Select(c => c.Property)],
             cancellationToken);
         await FacetCounts.FromDatabaseAsync(scoped, [.. groups.Where(g => !g.Own && FacetCounts.IsList(g.Group) && read?.Lists.Contains(g.Group) != true).Select(g => g.Group)],
             cancellationToken);

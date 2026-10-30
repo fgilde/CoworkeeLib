@@ -4,6 +4,12 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Changed
+
+- A facet request counts the filtered set once before its facets (with `FacetRowLimit` or `MaxFacetRows` on), and the in-memory read has no `TOP` any more: a `TOP` of more rows than match let SQL Server plan for rows found early and scan the whole table (28 s instead of 4 s for 12,000 of 1.2 million rows). `MaxFacetRows` checks with that count. No action needed.
+
+## 0.0.1.47 (2026-10-30)
+
 ### Added
 
 - `Coworkee:OData:MaxFacetRows` (`CoworkeeODataOptions.MaxFacetRows`, default 0 = off; below 0 stops the start): a filtered set of more rows than this gets no facets, checked with one count that stops after that many rows. For lists that may reach the whole database, where every facet group would read all of it. See [OData](../web/odata.md#how-facets-are-counted).
