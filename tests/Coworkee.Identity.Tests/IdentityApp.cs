@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using Coworkee.Application.Authorization;
+using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore;
 using Coworkee.Contracts.Identity;
 using Coworkee.Core.Modularity;
@@ -49,6 +50,8 @@ public sealed class IdentityApp : DatabaseFixture
         });
         builder.Services.AddScoped<Coworkee.Application.Setup.ISetupStep, RecordingSetupStep>();
         builder.Services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, RaceInjector>();
+        builder.Services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, CommandGate>();
+        builder.Services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, SelectionGate>();
         builder.Services.AddSingleton<Coworkee.Realtime.IRealtimePublisher>(RecordingRealtimePublisher.Instance);
         builder.Services.AddComputedPermission(ComputedPermissionTests.Permission, (c, _) => Task.FromResult(ComputedPermissionTests.Leaders.ContainsKey(c.UserId)));
         App = builder.Build();
@@ -104,6 +107,7 @@ public sealed class TestAppModule : CoworkeeModule
 {
     public override void ConfigureServices(ModuleServiceContext context)
     {
+        context.Services.AddMessagingFromAssembly(typeof(IdentityApp).Assembly);
         context.Services.AddSingleton<Coworkee.Application.Authorization.IResourceHierarchy>(TestFolderHierarchy.Instance);
         context.Services.AddSingleton<Coworkee.Application.Authorization.IResourceRestriction>(TestFolderRestriction.Instance);
         context.Services.AddCoworkeeDbContext<IdentityTestDbContext>((provider, options) =>
@@ -163,5 +167,77 @@ public sealed class RaceInjector : Microsoft.EntityFrameworkCore.Diagnostics.Sav
         }
 
         return result;
+    }
+}
+
+/// <summary>Holds the next query that has <see cref="Held.Parameter"/> among its parameters until the test releases it: a slow load other requests wait on.</summary>
+public sealed class CommandGate : Microsoft.EntityFrameworkCore.Diagnostics.DbCommandInterceptor
+{
+    private static Held? _next;
+
+    public static Held Arm(object parameter) => _next = new Held(parameter);
+
+    public override async ValueTask<Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult<System.Data.Common.DbDataReader>> ReaderExecutingAsync(
+        System.Data.Common.DbCommand command, Microsoft.EntityFrameworkCore.Diagnostics.CommandEventData eventData,
+        Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult<System.Data.Common.DbDataReader> result, CancellationToken cancellationToken = default)
+    {
+        if (_next is { } held && command.Parameters.Cast<System.Data.Common.DbParameter>().Any(p => Equals(p.Value, held.Parameter))
+            && Interlocked.CompareExchange(ref _next, null, held) == held)
+        {
+            held.Entered.TrySetResult();
+            await held.Released.Task.WaitAsync(TimeSpan.FromSeconds(30), CancellationToken.None);
+        }
+
+        return result;
+    }
+
+    public sealed class Held(object parameter)
+    {
+        public object Parameter { get; } = parameter;
+
+        public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource Released { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    }
+}
+
+/// <summary>
+/// Holds saves that change group selections until <c>parties</c> of them arrived, so their requests read the stored selection at the same time.
+/// Requests that wait for each other never all arrive: a held save goes on after <see cref="Patience"/>.
+/// </summary>
+public sealed class SelectionGate : Microsoft.EntityFrameworkCore.Diagnostics.SaveChangesInterceptor
+{
+    public static readonly TimeSpan Patience = TimeSpan.FromSeconds(2);
+
+    private static int _missing;
+    private static TaskCompletionSource? _all;
+
+    public static IDisposable Arm(int parties)
+    {
+        _missing = parties;
+        _all = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        return new Disarm();
+    }
+
+    public override async ValueTask<Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult<int>> SavingChangesAsync(
+        Microsoft.EntityFrameworkCore.Diagnostics.DbContextEventData eventData, Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult<int> result,
+        CancellationToken cancellationToken = default)
+    {
+        if (_all is { } all && eventData.Context!.ChangeTracker.Entries<Coworkee.Identity.Domain.GroupSelection>().Any(e => e.State is EntityState.Added or EntityState.Deleted))
+        {
+            if (Interlocked.Decrement(ref _missing) <= 0)
+            {
+                all.TrySetResult();
+            }
+
+            await Task.WhenAny(all.Task, Task.Delay(Patience, cancellationToken));
+        }
+
+        return result;
+    }
+
+    private sealed class Disarm : IDisposable
+    {
+        public void Dispose() => _all = null;
     }
 }

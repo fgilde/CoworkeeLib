@@ -318,6 +318,58 @@ public sealed class GroupScopeTests(IdentityApp app) : IAsyncLifetime
         (await PartitionAsync()).ShouldBe(none);
     }
 
+    [Fact]
+    public async Task The_same_selection_twice_at_once_succeeds_both_times()
+    {
+        var (user, a, _, b) = await MemberOfAAndBAsync();
+
+        var statuses = await AtOnceAsync(user, [a, b], [a, b]);
+
+        statuses.ShouldAllBe(s => s == HttpStatusCode.NoContent);
+        (await StoredAsync(user)).ShouldBe([a, b], ignoreOrder: true);
+    }
+
+    [Fact]
+    public async Task Two_different_selections_at_once_end_as_one_of_them_not_their_union()
+    {
+        var (user, a, _, b) = await MemberOfAAndBAsync();
+
+        var statuses = await AtOnceAsync(user, [a], [b]);
+
+        statuses.ShouldAllBe(s => s == HttpStatusCode.NoContent);
+        await ShouldBeOneOfAsync(user, a, b);
+    }
+
+    [Fact]
+    public async Task Two_different_selections_at_once_replace_a_stored_one_without_failing()
+    {
+        var (user, a, a1, b) = await MemberOfAAndBAsync();
+        (await SelectAsync(user, a1)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        var statuses = await AtOnceAsync(user, [a], [b]);
+
+        statuses.ShouldAllBe(s => s == HttpStatusCode.NoContent);
+        await ShouldBeOneOfAsync(user, a, b);
+    }
+
+    /// <summary>Two selections whose requests read the stored selection at the same time (unless one waits for the other).</summary>
+    private async Task<HttpStatusCode[]> AtOnceAsync(Guid user, Guid[] first, Guid[] second)
+    {
+        using var gate = SelectionGate.Arm(2);
+        var responses = await Task.WhenAll(SelectAsync(user, first), SelectAsync(user, second));
+        return [.. responses.Select(r => r.StatusCode)];
+    }
+
+    // the selection of one request, never a mix of both
+    private async Task ShouldBeOneOfAsync(Guid user, Guid first, Guid second)
+    {
+        var stored = await StoredAsync(user);
+        (stored.SequenceEqual([first]) || stored.SequenceEqual([second])).ShouldBeTrue($"stored: {string.Join(", ", stored)}");
+    }
+
+    private async Task<Guid[]> StoredAsync(Guid user) =>
+        [.. (await app.InDbAsync(null, db => Task.FromResult(db.Set<GroupSelection>().Where(s => s.UserId == user).Select(s => s.GroupId).ToList()))).Order()];
+
     /// <summary>A user in A and B; A has the sub-group A1.</summary>
     private async Task<(Guid User, Guid A, Guid A1, Guid B)> MemberOfAAndBAsync()
     {

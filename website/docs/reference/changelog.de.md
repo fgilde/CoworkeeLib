@@ -2,6 +2,25 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- `Coworkee:OData:MaxNodeCount`, `MaxAnyAllExpressionDepth`, `MaxExpansionDepth` und `MaxOrderByNodeCount` (`CoworkeeODataOptions`, Standard die Werte von OData: 100, 1, 2 und 5): die Abfragegrenzen von OData für die Entity-Sets jeder Route, in `IODataQueries`, Exporten, `query_data`, Facettenfiltern, Zeilenfiltern aus Code (`ODataEntityAccess.FilteredAsync`) und Berichten (samt berechneter Quellen; `ODataLimits.Check(options, services)` für eigenen Code), etwa für eine Suche, die `contains` über viele Felder mit `or` verknüpft; ein Wert unter 1 (unter 0 bei `MaxExpansionDepth`) verhindert den Start. Siehe [OData](../web/odata.md).
+- `HybridCache.GetOrCreateInScopeAsync(services, actor, key, (services, ct) => ...)` (`SharedCacheLoad`): ein Laden in den Cache, das Scoped-Services liest, in einem eigenen Service-Scope als `actor`; `CurrentUserScope.Capture(user)` hält einen Benutzer über seine Anfrage hinaus fest. Siehe [Messaging](../fundamentals/messaging.md#caching).
+
+### Geändert
+
+- Der Handler einer `ICachedQuery` läuft in einem eigenen Service-Scope, als der aufrufende Benutzer, mit dem Abbruch-Token des Caches (abgebrochen erst, wenn jede wartende Anfrage abbricht): Scoped-Zustand, den die Anfrage vor der Query gesetzt hat, sieht er nicht. In einer offenen Transaktion des DbContext der App (`IUnitOfWork.InTransaction`, neu, Standard `false`) umgehen gecachte Queries und das geteilte Laden von Berechtigungen, Einstellungen, Features und Texten den Cache: Sie lesen durch den Kontext und die Transaktion des Aufrufers, sodass eine zuvor in der Transaktion geschriebene Berechtigung zählt, und nichts davon wird gecacht. Siehe [Messaging](../fundamentals/messaging.md#caching).
+- Gecachte Queries halten einen Eintrag je Kultur (`CurrentCulture` und `CurrentUICulture`), sodass nicht mehr die Sprache des ersten Aufrufers allen antwortet, und bei `CacheScope.Tenant` teilen angemeldete Benutzer ohne Mandant nicht mehr die Einträge anonymer Aufrufer. Das Invalidieren per Tag erreicht beide wie bisher. Siehe [Messaging](../fundamentals/messaging.md#caching).
+
+### Behoben
+
+- Anfragen, die auf dasselbe kalte Laden in den Cache warteten (die Berechtigungen eines Benutzers oder Clients, Einstellungen, Features, Texte, Branding und Clients des Auth-Servers, gecachte Queries), scheiterten mit `500` („Connection is not open", ein verworfener Kontext, ein abgebrochener Task), wenn die Anfrage, die das Laden begann, zuerst endete, etwa weil der Browser sie beim Navigieren abbrach. Jedes geteilte Laden läuft jetzt in einem eigenen Scope.
+- Eine gescheiterte gecachte Query erreichte die anderen darauf wartenden Anfragen als Erfolg mit leerem Wert; sie bekommen jetzt den Fehler.
+- `SelectGroups` (`PUT /api/v1/identity/groups/mine/selection`) zweimal gleichzeitig für einen Benutzer: Dieselbe Auswahl scheiterte mit `500` am Primärschlüssel, verschiedene konnten gemischt gespeichert werden oder mit `500` scheitern. Sie laufen jetzt nacheinander: Beide gelingen, die spätere bleibt.
+- Eine gecachte Query, deren Laden die Anfrage überdauerte, die es begann, rechnete mit allen Rechten des Benutzers statt mit den Scopes des API-Schlüssels, und Einträge mit `CacheScope.User` teilten sich die Sitzung eines Benutzers, seine API-Schlüssel und eine „Anmelden als"-Sitzung. `HttpCurrentUser` nimmt den Schlüssel und seine Scopes vom festgehaltenen Aufrufer, sobald die Anfrage fort ist (die Grenzen eines Schlüssels fallen nie weg), der Eintrag eines Benutzers gilt je Schlüssel oder Sitzung und je Impersonator, und die Gruppenauswahl gilt für eine festgehaltene Sitzung (`ICurrentUser.IsInteractive`, neu, Standard `false`).
+
 ## 0.0.1.44 (2026-10-29)
 
 ### Hinzugefügt

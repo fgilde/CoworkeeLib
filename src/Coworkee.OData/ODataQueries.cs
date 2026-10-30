@@ -45,7 +45,8 @@ public sealed record ODataQueryResult<T>(
     IReadOnlyList<T> Rows, IReadOnlyList<IReadOnlyDictionary<string, object?>>? Shaped, long? Count, IReadOnlyList<FacetGroupDto>? Facets);
 
 internal sealed class ODataQueries(
-    IServiceProvider services, ODataRoutes routes, ODataEntityRegistry registry, ICurrentUser user, ILogger<ODataQueries> logger, IHttpContextAccessor? accessor = null)
+    IServiceProvider services, ODataRoutes routes, ODataEntityRegistry registry, ICurrentUser user, ILogger<ODataQueries> logger,
+    Microsoft.Extensions.Options.IOptions<CoworkeeODataOptions> limits, IHttpContextAccessor? accessor = null)
     : IODataQueries
 {
     public async Task<Result<ODataQueryResult<T>>> QueryAsync<T>(string route, string entitySet, string? query, bool facets, CancellationToken cancellationToken)
@@ -78,14 +79,15 @@ internal sealed class ODataQueries(
 
         try
         {
-            var rows = await ODataPipeline.RowsAsync<T>(http, profile, cancellationToken);
             var model = ODataPipeline.Model(http.Request);
             var edmSet = model.EntityContainer.FindEntitySet(set.EntitySet);
 
-            // what [EnableQuery] does on the route: validate with its defaults, page by the model's page size, then apply in the scope's two steps
+            // what [EnableQuery] does on the route: validate with the configured limits (before the facets read the filter), page by the model's page
+            // size, then apply in the scope's two steps
             var options = http.Request.ODataQueryOptions<T>(model, edmSet);
-            var enableQuery = new ScopedEnableQueryAttribute();
+            var enableQuery = new ScopedEnableQueryAttribute(limits.Value);
             enableQuery.ValidateQuery(http.Request, options);
+            var rows = await ODataPipeline.RowsAsync<T>(http, profile, cancellationToken);
             enableQuery.UseModelPageSize(model, edmSet.EntityType);
             var items = new List<object>();
             var applied = enableQuery.ApplyQuery(rows, options);

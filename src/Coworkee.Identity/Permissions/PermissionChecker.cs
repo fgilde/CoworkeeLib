@@ -1,4 +1,5 @@
 using Coworkee.Application.Authorization;
+using Coworkee.Application.Caching;
 using Coworkee.Contracts.Identity;
 using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
@@ -7,6 +8,7 @@ using Coworkee.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Identity.Permissions;
 
@@ -41,16 +43,17 @@ internal sealed class PermissionChecker(
     private async Task<IReadOnlyCollection<string>> GrantedAsync(Guid userId, bool narrow, CancellationToken cancellationToken)
     {
         var tenantId = currentUser.TenantId;
-        return await cache.GetOrCreateAsync(
+        return await cache.GetOrCreateInScopeAsync(
+            services,
+            new ImpersonatedUser(userId, tenantId),
             $"coworkee:permissions:{tenantId}:{userId}:{(narrow ? "active" : "all")}",
-            async ct =>
-            {
-                using var actor = CurrentUserScope.Begin(new ImpersonatedUser(userId, tenantId));
-                return await LoadAsync(userId, tenantId, narrow, ct);
-            },
+            (scope, ct) => Own(scope).LoadAsync(userId, tenantId, narrow, ct),
             tags: [PermissionCache.Tag],
             cancellationToken: cancellationToken);
     }
+
+    // a shared load reads through a checker of the scope it gets: its own, as the request that started it may end first (L64)
+    private static PermissionChecker Own(IServiceProvider scope) => ActivatorUtilities.CreateInstance<PermissionChecker>(scope);
 
     private async Task<bool> InScopeAsync(Guid userId, string permission, CancellationToken cancellationToken) =>
         currentUser.PermissionScopes is not { } scopes
@@ -61,17 +64,20 @@ internal sealed class PermissionChecker(
     {
         var tenantId = currentUser.TenantId;
         var roles = currentUser.Roles.Order(StringComparer.Ordinal).ToArray();
-        var fromRoles = await cache.GetOrCreateAsync(
+        var fromRoles = await cache.GetOrCreateInScopeAsync(
+            services,
+            new ImpersonatedUser(null, tenantId),
             $"coworkee:permissions:roles:{tenantId}:{string.Join(',', roles)}",
-            async ct =>
-            {
-                using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, tenantId));
-                var roleIds = await db.Set<Role>().Where(r => roles.Contains(r.Name!) && r.TenantId == tenantId && !r.IsSystem).Select(r => r.Id).ToListAsync(ct);
-                return (await GrantsForRolesAsync(roleIds, tenantId, ct)).ToArray();
-            },
+            (scope, ct) => Own(scope).ClientRoleGrantsAsync(roles, tenantId, ct),
             tags: [PermissionCache.Tag],
             cancellationToken: cancellationToken);
         return [.. definitions.Expand(fromRoles.Concat(currentUser.ClientPermissions.Where(definitions.Exists)))];
+    }
+
+    private async Task<string[]> ClientRoleGrantsAsync(string[] roles, Guid? tenantId, CancellationToken cancellationToken)
+    {
+        var roleIds = await db.Set<Role>().Where(r => roles.Contains(r.Name!) && r.TenantId == tenantId && !r.IsSystem).Select(r => r.Id).ToListAsync(cancellationToken);
+        return [.. await GrantsForRolesAsync(roleIds, tenantId, cancellationToken)];
     }
 
     public async Task<bool> IsGrantedAsync(string permission, CancellationToken cancellationToken) =>

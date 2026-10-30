@@ -1,7 +1,9 @@
+using Coworkee.Application.Caching;
 using Coworkee.Core.Security;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Features;
 
@@ -15,7 +17,7 @@ public interface IFeatureChecker
     Task<IReadOnlyDictionary<string, string?>> GetAllAsync(CancellationToken cancellationToken = default);
 }
 
-internal sealed class FeatureChecker(CoworkeeDbContext db, ICurrentUser currentUser, IFeatureDefinitionManager definitions, HybridCache cache) : IFeatureChecker
+internal sealed class FeatureChecker(ICurrentUser currentUser, IFeatureDefinitionManager definitions, HybridCache cache, IServiceProvider services) : IFeatureChecker
 {
     internal const string CacheTag = "coworkee:features";
 
@@ -41,10 +43,13 @@ internal sealed class FeatureChecker(CoworkeeDbContext db, ICurrentUser currentU
             return [];
         }
 
-        return await cache.GetOrCreateAsync(
+        return await cache.GetOrCreateInScopeAsync(
+            services,
+            new ImpersonatedUser(null, tenantId),
             $"{CacheTag}:{tenantId}",
-            async token =>
+            async (scope, token) =>
             {
+                var db = scope.GetRequiredService<CoworkeeDbContext>();
                 var set = await db.Set<TenantFeatureSet>().AsNoTracking().SingleOrDefaultAsync(s => s.TenantId == tenantId, token);
                 var values = set?.EditionId is { } editionId
                     ? await db.Set<Edition>().AsNoTracking().Where(e => e.Id == editionId).Select(e => e.Values).SingleOrDefaultAsync(token) ?? []

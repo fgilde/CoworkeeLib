@@ -182,11 +182,14 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
     }
 
     private static async Task<StoredClients> LoadStoredClientsAsync(Microsoft.AspNetCore.Http.HttpContext context) =>
-        await context.RequestServices.GetRequiredService<Microsoft.Extensions.Caching.Hybrid.HybridCache>().GetOrCreateAsync(
+        await Coworkee.Application.Caching.SharedCacheLoad.GetOrCreateInScopeAsync(
+            context.RequestServices.GetRequiredService<Microsoft.Extensions.Caching.Hybrid.HybridCache>(),
+            context.RequestServices,
+            new Coworkee.Core.Security.ImpersonatedUser(null, null),
             "coworkee:auth-clients",
-            async ct =>
+            async (scope, ct) =>
             {
-                var applications = context.RequestServices.GetRequiredService<OpenIddict.Abstractions.IOpenIddictApplicationManager>();
+                var applications = scope.GetRequiredService<OpenIddict.Abstractions.IOpenIddictApplicationManager>();
                 var uris = new List<string>();
                 var logos = new List<string>();
                 await foreach (var application in applications.ListAsync(null, null, ct))

@@ -61,7 +61,7 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
         {
             if (source!.Computed is { } computed)
             {
-                computed.Parse(request.Filter);
+                computed.Parse(request.Filter, services);
             }
             else
             {

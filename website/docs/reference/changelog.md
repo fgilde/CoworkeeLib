@@ -2,6 +2,25 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- `Coworkee:OData:MaxNodeCount`, `MaxAnyAllExpressionDepth`, `MaxExpansionDepth` and `MaxOrderByNodeCount` (`CoworkeeODataOptions`, defaults OData's 100, 1, 2 and 5): OData's query limits on the entity sets of every route, in `IODataQueries`, exports, `query_data`, facet filters, row filters of code (`ODataEntityAccess.FilteredAsync`) and reports (computed sources included; `ODataLimits.Check(options, services)` for own code), e.g. for a search that ORs `contains` over many fields; a value below 1 (below 0 for `MaxExpansionDepth`) stops the start. See [OData](../web/odata.md).
+- `HybridCache.GetOrCreateInScopeAsync(services, actor, key, (services, ct) => ...)` (`SharedCacheLoad`): a cache load that reads scoped services, in a service scope of its own as `actor`; `CurrentUserScope.Capture(user)` keeps a user beyond his request. See [messaging](../fundamentals/messaging.md#caching).
+
+### Changed
+
+- The handler of an `ICachedQuery` runs in a service scope of its own, as the calling user, with the cache's cancellation token (canceled only when every waiting request is): scoped state the request set before the query is not visible to it. Inside an open transaction of the app's DbContext (`IUnitOfWork.InTransaction`, new, default `false`) cached queries and the shared loads of permissions, settings, features and texts skip the cache: they read through the caller's context and transaction, so a grant written earlier in the transaction counts, and nothing of it is cached. See [messaging](../fundamentals/messaging.md#caching).
+- Cached queries keep an entry per culture (`CurrentCulture` and `CurrentUICulture`), so the first caller's language no longer answers everyone, and with `CacheScope.Tenant` signed-in users without a tenant no longer share the entries of anonymous callers. Invalidation by tag reaches both as before. See [messaging](../fundamentals/messaging.md#caching).
+
+### Fixed
+
+- Requests waiting on the same cold cache load (a user's or a client's permissions, settings, features, texts, the auth server's branding and clients, cached queries) failed with `500` ("Connection is not open", a disposed context, a canceled task) when the request that started the load ended first, e.g. a browser aborting it on navigation. Every shared load runs in a scope of its own now.
+- A failed cached query reached the other requests waiting on it as a success with an empty value; they get the failure now.
+- `SelectGroups` (`PUT /api/v1/identity/groups/mine/selection`) twice at once for one user: the same selection failed with `500` on the primary key, different ones could be stored mixed or fail with `500`. They run one after the other now: both succeed, the later one stays.
+- A cached query whose load outlived the request that started it computed with the user's full rights instead of the API key's scopes, and `CacheScope.User` entries were shared by a user's session, his API keys and a "Log in as" session. `HttpCurrentUser` takes the key and its scopes from the captured caller once the request is gone (a key's limits are never dropped), a user's entry is kept per key or session and per impersonator, and the group selection applies to a captured session (`ICurrentUser.IsInteractive`, new, default `false`).
+
 ## 0.0.1.44 (2026-10-29)
 
 ### Added

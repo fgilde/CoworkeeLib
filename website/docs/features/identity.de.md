@@ -64,7 +64,7 @@ services.AddGroupDetailTab<OrganisationCodes>("Organisation codes", ShipmentPerm
 | `ActiveAsync` | die Auswahl samt Untergruppen; `AccessibleAsync`, wenn nichts ausgewählt ist |
 | `NodesAsync`, `AncestorsAsync` | `GroupNode(Id, ParentId, Code, Name)` von Gruppen oder der Pfad über einer Gruppe (Wurzel zuerst) |
 
-Die Auswahl im Picker der App-Leiste speichert der Server pro Benutzer (`cw.GroupSelections`): Nichts ausgewählt heißt alles, was der Benutzer erreicht; einzelne Gruppen ausgewählt heißt diese samt Untergruppen. Eine Auswahl erweitert nie den Zugriff, und eine veraltete (Mitgliedschaft entfernt) wird ignoriert. Sie gilt nur für interaktive Anmeldungen; persönliche API-Schlüssel, MCP, Service-Clients und Hintergrundjobs sehen `AccessibleAsync`. Ohne Benutzer sind alle Listen leer; Ausnahmen (etwa eine Berechtigung „alles sehen") regelt die App.
+Die Auswahl im Picker der App-Leiste speichert der Server pro Benutzer (`cw.GroupSelections`): Nichts ausgewählt heißt alles, was der Benutzer erreicht; einzelne Gruppen ausgewählt heißt diese samt Untergruppen. Eine Auswahl erweitert nie den Zugriff, und eine veraltete (Mitgliedschaft entfernt) wird ignoriert. Sie gilt nur für interaktive Anmeldungen; persönliche API-Schlüssel, MCP, Service-Clients und Hintergrundjobs sehen `AccessibleAsync`. Ohne Benutzer sind alle Listen leer; Ausnahmen (etwa eine Berechtigung „alles sehen") regelt die App. Auswahlen eines Benutzers, die gleichzeitig ankommen (ein Browser schickt seine erste zweimal), werden nacheinander gespeichert: Beide gelingen, die spätere bleibt, nie eine Mischung aus beiden.
 
 Apps schränken ihre Zeilen mit einem Filter ein, der einmal gegen `ActiveAsync` geschrieben wird:
 

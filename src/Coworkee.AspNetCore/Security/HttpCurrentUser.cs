@@ -27,11 +27,18 @@ public sealed class HttpCurrentUser(IHttpContextAccessor accessor) : ICurrentUse
         ? ambient.ClientPermissions
         : ServiceClient is null ? [] : Principal!.FindAll("permission").Select(c => c.Value).ToArray();
 
-    // read from the request even inside an ambient user scope: code acting for the caller must not shed the key's limits
-    public Guid? ApiKeyId => ParseGuid(Principal?.FindFirstValue(ApiKeyDefaults.IdClaim));
+    // read from the request even inside an ambient user scope: code acting for the caller must not shed the key's limits; without the request (a
+    // shared load that outlives it) from the caller captured for it
+    public Guid? ApiKeyId => RequestKey ?? CurrentUserScope.Current?.ApiKeyId;
 
     // a key without scopes grants nothing, never everything
-    public IReadOnlyCollection<string>? PermissionScopes => ApiKeyId is null ? null : Principal!.FindAll(ApiKeyDefaults.ScopeClaim).Select(c => c.Value).ToArray();
+    public IReadOnlyCollection<string>? PermissionScopes => RequestKey is not null
+        ? Principal!.FindAll(ApiKeyDefaults.ScopeClaim).Select(c => c.Value).ToArray()
+        : CurrentUserScope.Current is { ApiKeyId: not null } ambient ? ambient.PermissionScopes ?? [] : null;
+
+    public bool IsInteractive => CurrentUserScope.Current?.IsInteractive == true || (accessor.HttpContext is not null && ApiKeyId is null && ClientId is null);
+
+    private Guid? RequestKey => ParseGuid(Principal?.FindFirstValue(ApiKeyDefaults.IdClaim));
 
     public Guid? ImpersonatorId => CurrentUserScope.Current is { } ambient ? ambient.ImpersonatorId : ParseGuid(Principal?.FindFirstValue(ImpersonationClaims.Impersonator));
 

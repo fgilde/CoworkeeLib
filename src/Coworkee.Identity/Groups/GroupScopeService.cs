@@ -25,7 +25,7 @@ internal sealed class GroupScopeService(CoworkeeDbContext db, ICurrentUser user,
     private IQueryable<UserGroup> Groups => db.Set<UserGroup>().AsNoTracking();
 
     // interactive sign-ins only: personal API keys (MCP), service clients and jobs without a request see everything accessible
-    private bool SelectionApplies => http.HttpContext is not null && user.ApiKeyId is null && user.ClientId is null;
+    private bool SelectionApplies => user.IsInteractive || (http.HttpContext is not null && user.ApiKeyId is null && user.ClientId is null);
 
     public async Task<IReadOnlyList<Guid>> MembershipsAsync(CancellationToken ct) => (await AccessAsync(ct)).Memberships;
 

@@ -24,4 +24,7 @@ public interface ICurrentUser
 
     /// <summary>The user who signed in as this one ("Log in as"), otherwise null.</summary>
     Guid? ImpersonatorId => null;
+
+    /// <summary>A user's own sign-in in an app (no API key, no service client), as opposed to keys, clients and jobs: the group selection applies to it.</summary>
+    bool IsInteractive => false;
 }

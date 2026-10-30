@@ -204,6 +204,7 @@ internal static class FacetResponse
         var services = request.RequestServices;
         var prefix = clrNames ? null : request.ODataFeature().RoutePrefix;
         var parsed = ODataQueryGuard.Request(services, QueryString.Create("$filter", filter), prefix).ODataQueryOptions<T>(services.GetRequiredService<ODataModels>().Of(prefix));
+        ODataLimits.Check(parsed, services);
         return await ScopeOf<T>(request).ApplyAsync(rows.ApplyODataFilter(parsed), cancellationToken);
     }
 }

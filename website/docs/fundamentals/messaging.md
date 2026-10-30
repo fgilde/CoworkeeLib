@@ -104,7 +104,18 @@ public sealed record GetDashboardQuery : IQuery<Result<DashboardDto>>, ICachedQu
 }
 ```
 
-`CacheScope` decides who shares an entry: `Tenant` (default), `User` or `Global`. Failures are never cached. Commands that change the underlying data list the same tag in `IInvalidatesCache.CacheTags`.
+`CacheScope` decides who shares an entry: `Tenant` (default), `User` (apart for each API key, the session and a "Log in as" session) or `Global`; every entry is kept per culture (`CurrentCulture` and `CurrentUICulture`), and with `Tenant` signed-in users without a tenant and anonymous callers have entries of their own. Failures are never cached. Commands that change the underlying data list the same tag in `IInvalidatesCache.CacheTags`.
+
+Requests that ask for an entry while it loads wait on that one load. So the handler of a cached query runs in a service scope of its own, as the calling user, with the cache's cancellation (canceled only when every waiting request is): the request that started the load may end first, a browser aborting it on navigation, without failing the others. The handler sees none of the request's scoped state; what it needs belongs in the query. Own `HybridCache` loads that read scoped services (a DbContext, `IDispatcher`) do the same with `GetOrCreateInScopeAsync`:
+
+```csharp
+var stats = await cache.GetOrCreateInScopeAsync(services, new ImpersonatedUser(null, tenantId), $"stats:{tenantId}",
+    (services, ct) => services.GetRequiredService<CatalogDbContext>().Products.CountAsync(ct), cancellationToken: cancellationToken);
+```
+
+`services` are the caller's, `actor` is who the load acts as: it always runs on a pool thread without the caller's ambient values (`AsyncLocal`s, the HTTP context). `CurrentUserScope.Capture(currentUser)` keeps the whole current user for it.
+
+Inside an open transaction of the app's DbContext (`IUnitOfWork.InTransaction`) both skip the cache: a cached query runs in the caller's pipeline, a load in the caller's scope, and the result is not cached. Another connection would not see what the transaction wrote (or wait on its locks), and it may still be rolled back.
 
 ## Domain events
 

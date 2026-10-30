@@ -14,6 +14,15 @@ internal sealed class ScopedEnableQueryAttribute : EnableQueryAttribute
 
     private const AllowedQueryOptions Narrowing = AllowedQueryOptions.Apply | AllowedQueryOptions.Filter | AllowedQueryOptions.Search;
 
+    /// <param name="options">The validation limits.</param>
+    internal ScopedEnableQueryAttribute(CoworkeeODataOptions options)
+    {
+        MaxNodeCount = options.MaxNodeCount;
+        MaxAnyAllExpressionDepth = options.MaxAnyAllExpressionDepth;
+        MaxExpansionDepth = options.MaxExpansionDepth;
+        MaxOrderByNodeCount = options.MaxOrderByNodeCount;
+    }
+
     // ponytail: the settings [EnableQuery] prepared (its page size, the model's page size, the time zone) are private; read them until there is an accessor
     private static readonly FieldInfo Settings = typeof(EnableQueryAttribute).GetField("_querySettings", BindingFlags.NonPublic | BindingFlags.Instance)
         ?? throw new InvalidOperationException("EnableQueryAttribute keeps its settings elsewhere; update ScopedEnableQueryAttribute.");

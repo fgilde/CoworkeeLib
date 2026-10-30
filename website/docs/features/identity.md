@@ -64,7 +64,7 @@ services.AddGroupDetailTab<OrganisationCodes>("Organisation codes", ShipmentPerm
 | `ActiveAsync` | the selection and its sub-groups; `AccessibleAsync` when nothing is selected |
 | `NodesAsync`, `AncestorsAsync` | `GroupNode(Id, ParentId, Code, Name)` of groups or the path above one (root first) |
 
-The picker in the app bar stores the selection per user on the server (`cw.GroupSelections`): nothing selected means everything the user may reach, some groups selected means those and their sub-groups. A selection never widens access, and a stale one (the user lost the membership) is ignored. It applies to interactive sign-ins only; personal API keys, MCP, service clients and background jobs see `AccessibleAsync`. Without a user every list is empty; bypasses (a "view all" permission) are the app's business.
+The picker in the app bar stores the selection per user on the server (`cw.GroupSelections`): nothing selected means everything the user may reach, some groups selected means those and their sub-groups. A selection never widens access, and a stale one (the user lost the membership) is ignored. It applies to interactive sign-ins only; personal API keys, MCP, service clients and background jobs see `AccessibleAsync`. Without a user every list is empty; bypasses (a "view all" permission) are the app's business. Selections of one user that arrive at once (a browser sending its first one twice) are saved one after the other: both succeed, the later one stays, never a mix of both.
 
 Apps scope their rows with a filter written once against `ActiveAsync`:
 

@@ -1,12 +1,15 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Coworkee.Application.Caching;
 using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Theming;
+using Coworkee.Core.Security;
 using Coworkee.Theming;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Coworkee.AuthServer;
@@ -29,7 +32,7 @@ public sealed record AuthBranding(string AppName, string? LogoUrl, string? Css, 
     public bool MediaIsVideo => Design.MediaUrl is { } url && VideoExtensions.Any(e => url.Split('?', '#')[0].EndsWith(e, StringComparison.OrdinalIgnoreCase));
 }
 
-public sealed partial class AuthBrandingProvider(IDispatcher dispatcher, HybridCache cache, IOptionsMonitor<AuthServerOptions> options, Settings.ISettingProvider settings)
+public sealed partial class AuthBrandingProvider(IServiceProvider services, HybridCache cache, IOptionsMonitor<AuthServerOptions> options, Settings.ISettingProvider settings)
 {
     private static readonly HybridCacheEntryOptions Entry = new() { Expiration = TimeSpan.FromMinutes(1), LocalCacheExpiration = TimeSpan.FromMinutes(1) };
 
@@ -41,16 +44,18 @@ public sealed partial class AuthBrandingProvider(IDispatcher dispatcher, HybridC
 
     // the theme part waits for the cache; the design follows the configuration at once, which picks up changes made in the app with its next reload
     public async ValueTask<AuthBranding> GetAsync(CancellationToken cancellationToken) =>
-        await cache.GetOrCreateAsync("coworkee:auth-branding", LoadAsync, Entry, cancellationToken: cancellationToken) with { Design = Checked(options.CurrentValue.Design) };
+        await cache.GetOrCreateInScopeAsync(services, new ImpersonatedUser(null, null), "coworkee:auth-branding", LoadAsync, Entry, cancellationToken: cancellationToken)
+            with { Design = Checked(options.CurrentValue.Design) };
 
     /// <summary>"light", "dark" or "system": the color mode setting of the user, else of the installation.</summary>
     public async Task<string> ModeAsync(CancellationToken cancellationToken) =>
         await settings.GetAsync(ThemeSettings.Mode, cancellationToken) switch { "light" => "light", "dark" => "dark", _ => "system" };
 
-    private async ValueTask<AuthBranding> LoadAsync(CancellationToken cancellationToken)
+    // the same for every visitor: the theme as an anonymous visitor gets it
+    private async Task<AuthBranding> LoadAsync(IServiceProvider scope, CancellationToken cancellationToken)
     {
         var configured = options.CurrentValue;
-        var theme = await dispatcher.SendAsync(new GetCurrentTheme(), cancellationToken);
+        var theme = await scope.GetRequiredService<IDispatcher>().SendAsync(new GetCurrentTheme(), cancellationToken);
         if (!theme.IsSuccess)
         {
             return new AuthBranding(configured.DisplayName, configured.LogoUrl, null, new SignInDesign());

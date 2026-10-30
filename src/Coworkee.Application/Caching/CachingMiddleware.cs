@@ -1,21 +1,33 @@
 using Coworkee.Application.Messaging;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
+using System.Globalization;
 using System.Reflection;
 using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Application.Caching;
 
-internal sealed class CachingMiddleware(HybridCache cache, ICurrentUser currentUser) : IRequestMiddleware
+internal sealed class CachingMiddleware(HybridCache cache, ICurrentUser currentUser, IServiceProvider services) : IRequestMiddleware
 {
     public int Order => MiddlewareOrder.Caching;
 
     public async Task<TResult> InvokeAsync<TRequest, TResult>(TRequest request, RequestHandlerDelegate<TResult> next, CancellationToken cancellationToken)
         where TRequest : IRequest<TResult>
     {
-        if (request is ICachedQuery query && (query.CacheScope != CacheScope.User || currentUser.UserId is not null))
+        // inside an open transaction the query reads through it and is not cached: it may see writes that are rolled back
+        if (request is ICachedQuery query && (query.CacheScope != CacheScope.User || currentUser.UserId is not null) && services.GetService<IUnitOfWork>() is not { InTransaction: true })
         {
-            return await ReadThroughAsync(query, typeof(TRequest), next, cancellationToken);
+            var scopes = services.GetRequiredService<IServiceScopeFactory>();
+            // every request asking while it loads waits on this load: it runs the rest of the pipeline in a scope of its own, as the caller, with the
+            // cache's token, so the request that started it may end (or be aborted) first (L64)
+            var caller = CurrentUserScope.Capture(currentUser);
+            return await ReadThroughAsync(query, typeof(TRequest), async ct =>
+            {
+                using var acting = CurrentUserScope.Begin(caller);
+                await using var scope = scopes.CreateAsyncScope();
+                return await RequestInvoker<TRequest, TResult>.Pipeline(request, scope.ServiceProvider, ct, GetType())();
+            }, cancellationToken);
         }
 
         var result = await next();
@@ -27,15 +39,15 @@ internal sealed class CachingMiddleware(HybridCache cache, ICurrentUser currentU
         return result;
     }
 
-    private Task<TResult> ReadThroughAsync<TResult>(ICachedQuery query, Type requestType, RequestHandlerDelegate<TResult> next, CancellationToken cancellationToken)
+    private Task<TResult> ReadThroughAsync<TResult>(ICachedQuery query, Type requestType, Func<CancellationToken, Task<TResult>> load, CancellationToken cancellationToken)
     {
         if (typeof(TResult).IsGenericType && typeof(TResult).GetGenericTypeDefinition() == typeof(Result<>))
         {
             var read = ReadResultMethods.GetOrAdd(typeof(TResult), type => ReadResultMethod.MakeGenericMethod(type.GetGenericArguments()[0]));
-            return (Task<TResult>)read.Invoke(this, [query, requestType, next, cancellationToken])!;
+            return (Task<TResult>)read.Invoke(this, [query, requestType, load, cancellationToken])!;
         }
 
-        return ReadAsync(query, requestType, () => next(), _ => true, cancellationToken);
+        return ReadAsync(query, requestType, load, cancellationToken);
     }
 
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, MethodInfo> ReadResultMethods = new();
@@ -43,44 +55,41 @@ internal sealed class CachingMiddleware(HybridCache cache, ICurrentUser currentU
     private static readonly MethodInfo ReadResultMethod =
         typeof(CachingMiddleware).GetMethod(nameof(ReadResultAsync), BindingFlags.Instance | BindingFlags.NonPublic)!;
 
-    private async Task<Result<TValue>> ReadResultAsync<TValue>(ICachedQuery query, Type requestType, RequestHandlerDelegate<Result<TValue>> next, CancellationToken cancellationToken)
+    // a failure is not cached; it reaches every caller that waited on the load
+    private async Task<Result<TValue>> ReadResultAsync<TValue>(
+        ICachedQuery query, Type requestType, Func<CancellationToken, Task<Result<TValue>>> load, CancellationToken cancellationToken)
     {
-        Result<TValue>? failure = null;
-        var value = await ReadAsync<TValue>(
-            query,
-            requestType,
-            async () =>
-            {
-                var result = await next();
-                failure = result.IsSuccess ? null : result;
-                return result.IsSuccess ? result.Value : default!;
-            },
-            _ => failure is null,
-            cancellationToken);
-        return failure ?? Result<TValue>.Success(value);
+        try
+        {
+            return Result<TValue>.Success(await ReadAsync(
+                query,
+                requestType,
+                async ct =>
+                {
+                    var result = await load(ct);
+                    return result.IsSuccess ? result.Value : throw new NotCached(result);
+                },
+                cancellationToken));
+        }
+        catch (NotCached notCached)
+        {
+            return (Result<TValue>)notCached.Result;
+        }
     }
 
-    private async Task<TValue> ReadAsync<TValue>(
-        ICachedQuery query, Type requestType, Func<Task<TValue>> load, Func<TValue, bool> cacheable, CancellationToken cancellationToken)
+    private async Task<TValue> ReadAsync<TValue>(ICachedQuery query, Type requestType, Func<CancellationToken, Task<TValue>> load, CancellationToken cancellationToken)
     {
         var options = query.CacheDuration is { } duration ? new HybridCacheEntryOptions { Expiration = duration, LocalCacheExpiration = duration } : null;
         var caller = ExecutionContext.Capture();
-        try
-        {
-            return await cache.GetOrCreateAsync(
-                Key(query, requestType),
-                async _ => await InCallerContext(caller, load) is var value && cacheable(value) ? value : throw new NotCached<TValue>(value),
-                options,
-                query.CacheTags.Select(Tag).ToList(),
-                cancellationToken);
-        }
-        catch (NotCached<TValue> notCached)
-        {
-            return notCached.Value;
-        }
+        return await cache.GetOrCreateAsync(
+            Key(query, requestType),
+            async ct => await InCallerContext(caller, () => load(ct)),
+            options,
+            query.CacheTags.Select(Tag).ToList(),
+            cancellationToken);
     }
 
-    // HybridCache may run the factory on a pool thread without the caller's ExecutionContext, which would lose the current user and tenant.
+    // HybridCache may run the factory on a pool thread without the caller's ExecutionContext, which would lose the culture and the ambient values.
     private static Task<TValue> InCallerContext<TValue>(ExecutionContext? caller, Func<Task<TValue>> load)
     {
         if (caller is null)
@@ -93,19 +102,27 @@ internal sealed class CachingMiddleware(HybridCache cache, ICurrentUser currentU
         return task!;
     }
 
+    // the culture is part of every key: a handler may answer in the caller's language or format
     private string Key(ICachedQuery query, Type requestType) => query.CacheScope switch
     {
-        CacheScope.User => $"coworkee:query:{currentUser.TenantId}:{currentUser.UserId}:{requestType.FullName}:{query.CacheKey}",
-        CacheScope.Global => $"coworkee:query:global:{requestType.FullName}:{query.CacheKey}",
-        _ => $"coworkee:query:{currentUser.TenantId?.ToString() ?? "anonymous"}:{requestType.FullName}:{query.CacheKey}",
+        // a key (its scopes) and a "Log in as" session may see less than the user's own session
+        CacheScope.User => $"coworkee:query:{currentUser.TenantId}:{currentUser.UserId}:{Credential()}:{requestType.FullName}:{Culture()}:{query.CacheKey}",
+        CacheScope.Global => $"coworkee:query:global:{requestType.FullName}:{Culture()}:{query.CacheKey}",
+        // a signed-in user without a tenant is not an anonymous caller
+        _ => $"coworkee:query:{currentUser.TenantId?.ToString() ?? (currentUser.IsAuthenticated ? "host" : "anonymous")}:{requestType.FullName}:{Culture()}:{query.CacheKey}",
     };
+
+    private static string Culture() => $"{CultureInfo.CurrentCulture.Name}|{CultureInfo.CurrentUICulture.Name}";
+
+    private string Credential() =>
+        (currentUser.ApiKeyId is { } key ? $"key-{key}" : "session") + (currentUser.ImpersonatorId is { } impersonator ? $"-as-{impersonator}" : string.Empty);
 
     private string Tag(string tag) => $"coworkee:{currentUser.TenantId?.ToString() ?? "anonymous"}:{tag}";
 
     private static bool Succeeded<TResult>(TResult result) => result is not Result { IsSuccess: false };
 
-    private sealed class NotCached<TValue>(TValue value) : Exception
+    private sealed class NotCached(object result) : Exception
     {
-        public TValue Value { get; } = value;
+        public object Result { get; } = result;
     }
 }

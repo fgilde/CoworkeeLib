@@ -22,20 +22,24 @@ internal abstract class ReportSourceRegistration(string name, string label, stri
 
     public IEdmStructuredType EdmType => (IEdmStructuredType)Model.FindDeclaredType(rowType.FullName!)!;
 
-    /// <summary>Parses the filter; unknown fields or bad syntax throw an ODataException.</summary>
-    public FilterClause? Parse(string? filter) => Option(filter)?.FilterClause;
+    /// <summary>Parses the filter; unknown fields, bad syntax or a filter beyond the query limits throw an ODataException.</summary>
+    public FilterClause? Parse(string? filter, IServiceProvider services) => Option(filter, services)?.FilterClause;
 
     public abstract Task<IQueryable> RowsAsync(IServiceProvider services, string? filter, CancellationToken cancellationToken);
 
-    protected FilterQueryOption? Option(string? filter)
+    protected FilterQueryOption? Option(string? filter, IServiceProvider services)
     {
         if (string.IsNullOrWhiteSpace(filter))
         {
             return null;
         }
 
+        // every field of the row type may be filtered; the query limits still apply
         var context = new ODataQueryContext(Model, rowType, new ODataPath());
-        return new FilterQueryOption(filter, context, new ODataQueryOptionParser(Model, EdmType, null, new Dictionary<string, string> { ["$filter"] = filter }));
+        context.DefaultQueryConfigurations.EnableFilter = true;
+        var option = new FilterQueryOption(filter, context, new ODataQueryOptionParser(Model, EdmType, null, new Dictionary<string, string> { ["$filter"] = filter }));
+        option.Validate(Coworkee.OData.ODataLimits.Settings(services));
+        return option;
     }
 
     private IEdmModel BuildModel()
@@ -52,7 +56,7 @@ internal sealed class ReportSourceRegistration<TRow>(string name, string label, 
 {
     public override async Task<IQueryable> RowsAsync(IServiceProvider services, string? filter, CancellationToken cancellationToken)
     {
-        var option = Option(filter);
+        var option = Option(filter, services);
         var (from, to) = ReportSourceDates.Bounds(option?.FilterClause);
         var result = await rows(new ReportSourceContext(services, from, to), cancellationToken);
         // ponytail: a list is filtered and aggregated in memory; return an IQueryable of the database when the rows get many
