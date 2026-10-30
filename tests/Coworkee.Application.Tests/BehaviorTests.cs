@@ -210,6 +210,48 @@ public sealed class BehaviorTests
     private static readonly ServiceProvider Root = new ServiceCollection().BuildServiceProvider();
 
     [Fact]
+    public async Task Anonymous_callers_and_signed_in_users_without_a_tenant_keep_apart_entries()
+    {
+        var counter = new Counter();
+        var anonymous = Build(services => services.AddSingleton(counter).AddSingleton<ICurrentUser>(new ImpersonatedUser(null, null)));
+        var host = Build(services => services.AddSingleton(counter).AddSingleton<ICurrentUser>(new ImpersonatedUser(Guid.CreateVersion7(), null)), cache: anonymous.Cache);
+
+        (await anonymous.SendAsync(new Count(), Ct)).Value.ShouldBe(1);
+        (await host.SendAsync(new Count(), Ct)).Value.ShouldBe(2);
+        (await anonymous.SendAsync(new Count(), Ct)).Value.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Each_culture_has_its_own_entry()
+    {
+        var dispatcher = Build(_ => { });
+        var previous = (System.Globalization.CultureInfo.CurrentCulture, System.Globalization.CultureInfo.CurrentUICulture);
+        try
+        {
+            foreach (var culture in new[] { "de-DE", "en-US", "de-DE" })
+            {
+                System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo(culture);
+                (await dispatcher.SendAsync(new ReadCulture(), Ct)).Value.ShouldBe(culture);
+            }
+        }
+        finally
+        {
+            (System.Globalization.CultureInfo.CurrentCulture, System.Globalization.CultureInfo.CurrentUICulture) = previous;
+        }
+    }
+
+    public sealed record ReadCulture : IQuery<Result<string>>, ICachedQuery
+    {
+        public string CacheKey => "culture";
+    }
+
+    internal sealed class ReadCultureHandler : IHandler<ReadCulture, Result<string>>
+    {
+        public Task<Result<string>> HandleAsync(ReadCulture request, CancellationToken cancellationToken) =>
+            Task.FromResult(Result<string>.Success(System.Globalization.CultureInfo.CurrentUICulture.Name));
+    }
+
+    [Fact]
     public async Task Failures_are_not_cached()
     {
         var counter = new Counter { FailNext = true };

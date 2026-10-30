@@ -1,6 +1,7 @@
 using Coworkee.Application.Messaging;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
+using System.Globalization;
 using System.Reflection;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
@@ -101,13 +102,17 @@ internal sealed class CachingMiddleware(HybridCache cache, ICurrentUser currentU
         return task!;
     }
 
+    // the culture is part of every key: a handler may answer in the caller's language or format
     private string Key(ICachedQuery query, Type requestType) => query.CacheScope switch
     {
         // a key (its scopes) and a "Log in as" session may see less than the user's own session
-        CacheScope.User => $"coworkee:query:{currentUser.TenantId}:{currentUser.UserId}:{Credential()}:{requestType.FullName}:{query.CacheKey}",
-        CacheScope.Global => $"coworkee:query:global:{requestType.FullName}:{query.CacheKey}",
-        _ => $"coworkee:query:{currentUser.TenantId?.ToString() ?? "anonymous"}:{requestType.FullName}:{query.CacheKey}",
+        CacheScope.User => $"coworkee:query:{currentUser.TenantId}:{currentUser.UserId}:{Credential()}:{requestType.FullName}:{Culture()}:{query.CacheKey}",
+        CacheScope.Global => $"coworkee:query:global:{requestType.FullName}:{Culture()}:{query.CacheKey}",
+        // a signed-in user without a tenant is not an anonymous caller
+        _ => $"coworkee:query:{currentUser.TenantId?.ToString() ?? (currentUser.IsAuthenticated ? "host" : "anonymous")}:{requestType.FullName}:{Culture()}:{query.CacheKey}",
     };
+
+    private static string Culture() => $"{CultureInfo.CurrentCulture.Name}|{CultureInfo.CurrentUICulture.Name}";
 
     private string Credential() =>
         (currentUser.ApiKeyId is { } key ? $"key-{key}" : "session") + (currentUser.ImpersonatorId is { } impersonator ? $"-as-{impersonator}" : string.Empty);

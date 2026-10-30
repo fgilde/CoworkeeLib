@@ -12,6 +12,7 @@
 ### Geändert
 
 - Der Handler einer `ICachedQuery` läuft in einem eigenen Service-Scope, als der aufrufende Benutzer, mit dem Abbruch-Token des Caches (abgebrochen erst, wenn jede wartende Anfrage abbricht): Scoped-Zustand, den die Anfrage vor der Query gesetzt hat, sieht er nicht. In einer offenen Transaktion des DbContext der App (`IUnitOfWork.InTransaction`, neu, Standard `false`) umgehen gecachte Queries und das geteilte Laden von Berechtigungen, Einstellungen, Features und Texten den Cache: Sie lesen durch den Kontext und die Transaktion des Aufrufers, sodass eine zuvor in der Transaktion geschriebene Berechtigung zählt, und nichts davon wird gecacht. Siehe [Messaging](../fundamentals/messaging.md#caching).
+- Gecachte Queries halten einen Eintrag je Kultur (`CurrentCulture` und `CurrentUICulture`), sodass nicht mehr die Sprache des ersten Aufrufers allen antwortet, und bei `CacheScope.Tenant` teilen angemeldete Benutzer ohne Mandant nicht mehr die Einträge anonymer Aufrufer. Das Invalidieren per Tag erreicht beide wie bisher. Siehe [Messaging](../fundamentals/messaging.md#caching).
 
 ### Behoben
 

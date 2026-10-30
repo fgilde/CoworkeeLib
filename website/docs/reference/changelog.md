@@ -12,6 +12,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 ### Changed
 
 - The handler of an `ICachedQuery` runs in a service scope of its own, as the calling user, with the cache's cancellation token (canceled only when every waiting request is): scoped state the request set before the query is not visible to it. Inside an open transaction of the app's DbContext (`IUnitOfWork.InTransaction`, new, default `false`) cached queries and the shared loads of permissions, settings, features and texts skip the cache: they read through the caller's context and transaction, so a grant written earlier in the transaction counts, and nothing of it is cached. See [messaging](../fundamentals/messaging.md#caching).
+- Cached queries keep an entry per culture (`CurrentCulture` and `CurrentUICulture`), so the first caller's language no longer answers everyone, and with `CacheScope.Tenant` signed-in users without a tenant no longer share the entries of anonymous callers. Invalidation by tag reaches both as before. See [messaging](../fundamentals/messaging.md#caching).
 
 ### Fixed
 
