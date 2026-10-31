@@ -13,7 +13,13 @@ internal sealed class ApiKeyPersonalData(CoworkeeDbContext db) : IPersonalDataCo
             .Select(k => new { k.Name, k.Description, k.Prefix, k.Scopes, k.CreatedAt, k.ExpiresAt, k.LastUsedAt, k.LastUsedIp, k.RevokedAt })
             .ToListAsync(cancellationToken);
 
-    public Task EraseAsync(PersonalDataSubject subject, CancellationToken cancellationToken) => Mine(subject).ExecuteDeleteAsync(cancellationToken);
+    /// <summary>His keys go; keys of others he revoked keep the revocation, without his id.</summary>
+    public async Task EraseAsync(PersonalDataSubject subject, CancellationToken cancellationToken)
+    {
+        await Mine(subject).ExecuteDeleteAsync(cancellationToken);
+        var erased = (Guid?)PersonalDataSubject.ErasedUserId;
+        await db.Set<ApiKey>().IgnoreQueryFilters().Where(k => k.RevokedBy == subject.UserId).ExecuteUpdateAsync(s => s.SetProperty(k => k.RevokedBy, erased), cancellationToken);
+    }
 
-    private IQueryable<ApiKey> Mine(PersonalDataSubject subject) => db.Set<ApiKey>().Where(k => k.UserId == subject.UserId);
+    private IQueryable<ApiKey> Mine(PersonalDataSubject subject) => db.Set<ApiKey>().IgnoreQueryFilters().Where(k => k.UserId == subject.UserId);
 }

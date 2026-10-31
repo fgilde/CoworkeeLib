@@ -33,6 +33,7 @@ public sealed class CoworkeeWebhooksModule : CoworkeeModule, IWebModule
         services.AddSingleton<WebhookUrlGuard>();
         services.AddSingleton<WebhookSecrets>();
         services.AddScoped<WebhookAdmins>();
+        services.AddScoped<Application.Privacy.IPersonalDataContributor, WebhookPersonalData>();
         services.AddScoped<IWebhookPublisher, WebhookPublisher>();
         services.AddScoped<IInterceptor, WebhookChangeInterceptor>();
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IOutboxRelay, WebhookRelay>());

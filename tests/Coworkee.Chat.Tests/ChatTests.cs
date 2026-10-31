@@ -111,7 +111,7 @@ public sealed class ChatTests(ChatApp app) : IAsyncLifetime
         (await Admin.PostAsJsonAsync($"/api/v1/chat/conversations/{_bob.Id}", new SendChatMessageRequest("Secret plan"), Ct)).EnsureSuccessStatusCode();
 
         var export = await Bob.GetFromJsonAsync<System.Text.Json.JsonElement>("/api/v1/identity/me/personal-data", Ct);
-        export.GetProperty("chat")[0].GetProperty("text").GetString().ShouldBe("Secret plan");
+        export.GetProperty("chat").GetProperty("messages")[0].GetProperty("text").GetString().ShouldBe("Secret plan");
         export.GetProperty("profile").GetProperty("email").GetString().ShouldBe("bob@acme.test");
 
         (await Bob.PostAsJsonAsync("/api/v1/identity/me/delete", new DeleteAccountRequest("bob@acme.test"), Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);

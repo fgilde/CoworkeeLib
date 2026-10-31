@@ -4,38 +4,39 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Notifications;
 
+/// <summary>Keyed by the user id, which belongs to one user in one organisation: rows of every organisation count (a follow written while he acted elsewhere too).</summary>
 internal sealed class NotificationPersonalData(CoworkeeDbContext db) : IPersonalDataContributor
 {
     public string Section => "notifications";
 
     public async Task<object?> ExportAsync(PersonalDataSubject subject, CancellationToken cancellationToken) => new
     {
-        notifications = await db.Set<Notification>().AsNoTracking().Where(n => n.UserId == subject.UserId).OrderBy(n => n.CreatedAt)
+        notifications = await db.Set<Notification>().IgnoreQueryFilters().AsNoTracking().Where(n => n.UserId == subject.UserId).OrderBy(n => n.CreatedAt)
             .Select(n => new { n.Type, n.Title, n.Body, n.Link, n.CreatedAt, n.ReadAt })
             .ToListAsync(cancellationToken),
-        pushDevices = await db.Set<Push.PushSubscription>().AsNoTracking().Where(s => s.UserId == subject.UserId).OrderBy(s => s.CreatedAt)
+        pushDevices = await db.Set<Push.PushSubscription>().IgnoreQueryFilters().AsNoTracking().Where(s => s.UserId == subject.UserId).OrderBy(s => s.CreatedAt)
             .Select(s => new { s.Device, s.CreatedAt })
             .ToListAsync(cancellationToken),
-        preferences = await db.Set<NotificationPreference>().AsNoTracking().Where(p => p.UserId == subject.UserId).OrderBy(p => p.Type)
+        preferences = await db.Set<NotificationPreference>().IgnoreQueryFilters().AsNoTracking().Where(p => p.UserId == subject.UserId).OrderBy(p => p.Type)
             .Select(p => new { p.Type, p.Scope, p.InApp, p.Email })
             .ToListAsync(cancellationToken),
-        follows = await db.Set<NotificationFollow>().AsNoTracking().Where(f => f.UserId == subject.UserId).OrderBy(f => f.CreatedAt)
+        follows = await db.Set<NotificationFollow>().IgnoreQueryFilters().AsNoTracking().Where(f => f.UserId == subject.UserId).OrderBy(f => f.CreatedAt)
             .Select(f => new { f.EntityType, f.EntityId, f.Title, f.CreatedAt })
             .ToListAsync(cancellationToken),
-        pendingMails = await db.Set<PendingNotificationMail>().AsNoTracking().Where(m => m.UserId == subject.UserId).OrderBy(m => m.DueAt)
+        pendingMails = await db.Set<PendingNotificationMail>().IgnoreQueryFilters().AsNoTracking().Where(m => m.UserId == subject.UserId).OrderBy(m => m.DueAt)
             .Select(m => new { m.Type, m.Title, m.Body, m.Link, m.DueAt })
             .ToListAsync(cancellationToken),
-        digestLastSentAt = await db.Set<NotificationDigestState>().AsNoTracking().Where(s => s.UserId == subject.UserId)
+        digestLastSentAt = await db.Set<NotificationDigestState>().IgnoreQueryFilters().AsNoTracking().Where(s => s.UserId == subject.UserId)
             .Select(s => (DateTimeOffset?)s.LastSentAt).FirstOrDefaultAsync(cancellationToken),
     };
 
     public async Task EraseAsync(PersonalDataSubject subject, CancellationToken cancellationToken)
     {
-        await db.Set<Notification>().Where(n => n.UserId == subject.UserId).ExecuteDeleteAsync(cancellationToken);
-        await db.Set<NotificationDigestState>().Where(s => s.UserId == subject.UserId).ExecuteDeleteAsync(cancellationToken);
-        await db.Set<Push.PushSubscription>().Where(s => s.UserId == subject.UserId).ExecuteDeleteAsync(cancellationToken);
-        await db.Set<NotificationPreference>().Where(p => p.UserId == subject.UserId).ExecuteDeleteAsync(cancellationToken);
-        await db.Set<NotificationFollow>().Where(f => f.UserId == subject.UserId).ExecuteDeleteAsync(cancellationToken);
-        await db.Set<PendingNotificationMail>().Where(m => m.UserId == subject.UserId).ExecuteDeleteAsync(cancellationToken);
+        await db.Set<Notification>().IgnoreQueryFilters().Where(n => n.UserId == subject.UserId).ExecuteDeleteAsync(cancellationToken);
+        await db.Set<NotificationDigestState>().IgnoreQueryFilters().Where(s => s.UserId == subject.UserId).ExecuteDeleteAsync(cancellationToken);
+        await db.Set<Push.PushSubscription>().IgnoreQueryFilters().Where(s => s.UserId == subject.UserId).ExecuteDeleteAsync(cancellationToken);
+        await db.Set<NotificationPreference>().IgnoreQueryFilters().Where(p => p.UserId == subject.UserId).ExecuteDeleteAsync(cancellationToken);
+        await db.Set<NotificationFollow>().IgnoreQueryFilters().Where(f => f.UserId == subject.UserId).ExecuteDeleteAsync(cancellationToken);
+        await db.Set<PendingNotificationMail>().IgnoreQueryFilters().Where(m => m.UserId == subject.UserId).ExecuteDeleteAsync(cancellationToken);
     }
 }

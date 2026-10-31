@@ -77,6 +77,8 @@ webhook-signature: v1,K5oZfzN95Z9UVu1EsfQmfVNQhnkZ2pj9o9NDN/H/pI4=
 
 The secret, the request and response bodies and the endpoints stay out of the AI tools and the MCP server. While someone is signed in as another user, adding and changing endpoints is refused (`auth.impersonating`).
 
+The [personal data export](../security/privacy.md) has a section `webhooks` with the endpoints the user saved last. Erasing the user keeps them, switched off and owned by the erased-user placeholder, since deliveries were shaped by his permissions; saving such an endpoint again makes the administrator its owner and switches it back on.
+
 ## Delivery
 
 Deliveries leave through the outbox and the background jobs, so a crash between saving and sending loses nothing. Each attempt waits at most `Timeout` for an answer; any 2xx counts as delivered. Redirects are not followed.

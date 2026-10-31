@@ -71,6 +71,8 @@ Erinnerungen und Fristen erledigt der wiederkehrende Job `workflow-deadlines` (a
 
 Jeder Übergang, jede Entscheidung, Erinnerung, Eskalation und jeder Verfall ist eine Zeile der Historie mit Benutzer, Zeit und Kommentar. Zustandswechsel und Genehmigungen landen außerdem wie jede andere Änderung im [Audit-Log](auditing.md). Jede Änderung geht über das Echtzeit-Topic `workflow:{entityType}:{entityId}` (`WorkflowTopics.Entity`); die Genehmigungen einer Person erreichen ihr eigenes Topic, der Posteingang zieht also mit.
 
+Der [Export personenbezogener Daten](../security/privacy.md) hat einen Abschnitt `workflows` (Schritte, Entscheidungen und angeforderte Freigaben des Benutzers). Das Löschen des Benutzers behält Historie und Entscheidungen mit dem Platzhalter für gelöschte Benutzer und ohne seine Kommentare; er verlässt offene Freigaben, und eine, die danach auf niemanden mehr wartet, ist sofort überfällig: Der Fristen-Job setzt sie in ihren `OnTimeout`-Zustand oder holt die Rolle aus `EscalateTo` dazu; eine bereits eskalierte wird abgebrochen.
+
 ## Erweitern
 
 Handler der Domain-Events `WorkflowTransitioned`, `ApprovalStarted` und `ApprovalDecided` (`IDomainEventHandler<T>`) laufen nach dem Commit über die Outbox, etwa um eine Mail zu schicken, ein anderes System aufzurufen oder einen [Elsa-Workflow](workflows-elsa.md) zu starten. Die Befehle sind gewöhnliche Requests (`RunTransitionCommand`, `DecideApprovalCommand`), also können auch der [KI-Assistent und MCP-Clients](ai.md) sie nutzen, mit den Berechtigungen des Benutzers.

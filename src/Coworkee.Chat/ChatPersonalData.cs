@@ -12,15 +12,29 @@ internal sealed class ChatPersonalData(CoworkeeDbContext db, IBlobStorage storag
 {
     public string Section => "chat";
 
-    /// <summary>What he sent anywhere and what he received in direct chats.</summary>
+    /// <summary>What he sent anywhere and what he received in direct chats, his memberships, reactions and the files he uploaded (listed, not included).</summary>
     public async Task<object?> ExportAsync(PersonalDataSubject subject, CancellationToken cancellationToken)
     {
-        var direct = await DirectAsync(subject.UserId, cancellationToken);
-        return await db.Set<ChatMessage>().IgnoreQueryFilters().AsNoTracking()
-            .Where(m => m.DeletedAt == null && (m.FromUserId == subject.UserId || direct.Contains(m.ConversationId)))
-            .OrderBy(m => m.SentAt)
-            .Select(m => new { m.ConversationId, m.FromUserId, m.Text, m.SentAt, m.EditedAt })
-            .ToListAsync(cancellationToken);
+        var userId = subject.UserId;
+        var direct = await DirectAsync(userId, cancellationToken);
+        return new
+        {
+            Messages = await db.Set<ChatMessage>().IgnoreQueryFilters().AsNoTracking()
+                .Where(m => m.DeletedAt == null && (m.FromUserId == userId || direct.Contains(m.ConversationId)))
+                .OrderBy(m => m.SentAt)
+                .Select(m => new { m.ConversationId, m.FromUserId, m.Text, m.SentAt, m.EditedAt })
+                .ToListAsync(cancellationToken),
+            Memberships = await (from member in db.Set<ChatMember>().IgnoreQueryFilters().AsNoTracking()
+                                 join conversation in db.Set<ChatConversation>().IgnoreQueryFilters() on member.ConversationId equals conversation.Id
+                                 where member.UserId == userId
+                                 orderby member.JoinedAt
+                                 select new { member.ConversationId, conversation.IsGroup, conversation.Name, member.IsOwner, member.JoinedAt, member.LastReadAt })
+                .ToListAsync(cancellationToken),
+            Reactions = await db.Set<ChatReaction>().IgnoreQueryFilters().AsNoTracking().Where(r => r.UserId == userId)
+                .Select(r => new { r.MessageId, r.Emoji }).ToListAsync(cancellationToken),
+            Attachments = await db.Set<ChatAttachment>().IgnoreQueryFilters().AsNoTracking().Where(a => a.UploadedBy == userId).OrderBy(a => a.UploadedAt)
+                .Select(a => new { a.ConversationId, a.MessageId, a.Name, a.ContentType, a.Size, a.UploadedAt }).ToListAsync(cancellationToken),
+        };
     }
 
     public async Task EraseAsync(PersonalDataSubject subject, CancellationToken cancellationToken)

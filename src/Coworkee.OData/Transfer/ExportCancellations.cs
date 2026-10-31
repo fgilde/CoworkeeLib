@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Coworkee.OData.Transfer;
 
 /// <summary>
-/// Stops running exports the user cancelled. The job row is the source of truth (<see cref="DataTransferStatus.Cancelled"/>): a watch trips at once on the
+/// Stops running exports the user cancelled or whose job row is gone. The job row is the source of truth (<see cref="DataTransferStatus.Cancelled"/>): a watch trips at once on the
 /// instance that took the cancel request and within <see cref="Poll"/> on the others, which read the row.
 /// </summary>
 public sealed class ExportCancellations(IServiceScopeFactory scopes)
@@ -46,7 +46,8 @@ public sealed class ExportCancellations(IServiceScopeFactory scopes)
                 await using var scope = scopes.CreateAsyncScope();
                 var status = await scope.ServiceProvider.GetRequiredService<CoworkeeDbContext>().Set<DataTransferJob>().IgnoreQueryFilters()
                     .Where(j => j.Id == watch.JobId).Select(j => (DataTransferStatus?)j.Status).FirstOrDefaultAsync(token);
-                if (status == DataTransferStatus.Cancelled)
+                // a job that is gone (its user was erased) stops too
+                if (status is null or DataTransferStatus.Cancelled)
                 {
                     watch.Cancel();
                 }

@@ -209,6 +209,34 @@ public sealed class FileTests(FilesApp app) : IAsyncLifetime
         (await client.GetAsync($"/api/v1/files/folders/content?folderId={toms.Id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
+    [Fact]
+    public async Task Erasing_a_user_deletes_his_registration_documents_with_content_and_folder_and_keeps_his_other_files()
+    {
+        var nia = await PostAsync<UserDto>("/api/v1/identity/users", new CreateUserRequest("nia@acme.test", "Passw0rd!x", null, null));
+        var tom = await PostAsync<UserDto>("/api/v1/identity/users", new CreateUserRequest("tom@acme.test", "Passw0rd!x", null, null));
+        await SaveRegistrationAsync(nia);
+        await SaveRegistrationAsync(tom);
+        var blobs = app.BlobCount();
+        Guid minutes;
+        using (Core.Security.CurrentUserScope.Begin(new Core.Security.ImpersonatedUser(nia.Id, _setup.TenantId)))
+        {
+            await using var scope = app.App.Services.CreateAsyncScope();
+            var db = scope.ServiceProvider.GetRequiredService<FilesTestDbContext>();
+            var file = new StoredFile { Name = "minutes.txt", ContentType = "text/plain", Size = 1, BlobKey = "none", TenantId = _setup.TenantId };
+            db.Add(file);
+            await db.SaveChangesAsync(Ct);
+            minutes = file.Id;
+        }
+
+        (await Admin.DeleteAsync($"/api/v1/identity/users/{nia.Id}", Ct)).EnsureSuccessStatusCode();
+
+        app.BlobCount().ShouldBe(blobs - 1);
+        var files = await app.InDbAsync(db => db.Set<StoredFile>().IgnoreQueryFilters().ToListAsync(Ct));
+        files.Select(f => (f.Name, f.CreatedBy)).ShouldBe([("minutes.txt", Application.Privacy.PersonalDataSubject.ErasedUserId), ("Passport - scan.png", tom.Id)], ignoreOrder: true);
+        (await app.InDbAsync(db => db.Set<FileFolder>().IgnoreQueryFilters().Select(f => f.Name).ToListAsync(Ct))).ShouldBe(["Registrations", "tom@acme.test"], ignoreOrder: true);
+        files.ShouldContain(f => f.Id == minutes);
+    }
+
     private async Task SaveRegistrationAsync(UserDto user)
     {
         using var actor = Core.Security.CurrentUserScope.Begin(new Core.Security.ImpersonatedUser(user.Id, _setup.TenantId));

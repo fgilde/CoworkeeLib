@@ -31,6 +31,7 @@ public sealed class CoworkeeWorkflowsModule : CoworkeeModule, IWebModule
         services.AddSingleton<IPermissionDefinitionContributor, WorkflowPermissionDefinitions>();
         services.AddScoped<WorkflowEngine>();
         services.AddScoped<ApproverDirectory>();
+        services.AddScoped<Application.Privacy.IPersonalDataContributor, WorkflowPersonalData>();
         services.AddHttpContextAccessor();
         services.AddSingleton<WorkflowUser>();
         services.AddSingleton<Coworkee.OData.Computed.IODataComputedPropertySource, WorkflowODataProperties>();

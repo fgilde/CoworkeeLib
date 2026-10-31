@@ -77,6 +77,8 @@ webhook-signature: v1,K5oZfzN95Z9UVu1EsfQmfVNQhnkZ2pj9o9NDN/H/pI4=
 
 Geheimnis, Bodies von Anfrage und Antwort und die Endpunkte bleiben außerhalb der KI-Tools und des MCP-Servers. Solange jemand als anderer Benutzer angemeldet ist, werden Anlegen und Ändern von Endpunkten abgelehnt (`auth.impersonating`).
 
+Der [Export personenbezogener Daten](../security/privacy.md) hat einen Abschnitt `webhooks` mit den Endpunkten, die der Benutzer zuletzt gespeichert hat. Das Löschen des Benutzers behält sie, abgeschaltet und im Besitz des Platzhalters für gelöschte Benutzer, da Zustellungen nach seinen Berechtigungen geformt wurden; erneutes Speichern macht den Administrator zum Eigentümer und schaltet den Endpunkt wieder ein.
+
 ## Zustellung
 
 Zustellungen laufen über die Outbox und die Background Jobs; ein Absturz zwischen Speichern und Senden verliert also nichts. Jeder Versuch wartet höchstens `Timeout` auf eine Antwort; jeder 2xx-Status gilt als zugestellt. Weiterleitungen werden nicht verfolgt.

@@ -259,6 +259,10 @@ Every mail ends with a link that ends the subscription without signing in (a pro
 | `POST /api/v1/reports/subscriptions/{id}/send` | mail it now, the schedule stays |
 | `GET`/`POST /api/v1/reports/subscriptions/unsubscribe` | the unsubscribe page of the mail link (anonymous, needs no `X-CSRF`) |
 
+### Personal data
+
+The [personal data export](../security/privacy.md) has a section `reports`: the reports the user owns, his favourites, subscriptions and dashboard choice. Erasing the user deletes his private reports, favourites, subscriptions and dashboard choice, so no subscription mails him any more; reports he shared stay for their audience, owned by the erased-user placeholder, and nobody changes them any more.
+
 ## A report as dashboard
 
 Every report you can open can be your dashboard: *Set as my dashboard* in the menu of its card or on the report page. Holders of `Reports.Dashboard` (administrators) also set the organisation's dashboard, which everybody sees who has made no choice of their own. Your own choice wins; a report you cannot open (any more) is skipped, and deleting a report removes it as dashboard.

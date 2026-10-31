@@ -33,6 +33,7 @@ public sealed class CoworkeeReportingModule : CoworkeeModule, IWebModule
         services.AddScoped<ReportQueries>();
         services.AddScoped<ReportDefinitionCheck>();
         services.AddScoped<ReportAccess>();
+        services.AddScoped<Application.Privacy.IPersonalDataContributor, ReportPersonalData>();
         services.AddGlobalSearchProvider<ReportSearchProvider>();
         services.AddScoped<Subscriptions.ReportSubscriptionMail>();
         services.AddSingleton<Subscriptions.ReportMailLinks>();

@@ -16,7 +16,7 @@ public sealed class MyAppDatabaseModule : CoworkeeModule;
 - Deleting is a soft delete of the folder with everything below it; the blobs stay until the [retention](retention.md) target `deleted-files` removes the rows with their content (no default: kept until days are set). Every change lands in the audit log and is pushed on the realtime topics `type:StoredFile` and `type:FileFolder`.
 - OData sets `StoredFiles` and `FileFolders` (`Files.View`) for search and filters.
 - Uploads are the raw request body, streamed to a temp file and then into the storage. The limit is `Coworkee:Files:MaxFileSize` (bytes, default 2 GB); a web host with `Coworkee:Bff:MaxRequestBodySize` caps forwarded uploads as well. Uploads to the drive have no scan hook; virus scanning exists for [record attachments](attachments.md) (`IAttachmentScanner`) and chat files (`IChatAttachmentScanner`).
-- The personal data export lists the user's uploads in the section `files` (metadata only); erasing keeps the files.
+- The personal data export lists the user's uploads in the section `files` (metadata only); erasing keeps the files with the erased-user placeholder as uploader and deletes his registration documents with their content and folder.
 
 | Endpoint | |
 |---|---|

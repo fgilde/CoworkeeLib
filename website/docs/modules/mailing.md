@@ -60,7 +60,7 @@ A queued mail starts the background job `SendMailJob` on the queue `mail`. The j
 
 A failed attempt is retried like every background job: `Coworkee:Jobs:Attempts` (3) attempts, waiting `Coworkee:Jobs:RetryDelaysInSeconds` (10, 60, 300) in between. The whitelist `Mail.Whitelist` takes addresses and `@domain` entries, one per line (commas and semicolons separate too); empty lets every recipient through. Use it on test systems that hold copies of real data.
 
-**Administration > Communication > Mail log** (`/cw/admin/mail/log`, permission `Mail.Log.View`) lists the mails of the own organisation with status, attempts and error, filtered by status or campaign (`?campaign=<id>`). API: `GET /api/v1/mail/outgoing?status=Failed&campaignId=...` (paged) and the OData set `Mails` (without the body). With the [Retention](retention.md) module the target `mail-log` deletes old mails (no default: kept until days are set; queued and sending mails stay). The personal data export lists the mails sent to the user's address (section `mails`); erasing removes them.
+**Administration > Communication > Mail log** (`/cw/admin/mail/log`, permission `Mail.Log.View`) lists the mails of the own organisation with status, attempts and error, filtered by status or campaign (`?campaign=<id>`). API: `GET /api/v1/mail/outgoing?status=Failed&campaignId=...` (paged) and the OData set `Mails` (without the body). With the [Retention](retention.md) module the target `mail-log` deletes old mails (no default: kept until days are set; queued and sending mails stay). The personal data export lists the mails sent to the user's address in his organisation (section `mails`); erasing removes them there, mails of another organisation to the same address stay.
 
 ## Providers
 

@@ -68,6 +68,10 @@ public abstract class BlobStorageContractTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Deleting_a_key_that_never_was_stored_is_fine() =>
+        await Storage.DeleteAsync(BlobKeys.New(Guid.CreateVersion7(), TimeProvider.System), Ct);
+
+    [Fact]
     public async Task Read_streams_know_their_length_and_can_seek()
     {
         var key = BlobKeys.New(Guid.CreateVersion7(), TimeProvider.System);

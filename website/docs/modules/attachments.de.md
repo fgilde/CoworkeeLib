@@ -72,7 +72,7 @@ Ein weich gelöschter Datensatz behält seine Dateien, eine Wiederherstellung br
 
 Jeder hinzugefügte, ersetzte oder gelöschte Anhang geht nach dem Commit über das Echtzeit-Topic `attachments:{entityType}:{entityId}` (`AttachmentTopics.Record`). Folgen darf, wer einen Slot des Datensatzes lesen darf, dieselbe Prüfung wie beim Listen-Endpunkt.
 
-Der [Export personenbezogener Daten](../security/privacy.md) hat einen Abschnitt `attachments` mit den Dateien, die der Benutzer angehängt hat (Datensatz, Slot, Name, Typ, Größe, Zeit), ohne den Inhalt. Das Löschen des Benutzers behält sie: Wie andere Dateien gehören sie zu den Datensätzen der Organisation, die Id der hochladenden Person zeigt danach auf niemanden.
+Der [Export personenbezogener Daten](../security/privacy.md) hat einen Abschnitt `attachments` mit den Dateien, die der Benutzer angehängt hat (Datensatz, Slot, Name, Typ, Größe, Zeit), ohne den Inhalt. Das Löschen des Benutzers behält sie: Wie andere Dateien gehören sie zu den Datensätzen der Organisation; als hochladende Person steht danach der Platzhalter für gelöschte Benutzer (`PersonalDataSubject.ErasedUserId`).
 
 ## Client
 

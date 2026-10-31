@@ -16,7 +16,7 @@ Das Audit protokolliert jede Änderung an den Entities der App Feld für Feld: w
 | `GET /api/v1/audit?entityType=&entityId=&actorId=&impersonatorId=&from=&to=&page=&pageSize=` | die Einträge (`Audit.View`); auch das OData-Set `AuditEntries` |
 | `GET /api/v1/versions/{type}/{id}`, `GET .../{revision}`, `POST .../{revision}/restore` | Schnappschüsse eines `IVersioned`-Typs (mit seiner registrierten Berechtigung) |
 
-Die Berechtigung `Audit.View` zeigt das Audit-Log und den Verlauf. Mit dem Modul [Aufbewahrung](retention.md) löschen die Ziele `audit` und `snapshots` alte Einträge; der Export personenbezogener Daten hat einen Abschnitt `activity` (was der Benutzer geändert hat: Typ, Id, Aktion, Zeit), und das Löschen eines Benutzers behält das Protokoll ohne seinen Namen.
+Die Berechtigung `Audit.View` zeigt das Audit-Log und den Verlauf. Mit dem Modul [Aufbewahrung](retention.md) löschen die Ziele `audit` und `snapshots` alte Einträge; der Export personenbezogener Daten hat einen Abschnitt `activity` (was der Benutzer geändert hat: Typ, Id, Aktion, Zeit), und das Löschen eines Benutzers behält das Protokoll ohne ihn: Seine ID wird zum Platzhalter für gelöschte Benutzer, die Werte der mit ihm gelöschten Datensätze werden `***`, seine ID und Adresse verschwinden aus den übrigen Werten ([Regeln](../security/privacy.md#der-audit-verlauf)).
 
 ## Verlauf eines Datensatzes und Wiederherstellen
 

@@ -229,4 +229,4 @@ With a VAPID key pair (`options.UsePush()` in the app host, or `Coworkee:Notific
 
 ### Retention and personal data
 
-Notifications are kept until the user deletes them; with the [Retention](retention.md) module the target `notifications` deletes them after the days set there. The personal data export has a section `notifications` (the notifications and the push devices of the user); erasing the user removes them.
+Notifications are kept until the user deletes them; with the [Retention](retention.md) module the target `notifications` deletes them after the days set there. The personal data export has a section `notifications` (the notifications, push devices, preferences, followed records and waiting mails of the user); erasing the user removes them in every organisation.

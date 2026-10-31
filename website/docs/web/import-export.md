@@ -102,6 +102,10 @@ Scheduled exports (`DataTransfer.ExportSchedules` plus the set's own permission)
 
 The export menu of a table offers *Schedule export* to holders of the permission; the page *Scheduled exports* (`/data/export-schedules`, key `export-schedules`) lists them with *Send now*, edit and delete. The mail is the template `Data.Export` (Mailing module, 23 languages); files above 10 MB are not attached, the mail then points to the app. Without the Mailing module nothing is mailed (`IExportMailer`). App values such as a currency stay in the query string; the app reads them itself.
 
+## Personal data
+
+The [personal data export](../security/privacy.md) has a section `dataTransfers`: the user's jobs (files listed with name and size, not included), his scheduled exports and the schedules of others that mail him. Erasing the user deletes his jobs with their files (a running export stops) and his schedules, and removes his address from the recipients of the other schedules of his organisation.
+
 ## HTTP API
 
 | Call | Purpose |

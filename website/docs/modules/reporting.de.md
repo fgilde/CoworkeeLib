@@ -259,6 +259,10 @@ Jede Mail endet mit einem Link, der das Abo ohne Anmeldung beendet (ein geschüt
 | `POST /api/v1/reports/subscriptions/{id}/send` | jetzt senden, der Plan bleibt |
 | `GET`/`POST /api/v1/reports/subscriptions/unsubscribe` | die Abmeldeseite des Mail-Links (anonym, ohne `X-CSRF`) |
 
+### Personenbezogene Daten
+
+Der [Export personenbezogener Daten](../security/privacy.md) hat einen Abschnitt `reports`: die Berichte des Benutzers, seine Favoriten, Abos und Dashboard-Wahl. Das Löschen des Benutzers entfernt seine privaten Berichte, Favoriten, Abos und Dashboard-Wahl, kein Abo mailt ihm also mehr; Berichte, die er geteilt hat, bleiben für ihr Publikum, Eigentümer ist der Platzhalter für gelöschte Benutzer, und niemand ändert sie mehr.
+
 ## Ein Bericht als Dashboard
 
 Jeder Bericht, den du öffnen kannst, kann dein Dashboard sein: *Als mein Dashboard festlegen* im Menü seiner Karte oder auf der Berichtsseite. Inhaber von `Reports.Dashboard` (Administratoren) legen außerdem das Dashboard der Organisation fest, das jeder sieht, der selbst keins gewählt hat. Deine eigene Wahl gewinnt; einen Bericht, den du (nicht mehr) öffnen kannst, überspringt sie, und wer einen Bericht löscht, nimmt ihn auch als Dashboard heraus.

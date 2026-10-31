@@ -102,6 +102,10 @@ Geplante Exporte (`DataTransfer.ExportSchedules` plus die eigene Berechtigung de
 
 Das Export-Menü einer Tabelle bietet Inhabern der Berechtigung *Export planen*; die Seite *Geplante Exporte* (`/data/export-schedules`, Schlüssel `export-schedules`) listet sie mit *Jetzt senden*, Bearbeiten und Löschen. Die Mail ist die Vorlage `Data.Export` (Mailing-Modul, 23 Sprachen); Dateien über 10 MB werden nicht angehängt, die Mail verweist dann auf die App. Ohne Mailing-Modul wird nichts gemailt (`IExportMailer`). App-Werte wie eine Währung bleiben in der Abfrage; die App liest sie selbst.
 
+## Personenbezogene Daten
+
+Der [Export personenbezogener Daten](../security/privacy.md) hat einen Abschnitt `dataTransfers`: die Jobs des Benutzers (Dateien mit Name und Größe aufgelistet, nicht mitgeliefert), seine geplanten Exporte und die Zeitpläne anderer, die ihm mailen. Das Löschen des Benutzers entfernt seine Jobs samt Dateien (ein laufender Export stoppt) und seine Zeitpläne und nimmt seine Adresse aus den Empfängern der anderen Zeitpläne seiner Organisation.
+
 ## HTTP-API
 
 | Aufruf | Zweck |

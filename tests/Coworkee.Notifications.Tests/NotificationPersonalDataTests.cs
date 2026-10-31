@@ -55,6 +55,24 @@ public sealed class NotificationPersonalDataTests(NotificationApp app) : IAsyncL
         (await CountAsync(_carl)).ShouldBe((1, 1, 1, 1));
     }
 
+    [Fact]
+    public async Task Erasing_a_user_removes_what_he_left_in_another_organisation()
+    {
+        var elsewhere = Guid.CreateVersion7();
+        await app.InDbAsync(elsewhere, db =>
+        {
+            db.Add(new NotificationFollow { TenantId = elsewhere, UserId = _bob, EntityType = "Shipments", EntityId = Guid.CreateVersion7(), Title = "S-2", CreatedAt = DateTimeOffset.UtcNow });
+            return db.SaveChangesAsync();
+        });
+
+        var export = await app.As(_bob, _setup.TenantId).GetFromJsonAsync<JsonElement>("/api/v1/identity/me/personal-data", Ct);
+        export.GetProperty("notifications").GetProperty("follows").EnumerateArray().Select(f => f.GetProperty("title").GetString()).ShouldBe(["S-1", "S-2"], ignoreOrder: true);
+
+        (await app.As(_setup.AdminUserId, _setup.TenantId).DeleteAsync($"/api/v1/identity/users/{_bob}", Ct)).EnsureSuccessStatusCode();
+
+        (await app.InDbAsync(null, db => db.Set<NotificationFollow>().IgnoreQueryFilters().CountAsync(f => f.UserId == _bob, Ct))).ShouldBe(0);
+    }
+
     private Task<(int, int, int, int)> CountAsync(Guid user) => app.InDbAsync(_setup.TenantId, async db => (
         await db.Set<NotificationPreference>().CountAsync(p => p.UserId == user, Ct),
         await db.Set<NotificationFollow>().CountAsync(f => f.UserId == user, Ct),

@@ -560,6 +560,34 @@
           "files": [ "src/**/*.cs" ]
         }
       ]
+    },
+    {
+      "version": "0.0.1.56",
+      "breaking": [
+        "Privacy: erasing a user writes PersonalDataSubject.ErasedUserId (the empty GUID) into CreatedBy, ModifiedBy and DeletedBy of every table of the app, the audit trail (ActorId, ImpersonatorId, his id and address in recorded values), snapshots and outbox; the values of records erased with him become ***. Code that looks up the creator of a record finds no user for that id.",
+        "Privacy: the chat section of the personal data export is an object (messages, memberships, reactions, attachments) instead of the list of messages; new sections reports, dataTransfers, webhooks, workflows.",
+        "Privacy: erasing switches off webhook endpoints the user owned, hands his shared reports to the placeholder (nobody changes them any more), removes him from pending workflow approvals (one waiting for nobody is overdue at once) and drops his address from other users' export schedules."
+      ],
+      "manual": [
+        {
+          "text": "Own tables with a column that names a user other than CreatedBy, ModifiedBy and DeletedBy (an assignee, owner, approver, recipient address, name) need an IPersonalDataContributor in the module: export the rows, delete what is the user's own, write PersonalDataSubject.ErasedUserId into the rest, stop own jobs or subscriptions that run as the user, limit rows found by e-mail address to subject.TenantId, and remove search index documents with his data. See security/privacy, section Your own tables.",
+          "find": "public\\s+Guid\\??\\s+\\w*(UserId|OwnerId|AssigneeId|AuthorId|ApproverId|SubscriberId|ById)\\s*\\{|public\\s+(string|List<string>)\\??\\s+\\w*(Email|Recipients)\\w*\\s*\\{",
+          "files": [
+            "src/**/*.cs"
+          ],
+          "unless": "IPersonalDataContributor"
+        },
+        {
+          "text": "Code or clients that read the chat section of the personal data export as a list read chat.messages now.",
+          "find": "personal-data",
+          "files": [
+            "src/**/*.cs",
+            "src/**/*.razor",
+            "src/**/*.ts",
+            "src/**/*.tsx"
+          ]
+        }
+      ]
     }
   ]
 }

@@ -115,7 +115,7 @@ await realtime.SubscribeAsync(RealtimeTopics.User(me), envelope =>
 
 ## Personal data
 
-The personal data export has a section `chat`: what the user sent anywhere and what he received in direct chats. Erasing the user removes those messages and their files.
+The personal data export has a section `chat`: `messages` (what the user sent anywhere and what he received in direct chats), `memberships`, `reactions` and the `attachments` he uploaded (listed, without content). Erasing the user removes those messages with their files, his reactions and memberships; group chats he created stay for the others.
 
 ## Upgrading
 

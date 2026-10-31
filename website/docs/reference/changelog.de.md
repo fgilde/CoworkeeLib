@@ -4,14 +4,32 @@
 
 ## 0.0.1.55 (2026-10-31)
 
+### Sicherheit
+
+- Das Löschen eines Benutzers (`DELETE /api/v1/identity/users/{id}`, *Konto löschen*) ließ personenbezogene Daten zurück, und dem Export fehlten Tabellen. Jetzt liefert jedes Modul seinen Teil, und die Bibliothek schließt jedes Löschen mit `PersonalDataReferences` ab; siehe [die Regeln des Löschens](../security/privacy.md#die-regeln-des-loschens):
+    - Seine ID verschwindet aus `CreatedBy`, `ModifiedBy` und `DeletedBy` jeder Tabelle (auch der App), aus dem Audit-Verlauf (`ActorId`, `ImpersonatorId`, seine ID und Adresse in erfassten Werten), den Snapshots und der Outbox; `PersonalDataSubject.ErasedUserId` (die leere GUID) tritt an ihre Stelle. Die Werte der mit ihm gelöschten Datensätze (sein Benutzer, Zeilen mit seiner ID im Schlüssel, Datensätze, die er angelegt hat und die nicht mehr existieren, z. B. gelöschte Kommentare) werden `***`; der Verlauf selbst bleibt.
+    - Berichte: Favoriten, Abos (der Abo-Job mailte gelöschten Benutzern weiter), Dashboard-Wahl und private Berichte werden exportiert und gelöscht; geteilte Berichte bleiben, Eigentümer ist der Platzhalter.
+    - Import und Export: Jobs (samt Dateien) und geplante Exporte werden exportiert und gelöscht, ein laufender Export, dessen Job fehlt, stoppt, seine Adresse verschwindet aus den Empfängern der anderen Zeitpläne seiner Organisation.
+    - Webhook-Endpunkte, die ihm gehörten, werden abgeschaltet (Zustellungen liefen als er). Workflow-Entscheidungen und -Historie behalten den Platzhalter ohne seine Kommentare; offene Freigaben, die nur noch auf ihn warten, sind sofort überfällig (Timeout-Zustand oder Eskalation), bereits eskalierte werden abgebrochen.
+    - Seine Zugriffstokens (Datei- und Download-Links) werden gelöscht und sein zwischengespeicherter Sitzungsstempel auf jeder Instanz verworfen (seine Tokens galten bis zu einer Minute weiter). Schlüssel anderer, die er widerrufen hat, und von ihm gestartete Bereinigungen behalten den Platzhalter, Gruppen-Chats, die er angelegt hat, bleiben mit dem Platzhalter als Ersteller, seine Registrierungsunterlagen werden samt Inhalt gelöscht.
+    - Benachrichtigungen, gefolgte Datensätze und Einstellungen zu seiner ID werden in jeder Organisation gelöscht, Mails nur in seiner Organisation (ein anderer Benutzer einer anderen Organisation mit derselben Adresse verlor sein Mail-Protokoll).
+    - Der Export enthält zusätzlich `profile.claims`, `permissionGrants`, `resourcePermissions` und `selectedGroups`, im Chat `memberships`, `reactions` und `attachments`, `activity`-Einträge, die als anderer Benutzer angemeldet entstanden, und die Abschnitte `reports`, `dataTransfers`, `webhooks` und `workflows`.
+
 ### Hinzugefügt
 
+- `PersonalDataSubject.ErasedUserId`: der Platzhalter, den eigene Contributors anstelle der ID eines gelöschten Benutzers schreiben. `tests/Coworkee.ArchitectureTests/PersonalDataCoverageTests` scheitert an einer Spalte der Bibliothek, die einen Benutzer nennt und keinen Contributor hat.
 - Gruppenbezogene Verwaltung: Mit `Coworkee:Identity:GroupScopedAdministration` (standardmäßig aus) erreichen Verwalter ohne `Identity.Groups.ScopeAll`, die keine Administratoren der Organisation sind, nur ihre Gruppen, deren Untergruppen und Mitglieder. Alles andere antwortet mit 404 und fehlt in Listen, Zählungen, Nachschlagen, den OData-Sets `Users`, `Groups`, `ApiKeys`, Exporten, Suche und KI-Werkzeugen; Benutzer, die auch zu einer Gruppe außerhalb der Reichweite gehören, ändert nur, wer alle ihre Gruppen erreicht (`403 identity.user_other_groups`), hinzugefügte Mitglieder dürfen zu keiner Gruppe außerhalb gehören, und Gruppen auf oberster Ebene, die Standardgruppe und Rollen brauchen die ganze Organisation (`403 identity.all_groups_required`). Die Standardgruppe zählt für niemanden. `AdminReach` (`Coworkee.Identity.Users`) wendet die Regeln in eigenen Requests an; `AccountGuard.CheckUserAsync` enthält sie. Siehe [gruppenbezogene Verwaltung](../security/permissions.md#gruppenbezogene-verwaltung).
 - `CreateUserRequest.GroupIds`: die Gruppen, denen ein neuer Benutzer beitritt (braucht `Identity.Groups.ManageMembers`); der Dialog *Neuer Benutzer* bietet sie an, wer Mitglieder verwaltet. Ein gruppenbezogener Verwalter nennt mindestens eine seiner Gruppen.
 
 ### Breaking Changes
 
 - `CreateUserRequest` hat einen neuen letzten Parameter `GroupIds`: Quellcode, der den Konstruktor aufruft, kompiliert unverändert, gegen den alten kompilierte Assemblies werden neu gebaut.
+- Der Abschnitt `chat` des Exports ist ein Objekt (`messages`, `memberships`, `reactions`, `attachments`) statt der Liste der Nachrichten.
+- Das Löschen schreibt `PersonalDataSubject.ErasedUserId` auch in `CreatedBy`, `ModifiedBy` und `DeletedBy` der Tabellen der App; Code, der den Ersteller nachschlägt, findet dafür keinen Benutzer.
+
+### Behoben
+
+- Der Blob-Speicher im Dateisystem scheiterte beim Löschen eines Schlüssels ohne vorhandenes Verzeichnis, der S3-Speicher bei einem noch nicht angelegten Bucket; beide übergehen das jetzt wie jeden anderen fehlenden Blob (das Löschen eines Benutzers, dessen Chat-Datei schon fehlte, antwortete mit 500).
 
 ## 0.0.1.54 (2026-10-31)
 
