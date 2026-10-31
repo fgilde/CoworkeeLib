@@ -42,7 +42,9 @@ context.Group("Billing", "Billing")
     .Add("Billing.ApiKey", "API key", SettingType.Secret, [SettingScope.Global]);
 ```
 
-Es gibt die Ebenen `Global`, `Tenant` und `User`, und der spezifischste Wert gewinnt: Eine Organisation kann die Standardsprache der Installation überschreiben, ein Benutzer beide. Sobald der `ISettingDefinitionContributor` registriert ist, erscheint die Einstellung auf der Admin-Seite im Reiter ihrer Ebene, ganz ohne Formularcode. Geheimnisse werden mit ASP.NET Core Data Protection verschlüsselt und landen nie im Browser.
+Es gibt die Ebenen `Global`, `Tenant` und `User`, und der spezifischste Wert gewinnt: Eine Organisation kann die Standardsprache der Installation überschreiben, ein Benutzer beide. Sobald der `ISettingDefinitionContributor` registriert ist, erscheint die Einstellung auf der Admin-Seite im Reiter ihrer Ebene, ganz ohne Formularcode. Geheimnisse werden mit ASP.NET Core Data Protection verschlüsselt und landen nie im Browser. Eine Einstellung kann zusätzlich zur Regel ihrer Ebene eine eigene Berechtigung verlangen (`Add(..., permission: ...)`), geprüft auf der Admin-Seite wie bei `PUT /api/v1/settings/{scope}`.
+
+`services.AddCoworkeeHeadScript()` bringt eine solche Einstellung mit: HTML mit Script-Tags (etwa ein Tag-Manager), das das Layout, sobald es eingeschaltet ist, in jede Seite einfügt und das nur mit `Settings.HeadScript` geändert wird. Die Systemorganisation setzt es für alle, mit `AddCoworkeeHeadScript(perOrganisation: true)` jede Organisation ihr eigenes; siehe [Head-Skript](../modules/settings.md#head-skript).
 
 ![Einstellungsseite mit den Reitern App-Einstellungen, System und Organisation](../assets/screenshots/app-configuration-light.webp){ .shot loading=lazy }
 
