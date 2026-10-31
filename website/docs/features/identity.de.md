@@ -47,6 +47,8 @@ Gruppen bilden pro Mandant einen Baum und können so Organisationseinheiten sein
 
 Benutzer sind Mitglied in beliebig vielen Gruppen. **Einheiten vergeben von sich aus nichts**: Eine Gruppe bestimmt nur, was ein Benutzer sieht. Gruppen können weiterhin Rollen tragen (Reiter Rollen), aber die Rolle einer übergeordneten Gruppe erben ihre Untergruppen nicht. Mitglieder werden mit `Identity.Groups.ManageMembers` (in `Identity.Groups.Manage` enthalten) hinzugefügt, entfernt oder alle auf einmal in eine andere Gruppe verschoben. `Identity.Groups.ScopeAll` („Work in any group") macht jede Gruppe des Mandanten zugänglich, für Operatoren ohne eigene Einheit; Administratoren mit allen Berechtigungen haben sie. Die Baum-Endpunkte (`/groups/children`, `/groups/tree`) akzeptieren `Groups.View` oder `ScopeAll`.
 
+Sind Einheiten Kunden, beschränkt `Coworkee:Identity:GroupScopedAdministration` Verwalter ohne `ScopeAll` auf ihre Gruppen, deren Untergruppen und Mitglieder: Die Seiten Benutzer und Gruppen, der Gruppenbaum (er beginnt bei den obersten Gruppen ihrer Reichweite), der Dialog *Neuer Benutzer* (der neue Benutzer tritt einer ihrer Gruppen bei), OData, Suche und KI-Werkzeuge zeigen nur diese, und Benutzer, die auch zu einer anderen Einheit gehören, ändert nur, wer alle ihre Gruppen erreicht. Siehe [gruppenbezogene Verwaltung](../security/permissions.md#gruppenbezogene-verwaltung).
+
 Auf der Gruppenseite lädt der Baum bei Bedarf nach, mit Suche, Zählern und den Reitern Allgemein, Mitglieder und Rollen. `?group={id}` springt direkt zu einer Gruppe. Apps ergänzen eigene Reiter:
 
 ```csharp
