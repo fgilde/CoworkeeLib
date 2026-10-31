@@ -4,7 +4,7 @@ Benutzer melden sich am Auth-Server mit einem Passkey (WebAuthn) statt mit dem P
 
 ## Für Benutzer
 
-- **Hinzufügen**: *Kontosicherheit › Passkeys* (`/Account/Manage/Passkeys`, in der App *Profil › Sicherheit › Passkeys*) fügt einem bestehenden Konto einen Passkey hinzu. Zuerst wird der Name abgefragt; vorbelegt sind Browser und Plattform (zum Beispiel `Chrome · Windows`). Ein Benutzer hat höchstens 20 Passkeys.
+- **Hinzufügen**: *Kontosicherheit › Passkeys* (`/Account/Manage/Passkeys`, in der App *Mein Profil › Sicherheit › Passkeys*) fügt einem bestehenden Konto einen Passkey hinzu. Zuerst wird der Name abgefragt; vorbelegt sind Browser und Plattform (zum Beispiel `Chrome · Windows`). Ein Benutzer hat höchstens 20 Passkeys.
 - **Liste**: Name, Tag des Hinzufügens und ob der Passkey gesichert ist (von der Plattform synchronisiert, z. B. iCloud-Schlüsselbund oder Google Passwortmanager) oder nur auf einem Gerät liegt. Passkeys lassen sich umbenennen und entfernen.
 - **Der letzte bleibt**: Wer weder Passwort noch externe Anmeldung hat, kann den letzten Passkey nicht entfernen; er ist dann der einzige Zugang.
 - **Anmelden**: Die Anmeldeseite hat unter dem Passwortformular *Mit Passkey anmelden*, und das Adressfeld bietet die Passkeys des Browsers im Autofill an (Conditional UI, `autocomplete="username webauthn"`). Browser ohne WebAuthn zeigen beides nicht.

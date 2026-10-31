@@ -4,7 +4,7 @@ Personal API keys let scripts and AI clients work with the app as their user: th
 
 ## Creating a key
 
-Users with `ApiKeys.Create` open *Profile › API keys* (`/profile/api-keys`) and create a key with
+Users with `ApiKeys.Create` open *My profile › API keys* (`/profile/api-keys`) and create a key with
 
 - a name and an optional description, e.g. *Claude Desktop on my laptop*,
 - an expiry of 7 to 365 days (the API accepts at most 366),

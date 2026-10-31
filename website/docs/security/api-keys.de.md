@@ -4,7 +4,7 @@ Persönliche API-Schlüssel lassen Skripte und KI-Clients als ihr Benutzer mit d
 
 ## Einen Schlüssel anlegen
 
-Benutzer mit `ApiKeys.Create` öffnen *Profil › API-Schlüssel* (`/profile/api-keys`) und legen einen Schlüssel an mit
+Benutzer mit `ApiKeys.Create` öffnen *Mein Profil › API-Schlüssel* (`/profile/api-keys`) und legen einen Schlüssel an mit
 
 - einem Namen und optional einer Beschreibung, z. B. *Claude Desktop auf meinem Laptop*,
 - einer Laufzeit von 7 bis 365 Tagen (die API nimmt höchstens 366),
