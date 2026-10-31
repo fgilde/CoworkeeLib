@@ -1,6 +1,6 @@
 # Deployment
 
-Der App-Host, der die App auf deinem Rechner startet, beschreibt auch ihr Deployment. `coworkee deploy` veröffentlicht ihn für ein Ziel: Docker Compose für einen einzelnen Linux-Host, Azure Container Apps als Bicep, Kubernetes als Helm-Chart. Die Tools deines App-Hosts (Keycloak, Grafana, WebDataStudio, LibreTranslate, Ollama, AspireUI) kommen mit, jedes mit eigenem Volume und, wo es eine Weboberfläche hat, einer öffentlichen Adresse.
+Der App-Host, der die App auf deinem Rechner startet, beschreibt auch ihr Deployment. `coworkee deploy` veröffentlicht ihn für ein Ziel: Docker Compose für einen einzelnen Linux-Host, Azure Container Apps als Bicep, Kubernetes als Helm-Chart. Die Tools deines App-Hosts (Keycloak, Grafana, WebDataStudio, LibreTranslate, Ollama, Open WebUI, Kibana, AspireUI) kommen mit, jedes mit eigenem Volume und, wo es eine Weboberfläche hat, einer öffentlichen Adresse.
 
 | Ziel | Befehl | Stand |
 |---|---|---|
@@ -18,7 +18,7 @@ Beim Veröffentlichen läuft der App-Host im Publish-Modus mit der Umgebung `Pro
 | Entwicklungszertifikate für die Tokens | zwei Zertifikate aus den Parametern `<app>-signing-certificate` und `<app>-encryption-certificate` (PKCS#12 als Base64), Issuer ist die öffentliche Adresse des Auth-Servers |
 | Demo-Benutzer aus `DemoUsers.cs` | ein Administrator aus den Parametern `<app>-admin-email` und `<app>-admin-password`, den die Migrationen in einer leeren Datenbank anlegen (siehe [Der erste Administrator](#der-erste-administrator)) |
 | Mailpit | dein Mailserver aus den Parametern `<app>-smtp-host`, `-smtp-port`, `-smtp-username`, `-smtp-password` und `-smtp-from`; Mailpit nur, wenn du es willst (siehe [Mail](#mail)) |
-| Keycloak, Grafana, WebDataStudio, LibreTranslate, Ollama, AspireUI | werden mit deployt, außer du lässt eins weg (siehe [Tools](#tools)) |
+| Keycloak, Grafana, WebDataStudio, LibreTranslate, Ollama, Open WebUI, Kibana, AspireUI | werden mit deployt, außer du lässt eins weg (siehe [Tools](#tools)) |
 | Dateien in `.data/blobs` | ein Volume `<app>-files`, das sich die Dienste teilen (Docker Compose) |
 | Volumes nach dem Ordner des App-Hosts benannt | `<app>-postgres-data`, `<app>-redis-data`, ...: Veröffentlichst du aus einem anderen Checkout, findet das Deployment dieselben Daten |
 
@@ -40,7 +40,7 @@ var app = builder.AddCoworkeeApp("shop", options => options.UseGrafana().DeployT
 
 | Tool | Im Deployment |
 |---|---|
-| Keycloak | der Realm der App mit den Clients des Auth-Servers und der Tools, dazu der erste Administrator als Benutzer mit der Rolle `Administrator`; die Migrationen gleichen ihn bei jedem Deployment ab. Öffentliche Adresse `<app>-keycloak-url`, Daten in `<app>-keycloak-data` (Keycloaks eigene Dateidatenbank), seine Konsole als `admin` mit `KEYCLOAK_PASSWORD`. Demo-Benutzer und Login-Theme bleiben lokal |
+| Keycloak | der Realm der App mit dem Client des Auth-Servers (die Tools melden sich am Auth-Server an, nicht im Realm), dazu der erste Administrator als Benutzer mit der Rolle `Administrator`; die Migrationen gleichen ihn bei jedem Deployment ab. Öffentliche Adresse `<app>-keycloak-url`, Daten in `<app>-keycloak-data` (Keycloaks eigene Dateidatenbank), seine Konsole als `admin` mit `KEYCLOAK_PASSWORD`. Demo-Benutzer und Login-Theme bleiben lokal |
 | Grafana | mit Prometheus, Loki, Tempo und dem Collector; die Dashboards der App und die Konfiguration stecken in den Images (`<app>-grafana`, ...). Der Administrator meldet sich mit Passwort oder am Auth-Server an. Öffentliche Adresse `<app>-grafana-url`, Daten in `<app>-grafana-data`, `<app>-prometheus-data` und `<app>-loki-data`; Tempo hält seine Traces im Container |
 | Open WebUI | mit Ollama; der Administrator meldet sich mit Passwort oder am Auth-Server an. Öffentliche Adresse `<app>-openwebui-url`, Daten in `<app>-openwebui-data`, Schlüssel `<app>-openwebui-secret-key` |
 | Kibana | hinter oauth2-proxy; Administratoren der System-Organisation melden sich am Auth-Server an (seine öffentliche Adresse ist Issuer und Token-Endpunkt). Öffentliche Adresse `<app>-kibana-url`, Client-Secret `<app>-kibana-secret`, Cookie-Secret `<app>-kibana-cookie-secret`, Passwort von `kibana_system` `<app>-kibana-password` |
@@ -54,7 +54,7 @@ Jedes Tool mit Weboberfläche steht wie die Dienste hinter deinem Reverse Proxy;
 
 ## Der erste Administrator
 
-Ist die Datenbank leer, legen die Migrationen den Administrator aus `<app>-admin-email` und `<app>-admin-password` an, mit der Organisation und den Einstellungen des Templates, und der Realm eines mitdeployten Keycloak bekommt denselben Benutzer. `coworkee deploy compose` fragt nach der E-Mail (oder nimmt `--admin-email`, eine Umgebungsvariable `SHOP_ADMIN_EMAIL` oder `admin@<app>.local`), erzeugt das Passwort und gibt beides am Ende seiner Ausgabe aus, sonst nirgends. Mit derselben E-Mail und demselben Passwort meldest du dich an der App, an Keycloak, Grafana, WebDataStudio, AspireUI und Mailpit an.
+Ist die Datenbank leer, legen die Migrationen den Administrator aus `<app>-admin-email` und `<app>-admin-password` an, mit der Organisation und den Einstellungen des Templates, und der Realm eines mitdeployten Keycloak bekommt denselben Benutzer. `coworkee deploy compose` fragt nach der E-Mail (oder nimmt `--admin-email`, eine Umgebungsvariable `SHOP_ADMIN_EMAIL` oder `admin@<app>.local`), erzeugt das Passwort und gibt beides am Ende seiner Ausgabe aus, sonst nirgends. Mit derselben E-Mail und demselben Passwort meldest du dich an der App, an Keycloak, Grafana, WebDataStudio, Open WebUI, AspireUI und Mailpit an.
 
 Lässt du beide Werte leer, wird nichts angelegt: Die App zeigt ihre Setup-Seite, auf der du mit `<app>-setup-token` Organisation und Administrator selbst einrichtest. Eine eingerichtete Datenbank bleibt, wie sie ist; ein geändertes Passwort in `.env` erreicht Keycloak und die Tools, nicht das Konto in der App.
 
@@ -86,7 +86,7 @@ SHOP_GRAFANA_URL=https://grafana.example.com
 SHOP_WEBDATASTUDIO_URL=https://data.example.com
 ```
 
-Die Dienste lauschen auf dem Loopback des Hosts, in der Reihenfolge, in der sie hinzugefügt wurden: Auth-Server `127.0.0.1:8080`, API `8081`, Web-App `8082` (AirWorks `8083`). Die Tools haben feste Ports: Keycloak `8090`, Grafana `8091`, WebDataStudio `8092`, AspireUI `8093`, Mailpit `8094`, Kibana `8096`. Davor beendet ein Reverse Proxy HTTPS, zum Beispiel Caddy, der sich die Zertifikate bei Let's Encrypt holt:
+Die Dienste lauschen auf dem Loopback des Hosts, in der Reihenfolge, in der sie hinzugefügt wurden: Auth-Server `127.0.0.1:8080`, API `8081`, Web-App `8082` (AirWorks `8083`). Die Tools haben feste Ports: Keycloak `8090`, Grafana `8091`, WebDataStudio `8092`, AspireUI `8093`, Mailpit `8094`, Kibana `8096`, Open WebUI `8097`. Davor beendet ein Reverse Proxy HTTPS, zum Beispiel Caddy, der sich die Zertifikate bei Let's Encrypt holt:
 
 ```caddyfile
 auth.example.com {

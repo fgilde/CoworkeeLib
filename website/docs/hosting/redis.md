@@ -10,7 +10,7 @@ Redis is optional. A service that has a `redis` connection string shares its sta
 | Session stamps and session changes | shared stamp cache, pub/sub to every instance ([Clients and sessions](../security/clients.md)) | own instance, the others within a minute |
 | Topics after permission changes | every instance checks its connections again ([Realtime](../modules/realtime.md)) | own instance |
 | Sign-in sessions of the web app | session store and the key ring of the cookie in Redis: shared by the instances, they survive restarts | memory and the local key ring |
-| Distributed lock | `Coworkee:DistributedLock:Provider = Redis` ([Events and locks](../fundamentals/events.md)) | Postgres advisory locks |
+| Distributed lock | `Coworkee:DistributedLock:Provider = Redis` ([Events and locks](../fundamentals/events.md)) | the database: a Postgres advisory lock, a SQL Server application lock, a file lock with SQLite |
 
 ## Aspire
 
