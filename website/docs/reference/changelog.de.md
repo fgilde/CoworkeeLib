@@ -27,6 +27,7 @@
 
 ### Behoben
 
+- Das Einstellungsformular zeigte Einstellungen mit eigener Berechtigung (das Head-Skript) jedem mit `Settings.Manage`; Speichern antwortete 403. Die Definitionen lassen eine solche Einstellung für jeden weg, dem ihre Berechtigung fehlt.
 - Eine Mail blieb für immer in `Sending`, wenn der Sender zwischen Anbieter und Speichern des Ergebnisses stoppte. Der wiederkehrende Job `coworkee-mail-stuck-sending` lässt solche Mails jetzt nach `Coworkee:Mail:SendingTimeout` (30 Minuten) mit *Delivery unknown* fehlschlagen und sendet sie nie doppelt; `Coworkee:Mail:RetryStuckSending` reiht sie stattdessen neu ein (eine Mail kann dann zweimal ankommen). Neue Spalte `cw.OutgoingMails.SendingSince` und ein Index auf `Status`: Migration anlegen. Siehe [Versand und Mail-Log](../modules/mailing.md#zustellung-und-mail-log).
 - Uploads in die Ablage (Seite Dateien, `POST /api/v1/files`) wurden nie auf Viren geprüft. Die registrierten `IAttachmentScanner` prüfen sie jetzt, bevor sie gespeichert werden (`FileUploads.EntityType`, der Ordner als `EntityId`); eine abgelehnte Datei antwortet 400. Eine App, deren Scanner `EntityType` oder `Slot` als Datensatztyp liest, behandelt `FileUploads.EntityType`.
 - Ein `CacheScope.Global`-Eintrag trug das Tag der Organisation des Aufrufers, der ihn lud: Ein Command in einer anderen Organisation hat ihn nie invalidiert. Globale Einträge tragen jetzt ein globales Tag, das jedes `IInvalidatesCache`-Command leert; Einträge der anderen Bereiche bleiben je Organisation.

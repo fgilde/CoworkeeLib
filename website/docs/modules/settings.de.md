@@ -95,7 +95,7 @@ context.Group("Support", "Support")
     .Add("Support.Banner", "Banner text", SettingType.Text, [SettingScope.Global, SettingScope.Tenant], permission: SupportPermissions.Banner);
 ```
 
-Die Einstellung ändert sich dann nur mit dieser Berechtigung zusätzlich zur Regel ihres Bereichs, auf jedem Weg: über die Einstellungs-Tabs, `PUT /api/v1/settings/global`, `PUT /api/v1/settings/tenant` und `PUT /api/v1/settings/user`. Ohne sie wird das ganze Speichern mit `403` abgelehnt (`settings.permission`, *Changing 'Support.Banner' needs the permission ...*). Das Formular zeigt das Feld weiter jedem, der den Tab sieht; da es nur geänderte Werte sendet, funktioniert das Speichern anderer Einstellungen weiter. Das Lesen schränkt sie nicht ein. Das Head-Skript unten ist so gebaut.
+Die Einstellung ändert sich dann nur mit dieser Berechtigung zusätzlich zur Regel ihres Bereichs, auf jedem Weg: über die Einstellungs-Tabs, `PUT /api/v1/settings/global`, `PUT /api/v1/settings/tenant` und `PUT /api/v1/settings/user`. Ohne sie wird das ganze Speichern mit `403` abgelehnt (`settings.permission`, *Changing 'Support.Banner' needs the permission ...*). Die Definitionen (`GET /api/v1/settings/definitions`, `/definitions/user`) lassen die Einstellung für jeden weg, dem die Berechtigung fehlt; das Formular zeigt also kein Feld, das er nicht speichern könnte. Das Lesen der Werte schränkt sie nicht ein. Das Head-Skript unten ist so gebaut.
 
 ### Gruppen auf eigener Seite
 
