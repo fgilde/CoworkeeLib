@@ -4,6 +4,7 @@ using Coworkee.Contracts.Data;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Coworkee.OData.Transfer;
@@ -42,10 +43,26 @@ internal sealed class ExportJob(
             }
 
             using var selection = groups is null ? null : GroupScope.Selection(groups);
-            var file = (await exports.WriteAsync(entity, new QueryString(job.Settings), null, watch.Token))!;
+            var progress = new SavedProgress(services.GetRequiredService<IServiceScopeFactory>(), job.Id);
+            ExportFile file;
+            using (var saving = CancellationTokenSource.CreateLinkedTokenSource(watch.Token))
+            {
+                var saver = progress.SaveAsync(saving.Token);
+                try
+                {
+                    file = (await exports.WriteAsync(entity, new QueryString(job.Settings), null, watch.Token, progress))!;
+                }
+                finally
+                {
+                    await saving.CancelAsync();
+                    await saver;
+                }
+            }
+
             (job.Result, job.ResultContentType, job.ResultFileName) = (file.Content, file.ContentType, job.FileName ?? file.Name);
+            (job.Total, job.Processed) = (progress.Last?.Total ?? 0, progress.Last?.Rows ?? 0);
             job.Status = DataTransferStatus.Completed;
-            mail = args.Mail ? new DataExportMail(job.UserId, args.Recipients ?? [], job.EntitySet, file with { Name = job.ResultFileName }) : null;
+            mail = new DataExportMail(job.UserId, args.Recipients ?? [], job.EntitySet, file with { Name = job.ResultFileName });
         }
         catch (OperationCanceledException) when (watch.Cancelled)
         {
@@ -65,6 +82,12 @@ internal sealed class ExportJob(
             return;
         }
 
+        // read after the completed status is saved: a stream whose client left sets the flag only while the job runs, else it mails the file itself
+        if (!args.Mail && !await db.Set<DataTransferJob>().AsNoTracking().Where(j => j.Id == job.Id).Select(j => j.MailOwner).SingleAsync(CancellationToken.None))
+        {
+            return;
+        }
+
         try
         {
             await exports.MailAsync(mail, cancellationToken);
@@ -79,6 +102,44 @@ internal sealed class ExportJob(
     }
 
     public const string MailFailed = "The file is ready, but the mail could not be sent.";
+
+    /// <summary>How often a running export saves its progress (rows read of all) on the job, for the stream that follows it.</summary>
+    private static readonly TimeSpan ProgressEvery = TimeSpan.FromSeconds(1);
+
+    /// <summary>Keeps the last progress of the export and saves it on the job row from a scope of its own: the job's context is busy reading the rows.</summary>
+    private sealed class SavedProgress(IServiceScopeFactory scopes, Guid jobId) : IProgress<DataExportProgress>
+    {
+        private volatile DataExportProgress? _last;
+
+        public DataExportProgress? Last => _last;
+
+        public void Report(DataExportProgress value) => _last = value;
+
+        public async Task SaveAsync(CancellationToken cancellationToken)
+        {
+            DataExportProgress? saved = null;
+            try
+            {
+                while (true)
+                {
+                    await Task.Delay(ProgressEvery, cancellationToken);
+                    if (_last is { Total: { } total } last && last != saved)
+                    {
+                        saved = last;
+                        await using var scope = scopes.CreateAsyncScope();
+                        // no change tracker: only a running job takes it (a cancel or the sweep wins), and no realtime event per step
+                        await scope.ServiceProvider.GetRequiredService<CoworkeeDbContext>().Set<DataTransferJob>().IgnoreQueryFilters()
+                            .Where(j => j.Id == jobId && j.Status == DataTransferStatus.Running)
+                            .ExecuteUpdateAsync(j => j.SetProperty(x => x.Total, total).SetProperty(x => x.Processed, last.Rows ?? 0), cancellationToken);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // progress only: the export goes on without it
+            }
+        }
+    }
 
     /// <summary>False when the job changed meanwhile (the stale sweep failed it, the user cancelled it): its state stays, nothing of this run is written, also no mail.</summary>
     private async Task<bool> SavedAsync(Guid jobId, CancellationToken cancellationToken)

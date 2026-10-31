@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261030210704_Initial")]
+    [Migration("20261031023052_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -1873,6 +1873,9 @@ namespace MyApp.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<bool>("MailOwner")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Message")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
@@ -3312,7 +3315,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261030210704_Initial")]
+    [Migration("20261031023052_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -5096,6 +5099,9 @@ namespace MyApp.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<bool>("MailOwner")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Message")
                         .HasMaxLength(2000)

@@ -20,8 +20,9 @@ namespace Coworkee.OData.Transfer;
 public sealed record ExportFile(byte[] Content, string ContentType, string Name);
 
 /// <summary>
-/// The rows of a set as its list shows them ($filter, $search, $orderby), with the chosen columns (columns=Name,Price), as
-/// Excel, CSV or JSON; <see cref="ODataComputedProperty.Exported"/> computed properties follow the entity's own columns.
+/// The rows of a set as its list shows them ($filter, $search, $orderby), with the chosen columns and their headers (<c>columns=Name:Product,Price</c>, see
+/// <see cref="ExportColumns"/>), as Excel, CSV or JSON; <see cref="ODataComputedProperty.Exported"/> computed properties follow the entity's own columns.
+/// <c>route=rt/odata</c> reads the names of that OData route (<see cref="ODataRouteProfile"/>), <c>fileName</c> names the file.
 /// Larger exports than <see cref="CoworkeeODataOptions.BackgroundExportRows"/> run as a job.
 /// </summary>
 public static class DataExport
@@ -39,10 +40,11 @@ public static class DataExport
         where TEntity : class
     {
         progress?.Report(new DataExportProgress(DataExportProgress.Counting, 0));
-        var model = services.GetRequiredService<IEdmModel>();
         var http = new DefaultHttpContext { RequestServices = services };
-        http.ODataFeature().RoutePrefix = CoworkeeODataModule.RoutePrefix;
         http.Request.QueryString = query;
+        var route = Route(services, http.Request.Query["route"]);
+        http.ODataFeature().RoutePrefix = route.Prefix;
+        var model = services.GetRequiredService<ODataModels>().Of(route);
         if (ODataEntityAccess.HasAliases(http.Request.Query))
         {
             throw new Microsoft.OData.ODataException("Parameter aliases (@name) are not supported.");
@@ -82,31 +84,47 @@ public static class DataExport
         }
 
         progress?.Report(new DataExportProgress(DataExportProgress.Writing, 80) { Rows = list.Count, Total = list.Count });
-        var wanted = http.Request.Query["columns"].ToString().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var wanted = ExportColumns.Parse(http.Request.Query["columns"]);
+        var edm = (IEdmStructuredType)model.FindDeclaredType(typeof(TEntity).FullName);
         List<Column> all =
         [
-            .. Columns<TEntity>(model, denied).Select(p => new Column(p.Name, row => p.GetValue(row.Entity))),
-            .. computed.Select((c, i) => new Column(c.Name, row => row.Computed[i])),
+            .. Columns<TEntity>(model, denied).Select(p => new Column(p.Name, p.Name, row => p.Property.GetValue(row.Entity))),
+            .. computed.Select((c, i) => new Column(Named(c.Name), Named(c.Name), row => row.Computed[i])),
         ];
-        var columns = wanted.Length == 0 ? all : [.. wanted.Select(w => all.FirstOrDefault(c => string.Equals(c.Name, w, StringComparison.OrdinalIgnoreCase))).OfType<Column>()];
+        var columns = wanted.Count == 0
+            ? all
+            : [.. wanted.Select(w => all.FirstOrDefault(c => string.Equals(c.Name, w.Field, StringComparison.OrdinalIgnoreCase)) is { } c ? c with { Header = w.Header ?? c.Name } : null).OfType<Column>()];
+        var name = DataExports.FileName(null, entitySet, query);
+
+        // a computed column in the route's case (rt/odata: margin)
+        string Named(string computedName) =>
+            edm.StructuralProperties().FirstOrDefault(p => string.Equals(p.Name, computedName, StringComparison.OrdinalIgnoreCase))?.Name ?? computedName;
         return Format(http.Request.Query["format"]) switch
         {
-            ExportFileFormat.Csv => new ExportFile(Csv(columns, list), "text/csv", $"{entitySet}.csv"),
-            ExportFileFormat.Json => new ExportFile(Json(columns, list), "application/json", $"{entitySet}.json"),
-            _ => new ExportFile(Xlsx(entitySet, columns, list), XlsxContentType, $"{entitySet}.xlsx"),
+            ExportFileFormat.Csv => new ExportFile(Csv(columns, list), "text/csv", name),
+            ExportFileFormat.Json => new ExportFile(Json(columns, list), "application/json", name),
+            _ => new ExportFile(Xlsx(entitySet, columns, list), XlsxContentType, name),
         };
     }
 
-    /// <summary>The exportable properties of the EDM type, without <paramref name="denied"/> ones.</summary>
-    internal static List<PropertyInfo> Columns<TEntity>(IEdmModel model, IReadOnlySet<string> denied)
+    /// <summary>The OData route whose names the export uses (<c>route=rt/odata</c>); the default route without one.</summary>
+    internal static ODataRouteProfile Route(IServiceProvider services, string? prefix)
+    {
+        var routes = services.GetRequiredService<ODataRoutes>();
+        return string.IsNullOrWhiteSpace(prefix) ? routes.Default : routes.Find(prefix) ?? throw new Microsoft.OData.ODataException($"There is no OData route {prefix}.");
+    }
+
+    /// <summary>The exportable properties of the EDM type under their names in the model, without <paramref name="denied"/> ones (CLR names).</summary>
+    internal static List<(string Name, PropertyInfo Property)> Columns<TEntity>(IEdmModel model, IReadOnlySet<string> denied)
     {
         var type = (IEdmStructuredType)model.FindDeclaredType(typeof(TEntity).FullName);
         return
         [
             .. type.StructuralProperties()
-                .Where(p => (p.Type.IsPrimitive() || p.Type.IsEnum()) && !denied.Contains(p.Name))
-                .Select(p => typeof(TEntity).GetProperty(p.Name))
-                .OfType<PropertyInfo>(),
+                .Where(p => p.Type.IsPrimitive() || p.Type.IsEnum())
+                .Select(p => (p.Name, Property: typeof(TEntity).GetProperty(ODataNames.Clr(model, p))))
+                .Where(p => p.Property is not null && !denied.Contains(p.Property.Name))
+                .Select(p => (p.Name, p.Property!)),
         ];
     }
 
@@ -134,10 +152,12 @@ public static class DataExport
 
     private sealed record ExportRow(object Entity, object?[] Computed);
 
-    private sealed record Column(string Name, Func<ExportRow, object?> Value);
+    /// <param name="Name">The field in the route's names; the key of a JSON row.</param>
+    /// <param name="Header">The header of a CSV or Excel column.</param>
+    private sealed record Column(string Name, string Header, Func<ExportRow, object?> Value);
 
     private static byte[] Csv(List<Column> columns, List<ExportRow> rows) =>
-        CsvFile.Write([columns.Select(c => c.Name), .. rows.Select(row => columns.Select(c => Text(c.Value(row))))]);
+        CsvFile.Write([columns.Select(c => c.Header), .. rows.Select(row => columns.Select(c => Text(c.Value(row))))]);
 
     private static string? Text(object? value) => value switch
     {
@@ -159,7 +179,7 @@ public static class DataExport
         var sheet = workbook.AddWorksheet(entitySet.Length > 31 ? entitySet[..31] : entitySet);
         for (var column = 0; column < columns.Count; column++)
         {
-            sheet.Cell(1, column + 1).Value = columns[column].Name;
+            sheet.Cell(1, column + 1).Value = columns[column].Header;
             for (var row = 0; row < rows.Count; row++)
             {
                 sheet.Cell(row + 2, column + 1).Value = Cell(columns[column].Value(rows[row]));

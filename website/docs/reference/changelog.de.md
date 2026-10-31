@@ -2,6 +2,18 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- Spaltenüberschriften in Exporten: `columns=Feld:Überschrift` gibt einer CSV- oder Excel-Spalte ihre Überschrift (`columns=Number:Sendungsnr.,Total`); ein Backslash maskiert ein Komma oder einen Doppelpunkt in einer Überschrift, und `ExportColumns.Format`/`Parse` (`Coworkee.Contracts.Data`) schreiben und lesen den Wert. `columns=Feld` funktioniert wie bisher, JSON-Schlüssel bleiben die Feldnamen, und gemailte und geplante Exporte behalten die Überschriften mit ihrer Abfrage. Siehe [Import und Export](../web/import-export.md#export).
+- `route=<Präfix>` in einer Export-Abfrage (`GET .../export`, der Stream, `MailExportRequest.Query`, `SaveExportScheduleRequest.Query`) liest `$filter`, `$orderby` und `columns` in den Namen dieser OData-Route (`AddCoworkeeODataRoute`), z. B. `route=rt/odata&$filter=creationTime gt 2026-01-01T00:00:00Z`; ohne sie in den Namen von `/odata`. Berechtigung, ausgeblendete und geschützte Eigenschaften, Zeilenfilter und Gruppen des Sets gelten wie auf der Route; eine unbekannte Route antwortet mit `400`.
+- `fileName=<Name>` in einer Export-Abfrage benennt die Datei des Exports und des Streams (Job, Ready-Zeile, Download), wie `MailExportRequest.FileName` bei gemailten Exporten; die Endung des Formats wird angehängt.
+
+### Geändert
+
+- Ein gestreamter Export mit mehr Zeilen als `BackgroundExportRows` endet nicht mehr mit `queued`: Der Stream folgt seinem Export-Job mit `reading`- und `writing`-Zeilen (der Job speichert seinen Fortschritt jede Sekunde) und endet mit `ready` und dem einmaligen Link oder mit `failed` oder `cancelled`. Geht der Client inzwischen, wird die Datei dem Besitzer des Exports gemailt, sobald sie geschrieben ist. **Zu tun:** eine Migration für die neue Spalte `cw.DataTransferJobs.MailOwner` (`coworkee migrations add <Name>`). Ein Client, der `queued` als letzte Zeile nahm, liest bis `ready` weiter.
+
 ## 0.0.1.49 (2026-10-30)
 
 ### Hinzugefügt

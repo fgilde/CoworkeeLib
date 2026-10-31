@@ -30,6 +30,9 @@ public sealed partial class DataExports(
 
     public const int MaxRecipients = 20;
 
+    /// <summary>How often a stream reads the export job it follows.</summary>
+    private static readonly TimeSpan FollowPoll = TimeSpan.FromSeconds(1);
+
     /// <summary>The one-time download link of a streamed export works this long.</summary>
     public static readonly TimeSpan DownloadLifetime = TimeSpan.FromMinutes(5);
 
@@ -63,7 +66,8 @@ public sealed partial class DataExports(
 
     /// <summary>
     /// The export as a stream of progress lines (application/x-ndjson) ending with a ready line and its one-time download link. The export goes on when the
-    /// client leaves; its file is then mailed to the user. Either way the job keeps the file.
+    /// client leaves; its file is then mailed to the user. Either way the job keeps the file. More rows than <see cref="CoworkeeODataOptions.BackgroundExportRows"/>
+    /// go to the export job, which the stream follows with the same lines.
     /// </summary>
     public async Task<IResult> StreamAsync(string entitySet, HttpContext http)
     {
@@ -137,7 +141,11 @@ public sealed partial class DataExports(
 
             var groups = services.GetService<IGroupScope>() is { } scope ? await scope.SelectedAsync(CancellationToken.None) : [];
             services.GetRequiredService<IBackgroundJobs>().Enqueue<ExportJob, ExportJobArgs>(new ExportJobArgs(job.Id, [.. groups], Mail: !connected));
-            await WriteLineAsync(http, new DataExportProgress(DataExportProgress.Queued, 100, JobId: job.Id));
+            if (connected)
+            {
+                await FollowAsync(job.Id, http);
+            }
+
             return Results.Empty;
         }
 
@@ -161,6 +169,75 @@ public sealed partial class DataExports(
         }
 
         return Results.Empty;
+    }
+
+    /// <summary>
+    /// Follows the export job of a stream with more rows than a request takes: its progress as reading and writing lines, then a ready line with a one-time link,
+    /// or failed or cancelled. When the client leaves meanwhile, the job mails the file to the owner once it is written (<see cref="DataTransferJob.MailOwner"/>);
+    /// when it was written already, the mail goes from here.
+    /// </summary>
+    private async Task FollowAsync(Guid jobId, HttpContext http)
+    {
+        var shown = new DataExportProgress(DataExportProgress.Counting, 0, JobId: jobId);
+        while (!http.RequestAborted.IsCancellationRequested)
+        {
+            var job = await db.Set<DataTransferJob>().AsNoTracking().Where(j => j.Id == jobId)
+                .Select(j => new { j.Status, j.Total, j.Processed, j.Message, j.ResultFileName }).SingleAsync(CancellationToken.None);
+            if (job.Status == DataTransferStatus.Completed)
+            {
+                var token = services.GetRequiredService<IAccessTokens>().Issue(DownloadPurpose, jobId, DownloadLifetime, singleUse: true);
+                await db.SaveChangesAsync(CancellationToken.None);
+                if (await WriteLineAsync(http, new DataExportProgress(DataExportProgress.Ready, 100, $"api/v1/data/downloads/{token}", job.ResultFileName, jobId)))
+                {
+                    return;
+                }
+
+                break;
+            }
+
+            var line = job.Status switch
+            {
+                DataTransferStatus.Failed => new DataExportProgress(DataExportProgress.Failed, 100, JobId: jobId, Message: job.Message ?? "Export failed"),
+                DataTransferStatus.Cancelled => new DataExportProgress(DataExportProgress.Cancelled, 100, JobId: jobId),
+                _ when job.Total == 0 => shown,
+                _ when job.Processed < job.Total => new DataExportProgress(DataExportProgress.Reading, (int)Math.Min(80, job.Processed * 80L / job.Total), JobId: jobId)
+                {
+                    Rows = job.Processed, Total = job.Total,
+                },
+                _ => new DataExportProgress(DataExportProgress.Writing, 80, JobId: jobId) { Rows = job.Processed, Total = job.Total },
+            };
+            if (line != shown && !await WriteLineAsync(http, line))
+            {
+                break;
+            }
+
+            if (line.Phase is DataExportProgress.Failed or DataExportProgress.Cancelled)
+            {
+                return;
+            }
+
+            shown = line;
+            try
+            {
+                await Task.Delay(FollowPoll, http.RequestAborted);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+        }
+
+        // the client left: a job still queued or running mails the file itself; this update waits for a job saving its end, so exactly one side mails
+        var flagged = await db.Set<DataTransferJob>()
+            .Where(j => j.Id == jobId && (j.Status == DataTransferStatus.Queued || j.Status == DataTransferStatus.Running))
+            .ExecuteUpdateAsync(j => j.SetProperty(x => x.MailOwner, true), CancellationToken.None);
+        if (flagged == 0 && await db.Set<DataTransferJob>().AsNoTracking().Where(j => j.Id == jobId && j.Status == DataTransferStatus.Completed && j.Result != null)
+                .Select(j => new { j.UserId, j.EntitySet, j.Result, j.ResultContentType, j.ResultFileName }).SingleOrDefaultAsync(CancellationToken.None) is { } done)
+        {
+            var file = new ExportFile(done.Result!, done.ResultContentType ?? "application/octet-stream", done.ResultFileName ?? "export");
+            await MailAsync(new DataExportMail(done.UserId, [], done.EntitySet, file), CancellationToken.None);
+            await db.SaveChangesAsync(CancellationToken.None);
+        }
     }
 
     /// <summary>
@@ -290,11 +367,11 @@ public sealed partial class DataExports(
         CreatedAt = clock.GetUtcNow(),
     };
 
-    /// <summary>The file name with the extension of the format; without a name the set's.</summary>
+    /// <summary>The file name with the extension of the format; without a name the query's <c>fileName</c>, else the set's.</summary>
     internal static string FileName(string? name, string entitySet, QueryString query)
     {
-        var extension = "." + DataExport.Format(FormatOf(query)).ToString().ToLowerInvariant();
-        var clean = string.Concat((name ?? string.Empty).Where(c => !Path.GetInvalidFileNameChars().Contains(c))).Trim();
+        var extension = "." + DataExport.Format(Param(query, "format")).ToString().ToLowerInvariant();
+        var clean = string.Concat((string.IsNullOrWhiteSpace(name) ? Param(query, "fileName") ?? string.Empty : name).Where(c => !Path.GetInvalidFileNameChars().Contains(c))).Trim();
         clean = clean.Length == 0 ? entitySet : clean[..Math.Min(clean.Length, 200)];
         return clean.EndsWith(extension, StringComparison.OrdinalIgnoreCase) ? clean : clean + extension;
     }
@@ -385,8 +462,8 @@ public sealed partial class DataExports(
         }
     }
 
-    private static string? FormatOf(QueryString query) =>
-        Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(query.Value).TryGetValue("format", out var format) ? format.ToString() : null;
+    private static string? Param(QueryString query, string name) =>
+        Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(query.Value).TryGetValue(name, out var value) ? value.ToString() : null;
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Export {JobId} failed.")]
     private partial void LogFailed(Exception exception, Guid jobId);

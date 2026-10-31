@@ -484,6 +484,30 @@
           ]
         }
       ]
+    },
+    {
+      "version": "0.0.1.50",
+      "breaking": [
+        "Export stream: more rows than BackgroundExportRows no longer end the stream with a queued line; the stream follows the export job with reading and writing lines and ends with ready (the one-time link), failed or cancelled."
+      ],
+      "manual": [
+        {
+          "text": "Add a migration for the new column cw.DataTransferJobs.MailOwner (coworkee migrations add CoworkeeLib050). EF gives the non-nullable boolean defaultValue: false, so existing jobs get false on SQL Server and PostgreSQL alike.",
+          "find": "CoworkeeODataModule|AddODataEntity",
+          "files": [
+            "src/**/*.cs"
+          ]
+        },
+        {
+          "text": "A client of the export stream that took DataExportProgress.Queued as the last line (closed, polled the job, issued its own download link, renamed the file) reads on: the stream now ends with ready and the link. File names go along as fileName=, route names as route=, headers as columns=Field:Header (ExportColumns.Format).",
+          "find": "DataExportProgress\\.Queued|export/stream",
+          "files": [
+            "src/**/*.cs",
+            "src/**/*.razor",
+            "src/**/*.ts"
+          ]
+        }
+      ]
     }
   ]
 }

@@ -14,7 +14,7 @@ public static class DataTransferPermissions
 }
 
 /// <summary>
-/// One line of the export stream (application/x-ndjson): <paramref name="Phase"/> is counting, reading, writing, ready, queued, failed or cancelled.
+/// One line of the export stream (application/x-ndjson): <paramref name="Phase"/> is counting, reading, writing, ready, failed or cancelled.
 /// The ready line carries the anonymous one-time <paramref name="Url"/> (relative to the API, five minutes) of the file; every line carries the <paramref name="JobId"/>.
 /// </summary>
 public sealed record DataExportProgress(string Phase, int Percent, string? Url = null, string? FileName = null, Guid? JobId = null, string? Message = null)
@@ -34,8 +34,61 @@ public sealed record DataExportProgress(string Phase, int Percent, string? Url =
     /// <summary>The user cancelled the export (<c>POST /api/v1/data/jobs/{id}/cancel</c>): no file, no mail.</summary>
     public const string Cancelled = "cancelled";
 
-    /// <summary>Too many rows for the request: <c>JobId</c> is the background export that writes the file (and mails it when the client left).</summary>
+    /// <summary>
+    /// The last line of a stream with more rows than a request takes on servers before 0.0.1.50 (<c>JobId</c>: the export job). The stream now follows that
+    /// job with reading, writing and ready lines and no longer sends it.
+    /// </summary>
     public const string Queued = "queued";
+}
+
+/// <summary>
+/// The <c>columns</c> parameter of an export: the fields in order, comma-separated, each with an optional header after a colon
+/// (<c>Number:Shipment no.,Total</c>); a backslash escapes the next character, e.g. a comma in a header (<c>Weight:Weight\, kg</c>).
+/// Without a header the column is headed by its field name. CSV and Excel show the headers; JSON keys stay the field names.
+/// </summary>
+public static class ExportColumns
+{
+    /// <summary>The value of <c>columns</c> for these fields and headers (null: the field name), escaped.</summary>
+    public static string Format(IEnumerable<(string Field, string? Header)> columns) =>
+        string.Join(',', columns.Select(c => string.IsNullOrEmpty(c.Header) ? Escape(c.Field) : $"{Escape(c.Field)}:{Escape(c.Header)}"));
+
+    /// <summary>The fields and headers of a <c>columns</c> value; empty entries are skipped.</summary>
+    public static IReadOnlyList<(string Field, string? Header)> Parse(string? value)
+    {
+        var columns = new List<(string Field, string? Header)>();
+        var part = new System.Text.StringBuilder();
+        string? field = null;
+        value ??= string.Empty;
+        for (var i = 0; i <= value.Length; i++)
+        {
+            if (i == value.Length || value[i] == ',')
+            {
+                var text = part.ToString().Trim();
+                if ((field ?? text).Length > 0)
+                {
+                    columns.Add(field is null ? (text, null) : (field, text.Length > 0 ? text : null));
+                }
+
+                (field, part.Length) = (null, 0);
+            }
+            else if (value[i] == '\\' && i + 1 < value.Length)
+            {
+                part.Append(value[++i]);
+            }
+            else if (value[i] == ':' && field is null)
+            {
+                (field, part.Length) = (part.ToString().Trim(), 0);
+            }
+            else
+            {
+                part.Append(value[i]);
+            }
+        }
+
+        return columns;
+    }
+
+    private static string Escape(string text) => text.Replace("\\", "\\\\").Replace(",", "\\,").Replace(":", "\\:");
 }
 
 /// <summary>An export written in the background and mailed to the requester and <paramref name="Recipients"/>; <paramref name="Query"/> is the export's query string.</summary>

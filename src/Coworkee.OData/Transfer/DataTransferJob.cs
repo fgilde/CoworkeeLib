@@ -36,6 +36,9 @@ public sealed class DataTransferJob : Entity, IMultiTenant, IHasRealtimeTopics
 
     public string? ResultContentType { get; set; }
 
+    /// <summary>Export: mail the file to the owner when the job has written it; set when the client of a stream that followed the job left.</summary>
+    public bool MailOwner { get; set; }
+
     public int Total { get; set; }
 
     public int Processed { get; set; }

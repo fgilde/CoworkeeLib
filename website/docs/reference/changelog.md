@@ -2,6 +2,18 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- Column headers in exports: `columns=Field:Header` heads a CSV or Excel column (`columns=Number:Shipment no.,Total`); a backslash escapes a comma or colon in a header, and `ExportColumns.Format`/`Parse` (`Coworkee.Contracts.Data`) write and read the value. `columns=Field` works as before, JSON keys stay the field names, and mailed and scheduled exports keep the headers with their query. See [import and export](../web/import-export.md#export).
+- `route=<prefix>` in an export query (`GET .../export`, the stream, `MailExportRequest.Query`, `SaveExportScheduleRequest.Query`) reads `$filter`, `$orderby` and `columns` in the names of that OData route (`AddCoworkeeODataRoute`), e.g. `route=rt/odata&$filter=creationTime gt 2026-01-01T00:00:00Z`; without it the names of `/odata`. The set's permission, hidden and protected properties, row filters and groups apply as on the route; an unknown route answers `400`.
+- `fileName=<name>` in an export query names the file of the export and of the stream (job, ready line, download), as `MailExportRequest.FileName` does for mailed exports; the extension of the format is added.
+
+### Changed
+
+- A streamed export with more rows than `BackgroundExportRows` no longer ends with `queued`: the stream follows its export job with `reading` and `writing` lines (the job saves its progress every second) and ends with `ready` and the one-time link, or with `failed` or `cancelled`. When the client leaves meanwhile, the file is mailed to the export's owner once it is written. **Action:** a migration for the new column `cw.DataTransferJobs.MailOwner` (`coworkee migrations add <Name>`). A client that took `queued` as the last line reads on to `ready`.
+
 ## 0.0.1.49 (2026-10-30)
 
 ### Added
