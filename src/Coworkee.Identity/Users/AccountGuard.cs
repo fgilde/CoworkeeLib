@@ -178,8 +178,12 @@ public sealed class AccountGuard(
         return false;
     }
 
-    private async Task<HashSet<string>> MineAsync(CancellationToken cancellationToken) => [.. await checker.GetGrantedAsync(cancellationToken)];
+    // the system (ISystemDispatcher, CurrentUserScope.BeginSystem) acts for app code that decided the caller may cause the change: it passes as an administrator
+    private static bool IsSystem => CurrentUserScope.Current is SystemActor;
+
+    private async Task<HashSet<string>> MineAsync(CancellationToken cancellationToken) =>
+        IsSystem ? [.. definitions.All.Select(d => d.Name)] : [.. await checker.GetGrantedAsync(cancellationToken)];
 
     private async Task<bool> CallerIsAdminAsync(CancellationToken cancellationToken) =>
-        currentUser.UserId is { } me && await AdminGuard.IsAdminAsync(db, me, cancellationToken);
+        IsSystem || (currentUser.UserId is { } me && await AdminGuard.IsAdminAsync(db, me, cancellationToken));
 }
