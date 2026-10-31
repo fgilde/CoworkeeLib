@@ -4,8 +4,8 @@ Jede Coworkee-App ist ein [MCP](https://modelcontextprotocol.io)-Server: Claude 
 
 - **Transport**: Streamable HTTP, zustandslos, jede Anfrage wird für sich angemeldet.
 - **Adresse**: die API stellt ihn unter `/mcp` bereit. Der Web-Host leitet ihn ebenfalls weiter, Clients nutzen also die Adresse der App (`https://myapp.example/mcp`). Der Web-Host gibt nur den API-Schlüssel (`Authorization: Bearer cwk_…` oder `X-Api-Key`) und die MCP-Header weiter: nie die Browser-Sitzung, ihre Cookies oder ihr Token, und keinen Pfad mit Punkt-Segmenten oder kodierten Schrägstrichen.
-- **Wer**: Benutzer mit der Berechtigung `Ai.Chat`. Mit einem [API-Schlüssel](../security/api-keys.md) muss `Ai.Chat` unter den Berechtigungen des Schlüssels sein.
-- **Rate-Limit**: die Policy `ai`, gezählt pro Benutzer.
+- **Wer**: Benutzer mit der Berechtigung `Ai.Chat`. Mit einem [API-Schlüssel](../security/api-keys.md) muss `Ai.Chat` unter den Berechtigungen des Schlüssels sein. Über den Web-Host funktionieren nur API-Schlüssel; die API selbst nimmt auch das Access Token einer Anmeldung.
+- **Rate-Limit**: die Policy `ai` (standardmäßig 30 Anfragen pro Minute und Benutzer, `Coworkee:RateLimiting:Policies:ai`), gemeinsam mit dem Assistenten.
 
 ```json
 {
@@ -20,7 +20,7 @@ Jede Coworkee-App ist ein [MCP](https://modelcontextprotocol.io)-Server: Claude 
 
 `Enabled` ist standardmäßig an; mit `false` gibt es keinen MCP-Endpunkt. Setz beide Werte für die API und den Web-Host, der denselben Pfad weiterleitet.
 
-Zur Laufzeit schalten Administratoren den Server mit der globalen Einstellung `Mcp.Enabled` ab (*Einstellungen > AI assistant > MCP server enabled*, standardmäßig an): dann ist `tools/list` leer und `tools/call` führt nichts aus, auch mit gültigen Schlüsseln. Sie hängt nicht an `Ai.Enabled`: MCP braucht kein Modell.
+Zur Laufzeit schalten Host-Administratoren den Server mit der globalen Einstellung `Mcp.Enabled` ab (*MCP-Server aktiv* auf *Administration > System > KI*, `/cw/admin/ai-settings`, standardmäßig an): dann ist `tools/list` leer und `tools/call` führt nichts aus, auch mit gültigen Schlüsseln. Sie hängt nicht an `Ai.Enabled`: MCP braucht kein Modell.
 
 ## Werkzeuge
 
@@ -28,9 +28,9 @@ Die Werkzeuge kommen aus denselben Quellen wie die des Assistenten:
 
 - Requests, registriert mit `services.AddAiTool<TRequest>("name", "description")`,
 - jeder Request eines geladenen Moduls, der ein `Result` liefert und `[RequiresPermission]` oder `[AiTool]` trägt; `[AiTool(Exclude = true)]` hält einen heraus,
-- mit dem OData-Modul `list_data_sets` (die Sets, die der Benutzer lesen darf, mit Feldern und Typen) und `query_data` (Zeilen eines Sets mit `filter`, `orderBy`, `select`, `top` und `skip`, mit den Berechtigungen, Zeilenfiltern und ausgeblendeten Eigenschaften der Tabellen).
+- die Werkzeuge der Bibliothek: `list_data_sets` (die Sets, die der Benutzer lesen darf, mit Feldern und Typen), `query_data` (Zeilen eines Sets mit `filter`, `orderBy`, `select`, `top` bis 50 und `skip`, mit den Berechtigungen, Zeilenfiltern und ausgeblendeten Eigenschaften der Tabellen) und `global_search` mit dem OData-Modul, `generate_report` mit Reporting; siehe [die Werkzeuge des Assistenten](ai.md#werkzeuge).
 
-`tools/list` nennt nur die Werkzeuge, die der Aufrufer nutzen darf. Queries sind als nur lesend markiert. Jedes Command, das Daten ändert, ist als destruktiv markiert, Clients fragen ihren Benutzer, bevor sie es ausführen; ein Command, das nur hinzufügt oder gefahrlos zweimal laufen kann, nimmt sich mit `NonDestructive` aus:
+`tools/list` nennt nur die Werkzeuge, die der Aufrufer nutzen darf: mit `Ai.Chat` und jeder Berechtigung der `[RequiresPermission]`-Attribute des Requests. Queries sind als nur lesend markiert. Jedes Command, das Daten ändert, ist als destruktiv markiert, Clients fragen ihren Benutzer, bevor sie es ausführen; ein Command, das nur hinzufügt oder gefahrlos zweimal laufen kann, nimmt sich mit `NonDestructive` aus:
 
 ```csharp
 [AiTool("Pins a product to the start page.", NonDestructive = true)]
@@ -38,11 +38,11 @@ Die Werkzeuge kommen aus denselben Quellen wie die des Assistenten:
 public sealed record PinProductCommand(Guid Id) : ICommand<Result>;
 ```
 
-Jeder Aufruf läuft als der aufrufende Benutzer durch den Dispatcher: Berechtigungen, Organisation, Validierung und Unit of Work gelten wie in der API, und Response-Filter formen das Ergebnis wie die Antworten der API. Jeder Aufruf landet im Audit der KI-Werkzeugaufrufe mit dem Kanal `mcp`, dem Benutzer und dem API-Schlüssel.
+Jeder Aufruf läuft als der aufrufende Benutzer durch den Dispatcher: Berechtigungen, Organisation, Validierung und Unit of Work gelten wie in der API, und Response-Filter formen das Ergebnis wie die Antworten der API. Die Antwort wird nach 20.000 Zeichen gekürzt. Jeder Aufruf landet im Audit der KI-Werkzeugaufrufe mit dem Kanal `mcp`, dem Benutzer und dem API-Schlüssel.
 
 ## Einen Client verbinden
 
-Unter *Konto > API-Schlüssel* einen Schlüssel anlegen, mit der Berechtigung *Use the assistant and the MCP server* und den Berechtigungen, die die Werkzeuge brauchen. Die Seite zeigt den Schlüssel einmal, zusammen mit der Adresse und einer fertigen Konfiguration.
+Unter *Konto > API-Schlüssel* einen Schlüssel anlegen, mit der Berechtigung *Den Assistenten und den MCP-Server nutzen* und den Berechtigungen, die die Werkzeuge brauchen. Die Seite zeigt den Schlüssel einmal, zusammen mit der Adresse und einer fertigen Konfiguration.
 
 ### Claude Desktop
 
@@ -144,7 +144,7 @@ var result = await client.CallToolAsync("query_data", new Dictionary<string, obj
 
 ## Sicherheit
 
-- Nur JSON-Bodies erreichen die Werkzeuge, und mit einem Cookie angemeldete Anfragen von fremden Browser-Origins werden abgewiesen: ein Formular einer fremden Seite kann keinen angemeldeten Benutzer benutzen.
+- Nur JSON-Bodies erreichen die Werkzeuge, und mit einem Cookie angemeldete Anfragen von fremden Browser-Origins werden abgewiesen (`403`): Ein Formular einer fremden Seite kann keinen angemeldeten Benutzer benutzen.
 - Nur Anfragen, die mit einem API-Schlüssel angemeldet sind, dürfen eine fremde `Origin` tragen (Desktop-Clients, die eine schicken); ein Schlüssel-Header allein genügt nicht. Der Server sendet keine CORS-Header, Webseiten anderer Sites können MCP-Antworten also nicht lesen.
 - Ein Schlüssel handelt höchstens mit den Berechtigungen seines Benutzers und nur mit denen, die er bekommen hat; siehe [API-Schlüssel](../security/api-keys.md).
 - Schlüssel gehören nicht in Repositories: Inputs von VS Code, Umgebungsvariablen oder den Secret-Speicher des Clients nutzen.
