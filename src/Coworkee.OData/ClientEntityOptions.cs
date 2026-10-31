@@ -17,6 +17,12 @@ public sealed class ClientEntityOptions
 
     public ClientEntitySettings Default { get; set; } = new();
 
+    /// <summary>
+    /// How long rows reported through <see cref="ClientEntities.IClientEntityChangeLog"/> are kept; a copy last refreshed longer ago than this
+    /// is downloaded again, since touches it would need are gone.
+    /// </summary>
+    public TimeSpan ChangeLogLifetime { get; set; } = TimeSpan.FromDays(30);
+
     /// <summary>Lets clients mirror <typeparamref name="TEntity"/>; <paramref name="configure"/> overrides the defaults, Enabled = false opts an attributed entity out.</summary>
     public ClientEntityOptions For<TEntity>(Action<ClientEntitySettings>? configure = null)
         where TEntity : class

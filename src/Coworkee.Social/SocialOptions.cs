@@ -24,10 +24,12 @@ public sealed record CommentValidation(
     CommentAction Action, string EntityType, Guid EntityId, string Text, CommentStatus Status, IReadOnlyDictionary<string, string>? Properties, Guid? CommentId, Guid? ParentId);
 
 /// <param name="VisibleIdsAsync">The ids the current user sees; null when he may not see the type at all.</param>
+/// <param name="ClrType">The entity type of a typed registration; its client entity copies hear of the writes.</param>
 internal sealed record SocialTarget(
     Func<IServiceProvider, CancellationToken, Task<IQueryable<Guid>?>>? VisibleIdsAsync,
     Func<CoworkeeDbContext, Guid, CancellationToken, Task<Guid?>>? OwnerAsync,
-    Func<Guid, string>? Link);
+    Func<Guid, string>? Link,
+    Type? ClrType = null);
 
 /// <summary>Which entity types take comments, tags, ratings and reactions; entity types are opt-in.</summary>
 public sealed class SocialOptions
@@ -95,7 +97,8 @@ public sealed class SocialOptions
             typeof(IAuditable).IsAssignableFrom(typeof(TEntity))
                 ? (db, id, cancellationToken) => db.Set<TEntity>().Where(e => EF.Property<Guid>(e, "Id") == id).Select(e => EF.Property<Guid?>(e, nameof(IAuditable.CreatedBy))).FirstOrDefaultAsync(cancellationToken)
                 : null,
-            link);
+            link,
+            typeof(TEntity));
     }
 }
 

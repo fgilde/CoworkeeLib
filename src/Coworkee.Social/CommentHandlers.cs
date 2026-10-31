@@ -76,6 +76,7 @@ internal sealed class CommentHandlers(
         };
         db.Add(comment);
         comment.Changed(CommentAction.Added);
+        guard.Touch(SocialFeature.Comments, comment.EntityType, [comment.EntityId]);
         await NotifyAsync(comment, cancellationToken);
         return ToDto(comment);
     }
@@ -141,6 +142,7 @@ internal sealed class CommentHandlers(
         {
             comment.Status = command.Status;
             comment.Changed(CommentAction.StatusChanged);
+            guard.Touch(SocialFeature.Comments, comment.EntityType, [comment.EntityId]);
         }
 
         return ToDto(comment);
@@ -180,6 +182,7 @@ internal sealed class CommentHandlers(
 
         db.RemoveRange(await db.Set<Reaction>().Where(r => r.EntityType == SocialReactions.Comment && gone.Contains(r.EntityId)).ToListAsync(cancellationToken));
         db.Remove(comment);
+        guard.Touch(SocialFeature.Comments, comment.EntityType, [comment.EntityId]);
         return Result.Success();
     }
 

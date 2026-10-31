@@ -165,6 +165,24 @@ private Task CancelAsync(SalesOrderDto order) => Snackbar.RunAsync(() => Orders.
 
 Das `POST` gelingt, die Kopie fragt nach den Änderungen seit ihrer Version, holt den geänderten Auftrag per Id, und die Tabelle lädt neu.
 
+### Änderungen, die kein Datum sieht
+
+Der Feed findet geänderte Zeilen an `ModifiedAt` (oder `ChangedAt`). Eine Änderung, die keine solche Spalte bewegt, etwa ein Tag an einem Auftrag über eine Verknüpfungstabelle, den die Kopie mit `Expand = "Tags"` zeigt, ließe die Kopie bis zum nächsten vollen Download veraltet. Melde solche Zeilen mit `IClientEntityChangeLog` (`Coworkee.OData.ClientEntities`) im Command, der die Änderung macht:
+
+```csharp
+internal sealed class TagOrderHandler(AppDbContext db, IClientEntityChangeLog changes) : IHandler<TagOrder, Result>
+{
+    public async Task<Result> HandleAsync(TagOrder command, CancellationToken ct)
+    {
+        db.Add(new OrderTag { OrderId = command.OrderId, TagId = command.TagId });
+        changes.Touch<SalesOrder>(command.OrderId);   // mit dem Command gespeichert, in cw.ClientEntityTouches
+        return Result.Success();
+    }
+}
+```
+
+Die nächste Aktualisierung jeder Kopie lädt diese Zeilen neu, aber nur die, die ihr Leser sieht (Mandant, Zeilenfilter und Gruppenbereich gelten wie für jede Zeile); Typen ohne Client-Entity-Set werden ignoriert. Tags, Bewertungen, Kommentare und Reaktionen der Bibliothek melden die Entity selbst, wenn sie typisiert registriert ist (`Tags<SalesOrder>("SalesOrders")`). Meldungen bleiben `Coworkee:ClientEntities:ChangeLogLifetime` lang (30 Tage, der Job `coworkee-client-entity-touches` löscht ältere); eine Kopie, die zuletzt davor aktualisiert wurde, lädt neu.
+
 ## Schritt 5: eigene Oberflächen
 
 `ClientEntities.SetAsync<T>` liefert die Kopie eines Sets. Sie ist `null`, wenn der Server das Set diesem Benutzer nicht anbietet.
@@ -276,7 +294,7 @@ Die Tests der Bibliothek (`LargeSetTests`, `LocalTableTests`) prüfen dasselbe m
 - Alles ist reines .NET: kein natives SQLite, kein `wasm-tools`-Workload, keine zusätzlichen Dateien.
 - Arbeitsspeicher: 100.000 Aufträge belegen einige zehn MB im Browser-Tab; halte `MaxRows` im Rahmen und expandiere nur, was du anzeigst.
 - Der erste Download eines großen Sets dauert (14,5 s für 100.000 Zeilen) und beschäftigt den Browser; die Tabelle antwortet währenddessen vom Server, langsamer als sonst. Antwortkomprimierung in der API (oder im BFF) hilft bei langsamen Netzen.
-- Änderungen erkennt der Server an `IAuditable` (`CreatedAt`, `ModifiedAt`), Löschungen an `ISoftDelete` (`DeletedAt`). Stimmt die Zeilenzahl nach einem Delta nicht mit der des Servers überein, vergleicht der Client die Ids; so verschwinden auch hart gelöschte Zeilen und solche, die nicht mehr sichtbar sind. Entities ohne `IAuditable` und ohne `ChangedAt` werden bei jeder Aktualisierung neu geladen.
+- Änderungen erkennt der Server an `IAuditable` (`CreatedAt`, `ModifiedAt`), Löschungen an `ISoftDelete` (`DeletedAt`). Stimmt die Zeilenzahl nach einem Delta nicht mit der des Servers überein, vergleicht der Client die Ids; so verschwinden auch hart gelöschte Zeilen und solche, die nicht mehr sichtbar sind. Entities ohne `IAuditable` und ohne `ChangedAt` werden bei jeder Aktualisierung neu geladen. Änderungen, die kein Datum bewegen, meldet [`IClientEntityChangeLog`](#anderungen-die-kein-datum-sieht).
 - Text sortiert ohne Groß-/Kleinschreibung nach der Kultur des Browsers; der Server sortiert nach der Collation seiner Datenbank, Sonderzeichen können also anders einsortiert sein.
 - Clients spiegeln nur die Zeilen, die ein Benutzer sehen darf; eine Kopie enthält also nichts, was eine OData-Abfrage nicht auch liefern würde. Auf dem Gerät ist sie nicht verschlüsselt; Sets mit sensiblen Daten lässt du auf dem Server.
 
@@ -285,7 +303,7 @@ Die Tests der Bibliothek (`LargeSetTests`, `LocalTableTests`) prüfen dasselbe m
 | Anfrage | Antwort |
 |---|---|
 | `GET /api/v1/client-entities` | die Sets, die dieser Benutzer spiegeln darf, mit ihren Einstellungen, ein Partitionsschlüssel pro Benutzer, Mandant und Gruppenauswahl und ein Besitzerschlüssel pro Benutzer und Mandant |
-| `GET /api/v1/client-entities/{set}/changes?since=…&skip=…` | neue Version, Zahl der sichtbaren Zeilen, geänderte und gelöschte Ids und die Partition des Aufrufers; mit `skip` kommen die geänderten Ids in Seiten von `BatchSize × 10` (`more`), ohne antwortet mehr als das mit `reset` |
+| `GET /api/v1/client-entities/{set}/changes?since=…&skip=…` | neue Version, Zahl der sichtbaren Zeilen, geänderte und gelöschte Ids und die Partition des Aufrufers; mit `skip` kommen die geänderten Ids in Seiten von `BatchSize × 10` (`more`), ohne antwortet mehr als das mit `reset`; auch `reset`, wenn `since` älter als `ChangeLogLifetime` ist |
 | `GET /api/v1/client-entities/{set}/ids` | alle sichtbaren Ids, um unbemerkt verschwundene Zeilen zu finden |
 
 ## Dateien der Demo

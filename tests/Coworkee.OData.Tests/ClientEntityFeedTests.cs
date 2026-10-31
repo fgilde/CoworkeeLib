@@ -107,6 +107,34 @@ public sealed class ClientEntityFeedTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Rows_touched_through_the_change_log_join_the_delta_when_the_reader_sees_them()
+    {
+        var start = await ChangesAsync(null);
+        var lamp = await app.InDbAsync(_setup.TenantId, db => db.Set<Gadget>().Where(g => g.Name == "Lamp").Select(g => g.Id).SingleAsync(Ct));
+        var foreign = await app.InDbAsync(_otherTenant, db => db.Set<Gadget>().Where(g => g.Name == "Foreign").Select(g => g.Id).SingleAsync(Ct));
+        var widget = Guid.CreateVersion7();
+        await TouchAsync(_setup.TenantId, log => { log.Touch<Gadget>(lamp); log.Touch<Widget>(widget); });
+        await TouchAsync(_otherTenant, log => log.Touch<Gadget>(foreign));
+        // a job without a tenant may touch rows of every tenant; the reader still gets only his own
+        await TouchAsync(null, log => log.Touch<Gadget>(foreign));
+
+        var delta = await ChangesAsync(start.Version);
+
+        delta.Reset.ShouldBeFalse();
+        delta.Changed.ShouldBe([lamp]);
+        (await app.InDbAsync(null, db => db.Set<Coworkee.OData.ClientEntities.ClientEntityTouch>().CountAsync(t => t.EntityId == widget, Ct))).ShouldBe(0);
+        (await ChangesAsync(DateTimeOffset.UtcNow.AddDays(-31))).Reset.ShouldBeTrue();
+    }
+
+    private async Task TouchAsync(Guid? tenantId, Action<Coworkee.OData.ClientEntities.IClientEntityChangeLog> touch)
+    {
+        using var actor = Core.Security.CurrentUserScope.Begin(new Core.Security.ImpersonatedUser(null, tenantId));
+        await using var scope = app.App.Services.CreateAsyncScope();
+        touch(scope.ServiceProvider.GetRequiredService<Coworkee.OData.ClientEntities.IClientEntityChangeLog>());
+        await scope.ServiceProvider.GetRequiredService<GadgetDbContext>().SaveChangesAsync(Ct);
+    }
+
+    [Fact]
     public async Task The_snapshot_pages_by_the_last_id_in_the_order_of_the_database()
     {
         var names = new List<string>();

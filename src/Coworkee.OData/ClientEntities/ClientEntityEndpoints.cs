@@ -106,6 +106,13 @@ internal static class ClientEntityEndpoints
             return Results.Ok(new ClientEntityChanges(version, count, [], [], Reset: false, Partition: partition));
         }
 
+        // touches older than the change log's lifetime are gone: such a copy cannot tell which rows they were
+        var log = services.GetRequiredService<IOptions<ClientEntityOptions>>().Value.ChangeLogLifetime;
+        if (since < version - log)
+        {
+            return Results.Ok(new ClientEntityChanges(version, count, [], [], Reset: true, Partition: partition));
+        }
+
         var from = since - settings.Overlap;
         var changedSince = settings.ChangedAt.Count > 0 ? ChangedAfter<TEntity>(services, settings.ChangedAt, from)
             : typeof(IAuditable).IsAssignableFrom(typeof(TEntity)) ? ChangedAfter<TEntity>(services, [nameof(IAuditable.CreatedAt), nameof(IAuditable.ModifiedAt)], from)
@@ -117,9 +124,20 @@ internal static class ClientEntityEndpoints
 
         // pages in the order of the ids: rows changing meanwhile only join the set (they changed after "from" too), so a skip misses none
         var limit = settings.BatchSize * 10;
-        var changed = await visible
-            .Where(changedSince)
-            .Select(e => EF.Property<Guid>(e, nameof(Entity.Id)))
+        // rows reported through IClientEntityChangeLog (a tag put on, no ChangedAt moved); of them only the visible ones come out
+        var touched = await services.GetRequiredService<ClientEntityChangeLog>().SinceAsync(typeof(TEntity), from, limit + 1, cancellationToken);
+        if (touched.Count > limit)
+        {
+            return Results.Ok(new ClientEntityChanges(version, count, [], [], Reset: true, Partition: partition));
+        }
+
+        var ids = visible.Where(changedSince).Select(e => EF.Property<Guid>(e, nameof(Entity.Id)));
+        if (touched.Count > 0)
+        {
+            ids = ids.Union(visible.Where(e => EF.Parameter(touched).Contains(EF.Property<Guid>(e, nameof(Entity.Id)))).Select(e => EF.Property<Guid>(e, nameof(Entity.Id))));
+        }
+
+        var changed = await ids
             .OrderBy(id => id)
             .Skip(feed.Skip ?? 0)
             .Take(limit + 1)

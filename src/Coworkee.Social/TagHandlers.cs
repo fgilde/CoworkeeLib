@@ -61,6 +61,7 @@ internal sealed class TagHandlers(CoworkeeDbContext db, SocialGuard guard, IPerm
         db.RemoveRange(links.Where(l => wanted.All(t => t.Id != l.TagId)));
         db.AddRange(wanted.Where(t => links.All(l => l.TagId != t.Id))
             .Select(t => new EntityTag { TenantId = currentUser.TenantId!.Value, TagId = t.Id, EntityId = command.EntityId }));
+        guard.Touch(SocialFeature.Tags, command.EntityType, [command.EntityId]);
         await db.SaveChangesAsync(cancellationToken);
         return await LoadAsync(command.EntityType, command.EntityId, cancellationToken);
     }
@@ -77,6 +78,7 @@ internal sealed class TagHandlers(CoworkeeDbContext db, SocialGuard guard, IPerm
             return Error.NotFound("tags.not_found", "The tag does not exist.");
         }
 
+        guard.Touch(SocialFeature.Tags, command.EntityType, await db.Set<EntityTag>().Where(l => l.TagId == tag.Id).Select(l => l.EntityId).ToListAsync(cancellationToken));
         db.Remove(tag);
         return Result.Success();
     }

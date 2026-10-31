@@ -96,6 +96,16 @@ public sealed class SocialApp : DatabaseFixture
         return note.Id;
     }
 
+    /// <summary>Dates the note back a day, so a client entity delta holds it only when something reports it.</summary>
+    public async Task AgeNoteAsync(Guid id)
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
+        await using var scope = App.Services.CreateAsyncScope();
+        var yesterday = DateTimeOffset.UtcNow.AddDays(-1);
+        await scope.ServiceProvider.GetRequiredService<SocialTestDbContext>().Set<Note>().IgnoreQueryFilters().Where(n => n.Id == id)
+            .ExecuteUpdateAsync(s => s.SetProperty(n => n.CreatedAt, yesterday).SetProperty(n => n.ModifiedAt, yesterday));
+    }
+
     public async Task<int> ReactionCountAsync()
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
@@ -171,13 +181,14 @@ internal sealed class NoteModelContributor : IModelContributor
     public void Apply(ModelBuilder modelBuilder) => modelBuilder.Entity<Note>(note => note.ToTable("Notes"));
 }
 
-[DependsOn(typeof(CoworkeeSocialModule), typeof(CoworkeeNotificationsModule), typeof(CoworkeeIdentityModule))]
+[DependsOn(typeof(CoworkeeSocialModule), typeof(CoworkeeNotificationsModule), typeof(CoworkeeIdentityModule), typeof(CoworkeeODataModule))]
 public sealed class TestSocialModule : CoworkeeModule
 {
     public override void ConfigureServices(ModuleServiceContext context)
     {
         context.Services.AddSingleton<IModelContributor, NoteModelContributor>();
         context.Services.AddODataEntity<Note>("Notes");
+        context.Services.AddCoworkeeClientEntities(o => o.For<Note>());
         context.Services.AddScoped<IODataEntityFilter<Note>, PrivateNotes>();
         context.Services.AddCoworkeeSocial(social => social
             .Comments<Note>("Notes", id => $"/notes/{id}")

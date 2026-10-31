@@ -17,6 +17,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Added
 
+- `IClientEntityChangeLog.Touch<T>(ids)` (L86): reports rows to the client entity copies when no `ChangedAt`/`ModifiedAt` column moved (a tag put on through a link table); stored in the new table `cw.ClientEntityTouches` with the command and read by the changes feed for the rows the reader sees. The library's tags, ratings, comments and reactions report entities registered typed (`Tags<T>(...)`) themselves. A copy last refreshed more than `Coworkee:ClientEntities:ChangeLogLifetime` (30 days) ago downloads again. Add a migration. See [changes no date sees](../ui/client-entities.md#changes-no-date-sees).
 - `PersonalDataSubject.ErasedUserId`: the placeholder own contributors write where an erased user's id stood. `tests/Coworkee.ArchitectureTests/PersonalDataCoverageTests` fails for a column of the library that names a user without a contributor.
 
 ### Breaking changes
