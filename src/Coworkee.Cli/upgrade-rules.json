@@ -470,7 +470,7 @@
       ],
       "manual": [
         {
-          "text": "Add a migration for the new column cw.Reports.GroupIds (coworkee migrations add CoworkeeLib049).",
+          "text": "Add a migration for the new column cw.Reports.GroupIds (coworkee migrations add CoworkeeLib049). On PostgreSQL give the column defaultValueSql: \"'{}'\" in that migration, or it fails on existing reports (SQL Server gets '[]' by itself).",
           "find": "CoworkeeReportingModule",
           "files": [
             "src/**/*.cs"
