@@ -2,12 +2,16 @@
 
 `Coworkee.Ai` lets a language model (Claude, GPT, a local model through Ollama, ...) work with the app through the same requests the UI uses. Every tool is a dispatcher request, so permissions, validation and audit apply to the assistant exactly as to a person.
 
+New apps have it (template and CLI option `ai`, on by default); by hand, depend on `CoworkeeAiModule` (it needs the settings module). It adds the tables `cw.AiToolCalls` (tool call audit), `cw.AiChatSessions` and `cw.AiChatMessages` (conversations): add a migration. With the [Retention](retention.md) module, `ai-tool-calls` and `ai-sessions` set how long they are kept.
+
+## Tools
+
 ```csharp
 services.AddAiTool<SearchAssetsQuery>("search_assets", "Finds assets by text, folder and tags.");
 services.AddAiTool<TagAssetsCommand>("tag_assets", "Adds tags to assets.");
 ```
 
-Without any registration, every request of a module that returns a `Result` and carries `[RequiresPermission]` or `[AiTool]` becomes a tool. Its `[Description]` is the tool description; `[AiTool(Exclude = true)]` keeps a request out, for example one that changes permissions:
+Without any registration, every request of a loaded module that returns a `Result` and carries `[RequiresPermission]` or `[AiTool]` becomes a tool. Its name is the type name in snake case without `Command` or `Query` (`GetBrandsQuery` → `get_brands`), or `[AiTool(Name = ...)]`; its description is `[AiTool("...")]`, else `[Description]`. `[AiTool(Exclude = true)]` keeps a request out, for example one that changes permissions; requests with a `Stream` or file property are never tools. A request registered with `AddAiTool` wins over the discovered one.
 
 ```csharp
 [RequiresPermission(CatalogPermissions.Brands.View)]
@@ -15,9 +19,20 @@ Without any registration, every request of a module that returns a `Result` and 
 public sealed record GetBrandsQuery(string? Search) : IQuery<Result<IReadOnlyList<BrandDto>>>;
 ```
 
-With the OData module, the assistant also gets the tools `list_data_sets` (the sets the user may read, with their fields) and `query_data`: it lists rows of any registered entity set with an OData filter, order and selected fields, with the same permissions, row filters and hidden properties as the tables.
+A user gets the tools only with `Ai.Chat`, and each tool only with every permission its `[RequiresPermission]` attributes name (several attributes: all of them). The request type becomes the tool's input schema, the `Result` its output, shaped by the response filters like the API's answers and cut after 20,000 characters. Failures reach the model as messages it can react to.
 
-The request type becomes the tool's input schema, the `Result` its output. Failures reach the model as messages it can react to.
+The library brings these tools:
+
+| Tool | Module | |
+|---|---|---|
+| `list_data_sets` | OData | the entity sets the user may read, with the name and type of each field |
+| `query_data` | OData | rows of a set with `filter`, `orderBy`, `select`, `top` (1 to 50, default 20) and `skip`: the permissions, row filters, hidden properties and [query limits](../web/odata.md) of the tables apply |
+| `global_search` | OData | the [global search](../web/global-search.md) over every kind of record the user may read (`query`, `types`, `limit` 1 to 50 per provider) |
+| `generate_report` | Reporting | builds a report definition from a description with the app's AI model (`Reports.Manage`); `create_report` and `update_report` save it, see [Create a report with AI](reporting.md#create-a-report-with-ai) |
+
+Further requests of the modules (users, roles, reports, ...) are tools by the rule above.
+
+## The assistant window
 
 - **Assistant window** for users with `Ai.Chat`: a button at the bottom right (or `Ctrl+I`) opens a chat with the tools of all modules, as the signed-in user. It comes small, large or full screen, and full screen on phones; it is not there while the assistant is not active or the user lacks `Ai.Chat`. The old `/assistant` route opens the window.
 - **Conversations** stay on the server per user: titled after the first message, renamed, deleted and searched in the side bar, live in every open tab, and part of the personal data export and erasure.
@@ -30,11 +45,13 @@ The request type becomes the tool's input schema, the `Result` its output. Failu
     ```
 
 - **[MCP server](mcp.md)** under `/mcp` with the same tools, for Claude Desktop, Claude Code, VS Code, Cursor and other MCP clients, signed in with an [API key](../security/api-keys.md).
-- **Tool call audit** for users with `Ai.Audit`: every call with input, result, user, channel and API key.
+- **Tool call audit** for users with `Ai.Audit` (*Administration > Monitoring > AI tool calls*, `/cw/admin/ai-tool-calls`, OData set `AiToolCalls`): every call with its input (values that look like secrets masked, cut after 4,000 characters), success or error, duration, user, channel (`chat` or `mcp`) and API key; the output is not stored.
 - Queries run at once. Every command, which changes data, waits: the window shows exactly what the assistant wants to run (inputs that look like secrets masked) with *Run* and *Cancel*, destructive ones highlighted, and only the user's click runs it. Creating a product by chat takes one click. Text planted in data or in the conversation can therefore never change anything on its own. A new message cancels a waiting call.
 - A waiting call is stored encrypted with ASP.NET Data Protection (share the key ring between API instances), decided once even when two tabs click at the same time, and never runs twice.
 
-The window talks to `/api/v1/ai`: `GET status`, `GET|POST sessions`, `GET|PUT|DELETE sessions/{id}`, and `POST sessions/{id}/messages` and `POST sessions/{id}/confirm`, which answer with `application/x-ndjson`: one `AiStreamEvent` per line, `delta` (text), `tool` (a tool call), then `done` (the saved message) or `error`. The answer runs to its end and is saved even when the browser goes away.
+The window talks to `/api/v1/ai`: `GET status`, `GET tools` (the user's tools), `GET|POST sessions` (`?search=`), `GET|PUT|DELETE sessions/{id}`, and `POST sessions/{id}/messages` and `POST sessions/{id}/confirm`, which answer with `application/x-ndjson`: one `AiStreamEvent` per line, `delta` (text), `tool` (a tool call), then `done` (the saved message) or `error`. The answer runs to its end and is saved even when the browser goes away. The AI page uses `GET connection`, `POST connection/models` and `POST connection/test`; the audit `GET tool-calls?channel=` (`Ai.Audit`).
+
+Messages, confirmations, model lists and connection tests go through the rate limit policy `ai` (30 requests a minute per user by default, `Coworkee:RateLimiting:Policies:ai`), like the MCP server.
 
 ![Assistant window with conversations](../assets/screenshots/mcp-ai-window-dark.png){ .shot }
 
@@ -67,7 +84,7 @@ Providers without tool calls (Perplexity, for example) do not fit: the assistant
 
 ### The AI page
 
-Host administrators with `Settings.Manage` set it up under **Administration > System > AI** (`/admin/ai-settings`): switch the assistant on, pick a provider card, enter address, key and model, and save. Changes apply to the next message, without a restart.
+Host administrators with `Settings.Manage` set it up under **Administration > System > AI** (`/cw/admin/ai-settings`): switch the assistant on, pick a provider card, enter address, key and model, and save. Changes apply to the next message, without a restart. The same page switches the [MCP server](mcp.md) on and off.
 
 ![AI page](../assets/screenshots/ai-admin-light.webp){ .shot }
 
@@ -80,19 +97,21 @@ Host administrators with `Settings.Manage` set it up under **Administration > Sy
 
 ### Settings
 
-The page writes the global AI settings; they also have defaults in the configuration, e.g. from the app host or environment variables:
+The page writes the AI settings. They are global only, so no organisation switches the assistant on or raises limits on the host's key; they also have defaults in the configuration, e.g. from the app host or environment variables:
 
 | Setting | |
 |---|---|
-| `Ai.Enabled` | on or off |
+| `Ai.Enabled` | on or off, `false` by default |
 | `Ai.Provider` | a provider id of the table above, `anthropic` by default |
 | `Ai.Model` | empty: the provider's default; Azure OpenAI: the deployment name |
 | `Ai.Endpoint` | empty: the provider's address; Azure OpenAI resource (`https://acme.openai.azure.com`), Ollama or LM Studio address, or the base address of a custom server |
 | `Ai.ApiKey` | API key (secret) |
 | `Ai.Headers` | extra headers, one `Name: value` per line |
 | `Ai.AuthHeader` | header that carries the key instead of `Authorization: Bearer` |
-| `Ai.Temperature`, `Ai.MaxOutputTokens` | empty: the model's defaults |
-| `Ai.MaxToolRounds` | how many tool rounds one answer may take |
+| `Ai.Temperature` | empty: the model's default; 0 to 2, lower answers more predictably |
+| `Ai.MaxOutputTokens` | empty: the provider's default (16000 for Anthropic) |
+| `Ai.MaxToolRounds` | how many tool rounds one answer may take, `10` by default |
+| `Mcp.Enabled` | the [MCP server](mcp.md) at runtime, `true` by default; needs no provider |
 
 ```json
 {
