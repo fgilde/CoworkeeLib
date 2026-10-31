@@ -24,8 +24,8 @@ return Results.Ics(calendar, "talks.ics"); // dasselbe als Download
 
 | Teil | Was es schreibt |
 |---|---|
-| `IcsTime` | `DateOnly` → ganzer Tag (`VALUE=DATE`), `DateTimeOffset` → UTC (`…Z`), `IcsTime.InZone(wallClock, "Europe/Berlin")` → `TZID=` mit der Ortszeit. Beide werden implizit umgewandelt. |
-| `IcsEvent` | `Uid` (stabil über Abrufe hinweg, damit Änderungen den Termin ersetzen), `Start`, `Summary`, optional `End` (exklusiv), `Description`, `Location`, `Url`, `Status`, `Categories`, `Organizer`, `Attendees`, `Transparent` (blockiert die Zeit nicht), `Stamp`. |
+| `IcsTime` | `DateOnly` → ganzer Tag (`VALUE=DATE`), `DateTimeOffset` → UTC (`…Z`), `IcsTime.InZone(wallClock, "Europe/Berlin")` (ein `DateTime`) → `TZID=` mit der Ortszeit. Die ersten beiden werden implizit umgewandelt oder kommen aus `IcsTime.Date(day)` und `IcsTime.Utc(instant)`. |
+| `IcsEvent` | `Uid` (stabil über Abrufe hinweg, damit Änderungen den Termin ersetzen), `Start`, `Summary`, optional `End` (exklusiv), `Description`, `Location`, `Url`, `Status` (`Tentative`, `Confirmed`, `Cancelled`), `Categories`, `Organizer`, `Attendees`, `Transparent` (blockiert die Zeit nicht), `Stamp`. |
 | `IcsEvent.AllDay(uid, first, last, summary)` | Tage von `first` bis `last`, beide eingeschlossen (`DTEND` ist der Tag nach `last`). |
 | `IcsCalendar` | `Name` (`X-WR-CALNAME`), `RefreshInterval` (`REFRESH-INTERVAL`, `X-PUBLISHED-TTL`), `ProductId`, `Stamp` (Standard jetzt, wird zu `DTSTAMP`), `ToString()`. |
 
