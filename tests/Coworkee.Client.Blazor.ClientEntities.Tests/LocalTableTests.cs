@@ -15,7 +15,7 @@ public sealed class LocalTableTests
         using var stream = new MemoryStream();
         var written = LocalTable<Gadget>.Of(Rows);
         written.Column("Name").Index().ShouldBeTrue();
-        written.Write(stream, DateTimeOffset.Parse("2026-10-10T10:00:00Z"));
+        await written.WriteAsync(stream, DateTimeOffset.Parse("2026-10-10T10:00:00Z"), () => Task.CompletedTask);
         stream.Position = 0;
 
         var (table, version) = (await LocalTable<Gadget>.ReadAsync(stream, () => Task.CompletedTask))!.Value;

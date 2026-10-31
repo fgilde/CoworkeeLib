@@ -14,7 +14,8 @@ sequenceDiagram
     T->>S: Abfrage
     S->>API: OData-Abfrage (noch nicht lokal)
     S->>API: changes (Version, Zeilenzahl)
-    S->>API: Seiten von /odata/SalesOrders?$orderby=Id&$select=…, zwei gleichzeitig
+    S->>API: Seiten von /odata/SalesOrders?$orderby=Id&$filter=Id gt (letzte Id)&$top=1000&$select=…
+    Note over S: jede Runde in IndexedDB abgelegt, ein Neuladen macht dort weiter
     Note over S: vollständig als Spalten, indiziert, in IndexedDB abgelegt
     T->>S: Abfrage
     S-->>T: lokal beantwortet
@@ -65,8 +66,10 @@ Jedes Set startet mit den Standardwerten, dann wirken das Attribut, die Optionen
 
 | Einstellung | Standard | |
 |---|---|---|
-| `BatchSize` | 1000 | Zeilen pro Seite beim Herunterladen, höchstens `Coworkee:OData:MaxTop`; der Client lädt zwei Seiten gleichzeitig |
+| `BatchSize` | 1000 | Zeilen pro Seite beim Herunterladen, höchstens `Coworkee:OData:MaxTop` |
+| `ParallelPages` | 1 | Seiten des Downloads, die gleichzeitig laden (auch die Blöcke geänderter Zeilen). Der Download blättert über die letzte Id; eine zweite Seite einer Runde überspringt die erste (`$skip`), die Datenbank liest diese also zweimal. Nur erhöhen, wo die Abfrage des Sets billig und das Netz der Engpass ist |
 | `MaxRows` | 50 000 | größere Sets bleiben auf dem Server; `[ClientEntity(MaxRows = …)]` setzt den Wert pro Entity |
+| `Expand` | keins | die Navigationseigenschaften, die die Kopie mitführt, wie in `$expand` (`[ClientEntity(Expand = "Customer")]` oder die Optionen). Ohne entscheidet die erste Abfrage eines Besuchs; siehe unten |
 | `RefreshInterval` | 5 Minuten | wie oft Clients nach Änderungen fragen |
 | `Enabled` | `true` | `false` lässt eine markierte Entity auf dem Server |
 | `ChangedAt` | keine | Datumseigenschaften, die sagen, wann eine Zeile angelegt oder geändert wurde, für Entities ohne `IAuditable` (Tabellen einer [externen Datenbank](../fundamentals/persistence.md#externe-datenbanken)); ohne sie lädt ein solches Set bei jeder Aktualisierung vollständig |
@@ -84,6 +87,9 @@ Jedes Set startet mit den Standardwerten, dann wirken das Attribut, die Optionen
     ```
 
     Die Standardwerte können auch aus der Konfiguration kommen (`Coworkee:ClientEntities:Default`).
+
+!!! tip "Expand benennen"
+    Ein Set hat eine Kopie pro Besuch. Ohne `Expand` nimmt sie das Expand der ersten Abfrage, die sie erreicht; fragt eine Seite mit anderem Expand als die Liste (ein Dashboard-Widget, ein Picker), bleibt die Liste für diesen Besuch auf dem Server und ihre Kopie liegt unter einem anderen Schlüssel, was beim nächsten Besuch einen Download kostet. Mit `Expand` führt die Kopie diese Eigenschaften, egal wer zuerst fragt, und jede Abfrage, deren Expand darin enthalten ist, wird lokal beantwortet. Abfragen mit `$select` oder `$search` starten nie eine Kopie: Keine Kopie könnte sie beantworten.
 
 === "Pro Anwendungsdienst"
 
@@ -134,6 +140,18 @@ Die Kopie aktualisiert sich
 - alle `RefreshInterval`.
 
 Beim Abmelden werden alle Kopien aus dem Browser-Speicher entfernt. Ein Set, das der Benutzer nicht mehr lesen darf (der Server antwortet 403 oder 404), verwirft seine Kopie bei der nächsten Aktualisierung.
+
+### Zwischen Besuchen behalten, und wann die Kopie neu beginnt
+
+Die Kopie soll pro Benutzer und Gruppenauswahl einmal herunterladen und danach nur Änderungen holen:
+
+- **Fortsetzen**: Der Download blättert über die letzte Id durch das Set (`$filter=Id gt …&$orderby=Id`) und legt jede Runde im Browser-Speicher ab. Ein Neuladen, ein geschlossener Tab oder eine fehlgeschlagene Anfrage macht bei der letzten abgelegten Runde weiter, nicht bei null; der Fortschrittsring zeigt die Zeilen, die schon da sind.
+- **Vollständig bleibt vollständig**: Die fertige Kopie ersetzt die Runden. Der nächste Besuch stellt sie wieder her und fragt nur nach den Änderungen seit ihrer Version.
+- **Änderungen statt Downloads**: Änderungen kommen als Ids geänderter und gelöschter Zeilen, die der Client per Id holt (`ParallelPages` Blöcke gleichzeitig). Viele Änderungen auf einmal (eine Massenänderung auf dem Server) kommen in Seiten von Ids; die Kopie bleibt solange lokal. Nur ein Set ohne `IAuditable` und ohne `ChangedAt` lädt bei jeder Aktualisierung neu.
+- **Eine wiederhergestellte Kopie antwortet nach ihrer ersten Aktualisierung**: Bis die Änderungen seit ihrer Version da sind (und inzwischen gelöschte oder für den Benutzer nicht mehr sichtbare Zeilen fort), fragt die Tabelle den Server. Die Kopie zeigt so nie Zeilen, auf die der Benutzer den Zugriff verlor, während der Browser zu war.
+- **Anderer Benutzer oder Mandant**: Das Manifest des Servers nennt den Besitzer (Benutzer, Mandant, Client). Weicht er vom Besitzer der abgelegten Kopien ab, werden alle vom Gerät gelöscht, bevor etwas gelesen wird, auch wenn sich der vorige Benutzer nicht abgemeldet hat (abgelaufene Sitzung). Kopien einer älteren Version ohne Besitzer gelten als die eines anderen Benutzers.
+- **Andere Gruppenauswahl**: Die Partition der Kopie enthält die [Gruppenauswahl](../features/identity.md#gruppenbaum-und-geltungsbereich), eine neue Auswahl zeigt also nie Zeilen der alten. Die Kopien der letzten drei Auswahlen bleiben im Browser-Speicher: Der Wechsel zurück stellt diese Kopie wieder her und holt nur ihre Änderungen. Jede Antwort des Änderungs-Feeds trägt die aktuelle Partition des Aufrufers; eine Kopie einer anderen Partition (Auswahl in einem anderen Tab geändert, inzwischen ein anderer Benutzer angemeldet) verlässt sofort den Arbeitsspeicher, und die Sets beginnen mit der neuen.
+- **Von null** nur, wenn es sein muss: Der Zeilentyp oder die .NET-Laufzeit hat sich geändert (die abgelegten Spalten passen nicht mehr), das Set ist über `MaxRows` gewachsen, der Server bietet das Set nicht mehr an oder der Benutzer verlor die Berechtigung (403, 404), oder die Kopie gehört einem anderen Benutzer, Mandanten oder einer Auswahl älter als die letzten drei.
 
 ## Schritt 4: Schreiben
 
@@ -210,7 +228,7 @@ WebAssembly interpretiert .NET-Code; Arbeit pro Zeile ist im Browser also teuer:
 - **Facetten** zählen die Ränge der gefundenen Zeilen: ein Durchlauf pro Facetten-Eigenschaft, egal wie viele Optionen. Wert-, Bereichs- und Flag-Optionen addieren dann die Anzahlen der Ränge, die sie annehmen (Bereiche über Präfixsummen); 35 Monatsbereiche über 100.000 verschiedene Auftragsdaten kosten so nicht mehr als eine Werteliste.
 - **Ergebnisse** der letzten 16 Kombinationen aus Filter und Sortierung bleiben erhalten: Die nächste Seite, ein Gruppenwechsel oder die Rückkehr zu einem früheren Filter schneiden nur einen Ausschnitt.
 - **Speicher**: Spalten und ihre Sortierungen werden als Binär-Arrays (gzip) in IndexedDB geschrieben. Ein Neuladen liest sie in einigen hundert Millisekunden zurück, Spalte für Spalte mit Pausen dazwischen; bis dahin fragt die Tabelle den Server und zeigt sofort Zeilen.
-- **Download**: Nur die Eigenschaften des Zeilentyps kommen über die Leitung (`$select`, verschachteltes `$expand`), zwei Seiten gleichzeitig, in einem Durchgang gelesen.
+- **Download**: Nur die Eigenschaften des Zeilentyps kommen über die Leitung (`$select`, verschachteltes `$expand`), eine Seite nach der anderen über die letzte Id (`$filter=Id gt …`, nie ein wachsendes `$skip`, das die Datenbank für jede Seite alle früheren Zeilen erneut lesen lässt), in einem Durchgang gelesen; Packen und Entpacken der abgelegten Kopie pausieren zwischen Spalten und Abschnitten, die Seite bleibt also bedienbar.
 
 Gemessen in Chromium mit den 100.000 Aufträgen der Demo (Release-Build, lokaler Rechner; der Server antwortet aus Postgres auf derselben Maschine):
 
@@ -253,12 +271,12 @@ Die Tests der Bibliothek (`LargeSetTests`, `LocalTableTests`) prüfen dasselbe m
 
 ## Speicher und Grenzen
 
-- Die Zeilen liegen als Spalten im Speicher und, mit gzip komprimiert, in IndexedDB (`coworkee-client-entities`), getrennt nach der Partition des Servers (Benutzer, Mandant), dem Set und seinem Expand. Der nächste Besuch ist sofort lokal und fragt nur nach Änderungen. Ändert sich der Zeilentyp, wird die gespeicherte Kopie verworfen. Ersetze `IClientEntityStorage`, um die Kopien anderswo abzulegen, oder registriere `NoClientEntityStorage`, um zwischen Besuchen nichts zu behalten.
+- Die Zeilen liegen als Spalten im Speicher und, mit gzip komprimiert, in IndexedDB (`coworkee-client-entities`), getrennt nach der Partition des Servers (Benutzer, Mandant, Gruppenauswahl), dem Set und seinem Expand. Der nächste Besuch fragt nur nach Änderungen (siehe [oben](#zwischen-besuchen-behalten-und-wann-die-kopie-neu-beginnt)). Ändert sich der Zeilentyp, wird die gespeicherte Kopie verworfen. Ersetze `IClientEntityStorage`, um die Kopien anderswo abzulegen, oder registriere `NoClientEntityStorage`, um zwischen Besuchen nichts zu behalten; ein Ersatz sollte auch `DeleteAsync(prefix)` umsetzen, das die Runden eines fertigen Downloads und die Kopien alter Gruppenauswahlen entfernt (der Standard entfernt nichts).
 - Zeilentypen mit Eigenschaften einfacher Typen (Text, Zahlen, Datumswerte, `Guid`, Enums, jeweils auch nullable) und verschachtelten Objekten aus solchen Eigenschaften werden als Spalten gehalten. Andere Zeilentypen (etwa mit Listen) funktionieren auch, werden aber als JSON abgelegt, langsamer wiederhergestellt und Zeile für Zeile gefiltert.
 - Alles ist reines .NET: kein natives SQLite, kein `wasm-tools`-Workload, keine zusätzlichen Dateien.
 - Arbeitsspeicher: 100.000 Aufträge belegen einige zehn MB im Browser-Tab; halte `MaxRows` im Rahmen und expandiere nur, was du anzeigst.
 - Der erste Download eines großen Sets dauert (14,5 s für 100.000 Zeilen) und beschäftigt den Browser; die Tabelle antwortet währenddessen vom Server, langsamer als sonst. Antwortkomprimierung in der API (oder im BFF) hilft bei langsamen Netzen.
-- Änderungen erkennt der Server an `IAuditable` (`CreatedAt`, `ModifiedAt`), Löschungen an `ISoftDelete` (`DeletedAt`). Stimmt die Zeilenzahl nach einem Delta nicht mit der des Servers überein, vergleicht der Client die Ids; so verschwinden auch hart gelöschte Zeilen und solche, die nicht mehr sichtbar sind. Entities ohne `IAuditable` werden bei jeder Aktualisierung neu geladen, ebenso ein Set mit mehr als `BatchSize × 10` Änderungen seit der letzten Version.
+- Änderungen erkennt der Server an `IAuditable` (`CreatedAt`, `ModifiedAt`), Löschungen an `ISoftDelete` (`DeletedAt`). Stimmt die Zeilenzahl nach einem Delta nicht mit der des Servers überein, vergleicht der Client die Ids; so verschwinden auch hart gelöschte Zeilen und solche, die nicht mehr sichtbar sind. Entities ohne `IAuditable` und ohne `ChangedAt` werden bei jeder Aktualisierung neu geladen.
 - Text sortiert ohne Groß-/Kleinschreibung nach der Kultur des Browsers; der Server sortiert nach der Collation seiner Datenbank, Sonderzeichen können also anders einsortiert sein.
 - Clients spiegeln nur die Zeilen, die ein Benutzer sehen darf; eine Kopie enthält also nichts, was eine OData-Abfrage nicht auch liefern würde. Auf dem Gerät ist sie nicht verschlüsselt; Sets mit sensiblen Daten lässt du auf dem Server.
 
@@ -266,8 +284,8 @@ Die Tests der Bibliothek (`LargeSetTests`, `LocalTableTests`) prüfen dasselbe m
 
 | Anfrage | Antwort |
 |---|---|
-| `GET /api/v1/client-entities` | die Sets, die dieser Benutzer spiegeln darf, mit ihren Einstellungen, und ein Partitionsschlüssel pro Benutzer und Mandant |
-| `GET /api/v1/client-entities/{set}/changes?since=…` | neue Version, Zahl der sichtbaren Zeilen, geänderte und gelöschte Ids |
+| `GET /api/v1/client-entities` | die Sets, die dieser Benutzer spiegeln darf, mit ihren Einstellungen, ein Partitionsschlüssel pro Benutzer, Mandant und Gruppenauswahl und ein Besitzerschlüssel pro Benutzer und Mandant |
+| `GET /api/v1/client-entities/{set}/changes?since=…&skip=…` | neue Version, Zahl der sichtbaren Zeilen, geänderte und gelöschte Ids und die Partition des Aufrufers; mit `skip` kommen die geänderten Ids in Seiten von `BatchSize × 10` (`more`), ohne antwortet mehr als das mit `reset` |
 | `GET /api/v1/client-entities/{set}/ids` | alle sichtbaren Ids, um unbemerkt verschwundene Zeilen zu finden |
 
 ## Dateien der Demo

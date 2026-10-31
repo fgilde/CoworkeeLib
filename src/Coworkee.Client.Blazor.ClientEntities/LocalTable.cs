@@ -116,7 +116,8 @@ internal sealed class LocalTable<T>
         return order;
     });
 
-    public void Write(Stream stream, DateTimeOffset version)
+    /// <summary><paramref name="pause"/> runs between columns, so packing a large copy does not hold the page.</summary>
+    public async Task WriteAsync(Stream stream, DateTimeOffset version, Func<Task> pause)
     {
         using var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true);
         writer.Write(Magic);
@@ -126,6 +127,7 @@ internal sealed class LocalTable<T>
         foreach (var path in Shape!.Columns)
         {
             Column(path).Write(writer);
+            await pause();
         }
     }
 

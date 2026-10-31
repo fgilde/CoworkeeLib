@@ -14,7 +14,8 @@ sequenceDiagram
     T->>S: query
     S->>API: OData query (not local yet)
     S->>API: changes (version, row count)
-    S->>API: pages of /odata/SalesOrders?$orderby=Id&$select=…, two at a time
+    S->>API: pages of /odata/SalesOrders?$orderby=Id&$filter=Id gt (last id)&$top=1000&$select=…
+    Note over S: each round kept in IndexedDB, so a reload goes on from there
     Note over S: complete as columns, indexed, kept in IndexedDB
     T->>S: query
     S-->>T: answered locally
@@ -65,8 +66,10 @@ Each set starts from the defaults, then the attribute, then the options, then it
 
 | Setting | Default | |
 |---|---|---|
-| `BatchSize` | 1000 | rows per download page, at most `Coworkee:OData:MaxTop`; the client loads two pages at a time |
+| `BatchSize` | 1000 | rows per download page, at most `Coworkee:OData:MaxTop` |
+| `ParallelPages` | 1 | download pages loaded side by side (also the chunks of changed rows). The download pages by the last id; a second page of a round skips the first (`$skip`), so the database reads that one twice. Raise it only where the set's query is cheap and the network is the bottleneck |
 | `MaxRows` | 50 000 | larger sets stay on the server; `[ClientEntity(MaxRows = …)]` sets it per entity |
+| `Expand` | none | the navigation properties the copy carries, as in `$expand` (`[ClientEntity(Expand = "Customer")]` or the options). Without it the first query of a visit decides; see below |
 | `RefreshInterval` | 5 minutes | how often clients ask for changes |
 | `Enabled` | `true` | `false` keeps an attributed entity on the server |
 | `ChangedAt` | none | date properties that tell when a row was created or changed, for entities without `IAuditable` (tables of an [external database](../fundamentals/persistence.md#external-databases)); without them such a set downloads completely on every refresh |
@@ -84,6 +87,9 @@ Each set starts from the defaults, then the attribute, then the options, then it
     ```
 
     The defaults can also come from configuration (`Coworkee:ClientEntities:Default`).
+
+!!! tip "Name the expand"
+    A set has one copy per visit. Without `Expand` its expand is the one of the first query that reaches it, so a page asking with another expand than the list (a dashboard widget, a picker) leaves the list on the server for that visit and its copy under another key, which costs a download on the next visit. With `Expand` set, the copy carries those properties whatever asks first, and every query whose expand is part of it is answered locally. Queries with `$select` or `$search` never start a copy: no copy could answer them.
 
 === "Per application service"
 
@@ -134,6 +140,18 @@ The copy refreshes
 - every `RefreshInterval`.
 
 Signing out removes all copies from the browser storage. A set the user may no longer read (the server answers 403 or 404) drops its copy at the next refresh.
+
+### Kept between visits, and when the copy starts over
+
+The copy is meant to download once per user and group selection and then only take changes:
+
+- **Resume**: the download pages through the set by the last id (`$filter=Id gt …&$orderby=Id`) and keeps every round in the browser storage. A reload, a closed tab or a failed request goes on from the last kept round, not from zero; the progress ring shows the rows already there.
+- **Complete stays complete**: the finished copy replaces the rounds. The next visit restores it and only asks for the changes since its version.
+- **Changes, not downloads**: the changes come as ids of changed and deleted rows, which the client fetches by id (`ParallelPages` chunks at a time). Many changes at once (a bulk update on the server) come in pages of ids; the copy stays local meanwhile. Only a set without `IAuditable` and without `ChangedAt` downloads again at each refresh.
+- **A restored copy answers after its first update**: until the changes since its version arrived (and rows deleted meanwhile or no longer visible to the user are gone), the table asks the server. So the copy never shows rows the user lost access to while the browser was closed.
+- **Another user or tenant**: the server's manifest names the owner (user, tenant, client). When it differs from the owner of the stored copies, all of them are deleted from the device before anything is read, also when the previous user did not sign out (an expired session). Copies of an older version, without an owner, count as another user's.
+- **Another group selection**: the partition of the copy includes the [group selection](../features/identity.md#group-tree-and-scope), so a new selection never shows rows of the old one. The copies of the last three selections stay in the browser storage: switching back restores that copy and takes only its changes. Every change feed answer carries the caller's current partition; a copy of another partition (a selection changed in another tab, another user signed in meanwhile) is dropped from memory at once and the sets start over with the new one.
+- **Starts from zero** only when it must: the row type or the .NET runtime changed (the stored columns no longer fit), the set grew beyond `MaxRows`, the server lost the set or the user's permission (403, 404), or the copy belongs to another user, tenant or a selection older than the last three.
 
 ## Step 4: writes
 
@@ -210,7 +228,7 @@ WebAssembly interprets .NET code, so per row work is expensive in the browser: p
 - **Facets** count ranks of the found rows: one pass per facet property, whatever the number of options. Value, range and flag options then add up the counts of the ranks they accept (ranges with prefix sums), so 35 month ranges over 100,000 distinct order dates cost no more than one value list.
 - **Results** of the last 16 filter and sort combinations are kept: the next page, a group change or going back to an earlier filter cuts only a slice.
 - **Storage**: columns and their sort orders are written as binary arrays (gzip) to IndexedDB. A reload reads them back in a few hundred milliseconds, column by column with pauses in between; until then the table asks the server, so it shows rows at once.
-- **Download**: only the properties of the row type travel (`$select`, nested `$expand`), two pages at a time, read in one pass.
+- **Download**: only the properties of the row type travel (`$select`, nested `$expand`), one page after the other by the last id (`$filter=Id gt …`, never a growing `$skip`, which makes the database read all earlier rows again for every page), read in one pass; packing and unpacking the stored copy pause between columns and slices, so the page stays responsive.
 
 Measured in Chromium with the 100,000 orders of the demo (Release build, local machine; the server answers from Postgres in the same machine):
 
@@ -253,12 +271,12 @@ The library's tests (`LargeSetTests`, `LocalTableTests`) check the same with 100
 
 ## Storage and limits
 
-- The rows live in memory as columns and, gzip compressed, in IndexedDB (`coworkee-client-entities`), keyed by the server's partition (user, tenant), the set and its expand. The next visit is local at once and only asks for changes. A changed row type discards the stored copy. Replace `IClientEntityStorage` to keep the copies elsewhere, or register `NoClientEntityStorage` to keep nothing between visits.
+- The rows live in memory as columns and, gzip compressed, in IndexedDB (`coworkee-client-entities`), keyed by the server's partition (user, tenant, group selection), the set and its expand. The next visit only asks for changes (see [above](#kept-between-visits-and-when-the-copy-starts-over)). A changed row type discards the stored copy. Replace `IClientEntityStorage` to keep the copies elsewhere, or register `NoClientEntityStorage` to keep nothing between visits; a replacement should also implement `DeleteAsync(prefix)`, which removes the rounds of a finished download and the copies of old group selections (the default removes nothing).
 - Row types with properties of simple types (text, numbers, dates, `Guid`, enums, their nullable forms) and nested objects of such properties are kept as columns. Other row types (for example with lists) work too, but are kept as JSON, which is slower to restore, and filter row by row.
 - Everything is plain .NET: no native SQLite, no `wasm-tools` workload, no extra files to serve.
 - Memory: 100,000 orders take some tens of MB in the browser tab; keep `MaxRows` in proportion and expand only what you show.
 - The first download of a large set takes a while (14.5 s for 100,000 rows) and keeps the browser busy; the table answers from the server meanwhile, slower than usual. Response compression in the API (or the BFF) helps on slow networks.
-- Changes come from `IAuditable` (`CreatedAt`, `ModifiedAt`), deletions from `ISoftDelete` (`DeletedAt`). When the row count after a delta differs from the server's, the client compares ids, so hard deletes and rows that are no longer visible disappear too. Entities without `IAuditable` are downloaded again at each refresh, and so is a set with more than `BatchSize × 10` changes since the last version.
+- Changes come from `IAuditable` (`CreatedAt`, `ModifiedAt`), deletions from `ISoftDelete` (`DeletedAt`). When the row count after a delta differs from the server's, the client compares ids, so hard deletes and rows that are no longer visible disappear too. Entities without `IAuditable` and without `ChangedAt` are downloaded again at each refresh.
 - Text sorts ignoring case with the culture of the browser; the server sorts with the collation of its database, so the order of special characters can differ.
 - Clients mirror the rows a user may see, so a copy contains nothing an OData query would not return. It is not encrypted on the device; leave sets with sensitive data on the server.
 
@@ -266,8 +284,8 @@ The library's tests (`LargeSetTests`, `LocalTableTests`) check the same with 100
 
 | Request | Answer |
 |---|---|
-| `GET /api/v1/client-entities` | the sets this user may mirror with their settings, and a partition key per user and tenant |
-| `GET /api/v1/client-entities/{set}/changes?since=…` | new version, visible row count, changed and deleted ids |
+| `GET /api/v1/client-entities` | the sets this user may mirror with their settings, a partition key per user, tenant and group selection and an owner key per user and tenant |
+| `GET /api/v1/client-entities/{set}/changes?since=…&skip=…` | new version, visible row count, changed and deleted ids and the caller's partition; with `skip` the changed ids come in pages of `BatchSize × 10` (`more`), without it more than that answers `reset` |
 | `GET /api/v1/client-entities/{set}/ids` | all visible ids, to find rows that vanished unseen |
 
 ## Files of the demo

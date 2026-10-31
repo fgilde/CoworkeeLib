@@ -10,6 +10,12 @@ public interface IClientEntityStorage
     Task SaveAsync(string key, byte[] data);
 
     Task ClearAsync();
+
+    /// <summary>
+    /// Removes the entries whose keys start with <paramref name="prefix"/>: the pages of a finished download and the copies of group selections
+    /// used long ago. The default removes nothing; such entries then stay until <see cref="ClearAsync"/> (sign-out, another user).
+    /// </summary>
+    Task DeleteAsync(string prefix) => Task.CompletedTask;
 }
 
 public sealed class NoClientEntityStorage : IClientEntityStorage
@@ -31,6 +37,8 @@ internal sealed class IndexedDbClientEntityStorage(IJSRuntime js) : IClientEntit
     public async Task SaveAsync(string key, byte[] data) => await (await ModuleAsync()).InvokeVoidAsync("save", key, data);
 
     public async Task ClearAsync() => await (await ModuleAsync()).InvokeVoidAsync("clear");
+
+    public async Task DeleteAsync(string prefix) => await (await ModuleAsync()).InvokeVoidAsync("remove", prefix);
 
     private async Task<IJSObjectReference> ModuleAsync() =>
         _module ??= await js.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor.ClientEntities/client-entities.js");

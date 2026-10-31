@@ -13,4 +13,19 @@ public sealed class ClientEntityOptionsTests
         options.For<Gadget>(s => s.Enabled = false).Resolve(typeof(Gadget)).ShouldBeNull();
         options.Default.BatchSize.ShouldBe(1000);
     }
+
+    [Fact]
+    public void The_attribute_and_the_options_name_the_expand()
+    {
+        var options = new ClientEntityOptions();
+
+        options.Resolve(typeof(Mirrored))!.Expand.ShouldBe("Brand");
+        options.Resolve(typeof(Mirrored))!.ParallelPages.ShouldBe(1);
+        options.For<Mirrored>(s => (s.Expand, s.ParallelPages) = ("Brand,Owner", 4)).Resolve(typeof(Mirrored))!.ShouldSatisfyAllConditions(
+            s => s.Expand.ShouldBe("Brand,Owner"),
+            s => s.ParallelPages.ShouldBe(4));
+    }
+
+    [Coworkee.Domain.ClientEntity(Expand = "Brand")]
+    private sealed class Mirrored;
 }

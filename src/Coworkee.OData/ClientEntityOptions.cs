@@ -42,6 +42,11 @@ public sealed class ClientEntityOptions
             settings.MaxRows = attribute.MaxRows;
         }
 
+        if (attribute is { Expand: { Length: > 0 } expand })
+        {
+            settings.Expand = expand;
+        }
+
         configure?.Invoke(settings);
         service?.Invoke(settings);
         return settings.Enabled ? settings : null;
@@ -66,6 +71,19 @@ public sealed record ClientEntitySettings
     /// e.g. the tables of an external database. Without them such sets download completely on every refresh.
     /// </summary>
     public IReadOnlyList<string> ChangedAt { get; set; } = [];
+
+    /// <summary>
+    /// The navigation properties the copy carries, as in $expand (e.g. "Tags"). Without it the first query of a session decides, so a page asking
+    /// with another expand (a map, a dashboard) may leave the list on the server and a copy kept under another key; name it when the set has one.
+    /// </summary>
+    public string? Expand { get; set; }
+
+    /// <summary>
+    /// Pages of the download loaded side by side, and chunks of changed rows fetched side by side (at least 1). The download pages by the last id;
+    /// a second page of a round skips the first one ($skip), so the database reads that one twice. Raise it only where the set's query is cheap
+    /// and the network the bottleneck.
+    /// </summary>
+    public int ParallelPages { get; set; } = 1;
 
     /// <summary>How far before the last refresh each refresh looks again, for commits that land after their timestamp; raise it for tables another system writes with its own clock.</summary>
     public TimeSpan Overlap { get; set; } = TimeSpan.FromSeconds(5);

@@ -12,10 +12,26 @@ Changes that need action in apps built on Coworkee. Newest first.
 - Extended attributes now check that the caller sees the row through the entity's OData set (its permission and row filters): `GET`/`PUT /api/v1/attributes/{type}/{id}` on a hidden row answers 404.
 - Erasing a user removes his notification preferences, followed records and pending notification mails; the personal data export lists them and the digest state.
 
+### Added
+
+- Client entities: `ClientEntitySettings.Expand` and `[ClientEntity(Expand = "...")]` name the navigation properties a copy carries, whatever query reaches the set first; `ClientEntitySettings.ParallelPages` (default 1) sets how many download pages load side by side. Name the expand of a set whose list uses `$expand` while other pages (a dashboard, a map) query it too; without it the first query of a visit decided, and the copy was downloaded again whenever another page came first.
+- `IClientEntityStorage.DeleteAsync(prefix)` (default: removes nothing) and `IClientDataCache.ScopeChangedAsync()` (default: `ClearAsync()`). An own `IClientEntityStorage` should implement `DeleteAsync`, so the pages of finished downloads and the copies of old group selections leave the browser storage.
+- The change feed of client entities takes a `skip` and then answers many changed ids in pages (`more`); its answers carry the caller's partition, the manifest an `owner` (user, tenant, client).
+
+### Breaking changes
+
+- Client entities download by the last id (`$filter=Id gt …&$orderby=Id&$top=…`) one page after the other instead of two pages at a time with a growing `$skip`, which made the database read all earlier rows again for every page (minutes per page on large tables with a row filter), so downloads timed out and started over. They keep their state between visits: every round of the download is kept in IndexedDB, so a reload or a failed request goes on where it stopped; a complete copy only takes changes afterwards, also after more than `BatchSize × 10` changes, which no longer start the download from zero. A restored copy answers once its first update arrived (rows deleted or no longer visible meanwhile are gone by then); the table asks the server until then.
+- A new group selection keeps the copies of the last three selections in the browser storage instead of dropping every copy; switching back takes only the changes. A copy of another user or tenant leaves the device before anything is read, also without a sign-out; a copy the server answers for another partition (selection changed in another tab) is dropped at once. After the update, the stored copies of older versions are downloaded once more.
+- Queries with `$select` or `$search` start no copy of a client entity set.
+
 ### Changed
 
 - Signing out or locking an administrator as a non-administrator answers `identity.admin_role_restricted` instead of `identity.admin_session_restricted`.
 - `ExtendedAttributeRegistration` built by `AddExtendedAttributes<T>` checks visibility through `ODataEntityAccess.VisibleIdsAsync<T>`; the package references `Coworkee.OData`. Setting extended attributes leaves the save to the pipeline.
+
+### Fixed
+
+- A copy saved while its columns were still being indexed could be written inconsistently and failed to restore, so the next visit downloaded it again. No action needed.
 
 ## 0.0.1.53 (2026-10-31)
 

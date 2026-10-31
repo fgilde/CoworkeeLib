@@ -515,7 +515,9 @@
         "Identity: requests that change or control another user's account (password, e-mail, two-step verification, passkeys, logins, avatar, update, unlock, lock, sign-out, delete, roles, groups, own grants, language, invitation and password reset mails, revoking his API keys, group memberships) are refused with 403 identity.user_more_permissions while the user holds a permission the caller lacks, and with 403 identity.admin_role_restricted on an administrator unless the caller is one. Signing out or locking an administrator answers identity.admin_role_restricted instead of identity.admin_session_restricted.",
         "Identity: granting or revoking permissions (grants of roles, users and groups), giving or taking roles (users, new users, groups, deleting a role), group memberships, deleting groups and resource grants need every permission involved (403 identity.grant_restricted); the caller counts with his active role and his API key's scopes. Default roles and the default group stay assignable.",
         "Auth server: changing, rotating the secret of or deleting a service client needs every permission of its roles and list (403 auth.client_rights_restricted).",
-        "Extended attributes: reading and writing need the row to be visible through the entity's OData set (permission and row filters); a hidden row answers 404."
+        "Extended attributes: reading and writing need the row to be visible through the entity's OData set (permission and row filters); a hidden row answers 404.",
+        "Client entities download by the last id ($filter=Id gt ...), one page at a time (ClientEntitySettings.ParallelPages, default 1) instead of two pages with a growing $skip.",
+        "Client entities: a new group selection calls IClientDataCache.ScopeChangedAsync instead of ClearAsync and keeps the copies of the last three selections; a restored copy answers once its first update arrived, the server until then; the copies stored by older versions are downloaded once more."
       ],
       "manual": [
         {
@@ -525,6 +527,18 @@
             "src/**/*.cs",
             "tests/**/*.cs"
           ]
+        },
+        {
+          "text": "Client entities: name the expand of a mirrored set whose list asks with $expand ([ClientEntity(Expand = \"...\")] or o.For<T>(s => s.Expand = \"...\")), so other pages querying the set first (a dashboard, a map, a picker) no longer decide the copy's expand and its storage key.",
+          "find": "\\[ClientEntity\\b|AddCoworkeeClientEntities\\(\\s*o\\b|\\.ClientEntity<",
+          "files": [ "src/**/*.cs" ],
+          "unless": "Expand ="
+        },
+        {
+          "text": "An own IClientEntityStorage implements DeleteAsync(prefix): remove every entry whose key starts with the prefix (the pages of a finished download, the copies of old group selections); the default keeps them until ClearAsync.",
+          "find": ":\\s*IClientEntityStorage\\b",
+          "files": [ "src/**/*.cs" ],
+          "unless": "DeleteAsync"
         }
       ]
     }

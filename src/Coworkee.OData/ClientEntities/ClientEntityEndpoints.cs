@@ -29,9 +29,10 @@ internal static class ClientEntityEndpoints
     {
         var sync = app.MapCoworkeeApi("/api/v1/client-entities").WithTags("Data").RequireAuthorization();
         sync.MapGet("/", ManifestAsync);
-        sync.MapGet("/{entitySet}/changes", (string entitySet, DateTimeOffset? since, HttpContext http) =>
-            DispatchAsync(entitySet, http, nameof(ChangesAsync), since));
-        sync.MapGet("/{entitySet}/ids", (string entitySet, HttpContext http) => DispatchAsync(entitySet, http, nameof(IdsAsync), null));
+        // with a skip the changed ids come in pages (More); without, more than ten pages of them ask for a reset as before
+        sync.MapGet("/{entitySet}/changes", (string entitySet, DateTimeOffset? since, int? skip, HttpContext http) =>
+            DispatchAsync(entitySet, http, nameof(ChangesAsync), new Feed(since, skip is { } s ? Math.Max(0, s) : null)));
+        sync.MapGet("/{entitySet}/ids", (string entitySet, HttpContext http) => DispatchAsync(entitySet, http, nameof(IdsAsync), new Feed(null, null)));
     }
 
     private static async Task<IResult> ManifestAsync(HttpContext http, ICurrentUser user)
@@ -46,16 +47,19 @@ internal static class ClientEntityEndpoints
             if (options.Resolve(entity.EntityType) is { } settings && await ODataEntityAccess.IsGrantedAsync(services, entity.EntityType, http.RequestAborted))
             {
                 var realtime = entity.EntityType.GetCustomAttribute<RealtimeAttribute>(inherit: false) is null ? null : RealtimeTopics.Type(entity.EntityType.Name);
-                sets.Add(new ClientEntitySetInfo(entity.EntitySet, Math.Min(settings.BatchSize, maxTop), settings.MaxRows, settings.RefreshInterval, realtime));
+                sets.Add(new ClientEntitySetInfo(entity.EntitySet, Math.Min(settings.BatchSize, maxTop), settings.MaxRows, settings.RefreshInterval, realtime,
+                    string.IsNullOrWhiteSpace(settings.Expand) ? null : settings.Expand, Math.Max(1, settings.ParallelPages)));
             }
         }
 
-        return Results.Ok(new ClientEntityManifest(await PartitionAsync(services, user, http.RequestAborted), sets));
+        return Results.Ok(new ClientEntityManifest(await PartitionAsync(services, user, http.RequestAborted), sets, Hash(Owner(user))));
     }
+
+    private static string Owner(ICurrentUser user) => $"{user.UserId}|{user.TenantId}|{user.ClientId}";
 
     private static async Task<string> PartitionAsync(IServiceProvider services, ICurrentUser user, CancellationToken cancellationToken)
     {
-        var key = new StringBuilder($"{user.UserId}|{user.TenantId}|{user.ClientId}");
+        var key = new StringBuilder(Owner(user));
         foreach (var part in services.GetServices<IClientEntityPartitionPart>())
         {
             if (await part.GetAsync(cancellationToken) is { } value)
@@ -64,10 +68,12 @@ internal static class ClientEntityEndpoints
             }
         }
 
-        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(key.ToString())))[..16].ToLowerInvariant();
+        return Hash(key.ToString());
     }
 
-    private static async Task<IResult> DispatchAsync(string entitySet, HttpContext http, string method, DateTimeOffset? since)
+    private static string Hash(string key) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(key)))[..16].ToLowerInvariant();
+
+    private static async Task<IResult> DispatchAsync(string entitySet, HttpContext http, string method, Feed feed)
     {
         var services = http.RequestServices;
         var entity = services.GetRequiredService<ODataEntityRegistry>().Entities
@@ -84,42 +90,54 @@ internal static class ClientEntityEndpoints
 
         return await (Task<IResult>)typeof(ClientEntityEndpoints).GetMethod(method, BindingFlags.NonPublic | BindingFlags.Static)!
             .MakeGenericMethod(entity.EntityType)
-            .Invoke(null, [services, settings, since, http.RequestAborted])!;
+            .Invoke(null, [services, settings, feed, http.RequestAborted])!;
     }
 
-    private static async Task<IResult> ChangesAsync<TEntity>(IServiceProvider services, ClientEntitySettings settings, DateTimeOffset? since, CancellationToken cancellationToken)
+    private static async Task<IResult> ChangesAsync<TEntity>(IServiceProvider services, ClientEntitySettings settings, Feed feed, CancellationToken cancellationToken)
         where TEntity : class
     {
         var version = services.GetRequiredService<TimeProvider>().GetUtcNow();
         var visible = await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken);
         var count = await visible.LongCountAsync(cancellationToken);
-        if (since is null)
+        // the client compares it with the partition of its copy: another user, tenant or group selection meanwhile drops the copy
+        var partition = await PartitionAsync(services, services.GetRequiredService<ICurrentUser>(), cancellationToken);
+        if (feed.Since is not { } since)
         {
-            return Results.Ok(new ClientEntityChanges(version, count, [], [], Reset: false));
+            return Results.Ok(new ClientEntityChanges(version, count, [], [], Reset: false, Partition: partition));
         }
 
-        var from = since.Value - settings.Overlap;
+        var from = since - settings.Overlap;
         var changedSince = settings.ChangedAt.Count > 0 ? ChangedAfter<TEntity>(services, settings.ChangedAt, from)
             : typeof(IAuditable).IsAssignableFrom(typeof(TEntity)) ? ChangedAfter<TEntity>(services, [nameof(IAuditable.CreatedAt), nameof(IAuditable.ModifiedAt)], from)
             : null;
         if (changedSince is null)
         {
-            return Results.Ok(new ClientEntityChanges(version, count, [], [], Reset: true));
+            return Results.Ok(new ClientEntityChanges(version, count, [], [], Reset: true, Partition: partition));
         }
 
+        // pages in the order of the ids: rows changing meanwhile only join the set (they changed after "from" too), so a skip misses none
         var limit = settings.BatchSize * 10;
         var changed = await visible
             .Where(changedSince)
             .Select(e => EF.Property<Guid>(e, nameof(Entity.Id)))
+            .OrderBy(id => id)
+            .Skip(feed.Skip ?? 0)
             .Take(limit + 1)
             .ToListAsync(cancellationToken);
-        if (changed.Count > limit)
+        var more = changed.Count > limit;
+        if (more && feed.Skip is null)
         {
-            return Results.Ok(new ClientEntityChanges(version, count, [], [], Reset: true));
+            return Results.Ok(new ClientEntityChanges(version, count, [], [], Reset: true, Partition: partition));
         }
 
+        if (more)
+        {
+            changed.RemoveAt(limit);
+        }
+
+        // the deleted ids come with the first page only
         List<Guid> deleted = [];
-        if (typeof(ISoftDelete).IsAssignableFrom(typeof(TEntity)))
+        if (feed.Skip is null or 0 && typeof(ISoftDelete).IsAssignableFrom(typeof(TEntity)))
         {
             deleted = await (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken, withDeleted: true))
                 .Where(e => EF.Property<bool>(e, nameof(ISoftDelete.IsDeleted)) && EF.Property<DateTimeOffset?>(e, nameof(ISoftDelete.DeletedAt)) > from)
@@ -127,7 +145,7 @@ internal static class ClientEntityEndpoints
                 .ToListAsync(cancellationToken);
         }
 
-        return Results.Ok(new ClientEntityChanges(version, count, changed, deleted, Reset: false));
+        return Results.Ok(new ClientEntityChanges(version, count, changed, deleted, Reset: false, more, partition));
     }
 
     /// <summary>e => e.A > from || e.B > from ..., with <paramref name="from"/> as a query parameter in the column's type.</summary>
@@ -157,7 +175,7 @@ internal static class ClientEntityEndpoints
             ? DateTimeKind.Unspecified
             : DateTimeKind.Utc);
 
-    private static async Task<IResult> IdsAsync<TEntity>(IServiceProvider services, ClientEntitySettings settings, DateTimeOffset? since, CancellationToken cancellationToken)
+    private static async Task<IResult> IdsAsync<TEntity>(IServiceProvider services, ClientEntitySettings settings, Feed feed, CancellationToken cancellationToken)
         where TEntity : class
     {
         var ids = await (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken))
@@ -166,4 +184,6 @@ internal static class ClientEntityEndpoints
             .ToListAsync(cancellationToken);
         return Results.Ok(ids);
     }
+
+    private sealed record Feed(DateTimeOffset? Since, int? Skip);
 }
