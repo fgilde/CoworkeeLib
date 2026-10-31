@@ -27,7 +27,8 @@ public sealed class ClientEntitySetTests
         var before = _server.Queries.Count;
         var page = await set.QueryAsync(new ODataQuery { Filter = "Category eq 'Tools'", OrderBy = "Price desc", Top = 1, Skip = 1 }, Ct);
 
-        _server.Queries.Take(2).Select(q => (q.OrderBy, q.Top, q.Skip)).ShouldBe([("Id", 2, 0), ("Id", 2, 2)]);
+        var second = _server.Rows.Select(r => r.Id).Order().ElementAt(1);
+        _server.Queries.Take(2).Select(q => (q.OrderBy, q.Top, q.Skip, q.Filter)).ShouldBe([("Id", 2, 0, null), ("Id", 2, 0, $"Id gt {second}")]);
         _server.Queries.Count.ShouldBe(before);
         set.Status.ShouldBe(set.Status with { State = ClientEntitySyncState.Idle, IsLocal = true, Loaded = 3, Revision = 1 });
         page.Items.ShouldHaveSingleItem().Name.ShouldBe("Hammer");

@@ -44,6 +44,26 @@ public sealed class SyncStateTests
     }
 
     [Fact]
+    public async Task The_download_pages_by_the_last_id_one_page_at_a_time_and_a_finished_one_never_starts_over()
+    {
+        // a growing $skip made SQL Server read all earlier rows again for every page (62 s at $skip=9000), so downloads timed out and began at 0
+        _server.Rows.AddRange(Enumerable.Range(5, 16).Select(i => new Gadget(Guid.NewGuid(), $"Gadget {i}", "Tools", i)));
+        await using var set = _server.Set(_storage);
+
+        await set.RefreshAsync(Ct);
+        var download = Downloads.ToList();
+        for (var i = 0; i < 5; i++)
+        {
+            await set.RefreshAsync(Ct);
+        }
+
+        download.ShouldAllBe(q => q.Skip == 0 && q.Top == 2);
+        download.Select(q => q.Filter).ShouldBe([null, .. Enumerable.Range(1, 10).Select(i => $"Id gt {Ids[2 * i - 1]}")]);
+        Downloads.Count().ShouldBe(download.Count, "a complete copy only asks for changes");
+        set.Items.Count.ShouldBe(21);
+    }
+
+    [Fact]
     public async Task A_failed_download_goes_on_in_the_same_visit()
     {
         _server.ParallelPages = 1;

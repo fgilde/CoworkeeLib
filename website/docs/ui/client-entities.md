@@ -14,7 +14,7 @@ sequenceDiagram
     T->>S: query
     S->>API: OData query (not local yet)
     S->>API: changes (version, row count)
-    S->>API: pages of /odata/SalesOrders?$orderby=Id&$filter=Id gt (last id)&$select=…, two at a time
+    S->>API: pages of /odata/SalesOrders?$orderby=Id&$filter=Id gt (last id)&$top=1000&$select=…
     Note over S: each round kept in IndexedDB, so a reload goes on from there
     Note over S: complete as columns, indexed, kept in IndexedDB
     T->>S: query
@@ -67,7 +67,7 @@ Each set starts from the defaults, then the attribute, then the options, then it
 | Setting | Default | |
 |---|---|---|
 | `BatchSize` | 1000 | rows per download page, at most `Coworkee:OData:MaxTop` |
-| `ParallelPages` | 2 | download pages loaded side by side (also the chunks of changed rows); more is faster and puts more load on the database, 1 loads one page after the other |
+| `ParallelPages` | 1 | download pages loaded side by side (also the chunks of changed rows). The download pages by the last id; a second page of a round skips the first (`$skip`), so the database reads that one twice. Raise it only where the set's query is cheap and the network is the bottleneck |
 | `MaxRows` | 50 000 | larger sets stay on the server; `[ClientEntity(MaxRows = …)]` sets it per entity |
 | `Expand` | none | the navigation properties the copy carries, as in `$expand` (`[ClientEntity(Expand = "Customer")]` or the options). Without it the first query of a visit decides; see below |
 | `RefreshInterval` | 5 minutes | how often clients ask for changes |
@@ -228,7 +228,7 @@ WebAssembly interprets .NET code, so per row work is expensive in the browser: p
 - **Facets** count ranks of the found rows: one pass per facet property, whatever the number of options. Value, range and flag options then add up the counts of the ranks they accept (ranges with prefix sums), so 35 month ranges over 100,000 distinct order dates cost no more than one value list.
 - **Results** of the last 16 filter and sort combinations are kept: the next page, a group change or going back to an earlier filter cuts only a slice.
 - **Storage**: columns and their sort orders are written as binary arrays (gzip) to IndexedDB. A reload reads them back in a few hundred milliseconds, column by column with pauses in between; until then the table asks the server, so it shows rows at once.
-- **Download**: only the properties of the row type travel (`$select`, nested `$expand`), `ParallelPages` pages at a time (2), read in one pass; packing and unpacking the stored copy pause between columns and slices, so the page stays responsive.
+- **Download**: only the properties of the row type travel (`$select`, nested `$expand`), one page after the other by the last id (`$filter=Id gt …`, never a growing `$skip`, which makes the database read all earlier rows again for every page), read in one pass; packing and unpacking the stored copy pause between columns and slices, so the page stays responsive.
 
 Measured in Chromium with the 100,000 orders of the demo (Release build, local machine; the server answers from Postgres in the same machine):
 

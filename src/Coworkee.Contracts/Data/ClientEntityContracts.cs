@@ -7,9 +7,9 @@ namespace Coworkee.Contracts.Data;
 public sealed record ClientEntityManifest(string Partition, IReadOnlyList<ClientEntitySetInfo> Sets, string? Owner = null);
 
 /// <param name="Expand">The navigation properties the copy carries whatever the first query asks for; null: those of the first query.</param>
-/// <param name="ParallelPages">Pages of the initial download loaded side by side.</param>
+/// <param name="ParallelPages">Pages of the download (and chunks of changed rows) loaded side by side.</param>
 public sealed record ClientEntitySetInfo(string EntitySet, int BatchSize, int MaxRows, TimeSpan RefreshInterval, string? RealtimeTopic,
-    string? Expand = null, int ParallelPages = 2);
+    string? Expand = null, int ParallelPages = 1);
 
 /// <summary>
 /// What changed since a version. <see cref="Version"/> is the next "since"; <see cref="Count"/> is the number of visible rows,

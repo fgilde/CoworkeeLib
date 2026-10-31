@@ -41,7 +41,7 @@ internal sealed class FakeServer : HttpMessageHandler, IODataClient
 
     public int BatchSize { get; set; } = 2;
 
-    public int ParallelPages { get; set; } = 2;
+    public int ParallelPages { get; set; } = 1;
 
     public string? Expand { get; set; }
 

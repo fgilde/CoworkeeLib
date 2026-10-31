@@ -512,6 +512,7 @@
     {
       "version": "0.0.1.54",
       "breaking": [
+        "Client entities download by the last id ($filter=Id gt ...), one page at a time (ClientEntitySettings.ParallelPages, default 1) instead of two pages with a growing $skip.",
         "Client entities: a new group selection calls IClientDataCache.ScopeChangedAsync instead of ClearAsync and keeps the copies of the last three selections; a restored copy answers once its first update arrived, the server until then; the copies stored by older versions are downloaded once more."
       ],
       "manual": [

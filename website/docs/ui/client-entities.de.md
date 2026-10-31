@@ -14,7 +14,7 @@ sequenceDiagram
     T->>S: Abfrage
     S->>API: OData-Abfrage (noch nicht lokal)
     S->>API: changes (Version, Zeilenzahl)
-    S->>API: Seiten von /odata/SalesOrders?$orderby=Id&$filter=Id gt (letzte Id)&$select=…, zwei gleichzeitig
+    S->>API: Seiten von /odata/SalesOrders?$orderby=Id&$filter=Id gt (letzte Id)&$top=1000&$select=…
     Note over S: jede Runde in IndexedDB abgelegt, ein Neuladen macht dort weiter
     Note over S: vollständig als Spalten, indiziert, in IndexedDB abgelegt
     T->>S: Abfrage
@@ -67,7 +67,7 @@ Jedes Set startet mit den Standardwerten, dann wirken das Attribut, die Optionen
 | Einstellung | Standard | |
 |---|---|---|
 | `BatchSize` | 1000 | Zeilen pro Seite beim Herunterladen, höchstens `Coworkee:OData:MaxTop` |
-| `ParallelPages` | 2 | Seiten des Downloads, die gleichzeitig laden (auch die Blöcke geänderter Zeilen); mehr ist schneller und belastet die Datenbank stärker, 1 lädt eine Seite nach der anderen |
+| `ParallelPages` | 1 | Seiten des Downloads, die gleichzeitig laden (auch die Blöcke geänderter Zeilen). Der Download blättert über die letzte Id; eine zweite Seite einer Runde überspringt die erste (`$skip`), die Datenbank liest diese also zweimal. Nur erhöhen, wo die Abfrage des Sets billig und das Netz der Engpass ist |
 | `MaxRows` | 50 000 | größere Sets bleiben auf dem Server; `[ClientEntity(MaxRows = …)]` setzt den Wert pro Entity |
 | `Expand` | keins | die Navigationseigenschaften, die die Kopie mitführt, wie in `$expand` (`[ClientEntity(Expand = "Customer")]` oder die Optionen). Ohne entscheidet die erste Abfrage eines Besuchs; siehe unten |
 | `RefreshInterval` | 5 Minuten | wie oft Clients nach Änderungen fragen |
@@ -228,7 +228,7 @@ WebAssembly interpretiert .NET-Code; Arbeit pro Zeile ist im Browser also teuer:
 - **Facetten** zählen die Ränge der gefundenen Zeilen: ein Durchlauf pro Facetten-Eigenschaft, egal wie viele Optionen. Wert-, Bereichs- und Flag-Optionen addieren dann die Anzahlen der Ränge, die sie annehmen (Bereiche über Präfixsummen); 35 Monatsbereiche über 100.000 verschiedene Auftragsdaten kosten so nicht mehr als eine Werteliste.
 - **Ergebnisse** der letzten 16 Kombinationen aus Filter und Sortierung bleiben erhalten: Die nächste Seite, ein Gruppenwechsel oder die Rückkehr zu einem früheren Filter schneiden nur einen Ausschnitt.
 - **Speicher**: Spalten und ihre Sortierungen werden als Binär-Arrays (gzip) in IndexedDB geschrieben. Ein Neuladen liest sie in einigen hundert Millisekunden zurück, Spalte für Spalte mit Pausen dazwischen; bis dahin fragt die Tabelle den Server und zeigt sofort Zeilen.
-- **Download**: Nur die Eigenschaften des Zeilentyps kommen über die Leitung (`$select`, verschachteltes `$expand`), `ParallelPages` Seiten gleichzeitig (2), in einem Durchgang gelesen; Packen und Entpacken der abgelegten Kopie pausieren zwischen Spalten und Abschnitten, die Seite bleibt also bedienbar.
+- **Download**: Nur die Eigenschaften des Zeilentyps kommen über die Leitung (`$select`, verschachteltes `$expand`), eine Seite nach der anderen über die letzte Id (`$filter=Id gt …`, nie ein wachsendes `$skip`, das die Datenbank für jede Seite alle früheren Zeilen erneut lesen lässt), in einem Durchgang gelesen; Packen und Entpacken der abgelegten Kopie pausieren zwischen Spalten und Abschnitten, die Seite bleibt also bedienbar.
 
 Gemessen in Chromium mit den 100.000 Aufträgen der Demo (Release-Build, lokaler Rechner; der Server antwortet aus Postgres auf derselben Maschine):
 

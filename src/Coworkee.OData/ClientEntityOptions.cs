@@ -78,8 +78,12 @@ public sealed record ClientEntitySettings
     /// </summary>
     public string? Expand { get; set; }
 
-    /// <summary>Pages of the initial download loaded side by side (at least 1); more load faster and put more load on the database.</summary>
-    public int ParallelPages { get; set; } = 2;
+    /// <summary>
+    /// Pages of the download loaded side by side, and chunks of changed rows fetched side by side (at least 1). The download pages by the last id;
+    /// a second page of a round skips the first one ($skip), so the database reads that one twice. Raise it only where the set's query is cheap
+    /// and the network the bottleneck.
+    /// </summary>
+    public int ParallelPages { get; set; } = 1;
 
     /// <summary>How far before the last refresh each refresh looks again, for commits that land after their timestamp; raise it for tables another system writes with its own clock.</summary>
     public TimeSpan Overlap { get; set; } = TimeSpan.FromSeconds(5);

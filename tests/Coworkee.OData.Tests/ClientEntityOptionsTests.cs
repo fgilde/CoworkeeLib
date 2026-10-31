@@ -20,7 +20,7 @@ public sealed class ClientEntityOptionsTests
         var options = new ClientEntityOptions();
 
         options.Resolve(typeof(Mirrored))!.Expand.ShouldBe("Brand");
-        options.Resolve(typeof(Mirrored))!.ParallelPages.ShouldBe(2);
+        options.Resolve(typeof(Mirrored))!.ParallelPages.ShouldBe(1);
         options.For<Mirrored>(s => (s.Expand, s.ParallelPages) = ("Brand,Owner", 4)).Resolve(typeof(Mirrored))!.ShouldSatisfyAllConditions(
             s => s.Expand.ShouldBe("Brand,Owner"),
             s => s.ParallelPages.ShouldBe(4));
