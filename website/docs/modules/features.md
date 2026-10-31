@@ -81,4 +81,4 @@ Both pages belong to the system organisation: every admin holds the permissions,
 
 ## Database
 
-The module adds `cw.Editions` (values as `jsonb`) and `cw.TenantFeatures` (edition and overrides per tenant). Create a migration after adding the module.
+The module adds `cw.Editions` (values as JSON, `jsonb` on PostgreSQL) and `cw.TenantFeatures` (edition and overrides per tenant). Create a migration after adding the module.
