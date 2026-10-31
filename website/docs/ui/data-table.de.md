@@ -28,9 +28,11 @@
 | `OnCreate`, `OnEdit`, `OnDelete` | Callbacks; die Tabelle lädt danach jeweils neu |
 | `CreatePermission`, `EditPermission`, `DeletePermission` | blenden die Schaltflächen ohne Berechtigung aus |
 | `DescribeItem` | Text für die Löschbestätigung |
+| `CreateText` | Beschriftung des Anlegen-Buttons (`New`); übergib einen Textschlüssel, die Tabelle übersetzt ihn |
 | `Exportable`, `ExportFileName` | Export der aktuellen Ansicht (Filter, Sortierung, sichtbare Spalten) als Excel, CSV und JSON mit Fortschrittsdialog (Zeilen, Prozent, Abbrechen); große Exporte laufen als Hintergrundjob, siehe [Import und Export](../web/import-export.md#fortschritts-stream-und-einmaliger-download) |
 | `Importable`, `ImportPermission` | ein *Import*-Button, der den [Import-Assistenten](../web/import-export.md) öffnet |
 | `ToolBarContent` | zusätzliche Schaltflächen in der Werkzeugleiste |
+| `SearchPlaceholder`, `NoRecordsText` | Platzhalter des Suchfelds (`Search`) und Text einer leeren Liste (`Nothing found.`) |
 | `PageSize` | Zeilen pro Seite (25); beim endlosen Scrollen kommen die Zeilen in Blöcken von mindestens 50 |
 | `PageMode` | `FromSettings` (Standard), `Pager` oder `EndlessScroll`, siehe [Seiten oder endloses Scrollen](#seiten-oder-endloses-scrollen) |
 | `EndlessHeight` | Höhe der scrollenden Zeilen beim endlosen Scrollen, jede CSS-Länge (`calc(100vh - 300px)`) |
@@ -42,42 +44,15 @@
 | `History`, `ItemId` | eine Verlaufsaktion je Zeile und ein Knopf *Gelöschte Datensätze*, siehe [Verlauf eines Datensatzes](../modules/auditing.md#verlauf-eines-datensatzes-und-wiederherstellen); `ItemId` wählt die Id (sonst die Eigenschaft `Id`) |
 | `AdvancedFilter` | die Schaltfläche *Erweiterter Filter* mit dem [Query-Builder](query-builder.md) (Standard `options.DataTable.AdvancedFilter`, `true`) |
 | `QueryFields` | die Felder des Query-Builders; standardmäßig die Eigenschaftsspalten und die Referenz-Facetten |
+| `SavedViews`, `ColumnChooser`, `UrlState`, `StateKey` | das Ansichtenmenü, das Spaltenmenü, der Zustand in der Adressleiste (alle `true`) und der Name seines Parameters (standardmäßig der Set-Name in Kleinbuchstaben), siehe [Spalten, Gruppierung und Ansichten](#spalten-gruppierung-und-ansichten) |
+| `RowHref`, `OnRowClick` | eine Zeile per Klick öffnen, siehe [Zeilen-Links](#zeilen-links) |
+| `ChildRowContent` | Inhalt unter einer Zeile, den ein Umschalter davor öffnet |
+| `RealtimeTopic` | das Thema, das die Tabelle neu lädt; standardmäßig `type:{T ohne Dto}` (`BrandDto` folgt `Brand`), `""` schaltet es ab; Tabellen über einer `DataSource` bleiben still |
+| `SelectedItemsChanged`, `OnLoaded` | die Auswahl hat sich geändert; eine Seite Zeilen ist angekommen |
 
-Die Tabelle lädt von selbst neu, wenn ihre `[Realtime]`-Entity sich ändert (`RealtimeTopic`, siehe [Realtime](../modules/realtime.md#anderungen-an-entities)). `ReloadAsync()` lädt von außen neu, etwa aus einer `RealtimeSubscription`. `Selection` liefert die Facettenauswahl, `CurrentFilter` den OData-Filter, den die Tabelle sendet (fester Filter, Facetten, Spaltenfilter und Suche).
+Die Tabelle lädt von selbst neu, wenn ihre `[Realtime]`-Entity sich ändert (siehe [Realtime](../modules/realtime.md#anderungen-an-entities)). `ReloadAsync()` lädt von außen neu, etwa aus einer `RealtimeSubscription`. `Selection` liefert die Facettenauswahl, `CurrentFilter` den OData-Filter, den die Tabelle sendet (fester Filter, Facetten, Spaltenfilter, erweiterter Filter und Suche).
 
 Für Sets, die als [Client-Entities](client-entities.md) markiert sind, filtert, sucht, sortiert und zählt die Tabelle im Browser, sobald die Zeilen angekommen sind; ein Schalter in ihrer Werkzeugleiste zeigt, wo gesucht wird, und lässt die Wahl.
-
-## Seiten oder endloses Scrollen
-
-Mit `PageMode="FromSettings"` (Standard) folgt eine Tabelle der Einstellung **Tabellenzeilen** (`DataTable.DefaultPageMode`): `Pager` (Standard) oder `EndlessScroll`. Administratoren legen sie unter *Einstellungen → System* für alle fest, jeder Benutzer kann sie unter *Meine Einstellungen* überschreiben; offene Tabellen wechseln, sobald gespeichert ist. `PageMode="Pager"` oder `PageMode="EndlessScroll"` legt es für eine Tabelle fest.
-
-Endloses Scrollen zeigt eine Liste mit festem Kopf (`EndlessHeight`) und der Gesamtzahl darunter. Gerendert werden nur die sichtbaren Zeilen; die Zeilen kommen beim Scrollen in Blöcken von `PageSize` (mindestens 50) und bleiben, bis sich die Abfrage ändert, Zurückscrollen braucht also keine Anfrage. Nur der erste Block einer Abfrage fragt nach Anzahl und Facetten. Sortieren, Suche, Facetten, Spaltenfilter, Auswahl, Realtime-Neuladen, Export (immer das ganze gefilterte Ergebnis) und Client-Entities funktionieren wie mit Seiten.
-
-MudBlazor kann gruppierte Zeilen nicht virtualisieren: Solange die Tabelle gruppiert ist, zeigt sie Seiten mit dem Hinweis *Gruppierte Zeilen werden seitenweise angezeigt.* und scrollt wieder, sobald die Gruppierung entfernt ist.
-
-```razor
-<CoworkeeDataTable T="SalesOrderDto" EntitySet="SalesOrders" PageMode="DataTablePageMode.EndlessScroll" EndlessHeight="70vh" ...>
-```
-
-## Zeilen-Links
-
-`RowHref` lässt jede Zeile auf eine Adresse führen, `OnRowClick` führt stattdessen Code aus. Ein Klick auf die Zeile öffnet sie, Klicks auf ihre Buttons und ihre Checkbox nicht. Jede solche Zeile bekommt in der Aktionsspalte einen Öffnen-Button, den Tastaturnutzer mit Tab und Enter erreichen; mit `RowHref` ist er ein echter Link (mittlere Maustaste, in neuem Tab öffnen).
-
-```razor
-<CoworkeeDataTable T="EmployeeDto" EntitySet="Employees" RowHref="@(e => $"/people/{e.Id}")">
-```
-
-```razor
-<CoworkeeDataTable T="EmployeeDto" EntitySet="Employees" OnRowClick="OpenAsync">
-```
-
-Hat eine Tabelle beides, gewinnt `RowHref`, wo es einen Link liefert; Zeilen, für die es `null` liefert, rufen `OnRowClick` auf.
-
-## Einträge der Werkzeugleiste
-
-Ein Paket kann eine Komponente in die Werkzeugleiste jeder Tabelle über einem OData-Set legen: `new DataTableToolbarItem(typeof(MyComponent))` in DI registrieren. Die Komponente bekommt die Tabelle als Parameter `Table` (`IDataTable`: `EntitySet`, `Expand`, `CurrentQuery`, `ReloadAsync()`). Der [Client-Entity-Schalter](client-entities.md#der-schalter-in-der-tabelle) kommt so in die Tabelle.
-
-Der CSV-Export entschärft Werte, die Tabellenkalkulationen sonst als Formel ausführen würden.
 
 ## Facetten
 
@@ -276,57 +251,6 @@ Die Felder sind die Eigenschaftsspalten und jede Referenz-Facette, die keine Spa
 
 `Advanced` gibt die Abfrage heraus (eine `QueryGroup`); `options.DataTable.AdvancedFilter = false` blendet die Schaltfläche in allen Tabellen aus.
 
-## Bearbeitungsdialoge
-
-Für einfache Modelle reicht ein erzeugter Dialog:
-
-```csharp
-if (await Dialogs.ShowEditAsync("Edit brand", model) is { } saved)
-{
-    await Snackbar.RunAsync(() => Api.SaveBrandAsync(id, saved), "Brand saved");
-}
-```
-
-Bearbeitungsdialoge sind Seitenblätter in voller Höhe, die von der Seite hereingleiten, auf die der Benutzer geklickt hat, auf breiten Bildschirmen zweispaltig. Mit `meta => ...` konfigurierst du das `MudExObjectEditForm` (Beschriftungen, Reihenfolge, Editoren). Mit einer Speicherfunktion bleibt der Dialog offen und zeigt die Meldungen der API, wenn das Speichern scheitert:
-
-![Bearbeitungsdialog](../assets/screenshots/edit-sheet.png){ .shot }
-
-```csharp
-await Dialogs.ShowEditAsync(L["New product"], model, saved => Api.SaveProductAsync(id, saved), meta =>
-{
-    meta.Property(p => p.BrandId).WithLabel(L["Brand"])
-        .RenderWith<ODataPicker, Guid>(p => p.Value)
-        .WithAdditionalAttribute(nameof(ODataPicker.EntitySet), "Brands");
-    meta.Property(p => p.ImageDataUrl).WithLabel(L["Image"]).RenderWith<ImageDataUrlEdit, string?>(p => p.Value);
-});
-```
-
-| Editor | für |
-|---|---|
-| `ODataPicker` | einen Fremdschlüssel: sucht in einem OData-Entity-Set über eine Texteigenschaft |
-| `OptionalODataPicker` | einen optionalen Fremdschlüssel (`Guid?`): wie `ODataPicker`, Leeren ergibt null |
-| `ImageDataUrlEdit` | ein Bild, gespeichert als Data-URL |
-
-`TextProperty` beider Picker (Standard `Name`) nimmt mehrere Eigenschaften, durch Kommas getrennt: `.WithAdditionalAttribute(nameof(ODataPicker.TextProperty), "FirstName,LastName")` zeigt *Eva Schulz*, fragt nur diese Spalten ab, sortiert nach ihnen und findet eine Zeile, wenn jedes getippte Wort in einer davon vorkommt (*eva sch*).
-
-### Chip-Listen
-
-In einer `ObjectEdit`-Meta rendert `ChipListMeta.RenderAsChips` eine `IReadOnlyList<string>`-Eigenschaft als Chips über die volle Breite des Formulars, mit MudEx' `MudExTagField<string>`: Enter, Leerzeichen, Komma oder Zeilenumbruch, Einfügen (eine eingefügte Liste wird in Chips zerlegt) oder das Verlassen des Felds fügen sie hinzu; das &times; eines Chips entfernt ihn. Die Aktion konfiguriert das Tag-Feld, z. B. `SearchFunc` (Vorschläge), `ValidateChip` (Fehlertext eines ungültigen Werts, `null` bei einem gültigen) und `IsChipClosable` (Chips, die sich nicht entfernen lassen):
-
-```csharp
-meta.Property(f => f.Scopes).RenderAsChips(e =>
-{
-    e.Label = L["Scopes"];
-    e.SearchFunc = (text, _) => Task.FromResult(known.Where(s => s.Contains(text, StringComparison.OrdinalIgnoreCase)));
-    e.ValidateChip = s => ScopePattern().IsMatch(s) ? null : L["Letters, digits and . _ : - only"];
-    e.IsChipClosable = s => s != "openid";
-});
-```
-
-Die Eigenschaft muss eine `IReadOnlyList<string>` sein. Die Konfigurationsaktion setzt Komponentenparameter direkt, der Aufruf steht deshalb zwischen `#pragma warning disable BL0005` und `restore`.
-
-`ShowSideSheetAsync<TDialog>` öffnet eine eigene Dialogkomponente genauso, `ConfirmAsync` fragt vor etwas, das sich nicht rückgängig machen lässt.
-
 ## Spalten, Gruppierung und Ansichten
 
 Alles, was der Benutzer einrichtet, gehört zum Zustand der Tabelle und lässt sich speichern, teilen und zurücksetzen.
@@ -364,6 +288,95 @@ builder.Services.AddScoped<ITableViewStore, MyTableViews>();
 
 `CurrentState` liefert den Zustand als `DataTableState` (nur, was vom deklarierten Layout abweicht), zum Beispiel für eigene Links; `DataTableState.Encode()` ergibt den Wert für den Query-Parameter.
 
+## Seiten oder endloses Scrollen
+
+Mit `PageMode="FromSettings"` (Standard) folgt eine Tabelle der Einstellung **Tabellenzeilen** (`DataTable.DefaultPageMode`): `Pager` (Standard) oder `EndlessScroll`. Administratoren legen sie unter *Einstellungen → System* für alle fest, jeder Benutzer kann sie unter *Meine Einstellungen* überschreiben; offene Tabellen wechseln, sobald gespeichert ist. `PageMode="Pager"` oder `PageMode="EndlessScroll"` legt es für eine Tabelle fest.
+
+Endloses Scrollen zeigt eine Liste mit festem Kopf (`EndlessHeight`) und der Gesamtzahl darunter. Gerendert werden nur die sichtbaren Zeilen; die Zeilen kommen beim Scrollen in Blöcken von `PageSize` (mindestens 50) und bleiben, bis sich die Abfrage ändert, Zurückscrollen braucht also keine Anfrage. Nur der erste Block einer Abfrage fragt nach der Anzahl; die Facetten kommen wie bei Seiten in einer eigenen Anfrage. Sortieren, Suche, Facetten, Spaltenfilter, Auswahl, Realtime-Neuladen, Export (immer das ganze gefilterte Ergebnis) und Client-Entities funktionieren wie mit Seiten.
+
+MudBlazor kann gruppierte Zeilen nicht virtualisieren: Solange die Tabelle gruppiert ist, zeigt sie Seiten mit dem Hinweis *Gruppierte Zeilen werden seitenweise angezeigt.* und scrollt wieder, sobald die Gruppierung entfernt ist.
+
+```razor
+<CoworkeeDataTable T="SalesOrderDto" EntitySet="SalesOrders" PageMode="DataTablePageMode.EndlessScroll" EndlessHeight="70vh" ...>
+```
+
+## Zeilen-Links
+
+`RowHref` lässt jede Zeile auf eine Adresse führen, `OnRowClick` führt stattdessen Code aus. Ein Klick auf die Zeile öffnet sie, Klicks auf ihre Buttons und ihre Checkbox nicht. Jede solche Zeile bekommt in der Aktionsspalte einen Öffnen-Button, den Tastaturnutzer mit Tab und Enter erreichen; mit `RowHref` ist er ein echter Link (mittlere Maustaste, in neuem Tab öffnen).
+
+```razor
+<CoworkeeDataTable T="EmployeeDto" EntitySet="Employees" RowHref="@(e => $"/people/{e.Id}")">
+```
+
+```razor
+<CoworkeeDataTable T="EmployeeDto" EntitySet="Employees" OnRowClick="OpenAsync">
+```
+
+Hat eine Tabelle beides, gewinnt `RowHref`, wo es einen Link liefert; Zeilen, für die es `null` liefert, rufen `OnRowClick` auf.
+
+## Export
+
+Der Export-Button der Werkzeugleiste (`Exportable`, standardmäßig an) bietet Excel, CSV und JSON der aktuellen Ansicht: Filter, Suche, Facetten, Sortierung und die sichtbaren Eigenschaftsspalten der Zeile selbst (Spalten über eine Navigation wie `Brand.Name` bleiben weg), benannt nach `ExportFileName`. Bei einem OData-Set schreibt der Server die Datei: ein Dialog zeigt Phase, Zeilen und Prozent mit *Abbrechen*, speichert die Datei über einen einmaligen Link und übergibt einen großen Export an den Hintergrund, der mit einem Hinweis zum Herunterladen endet; zu viele Exporte gleichzeitig (`429`), eine ungültige Abfrage, eine Zeitüberschreitung oder eine verlorene Verbindung erscheinen als Fehler. *Export planen* (Berechtigung `DataTransfer.ExportSchedules`) mailt dieselbe Ansicht nach Zeitplan. Siehe [Import und Export](../web/import-export.md#fortschritts-stream-und-einmaliger-download).
+
+`ExportProgressDialog.ShowAsync(dialogs, title, entitySet, query, fileName)` startet denselben Dialog von einem eigenen Button; `ExportQueries.Of(format, odataQuery, columns)` baut die Abfrage. CSV-Exporte, vom Server und von einer `DataSource`, entschärfen Werte, die Tabellenkalkulationen sonst als Formel ausführen würden.
+
+## Bearbeitungsdialoge
+
+Für einfache Modelle reicht ein erzeugter Dialog:
+
+```csharp
+if (await Dialogs.ShowEditAsync("Edit brand", model) is { } saved)
+{
+    await Snackbar.RunAsync(() => Api.SaveBrandAsync(id, saved), "Brand saved");
+}
+```
+
+Bearbeitungsdialoge sind Seitenblätter in voller Höhe, die von der Seite hereingleiten, auf die der Benutzer geklickt hat, auf breiten Bildschirmen zweispaltig.
+
+![Bearbeitungsdialog](../assets/screenshots/edit-sheet.png){ .shot }
+
+Mit `meta => ...` konfigurierst du das `MudExObjectEditForm` (Beschriftungen, Reihenfolge, Editoren). Mit einer Speicherfunktion bleibt der Dialog offen und zeigt die Meldungen der API, wenn das Speichern scheitert:
+
+```csharp
+await Dialogs.ShowEditAsync(L["New product"], model, saved => Api.SaveProductAsync(id, saved), meta =>
+{
+    meta.Property(p => p.BrandId).WithLabel(L["Brand"])
+        .RenderWith<ODataPicker, Guid>(p => p.Value)
+        .WithAdditionalAttribute(nameof(ODataPicker.EntitySet), "Brands");
+    meta.Property(p => p.ImageDataUrl).WithLabel(L["Image"]).RenderWith<ImageDataUrlEdit, string?>(p => p.Value);
+});
+```
+
+| Editor | für |
+|---|---|
+| `ODataPicker` | einen Fremdschlüssel: sucht in einem OData-Entity-Set über eine Texteigenschaft |
+| `OptionalODataPicker` | einen optionalen Fremdschlüssel (`Guid?`): wie `ODataPicker`, Leeren ergibt null |
+| `ImageDataUrlEdit` | ein Bild, gespeichert als Data-URL |
+
+`TextProperty` beider Picker (Standard `Name`) nimmt mehrere Eigenschaften, durch Kommas getrennt: `.WithAdditionalAttribute(nameof(ODataPicker.TextProperty), "FirstName,LastName")` zeigt *Eva Schulz*, fragt nur diese Spalten ab, sortiert nach ihnen und findet eine Zeile, wenn jedes getippte Wort in einer davon vorkommt (*eva sch*).
+
+### Chip-Listen
+
+In einer `ObjectEdit`-Meta rendert `ChipListMeta.RenderAsChips` eine `IReadOnlyList<string>`-Eigenschaft als Chips über die volle Breite des Formulars, mit MudEx' `MudExTagField<string>`: Enter, Leerzeichen, Komma oder Zeilenumbruch, Einfügen (eine eingefügte Liste wird in Chips zerlegt) oder das Verlassen des Felds fügen sie hinzu; das &times; eines Chips entfernt ihn. Die Aktion konfiguriert das Tag-Feld, z. B. `SearchFunc` (Vorschläge), `ValidateChip` (Fehlertext eines ungültigen Werts, `null` bei einem gültigen) und `IsChipClosable` (Chips, die sich nicht entfernen lassen):
+
+```csharp
+meta.Property(f => f.Scopes).RenderAsChips(e =>
+{
+    e.Label = L["Scopes"];
+    e.SearchFunc = (text, _) => Task.FromResult(known.Where(s => s.Contains(text, StringComparison.OrdinalIgnoreCase)));
+    e.ValidateChip = s => ScopePattern().IsMatch(s) ? null : L["Letters, digits and . _ : - only"];
+    e.IsChipClosable = s => s != "openid";
+});
+```
+
+Die Eigenschaft muss eine `IReadOnlyList<string>` sein. Die Konfigurationsaktion setzt Komponentenparameter direkt, der Aufruf steht deshalb zwischen `#pragma warning disable BL0005` und `restore`.
+
+`ShowSideSheetAsync<TDialog>` öffnet eine eigene Dialogkomponente genauso, `ConfirmAsync` fragt vor etwas, das sich nicht rückgängig machen lässt.
+
+## Einträge der Werkzeugleiste
+
+Ein Paket kann eine Komponente in die Werkzeugleiste jeder Tabelle über einem OData-Set legen: `new DataTableToolbarItem(typeof(MyComponent))` in DI registrieren. Die Komponente bekommt die Tabelle als Parameter `Table` (`IDataTable`: `EntitySet`, `Expand`, `CurrentQuery`, `ReloadAsync()`). Der [Client-Entity-Schalter](client-entities.md#der-schalter-in-der-tabelle) kommt so in die Tabelle.
+
 ## Andere Datenquellen
 
 Standardmäßig fragt die Tabelle `EntitySet` über OData ab. `DataSource` nimmt stattdessen eine beliebige `ITableDataSource<T>`, zum Beispiel Zeilen, die im Browser liegen:
@@ -376,4 +389,6 @@ public sealed class LocalProducts(ProductStore store) : ITableDataSource<Product
 }
 ```
 
-Die Abfrage trägt den OData-Text, den die Tabelle baut (Filter aus Suche und Facetten, Sortierung, `Top`/`Skip`), die Quelle beantwortet also diese Teilmenge. `EntitySet` benennt weiterhin Ansichten und URL-Parameter. CSV- und JSON-Export nutzen die Quelle; Excel-Export und -Import bleiben bei OData-Sets.
+Die Abfrage trägt den OData-Text, den die Tabelle baut (Filter aus Suche und Facetten, Sortierung, `Top`/`Skip`), die Quelle beantwortet also diese Teilmenge. `EntitySet` benennt weiterhin Ansichten und URL-Parameter. Auch die Facetten kommen aus der Quelle: eine zweite Abfrage mit `Top = 0`, `Count = false`, `Facets = true` und der Auswahl getrennt vom übrigen Filter in `FacetContext` (siehe [Facetten](#facetten)). Eine Quelle, die einen eigenen Endpunkt fragt, schickt den Kontext mit (Header `Coworkee-Facets`, `FacetContextDto.Encode()`), und der Endpunkt reicht ihn an `IODataQueries.QueryAsync<T>(route, set, query, facets: true, facetContext, ct)` weiter, sodass jede Facettengruppe wie auf der OData-Route ohne ihre eigene Auswahl zählt; ohne ihn zählt jede Gruppe mit dem ganzen Filter. Siehe [Abfragen im Code](../web/odata.md#abfragen-im-code).
+
+CSV- und JSON-Export nutzen die Quelle (jede öffentliche Eigenschaft eines einfachen Typs, nicht nur die sichtbaren Spalten); Excel-Export, geplante Exporte und Import bleiben bei OData-Sets.
