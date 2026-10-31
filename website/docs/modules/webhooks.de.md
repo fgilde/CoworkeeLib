@@ -18,7 +18,7 @@ public sealed class MyAppCatalogModule : CoworkeeModule
 }
 ```
 
-Das Modul braucht die Background Jobs und den Outbox-Prozessor (`AddCoworkeeOutboxProcessing`); beides hat jede generierte App. Es bringt die Tabellen `cw.WebhookSubscriptions` und `cw.WebhookDeliveries` mit; leg nach dem Hinzufügen eine Migration an.
+Das Modul hängt von den Modulen Identity und Background Jobs ab und braucht den Outbox-Prozessor (`AddCoworkeeOutboxProcessing`); all das hat jede generierte App. Es bringt die Tabellen `cw.WebhookSubscriptions` und `cw.WebhookDeliveries` mit; leg nach dem Hinzufügen eine Migration an. `Entity<T>()` lehnt eine Entity ohne Guid-`Id` schon bei der Registrierung ab.
 
 ## Ereignisse
 
@@ -70,20 +70,20 @@ webhook-signature: v1,K5oZfzN95Z9UVu1EsfQmfVNQhnkZ2pj9o9NDN/H/pI4=
 
 *Administration → System → Webhooks* (`/cw/admin/webhooks`, Berechtigung `Webhooks.Manage`) zeigt die Endpunkte mit ihrem Zustand und die letzten Zustellungen:
 
-- **Endpunkt hinzufügen**: Adresse, Beschreibung, Ereignisse (mit Vorschlägen aller bekannten Ereignistypen) und *Aktiv*. Das Signaturgeheimnis wird erzeugt und einmal angezeigt; über den Schlüssel-Knopf siehst du es später wieder.
+- **Endpunkt hinzufügen**: Adresse, Beschreibung (höchstens 500 Zeichen), Ereignisse (mit Vorschlägen aller bekannten Ereignistypen) und *Aktiv*. Das Signaturgeheimnis wird erzeugt und einmal angezeigt; über den Schlüssel-Knopf siehst du es später wieder.
 - **Secret erneuern** erzeugt ein neues Geheimnis und zeigt es einmal an. Für `SecretGracePeriod` (24 Stunden) trägt jede Zustellung zwei Signaturen, eine mit dem neuen und eine mit dem alten Geheimnis, so kann der Empfänger umstellen, ohne eine Zustellung zu verlieren; die Liste zeigt, bis wann.
 - **Testereignis senden** reiht eine `webhook.test`-Zustellung für den Endpunkt ein, auch wenn er abgeschaltet ist.
 - **Zustellungen** zeigt Zeit, Ereignis, Endpunkt, Status mit HTTP-Code und Versuche; eine Zeile klappt Anfrage und Antwort des letzten Versuchs auf. **Erneut zustellen** schickt denselben Body noch einmal als neue Zustellung.
 
-Geheimnis, Bodies von Anfrage und Antwort und die Endpunkte bleiben außerhalb der KI-Tools und des MCP-Servers.
+Geheimnis, Bodies von Anfrage und Antwort und die Endpunkte bleiben außerhalb der KI-Tools und des MCP-Servers. Solange jemand als anderer Benutzer angemeldet ist, werden Anlegen und Ändern von Endpunkten abgelehnt (`auth.impersonating`).
 
 ## Zustellung
 
 Zustellungen laufen über die Outbox und die Background Jobs; ein Absturz zwischen Speichern und Senden verliert also nichts. Jeder Versuch wartet höchstens `Timeout` auf eine Antwort; jeder 2xx-Status gilt als zugestellt. Weiterleitungen werden nicht verfolgt.
 
-Ein fehlgeschlagener Versuch wird mit exponentiellem Backoff wiederholt: 30 s, 1 min, 2 min, 4 min, 8 min (jeweils doppelt so lang, gedeckelt bei `MaxRetryDelay`), insgesamt sechs Versuche. Ist eine Zustellung endgültig gescheitert, zählt der Endpunkt mit; nach `DisableAfterFailures` gescheiterten Zustellungen in Folge wird er abgeschaltet, und sein Besitzer sowie die Administratoren der Organisation bekommen eine Benachrichtigung (mit `Coworkee.Notifications` in der App). Eine erfolgreiche Zustellung setzt den Zähler zurück, das Wiedereinschalten auch.
+Ein fehlgeschlagener Versuch wird mit exponentiellem Backoff wiederholt: 30 s, 1 min, 2 min, 4 min, 8 min (ab `FirstRetryDelay` jeweils doppelt so lang, gedeckelt bei `MaxRetryDelay`), insgesamt `MaxAttempts` (sechs) Versuche. Ist eine Zustellung endgültig gescheitert, zählt der Endpunkt mit; nach `DisableAfterFailures` gescheiterten Zustellungen in Folge wird er abgeschaltet, und sein Besitzer sowie die Inhaber der Administratorrolle der Organisation bekommen die Benachrichtigung `webhooks.disabled` (mit `Coworkee.Notifications` in der App; ohne das Modul wird das Abschalten nur geloggt). Eine erfolgreiche Zustellung setzt den Zähler zurück, das Wiedereinschalten auch.
 
-Das Protokoll behält die Anfrage mit ihren Headern (die Signatur maskiert) und die Antwort, beide nach `LogBodyLimit` Zeichen gekürzt, für `LogRetentionDays` Tage. Mit dem Modul [Aufbewahrung](retention.md) entscheidet die Einstellung `Retention.webhook-deliveries.Days` (Standard `LogRetentionDays`), und die Admin-Seite *Aufbewahrung* ändert sie oder löscht sofort.
+Das Protokoll behält die Anfrage mit ihren Headern (die Signatur maskiert als `v1,***`) und die Antwort, beide nach `LogBodyLimit` Zeichen gekürzt, für `LogRetentionDays` Tage: Der Job `coworkee-webhooks-log-cleanup` (täglich um 03:17) löscht ältere Zustellungen, `0` behält sie. Mit dem Modul [Aufbewahrung](retention.md) tut dieser Job nichts, und die Einstellung `Retention.webhook-deliveries.Days` entscheidet (Standard `LogRetentionDays`); die Admin-Seite *Aufbewahrung* ändert sie oder löscht sofort.
 
 ## Schutz vor SSRF
 
@@ -108,7 +108,7 @@ Endpunkte dürfen nicht in dein eigenes Netz greifen:
 | `FirstRetryDelay`, `MaxRetryDelay` | `00:00:30`, `06:00:00` | Backoff |
 | `DisableAfterFailures` | `5` | gescheiterte Zustellungen in Folge, bevor der Endpunkt abgeschaltet wird |
 | `LogBodyLimit` | `4096` | Zeichen von Anfrage und Antwort im Protokoll |
-| `LogRetentionDays` | `30` | ein täglicher Job löscht ältere Zustellungen; mit [Aufbewahrung](retention.md) der Standard von `Retention.webhook-deliveries.Days` |
+| `LogRetentionDays` | `30` | ein täglicher Job löscht ältere Zustellungen (`0` behält sie); mit [Aufbewahrung](retention.md) der Standard von `Retention.webhook-deliveries.Days` |
 | `SecretGracePeriod` | `24:00:00` | wie lange das alte Geheimnis nach *Secret erneuern* neben dem neuen signiert |
 | `DomainEvents` | `{ "WorkflowTransitioned": "workflow.transitioned" }` | Domain Events anderer Module, die zu Webhook-Ereignissen werden |
 
@@ -226,11 +226,12 @@ Ein *IF*-Knoten auf `{{$json.type}}` schickt danach `products.created` in die ei
 |---|---|
 | `GET /api/v1/webhooks` | Endpunkte der Organisation |
 | `POST /api/v1/webhooks` | anlegen mit `{ "url", "events", "description", "isActive", "secret"? }`, antwortet mit dem Geheimnis |
-| `PUT/DELETE /api/v1/webhooks/{id}` | ändern (ein `secret` ersetzt es) / mit seinen Zustellungen löschen |
+| `PUT/DELETE /api/v1/webhooks/{id}` | ändern (ein `secret` ersetzt es sofort, ohne Übergangsfrist) / mit seinen Zustellungen löschen |
 | `GET /api/v1/webhooks/{id}/secret` | das Signaturgeheimnis |
+| `POST /api/v1/webhooks/{id}/rotate-secret` | ein neues Geheimnis, einmal in der Antwort; das alte signiert für `SecretGracePeriod` daneben (`previousSecretUntil` in der Liste) |
 | `POST /api/v1/webhooks/{id}/test` | ein Testereignis einreihen |
 | `GET /api/v1/webhooks/event-types` | bekannte Ereignistypen |
-| `GET /api/v1/webhooks/deliveries?subscriptionId=&take=` | die letzten Zustellungen |
+| `GET /api/v1/webhooks/deliveries?subscriptionId=&take=` | die letzten Zustellungen (`take` 1 bis 200, Standard 50) |
 | `POST /api/v1/webhooks/deliveries/{id}/redeliver` | eine Zustellung noch einmal senden |
 
-Alle brauchen `Webhooks.Manage`.
+Alle brauchen `Webhooks.Manage`. Ein eigenes `secret` ist ein `whsec_…`-Geheimnis oder mindestens 16 Zeichen lang.

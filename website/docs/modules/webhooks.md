@@ -18,7 +18,7 @@ public sealed class MyAppCatalogModule : CoworkeeModule
 }
 ```
 
-The module needs the background jobs and the outbox processor (`AddCoworkeeOutboxProcessing`), both part of every generated app. It adds the tables `cw.WebhookSubscriptions` and `cw.WebhookDeliveries`; create a migration after adding it.
+The module depends on the identity and background jobs modules and needs the outbox processor (`AddCoworkeeOutboxProcessing`), all part of every generated app. It adds the tables `cw.WebhookSubscriptions` and `cw.WebhookDeliveries`; create a migration after adding it. `Entity<T>()` refuses an entity without a Guid `Id` at registration.
 
 ## Events
 
@@ -70,20 +70,20 @@ webhook-signature: v1,K5oZfzN95Z9UVu1EsfQmfVNQhnkZ2pj9o9NDN/H/pI4=
 
 *Administration → System → Webhooks* (`/cw/admin/webhooks`, permission `Webhooks.Manage`) lists the endpoints with their state and the latest deliveries:
 
-- **Add endpoint**: address, description, events (with suggestions of every known event type) and *Active*. The signing secret is generated and shown once; the key button shows it again later.
+- **Add endpoint**: address, description (at most 500 characters), events (with suggestions of every known event type) and *Active*. The signing secret is generated and shown once; the key button shows it again later.
 - **Rotate secret** creates a new secret and shows it once. For `SecretGracePeriod` (24 hours) every delivery carries two signatures, one with the new and one with the old secret, so the receiver can switch without losing a delivery; the list shows until when.
 - **Send test event** queues a `webhook.test` delivery to the endpoint, even when it is switched off.
 - **Deliveries** shows time, event, endpoint, status with the HTTP code and the attempts; a row opens the request and the response of the last attempt. **Redeliver** sends the same body again as a new delivery.
 
-The secret, the request and response bodies and the endpoints stay out of the AI tools and the MCP server.
+The secret, the request and response bodies and the endpoints stay out of the AI tools and the MCP server. While someone is signed in as another user, adding and changing endpoints is refused (`auth.impersonating`).
 
 ## Delivery
 
 Deliveries leave through the outbox and the background jobs, so a crash between saving and sending loses nothing. Each attempt waits at most `Timeout` for an answer; any 2xx counts as delivered. Redirects are not followed.
 
-A failed attempt is retried with exponential backoff: 30 s, 1 min, 2 min, 4 min, 8 min (doubling, capped at `MaxRetryDelay`), six attempts in all. When a delivery has failed for good, the endpoint counts it; after `DisableAfterFailures` failed deliveries in a row the endpoint is switched off, and its owner and the organisation's administrators get a notification (with `Coworkee.Notifications` in the app). A successful delivery resets the count; switching the endpoint on again does too.
+A failed attempt is retried with exponential backoff: 30 s, 1 min, 2 min, 4 min, 8 min (doubling from `FirstRetryDelay`, capped at `MaxRetryDelay`), `MaxAttempts` (six) attempts in all. When a delivery has failed for good, the endpoint counts it; after `DisableAfterFailures` failed deliveries in a row the endpoint is switched off, and its owner and the holders of the organisation's administrator role get the notification `webhooks.disabled` (with `Coworkee.Notifications` in the app; without it the switch-off is only logged). A successful delivery resets the count; switching the endpoint on again does too.
 
-The log keeps the request with its headers (the signature masked) and the answer, both cut after `LogBodyLimit` characters, for `LogRetentionDays` days. With the [Retention](retention.md) module the setting `Retention.webhook-deliveries.Days` decides (default `LogRetentionDays`), and the admin page *Retention* changes it or deletes at once.
+The log keeps the request with its headers (the signature masked as `v1,***`) and the answer, both cut after `LogBodyLimit` characters, for `LogRetentionDays` days: the job `coworkee-webhooks-log-cleanup` (daily at 03:17) deletes older deliveries, `0` keeps them. With the [Retention](retention.md) module that job does nothing and the setting `Retention.webhook-deliveries.Days` decides (default `LogRetentionDays`); the admin page *Retention* changes it or deletes at once.
 
 ## Protection against SSRF
 
@@ -108,7 +108,7 @@ Endpoints may not reach into your own network:
 | `FirstRetryDelay`, `MaxRetryDelay` | `00:00:30`, `06:00:00` | backoff |
 | `DisableAfterFailures` | `5` | failed deliveries in a row before the endpoint is switched off |
 | `LogBodyLimit` | `4096` | characters of request and response in the log |
-| `LogRetentionDays` | `30` | a daily job deletes older deliveries; with [Retention](retention.md) the default of `Retention.webhook-deliveries.Days` |
+| `LogRetentionDays` | `30` | a daily job deletes older deliveries (`0` keeps them); with [Retention](retention.md) the default of `Retention.webhook-deliveries.Days` |
 | `SecretGracePeriod` | `24:00:00` | how long the old secret signs next to the new one after *Rotate secret* |
 | `DomainEvents` | `{ "WorkflowTransitioned": "workflow.transitioned" }` | domain events of other modules that become webhook events |
 
@@ -226,11 +226,12 @@ An *IF* node on `{{$json.type}}` then sends `products.created` one way and `orde
 |---|---|
 | `GET /api/v1/webhooks` | endpoints of the organisation |
 | `POST /api/v1/webhooks` | add with `{ "url", "events", "description", "isActive", "secret"? }`, answers with the secret |
-| `PUT/DELETE /api/v1/webhooks/{id}` | change (a `secret` replaces it) / delete with its deliveries |
+| `PUT/DELETE /api/v1/webhooks/{id}` | change (a `secret` replaces it at once, without grace period) / delete with its deliveries |
 | `GET /api/v1/webhooks/{id}/secret` | the signing secret |
+| `POST /api/v1/webhooks/{id}/rotate-secret` | a new secret, answered once; the old one signs next to it for `SecretGracePeriod` (`previousSecretUntil` in the list) |
 | `POST /api/v1/webhooks/{id}/test` | queue a test event |
 | `GET /api/v1/webhooks/event-types` | known event types |
-| `GET /api/v1/webhooks/deliveries?subscriptionId=&take=` | the latest deliveries |
+| `GET /api/v1/webhooks/deliveries?subscriptionId=&take=` | the latest deliveries (`take` 1 to 200, default 50) |
 | `POST /api/v1/webhooks/deliveries/{id}/redeliver` | send a delivery again |
 
-All of them need `Webhooks.Manage`.
+All of them need `Webhooks.Manage`. An own `secret` is a `whsec_…` secret or at least 16 characters.
