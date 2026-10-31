@@ -2,17 +2,25 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
-## 0.0.1.52 (2026-10-31)
+## Unveröffentlicht
 
 ### Hinzugefügt
 
 - Das Head-Skript: `AddCoworkeeHeadScript(perOrganisation)` schaltet die Einstellungen `HeadScript.Enabled` und `HeadScript.Value` (HTML mit Script-Tags, z. B. ein Tag-Manager), die Berechtigung `Settings.HeadScript`, das anonyme `GET /api/v1/settings/head-script` und `PUT /api/v1/settings/head-script` ein; das Blazor-Layout fügt das Skript in die Seite ein. Aus, solange die App es nicht aufruft. Siehe [Einstellungen](../modules/settings.md#head-skript).
 - `SettingDefinition.Permission` (`Add(..., permission: ...)`): eine Einstellung ändert sich nur mit dieser Berechtigung zusätzlich zur Regel ihres Bereichs, auch über `PUT /api/v1/settings/{scope}`.
-- `ODataEntityOptions<T>.MaxNodeCount(int)`: eine Knotengrenze für eine Menge statt `Coworkee:OData:MaxNodeCount` (`AddODataEntity<T>(set, permission, o => o.MaxNodeCount(1000))`), für Clients, die nur an diese Menge lange Filter senden. Sie gilt für die Routen der Menge, `IODataQueries`, Exporte, Facettenfilter, Zeilenfilter im Code und `query_data`; `ODataLimits.Settings(services, entityType)` liest sie. Kein Handlungsbedarf. Siehe [OData](../web/odata.md).
 
 ### Behoben
 
 - Zwei Module, die Berechtigungen in dieselbe Gruppe legen, zeigten diese Gruppe im Berechtigungsbaum doppelt. Kein Handlungsbedarf.
+
+## 0.0.1.52 (2026-10-31)
+
+### Hinzugefügt
+
+- `ODataEntityOptions<T>.MaxNodeCount(int)`: eine Knotengrenze für eine Menge statt `Coworkee:OData:MaxNodeCount` (`AddODataEntity<T>(set, permission, o => o.MaxNodeCount(1000))`), für Clients, die nur an diese Menge lange Filter senden. Sie gilt für die Routen der Menge, `IODataQueries`, Exporte, Facettenfilter, Zeilenfilter im Code und `query_data`; `ODataLimits.Settings(services, entityType)` liest sie. Kein Handlungsbedarf. Siehe [OData](../web/odata.md).
+
+### Behoben
+
 - Ein gemailter Export (`POST /api/v1/data/{set}/export/mail`, `DataExports.MailAsync`) und ein gestreamter Export, dessen Client gegangen war, schrieben die Datei, verschickten die Mail aber nie: der Exportjob speicherte die Mail nicht, die das Mailing-Modul eingereiht hatte. Kein Handlungsbedarf.
 
 ## 0.0.1.50 (2026-10-31)
