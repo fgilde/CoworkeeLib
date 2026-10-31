@@ -53,7 +53,11 @@ From that markup users get facets (as pills above the rows or in a side panel), 
 
 Saved views keep the whole arrangement under a name: filters, column order and widths, grouping, sorting. They are stored in the user's settings and follow the user to another device. The link button copies an address that opens the table exactly as it looks.
 
-Paging is either a pager or endless scrolling; administrators set the default, users override it. Export covers CSV, JSON and Excel of the full filtered result. Tables over `[Realtime]` entities reload when someone else changes a row, which is mostly useful and occasionally startling.
+Paging is either a pager or endless scrolling; administrators set the default, users override it. Export covers CSV, JSON and Excel of the full filtered result, in a dialog with progress and *Cancel*; *Schedule export* mails it regularly. `RowHref` or `OnRowClick` open a row by clicking it. Tables over `[Realtime]` entities reload when someone else changes a row, which is mostly useful and occasionally startling.
+
+## More building blocks
+
+Ctrl+K opens the [command palette](../ui/command-palette.md) on every page: pages, records from the global search, actions and the assistant as fallback. `CoworkeeDetailPanel` shows the details of a list or board item in a drawer bound to `?item={id}` ([detail panel](../ui/detail-panel.md)). `ResourceCalendar` puts resources against days with bars, half days, holidays and day selection ([resource calendar](../ui/resource-calendar.md)), and `CoworkeeBarChart`, `CoworkeeDonut` and `CoworkeeSparkline` draw [small charts](../ui/charts.md) without the Reporting module.
 
 ## Themes, sign-in and loading screen
 
@@ -83,4 +87,4 @@ The same apps can also run in a web desktop: `coworkee new Shop --airworks` adds
 
 **Status:** the library's admin pages live under `/cw/admin/...` (see [Pages of the library](../ui/customizing.md#pages-of-the-library)). Grouped rows cannot be virtualized, so a grouped table falls back to the pager.
 
-Reference: [client and layout](../ui/client.md), [data tables](../ui/data-table.md), [replacing components](../ui/customizing.md), [theming](../modules/theming.md), [sign-in pages](../security/sign-in-pages.md).
+Reference: [client and layout](../ui/client.md), [data tables](../ui/data-table.md), [phones, installable app and push](../ui/phones-and-pwa.md), [replacing components](../ui/customizing.md), [theming](../modules/theming.md), [sign-in pages](../security/sign-in-pages.md).

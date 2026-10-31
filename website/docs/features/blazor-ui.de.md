@@ -53,7 +53,11 @@ Aus diesem Markup bekommen Benutzer Facetten (als Pillen über den Zeilen oder i
 
 Gespeicherte Ansichten merken sich die ganze Anordnung unter einem Namen: Filter, Reihenfolge und Breite der Spalten, Gruppierung, Sortierung. Sie liegen in den Benutzereinstellungen und sind damit auch auf dem nächsten Gerät da. Der Link-Knopf kopiert eine Adresse, die die Tabelle genau so öffnet, wie sie gerade aussieht.
 
-Geblättert wird mit Pager oder per endlosem Scrollen; den Standard legen Administratoren fest, Benutzer können ihn überschreiben. Der Export liefert CSV, JSON und Excel mit dem ganzen gefilterten Ergebnis. Tabellen über `[Realtime]`-Entities laden neu, sobald jemand anderes eine Zeile ändert. Meistens praktisch, manchmal überraschend.
+Geblättert wird mit Pager oder per endlosem Scrollen; den Standard legen Administratoren fest, Benutzer können ihn überschreiben. Der Export liefert CSV, JSON und Excel mit dem ganzen gefilterten Ergebnis, in einem Dialog mit Fortschritt und *Abbrechen*; *Export planen* verschickt ihn regelmäßig per Mail. `RowHref` oder `OnRowClick` öffnen eine Zeile per Klick. Tabellen über `[Realtime]`-Entities laden neu, sobald jemand anderes eine Zeile ändert. Meistens praktisch, manchmal überraschend.
+
+## Weitere Bausteine
+
+Strg+K öffnet auf jeder Seite die [Befehlspalette](../ui/command-palette.md): Seiten, Datensätze aus der globalen Suche, Aktionen und den Assistenten als Rückfall. `CoworkeeDetailPanel` zeigt die Details eines Listen- oder Board-Eintrags in einer Schublade, gebunden an `?item={id}` ([Detailbereich](../ui/detail-panel.md)). `ResourceCalendar` stellt Ressourcen Tagen gegenüber, mit Balken, halben Tagen, Feiertagen und Tagesauswahl ([Ressourcenkalender](../ui/resource-calendar.md)), und `CoworkeeBarChart`, `CoworkeeDonut` und `CoworkeeSparkline` zeichnen [kleine Diagramme](../ui/charts.md) ohne das Berichtsmodul.
 
 ## Themes, Anmeldung und Ladebildschirm
 
@@ -83,4 +87,4 @@ Dieselben Apps laufen auf Wunsch auch in einem Web-Desktop: `coworkee new Shop -
 
 **Stand:** Die Admin-Seiten der Bibliothek liegen unter `/cw/admin/...` (siehe [Seiten der Bibliothek](../ui/customizing.md#seiten-der-bibliothek)). Gruppierte Zeilen lassen sich nicht virtualisieren, eine gruppierte Tabelle fällt deshalb auf den Pager zurück.
 
-Referenz: [Client und Layout](../ui/client.md), [Datentabellen](../ui/data-table.md), [Komponenten ersetzen](../ui/customizing.md), [Themes](../modules/theming.md), [Anmeldeseiten](../security/sign-in-pages.md).
+Referenz: [Client und Layout](../ui/client.md), [Datentabellen](../ui/data-table.md), [Smartphones, installierbare App und Push](../ui/phones-and-pwa.md), [Komponenten ersetzen](../ui/customizing.md), [Themes](../modules/theming.md), [Anmeldeseiten](../security/sign-in-pages.md).
