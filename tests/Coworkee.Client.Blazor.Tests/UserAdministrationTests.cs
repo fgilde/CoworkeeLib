@@ -41,6 +41,8 @@ public sealed class UserAdministrationTests : ClientTestBase
         dialogs.WaitForAssertion(() => dialogs.Find("input[type='email']"));
         dialogs.Markup.ShouldContain("First sign-in");
         dialogs.Markup.ShouldContain("Send invitation");
+        // no group field without Groups.ManageMembers
+        dialogs.Markup.ShouldNotContain("Groups");
         // the dialog applies the SendInvitation condition a moment after its first render (debounced), so wait for it
         dialogs.WaitForAssertion(() => dialogs.FindAll("input[type='password']").ShouldBeEmpty());
         dialogs.Find("input[type='email']").Change("bob@acme.test");
@@ -49,6 +51,22 @@ public sealed class UserAdministrationTests : ClientTestBase
 
         await Api.Received(1).CreateUserAsync(Arg.Is<CreateUserRequest>(r => r.Email == "bob@acme.test" && r.Password == null && r.IsActive), Arg.Any<CancellationToken>());
         await Api.Received(1).SendInvitationAsync(_bob, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public void Who_manages_members_puts_new_users_into_groups()
+    {
+        var hamburg = new GroupDto(Guid.CreateVersion7(), "Hamburg", null, [], [], Code: "0001.0001");
+        Api.GetMyPermissionsAsync(Arg.Any<CancellationToken>()).Returns([IdentityPermissions.Users.Manage, IdentityPermissions.Groups.ManageMembers]);
+        Api.GetGroupsAsync(Arg.Any<Coworkee.Contracts.PageRequest>(), Arg.Any<CancellationToken>()).Returns(new Coworkee.Contracts.PagedResult<GroupDto>([hamburg], 1, 1, 200));
+        var dialogs = Render<MudDialogProvider>();
+        var page = Render<Users>();
+
+        _ = page.WaitForElement("[data-testid='create']").ClickAsync(new());
+
+        dialogs.WaitForAssertion(() => dialogs.Find("input[type='email']"));
+        dialogs.WaitForAssertion(() => dialogs.Markup.ShouldContain("Groups"));
+        new NewUserForm { Email = " bob@acme.test ", Groups = [hamburg.Id] }.ToRequest().GroupIds.ShouldBe([hamburg.Id]);
     }
 
     [Fact]

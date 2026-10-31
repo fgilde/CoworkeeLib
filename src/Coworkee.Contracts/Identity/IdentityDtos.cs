@@ -22,10 +22,12 @@ public sealed record PostalAddress(string? Street, string? ZipCode, string? City
 
 /// <summary>
 /// A new user; <paramref name="MustChangePassword"/> makes the first sign-in ask for an own password.
-/// Without <paramref name="Password"/> the user signs in after choosing one from an invitation or reset mail.
+/// Without <paramref name="Password"/> the user signs in after choosing one from an invitation or reset mail. <paramref name="GroupIds"/> are the groups
+/// he joins; an administrator limited to his groups names at least one of them.
 /// </summary>
 public sealed record CreateUserRequest(
-    string Email, string? Password, string? FirstName, string? LastName, bool MustChangePassword = false, IReadOnlyList<Guid>? RoleIds = null, bool IsActive = true);
+    string Email, string? Password, string? FirstName, string? LastName, bool MustChangePassword = false, IReadOnlyList<Guid>? RoleIds = null, bool IsActive = true,
+    IReadOnlyList<Guid>? GroupIds = null);
 
 /// <summary>Changes a user; the optional values left null stay as they are, empty texts clear them.</summary>
 public sealed record UpdateUserRequest(

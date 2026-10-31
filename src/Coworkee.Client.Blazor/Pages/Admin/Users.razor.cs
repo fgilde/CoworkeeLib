@@ -2,6 +2,7 @@ using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Data.Admin;
 using Coworkee.Client.Blazor.Localization;
+using Coworkee.Contracts;
 using Coworkee.Contracts.Identity;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components;
@@ -31,6 +32,8 @@ public partial class Users
 
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
+    [Inject] private Security.PermissionStore Permissions { get; set; } = null!;
+
     [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; } = null!;
 
     private ClaimsPrincipal _user = new();
@@ -50,7 +53,14 @@ public partial class Users
 
     private async Task CreateAsync()
     {
-        if (await Dialogs.ShowEditAsync(L["New user"], new NewUserForm(), SaveAsync, meta => NewUserMeta.Apply(meta, L, _roles)))
+        // the groups the administrator reaches (all of the organisation, or his own with group-scoped administration)
+        IReadOnlyList<GroupDto> groups = [];
+        if (await Permissions.HasAsync(IdentityPermissions.Groups.ManageMembers))
+        {
+            await Snackbar.RunAsync(async () => groups = (await Api.GetGroupsAsync(new PageRequest(1, 200))).Items);
+        }
+
+        if (await Dialogs.ShowEditAsync(L["New user"], new NewUserForm(), SaveAsync, meta => NewUserMeta.Apply(meta, L, _roles, groups)))
         {
             Snackbar.Add(L["User created"], Severity.Success);
             await _table.ReloadAsync();

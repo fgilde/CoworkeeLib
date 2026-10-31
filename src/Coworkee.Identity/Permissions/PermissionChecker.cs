@@ -313,7 +313,12 @@ internal sealed class PermissionChecker(
     }
 
     // ponytail: the role, group and direct grant ids are loaded into lists; one query with subqueries when a tenant has many thousands of grants
-    public async Task<Contracts.PagedResult<Guid>> UsersGrantedAsync(string permission, Guid? groupId, Contracts.PageRequest page, CancellationToken cancellationToken)
+    public Task<Contracts.PagedResult<Guid>> UsersGrantedAsync(string permission, Guid? groupId, Contracts.PageRequest page, CancellationToken cancellationToken) =>
+        UsersGrantedAsync(permission, groupId, page, cancellationToken, null);
+
+    /// <param name="within">Only these users (<see cref="Users.AdminReach.UserFilterAsync"/>).</param>
+    internal async Task<Contracts.PagedResult<Guid>> UsersGrantedAsync(
+        string permission, Guid? groupId, Contracts.PageRequest page, CancellationToken cancellationToken, System.Linq.Expressions.Expression<Func<User, bool>>? within)
     {
         var tenantId = currentUser.TenantId;
         var names = definitions.All.Select(d => d.Name).Where(n => definitions.Expand([n]).Contains(permission)).Append(permission).Distinct(StringComparer.Ordinal).ToList();
@@ -330,6 +335,11 @@ internal sealed class PermissionChecker(
             .Where(u => direct.Contains(u.Id)
                         || db.Set<IdentityUserRole<Guid>>().Any(r => r.UserId == u.Id && roleIds.Contains(r.RoleId))
                         || db.Set<UserGroupMember>().Any(m => m.UserId == u.Id && groupIds.Contains(m.GroupId)));
+        if (within is not null)
+        {
+            users = users.Where(within);
+        }
+
         if (groupId is { } group)
         {
             var code = await db.Set<UserGroup>().Where(g => g.Id == group).Select(g => g.Code).SingleOrDefaultAsync(cancellationToken);

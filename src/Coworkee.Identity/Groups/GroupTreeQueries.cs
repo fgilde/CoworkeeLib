@@ -21,15 +21,34 @@ internal sealed class SearchGroupTreeValidator : AbstractValidator<SearchGroupTr
     public SearchGroupTreeValidator() => RuleFor(q => q.Search).MaximumLength(200);
 }
 
-internal sealed class GetGroupChildrenHandler(CoworkeeDbContext db, IPermissionChecker permissions) : IHandler<GetGroupChildren, Result<IReadOnlyList<GroupNodeDto>>>
+internal sealed class GetGroupChildrenHandler(CoworkeeDbContext db, IPermissionChecker permissions, Users.AdminReach reach) : IHandler<GetGroupChildren, Result<IReadOnlyList<GroupNodeDto>>>
 {
-    public async Task<Result<IReadOnlyList<GroupNodeDto>>> HandleAsync(GetGroupChildren query, CancellationToken cancellationToken) =>
-        await GroupNodes.CanBrowseAsync(permissions, cancellationToken)
-            ? await db.Set<UserGroup>().Where(g => g.ParentId == query.ParentId).OrderBy(g => g.Name).ToNodes(db).ToListAsync(cancellationToken)
-            : GroupNodes.NoBrowse;
+    public async Task<Result<IReadOnlyList<GroupNodeDto>>> HandleAsync(GetGroupChildren query, CancellationToken cancellationToken)
+    {
+        if (!await GroupNodes.CanBrowseAsync(permissions, cancellationToken))
+        {
+            return GroupNodes.NoBrowse;
+        }
+
+        var groups = db.Set<UserGroup>().AsQueryable();
+        if (await reach.GroupIdsAsync(cancellationToken) is { } reached)
+        {
+            // a group-scoped administrator's roots are the top groups of his reach
+            var ids = reached.ToList();
+            groups = query.ParentId is null
+                ? groups.Where(g => EF.Parameter(ids).Contains(g.Id) && (g.ParentId == null || !EF.Parameter(ids).Contains(g.ParentId.Value)))
+                : groups.Where(g => EF.Parameter(ids).Contains(g.Id) && g.ParentId == query.ParentId);
+        }
+        else
+        {
+            groups = groups.Where(g => g.ParentId == query.ParentId);
+        }
+
+        return await groups.OrderBy(g => g.Name).ToNodes(db).ToListAsync(cancellationToken);
+    }
 }
 
-internal sealed class SearchGroupTreeHandler(CoworkeeDbContext db, IPermissionChecker permissions) : IHandler<SearchGroupTree, Result<IReadOnlyList<GroupNodeDto>>>
+internal sealed class SearchGroupTreeHandler(CoworkeeDbContext db, IPermissionChecker permissions, Users.AdminReach reach) : IHandler<SearchGroupTree, Result<IReadOnlyList<GroupNodeDto>>>
 {
     // ponytail: the first 200 matches in tree order, no paging; narrow the search text when it is not enough
     private const int MaxMatches = 200;
@@ -47,11 +66,13 @@ internal sealed class SearchGroupTreeHandler(CoworkeeDbContext db, IPermissionCh
             return Array.Empty<GroupNodeDto>();
         }
 
-        var matches = await db.Set<UserGroup>().AsNoTracking().Where(g => g.Code != null && g.Name.ToLower().Contains(search))
+        // a group-scoped administrator finds the groups of his reach, with their ancestors inside it
+        var reached = await reach.FilterGroupsAsync(db.Set<UserGroup>().AsNoTracking(), cancellationToken);
+        var matches = await reached.Where(g => g.Code != null && g.Name.ToLower().Contains(search))
             .OrderBy(g => g.Code).Take(MaxMatches).Select(g => g.Code!).ToListAsync(cancellationToken);
         var codes = matches.SelectMany(GroupCodes.Prefixes).Distinct().ToList();
         // up to 3200 prefixes, more than the 2100 parameters of a SQL Server command; the 3200-prefix test guards that EF.Parameter keeps this one parameter
-        var nodes = await db.Set<UserGroup>().Where(g => EF.Parameter(codes).Contains(g.Code!)).ToNodes(db).ToListAsync(cancellationToken);
+        var nodes = await reached.Where(g => EF.Parameter(codes).Contains(g.Code!)).ToNodes(db).ToListAsync(cancellationToken);
         return nodes.OrderBy(g => g.Code, StringComparer.Ordinal).ToList();
     }
 }

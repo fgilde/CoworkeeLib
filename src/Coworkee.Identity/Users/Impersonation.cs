@@ -31,7 +31,8 @@ internal sealed class StartImpersonationValidator : AbstractValidator<StartImper
     public StartImpersonationValidator() => RuleFor(c => c.UserId).NotEmpty();
 }
 
-internal sealed class StartImpersonationHandler(ICurrentUser currentUser, ImpersonationRules rules, ImpersonationTickets tickets, ILogger<StartImpersonationHandler> logger)
+internal sealed class StartImpersonationHandler(
+    ICurrentUser currentUser, ImpersonationRules rules, ImpersonationTickets tickets, AdminReach reach, ILogger<StartImpersonationHandler> logger)
     : IHandler<StartImpersonation, Result<ImpersonationTicketDto>>
 {
     public async Task<Result<ImpersonationTicketDto>> HandleAsync(StartImpersonation command, CancellationToken cancellationToken)
@@ -40,6 +41,12 @@ internal sealed class StartImpersonationHandler(ICurrentUser currentUser, Impers
         if (currentUser.UserId is not { } me)
         {
             return ImpersonationRules.Forbidden;
+        }
+
+        // a user out of reach is unknown; the rules check the groups again on every refresh
+        if (!await reach.ReachesUserAsync(command.UserId, cancellationToken))
+        {
+            return UserErrors.NotFound;
         }
 
         if (await rules.CheckAsync(me, currentUser.ImpersonatorId, command.UserId, currentUser.TenantId, cancellationToken) is { } error)

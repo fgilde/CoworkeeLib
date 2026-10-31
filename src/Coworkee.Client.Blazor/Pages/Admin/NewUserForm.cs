@@ -18,6 +18,9 @@ public sealed class NewUserForm
 
     public IEnumerable<Guid> Roles { get; set; } = [];
 
+    /// <summary>The groups the user joins; an administrator limited to his groups names at least one.</summary>
+    public IEnumerable<Guid> Groups { get; set; } = [];
+
     public bool SendInvitation { get; set; } = true;
 
     public string? Password { get; set; }
@@ -25,6 +28,6 @@ public sealed class NewUserForm
     public bool MustChangePassword { get; set; } = true;
 
     public CreateUserRequest ToRequest() => SendInvitation
-        ? new(Email.Trim(), null, FirstName, LastName, false, [.. Roles], IsActive)
-        : new(Email.Trim(), Password ?? string.Empty, FirstName, LastName, MustChangePassword, [.. Roles], IsActive);
+        ? new(Email.Trim(), null, FirstName, LastName, false, [.. Roles], IsActive, [.. Groups])
+        : new(Email.Trim(), Password ?? string.Empty, FirstName, LastName, MustChangePassword, [.. Roles], IsActive, [.. Groups]);
 }

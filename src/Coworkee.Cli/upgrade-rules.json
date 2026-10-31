@@ -541,6 +541,25 @@
           "unless": "DeleteAsync"
         }
       ]
+    },
+    {
+      "version": "0.0.1.55",
+      "breaking": [
+        "Identity: CreateUserRequest has a new last parameter GroupIds (the groups a new user joins; needs Identity.Groups.ManageMembers). Source that calls the constructor compiles unchanged; assemblies compiled against the old constructor are rebuilt. Without Coworkee:Identity:GroupScopedAdministration nothing else changes."
+      ],
+      "manual": [
+        {
+          "text": "Apps that keep customers apart in groups of one organisation turn on Coworkee:Identity:GroupScopedAdministration (appsettings). Administrators without Identity.Groups.ScopeAll then reach only their groups, the sub-groups and their members; give ScopeAll to operators and service clients that manage everyone. A scoped administrator creates users with CreateUserRequest.GroupIds (one of his groups, needs Identity.Groups.ManageMembers); top-level groups, the default group and roles need the whole organisation (403 identity.all_groups_required).",
+          "find": "IGroupScope|GroupScopePicker|Groups\\.ScopeAll",
+          "files": [ "src/**/*.cs", "src/**/*.razor", "src/**/appsettings*.json" ],
+          "unless": "GroupScopedAdministration"
+        },
+        {
+          "text": "With GroupScopedAdministration on, own requests that read or list users or groups for administration filter them with AdminReach (Coworkee.Identity.Users: FilterUsersAsync, FilterGroupsAsync, ReachesUserAsync, ReachesGroupAsync, CheckAllAsync), and own requests that change a user call AccountGuard.CheckUserAsync, which now includes the reach (404 out of reach, 403 identity.user_other_groups for users also in other groups). Own checks of the same rules before sending the library's requests can go.",
+          "find": "Set<User>\\(\\)|Set<UserGroup>\\(\\)|Set<UserGroupMember>\\(\\)",
+          "files": [ "src/**/*.cs" ]
+        }
+      ]
     }
   ]
 }

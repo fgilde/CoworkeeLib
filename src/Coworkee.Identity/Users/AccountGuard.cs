@@ -31,12 +31,23 @@ public sealed class AccountGuard(
 
     private PermissionChecker? _permissions;
 
-    /// <summary>Null when the caller may change the account of <paramref name="userId"/>, a user of his organisation; his own account always.</summary>
-    public async Task<Error?> CheckUserAsync(Guid userId, CancellationToken cancellationToken)
+    /// <summary>
+    /// Null when the caller may change the account of <paramref name="userId"/>, a user of his organisation; his own account always. With group-scoped
+    /// administration the user must be in his reach (else 404) with all his groups (<see cref="AdminReach.CheckUserAsync"/>).
+    /// </summary>
+    public Task<Error?> CheckUserAsync(Guid userId, CancellationToken cancellationToken) => CheckUserAsync(userId, false, cancellationToken);
+
+    /// <summary><see cref="CheckUserAsync(Guid, CancellationToken)"/>; <paramref name="joining"/>: the user joins a group of the caller, so a user of no group passes the reach.</summary>
+    internal async Task<Error?> CheckUserAsync(Guid userId, bool joining, CancellationToken cancellationToken)
     {
         if (userId == currentUser.UserId)
         {
             return null;
+        }
+
+        if (await services.GetRequiredService<AdminReach>().CheckUserAsync(userId, cancellationToken, joining) is { } outOfReach)
+        {
+            return outOfReach;
         }
 
         if (!await CallerIsAdminAsync(cancellationToken) && await AdminGuard.IsAdminAsync(db, userId, cancellationToken))
@@ -51,11 +62,13 @@ public sealed class AccountGuard(
 
     /// <summary><see cref="CheckUserAsync"/> for each of <paramref name="userIds"/>; the first refusal.</summary>
     // ponytail: one permission load per user; batch the loads if member changes of thousands of users at once get slow
-    public async Task<Error?> CheckUsersAsync(IEnumerable<Guid> userIds, CancellationToken cancellationToken)
+    public Task<Error?> CheckUsersAsync(IEnumerable<Guid> userIds, CancellationToken cancellationToken) => CheckUsersAsync(userIds, false, cancellationToken);
+
+    internal async Task<Error?> CheckUsersAsync(IEnumerable<Guid> userIds, bool joining, CancellationToken cancellationToken)
     {
         foreach (var userId in userIds.Distinct())
         {
-            if (await CheckUserAsync(userId, cancellationToken) is { } error)
+            if (await CheckUserAsync(userId, joining, cancellationToken) is { } error)
             {
                 return error;
             }

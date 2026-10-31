@@ -24,7 +24,7 @@ internal sealed class ImportGroupValidator : AbstractValidator<ImportGroup>
     public ImportGroupValidator() => RuleFor(c => c.Row.Name).Cascade(CascadeMode.Stop).NotEmpty().MaximumLength(200).Must(name => !name.Contains('/')).WithMessage("A group name cannot contain '/'.");
 }
 
-internal sealed class ImportGroupHandler(CoworkeeDbContext db) : IHandler<ImportGroup, Result<Guid>>
+internal sealed class ImportGroupHandler(CoworkeeDbContext db, Users.AdminReach reach) : IHandler<ImportGroup, Result<Guid>>
 {
     public async Task<Result<Guid>> HandleAsync(ImportGroup command, CancellationToken cancellationToken)
     {
@@ -40,11 +40,23 @@ internal sealed class ImportGroupHandler(CoworkeeDbContext db) : IHandler<Import
             }
         }
 
+        // a group-scoped administrator imports below the groups of his reach; a parent out of it is as unknown as a missing one (paths start at the roots)
+        if (await reach.CheckParentAsync(parentId, cancellationToken) is { } refused)
+        {
+            return parentId is null ? refused : GroupErrors.ParentPathUnknown;
+        }
+
         var name = command.Row.Name.Trim();
         var existing = await groups.SingleOrDefaultAsync(g => g.ParentId == parentId && g.Name == name, cancellationToken);
         if (existing is null)
         {
             return await CreateGroupHandler.AddAsync(db, new GroupRequest(name, command.Row.Description?.Trim(), parentId), cancellationToken);
+        }
+
+        // the default group below a group in reach
+        if (!await reach.ReachesGroupAsync(existing.Id, cancellationToken))
+        {
+            return Users.AdminReach.AllGroupsRequired;
         }
 
         if (!string.IsNullOrWhiteSpace(command.Row.Description))

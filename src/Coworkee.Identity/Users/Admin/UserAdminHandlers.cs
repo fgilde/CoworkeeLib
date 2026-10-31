@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Coworkee.Identity.Users.Admin;
 
 internal sealed class UserAdminHandlers(
-    CoworkeeDbContext db, ICurrentUser currentUser, UserManager<User> users, UserChanges changes, TimeProvider clock, AccountGuard guard)
+    CoworkeeDbContext db, ICurrentUser currentUser, UserManager<User> users, UserChanges changes, TimeProvider clock, AccountGuard guard, AdminReach reach)
     : IHandler<SetUserAvatar, Result>,
       IHandler<ResetUserTwoFactor, Result>,
       IHandler<ResetUserPasskeys, Result>,
@@ -99,7 +99,8 @@ internal sealed class UserAdminHandlers(
         }
 
         var wanted = command.GroupIds.Distinct().ToList();
-        var groups = await db.Set<UserGroup>().Include(g => g.Members)
+        // a group-scoped administrator sets the memberships within his reach; the others (the default group) stay
+        var groups = await (await reach.FilterGroupsAsync(db.Set<UserGroup>(), cancellationToken)).Include(g => g.Members)
             .Where(g => wanted.Contains(g.Id) || g.Members.Any(m => m.UserId == command.Id)).ToListAsync(cancellationToken);
         if (groups.Count(g => wanted.Contains(g.Id)) != wanted.Count)
         {

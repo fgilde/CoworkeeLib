@@ -19,15 +19,21 @@ internal sealed class MoveGroupValidator : AbstractValidator<MoveGroup>
 
 // ponytail: two concurrent cross moves ("A under B", "B under A") both pass the cycle check and commit a ParentId cycle;
 // serializable isolation or re-reading the parent's code right before the save closes it
-internal sealed class MoveGroupHandler(CoworkeeDbContext db) : IHandler<MoveGroup, Result>
+internal sealed class MoveGroupHandler(CoworkeeDbContext db, Users.AdminReach reach) : IHandler<MoveGroup, Result>
 {
     public async Task<Result> HandleAsync(MoveGroup command, CancellationToken cancellationToken)
     {
         var groups = db.Set<UserGroup>();
         var group = await groups.SingleOrDefaultAsync(g => g.Id == command.Id, cancellationToken);
-        if (group?.Code is not { } oldCode)
+        if (group?.Code is not { } oldCode || !await reach.ReachesGroupAsync(group.Id, cancellationToken))
         {
             return GroupErrors.NotFound;
+        }
+
+        // also when it stays where it is: a group-scoped administrator learns nothing about parents out of his reach
+        if (await reach.CheckParentAsync(command.ParentId, cancellationToken) is { } refused)
+        {
+            return refused;
         }
 
         string? parentCode = null;
