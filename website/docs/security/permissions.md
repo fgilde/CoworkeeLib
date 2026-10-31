@@ -110,7 +110,7 @@ Groups play two parts. As holders of permissions they act like roles: a role of 
 | `Identity.Groups.View` | read the group tree |
 | `Identity.Groups.ManageMembers` | add, remove, move members and mark owners |
 | `Identity.Groups.Manage` | create, move, delete groups; implies `ManageMembers` |
-| `Identity.Groups.ScopeAll` | every group of the organisation is accessible, for operators who belong to no unit |
+| `Identity.Groups.ScopeAll` | every group of the organisation is accessible, for operators who belong to no unit; with [group-scoped administration](#group-scoped-administration) every user and group can be administered |
 
 Rows the user may see are the business of the app's row filters (`IODataEntityFilter<T>` against `IGroupScope.ActiveAsync`); see [which groups a user sees](../features/identity.md#which-groups-a-user-sees).
 
@@ -129,7 +129,38 @@ if (await guard.CheckUserAsync(userId, ct) is { } refused) return refused;
 if (await guard.CheckRolesAsync(addedOrRemovedRoleIds, ct) is { } restricted) return restricted;
 ```
 
-Group-scoped administration (a manager limited to the users of his groups) is not part of the rule yet.
+With [group-scoped administration](#group-scoped-administration) the guard also refuses users outside the caller's groups.
+
+### Group-scoped administration
+
+Apps that keep several customers in one organisation, separated by groups, limit their administrators to their own groups with one setting:
+
+```json
+{ "Coworkee": { "Identity": { "GroupScopedAdministration": true } } }
+```
+
+It is off by default. An app whose groups are departments of one company lets its user managers manage everybody today; turned on, the manager of a department would no longer see colleagues of other departments or users without a group. Only where it changes nothing would it be harmless as a default (an organisation without groups, a manager of every group), so the app decides.
+
+With it on, an administrator reaches the groups he is a member of and their sub-groups (`IGroupScope.AccessibleAsync`, never narrowed by the group selection) and the users who are a member of one of them; himself always. The whole organisation, as before, is reached by holders of `Identity.Groups.ScopeAll`, administrators, the system (`ISystemDispatcher`, `CurrentUserScope.BeginSystem`) and whoever reaches every group. The [default group](../features/identity.md#owners-default-group-and-default-role) counts for nobody: everyone is in it, so it reaches no users, does not stand against changing a user and is changed only with the whole organisation.
+
+- **Reading:** users, groups and their grants out of reach answer 404 (`identity.user_not_found`, `identity.group_not_found`, `identity.grant_target_not_found`) and are absent from lists, counts and lookups: `GetUsers`, `GetGroups`, `/users/roles`, `/users/granted`, effective permissions, the language of a user, the group tree (`/groups/children` starts at the top groups of the reach, `/groups/tree` finds only groups in reach), and the OData sets `Users`, `Groups` and `ApiKeys`, so also exports, the global search, client entities, reports, mail recipients and the AI tools. A user's detail lists only his groups in reach, resource grants only principals in reach.
+- **Changing a user** (everything `AccountGuard.CheckUserAsync` guards, see above) needs all his groups in reach; a user who also belongs to a group outside answers `403 identity.user_other_groups`. Joining or leaving one of the caller's groups is such a change.
+- **Adding members and owners:** only users in reach or users of no group outside the reach (a new registration in the default group), so adding never takes in another customer's user; others are unknown (`400 Unknown user.`).
+- **Groups:** creating, renaming, moving and deleting groups, their members, roles and grants work inside the reach; a parent or group outside answers 404. A group at the top level (created, moved or imported there), the default group and roles (create, change, delete, their grants: they reach users everywhere) need the whole organisation, `403 identity.all_groups_required`. Group roles and grants and deleting a group are refused while a member also belongs to a group outside the reach (`identity.user_other_groups`): they change what he may do there.
+- **New users:** a scoped administrator names at least one of his groups (`CreateUserRequest.GroupIds`, needs `Identity.Groups.ManageMembers`; the *New user* dialog offers the groups), otherwise the user would be out of his reach at once.
+- **Resource grants** name users and groups in reach; grants to others are not listed and cannot be revoked by him.
+- **Log in as** a user out of reach answers 404; the [impersonation rule](#log-in-as-another-user) (each of the target's groups lies in the caller's) holds with or without the setting.
+
+Not limited: names, cards and avatars of colleagues (`/users/names`, `/users/cards`, `/users/{id}/avatar`), which every signed-in user reads for "created by" columns and the chat; the role list; the `ParentPath` column of the `Groups` set, which names the ancestors above the caller's own groups; and the `[Realtime]` change notifications of users and groups (ids only; the reload is filtered). Service clients belong to no group: give them `ScopeAll`.
+
+Own requests apply the same rules through `AdminReach` (`Coworkee.Identity.Users`):
+
+```csharp
+var users = await reach.FilterUsersAsync(db.Set<User>(), ct);              // the users in reach (all when the setting is off)
+if (!await reach.ReachesGroupAsync(groupId, ct)) return GroupNotFound;     // a group out of reach is unknown
+if (await guard.CheckUserAsync(userId, ct) is { } refused) return refused; // reach, superset and admin rule
+if (await reach.CheckAllAsync(ct) is { } restricted) return restricted;    // organisation-wide changes
+```
 
 ## Log in as another user
 

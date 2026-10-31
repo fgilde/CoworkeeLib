@@ -23,6 +23,8 @@ internal static class IdentityODataSets
         services.AddODataEntity<ApiKeys.ApiKey>("ApiKeys", ApiKeyPermissions.Manage, k => k.SecretHash);
         services.AddScoped<IODataEntityFilter<User>, UserODataFilter>();
         services.AddScoped<IODataEntityFilter<Role>, RoleODataFilter>();
+        services.AddScoped<IODataEntityFilter<UserGroup>, GroupODataFilter>();
+        services.AddScoped<IODataEntityFilter<ApiKeys.ApiKey>, ApiKeyODataFilter>();
         services.AddGlobalSearch<User>(s => s.Fields(u => u.UserName, u => u.Email, u => u.FirstName, u => u.LastName)
             .Title(u => $"{u.FirstName} {u.LastName}".Trim() is { Length: > 0 } name ? name : u.UserName).Subtitle(u => u.Email)
             .Url(u => $"/admin/users/{u.Id}").Thumbnail(u => u.AvatarUrl).Icon("Person"));

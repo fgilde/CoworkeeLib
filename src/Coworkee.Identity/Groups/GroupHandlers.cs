@@ -46,12 +46,12 @@ internal sealed class UpdateGroupValidator : AbstractValidator<UpdateGroup>
     public UpdateGroupValidator() => RuleFor(c => c.Group.Name).NotEmpty().MaximumLength(200);
 }
 
-internal sealed class GetGroupsHandler(CoworkeeDbContext db) : IHandler<GetGroups, Result<PagedResult<GroupDto>>>
+internal sealed class GetGroupsHandler(CoworkeeDbContext db, Users.AdminReach reach) : IHandler<GetGroups, Result<PagedResult<GroupDto>>>
 {
     public async Task<Result<PagedResult<GroupDto>>> HandleAsync(GetGroups query, CancellationToken cancellationToken)
     {
         var page = query.Page;
-        var groups = db.Set<UserGroup>().AsNoTracking().AsSplitQuery();
+        var groups = await reach.FilterGroupsAsync(db.Set<UserGroup>().AsNoTracking().AsSplitQuery(), cancellationToken);
         if (!string.IsNullOrWhiteSpace(page.Search))
         {
             var search = page.Search.Trim().ToLowerInvariant();
@@ -67,9 +67,10 @@ internal sealed class GetGroupsHandler(CoworkeeDbContext db) : IHandler<GetGroup
     }
 }
 
-internal sealed class CreateGroupHandler(CoworkeeDbContext db) : IHandler<CreateGroup, Result<Guid>>
+internal sealed class CreateGroupHandler(CoworkeeDbContext db, Users.AdminReach reach) : IHandler<CreateGroup, Result<Guid>>
 {
-    public Task<Result<Guid>> HandleAsync(CreateGroup command, CancellationToken cancellationToken) => AddAsync(db, command.Group, cancellationToken);
+    public async Task<Result<Guid>> HandleAsync(CreateGroup command, CancellationToken cancellationToken) =>
+        await reach.CheckParentAsync(command.Group.ParentId, cancellationToken) is { } refused ? refused : await AddAsync(db, command.Group, cancellationToken);
 
     /// <summary>Adds a group under its parent with the next free code; shared with the group import.</summary>
     internal static async Task<Result<Guid>> AddAsync(CoworkeeDbContext db, GroupRequest request, CancellationToken cancellationToken)
@@ -110,12 +111,12 @@ internal sealed class CreateGroupHandler(CoworkeeDbContext db) : IHandler<Create
     }
 }
 
-internal sealed class UpdateGroupHandler(CoworkeeDbContext db) : IHandler<UpdateGroup, Result>
+internal sealed class UpdateGroupHandler(CoworkeeDbContext db, Users.AdminReach reach) : IHandler<UpdateGroup, Result>
 {
     public async Task<Result> HandleAsync(UpdateGroup command, CancellationToken cancellationToken)
     {
         var group = await db.Set<UserGroup>().SingleOrDefaultAsync(g => g.Id == command.Id, cancellationToken);
-        if (group is null)
+        if (group is null || !await reach.ReachesGroupAsync(group.Id, cancellationToken))
         {
             return GroupErrors.NotFound;
         }
@@ -138,12 +139,12 @@ internal sealed class UpdateGroupHandler(CoworkeeDbContext db) : IHandler<Update
     }
 }
 
-internal sealed class DeleteGroupHandler(CoworkeeDbContext db, Users.AccountGuard guard) : IHandler<DeleteGroup, Result>
+internal sealed class DeleteGroupHandler(CoworkeeDbContext db, Users.AccountGuard guard, Users.AdminReach reach) : IHandler<DeleteGroup, Result>
 {
     public async Task<Result> HandleAsync(DeleteGroup command, CancellationToken cancellationToken)
     {
         var group = await db.Set<UserGroup>().SingleOrDefaultAsync(g => g.Id == command.Id, cancellationToken);
-        if (group is null)
+        if (group is null || !await reach.ReachesGroupAsync(group.Id, cancellationToken))
         {
             return GroupErrors.NotFound;
         }
@@ -156,10 +157,13 @@ internal sealed class DeleteGroupHandler(CoworkeeDbContext db, Users.AccountGuar
         var ids = subtree.Select(g => g.Id).ToList();
 
         // the members lose what the groups grant
-        if (await guard.CheckGroupsAsync(ids, cancellationToken) is { } restricted)
+        // the default group, also below a group in reach, belongs to the whole organisation
+        if ((await guard.CheckGroupsAsync(ids, cancellationToken) ?? await reach.CheckMembersAsync(ids, cancellationToken)
+                ?? (subtree.Any(g => g.IsDefault) ? await reach.CheckAllAsync(cancellationToken) : null)) is { } restricted)
         {
             return restricted;
         }
+
         db.RemoveRange(await db.Set<PermissionGrant>().Where(g => g.ProviderType == PermissionProviderType.Group && EF.Parameter(ids).Contains(g.ProviderKey)).ToListAsync(cancellationToken));
         db.RemoveRange(await db.Set<ResourcePermission>().Where(p => p.PrincipalType == PrincipalType.Group && EF.Parameter(ids).Contains(p.PrincipalId)).ToListAsync(cancellationToken));
         db.RemoveRange(subtree);
@@ -167,24 +171,25 @@ internal sealed class DeleteGroupHandler(CoworkeeDbContext db, Users.AccountGuar
     }
 }
 
-internal sealed class SetGroupMembersHandler(CoworkeeDbContext db, ICurrentUser currentUser, Users.AccountGuard guard) : IHandler<SetGroupMembers, Result>
+internal sealed class SetGroupMembersHandler(CoworkeeDbContext db, ICurrentUser currentUser, Users.AccountGuard guard, Users.AdminReach reach) : IHandler<SetGroupMembers, Result>
 {
     public async Task<Result> HandleAsync(SetGroupMembers command, CancellationToken cancellationToken)
     {
-        var group = await db.Set<UserGroup>().Include(g => g.Members).SingleOrDefaultAsync(g => g.Id == command.Id, cancellationToken);
+        var group = await GroupMembers.LoadAsync(db, reach, command.Id, cancellationToken);
         if (group is null)
         {
             return GroupErrors.NotFound;
         }
 
         var wanted = command.UserIds.Distinct().ToList();
-        if (!await GroupMembers.AllInTenantAsync(db, currentUser, wanted, cancellationToken))
+        if (!await GroupMembers.AllInTenantAsync(db, currentUser, reach, wanted, cancellationToken))
         {
             return GroupMembers.UnknownUser;
         }
 
-        var changed = wanted.Where(id => group.Members.All(m => m.UserId != id)).Concat(group.Members.Where(m => !wanted.Contains(m.UserId)).Select(m => m.UserId));
-        if (await GroupMembers.CheckAsync(guard, [group.Id], changed, cancellationToken) is { } refused)
+        var joining = wanted.Where(id => group.Members.All(m => m.UserId != id));
+        var leaving = group.Members.Where(m => !wanted.Contains(m.UserId)).Select(m => m.UserId);
+        if (await GroupMembers.CheckAsync(guard, [group.Id], joining, leaving, cancellationToken) is { } refused)
         {
             return refused;
         }
@@ -195,12 +200,13 @@ internal sealed class SetGroupMembersHandler(CoworkeeDbContext db, ICurrentUser 
     }
 }
 
-internal sealed class SetGroupRolesHandler(CoworkeeDbContext db, ICurrentUser currentUser, Roles.RoleOffer offer, Users.AccountGuard guard) : IHandler<SetGroupRoles, Result>
+internal sealed class SetGroupRolesHandler(CoworkeeDbContext db, ICurrentUser currentUser, Roles.RoleOffer offer, Users.AccountGuard guard, Users.AdminReach reach)
+    : IHandler<SetGroupRoles, Result>
 {
     public async Task<Result> HandleAsync(SetGroupRoles command, CancellationToken cancellationToken)
     {
         var group = await db.Set<UserGroup>().Include(g => g.Roles).SingleOrDefaultAsync(g => g.Id == command.Id, cancellationToken);
-        if (group is null)
+        if (group is null || !await reach.ReachesGroupAsync(group.Id, cancellationToken))
         {
             return GroupErrors.NotFound;
         }
@@ -214,9 +220,15 @@ internal sealed class SetGroupRolesHandler(CoworkeeDbContext db, ICurrentUser cu
 
         // the members gain or lose what the roles grant
         var added = wanted.Where(id => group.Roles.All(r => r.RoleId != id)).ToList();
-        if (await guard.CheckRolesAsync(added.Concat(group.Roles.Where(r => !wanted.Contains(r.RoleId)).Select(r => r.RoleId)), cancellationToken) is { } restricted)
+        var removed = group.Roles.Where(r => !wanted.Contains(r.RoleId)).Select(r => r.RoleId).ToList();
+        if (await guard.CheckRolesAsync(added.Concat(removed), cancellationToken) is { } restricted)
         {
             return restricted;
+        }
+
+        if (added.Count + removed.Count > 0 && await reach.CheckMembersAsync([group.Id], cancellationToken) is { } shared)
+        {
+            return shared;
         }
 
         // new users join the default group and get its roles

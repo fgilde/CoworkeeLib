@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Coworkee.Account.Users;
 
 // the language is the user's own setting; administrators read and write it for users of their organisation
-internal sealed class UserLanguageHandlers(CoworkeeDbContext db, ICurrentUser currentUser, Identity.Users.AccountGuard guard)
+internal sealed class UserLanguageHandlers(CoworkeeDbContext db, ICurrentUser currentUser, Identity.Users.AccountGuard guard, Identity.Users.AdminReach reach)
     : IHandler<GetUserLanguage, Result<UserLanguageDto>>, IHandler<SetUserLanguage, Result>
 {
     public async Task<Result<UserLanguageDto>> HandleAsync(GetUserLanguage query, CancellationToken cancellationToken) =>
@@ -49,8 +49,8 @@ internal sealed class UserLanguageHandlers(CoworkeeDbContext db, ICurrentUser cu
         return Result.Success();
     }
 
-    private Task<bool> InTenantAsync(Guid id, CancellationToken cancellationToken) =>
-        db.Set<User>().AnyAsync(u => u.Id == id && u.TenantId == currentUser.TenantId, cancellationToken);
+    private async Task<bool> InTenantAsync(Guid id, CancellationToken cancellationToken) =>
+        await db.Set<User>().AnyAsync(u => u.Id == id && u.TenantId == currentUser.TenantId, cancellationToken) && await reach.ReachesUserAsync(id, cancellationToken);
 
     private IQueryable<SettingValue> Stored(Guid userId) =>
         db.Set<SettingValue>().Where(s => s.Name == LocalizationSettings.Culture && s.Scope == SettingScope.User && s.ScopeKey == userId);

@@ -33,20 +33,32 @@ internal sealed class GetPermissionDefinitionsHandler(IPermissionDefinitionManag
     }
 }
 
-internal sealed class GetGrantsHandler(CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<GetGrants, Result<IReadOnlyList<string>>>
+internal sealed class GetGrantsHandler(CoworkeeDbContext db, ICurrentUser currentUser, Users.AdminReach reach) : IHandler<GetGrants, Result<IReadOnlyList<string>>>
 {
     public async Task<Result<IReadOnlyList<string>>> HandleAsync(GetGrants query, CancellationToken cancellationToken) =>
-        await db.Set<PermissionGrant>()
-            .Where(g => g.ProviderType == query.ProviderType && g.ProviderKey == query.ProviderKey && g.TenantId == currentUser.TenantId)
-            .OrderBy(g => g.Name)
-            .Select(g => g.Name)
-            .ToListAsync(cancellationToken);
+        !await SetGrantsHandler.ReachesAsync(reach, query.ProviderType, query.ProviderKey, cancellationToken)
+            ? SetGrantsHandler.NotFound
+            : await db.Set<PermissionGrant>()
+                .Where(g => g.ProviderType == query.ProviderType && g.ProviderKey == query.ProviderKey && g.TenantId == currentUser.TenantId)
+                .OrderBy(g => g.Name)
+                .Select(g => g.Name)
+                .ToListAsync(cancellationToken);
 }
 
 internal sealed class SetGrantsHandler(
-    CoworkeeDbContext db, ICurrentUser currentUser, IPermissionDefinitionManager definitions, Roles.RoleOffer offer, Users.AccountGuard guard)
+    CoworkeeDbContext db, ICurrentUser currentUser, IPermissionDefinitionManager definitions, Roles.RoleOffer offer, Users.AccountGuard guard, Users.AdminReach reach)
     : IHandler<SetGrants, Result>
 {
+    internal static readonly Error NotFound = Error.NotFound("identity.grant_target_not_found", "The role, user or group does not exist.");
+
+    /// <summary>Users and groups in the caller's reach (<see cref="Users.AdminReach"/>); roles are everyone's.</summary>
+    internal static async Task<bool> ReachesAsync(Users.AdminReach reach, PermissionProviderType type, Guid key, CancellationToken cancellationToken) => type switch
+    {
+        PermissionProviderType.User => await reach.ReachesUserAsync(key, cancellationToken),
+        PermissionProviderType.Group => await reach.ReachesGroupAsync(key, cancellationToken),
+        _ => true,
+    };
+
     public async Task<Result> HandleAsync(SetGrants command, CancellationToken cancellationToken)
     {
         var unknown = command.Names.Where(n => !definitions.Exists(n)).ToArray();
@@ -55,12 +67,19 @@ internal sealed class SetGrantsHandler(
             return Error.Validation(nameof(command.Names), $"Unknown permissions: {string.Join(", ", unknown)}");
         }
 
-        if (!await ProviderExistsAsync(command, cancellationToken))
+        if (!await ProviderExistsAsync(command, cancellationToken) || !await ReachesAsync(reach, command.ProviderType, command.ProviderKey, cancellationToken))
         {
-            return Error.NotFound("identity.grant_target_not_found", "The role, user or group does not exist.");
+            return NotFound;
         }
 
-        if (command.ProviderType == PermissionProviderType.User && await guard.CheckUserAsync(command.ProviderKey, cancellationToken) is { } forbidden)
+        // a role reaches its users everywhere; a group's grants reach its members' work for other groups
+        var outOfReach = command.ProviderType switch
+        {
+            PermissionProviderType.User => await guard.CheckUserAsync(command.ProviderKey, cancellationToken),
+            PermissionProviderType.Group => await reach.CheckMembersAsync([command.ProviderKey], cancellationToken),
+            _ => await reach.CheckAllAsync(cancellationToken),
+        };
+        if (outOfReach is { } forbidden)
         {
             return forbidden;
         }
@@ -113,12 +132,13 @@ internal sealed class SetGrantsHandler(
 [RequiresPermission(IdentityPermissions.Users.View)]
 public sealed record GetEffectivePermissions(Guid UserId) : IQuery<Result<IReadOnlyList<string>>>;
 
-internal sealed class GetEffectivePermissionsHandler(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionChecker checker)
+internal sealed class GetEffectivePermissionsHandler(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionChecker checker, Users.AdminReach reach)
     : IHandler<GetEffectivePermissions, Result<IReadOnlyList<string>>>
 {
     public async Task<Result<IReadOnlyList<string>>> HandleAsync(GetEffectivePermissions query, CancellationToken cancellationToken)
     {
-        if (!await db.Set<User>().AnyAsync(u => u.Id == query.UserId && u.TenantId == currentUser.TenantId, cancellationToken))
+        if (!await db.Set<User>().AnyAsync(u => u.Id == query.UserId && u.TenantId == currentUser.TenantId, cancellationToken)
+            || !await reach.ReachesUserAsync(query.UserId, cancellationToken))
         {
             return Error.NotFound("identity.user_not_found", "The user does not exist.");
         }

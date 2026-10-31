@@ -89,9 +89,10 @@ public partial class GroupTree
         var level = _items;
         foreach (var prefix in GroupPaths.Prefixes(code).SkipLast(1))
         {
+            // ancestors above the roots of a group-scoped administrator's reach are not in the tree
             if (level.FirstOrDefault(i => i.Value!.Code == prefix) is not { } item)
             {
-                break;
+                continue;
             }
 
             var children = item.Children is null ? await ChildrenOfAsync(item.Value!.Id) : [.. Typed(item.Children)];

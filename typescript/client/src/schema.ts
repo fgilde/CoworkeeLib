@@ -15220,6 +15220,7 @@ export interface components {
             roleIds?: null | string[];
             /** @default true */
             isActive: boolean;
+            groupIds?: null | string[];
         };
         CustomerDto: {
             /** Format: uuid */

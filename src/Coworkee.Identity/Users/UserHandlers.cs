@@ -108,12 +108,12 @@ internal sealed class CreateUserValidator : AbstractValidator<CreateUser>
     }
 }
 
-internal sealed class GetUsersHandler(CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<GetUsers, Result<PagedResult<UserDto>>>
+internal sealed class GetUsersHandler(CoworkeeDbContext db, ICurrentUser currentUser, AdminReach reach) : IHandler<GetUsers, Result<PagedResult<UserDto>>>
 {
     public async Task<Result<PagedResult<UserDto>>> HandleAsync(GetUsers query, CancellationToken cancellationToken)
     {
         var page = query.Page;
-        var users = db.Set<User>().AsNoTracking().Where(u => u.TenantId == currentUser.TenantId);
+        var users = await reach.FilterUsersAsync(db.Set<User>().AsNoTracking().Where(u => u.TenantId == currentUser.TenantId), cancellationToken);
         if (!string.IsNullOrWhiteSpace(page.Search))
         {
             var search = page.Search.Trim().ToLowerInvariant();
@@ -129,8 +129,18 @@ internal sealed class GetUsersHandler(CoworkeeDbContext db, ICurrentUser current
     }
 }
 
-internal sealed class CreateUserHandler(UserManager<User> users, CoworkeeDbContext db, ICurrentUser currentUser, AccountGuard guard) : IHandler<CreateUser, Result<UserDto>>
+internal sealed class CreateUserHandler(
+    UserManager<User> users, CoworkeeDbContext db, ICurrentUser currentUser, AccountGuard guard, AdminReach reach, IPermissionChecker permissions)
+    : IHandler<CreateUser, Result<UserDto>>
 {
+    private static readonly Error UnknownGroup = Error.Validation(nameof(CreateUserRequest.GroupIds), "Unknown group.");
+
+    // the same answer the pipeline gives for a missing [RequiresPermission]
+    private static readonly Error NoMembers = Error.Forbidden("auth.forbidden", $"Permission '{IdentityPermissions.Groups.ManageMembers}' is required.");
+
+    // a group-scoped administrator places the user in his groups, else he could not reach him afterwards
+    private static readonly Error GroupRequired = Error.Validation(nameof(CreateUserRequest.GroupIds), "Choose at least one group you administer.");
+
     public async Task<Result<UserDto>> HandleAsync(CreateUser command, CancellationToken cancellationToken)
     {
         var request = command.User;
@@ -138,6 +148,12 @@ internal sealed class CreateUserHandler(UserManager<User> users, CoworkeeDbConte
         if (await RolesErrorAsync(roleIds, cancellationToken) is { } error)
         {
             return error;
+        }
+
+        var groupIds = request.GroupIds?.Distinct().ToList() ?? [];
+        if (await GroupsErrorAsync(groupIds, cancellationToken) is { } groupError)
+        {
+            return groupError;
         }
 
         var email = request.Email.Trim();
@@ -160,6 +176,7 @@ internal sealed class CreateUserHandler(UserManager<User> users, CoworkeeDbConte
         }
 
         db.AddRange(roleIds.Select(id => new IdentityUserRole<Guid> { UserId = user.Id, RoleId = id }));
+        db.AddRange(groupIds.Select(id => new UserGroupMember { GroupId = id, UserId = user.Id }));
         var roles = await db.Set<Role>().Where(r => roleIds.Contains(r.Id)).Select(r => new RoleRefDto(r.Id, r.Name!)).ToListAsync(cancellationToken);
         return user.ToDto(new Dictionary<Guid, List<RoleRefDto>> { [user.Id] = roles });
     }
@@ -173,21 +190,40 @@ internal sealed class CreateUserHandler(UserManager<User> users, CoworkeeDbConte
 
         return await guard.CheckRolesAsync(roleIds, cancellationToken);
     }
+
+    private async Task<Error?> GroupsErrorAsync(List<Guid> groupIds, CancellationToken cancellationToken)
+    {
+        if (groupIds.Count == 0)
+        {
+            return await reach.AllAsync(cancellationToken) ? null : GroupRequired;
+        }
+
+        if (!await permissions.IsGrantedAsync(IdentityPermissions.Groups.ManageMembers, cancellationToken))
+        {
+            return NoMembers;
+        }
+
+        // the tenant filter hides groups of other tenants
+        var known = await (await reach.FilterGroupsAsync(db.Set<UserGroup>(), cancellationToken)).CountAsync(g => groupIds.Contains(g.Id), cancellationToken);
+        return known != groupIds.Count ? UnknownGroup : await guard.CheckGroupsAsync(groupIds, cancellationToken);
+    }
 }
 
-internal sealed class UserDetailHandlers(CoworkeeDbContext db, ICurrentUser currentUser, TimeProvider clock, AccountGuard guard)
+internal sealed class UserDetailHandlers(CoworkeeDbContext db, ICurrentUser currentUser, TimeProvider clock, AccountGuard guard, AdminReach reach)
     : IHandler<GetUser, Result<UserDetailDto>>, IHandler<UnlockUser, Result>
 {
     public async Task<Result<UserDetailDto>> HandleAsync(GetUser query, CancellationToken cancellationToken)
     {
-        if (await db.Set<User>().AsNoTracking().SingleOrDefaultAsync(u => u.Id == query.Id && u.TenantId == currentUser.TenantId, cancellationToken) is not { } user)
+        var users = await reach.FilterUsersAsync(db.Set<User>().AsNoTracking(), cancellationToken);
+        if (await users.SingleOrDefaultAsync(u => u.Id == query.Id && u.TenantId == currentUser.TenantId, cancellationToken) is not { } user)
         {
             return UserErrors.NotFound;
         }
 
         var roles = await UserRoles.ForAsync(db, [user.Id], cancellationToken);
+        // a user shared with groups out of reach: their names stay unknown
         var groups = await (from member in db.Set<UserGroupMember>()
-                            join userGroup in db.Set<UserGroup>() on member.GroupId equals userGroup.Id
+                            join userGroup in await reach.FilterGroupsAsync(db.Set<UserGroup>(), cancellationToken) on member.GroupId equals userGroup.Id
                             where member.UserId == user.Id
                             orderby userGroup.Name
                             select new GroupRefDto(userGroup.Id, userGroup.Name)).ToListAsync(cancellationToken);

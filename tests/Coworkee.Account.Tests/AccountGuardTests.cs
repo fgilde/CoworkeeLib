@@ -51,6 +51,39 @@ public sealed class AccountGuardTests(AccountApp app) : IAsyncLifetime
         (await RunAsync(operation, Admin, _rich)).IsSuccessStatusCode.ShouldBeTrue();
     }
 
+    [Theory]
+    [InlineData("email")]
+    [InlineData("invitation")]
+    [InlineData("password-reset")]
+    [InlineData("language")]
+    public async Task A_group_scoped_manager_reaches_only_users_of_his_groups(string operation)
+    {
+        var options = app.App.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<Coworkee.Identity.Users.IdentityAdministrationOptions>>().Value;
+        var a = await GroupAsync("Customer A");
+        var b = await GroupAsync("Customer B");
+        var other = await UserWithAsync("other@b.test", IdentityPermissions.Users.View);
+        var shared = await UserWithAsync("shared@ab.test", IdentityPermissions.Users.View);
+        await JoinAsync(a, _manager, _peer, shared);
+        await JoinAsync(b, other, shared);
+        options.GroupScopedAdministration = true;
+        try
+        {
+            (await RunAsync(operation, Manager, other)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+            (await Manager.GetAsync($"/api/v1/identity/users/{other}/language", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+            var onShared = await RunAsync(operation, Manager, shared);
+            onShared.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+            (await CodeAsync(onShared)).ShouldBe("identity.user_other_groups");
+            (await RunAsync(operation, Manager, _peer)).IsSuccessStatusCode.ShouldBeTrue();
+            (await RunAsync(operation, Admin, other)).IsSuccessStatusCode.ShouldBeTrue();
+        }
+        finally
+        {
+            options.GroupScopedAdministration = false;
+        }
+
+        (await RunAsync(operation, Manager, other)).IsSuccessStatusCode.ShouldBeTrue();
+    }
+
     [Fact]
     public async Task A_manager_cannot_take_over_an_administrator_by_his_address()
     {
@@ -83,6 +116,12 @@ public sealed class AccountGuardTests(AccountApp app) : IAsyncLifetime
         (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{user.Id}/roles", new IdListRequest([role]), Ct)).EnsureSuccessStatusCode();
         return user.Id;
     }
+
+    private async Task<Guid> GroupAsync(string name) =>
+        await (await Admin.PostAsJsonAsync("/api/v1/identity/groups", new GroupRequest(name, null), Ct)).Content.ReadFromJsonAsync<Guid>(Ct);
+
+    private async Task JoinAsync(Guid groupId, params Guid[] userIds) =>
+        (await Admin.PostAsJsonAsync($"/api/v1/identity/groups/{groupId}/members/add", new IdListRequest(userIds), Ct)).EnsureSuccessStatusCode();
 
     private static async Task<string?> CodeAsync(HttpResponseMessage response) =>
         (await response.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("code").GetString();

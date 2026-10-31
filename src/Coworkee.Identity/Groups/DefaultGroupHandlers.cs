@@ -15,7 +15,8 @@ public sealed record GetDefaultGroup : IQuery<Result<DefaultGroupDto>>;
 [RequiresPermission(IdentityPermissions.Groups.Manage)]
 public sealed record SetDefaultGroup(Guid? GroupId) : ICommand<Result>;
 
-internal sealed class DefaultGroupHandlers(CoworkeeDbContext db, Roles.RoleOffer offer) : IHandler<GetDefaultGroup, Result<DefaultGroupDto>>, IHandler<SetDefaultGroup, Result>
+internal sealed class DefaultGroupHandlers(CoworkeeDbContext db, Roles.RoleOffer offer, Users.AdminReach reach)
+    : IHandler<GetDefaultGroup, Result<DefaultGroupDto>>, IHandler<SetDefaultGroup, Result>
 {
     public async Task<Result<DefaultGroupDto>> HandleAsync(GetDefaultGroup query, CancellationToken cancellationToken) =>
         new DefaultGroupDto(await db.Set<UserGroup>().Where(g => g.IsDefault).Select(g => (Guid?)g.Id).FirstOrDefaultAsync(cancellationToken));
@@ -25,6 +26,12 @@ internal sealed class DefaultGroupHandlers(CoworkeeDbContext db, Roles.RoleOffer
 
     public async Task<Result> HandleAsync(SetDefaultGroup command, CancellationToken cancellationToken)
     {
+        // every new user of the organisation joins it
+        if (await reach.CheckAllAsync(cancellationToken) is { } restricted)
+        {
+            return restricted;
+        }
+
         // inside a transaction of the caller the clash is its business: Postgres has aborted that transaction, so the error goes up
         var own = db.Database.CurrentTransaction is null;
         try

@@ -110,7 +110,7 @@ Gruppen haben zwei Aufgaben. Als Träger von Berechtigungen wirken sie wie Rolle
 | `Identity.Groups.View` | den Gruppenbaum lesen |
 | `Identity.Groups.ManageMembers` | Mitglieder hinzufügen, entfernen, verschieben und Besitzer markieren |
 | `Identity.Groups.Manage` | Gruppen anlegen, verschieben, löschen; schließt `ManageMembers` ein |
-| `Identity.Groups.ScopeAll` | jede Gruppe der Organisation ist erreichbar, für Bearbeiter, die zu keiner Einheit gehören |
+| `Identity.Groups.ScopeAll` | jede Gruppe der Organisation ist erreichbar, für Bearbeiter, die zu keiner Einheit gehören; mit [gruppenbezogener Verwaltung](#gruppenbezogene-verwaltung) lässt sich jeder Benutzer und jede Gruppe verwalten |
 
 Welche Zeilen ein Benutzer sieht, entscheiden die Zeilenfilter der App (`IODataEntityFilter<T>` gegen `IGroupScope.ActiveAsync`); siehe [Welche Gruppen ein Benutzer sieht](../features/identity.md#welche-gruppen-ein-benutzer-sieht).
 
@@ -129,7 +129,38 @@ if (await guard.CheckUserAsync(userId, ct) is { } refused) return refused;
 if (await guard.CheckRolesAsync(addedOrRemovedRoleIds, ct) is { } restricted) return restricted;
 ```
 
-Verwaltung auf Gruppen beschränkt (ein Verwalter nur für die Benutzer seiner Gruppen) gehört noch nicht zur Regel.
+Mit [gruppenbezogener Verwaltung](#gruppenbezogene-verwaltung) lehnt der Guard auch Benutzer außerhalb der Gruppen des Aufrufers ab.
+
+### Gruppenbezogene Verwaltung
+
+Apps, die mehrere Kunden in einer Organisation führen und durch Gruppen trennen, beschränken ihre Verwalter mit einer Einstellung auf die eigenen Gruppen:
+
+```json
+{ "Coworkee": { "Identity": { "GroupScopedAdministration": true } } }
+```
+
+Sie ist standardmäßig aus. Eine App, deren Gruppen Abteilungen einer Firma sind, lässt ihre Benutzerverwalter heute alle verwalten; eingeschaltet sähe der Verwalter einer Abteilung keine Kollegen anderer Abteilungen und keine Benutzer ohne Gruppe mehr. Harmlos als Standard wäre sie nur, wo sie nichts ändert (eine Organisation ohne Gruppen, ein Verwalter jeder Gruppe); deshalb entscheidet die App.
+
+Eingeschaltet erreicht ein Verwalter die Gruppen, in denen er Mitglied ist, ihre Untergruppen (`IGroupScope.AccessibleAsync`, nie durch die Gruppenauswahl eingeschränkt) und die Benutzer, die Mitglied in einer davon sind; sich selbst immer. Die ganze Organisation wie bisher erreichen Inhaber von `Identity.Groups.ScopeAll`, Administratoren, das System (`ISystemDispatcher`, `CurrentUserScope.BeginSystem`) und wer jede Gruppe erreicht. Die [Standardgruppe](../features/identity.md#besitzer-standardgruppe-und-standardrolle) zählt für niemanden: Alle sind darin, also erreicht sie keine Benutzer, steht keiner Änderung eines Benutzers entgegen und wird nur mit der ganzen Organisation geändert.
+
+- **Lesen:** Benutzer, Gruppen und ihre Berechtigungen außerhalb der Reichweite antworten mit 404 (`identity.user_not_found`, `identity.group_not_found`, `identity.grant_target_not_found`) und fehlen in Listen, Zählungen und Nachschlagen: `GetUsers`, `GetGroups`, `/users/roles`, `/users/granted`, effektive Berechtigungen, die Sprache eines Benutzers, der Gruppenbaum (`/groups/children` beginnt bei den obersten Gruppen der Reichweite, `/groups/tree` findet nur Gruppen darin) und die OData-Sets `Users`, `Groups` und `ApiKeys`, damit auch Exporte, die globale Suche, Client-Entities, Berichte, Mail-Empfänger und die KI-Werkzeuge. Die Detailansicht eines Benutzers nennt nur seine Gruppen in der Reichweite, Ressourcenfreigaben nur Empfänger in der Reichweite.
+- **Einen Benutzer ändern** (alles, was `AccountGuard.CheckUserAsync` schützt, siehe oben) braucht alle seine Gruppen in der Reichweite; ein Benutzer, der auch zu einer Gruppe außerhalb gehört, antwortet mit `403 identity.user_other_groups`. Einer Gruppe des Aufrufers beitreten oder sie verlassen ist eine solche Änderung.
+- **Mitglieder und Besitzer hinzufügen:** nur Benutzer in der Reichweite oder Benutzer ohne Gruppe außerhalb der Reichweite (eine neue Registrierung in der Standardgruppe), damit Hinzufügen nie den Benutzer eines anderen Kunden hereinholt; andere sind unbekannt (`400 Unknown user.`).
+- **Gruppen:** Gruppen anlegen, umbenennen, verschieben und löschen, ihre Mitglieder, Rollen und Berechtigungen gehen innerhalb der Reichweite; eine übergeordnete Gruppe oder Gruppe außerhalb antwortet mit 404. Eine Gruppe auf oberster Ebene (dort angelegt, dorthin verschoben oder importiert), die Standardgruppe und Rollen (anlegen, ändern, löschen, ihre Berechtigungen: sie erreichen Benutzer überall) brauchen die ganze Organisation, `403 identity.all_groups_required`. Gruppenrollen und -berechtigungen und das Löschen einer Gruppe werden abgelehnt, solange ein Mitglied auch zu einer Gruppe außerhalb der Reichweite gehört (`identity.user_other_groups`): Sie ändern, was er dort darf.
+- **Neue Benutzer:** Ein beschränkter Verwalter nennt mindestens eine seiner Gruppen (`CreateUserRequest.GroupIds`, braucht `Identity.Groups.ManageMembers`; der Dialog *Neuer Benutzer* bietet die Gruppen an), sonst wäre der Benutzer sofort außerhalb seiner Reichweite.
+- **Ressourcenfreigaben** nennen Benutzer und Gruppen in der Reichweite; Freigaben an andere sieht er nicht und entzieht er nicht.
+- **Anmelden als** ein Benutzer außerhalb der Reichweite antwortet mit 404; die [Regel fürs Anmelden als](#als-anderer-benutzer-anmelden) (jede Gruppe des Ziels liegt in denen des Aufrufers) gilt mit und ohne die Einstellung.
+
+Nicht beschränkt: Namen, Karten und Avatare von Kollegen (`/users/names`, `/users/cards`, `/users/{id}/avatar`), die jeder angemeldete Benutzer für "Erstellt von"-Spalten und den Chat liest; die Rollenliste; die Spalte `ParentPath` des Sets `Groups`, die die Vorfahren über den eigenen Gruppen des Aufrufers nennt; und die `[Realtime]`-Änderungsmeldungen zu Benutzern und Gruppen (nur Ids; das Neuladen ist gefiltert). Service-Clients gehören zu keiner Gruppe: Sie bekommen `ScopeAll`.
+
+Eigene Requests wenden dieselben Regeln über `AdminReach` (`Coworkee.Identity.Users`) an:
+
+```csharp
+var users = await reach.FilterUsersAsync(db.Set<User>(), ct);              // die Benutzer in der Reichweite (alle, wenn die Einstellung aus ist)
+if (!await reach.ReachesGroupAsync(groupId, ct)) return GroupNotFound;     // eine Gruppe außerhalb ist unbekannt
+if (await guard.CheckUserAsync(userId, ct) is { } refused) return refused; // Reichweite, Obermengen- und Administratorregel
+if (await reach.CheckAllAsync(ct) is { } restricted) return restricted;    // Änderungen für die ganze Organisation
+```
 
 ## Als anderer Benutzer anmelden
 

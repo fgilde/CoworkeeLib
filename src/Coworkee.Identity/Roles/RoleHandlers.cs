@@ -43,10 +43,16 @@ internal sealed class GetRolesHandler(CoworkeeDbContext db, ICurrentUser current
             .ToListAsync(cancellationToken);
 }
 
-internal sealed class CreateRoleHandler(CoworkeeDbContext db, ICurrentUser currentUser, RoleOffer offer) : IHandler<CreateRole, Result<Guid>>
+internal sealed class CreateRoleHandler(CoworkeeDbContext db, ICurrentUser currentUser, RoleOffer offer, Users.AdminReach reach) : IHandler<CreateRole, Result<Guid>>
 {
     public async Task<Result<Guid>> HandleAsync(CreateRole command, CancellationToken cancellationToken)
     {
+        // roles are the organisation's: a group-scoped administrator uses them, he does not shape them
+        if (await reach.CheckAllAsync(cancellationToken) is { } restricted)
+        {
+            return restricted;
+        }
+
         var normalized = command.Role.Name.Trim().ToUpperInvariant();
         if (await RoleNames.TakenAsync(db, normalized, currentUser.TenantId, null, cancellationToken))
         {
@@ -68,7 +74,7 @@ internal sealed class CreateRoleHandler(CoworkeeDbContext db, ICurrentUser curre
     }
 }
 
-internal sealed class UpdateRoleHandler(CoworkeeDbContext db, ICurrentUser currentUser, RoleOffer offer) : IHandler<UpdateRole, Result>
+internal sealed class UpdateRoleHandler(CoworkeeDbContext db, ICurrentUser currentUser, RoleOffer offer, Users.AdminReach reach) : IHandler<UpdateRole, Result>
 {
     public async Task<Result> HandleAsync(UpdateRole command, CancellationToken cancellationToken)
     {
@@ -76,6 +82,11 @@ internal sealed class UpdateRoleHandler(CoworkeeDbContext db, ICurrentUser curre
         if (role is null)
         {
             return RoleNames.NotFound;
+        }
+
+        if (await reach.CheckAllAsync(cancellationToken) is { } restricted)
+        {
+            return restricted;
         }
 
         var normalized = command.Role.Name.Trim().ToUpperInvariant();
@@ -99,7 +110,7 @@ internal sealed class UpdateRoleHandler(CoworkeeDbContext db, ICurrentUser curre
     }
 }
 
-internal sealed class DeleteRoleHandler(CoworkeeDbContext db, ICurrentUser currentUser, Users.AccountGuard guard) : IHandler<DeleteRole, Result>
+internal sealed class DeleteRoleHandler(CoworkeeDbContext db, ICurrentUser currentUser, Users.AccountGuard guard, Users.AdminReach reach) : IHandler<DeleteRole, Result>
 {
     public async Task<Result> HandleAsync(DeleteRole command, CancellationToken cancellationToken)
     {
@@ -114,8 +125,8 @@ internal sealed class DeleteRoleHandler(CoworkeeDbContext db, ICurrentUser curre
             return Error.Conflict("identity.role_system", "System roles cannot be deleted.");
         }
 
-        // its members lose what it grants
-        if (await guard.CheckRolesAsync([role.Id], cancellationToken) is { } restricted)
+        // its members lose what it grants, wherever they work
+        if ((await reach.CheckAllAsync(cancellationToken) ?? await guard.CheckRolesAsync([role.Id], cancellationToken)) is { } restricted)
         {
             return restricted;
         }
