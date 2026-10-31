@@ -31,6 +31,8 @@ Domain events (`Raise(...)` on an `AggregateRoot`) and integration events go thr
 
 `Coworkee:Database:Provider` picks PostgreSQL (the default), SQL Server or SQLite. The provider-specific bits, such as outbox row locks or where Hangfire keeps its jobs, live behind small seams in the library. SQLite is for demos and one-machine setups: one writer at a time, background jobs in memory.
 
+Tables of another database stay in their own plain `DbContext`: `AddCoworkeeExternalDbContext<TContext>()` lets OData sets, row filters, search, export, reports and client entities read its entities, and the unit of work saves it along with the app's context ([external databases](../fundamentals/persistence.md#external-databases)).
+
 ## OData sets with facets
 
 ```csharp
@@ -39,9 +41,11 @@ context.Services.AddODataEntity<Product>("Products", CatalogPermissions.Products
 
 That line gives the entity a set with `$filter`, `$orderby`, `$expand`, paging and counts. The permission is checked on every call, and tenant and soft delete filters apply as everywhere. Rows that only some users may see go through an `IODataEntityFilter<T>`, which narrows lists, counts and facets alike.
 
-Properties marked `[ProvideFacet]` come back as facet groups: each option with label, count and the filter fragment that applies it. Counts follow the current filter, the way a shop sidebar does. Number and date facets carry a histogram.
+The options of a set go further: another key than `Id` (`o => o.Key(c => c.IsoCode)`), properties hidden or shown only with a permission (`Hide`, `HideUnless`), and a query limit of its own (`o => o.MaxNodeCount(1000)` instead of `Coworkee:OData:MaxNodeCount`). Child rows can follow the row filters of their parent (`AddODataChildFilter<TChild, TParent>`), and navigations follow the rules of their target. A second route with other names (`AddCoworkeeODataRoute("rt/odata", ...)`) serves the same sets under the same checks, and `IODataQueries.QueryAsync` runs a list query of a route in process, with count, facets and a table's facet choice. See [routes with other names](../web/odata.md#routes-with-other-names), [queries in code](../web/odata.md#queries-in-code) and [hiding properties](../web/odata.md#hiding-properties).
 
-The same sets serve files. Exports write the current view as Excel, CSV or JSON, large ones as a background job with a download link. `AddODataImport` makes a set importable through a wizard: columns are matched to fields, values converted with the file's language, every row checked by the command's validators before anything is written, then imported (new, update by key or both) as a job with live progress, a file of the failed rows and an undo. See [Import and export](../web/import-export.md).
+Properties marked `[ProvideFacet]` come back as facet groups: each option with label, count and the filter fragment that applies it. Counts follow the current filter, the way a shop sidebar does. Number and date facets carry a histogram. Most facets of a filtered set of up to `FacetRowLimit` rows (50,000) are counted in memory from one read, and `MaxFacetRows`, when set, leaves facets out for results larger than that ([how facets are counted](../web/odata.md#how-facets-are-counted)).
+
+The same sets serve files. Exports write the current view as Excel, CSV or JSON, with headers of your choice (`columns=Number:Shipment no.`), in the names of another route (`route=`) and under a file name (`fileName=`). A progress stream reports the rows read and written and ends with a one-time download link; above `BackgroundExportRows` (10,000) it follows the export job, and a client that left gets the file by mail. Exports can also be mailed or scheduled. `AddODataImport` makes a set importable through a wizard: columns are matched to fields, values converted with the file's language, every row checked by the command's validators before anything is written, then imported (new, update by key or both) as a job with live progress, a file of the failed rows and an undo. See [Import and export](../web/import-export.md).
 
 For conditions users assemble themselves, `QueryBuilder` produces nested *all / any* groups. `ODataQueryTranslator.ToFilter` turns the result into `$filter` text, `LinqQueryTranslator.ToExpression<T>` into an expression EF Core can run, and the tests make sure both return the same rows.
 
