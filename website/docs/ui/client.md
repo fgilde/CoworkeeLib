@@ -20,10 +20,16 @@ await host.RunAsync();
 ```
 
 ```razor title="Routes.razor"
+@inject CoworkeeLocalizer L
 <Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(CoworkeeClientOptions).Assembly }">
     <Found Context="routeData">
-        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(CoworkeeLayout)" />
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(CoworkeeLayout)">
+            <NotAuthorized><NotAllowed PageType="routeData.PageType" /></NotAuthorized>
+        </AuthorizeRouteView>
     </Found>
+    <NotFound>
+        <LayoutView Layout="typeof(CoworkeeLayout)"><MudText>@L["Not found."]</MudText></LayoutView>
+    </NotFound>
 </Router>
 ```
 
@@ -79,7 +85,25 @@ internal sealed class LanguageBar : IAppBarContributor
 }
 ```
 
+The user menu holds *My profile*, *My settings*, *Password and security* (the account pages of the auth server), *Install app* while the browser offers it, and *Sign out*. While someone is [signed in as another user](../features/identity.md#log-in-as-another-user), the app bar shows *Impersonated by …* and the menu *Back to my account*.
+
 ![About dialog](../assets/screenshots/about.png){ .shot }
+
+## Head script
+
+With `AddCoworkeeHeadScript()` on the server, administrators keep a script such as a tag manager in a setting ([Settings](../modules/settings.md#head-script)), and `CoworkeeLayout` puts it into the page; the client needs nothing. Once the app has started (theme and client settings loaded) and when `HeadScript.Enabled` is on and `HeadScript.Value` is not empty, the layout hands the HTML to `coworkee.js` once per page load:
+
+- inline JavaScript (`<script>` without `src`, without a type or of a JavaScript type) runs in the global scope through `eval`; an error is written to the browser console as a warning and does not stop the app,
+- `<script src>` and scripts of other types become new tags in `<head>` with their attributes (`async`, `id`, ...),
+- `<noscript>` and `<iframe>` go to the end of `<body>`.
+
+A marker (`<meta name="cw-head-script">`) keeps it to one injection per page load, so a changed script applies after a reload. Pages opened with `?embed=1` get it as well. The script runs after the app has rendered: snippets that rely on `document.write` or `document.currentScript` do not work.
+
+**Content-Security-Policy**: the policy of `UseCoworkeeSecurityHeaders` allows no inline script, but `'unsafe-eval'` (Blazor's libraries need it), which is why inline code runs through `eval`. A script loaded from another host (`https://www.googletagmanager.com`) needs that host in `script-src`, and whatever it sends or shows needs `connect-src`, `img-src` or `frame-src`: `Coworkee:Bff:SecurityHeaders:Sources`, see [security headers of the web app](../security/authentication.md#security-headers-of-the-web-app). An own policy without `'unsafe-eval'` runs no inline head script.
+
+## Embedded pages
+
+`?embed=1` on the first address shows only the page: no app bar, menu or assistant, less padding. Windows of another client use it, for example [pages of the web app in AirWorks](../web/airworks.md#pages-of-the-web-app-embedapp). The layout keeps the mode while the user navigates inside the frame.
 
 ## Calling your API
 
@@ -111,7 +135,7 @@ Do not parse the `sub` claim yourself.
 
 ## People
 
-`UserAvatar` shows a user's picture or initials, `UserCard` picture and name with an optional second line. Both load in batches and update for everyone the moment someone changes name or picture on the profile page (`tenant:users` realtime topic).
+`UserAvatar` shows a user's picture or initials with the presence dot (`ShowPresence`), `UserCard` picture and name with an optional second line. For other people the avatar opens a menu with *Chat* and *Profile* when the user may chat; set `OfferChat="false"` where it sits in something that reacts to clicks. Both load in batches and update for everyone the moment someone changes name or picture on the profile page (`tenant:users` realtime topic).
 
 ![Profile page](../assets/screenshots/profile.png){ .shot }
 
@@ -122,7 +146,7 @@ Do not parse the `sub` claim yourself.
 
 ## Account page
 
-`/profile` holds the tabs Profile (picture, name, phone, address), Security, Notifications and Settings; `/profile/{key}` opens one directly. Register a `ProfileTab` to add your own:
+`/profile` holds the tabs Profile (picture, name, phone, address), Security, Notifications, Settings and Privacy (keys `security`, `notifications`, `settings`, `privacy`); `/profile/{key}` opens one directly. Register a `ProfileTab` to add your own:
 
 ```csharp
 builder.Services.AddSingleton(new ProfileTab("Documents", "documents", typeof(MyDocuments), DocumentPermissions.Documents.View));
@@ -135,6 +159,8 @@ builder.Services.AddSingleton(new ProfileTab("Documents", "documents", typeof(My
 | `PageHeader` | title, description, actions on the right; sets the browser title. Pass text keys (`Title="Brands"`), it translates them itself; so does `CreateText` of `CoworkeeDataTable` |
 | `StickyMergeTabs` | wraps a `<MudTabs>`: its tab bar sticks below the app bar and shrinks to its tabs, so a sticky `MudExObjectEditForm` toolbar in the panel shows next to it; not on narrow screens |
 | `PermissionGate`, `PermissionView` | render content only with a permission |
+| `FeatureGate` | renders content only while a bool feature is on (`Disabled` for the other case) |
+| `GroupScopePicker` | lets users narrow lists to some of their groups, see [group tree and scope](../features/identity.md#group-tree-and-scope) |
 | `RealtimeSubscription` | calls back when the server publishes on a topic, e.g. `type:Brand` |
 | `EntityWatch` | keeps a detail page in step with its entry, goes back when it is deleted |
 | `NotAllowed` | what the router shows instead of a forbidden page, with a switch to a role that grants it |
