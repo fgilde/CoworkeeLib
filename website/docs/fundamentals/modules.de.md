@@ -28,12 +28,12 @@ Ein Host nennt genau ein Root-Modul, der Rest ergibt sich aus den Abhängigkeite
 ```csharp
 builder.AddCoworkee<MyAppApiModule>();   // registriert jedes Modul im Graphen
 var app = builder.Build();
-app.UseCoworkee();                       // Authentifizierung, Problem Details, dann jedes IWebModule
+app.UseCoworkee();                       // Exception-Handler, CORS, Request-Sprachen, jedes IWebModule, dann Authentifizierung, Autorisierung, Rate-Limits
 ```
 
-Hosts ohne HTTP, etwa der Migrations-Dienst, rufen stattdessen `services.AddCoworkeeModules<TRoot>(configuration)` auf.
+Hosts ohne HTTP, etwa der Migrations-Dienst, rufen stattdessen `services.AddCoworkeeModules<TRoot>(configuration)` auf. Ein Worker-Host, der nur Hintergrundjobs ausführt, ruft `AddCoworkee<TRoot>()` und `app.UseCoworkeeWorker()` auf: Die Dienste der Module laufen, aber Endpunkte, Dashboards und OpenAPI werden nicht eingehängt.
 
-Verschiedene Hosts setzen aus denselben Modulen verschiedene Graphen zusammen. Im Template hängt das API-Root von Katalog- und Dokumentenmodul ab, der Auth-Host nur von der Infrastruktur, `CoworkeeAuthServerModule` und mit Beispielen vom schlanken `MyAppRegistrationDocumentsModule`, das Registrierungsdokumente ohne die Dokumenten-API ablegt. Ein Modul, das nicht im Graphen eines Hosts liegt, kostet diesen Host nichts.
+Verschiedene Hosts setzen aus denselben Modulen verschiedene Graphen zusammen. Im Template hängt das API-Root von `MyAppDatabaseModule` ab, das jedes Modul der App mitbringt (mit Beispielen Katalog- und Dokumentenmodul), der Auth-Host nur von der Infrastruktur, `CoworkeeAuthServerModule` und mit Beispielen vom schlanken `MyAppRegistrationDocumentsModule`, das Registrierungsdokumente ohne die Dokumenten-API ablegt. Ein Modul, das nicht im Graphen eines Hosts liegt, kostet diesen Host nichts.
 
 ## Contributor statt zentraler Listen
 

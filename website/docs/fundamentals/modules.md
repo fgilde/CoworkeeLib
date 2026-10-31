@@ -28,12 +28,12 @@ A host names one root module, the rest follows from the dependencies:
 ```csharp
 builder.AddCoworkee<MyAppApiModule>();   // registers every module in the graph
 var app = builder.Build();
-app.UseCoworkee();                       // authentication, problem details, then each IWebModule
+app.UseCoworkee();                       // exception handler, CORS, request languages, each IWebModule, then authentication, authorization, rate limits
 ```
 
-Hosts without HTTP, such as the migration service, call `services.AddCoworkeeModules<TRoot>(configuration)` instead.
+Hosts without HTTP, such as the migration service, call `services.AddCoworkeeModules<TRoot>(configuration)` instead. A worker host that only runs background jobs calls `AddCoworkee<TRoot>()` and `app.UseCoworkeeWorker()`: the modules' services run, but no endpoints, dashboards or OpenAPI are mapped.
 
-Different hosts compose different graphs from the same modules. In the template the API root depends on the catalog and documents modules, the auth host only on infrastructure, `CoworkeeAuthServerModule` and, with samples, the slim `MyAppRegistrationDocumentsModule` that stores registration documents without the documents API. A module that is not in a host's graph costs that host nothing.
+Different hosts compose different graphs from the same modules. In the template the API root depends on `MyAppDatabaseModule`, which brings every module of the app (with samples the catalog and documents modules), the auth host only on infrastructure, `CoworkeeAuthServerModule` and, with samples, the slim `MyAppRegistrationDocumentsModule` that stores registration documents without the documents API. A module that is not in a host's graph costs that host nothing.
 
 ## Contributors instead of central lists
 
