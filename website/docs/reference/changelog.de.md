@@ -17,6 +17,7 @@
 
 ### Hinzugefügt
 
+- `Coworkee:Bff:Pwa:Icons` (`BffPwaOptions.Icons`): mehrere Icons des Web-Manifests mit Größe, Typ und Zweck (z. B. PNGs mit 192 und 512 Pixeln), statt des einen `Icon` gelistet, solange das Theme kein Logo hat. Siehe [Smartphones und PWA](../ui/phones-and-pwa.md).
 - `IClientEntityChangeLog.Touch<T>(ids)` (L86): meldet Zeilen an die Client-Entity-Kopien, wenn keine `ChangedAt`/`ModifiedAt`-Spalte sich bewegt hat (ein Tag über eine Verknüpfungstabelle); gespeichert mit dem Command in der neuen Tabelle `cw.ClientEntityTouches` und vom Änderungs-Feed für die Zeilen gelesen, die der Leser sieht. Tags, Bewertungen, Kommentare und Reaktionen der Bibliothek melden typisiert registrierte Entities (`Tags<T>(...)`) selbst. Eine Kopie, die zuletzt vor mehr als `Coworkee:ClientEntities:ChangeLogLifetime` (30 Tage) aktualisiert wurde, lädt neu. Migration anlegen. Siehe [Änderungen, die kein Datum sieht](../ui/client-entities.md#anderungen-die-kein-datum-sieht).
 - `PersonalDataSubject.ErasedUserId`: der Platzhalter, den eigene Contributors anstelle der ID eines gelöschten Benutzers schreiben. `tests/Coworkee.ArchitectureTests/PersonalDataCoverageTests` scheitert an einer Spalte der Bibliothek, die einen Benutzer nennt und keinen Contributor hat.
 

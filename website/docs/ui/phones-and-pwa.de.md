@@ -47,6 +47,12 @@ Name und Icon kommen aus der Konfiguration; Aspire setzt beides aus `DisplayName
 "Coworkee": { "Bff": { "Pwa": { "Name": "Mein Shop", "Icon": "/coworkee-icon.svg" } } }
 ```
 
+`Icon` steht im Manifest mit der Größe `any`. Manche Plattformen installieren nur mit PNG-Icons bestimmter Größen (192 und 512 Pixel); liste sie in `Icons`, die das Manifest dann stattdessen nennt (`Sizes` Standard `any`, `Type` aus der Endung, `Purpose` `any`, `maskable` oder `monochrome`; nur lokale Pfade). Ein Theme mit Logo gewinnt weiter: Sein Logo ist das Icon.
+
+```json
+"Pwa": { "Icons": [ { "Src": "/icons/192.png", "Sizes": "192x192" }, { "Src": "/icons/512.png", "Sizes": "512x512", "Purpose": "maskable" } ] }
+```
+
 Was der Service Worker tut:
 
 - Er speichert eine einzige statische Datei, die Offline-Seite, und zeigt sie, wenn eine Seite ohne Netz nicht lädt. Ihre Framework-Dateien hält Blazor in einem eigenen Cache.
