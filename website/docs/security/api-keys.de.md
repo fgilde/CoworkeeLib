@@ -4,15 +4,24 @@ Persönliche API-Schlüssel lassen Skripte und KI-Clients als ihr Benutzer mit d
 
 ## Einen Schlüssel anlegen
 
-Benutzer mit `ApiKeys.Create` öffnen *Konto > API-Schlüssel* und legen einen Schlüssel an mit
+Benutzer mit `ApiKeys.Create` öffnen *Mein Profil › API-Schlüssel* (`/profile/api-keys`) und legen einen Schlüssel an mit
 
 - einem Namen und optional einer Beschreibung, z. B. *Claude Desktop auf meinem Laptop*,
 - einer Laufzeit von 7 bis 365 Tagen (die API nimmt höchstens 366),
 - den Berechtigungen des Schlüssels, ausgewählt aus dem, was der Benutzer gerade darf: mit einer in der App gewählten aktiven Rolle nur aus deren Berechtigungen. Andere Berechtigungen werden nicht angeboten, und die API lehnt sie ab.
 
-Ein Benutzer hat höchstens 20 Schlüssel, die weder widerrufen noch abgelaufen sind (`Coworkee:ApiKeys:MaxActivePerUser`), und das Anlegen ist in der Rate begrenzt (Policy `apiKeys`, 10 pro Minute und Benutzer).
+Ein Benutzer hat höchstens 20 Schlüssel, die weder widerrufen noch abgelaufen sind (`Coworkee:ApiKeys:MaxActivePerUser`, darüber `409 api_keys.limit`), und das Anlegen ist in der Rate begrenzt (Policy `apiKeys`, 10 pro Minute und Benutzer). Wer als anderer Benutzer angemeldet ist ([Anmelden als](../features/identity.md#als-anderer-benutzer-anmelden)), legt für ihn keine Schlüssel an (`403 auth.impersonating`).
 
 Der Schlüssel wird einmal angezeigt: `cwk_` und 64 Hex-Zeichen (256 Zufallsbits). Der Server speichert nur seinen SHA-256-Hash und vergleicht Hashes in fester Zeit; die ersten 10 Zeichen bleiben sichtbar, damit man seine Schlüssel unterscheiden kann. Ein verlorener Schlüssel lässt sich nicht erneut anzeigen: widerrufen und einen neuen anlegen.
+
+Die Seite nutzt diese Endpunkte; alle brauchen `ApiKeys.Create`:
+
+```http
+GET  /api/v1/identity/api-keys                → [ApiKeyDto]  eigene Schlüssel
+GET  /api/v1/identity/api-keys/scopes         → [PermissionGroupDto]  was ein neuer Schlüssel bekommen darf
+POST /api/v1/identity/api-keys                { name, description, expiresAt, scopes } → { key, secret }
+POST /api/v1/identity/api-keys/{id}/revoke
+```
 
 ![Neuer API-Schlüssel mit Berechtigungen aus den eigenen](../assets/screenshots/mcp-api-key-dialog-light.png){ .shot }
 
@@ -45,8 +54,8 @@ Schlüssel können keine Schlüssel anlegen oder widerrufen, auch nicht mit `Api
 
 Die Liste zeigt, wann und von welcher IP-Adresse jeder Schlüssel zuletzt genutzt wurde (höchstens einmal pro Minute aktualisiert). Anlegen und Widerrufen landen im Audit-Trail, der Hash des Geheimnisses nie. MCP-Werkzeugaufrufe halten den Schlüssel im Audit der KI-Werkzeugaufrufe fest. Rate-Limits zählen pro Benutzer, egal mit welchem Schlüssel.
 
-Administratoren mit `ApiKeys.Manage` (enthält `ApiKeys.Create`) sehen die Schlüssel aller Benutzer ihrer Organisation unter *Administration > Identität > API-Schlüssel* (`/admin/api-keys`): Besitzer, Berechtigungen, angelegt, Ablauf, letzte Nutzung und Status, mit Suche, Filtern, Export und Live-Aktualisierung, und widerrufen sie. Schlüssel anderer Organisationen bleiben unsichtbar.
+Administratoren mit `ApiKeys.Manage` (enthält `ApiKeys.Create`) sehen die Schlüssel aller Benutzer ihrer Organisation unter *Administration › Identität › API-Schlüssel* (`/cw/admin/api-keys`, das OData-Set `ApiKeys` ohne den Hash): Besitzer, Berechtigungen, angelegt, Ablauf, letzte Nutzung und Status, mit Suche, Filtern, Export und Live-Aktualisierung, und widerrufen sie. Schlüssel anderer Organisationen bleiben unsichtbar.
 
-Der Export der personenbezogenen Daten enthält die Schlüssel des Benutzers ohne Geheimnisse; das Löschen des Kontos löscht sie.
+Der Export der personenbezogenen Daten enthält die Schlüssel des Benutzers im Abschnitt `apiKeys` (Name, Präfix, Berechtigungen, Daten, letzte Adresse), ohne Geheimnisse; das Löschen des Kontos löscht sie.
 
 ![Alle Schlüssel der Organisation für Administratoren](../assets/screenshots/mcp-admin-api-keys-dark.png){ .shot }

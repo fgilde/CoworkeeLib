@@ -62,6 +62,10 @@ The root of the auth server opens **Your applications** for the signed-in user: 
 
 The launcher lists clients that sign users in (authorization code), have a home address and **Show in the app launcher** on; service clients never appear. Administrators set **Home address**, **Logo address**, **Description** and **Show in the app launcher** on the clients page; clients from the configuration take `ClientUri`, `LogoUrl`, `Description` and `ShowInLauncher` (default on) of `Coworkee:Auth:Clients`. A configured client without own logo shows the logo of the account pages. In the app host, `AddWeb` sets the home address of the web client, so it appears without further configuration. Addresses have to be absolute http(s) addresses; the content security policy allows the origins of the logos as image sources.
 
+## Branding of the account pages
+
+The account pages take the app name from `Coworkee:Auth:DisplayName` and logo and colors from the default theme of the system organisation ([Theming](../modules/theming.md)); changes show within a minute. A theme without logo shows `Coworkee:Auth:LogoUrl`, an absolute address or a path on the auth server; the content security policy allows the origin of an absolute address as image source. In the app host, `options.LogoUrl = "/coworkee-icon.svg"` points the auth server at that path of the web app.
+
 ## Signing out everywhere and locking
 
 The user detail page has **Sign out everywhere** and **Lock** (until a day or until unlocked); **Unlock** lifts a lock. All take effect at once:
@@ -93,7 +97,9 @@ sequenceDiagram
 - The BFF ends its cookie session when the API answers `401` to a request it sent a token with.
 - Refresh tokens are revoked and, issued with the old stamp, refused anyway; the auth server's own sign-in cookie no longer counts at `/connect/authorize`.
 
-Administrators cannot end their own session this way, and only administrators can sign out or lock other administrators.
+The three actions need `Identity.Users.Manage` (`POST /api/v1/identity/users/{id}/sign-out`, `/lock` with an optional `until`, `/unlock`). Nobody ends his own session this way (`409 identity.own_session`; the user menu signs out), and only administrators can sign out or lock other administrators (`403 identity.admin_session_restricted`).
+
+A [Log in as](../features/identity.md#log-in-as-another-user) session ends as well when the impersonator's stamp changes: when he is signed out everywhere, locked or deactivated, or changes his password, the next authorization or token refresh revokes the impersonation's tokens and signs the browser out.
 
 ### Changing the own password
 
@@ -141,7 +147,3 @@ The defaults of the six password rules come from the configured Identity options
 Next to every password field (registration, reset, change, new password at sign-in, the administrator's dialog, the setup wizard) a hint names the rules in force, e.g. *At least 12 characters, a digit, an uppercase letter.* `PasswordRules.Describe` builds it from the settings and a translation function. Before the first administrator exists nobody can read settings, so the setup status (`SetupStatusDto.PasswordRules`) carries the rules for the setup page.
 
 Administrators tick **Change password at first sign-in** when they create a user, or **Change password at next sign-in** on the user detail page. After the sign-in, before the client gets tokens, the auth server shows **Choose a new password**; the same happens when the password expired. Users who sign in only with an external provider have no password and are never asked.
-
-## Branding of the account pages
-
-The account pages take the app name from `Coworkee:Auth:DisplayName` and logo and colors from the default theme of the system organisation ([Theming](../modules/theming.md)); changes show within a minute. A theme without logo shows `Coworkee:Auth:LogoUrl`, an absolute address or a path on the auth server; the content security policy allows the origin of an absolute address as image source. In the app host, `options.LogoUrl = "/coworkee-icon.svg"` points the auth server at that path of the web app.

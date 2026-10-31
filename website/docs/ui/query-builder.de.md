@@ -66,7 +66,7 @@ string text = QueryDescriber.Describe(query, fields, l);                     // 
 Beide Übersetzer lesen eine Abfrage gleich:
 
 - Text vergleicht ohne Groß-/Kleinschreibung (`contains(tolower(Name),'drill')`, `Name.ToLower().Contains("drill")`), leerer Text (null) passt nie;
-- Datumswerte vergleichen ganze Tage im Offset von `now`: *ist am 11. Okt.* ist `ge 2026-10-11T00:00:00+02:00 and lt 2026-10-12T00:00:00+02:00`, *diese Woche* beginnt am Montag;
+- Datumswerte vergleichen ganze Tage im Offset von `now` (das optionale letzte Argument jedes Übersetzers, standardmäßig die lokale Uhr): *ist am 11. Okt.* ist `ge 2026-10-11T00:00:00+02:00 and lt 2026-10-12T00:00:00+02:00`, *diese Woche* beginnt am Montag;
 - Enums vergleichen nach Membername (`Status eq 'Shipped'`), gespeicherte Abfragen überstehen also umsortierte Enums;
 - eine leere Navigation liest sich als null (`Customer.Name` eines Auftrags ohne Kunde);
 - unvollständige Bedingungen und leere Gruppen fallen weg, eine Abfrage in Bearbeitung ist also immer gültig;

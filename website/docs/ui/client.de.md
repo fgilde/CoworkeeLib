@@ -20,10 +20,16 @@ await host.RunAsync();
 ```
 
 ```razor title="Routes.razor"
+@inject CoworkeeLocalizer L
 <Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(CoworkeeClientOptions).Assembly }">
     <Found Context="routeData">
-        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(CoworkeeLayout)" />
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(CoworkeeLayout)">
+            <NotAuthorized><NotAllowed PageType="routeData.PageType" /></NotAuthorized>
+        </AuthorizeRouteView>
     </Found>
+    <NotFound>
+        <LayoutView Layout="typeof(CoworkeeLayout)"><MudText>@L["Not found."]</MudText></LayoutView>
+    </NotFound>
 </Router>
 ```
 
@@ -79,7 +85,25 @@ internal sealed class LanguageBar : IAppBarContributor
 }
 ```
 
+Das Benutzermenü enthält *Mein Profil*, *Meine Einstellungen*, *Passwort und Sicherheit* (die Kontoseiten des Auth-Servers), *App installieren*, solange der Browser es anbietet, und *Abmelden*. Solange jemand [als anderer Benutzer angemeldet](../features/identity.md#als-anderer-benutzer-anmelden) ist, zeigt die App-Leiste *Angemeldet durch …* und das Menü *Zurück zu meinem Konto*.
+
 ![Info-Dialog](../assets/screenshots/about.png){ .shot }
+
+## Head-Skript
+
+Mit `AddCoworkeeHeadScript()` auf dem Server pflegen Administratoren ein Skript wie einen Tag-Manager in einer Einstellung ([Einstellungen](../modules/settings.md#head-skript)), und `CoworkeeLayout` setzt es in die Seite; der Client braucht nichts. Sobald die App gestartet ist (Theme und Client-Einstellungen geladen) und wenn `HeadScript.Enabled` an und `HeadScript.Value` nicht leer ist, übergibt das Layout das HTML einmal pro Seitenaufruf an `coworkee.js`:
+
+- Inline-JavaScript (`<script>` ohne `src`, ohne Typ oder mit einem JavaScript-Typ) läuft per `eval` im globalen Gültigkeitsbereich; ein Fehler landet als Warnung in der Browserkonsole und hält die App nicht an,
+- `<script src>` und Skripte anderer Typen werden neue Tags in `<head>` mit ihren Attributen (`async`, `id`, ...),
+- `<noscript>` und `<iframe>` kommen ans Ende von `<body>`.
+
+Eine Markierung (`<meta name="cw-head-script">`) begrenzt es auf ein Einfügen pro Seitenaufruf, ein geändertes Skript gilt also nach dem Neuladen. Seiten mit `?embed=1` bekommen es ebenfalls. Das Skript läuft, nachdem die App gerendert hat: Snippets, die sich auf `document.write` oder `document.currentScript` verlassen, funktionieren nicht.
+
+**Content-Security-Policy**: die Richtlinie von `UseCoworkeeSecurityHeaders` erlaubt kein Inline-Skript, aber `'unsafe-eval'` (Blazors Bibliotheken brauchen es); deshalb läuft Inline-Code über `eval`. Ein Skript von einem anderen Host (`https://www.googletagmanager.com`) braucht diesen Host in `script-src`, und was es sendet oder anzeigt, braucht `connect-src`, `img-src` oder `frame-src`: `Coworkee:Bff:SecurityHeaders:Sources`, siehe [Sicherheits-Header der Web-App](../security/authentication.md#sicherheits-header-der-web-app). Eine eigene Richtlinie ohne `'unsafe-eval'` führt kein Inline-Head-Skript aus.
+
+## Eingebettete Seiten
+
+`?embed=1` an der ersten Adresse zeigt nur die Seite: ohne App-Leiste, Menü und Assistent, mit weniger Rand. Fenster eines anderen Clients nutzen das, etwa [Seiten der Web-App in AirWorks](../web/airworks.md#seiten-der-web-app-embedapp). Das Layout behält den Modus, während der Benutzer im Rahmen navigiert.
 
 ## Die eigene API aufrufen
 
@@ -111,7 +135,7 @@ Den Claim `sub` nicht selbst parsen.
 
 ## Personen
 
-`UserAvatar` zeigt das Bild eines Benutzers oder seine Initialen, `UserCard` Bild und Name mit optionaler zweiter Zeile. Beide laden gebündelt und aktualisieren sich für alle, sobald jemand Name oder Bild auf der Profilseite ändert (Realtime-Topic `tenant:users`).
+`UserAvatar` zeigt das Bild eines Benutzers oder seine Initialen mit dem Anwesenheitspunkt (`ShowPresence`), `UserCard` Bild und Name mit optionaler zweiter Zeile. Bei anderen Personen öffnet der Avatar ein Menü mit *Chat* und *Profil*, wenn der Benutzer chatten darf; setze `OfferChat="false"`, wo er in etwas sitzt, das auf Klicks reagiert. Beide laden gebündelt und aktualisieren sich für alle, sobald jemand Name oder Bild auf der Profilseite ändert (Realtime-Topic `tenant:users`).
 
 ![Profilseite](../assets/screenshots/profile.png){ .shot }
 
@@ -122,7 +146,7 @@ Den Claim `sub` nicht selbst parsen.
 
 ## Kontoseite
 
-`/profile` enthält die Tabs Profil (Bild, Name, Telefon, Adresse), Sicherheit, Benachrichtigungen und Einstellungen; `/profile/{key}` öffnet einen direkt. Mit einem `ProfileTab` fügst du eigene hinzu:
+`/profile` enthält die Tabs Profil (Bild, Name, Telefon, Adresse), Sicherheit, Benachrichtigungen, Einstellungen und Datenschutz (Schlüssel `security`, `notifications`, `settings`, `privacy`); `/profile/{key}` öffnet einen direkt. Mit einem `ProfileTab` fügst du eigene hinzu:
 
 ```csharp
 builder.Services.AddSingleton(new ProfileTab("Documents", "documents", typeof(MyDocuments), DocumentPermissions.Documents.View));
@@ -133,8 +157,10 @@ builder.Services.AddSingleton(new ProfileTab("Documents", "documents", typeof(My
 | Komponente | Zweck |
 |---|---|
 | `PageHeader` | Titel, Beschreibung, Aktionen rechts; setzt den Browsertitel. Übergib Textschlüssel (`Title="Brands"`), es übersetzt sie selbst; ebenso `CreateText` von `CoworkeeDataTable` |
-| `StickyMergeTabs` | umschließt ein `<MudTabs>`: dessen Tab-Leiste klebt unter der App-Leiste und schrumpft auf die Breite der Tabs schrumpft, sodass eine klebende `MudExObjectEditForm`-Toolbar im Panel daneben sichtbar wird; nicht auf schmalen Bildschirmen |
+| `StickyMergeTabs` | umschließt ein `<MudTabs>`: dessen Tab-Leiste klebt unter der App-Leiste und schrumpft auf die Breite der Tabs, sodass eine klebende `MudExObjectEditForm`-Toolbar im Panel daneben sichtbar wird; nicht auf schmalen Bildschirmen |
 | `PermissionGate`, `PermissionView` | rendern Inhalt nur mit einer Berechtigung |
+| `FeatureGate` | rendert Inhalt nur, solange ein boolesches Feature an ist (`Disabled` für den anderen Fall) |
+| `GroupScopePicker` | lässt Benutzer Listen auf einige ihrer Gruppen eingrenzen, siehe [Gruppenbaum und Geltungsbereich](../features/identity.md#gruppenbaum-und-geltungsbereich) |
 | `RealtimeSubscription` | ruft zurück, wenn der Server auf einem Thema veröffentlicht, z. B. `type:Brand` |
 | `EntityWatch` | hält eine Detailseite mit ihrem Eintrag gleich, geht zurück, wenn er gelöscht wird |
 | `NotAllowed` | was der Router statt einer verbotenen Seite zeigt, mit Wechsel zu einer Rolle, die sie erlaubt |

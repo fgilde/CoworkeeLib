@@ -4,7 +4,7 @@ Users sign in to the auth server with a passkey (WebAuthn) instead of the passwo
 
 ## For users
 
-- **Adding**: *Account security › Passkeys* (`/Account/Manage/Passkeys`, in the app *Profile › Security › Passkeys*) adds a passkey to an existing account. The name is asked first; it starts with the browser and the platform (for example `Chrome · Windows`). A user has at most 20 passkeys.
+- **Adding**: *Account security › Passkeys* (`/Account/Manage/Passkeys`, in the app *My profile › Security › Passkeys*) adds a passkey to an existing account. The name is asked first; it starts with the browser and the platform (for example `Chrome · Windows`). A user has at most 20 passkeys.
 - **List**: name, the day it was added and whether it is backed up (synced by the platform, e.g. iCloud Keychain or Google Password Manager) or lives on one device only. Passkeys can be renamed and removed.
 - **The last one stays**: a user without a password and without an external sign-in cannot remove the last passkey; it is the only way in.
 - **Signing in**: the sign-in page has *Sign in with a passkey* below the password form, and the address field offers the passkeys of the browser in its autofill (conditional UI, `autocomplete="username webauthn"`). Browsers without WebAuthn show neither.
@@ -12,6 +12,8 @@ Users sign in to the auth server with a passkey (WebAuthn) instead of the passwo
 A passkey sign-in counts as a strong sign-in: two-step verification does not follow, as in ASP.NET Core Identity. That is why the device has to verify the user (fingerprint, face, PIN): the sign-in refuses an assertion without user verification, whatever the configuration says. Everything else is checked as for the password: inactive accounts, `Coworkee:Auth:Login:AllowedEmails`, the confirmed address and the lockout give the same answers, and the sign-in records the last login.
 
 Registering without a password is not possible; a passkey always joins an existing account.
+
+While someone is signed in as the user ([Log in as](../features/identity.md#log-in-as-another-user)), the passkey page answers `403` like every account page: an impersonator never adds a way into the account.
 
 ## For administrators
 

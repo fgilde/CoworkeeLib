@@ -66,7 +66,7 @@ string text = QueryDescriber.Describe(query, fields, l);                     // 
 Both translators read a query the same way:
 
 - text compares ignoring case (`contains(tolower(Name),'drill')`, `Name.ToLower().Contains("drill")`) and null text never matches;
-- dates compare by whole days in the offset of `now`: *is on 11 Oct* is `ge 2026-10-11T00:00:00+02:00 and lt 2026-10-12T00:00:00+02:00`, *this week* starts on Monday;
+- dates compare by whole days in the offset of `now` (the optional last argument of each translator, the local clock by default): *is on 11 Oct* is `ge 2026-10-11T00:00:00+02:00 and lt 2026-10-12T00:00:00+02:00`, *this week* starts on Monday;
 - enums compare by member name (`Status eq 'Shipped'`), so saved queries survive reordered enums;
 - a null navigation reads as null (`Customer.Name` of an order without customer);
 - incomplete conditions and empty groups are left out, so a query being edited is always valid;

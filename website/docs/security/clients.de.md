@@ -62,6 +62,10 @@ Die Startadresse des Auth-Servers öffnet für angemeldete Benutzer **Ihre Anwen
 
 Der Launcher zeigt Clients, die Benutzer anmelden (Authorization Code), eine Startadresse haben und **Im App-Launcher anzeigen** eingeschaltet haben; Dienst-Clients erscheinen nie. Administratoren setzen **Startadresse**, **Logo-Adresse**, **Beschreibung** und **Im App-Launcher anzeigen** auf der Seite der Clients; Clients aus der Konfiguration nehmen `ClientUri`, `LogoUrl`, `Description` und `ShowInLauncher` (standardmäßig an) aus `Coworkee:Auth:Clients`. Ein konfigurierter Client ohne eigenes Logo zeigt das Logo der Kontoseiten. Im App-Host setzt `AddWeb` die Startadresse des Web-Clients, sodass er ohne weitere Konfiguration erscheint. Adressen müssen absolute http(s)-Adressen sein; die Content Security Policy erlaubt die Herkunft der Logos als Bildquelle.
 
+## Branding der Kontoseiten
+
+Die Kontoseiten nehmen den App-Namen aus `Coworkee:Auth:DisplayName` und Logo und Farben aus dem Standard-Theme der Systemorganisation ([Themes](../modules/theming.md)); Änderungen erscheinen innerhalb einer Minute. Ein Theme ohne Logo zeigt `Coworkee:Auth:LogoUrl`, eine absolute Adresse oder einen Pfad auf dem Auth-Server; die Content Security Policy erlaubt den Origin einer absoluten Adresse als Bildquelle. Im AppHost verweist `options.LogoUrl = "/coworkee-icon.svg"` den Auth-Server auf diesen Pfad der Web-App.
+
 ## Überall abmelden und sperren
 
 Die Benutzerdetailseite hat **Überall abmelden** und **Sperren** (bis zu einem Tag oder bis zum Entsperren); **Entsperren** hebt eine Sperre auf. Alles wirkt sofort:
@@ -93,7 +97,9 @@ sequenceDiagram
 - Der BFF beendet seine Cookie-Sitzung, wenn die API auf eine Anfrage mit Token `401` antwortet.
 - Refresh-Tokens werden widerrufen und, mit dem alten Stamp ausgestellt, ohnehin abgelehnt; das Anmelde-Cookie des Auth-Servers zählt bei `/connect/authorize` nicht mehr.
 
-Administratoren können ihre eigene Sitzung so nicht beenden, und nur Administratoren können andere Administratoren abmelden oder sperren.
+Die drei Aktionen brauchen `Identity.Users.Manage` (`POST /api/v1/identity/users/{id}/sign-out`, `/lock` mit optionalem `until`, `/unlock`). Die eigene Sitzung beendet so niemand (`409 identity.own_session`; dafür meldet das Benutzermenü ab), und nur Administratoren können andere Administratoren abmelden oder sperren (`403 identity.admin_session_restricted`).
+
+Eine Sitzung [als anderer Benutzer](../features/identity.md#als-anderer-benutzer-anmelden) endet ebenfalls, wenn sich der Stempel des Impersonators ändert: Wird er überall abgemeldet, gesperrt oder deaktiviert oder ändert er sein Passwort, widerruft die nächste Autorisierung oder Token-Erneuerung die Tokens der Übernahme und meldet den Browser ab.
 
 ### Das eigene Passwort ändern
 
@@ -141,7 +147,3 @@ Die Standards der sechs Passwortregeln kommen aus den konfigurierten Identity-Op
 Neben jedem Passwortfeld (Registrierung, Zurücksetzen, Ändern, neues Passwort bei der Anmeldung, Dialog der Administratoren, Setup-Assistent) nennt ein Hinweis die geltenden Regeln, z. B. *Mindestens 12 Zeichen, eine Ziffer, ein Großbuchstabe.* `PasswordRules.Describe` baut ihn aus den Einstellungen und einer Übersetzungsfunktion. Solange es keinen ersten Administrator gibt, kann niemand Einstellungen lesen, deshalb trägt der Setup-Status (`SetupStatusDto.PasswordRules`) die Regeln für die Setup-Seite.
 
 Administratoren setzen beim Anlegen eines Benutzers **Passwort bei der ersten Anmeldung ändern** oder auf der Benutzerdetailseite **Passwort bei der nächsten Anmeldung ändern**. Nach der Anmeldung und bevor der Client Tokens bekommt, zeigt der Auth-Server **Neues Passwort wählen**; dasselbe passiert, wenn das Passwort abgelaufen ist. Wer sich nur über einen externen Anbieter anmeldet, hat kein Passwort und wird nie gefragt.
-
-## Branding der Kontoseiten
-
-Die Kontoseiten nehmen den App-Namen aus `Coworkee:Auth:DisplayName` und Logo und Farben aus dem Standard-Theme der Systemorganisation ([Themes](../modules/theming.md)); Änderungen erscheinen innerhalb einer Minute. Ein Theme ohne Logo zeigt `Coworkee:Auth:LogoUrl`, eine absolute Adresse oder einen Pfad auf dem Auth-Server; die Content Security Policy erlaubt den Origin einer absoluten Adresse als Bildquelle. Im AppHost verweist `options.LogoUrl = "/coworkee-icon.svg"` den Auth-Server auf diesen Pfad der Web-App.

@@ -34,8 +34,9 @@ The design applies to the whole installation, whichever theme is the default. Th
 | Option | Meaning |
 |---|---|
 | `Design:Layout` | `Card`, `Split`, `Slide` or the name of an own layout; unknown names fall back to `Slide` |
-| `Design:MediaUrl` | an image, or a video for `.mp4`, `.webm`, `.ogg` and `.mov`; a path on the auth server or an `http(s)` address, whose origin enters `img-src` and `media-src` of the content security policy |
+| `Design:MediaUrl` | an image, or a video for `.mp4`, `.webm`, `.ogg`, `.ogv` and `.mov`; a path on the auth server or an `http(s)` address, whose origin enters `img-src` and `media-src` of the content security policy |
 | `Design:MediaSide` | `Left` (default) or `Right`; with `Slide` the panel of the registration page sits on the other side |
+| `Design:LoadingScreen` | background of the app's [loading screen](../modules/theming.md#loading-screen): `Animated`, `SignInMedia` (the image or video above) or `Plain` |
 | `AllowDesignChanges` | `true` (default) lets administrators change the design on the Themes page; `false` keeps the configuration. Set it for the service that hosts the API, where the change is saved. |
 
 The Aspire app host sets the same values with `options.SignIn` and serves a media path from the web app, see [Aspire app host](../hosting/aspire.md).
@@ -51,7 +52,7 @@ The card shows for administrators of the system organisation who may manage sett
 The client options control the card:
 
 ```csharp
-builder.Services.AddCoworkeeClient(options =>
+builder.Services.AddCoworkeeClient(baseAddress, options =>
 {
     options.AllowSignInDesign = false;        // hides the card
     options.SignInLayouts.Add("Aurora");      // offers an own layout

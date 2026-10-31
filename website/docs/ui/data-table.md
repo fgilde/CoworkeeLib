@@ -28,9 +28,11 @@
 | `OnCreate`, `OnEdit`, `OnDelete` | callbacks; the table reloads after each of them |
 | `CreatePermission`, `EditPermission`, `DeletePermission` | hide the buttons without the permission |
 | `DescribeItem` | text for the delete confirmation |
+| `CreateText` | label of the create button (`New`); pass a text key, the table translates it |
 | `Exportable`, `ExportFileName` | Excel, CSV and JSON export of the current view (filter, sort, visible columns) with a progress dialog (rows, percent, cancel); large ones run as a background job, see [import and export](../web/import-export.md#progress-stream-and-one-time-download) |
 | `Importable`, `ImportPermission` | an *Import* button that opens the [import wizard](../web/import-export.md) |
 | `ToolBarContent` | extra buttons in the tool bar |
+| `SearchPlaceholder`, `NoRecordsText` | placeholder of the search box (`Search`) and text of an empty list (`Nothing found.`) |
 | `PageSize` | rows per page (25); in endless mode rows load in chunks of at least 50 |
 | `PageMode` | `FromSettings` (default), `Pager` or `EndlessScroll`, see [pages or endless scrolling](#pages-or-endless-scrolling) |
 | `EndlessHeight` | height of the scrolling rows in endless mode, any CSS length (`calc(100vh - 300px)`) |
@@ -42,42 +44,15 @@
 | `History`, `ItemId` | a history action per row and a *Deleted records* button, see [record history](../modules/auditing.md#record-history-and-restore); `ItemId` picks the id (default the `Id` property) |
 | `AdvancedFilter` | the *Advanced filter* button with the [query builder](query-builder.md) (default `options.DataTable.AdvancedFilter`, `true`) |
 | `QueryFields` | the fields of the query builder; by default the property columns and the reference facets |
+| `SavedViews`, `ColumnChooser`, `UrlState`, `StateKey` | the views menu, the column menu, the state in the address bar (all `true`) and the name of its parameter (default the set name in lower case), see [columns, grouping and views](#columns-grouping-and-views) |
+| `RowHref`, `OnRowClick` | open a row by clicking it, see [row links](#row-links) |
+| `ChildRowContent` | content under a row, opened by a toggle in front of it |
+| `RealtimeTopic` | the topic that reloads the table; by default `type:{T without Dto}` (`BrandDto` follows `Brand`), `""` turns it off; tables over a `DataSource` stay quiet |
+| `SelectedItemsChanged`, `OnLoaded` | the selection changed; a page of rows arrived |
 
-The table reloads by itself when its `[Realtime]` entity changes (`RealtimeTopic`, see [Realtime](../modules/realtime.md#entity-changes)). `ReloadAsync()` reloads from outside, for example from a `RealtimeSubscription`. `Selection` exposes the facet choices, `CurrentFilter` the OData filter the table sends (fixed filter, facets, column filters and search).
+The table reloads by itself when its `[Realtime]` entity changes (see [Realtime](../modules/realtime.md#entity-changes)). `ReloadAsync()` reloads from outside, for example from a `RealtimeSubscription`. `Selection` exposes the facet choices, `CurrentFilter` the OData filter the table sends (fixed filter, facets, column filters, advanced filter and search).
 
 For sets marked as [client entities](client-entities.md) the table filters, searches, sorts and counts in the browser once the rows arrived; a switch in its tool bar shows where searching runs and lets the user choose.
-
-## Pages or endless scrolling
-
-With `PageMode="FromSettings"` (the default) a table follows the setting **Table rows** (`DataTable.DefaultPageMode`): `Pager` (default) or `EndlessScroll`. Administrators set it for everyone under *Settings → System*, each user can override it under *My settings*; open tables switch as soon as it is saved. `PageMode="Pager"` or `PageMode="EndlessScroll"` fixes it for one table.
-
-Endless scrolling shows one list with a fixed header (`EndlessHeight`) and the total below it. Only the visible rows are rendered; the rows come in chunks of `PageSize` (at least 50) while scrolling and stay until the query changes, so scrolling back needs no request. Only the first chunk of a query asks for the count and the facets. Sorting, search, facets, column filters, selection, realtime reloads, export (always the whole filtered result) and client entities work as with pages.
-
-MudBlazor cannot virtualize grouped rows: while the table is grouped it shows pages with the hint *Grouped rows are shown in pages.* and goes back to scrolling when the grouping is removed.
-
-```razor
-<CoworkeeDataTable T="SalesOrderDto" EntitySet="SalesOrders" PageMode="DataTablePageMode.EndlessScroll" EndlessHeight="70vh" ...>
-```
-
-## Row links
-
-`RowHref` makes each row lead somewhere, `OnRowClick` runs code instead. A click on the row opens it, clicks on the row's buttons and its checkbox do not. Every such row gets an open button in the action column, so keyboard users reach it with Tab and Enter, and with `RowHref` it is a real link (middle click, open in a new tab).
-
-```razor
-<CoworkeeDataTable T="EmployeeDto" EntitySet="Employees" RowHref="@(e => $"/people/{e.Id}")">
-```
-
-```razor
-<CoworkeeDataTable T="EmployeeDto" EntitySet="Employees" OnRowClick="OpenAsync">
-```
-
-When a row has both, `RowHref` wins where it returns a link; rows for which it returns `null` call `OnRowClick`.
-
-## Tool bar items
-
-A package can put a component into the tool bar of every table over an OData set: register `new DataTableToolbarItem(typeof(MyComponent))` in DI. The component gets the table as parameter `Table` (`IDataTable`: `EntitySet`, `Expand`, `CurrentQuery`, `ReloadAsync()`). The [client entity switch](client-entities.md#the-switch-in-the-table) is added this way.
-
-The CSV export escapes values that spreadsheet programs would run as formulas.
 
 ## Facets
 
@@ -137,7 +112,7 @@ or without touching the entity:
 services.ConfigureFacet<SalesOrder>(o => o.Region, f => { f.View = FacetView.Select; f.AllowExclude = true; });
 ```
 
-`Switchable` lets users switch between *any of* and *all of* (where values can hold together) and between the views that fit (the tune menu of a facet); their pick is part of saved views. Unset, `MultiSelect = false` on `[ProvideFacet]` means `Single` and `GroupOperator = And` means `All`.
+`Switchable` lets users switch between *any of* and *all of* (where values can hold together) and between the views that fit (the tune menu of a facet); their pick is part of saved views. Unset, `MultiSelect = false` on `[ProvideFacet]` means `Single` and `GroupOperator = And` means `All`. `TreeSeparator` splits values for the `Tree` view (`"Europe / Germany"`), `Buckets` sets the bars of a number histogram (12).
 
 The page has the last word:
 
@@ -276,58 +251,6 @@ The fields are the property columns plus every reference facet that is no column
 
 `Advanced` exposes the query (a `QueryGroup`); `options.DataTable.AdvancedFilter = false` hides the button in every table.
 
-## Edit dialogs
-
-For plain models a generated dialog is enough:
-
-```csharp
-if (await Dialogs.ShowEditAsync("Edit brand", model) is { } saved)
-{
-    await Snackbar.RunAsync(() => Api.SaveBrandAsync(id, saved), "Brand saved");
-}
-```
-
-Edit dialogs are full height side sheets that slide in from the side the user clicked on, with two columns on wide screens.
-
-![Edit side sheet](../assets/screenshots/edit-sheet.png){ .shot }
- Pass `meta => ...` to configure the `MudExObjectEditForm` (labels, order, editors). With a save function the dialog stays open and shows the messages of the API when saving fails:
-
-```csharp
-await Dialogs.ShowEditAsync(L["New product"], model, saved => Api.SaveProductAsync(id, saved), meta =>
-{
-    meta.Property(p => p.BrandId).WithLabel(L["Brand"])
-        .RenderWith<ODataPicker, Guid>(p => p.Value)
-        .WithAdditionalAttribute(nameof(ODataPicker.EntitySet), "Brands");
-    meta.Property(p => p.ImageDataUrl).WithLabel(L["Image"]).RenderWith<ImageDataUrlEdit, string?>(p => p.Value);
-});
-```
-
-| Editor | for |
-|---|---|
-| `ODataPicker` | a foreign key: searches an OData entity set by a text property |
-| `OptionalODataPicker` | an optional foreign key (`Guid?`): like `ODataPicker`, clearing it gives null |
-| `ImageDataUrlEdit` | a picture kept as data URL |
-
-`TextProperty` of both pickers (default `Name`) takes several properties separated by commas: `.WithAdditionalAttribute(nameof(ODataPicker.TextProperty), "FirstName,LastName")` shows *Eva Schulz*, selects only these columns, sorts by them and finds a row when every typed word appears in one of them (*eva sch*).
-
-### Chip lists
-
-In an `ObjectEdit` meta, `ChipListMeta.RenderAsChips` renders an `IReadOnlyList<string>` property as chips over the full width of the form, with MudEx's `MudExTagField<string>`: Enter, a space, comma or line break, a paste (a pasted list splits into chips) or leaving the field adds them; the &times; of a chip removes it. The action configures the tag field, e.g. `SearchFunc` (suggestions), `ValidateChip` (error text of an invalid value, `null` for a valid one) and `IsChipClosable` (chips that cannot be removed):
-
-```csharp
-meta.Property(f => f.Scopes).RenderAsChips(e =>
-{
-    e.Label = L["Scopes"];
-    e.SearchFunc = (text, _) => Task.FromResult(known.Where(s => s.Contains(text, StringComparison.OrdinalIgnoreCase)));
-    e.ValidateChip = s => ScopePattern().IsMatch(s) ? null : L["Letters, digits and . _ : - only"];
-    e.IsChipClosable = s => s != "openid";
-});
-```
-
-The property has to be an `IReadOnlyList<string>`. The configuring action sets component parameters directly, so the call sits between `#pragma warning disable BL0005` and `restore`.
-
-`ShowSideSheetAsync<TDialog>` opens your own dialog component the same way, `ConfirmAsync` asks before something that cannot be undone.
-
 ## Columns, grouping and views
 
 Everything the user arranges is part of the table's state and can be saved, shared and reset.
@@ -365,6 +288,95 @@ builder.Services.AddScoped<ITableViewStore, MyTableViews>();
 
 `CurrentState` returns the state as a `DataTableState` (only what differs from the declared layout), e.g. to build your own links; `DataTableState.Encode()` gives the value for the query parameter.
 
+## Pages or endless scrolling
+
+With `PageMode="FromSettings"` (the default) a table follows the setting **Table rows** (`DataTable.DefaultPageMode`): `Pager` (default) or `EndlessScroll`. Administrators set it for everyone under *Settings → System*, each user can override it under *My settings*; open tables switch as soon as it is saved. `PageMode="Pager"` or `PageMode="EndlessScroll"` fixes it for one table.
+
+Endless scrolling shows one list with a fixed header (`EndlessHeight`) and the total below it. Only the visible rows are rendered; the rows come in chunks of `PageSize` (at least 50) while scrolling and stay until the query changes, so scrolling back needs no request. Only the first chunk of a query asks for the count; the facets come in their own request, as with pages. Sorting, search, facets, column filters, selection, realtime reloads, export (always the whole filtered result) and client entities work as with pages.
+
+MudBlazor cannot virtualize grouped rows: while the table is grouped it shows pages with the hint *Grouped rows are shown in pages.* and goes back to scrolling when the grouping is removed.
+
+```razor
+<CoworkeeDataTable T="SalesOrderDto" EntitySet="SalesOrders" PageMode="DataTablePageMode.EndlessScroll" EndlessHeight="70vh" ...>
+```
+
+## Row links
+
+`RowHref` makes each row lead somewhere, `OnRowClick` runs code instead. A click on the row opens it, clicks on the row's buttons and its checkbox do not. Every such row gets an open button in the action column, so keyboard users reach it with Tab and Enter, and with `RowHref` it is a real link (middle click, open in a new tab).
+
+```razor
+<CoworkeeDataTable T="EmployeeDto" EntitySet="Employees" RowHref="@(e => $"/people/{e.Id}")">
+```
+
+```razor
+<CoworkeeDataTable T="EmployeeDto" EntitySet="Employees" OnRowClick="OpenAsync">
+```
+
+When a row has both, `RowHref` wins where it returns a link; rows for which it returns `null` call `OnRowClick`.
+
+## Export
+
+The export button of the tool bar (`Exportable`, on by default) offers Excel, CSV and JSON of the current view: filter, search, facets, sort and the visible property columns of the row itself (columns through a navigation such as `Brand.Name` are left out), named after `ExportFileName`. For an OData set the server writes the file: a dialog shows the phase, the rows and the percent with *Cancel*, saves the file through a one-time link and hands a large export to the background, which ends with a notice to download it; too many exports at once (`429`), an invalid query, a timeout or a lost connection show as errors. *Schedule export* (permission `DataTransfer.ExportSchedules`) mails the same view on a schedule. See [import and export](../web/import-export.md#progress-stream-and-one-time-download).
+
+`ExportProgressDialog.ShowAsync(dialogs, title, entitySet, query, fileName)` runs the same dialog from a button of your own; `ExportQueries.Of(format, odataQuery, columns)` builds the query. CSV exports, of the server and of a `DataSource`, escape values that spreadsheet programs would run as formulas.
+
+## Edit dialogs
+
+For plain models a generated dialog is enough:
+
+```csharp
+if (await Dialogs.ShowEditAsync("Edit brand", model) is { } saved)
+{
+    await Snackbar.RunAsync(() => Api.SaveBrandAsync(id, saved), "Brand saved");
+}
+```
+
+Edit dialogs are full height side sheets that slide in from the side the user clicked on, with two columns on wide screens.
+
+![Edit side sheet](../assets/screenshots/edit-sheet.png){ .shot }
+
+Pass `meta => ...` to configure the `MudExObjectEditForm` (labels, order, editors). With a save function the dialog stays open and shows the messages of the API when saving fails:
+
+```csharp
+await Dialogs.ShowEditAsync(L["New product"], model, saved => Api.SaveProductAsync(id, saved), meta =>
+{
+    meta.Property(p => p.BrandId).WithLabel(L["Brand"])
+        .RenderWith<ODataPicker, Guid>(p => p.Value)
+        .WithAdditionalAttribute(nameof(ODataPicker.EntitySet), "Brands");
+    meta.Property(p => p.ImageDataUrl).WithLabel(L["Image"]).RenderWith<ImageDataUrlEdit, string?>(p => p.Value);
+});
+```
+
+| Editor | for |
+|---|---|
+| `ODataPicker` | a foreign key: searches an OData entity set by a text property |
+| `OptionalODataPicker` | an optional foreign key (`Guid?`): like `ODataPicker`, clearing it gives null |
+| `ImageDataUrlEdit` | a picture kept as data URL |
+
+`TextProperty` of both pickers (default `Name`) takes several properties separated by commas: `.WithAdditionalAttribute(nameof(ODataPicker.TextProperty), "FirstName,LastName")` shows *Eva Schulz*, selects only these columns, sorts by them and finds a row when every typed word appears in one of them (*eva sch*).
+
+### Chip lists
+
+In an `ObjectEdit` meta, `ChipListMeta.RenderAsChips` renders an `IReadOnlyList<string>` property as chips over the full width of the form, with MudEx's `MudExTagField<string>`: Enter, a space, comma or line break, a paste (a pasted list splits into chips) or leaving the field adds them; the &times; of a chip removes it. The action configures the tag field, e.g. `SearchFunc` (suggestions), `ValidateChip` (error text of an invalid value, `null` for a valid one) and `IsChipClosable` (chips that cannot be removed):
+
+```csharp
+meta.Property(f => f.Scopes).RenderAsChips(e =>
+{
+    e.Label = L["Scopes"];
+    e.SearchFunc = (text, _) => Task.FromResult(known.Where(s => s.Contains(text, StringComparison.OrdinalIgnoreCase)));
+    e.ValidateChip = s => ScopePattern().IsMatch(s) ? null : L["Letters, digits and . _ : - only"];
+    e.IsChipClosable = s => s != "openid";
+});
+```
+
+The property has to be an `IReadOnlyList<string>`. The configuring action sets component parameters directly, so the call sits between `#pragma warning disable BL0005` and `restore`.
+
+`ShowSideSheetAsync<TDialog>` opens your own dialog component the same way, `ConfirmAsync` asks before something that cannot be undone.
+
+## Tool bar items
+
+A package can put a component into the tool bar of every table over an OData set: register `new DataTableToolbarItem(typeof(MyComponent))` in DI. The component gets the table as parameter `Table` (`IDataTable`: `EntitySet`, `Expand`, `CurrentQuery`, `ReloadAsync()`). The [client entity switch](client-entities.md#the-switch-in-the-table) is added this way.
+
 ## Other data sources
 
 By default the table queries `EntitySet` through OData. `DataSource` takes any `ITableDataSource<T>` instead, for example rows kept in the browser:
@@ -377,4 +389,6 @@ public sealed class LocalProducts(ProductStore store) : ITableDataSource<Product
 }
 ```
 
-The query carries the OData text the table builds (filter from search and facets, order, `Top`/`Skip`), so the source answers that subset. `EntitySet` still names the views and the URL parameter. CSV and JSON export use the source; Excel export, server exports and import stay with OData sets.
+The query carries the OData text the table builds (filter from search and facets, order, `Top`/`Skip`), so the source answers that subset. `EntitySet` still names the views and the URL parameter. The facets come from the source too: a second query with `Top = 0`, `Count = false`, `Facets = true` and the choice apart from the rest of the filter in `FacetContext` (see [facets](#facets)). A source that asks an endpoint of its own sends the context along (header `Coworkee-Facets`, `FacetContextDto.Encode()`), and the endpoint passes it to `IODataQueries.QueryAsync<T>(route, set, query, facets: true, facetContext, ct)`, so each facet group counts without its own choice as on the OData route; without it every group counts with the whole filter. See [queries in code](../web/odata.md#queries-in-code).
+
+CSV and JSON export use the source (every public property of a simple type, not only the visible columns); Excel export, scheduled exports and import stay with OData sets.
