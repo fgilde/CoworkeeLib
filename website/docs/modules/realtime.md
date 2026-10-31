@@ -1,5 +1,12 @@
 # Realtime and notifications
 
+`Coworkee.Realtime` (`CoworkeeRealtimeModule`) runs a SignalR hub that tells every open tab about changes; `Coworkee.Notifications` (`CoworkeeNotificationsModule`, depends on realtime and [mailing](mailing.md)) adds the notifications of users, their inbox, preferences, mails and push. Apps from the template have both (template option `notifications`, on by default):
+
+```csharp
+[DependsOn(typeof(CoworkeeNotificationsModule))]
+public sealed class MyAppDatabaseModule : CoworkeeModule;
+```
+
 ## What arrives live
 
 Every open tab follows these changes without a reload:
@@ -26,13 +33,13 @@ Mark an entity, and every committed insert, update and delete is pushed over Sig
 public sealed class Brand : AuditedEntity, IMultiTenant { }
 ```
 
-A `CoworkeeDataTable` follows its entity by itself: the topic is `type:` plus the row type without `Dto`, so a table of `BrandDto` reloads on every change of `Brand`, once per burst (a bulk delete sends one event per row). Set `RealtimeTopic` when the row type is named differently, or to an empty string to turn it off:
+Each change goes to two topics: `type:Brand` (every row of the type) and `entity:Brand:{id}` (that row). A `CoworkeeDataTable` follows its entity by itself: the topic is `type:` plus the row type without `Dto`, so a table of `BrandDto` reloads on every change of `Brand`, once per burst (a bulk delete sends one event per row). Set `RealtimeTopic` when the row type is named differently, or to an empty string to turn it off; a table over a `DataSource` follows nothing unless `RealtimeTopic` is set:
 
 ```razor
 <CoworkeeDataTable T="UserRow" EntitySet="Users" RealtimeTopic="type:User" ... />
 ```
 
-A detail page watches its entry:
+A detail page watches its entry (topic `entity:{EntityType}:{EntityId}`):
 
 ```razor
 <EntityWatch EntityType="Brand" EntityId="Id" ReturnHref="/catalog/brands" OnChanged="LoadAsync" />
@@ -57,7 +64,23 @@ Private data needs more care: entities only some users may see should not use th
 await publisher.PublishAsync(tenantId, $"folder:{folder.Id}", "AssetAdded", new { asset.Id }, ct);
 ```
 
+An entity can also name topics of its own: `IHasRealtimeTopics.RealtimeTopics` on the entity, or an `IRealtimeTopicMapper` service for entities you do not own (`TopicsFor(entity)`). Their changes go to those topics as `EntityChanged` too, also without `[Realtime]`; the notifications of a user, for example, go to `user:{id}`.
+
 With several API instances, set the connection string `redis` for the SignalR backplane. The app host does that for every service that references `Coworkee.Realtime`. The same connection carries the session changes between the instances (see [Clients and sessions](../security/clients.md)): each instance ends the hub connections of a session that was ended, whichever instance holds them.
+
+## Topics
+
+Clients connect to the hub at `/hubs/realtime` (signed in; the connection ends when its token expires) and call `Subscribe(topic)` and `Unsubscribe(topic)`; every message arrives through `OnEvent` as a `RealtimeEnvelope(Topic, Type, Payload)`. The server lets a connection join a topic only when an `IRealtimeTopicAuthorizer` that handles its prefix agrees:
+
+| Topic | Who may follow it | What goes there |
+|---|---|---|
+| `type:{Entity}`, `entity:{Entity}:{id}` | holders of the permission of the entity's `[Realtime]` attribute; for `entity:` also holders of it on that resource (`[Realtime(permission, ResourceType = ...)]`) | `EntityChanged` |
+| `user:{id}` | that user | his notifications, chat, `SessionRevoked` |
+| `session:{sid}` (`RealtimeTopics.Session`) | connections whose token carries that `sid` | `ImpersonationEnded` (`ImpersonationEndedPayload`) when a *Log in as* ends, see [identity](../features/identity.md#log-in-as-another-user) |
+| `tenant:...` | every signed-in user of the organisation | e.g. `tenant:permissions`, `tenant:presence` |
+| `global:...` | every signed-in user | e.g. `global:permissions` |
+
+Other prefixes are refused unless an app registers its own `IRealtimeTopicAuthorizer` (`Handles(topic)`, `AuthorizeAsync(topic, ct)`), as the social, workflow and record attachment modules do for their topics. `IRealtimePublisher.PublishAsync(tenantId, topic, type, payload)` sends to a topic; apps can decorate it to forward messages to hubs of their own. `SessionRevoked` (`SessionRevokedPayload`: reason, `KeptSessionId`) passes the publisher once per session change on every instance, but `RealtimePublisher` sends it to no group: the identity module ends exactly the hub connections of that session (see [Clients and sessions](../security/clients.md#signing-out-everywhere-and-locking)).
 
 ## Permissions
 
@@ -108,22 +131,22 @@ Localizable notifications take the English texts as keys with `{0}` placeholders
 await notifier.NotifyLocalizedAsync(adminIds, "account.registration", "New registration", "{0} ({1}) waits for activation.", [name, email], $"/admin/users/{id}", ct);
 ```
 
-Users see them in the bell of the app bar and on the notifications page, live through SignalR. A daily digest mails unread ones (`Coworkee:Notifications:DigestCron`), with links to `PublicAppUrl`; notifications that went out as a mail of their own (e-mail channel of a type) are left out.
+Users see them in the bell of the app bar and on the notifications page, live through SignalR (topic `user:{id}`). A daily digest mails the unread ones (see [Daily digest](#daily-digest)).
 
 The bell shows the unread count and the latest ten; a notification that arrives pops up as a snackbar with a link to it. Clicking one marks it read and opens its link (only pages of the app). Each can be marked read or unread again and deleted; the bell marks all as read, the page `/notifications` (also a tab of `/profile`) pages through all or only the unread ones and deletes all. Every change reaches all open tabs of the user at once: the client's `NotificationCenter` holds the unread count and raises `Changed` once per burst, also after "mark all as read".
 
 | Endpoint | |
 |---|---|
-| `GET /api/v1/notifications?unreadOnly=&type=&page=&pageSize=` | newest first |
+| `GET /api/v1/notifications?unreadOnly=&type=&category=&done=&search=&page=&pageSize=` | newest first (at most 100 per page); filters: unread, type, category, open (`done=false`) or done, text in title or body |
 | `GET /api/v1/notifications/unread-count` | |
+| `GET /api/v1/notifications/counts` | open, unread and open per category |
 | `POST /api/v1/notifications/{id}/read`, `/{id}/unread` | |
 | `POST /api/v1/notifications/read-all` | |
-| `GET /api/v1/notifications?category=&done=&search=` | inbox filters: category, open (`done=false`) or done, text in title or body |
-| `GET /api/v1/notifications/counts` | open, unread and open per category |
 | `POST /api/v1/notifications/{id}/done`, `/{id}/undone` | done also marks read |
 | `GET /api/v1/notifications/preferences`, `PUT .../preferences/{type}` | the user's choice per registered type |
 | `GET /api/v1/notifications/follows`, `GET/PUT/DELETE .../follows/{entityType}/{entityId}` | followed entities, follow state, follow, unfollow |
 | `DELETE /api/v1/notifications/{id}`, `DELETE /api/v1/notifications` | one, all |
+| `GET /api/v1/notifications/push`, `PUT .../push`, `DELETE .../push/{id}` | Web Push key and the user's devices, subscribe a device, remove one (see [Push](#push)) |
 
 ### Preferences, following and delayed mails
 
@@ -140,7 +163,8 @@ A type has a category (inbox filter and counts), a name (localization key) and d
 
 !!! warning "`Followable(string)` checks nothing"
     With `Followable("Type")` users may follow any id, and nobody checks that they may see it. Notifications about such entities therefore reach followers only through an `Audience`, limited to it; without an audience their followers get nothing. Register records some users must not see with `Followable<TEntity>`.
- `CoworkeeFollowButton` (`EntityType`, `EntityId`, `Title`) follows and unfollows on a detail page; the *Following* tab lists what the user follows. `NotificationFollow` (`cw.NotificationFollows`) is public, so apps filter their lists by it (followed only, an is-followed column).
+
+`CoworkeeFollowButton` (`EntityType`, `EntityId`, `Title`) follows and unfollows on a detail page; the *Following* tab lists what the user follows. `NotificationFollow` (`cw.NotificationFollows`) is public, so apps filter their lists by it (followed only, an is-followed column).
 
 `INotifier.PublishAsync(NotificationMessage)` sends to three kinds of recipients:
 
@@ -155,13 +179,13 @@ await notifier.PublishAsync(new NotificationMessage("shipment.eta", "Estimated a
 }, ct);
 ```
 
-Addressed users get it unless their scope is Off; followers when it is All or Followed and they still see the entity: limited to the audience when one is given, otherwise each follower is checked as himself against the set of the `Followable<TEntity>` registration (permission, row filters, groups); the audience when it is All. The actor gets it only when addressed. Per recipient the channels decide: in the app a notification, by e-mail the mail `Notifications.Notification` in the reader's language, only to an active address (without one the notification stays in the daily digest). A type with `emailDelay` lets the mail wait in `cw.PendingNotificationMails`; another notification of the same user, type and entity before that replaces it and waits anew, so a burst of changes ends in one mail with the latest text. The job `coworkee-notification-mails` sends due mails every minute. A waiting mail is unique per user, type and entity and is written through the outbox after the sending command commits: a command that fails sends no mail, and parallel notifications or the job never fail the command (the outbox handler retries; the API host runs the outbox with `AddCoworkeeOutboxProcessing`); the job takes a mail only in the version it read (`Version` changes on every replacement), a mail replaced meanwhile waits anew. Publish inside the command, before its unit of work is saved (in a handler the pipeline saves), or after the commit from a domain event handler: the in-app notifications, immediate mails and the outbox message of a delayed mail are part of that save, so a command that fails sends nothing, and code that publishes after its last `SaveChangesAsync` must save again.
+Addressed users get it unless their scope is Off; followers when it is All or Followed and they still see the entity: limited to the audience when one is given, otherwise each follower is checked as himself against the set of the `Followable<TEntity>` registration (permission, row filters, groups); the audience when it is All. The actor gets it only when addressed. Per recipient the channels decide: in the app a notification, by e-mail the mail `Notifications.Notification` in the reader's language, only to an active address (without one the notification stays in the daily digest). A type with `emailDelay` lets the mail wait in `cw.PendingNotificationMails`; another notification of the same user, type and entity before that replaces it and waits anew, so a burst of changes ends in one mail with the latest text (a message without `EntityType` and `EntityId` is not merged: each waits on its own). The job `coworkee-notification-mails` sends due mails every minute. A waiting mail is unique per user, type and entity and is written through the outbox after the sending command commits: a command that fails sends no mail, and parallel notifications or the job never fail the command (the outbox handler retries; the API host runs the outbox with `AddCoworkeeOutboxProcessing`); the job takes a mail only in the version it read (`Version` changes on every replacement), a mail replaced meanwhile waits anew. Publish inside the command, before its unit of work is saved (in a handler the pipeline saves), or after the commit from a domain event handler: the in-app notifications, immediate mails and the outbox message of a delayed mail are part of that save, so a command that fails sends nothing, and code that publishes after its last `SaveChangesAsync` must save again.
 
 The follower check costs one query per follower without an `Audience`: each follower is checked as himself, because permissions, row filters and groups differ per user. For entities followed by hundreds of users pass an `Audience` (the users who may see the entity), which replaces the per-follower check by one intersection.
 
 `NotifyAsync` and `NotifyLocalizedAsync` are `PublishAsync` with `Recipients`; unregistered types reach them in the app only, as before.
 
-The inbox lists open notifications by default; *Done* moves one out of it (and marks it read), the tabs show open, done or all, the chips filter by category with their open counts, the search looks in title and body.
+The inbox lists open notifications by default; *Done* moves one out of it (and marks it read), the chips *To do*, *Done* and *All* switch between open, done and all, the category chips filter by category with their open counts, the search looks in title and body.
 
 ### Mail templates per type and delay per tenant
 
@@ -194,3 +218,15 @@ context.Add(new MailTemplateDefinition("Shipments.EtaChanged", "Estimated arriva
 ```
 
 `resolveEmailDelay` runs when a notification is published, with the services of the sender's scope (its tenant, features and settings). Its result is the delay for this notification; `null` keeps `emailDelay`, `TimeSpan.Zero` mails at once. A resolver that throws is logged and `emailDelay` applies; it never fails the publishing command. The waiting mail keeps the due time it got, a newer notification of the same entity sets a new one.
+
+### Daily digest
+
+The job `coworkee-notification-digest` mails every user with unread notifications since his last digest (at most one day back, at most 50 per mail) one mail with the template `Notifications.Digest`, in his language and with links to `Coworkee:Notifications:PublicAppUrl` (the web app; without it the links stay relative). Notifications that went out as a mail of their own (e-mail channel of a type) are left out. `Coworkee:Notifications:DigestCron` sets when it runs (cron in UTC, default `0 6 * * *`); the setting `Notifications.Digest` (*Daily e-mail with unread notifications*, system and user, default on) lets users switch it off.
+
+### Push
+
+With a VAPID key pair (`options.UsePush()` in the app host, or `Coworkee:Notifications:Push:PublicKey`, `PrivateKey` and `Subject`) every notification also goes as Web Push to the devices a user switched on in the inbox. Setup and delivery: [Phones, installable app and push](../ui/phones-and-pwa.md#push-notifications).
+
+### Retention and personal data
+
+Notifications are kept until the user deletes them; with the [Retention](retention.md) module the target `notifications` deletes them after the days set there. The personal data export has a section `notifications` (the notifications and the push devices of the user); erasing the user removes them.
