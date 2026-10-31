@@ -72,7 +72,7 @@ A soft deleted record keeps its files, so a restore brings them back. Once the r
 
 Every added, replaced or deleted attachment is sent on the realtime topic `attachments:{entityType}:{entityId}` (`AttachmentTopics.Record`), after the commit. Following it needs read access to one of the record's slots, the same check as the list endpoint.
 
-The [personal data export](../security/privacy.md) has a section `attachments` with the files the user attached (record, slot, name, type, size, time), without the content. Erasing the user keeps them: like other files they belong to the organisation's records, and the uploader id points to nobody afterwards.
+The [personal data export](../security/privacy.md) has a section `attachments` with the files the user attached (record, slot, name, type, size, time), without the content. Erasing the user keeps them: like other files they belong to the organisation's records; the uploader becomes the erased-user placeholder (`PersonalDataSubject.ErasedUserId`).
 
 ## Client
 

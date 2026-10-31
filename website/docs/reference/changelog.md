@@ -4,14 +4,32 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Security
+
+- Erasing a user (`DELETE /api/v1/identity/users/{id}`, *delete my account*) left personal data behind, and the personal data export missed tables. Now every module contributes, and the library ends each erase with `PersonalDataReferences`; see [the rules of an erase](../security/privacy.md#the-rules-of-an-erase):
+    - His id leaves `CreatedBy`, `ModifiedBy` and `DeletedBy` of every table (the app's too), the audit trail (`ActorId`, `ImpersonatorId`, his id and address inside recorded values), the snapshots and the outbox; `PersonalDataSubject.ErasedUserId` (the empty GUID) takes its place. The values recorded for the records erased with him (his user, rows keyed by his id, records he created that no longer exist, e.g. deleted comments) become `***`; the trail itself stays.
+    - Reporting: favourites, subscriptions (the subscription job kept mailing an erased user), dashboard choices and private reports are exported and erased; shared reports stay, owned by the placeholder.
+    - Import and export: jobs (with their files) and scheduled exports are exported and erased, a running export whose job is gone stops, his address leaves the recipients of the other schedules of his organisation.
+    - Webhook endpoints he owned are switched off (deliveries ran as him). Workflow decisions and history keep the placeholder without his comments; pending approvals waiting only for him are overdue at once (timeout state or escalation), already escalated ones are cancelled.
+    - His access tokens (file and download links) are deleted and his cached session stamp is dropped on every instance (his tokens worked up to a minute longer). Keys of others he revoked and clean-ups he started keep the placeholder, group chats he created stay with the placeholder as creator, his registration documents are deleted with their content.
+    - Notifications, follows and preferences of his id are erased in every organisation, mails only in his organisation (another user of another organisation with the same address lost his mail log).
+    - The export adds `profile.claims`, `permissionGrants`, `resourcePermissions` and `selectedGroups`, the chat's `memberships`, `reactions` and `attachments`, `activity` entries made while signed in as someone else, and the sections `reports`, `dataTransfers`, `webhooks` and `workflows`.
+
 ### Added
 
+- `PersonalDataSubject.ErasedUserId`: the placeholder own contributors write where an erased user's id stood. `tests/Coworkee.ArchitectureTests/PersonalDataCoverageTests` fails for a column of the library that names a user without a contributor.
 - Group-scoped administration: with `Coworkee:Identity:GroupScopedAdministration` (off by default) administrators without `Identity.Groups.ScopeAll` who are no administrators of the organisation reach only their groups, the sub-groups and their members. Everything else answers 404 and is absent from lists, counts, lookups, the OData sets `Users`, `Groups`, `ApiKeys`, exports, search and AI tools; users who also belong to a group outside the reach are changed only by someone reaching all their groups (`403 identity.user_other_groups`), members added must belong to no group outside the reach, and top-level groups, the default group and roles need the whole organisation (`403 identity.all_groups_required`). The default group counts for nobody. `AdminReach` (`Coworkee.Identity.Users`) applies the rules in own requests; `AccountGuard.CheckUserAsync` includes them. See [group-scoped administration](../security/permissions.md#group-scoped-administration).
 - `CreateUserRequest.GroupIds`: the groups a new user joins (needs `Identity.Groups.ManageMembers`); the *New user* dialog offers them to who manages members. A group-scoped administrator names at least one of his groups.
 
 ### Breaking changes
 
 - `CreateUserRequest` has a new last parameter `GroupIds`: source that calls the constructor compiles unchanged, assemblies compiled against the old one are rebuilt.
+- The `chat` section of the personal data export is an object (`messages`, `memberships`, `reactions`, `attachments`) instead of the list of messages.
+- An erase writes `PersonalDataSubject.ErasedUserId` into `CreatedBy`, `ModifiedBy` and `DeletedBy` of the app's tables too; code that looks the creator up finds no user for it.
+
+### Fixed
+
+- The file system blob storage failed to delete a key whose directory did not exist, the S3 storage one whose bucket did not exist yet; both ignore it now like any other missing blob (erasing a user whose chat file was already gone answered 500).
 
 ## 0.0.1.54 (2026-10-31)
 

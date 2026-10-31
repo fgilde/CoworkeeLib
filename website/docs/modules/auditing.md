@@ -16,7 +16,7 @@ The audit trail records every change of the app's entities field by field: who (
 | `GET /api/v1/audit?entityType=&entityId=&actorId=&impersonatorId=&from=&to=&page=&pageSize=` | the entries (`Audit.View`); also the OData set `AuditEntries` |
 | `GET /api/v1/versions/{type}/{id}`, `GET .../{revision}`, `POST .../{revision}/restore` | snapshots of an `IVersioned` type (its registered permission) |
 
-The permission `Audit.View` shows the audit log and the history. With the [Retention](retention.md) module the targets `audit` and `snapshots` delete old entries; the personal data export has a section `activity` (what the user changed: type, id, action, time), and erasing a user keeps the trail without his name.
+The permission `Audit.View` shows the audit log and the history. With the [Retention](retention.md) module the targets `audit` and `snapshots` delete old entries; the personal data export has a section `activity` (what the user changed: type, id, action, time), and erasing a user keeps the trail without him: his id becomes the erased-user placeholder, the values of the records erased with him become `***`, his id and address leave the other values ([rules](../security/privacy.md#the-audit-trail)).
 
 ## Record history and restore
 

@@ -16,7 +16,7 @@ public sealed class MyAppDatabaseModule : CoworkeeModule;
 - Löschen ist ein Soft Delete des Ordners mit allem darunter; die Blobs bleiben, bis das [Aufbewahrungs](retention.md)-Ziel `deleted-files` die Zeilen mit ihrem Inhalt entfernt (ohne Standard: aufbewahrt, bis Tage gesetzt sind). Jede Änderung landet im Audit-Log und geht über die Realtime-Topics `type:StoredFile` und `type:FileFolder` raus.
 - OData-Sets `StoredFiles` und `FileFolders` (`Files.View`) für Suche und Filter.
 - Ein Upload ist der rohe Request-Body; er wird in eine temporäre Datei und von dort in den Speicher gestreamt. Die Grenze ist `Coworkee:Files:MaxFileSize` (Bytes, Standard 2 GB); ein Web-Host mit `Coworkee:Bff:MaxRequestBodySize` begrenzt weitergeleitete Uploads zusätzlich. Uploads in die Ablage haben keinen Prüf-Hook; Virenprüfung gibt es für [Datensatz-Anhänge](attachments.md) (`IAttachmentScanner`) und Chat-Dateien (`IChatAttachmentScanner`).
-- Der Export persönlicher Daten listet die Uploads des Benutzers im Abschnitt `files` (nur Metadaten); das Löschen behält die Dateien.
+- Der Export persönlicher Daten listet die Uploads des Benutzers im Abschnitt `files` (nur Metadaten); das Löschen behält die Dateien mit dem Platzhalter für gelöschte Benutzer als hochladender Person und löscht seine Registrierungsunterlagen samt Inhalt und Ordner.
 
 | Endpunkt | |
 |---|---|

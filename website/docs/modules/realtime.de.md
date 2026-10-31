@@ -229,4 +229,4 @@ Mit einem VAPID-Schlüsselpaar (`options.UsePush()` im AppHost oder `Coworkee:No
 
 ### Aufbewahrung und personenbezogene Daten
 
-Benachrichtigungen bleiben, bis der Benutzer sie löscht; mit dem Modul [Aufbewahrung](retention.md) löscht das Ziel `notifications` sie nach den dort eingestellten Tagen. Der Export personenbezogener Daten hat einen Abschnitt `notifications` (die Benachrichtigungen und Push-Geräte des Benutzers); das Löschen des Benutzers entfernt sie.
+Benachrichtigungen bleiben, bis der Benutzer sie löscht; mit dem Modul [Aufbewahrung](retention.md) löscht das Ziel `notifications` sie nach den dort eingestellten Tagen. Der Export personenbezogener Daten hat einen Abschnitt `notifications` (Benachrichtigungen, Push-Geräte, Einstellungen, gefolgte Datensätze und wartende Mails des Benutzers); das Löschen des Benutzers entfernt sie in jeder Organisation.

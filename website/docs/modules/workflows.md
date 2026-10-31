@@ -71,6 +71,8 @@ The reminders and deadlines are handled by the recurring job `workflow-deadlines
 
 Every transition, decision, reminder, escalation and expiry is a line of the history with the user, the time and the comment. State changes and approvals also land in the [audit log](auditing.md) like changes of any entity. Every change is sent on the realtime topic `workflow:{entityType}:{entityId}` (`WorkflowTopics.Entity`); the approvals of a user reach their own topic, so the inbox follows along.
 
+The [personal data export](../security/privacy.md) has a section `workflows` (the user's steps, decisions and requested approvals). Erasing the user keeps history and decisions with the erased-user placeholder and without his comments; he leaves pending approvals, and one that then waits for nobody is overdue at once: the deadline job moves it to its `OnTimeout` state or lets the `EscalateTo` role join; one already escalated is cancelled.
+
 ## Extending it
 
 Handlers of the domain events `WorkflowTransitioned`, `ApprovalStarted` and `ApprovalDecided` (`IDomainEventHandler<T>`) run after the commit through the outbox, e.g. to send a mail, call another system or start an [Elsa workflow](workflows-elsa.md). The commands are ordinary requests (`RunTransitionCommand`, `DecideApprovalCommand`), so the [AI assistant and MCP clients](ai.md) can use them too, with the user's permissions.

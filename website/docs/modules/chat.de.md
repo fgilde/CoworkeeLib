@@ -115,7 +115,7 @@ await realtime.SubscribeAsync(RealtimeTopics.User(me), envelope =>
 
 ## Personenbezogene Daten
 
-Der Export personenbezogener Daten hat einen Abschnitt `chat`: was der Benutzer irgendwo gesendet und was er in Direkt-Chats empfangen hat. Das Löschen des Benutzers entfernt diese Nachrichten und ihre Dateien.
+Der Export personenbezogener Daten hat einen Abschnitt `chat`: `messages` (was der Benutzer irgendwo gesendet und in Direkt-Chats empfangen hat), `memberships`, `reactions` und die hochgeladenen `attachments` (aufgelistet, ohne Inhalt). Das Löschen des Benutzers entfernt diese Nachrichten samt Dateien, seine Reaktionen und Mitgliedschaften; Gruppen-Chats, die er angelegt hat, bleiben für die anderen.
 
 ## Aktualisieren
 
