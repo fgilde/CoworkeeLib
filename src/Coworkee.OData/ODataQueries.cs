@@ -27,6 +27,16 @@ public interface IODataQueries
     /// <param name="facets">Builds the facets of the page, as <c>Prefer: odata.include-annotations="cn.facets"</c> does.</param>
     /// <returns>The page; Forbidden or Validation errors where the route answers 403 or 400.</returns>
     Task<Result<ODataQueryResult<T>>> QueryAsync<T>(string route, string entitySet, string? query, bool facets = false, CancellationToken cancellationToken = default)
+        where T : class =>
+        QueryAsync<T>(route, entitySet, query, facets, null, cancellationToken);
+
+    /// <summary>
+    /// The list read with the facet choice apart from the filter (<see cref="FacetContextDto"/>, the <c>Coworkee-Facets</c> header of the route): each facet
+    /// group counts without its own choice, as the route counts it for a table. An endpoint that answers a table's query forwards the table's context.
+    /// </summary>
+    /// <param name="facetContext">The table's facet choice; null counts every group with the whole filter.</param>
+    Task<Result<ODataQueryResult<T>>> QueryAsync<T>(string route, string entitySet, string? query, bool facets, FacetContextDto? facetContext,
+        CancellationToken cancellationToken = default)
         where T : class;
 }
 
@@ -49,7 +59,8 @@ internal sealed class ODataQueries(
     Microsoft.Extensions.Options.IOptions<CoworkeeODataOptions> limits, IHttpContextAccessor? accessor = null)
     : IODataQueries
 {
-    public async Task<Result<ODataQueryResult<T>>> QueryAsync<T>(string route, string entitySet, string? query, bool facets, CancellationToken cancellationToken)
+    public async Task<Result<ODataQueryResult<T>>> QueryAsync<T>(string route, string entitySet, string? query, bool facets, FacetContextDto? facetContext,
+        CancellationToken cancellationToken)
         where T : class
     {
         var profile = routes.Find(route) ?? throw new ArgumentException($"There is no OData route {route}.", nameof(route));
@@ -69,7 +80,7 @@ internal sealed class ODataQueries(
             return Error.Forbidden("odata.forbidden", $"You may not read {set.EntitySet}.");
         }
 
-        var http = Request(profile, set.EntitySet, query, facets, cancellationToken);
+        var http = Request(profile, set.EntitySet, query, facets, facetContext, cancellationToken);
         if (await ODataPipeline.PrepareAsync<T>(http, byKey: false) is { } refusal)
         {
             return refusal.Status == StatusCodes.Status400BadRequest
@@ -143,7 +154,7 @@ internal sealed class ODataQueries(
     }
 
     // a request of the route as the controller sees it, with the services of the current scope (user, tenant, group selection)
-    private DefaultHttpContext Request(ODataRouteProfile profile, string entitySet, string? query, bool facets, CancellationToken cancellationToken)
+    private DefaultHttpContext Request(ODataRouteProfile profile, string entitySet, string? query, bool facets, FacetContextDto? facetContext, CancellationToken cancellationToken)
     {
         var http = new DefaultHttpContext { RequestServices = services, RequestAborted = cancellationToken };
         if (accessor?.HttpContext?.User is { } principal)
@@ -157,6 +168,10 @@ internal sealed class ODataQueries(
         if (facets)
         {
             http.Request.Headers["Prefer"] = $"odata.include-annotations=\"{FacetResourceSetSerializer.FacetsAnnotationName}\"";
+            if (facetContext is not null)
+            {
+                http.Request.Headers[FacetContextDto.Header] = facetContext.Encode();
+            }
         }
 
         http.ODataFeature().RoutePrefix = profile.Prefix;
