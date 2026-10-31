@@ -4,7 +4,7 @@ An application service is an interface in the contracts. The server exposes its 
 
 **Why**: one interface is the whole API contract. The page calls `Orders.CancelAsync(id)` like a local service, the server gets an ordinary minimal API with permissions, validation and the unit of work, and the OpenAPI document and SDKs see the same endpoints. **Compared with** [hand-written endpoints](http-api.md) and the [dispatcher](../fundamentals/messaging.md): use a service for the operations a client calls; keep commands for work that also runs from jobs, imports or the AI assistant (a service method can simply send the command).
 
-The template has two: `IDocumentTypeAppService` (Documents) and `ISalesOrderAppService` (Sales). This page builds the second one step by step.
+The template has none; the demo app has two: `IDocumentTypeAppService` (Documents) and `ISalesOrderAppService` (Sales). This page builds the second one step by step.
 
 ## Step 1: the interface in the contracts
 
@@ -55,7 +55,7 @@ internal sealed class AddEditSalesOrderValidator : AbstractValidator<AddEditSale
 }
 ```
 
-There is no registration and no mapping: `AddCoworkee` registers every implementation found in the assemblies of the modules (scoped, unless the interface is registered already) and `UseCoworkee` maps it. The implementation changes the `DbContext` and does not save; the endpoint does (step 4). The `DocumentTypeAppService` of the template shows the other style: each method sends a command through the dispatcher and turns a failed result into an exception with `OrThrow()`.
+There is no registration and no mapping: `AddCoworkee` registers every implementation found in the assemblies of the modules (scoped, unless the interface is registered already) and `UseCoworkee` maps it. The implementation changes the `DbContext` and does not save; the endpoint does (step 4). The `DocumentTypeAppService` of the demo app shows the other style: each method sends a command through the dispatcher and turns a failed result into an exception with `OrThrow()`.
 
 Hosts without modules call `services.AddCoworkeeApplicationServices(assembly)` and `app.MapCoworkeeApplicationServices()`.
 
@@ -97,7 +97,7 @@ To look at the files, open *Dependencies → Analyzers → Coworkee.SourceGenera
 
 ## Step 4: permissions, validation, errors, saving
 
-Every application service endpoint requires a signed-in user and runs, in this order:
+Every application service endpoint requires a signed-in user (unless `RequireAuthorization` is turned off, see [below](#configuring-single-services)) and runs, in this order:
 
 1. `[RequiresPermission]` on the implementing class or method: `401` without a user, `403` without the permission.
 2. FluentValidation: every validator registered for an argument type (`IValidator<AddEditSalesOrderRequest>`, registered by `AddMessagingFromAssembly`) runs; failures come back as `400` with `errors` per field.
@@ -226,6 +226,8 @@ The generator runs in the projects that reference `Coworkee.AspNetCore` (endpoin
 Proxies register when their assembly loads: those of the client app always are; those generated into a class library only when the library is loaded before `AddCoworkeeClient` runs.
 
 ## Files of the sample
+
+In the demo app:
 
 | File | |
 |---|---|

@@ -85,6 +85,6 @@ const folder = unwrap(await api.GET('/api/v1/files/folders/content', { params: {
 const products = await odataPage('Products', { top: 20, orderBy: 'Name', count: true }, { baseUrl: 'https://myapp.example', token: () => apiKey });
 ```
 
-`createRealtime()` folgt Topics des Realtime-Hubs (SignalR über das BFF, z. B. `coworkee.realtime.subscribe('type:Order', ...)`), `postNdjson()` liest gestreamte Antworten wie die des Assistenten.
+`createRealtime()` folgt Topics des Realtime-Hubs (SignalR über das BFF, z. B. `createRealtime().subscribe(realtimeTopics.type('Order'), handler)`, das die Funktion zum Abmelden zurückgibt), `postNdjson()` liest gestreamte Antworten wie die des Assistenten.
 
 Installation mit `npm install @coworkee/client`; jedes Release veröffentlicht es in der Version des Releases (`a.b.c.d` wird zu `a.b.(c*1000+d)`, siehe [AirWorks-Client](airworks.md#die-pakete)). Der [AirWorks-Client](airworks.md) baut darauf auf. Die Quellen liegen in `typescript/client`; `npm run openapi -- <Adresse von /openapi/v1.json>` aktualisiert die Beschreibung aus einer laufenden App und `npm run generate` die Typen.

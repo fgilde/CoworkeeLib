@@ -4,7 +4,7 @@ Ein Anwendungsdienst ist ein Interface in den Contracts. Der Server stellt seine
 
 **Wozu**: Ein Interface ist der ganze API-Vertrag. Die Seite ruft `Orders.CancelAsync(id)` wie einen lokalen Dienst, der Server bekommt eine gewöhnliche Minimal-API mit Berechtigungen, Validierung und Unit of Work, und OpenAPI-Dokument und SDKs sehen dieselben Endpunkte. **Im Vergleich** zu [handgeschriebenen Endpunkten](http-api.md) und dem [Dispatcher](../fundamentals/messaging.md): Nimm einen Dienst für die Operationen, die ein Client aufruft; Commands bleiben für Arbeit, die auch aus Jobs, Importen oder dem KI-Assistenten läuft (eine Dienstmethode kann einfach den Command senden).
 
-Das Template hat zwei: `IDocumentTypeAppService` (Dokumente) und `ISalesOrderAppService` (Vertrieb). Diese Seite baut den zweiten Schritt für Schritt auf.
+Das Template hat keinen; die Demo-App hat zwei: `IDocumentTypeAppService` (Dokumente) und `ISalesOrderAppService` (Vertrieb). Diese Seite baut den zweiten Schritt für Schritt auf.
 
 ## Schritt 1: das Interface in den Contracts
 
@@ -55,7 +55,7 @@ internal sealed class AddEditSalesOrderValidator : AbstractValidator<AddEditSale
 }
 ```
 
-Es gibt keine Registrierung und kein Mapping: `AddCoworkee` registriert jede Implementierung aus den Assemblies der Module (scoped, außer das Interface ist schon registriert), und `UseCoworkee` mappt sie. Die Implementierung ändert den `DbContext` und speichert nicht; das macht der Endpunkt (Schritt 4). Der `DocumentTypeAppService` des Templates zeigt den anderen Stil: Jede Methode sendet einen Command über den Dispatcher und macht aus einem fehlgeschlagenen Result mit `OrThrow()` eine Exception.
+Es gibt keine Registrierung und kein Mapping: `AddCoworkee` registriert jede Implementierung aus den Assemblies der Module (scoped, außer das Interface ist schon registriert), und `UseCoworkee` mappt sie. Die Implementierung ändert den `DbContext` und speichert nicht; das macht der Endpunkt (Schritt 4). Der `DocumentTypeAppService` der Demo-App zeigt den anderen Stil: Jede Methode sendet einen Command über den Dispatcher und macht aus einem fehlgeschlagenen Result mit `OrThrow()` eine Exception.
 
 Hosts ohne Module rufen `services.AddCoworkeeApplicationServices(assembly)` und `app.MapCoworkeeApplicationServices()` auf.
 
@@ -97,7 +97,7 @@ Die Dateien sieht man in der IDE unter *Dependencies → Analyzers → Coworkee.
 
 ## Schritt 4: Berechtigungen, Validierung, Fehler, Speichern
 
-Jeder Endpunkt eines Anwendungsdienstes verlangt einen angemeldeten Benutzer und führt in dieser Reihenfolge aus:
+Jeder Endpunkt eines Anwendungsdienstes verlangt einen angemeldeten Benutzer (außer `RequireAuthorization` ist abgeschaltet, siehe [unten](#einzelne-dienste-konfigurieren)) und führt in dieser Reihenfolge aus:
 
 1. `[RequiresPermission]` an der implementierenden Klasse oder Methode: `401` ohne Benutzer, `403` ohne die Berechtigung.
 2. FluentValidation: Jeder für einen Argumenttyp registrierte Validator (`IValidator<AddEditSalesOrderRequest>`, registriert von `AddMessagingFromAssembly`) läuft; Fehler kommen als `400` mit `errors` pro Feld zurück.
@@ -226,6 +226,8 @@ Der Generator läuft in den Projekten, die `Coworkee.AspNetCore` (Endpunkte für
 Proxies registrieren sich, wenn ihre Assembly geladen wird: die der Client-App immer; die in einer Klassenbibliothek generierten nur, wenn die Bibliothek geladen ist, bevor `AddCoworkeeClient` läuft.
 
 ## Dateien des Beispiels
+
+In der Demo-App:
 
 | Datei | |
 |---|---|

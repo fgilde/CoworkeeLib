@@ -78,4 +78,4 @@ if (held is null)
 | Datenbanksperre | Standard mit `AddCoworkeeDbContext` | Postgres Advisory Lock oder SQL Server `sp_getapplock` auf einer eigenen Verbindung; ein abgestürzter Halter gibt sie frei, sobald die Verbindung abbricht. SQLite nutzt eine Dateisperre, das reicht für die Prozesse eines Rechners |
 | Redis | `Coworkee:DistributedLock:Provider = Redis` mit `Coworkee.Realtime` und einem Connection-String `redis` | läuft nach 30 s ab, wenn der Halter sie nicht mehr verlängert |
 
-Der Benachrichtigungs-Digest nutzt sie, damit ein manueller Lauf während des geplanten keine zweite Mail verschickt.
+Die wiederkehrenden Jobs der Bibliothek nutzen sie (Benachrichtigungs-Digest und Benachrichtigungs-Mails, geplante Exporte, Berichtsabos), damit ein manueller Lauf während des geplanten keine zweite Mail verschickt; ebenso das Exportlimit pro Benutzer und die erste maschinelle Übersetzung der Texte beim Start.

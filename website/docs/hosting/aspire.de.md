@@ -91,7 +91,7 @@ app.AddSpaClient("spa", spa, scopes: ["files"], apiScopeAliases: ["Shop"], allow
 | Übernahme | `allowImpersonation: true` lässt [Anmelden als](../features/identity.md#als-anderer-benutzer-anmelden) die App erreichen |
 | CORS | der Origin kommt in `Coworkee:Cors:Origins` des Auth-Servers und jeder API, auch später hinzugefügter (siehe [CORS](../security/clients.md#aufrufe-von-anderen-origins-cors)) |
 
-In einem Deployment kommt die Adresse aus dem Parameter `{name}-{resource}-url` (z. B. `https://spa.example.com`), wie die öffentlichen Adressen der Dienste. Die App selbst braucht die Adressen von Auth-Server und API, oft auch ihre eigene; gib sie ihr so mit, wie sie sie liest (`WithEnvironment`). `app.SpaClientUrl(spa)` ist die eigene Adresse der App, der Endpunkt im Lauf und der Parameter im Deployment; `app.PublicUrl(service)` die eines Dienstes:
+In einem Deployment kommt die Adresse aus dem Parameter `{name}-{resource}-url` (z. B. `https://spa.example.com`), wie die öffentlichen Adressen der Dienste. Die App selbst braucht die Adressen von Auth-Server und API, oft auch ihre eigene; gib sie ihr so mit, wie sie sie liest (`WithEnvironment`). `app.SpaClientUrl(spa)` ist die eigene Adresse der App, der Endpunkt im Lauf und der Parameter im Deployment; `app.PublicUrl(service)` die eines Dienstes. `SpaClientUrl` einer Ressource, die nicht mit `AddSpaClient` hinzugefügt wurde, wirft, ebenso `AddSpaClient` vor Auth-Server oder API:
 
 ```csharp
 spa.WithEnvironment("APP_URL", app.SpaClientUrl(spa))
@@ -107,10 +107,11 @@ Bevor Coworkee einen Dienst verdrahtet, liest es dessen `obj/project.assets.json
 |---|---|
 | `Coworkee.Infrastructure` | Connection-String der App-Datenbank und `Coworkee:Database:Provider`, wartet, bis die Migrationen fertig sind |
 | `Coworkee.Realtime` | Redis für die SignalR-Backplane, Anwesenheit, Cache-Invalidierung und Sitzungsänderungen zwischen Instanzen ([Skalieren mit Redis](redis.md)); `options.WithoutRedis()` lässt es weg |
-| `Coworkee.Mailing` | Mailpit als Standard-SMTP-Server |
-| `Coworkee.Storage` | den gemeinsamen Blob-Ordner `.data/blobs` (nur lokal; veröffentlichte Container behalten ihren Standard) |
+| `Coworkee.Mailing` | Mailpit als Standard-SMTP-Server; im Deployment der Mailserver aus den Deploy-Parametern (siehe [Deployment](deployment.md#mail)) |
+| `Coworkee.Storage` | den gemeinsamen Blob-Ordner `.data/blobs` (`options.BlobRoot` für einen anderen); im Deployment das Volume `{name}-files` |
 | `Coworkee.Search.Elasticsearch` | Elasticsearch |
-| `Coworkee.Notifications` | Links in Zusammenfassungsmails zeigen auf die Web-App |
+| `Coworkee.Notifications` | Links in Zusammenfassungsmails zeigen auf die Web-App; mit `options.UsePush()` das Web-Push-Schlüsselpaar (Parameter `{name}-push-public-key` und `-private-key`, beim ersten Start erzeugt, siehe [Smartphones und Push](../ui/phones-and-pwa.md)) |
+| `Coworkee.Localization` | der Übersetzungsdienst aus `options.UseTranslation(...)` oder `options.UseLibreTranslate([...])` (ein LibreTranslate-Container) und `options.TranslationSource` als Vorgaben der Einstellungen, siehe [Lokalisierung](../modules/localization.md) |
 
 Grafana (mit Prometheus, Loki, Tempo und Collector) und WebDataStudio kommen mit `options.UseGrafana()` und `options.UseWebDataStudio()` dazu, siehe [Grafana und WebDataStudio](observability.md). Kibana kommt mit `options.UseKibana()`, siehe [Kibana](#kibana).
 
@@ -210,7 +211,9 @@ Aus `s => s.Coworkee.Bff.Scopes[0]` wird die Umgebungsvariable `Coworkee__Bff__S
 `UseKeycloak` fügt einen Keycloak-Container mit einem Realm hinzu, der wie die App heißt:
 
 - ein vertraulicher Client `{name}-auth`, dessen Secret ein generierter Parameter ist (`{name}-keycloak-client-secret`),
-- die angegebenen Benutzer, jeder mit seinem `Password`; Benutzer ohne teilen sich ein generiertes Passwort (`{name}-keycloak-user-password`, im Dashboard sichtbar und in den User-Secrets des AppHosts gespeichert).
+- die angegebenen Benutzer, jeder mit seinem `Password`; Benutzer ohne teilen sich ein generiertes Passwort (`{name}-keycloak-user-password`, im Dashboard sichtbar und in den User-Secrets des AppHosts gespeichert). `KeycloakUser.Roles` sind Realm-Rollen, die bei Bedarf angelegt werden; jeder Client des Realms bekommt sie im Claim `roles`.
+
+`Realm` benennt den Realm (Standard der Name der App), `DisplayName` den Knopf der Anmeldeseite (Standard *Keycloak*), und `TrustEmail` (Standard `true`) wertet die Adressen des Realms als bestätigt, sodass eine Anmeldung das lokale Konto mit derselben E-Mail übernimmt.
 
 Der Realm wird bei **jedem Start** auf den aktuellen Stand gebracht, sobald Keycloak bereit ist und bevor der Auth-Server startet: Ein fehlender Realm wird angelegt, ein vorhandener (im Daten-Volume) bekommt über die Admin-API die aktuellen Client-Secrets, Redirect-Adressen, Benutzer und Passwörter. Ein geänderter Secret-Parameter oder ein geändertes Passwort gilt also ab dem nächsten Start, und Benutzer oder Clients, die du in der Keycloak-Konsole angelegt hast, bleiben erhalten. Das Ressourcen-Log von Keycloak meldet `Realm myapp is up to date: clients ..., users ...`.
 
@@ -257,7 +260,7 @@ Ruf sie nach `UseKeycloak` und `AddAuthServer` (oder `AddProjects`) auf.
 
 [![AspireUI](../assets/brands/aspireui.svg){ .cw-product-logo }](https://fgilde.github.io/AspireUI/)
 
-[AspireUI](https://fgilde.github.io/AspireUI/) meldet sich mit einem Aufruf am Auth-Server der App an; die Administratoren der Systemorganisation werden AspireUI-Admins:
+[AspireUI](https://fgilde.github.io/AspireUI/) meldet sich mit einem Aufruf nach `AddAuthServer` (oder `AddProjects`) am Auth-Server der App an; die Administratoren der Systemorganisation werden AspireUI-Admins:
 
 ```csharp
 using Nextended.Aspire.Hosting.AspireUI;
@@ -285,16 +288,19 @@ Der Administrator der App meldet sich lokal an (`WEBUI_ADMIN_EMAIL`, über das F
 
 ### AspireUI in einer generierten App
 
-`coworkee new --aspire-ui` (Template-Option `aspireUI`, standardmäßig aus) fügt dieselben Zeilen in `src/MyApp.AppHost/AppHost.cs` ein, dazu den Paketverweis `Nextended.Aspire.Hosting.AspireUI` im AppHost und einen Abschnitt in `LOGIN.md`: Der Administrator meldet sich lokal mit E-Mail und Passwort der App an oder am Auth-Server der App (`WithCoworkee(app)`). Das Studio zeigt die Option neben Grafana und WebDataStudio; die Vorlage *Everything* schaltet sie ein.
+`coworkee new --aspire-ui` (Template-Option `aspireUI`, standardmäßig aus) fügt AspireUI als Tool der App in `src/MyApp.AppHost/AppHost.cs` ein, dazu den Paketverweis `Nextended.Aspire.Hosting.AspireUI` im AppHost und einen Abschnitt in `LOGIN.md`. `WithCoworkee(app)` tut mehr als `WithCoworkeeSignOn`: Der Administrator der App (`options.Administrator`, im Deployment die Deploy-Parameter) meldet sich lokal an, das Daten-Volume gehört der App (`{app}-aspireui-data`), ein Deployment gibt ihm eine öffentliche Adresse (`{app}-aspireui-url`), und mit einem Auth-Server kommt die Anmeldung von oben dazu. Das Studio zeigt die Option neben Grafana und WebDataStudio; die Vorlage *Everything* schaltet sie ein.
 
 ```csharp
-builder.AddAspireUI()
-    .WithAdminUser(administrator.Email, administrator.Password)
-    .WithSeedFromDirectory(builder.AppHostDirectory)
-    .WithCoworkeeSignOn(app)
-    .WithRetrieveApi();
+if (app.Deploys(CoworkeeTools.AspireUI))
+{
+    var aspireUi = builder.AddAspireUI().WithCoworkee(app).WithRetrieveApi();
+    if (builder.ExecutionContext.IsRunMode)
+    {
+        aspireUi.WithSeedFromDirectory(builder.AppHostDirectory);
+    }
+}
 ```
 
 ## Veröffentlichen
 
-`coworkee deploy compose|azure|k8s` veröffentlicht den AppHost für Docker Compose, Azure Container Apps oder Kubernetes: öffentliche Adressen, Token-Zertifikate, der erste Administrator und der Mailserver als Parameter, keine Demo-Benutzer, und die Tools des AppHosts (Keycloak, Grafana, WebDataStudio, LibreTranslate, Ollama, AspireUI) kommen mit, außer du schaltest sie mit `DeployTool` oder `coworkee deploy --without` ab. `PublishToDockerCompose(configure)` konfiguriert weiterhin die Compose-Umgebung (`compose => compose.WithDashboard(false)`); eine Umgebung, die der AppHost vor `AddCoworkeeApp` selbst hinzufügt, ersetzt die von `Coworkee:Deploy:Target`. Alles Weitere, auch was geprüft ist, steht unter [Deployment](deployment.md).
+`coworkee deploy compose|azure|k8s` veröffentlicht den AppHost für Docker Compose, Azure Container Apps oder Kubernetes: öffentliche Adressen, Token-Zertifikate, der erste Administrator und der Mailserver als Parameter, keine Demo-Benutzer, und die Tools des AppHosts (Keycloak, Grafana, WebDataStudio, LibreTranslate, Ollama, Open WebUI, Kibana, AspireUI) kommen mit, außer du schaltest sie mit `DeployTool` oder `coworkee deploy --without` ab. `PublishToDockerCompose(configure)` konfiguriert weiterhin die Compose-Umgebung (`compose => compose.WithDashboard(false)`); eine Umgebung, die der AppHost vor `AddCoworkeeApp` selbst hinzufügt, ersetzt die von `Coworkee:Deploy:Target`. Alles Weitere, auch was geprüft ist, steht unter [Deployment](deployment.md).

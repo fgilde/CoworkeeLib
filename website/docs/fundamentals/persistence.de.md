@@ -42,7 +42,6 @@ Grenzen, die man kennen sollte:
 - **Migrationen gehören zu einem Provider.** Eine App behält die Migrationen des Providers, mit dem sie angelegt wurde. Zum Wechseln löschst du `Migrations` und führst `coworkee migrations add Initial` erneut aus. Soll eine App mehrere Provider bedienen, folge der EF-Core-Anleitung [Migrations with multiple providers](https://learn.microsoft.com/ef/core/managing-schemas/migrations/providers) mit einer Migrations-Assembly pro Provider.
 - **[Datenbanksicherungen](../modules/backups.md) brauchen Postgres.** Das Template lässt das Modul bei den anderen Providern weg.
 - **SQLite** kennt nur einen Schreiber zur Zeit, hält Hintergrundjobs im Speicher (eingereihte und verzögerte Jobs gehen beim Neustart verloren), speichert `DateTimeOffset` als Zahl und `decimal` als `double`, prüft `HasMaxLength` nicht und kennt keine Schemas (Tabellen verlieren ihr `cw.`). Es ist für Entwicklung und kleine Installationen auf einem Rechner gedacht.
-- Facetten über `bool`-Spalten (`[ProvideFacet]` auf `IsActive`) scheitern auf SQL Server und SQLite, die den Wert als `1`/`0` zurückgeben; behoben im nächsten Release von Nextended.
 - MySQL und MariaDB gibt es nicht: Pomelo, der übliche Provider, hat noch kein Release für EF Core 10.
 
 ## Basisklassen und Marker
@@ -121,9 +120,10 @@ return await host.RunCoworkeeMigrationsAsync();
 
 `AddCoworkeeMigrations` (`Coworkee.Identity.Setup`) plant den Lauf und `RunCoworkeeMigrationsAsync` führt ihn aus, mit Exit-Code 0 oder 1:
 
-1. die Datenbank migrieren, alle 3 Sekunden erneut versucht, solange ihr Server noch keine Verbindungen annimmt (`Migrations:Attempts`, Standard 20, oder `options.Attempts`);
+1. die Datenbank migrieren, alle 3 Sekunden erneut versucht, solange ihr Server noch keine Verbindungen annimmt (`Migrations:Attempts`, Standard 20, oder `options.Attempts`), und Gruppen ohne `Code`-Pfad bekommen ihren;
 2. seeden: mit einem ersten Administrator aus den Deploy-Parametern (`Coworkee:InitialAdmin`, siehe [Setup-Assistent oder Seed](../security/authentication.md#setup-assistent-oder-seed)) `DeploymentSeed` mit ihm; sonst `DevelopmentSeed` in der Development-Umgebung (`options.DevelopmentUsers` entscheidet anders), danach `SyncDevelopmentUsersAsync`; sonst nichts, und die Setup-Seite mit ihrem Token richtet das System ein;
-3. ein deploytes Keycloak abgleichen (`ReconcileKeycloakRealmAsync`).
+3. `options.AfterSeed` ausführen, die eigenen Datenschritte der App, falls gesetzt;
+4. ein deploytes Keycloak abgleichen (`ReconcileKeycloakRealmAsync`).
 
 Außerdem baut es den Container mit den Produktions-Standards: Ein lokaler Lauf ist Development, und dessen Prüfung der Scopes scheitert an den MVC-Diensten von OData in einem Host ohne Web-Umgebung.
 

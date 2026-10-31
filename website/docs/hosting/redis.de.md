@@ -10,7 +10,7 @@ Redis ist optional. Ein Dienst mit einem Connection-String `redis` teilt seinen 
 | Sitzungs-Stamps und Sitzungsänderungen | gemeinsamer Stamp-Cache, Pub/Sub an jede Instanz ([Clients und Sitzungen](../security/clients.md)) | eigene Instanz, die anderen innerhalb einer Minute |
 | Topics nach Berechtigungsänderungen | jede Instanz prüft ihre Verbindungen erneut ([Realtime](../modules/realtime.md)) | eigene Instanz |
 | Anmeldesitzungen der Web-App | Sitzungsspeicher und Schlüsselring des Cookies in Redis: von den Instanzen geteilt, sie überstehen Neustarts | Speicher und lokaler Schlüsselring |
-| Verteilte Sperre | `Coworkee:DistributedLock:Provider = Redis` ([Ereignisse und Sperren](../fundamentals/events.md)) | Postgres-Advisory-Locks |
+| Verteilte Sperre | `Coworkee:DistributedLock:Provider = Redis` ([Ereignisse und Sperren](../fundamentals/events.md)) | die Datenbank: ein Postgres-Advisory-Lock, ein SQL-Server-Application-Lock, mit SQLite eine Dateisperre |
 
 ## Aspire
 

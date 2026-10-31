@@ -20,7 +20,7 @@ internal sealed class DashboardResponseFilter : ResponseFilter<DashboardDto>
 context.Services.AddCoworkeeResponseFilters([typeof(MyAppCatalogModule).Assembly]);
 ```
 
-`AddCoworkeeResponseFilters` findet alle Filter in den angegebenen Assemblies und wendet sie auf jede mit `MapCoworkeeApi` angelegte Gruppe und auf MVC-Ergebnisse an.
+`AddCoworkeeResponseFilters` findet alle Filter in den angegebenen Assemblies und wendet sie auf jede mit `MapCoworkeeApi` angelegte Gruppe und auf MVC-Ergebnisse an. Antworten, die außerhalb eines Endpunkt-Ergebnisses geschrieben werden, bekommen dieselbe Form: die Treffer des Streams der globalen Suche (`IResponseShaper`) und die Ergebnisse, die die Werkzeuge des Assistenten und von MCP an das Modell geben, damit eine Eigenschaft, die ein Filter ausblendet, nicht über sie durchsickert. Das optionale zweite Argument konfiguriert die `ResponseFilterOptions` von Nextended.
 
 ## Regeln
 

@@ -28,7 +28,7 @@ context.Services.AddGlobalSearch<Product>(s => s
     .Icon("ViewCarousel"));
 ```
 
-Die Suche sieht genau das, was die OData-Liste des Sets liefert: ihre Berechtigung, die Organisation, [Zeilenregeln](odata.md#row-level-rules) und das weiche Löschen. Wer eine versteckte Eigenschaft durchsucht, bekommt beim Start einen Fehler. Gesucht wird in zwei Runden: Werte, die mit dem Text beginnen (oder der Datensatz einer eingegebenen Id), kommen sofort, Werte, die jedes Wort enthalten, folgen.
+Die Suche sieht genau das, was die OData-Liste des Sets liefert: ihre Berechtigung, die Organisation, [Zeilenregeln](odata.md#regeln-pro-zeile) und das weiche Löschen. Wer eine versteckte Eigenschaft durchsucht, bekommt beim Start einen Fehler. Gesucht wird in zwei Runden: Werte, die mit dem Text beginnen (oder der Datensatz einer eingegebenen Id), kommen sofort, Werte, die jedes Wort enthalten, folgen.
 
 Felder dürfen über eine Navigation lesen (`t => t.Customer!.Name`): sie werden in der Abfrage gelesen und folgen den [Navigationsregeln](odata.md#navigationen-folgen-ihrem-ziel), ein ausgeblendetes Ziel passt also weder noch erscheint es. `Title`, `Subtitle`, `Url` und `Thumbnail` laufen auf der geladenen Zeile, die keine Navigationen hat; Werte anderer Zeilen gehören in Felder.
 
@@ -105,7 +105,7 @@ services.AddGlobalSearchIndex("myapp-products", s => s
 | `GET /api/v1/search/stream?q=&types=&limit=` | JSON-Zeilen (`application/x-ndjson`): jeder Treffer, sobald er gefunden ist, dann eine Zeile pro Provider mit `Done`, `TimedOut` oder `Failed` |
 | `GET /api/v1/search/providers` | die Provider, die der Benutzer nutzen darf |
 
-`types` ist eine Komma-Liste von Provider-Namen, `limit` die Treffer pro Provider (Standard 5, höchstens 50). Ein Provider, der nach `Coworkee:GlobalSearch:ProviderTimeout` (3 s) noch sucht, endet als `timedOut`, ohne die anderen aufzuhalten; bricht der Browser die Anfrage ab, hören alle auf. Treffer laufen wie jede Antwort der API durch die [Response-Filter](response-filters.md), ein `ResponseFilter<GlobalSearchHit>` kann also Untertitel vor manchen Benutzern verbergen.
+`types` ist eine Komma-Liste von Provider-Namen, `limit` die Treffer pro Provider (`Coworkee:GlobalSearch:DefaultLimit`, Standard 5, höchstens `MaxLimit`, Standard 50). Ein Provider, der nach `Coworkee:GlobalSearch:ProviderTimeout` (3 s) noch sucht, endet als `timedOut`, ohne die anderen aufzuhalten; bricht der Browser die Anfrage ab, hören alle auf. Treffer laufen wie jede Antwort der API durch die [Response-Filter](response-filters.md), ein `ResponseFilter<GlobalSearchHit>` kann also Untertitel vor manchen Benutzern verbergen.
 
 Der Stream geht Zeile für Zeile durch das BFF (es puffert nicht) und schickt `X-Accel-Buffering: no` für nginx; andere Proxys vor der App dürfen `application/x-ndjson` auch nicht puffern.
 

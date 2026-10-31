@@ -39,9 +39,10 @@ Welches Paket wohin gehört und was in den `using`-Block kommt.
 | `Coworkee.Workflows.Elsa.Studio` | Studio-Host | `Coworkee.Workflows.Elsa.Studio` | `AddCoworkeeElsaStudio`, `MapCoworkeeElsaStudio`: Elsa Studio als eigene App, angemeldet am Auth-Server |
 | `Coworkee.Webhooks` | API, workers | `Coworkee.Webhooks` | `CoworkeeWebhooksModule`, `AddCoworkeeWebhooks`, `IWebhookPublisher`, `WebhookSignature` |
 | `Coworkee.EventBus`, `Coworkee.EventBus.RabbitMq` | API, workers | `Coworkee.EventBus` | `IEventBus`, `IIntegrationEvent`, `IIntegrationEventHandler<T>`, `CoworkeeRabbitMqEventBusModule` |
-| `Coworkee.Cli` | Dein Rechner | | `coworkee new` (Optionen oder `--spec`), `options`, `spec`, `run`, `migrations add`, `module add`, `entity add`, `update`, `doctor`, `ui`, `mcp` |
+| `Coworkee.Cli` | Dein Rechner | | `coworkee new` (Optionen oder `--spec`), `options`, `spec`, `specs`, `add`, `remove`, `run`, `migrations add`, `module add`, `entity add`, `entity import`, `db`, `texts`, `deploy`, `update`, `self-update`, `doctor`, `ui`, `mcp` ([CLI](../getting-started/cli.md)) |
+| `Coworkee.Studio` | Dein Rechner | | Coworkee Studio, der Desktop-Assistent (Tool `coworkee-ui`, gestartet mit `coworkee ui`, siehe [Studio](../getting-started/studio.md)) |
 | `Coworkee.Templates` | Dein Rechner | | `dotnet new coworkee` |
-| `Coworkee.Client` | SDKs, other .NET apps | `Coworkee.Client` | `CoworkeeApiClient`, `CoworkeeApiException`, `BearerTokenHandler`, `ODataResult<T>` |
+| `Coworkee.Client` | SDKs, andere .NET-Apps | `Coworkee.Client` | `CoworkeeApiClient`, `CoworkeeApiException`, `BearerTokenHandler`, `ODataResult<T>` |
 | `Coworkee.Client.Blazor` | WebAssembly-Client | `Coworkee.Client.Blazor`, `.Components`, `.Components.Data`, `.Data`, `.Api`, `.Navigation`, `.Security`, `.Customization` | `AddCoworkeeClient`, `CoworkeeLayout`, `CoworkeeDataTable<T>`, `IODataClient`, `ApiClientBase`, `ReplaceComponent` |
 | `Coworkee.Client.Blazor.ClientEntities` | WebAssembly-Client: lokale Kopien von OData-Sets | `Coworkee.Client.Blazor.ClientEntities` | `AddCoworkeeClientEntities`, `ClientEntities`, `ClientEntitySet<T>`, `ClientEntitySwitch`, `ODataLinq` |
 | `Coworkee.Client.Blazor.Reporting` | WebAssembly-Client: Berichte und Dashboards | `Coworkee.Client.Blazor.Reporting` | `AddCoworkeeReporting`, `ReportingOptions`, `ReportGrid`, `ReportFacetFilter` |

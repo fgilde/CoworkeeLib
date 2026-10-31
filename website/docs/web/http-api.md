@@ -20,7 +20,7 @@ Services with many endpoints can skip the mapping: [application services](applic
 | `Error.Unauthorized` / `Forbidden` / `NotFound` / `Conflict` | `401` / `403` / `404` / `409` problem details |
 | `Error.Unexpected` | `500` problem details |
 
-Every problem details body carries the error `code`, so clients can react to `catalog.brand_name_taken` instead of parsing text.
+Every problem details body carries the error's message as `title` and its `code`, so clients can react to `catalog.brand_name_taken` instead of parsing text.
 
 ## Conventions for all API groups
 
@@ -38,7 +38,7 @@ The API validates the bearer tokens of the Coworkee auth server:
 context.Services.AddCoworkeeApiAuthentication(context.Configuration, audience: "myapp_api");
 ```
 
-Authority and audience come from `Coworkee:ApiAuth`; the [app host](../hosting/aspire.md) sets them. Browsers never hold these tokens: the BFF does, see [Authentication](../security/authentication.md).
+Authority and audience come from `Coworkee:ApiAuth`; the [app host](../hosting/aspire.md) sets them. Browsers never hold these tokens: the BFF does, see [Authentication](../security/authentication.md). A single-page app on another origin calls the API with its own token; the API answers it only from the exact origins in `Coworkee:Cors:Origins`, without credentials, and an endpoint that needs them opts in with `.RequireCors(CoworkeeCors.WithCredentials)`, see [cross-origin calls](../security/clients.md#cross-origin-calls-cors).
 
 ## OpenAPI
 
@@ -68,8 +68,9 @@ Each version gets its own document, `/openapi/v2.json`, and an entry in the Swag
 
 | Policy | Default | Applied to |
 |---|---|---|
-| `auth` | 60 per minute | sign-in, registration and password pages of the auth server |
-| `ai` | 30 per minute | `/api/v1/ai/*` and `/mcp` |
+| `auth` | 60 per minute | sign-in, registration and password pages of the auth server, `POST /api/v1/identity/me/email`, `PUT /api/v1/identity/me/password` |
+| `ai` | 30 per minute | assistant sessions (`/api/v1/ai/sessions`), listing models and testing an AI connection, `/mcp` |
+| `apiKeys` | 10 per minute | creating API keys (`POST /api/v1/identity/api-keys`) |
 | `upload` | 120 per minute | nothing built in; for your upload endpoints |
 | `tokens` | 120 per minute | anonymous token links: temporary file and attachment links, export downloads |
 | global | off | every request, once configured |

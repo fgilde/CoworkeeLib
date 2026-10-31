@@ -105,7 +105,7 @@ services.AddGlobalSearchIndex("myapp-products", s => s
 | `GET /api/v1/search/stream?q=&types=&limit=` | JSON lines (`application/x-ndjson`): each hit as soon as it is found, then one line per provider with `Done`, `TimedOut` or `Failed` |
 | `GET /api/v1/search/providers` | the providers the user may use |
 
-`types` is a comma list of provider names, `limit` the hits per provider (default 5, at most 50). A provider still busy after `Coworkee:GlobalSearch:ProviderTimeout` (3 s) ends as `timedOut` without holding up the others; a request the browser cancels stops all of them. Hits pass the [response filters](response-filters.md) like any answer of the API, so a `ResponseFilter<GlobalSearchHit>` can hide subtitles from some users.
+`types` is a comma list of provider names, `limit` the hits per provider (`Coworkee:GlobalSearch:DefaultLimit`, default 5, at most `MaxLimit`, default 50). A provider still busy after `Coworkee:GlobalSearch:ProviderTimeout` (3 s) ends as `timedOut` without holding up the others; a request the browser cancels stops all of them. Hits pass the [response filters](response-filters.md) like any answer of the API, so a `ResponseFilter<GlobalSearchHit>` can hide subtitles from some users.
 
 The stream goes through the BFF line by line (it does not buffer) and sends `X-Accel-Buffering: no` for nginx; other proxies in front of the app must not buffer `application/x-ndjson` either.
 
