@@ -21,6 +21,8 @@ public sealed record GetBrandsQuery(string? Search) : IQuery<Result<IReadOnlyLis
 
 `[AiTool(Exclude = true)]` keeps a request out; the permission editor is an obvious candidate. With the OData module the assistant also gets `list_data_sets` and `query_data`, which read any registered entity set under the same row filters as the tables. In the demo that means it can answer questions about the 100,000 sales orders without a tool written for it.
 
+A request with several `[RequiresPermission]` attributes is a tool that needs all of them. Modules bring tools of their own the same way, such as `global_search` over the [global search](../web/global-search.md) and `generate_report`, which builds a [report from a description](../modules/reporting.md#create-a-report-with-ai).
+
 Queries run right away. Commands wait:
 
 ![The assistant waits for confirmation before running a destructive command](../assets/screenshots/mcp-ai-confirm-light.png){ .shot loading=lazy }
