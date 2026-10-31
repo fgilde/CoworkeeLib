@@ -81,4 +81,4 @@ Beide Seiten gehören zur Systemorganisation: Jeder Administrator hat die Berech
 
 ## Datenbank
 
-Das Modul ergänzt `cw.Editions` (Werte als `jsonb`) und `cw.TenantFeatures` (Edition und Überschreibungen je Mandant). Nach dem Hinzufügen des Moduls eine Migration erzeugen.
+Das Modul ergänzt `cw.Editions` (Werte als JSON, `jsonb` unter PostgreSQL) und `cw.TenantFeatures` (Edition und Überschreibungen je Mandant). Nach dem Hinzufügen des Moduls eine Migration erzeugen.

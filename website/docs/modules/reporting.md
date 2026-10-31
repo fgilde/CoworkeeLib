@@ -19,7 +19,7 @@ builder.Services.AddCoworkeeReporting(baseAddress, reports => reports
     .DrillDown("Products", "catalog/products"));
 ```
 
-Add `typeof(Coworkee.Client.Blazor.Reporting.ReportingOptions).Assembly` to the router's `AdditionalAssemblies` (in `Routes.razor` and in `AddAdditionalAssemblies` of the web host) and create a migration for the tables `cw.Reports` and `cw.ReportFavorites`. New apps get all of this with the template option `--reports` (on by default).
+Add `typeof(Coworkee.Client.Blazor.Reporting.ReportingOptions).Assembly` to the router's `AdditionalAssemblies` (in `Routes.razor` and in `AddAdditionalAssemblies` of the web host) and create a migration for the tables `cw.Reports`, `cw.ReportFavorites`, `cw.DashboardReports` and `cw.ReportSubscriptions`. The module depends on the [mailing module](mailing.md) (subscription mails), which brings `cw.OutgoingMailAttachments`. New apps get all of this with the template option `--reports` (on by default).
 
 ## Your entity sets as data sources
 
@@ -30,7 +30,7 @@ services.AddODataEntity<SalesOrder>("SalesOrders", SalesPermissions.Orders.View)
 services.AddODataEntity<Customer>("Customers", SalesPermissions.Orders.View);
 ```
 
-- **Fields** come from the EDM: properties hidden with `AddODataEntity(..., o => o.Secret)` never show up, neither as field nor in a filter.
+- **Fields** come from the EDM: properties hidden with `AddODataEntity(..., o => o.Hide(...))` never show up, neither as field nor in a filter; those behind `HideUnless(..., permission)` only for users with that permission.
 - **Navigation** properties to another registered set add its fields, e.g. `Customer/Name`; the user needs the permission of that set too, and its row filters apply: a customer the user may not see counts as empty (`null`), never under its name.
 - **Labels** come from `[ProvideFacet(Label = ...)]`, `[Display(Name = ...)]` or the property name; enum members show their `[Display]` names.
 - **Rows** are the ones the OData list returns: tenant filter, soft delete and every `IODataEntityFilter<T>` apply. A user without the set's permission gets a 403 for widgets on it, the rest of the report still works.
@@ -160,6 +160,10 @@ Charts use [Blazor-ApexCharts](https://github.com/apexcharts/Blazor-ApexCharts):
 
 ![The same dashboard in dark mode](../assets/screenshots/reporting-dark.png){ .shot }
 
+### App data of a widget
+
+`ReportWidget.AppData` (a dictionary of JSON values) is data an app or a second client keeps with a widget, e.g. its own settings of it. Reports neither read nor change it; it is saved, read and duplicated with the report and limited to 20,000 characters of JSON per widget (more is refused on save).
+
 ## Designer
 
 ![Designer with the widget panel](../assets/screenshots/reporting-designer.png){ .shot }
@@ -193,8 +197,6 @@ new ReportWidget
 ```
 
 ## Thresholds
-
-A widget can carry `AppData`, a JSON object per key that an app or a second client keeps with it (e.g. its own settings of the widget); reports neither read nor change it, it is copied with the report and limited to 20,000 characters per widget.
 
 *Thresholds* in the widget panel colour a value by bands (`WidgetOptions.Thresholds`, a list of `ThresholdStop`): each stop has a start value, a colour and a label, and a value takes the band of the highest stop it reaches (values below the first stop keep their own colour). Colours are the theme's `success`, `warning`, `error` and `info` (they follow custom themes and dark mode) or an own `#rrggbb`; anything else is refused on save.
 
@@ -236,11 +238,13 @@ A widget's rows are narrowed by, in this order: its own query builder rules and 
 | `Reports.Dashboard` | choose the organisation's dashboard |
 | `Reports.Subscriptions` | see and end the report subscriptions of the organisation |
 
-A report is *private*, shared with *roles* (holders of one of them, directly or through groups), with *groups* or with the *organisation*. Shared with groups, it reaches the members of those groups and of the groups above them: the user's active groups (`IGroupScope.ActiveAsync`), so a group selection narrows the report list like it narrows the data. The owner shares only with own groups and the groups below them (`GET /api/v1/reports/groups`); groups shared before stay when the owner leaves one. The owner always sees the report. Only the owner changes it; others duplicate it into a private copy. A change reaches everyone who has the report open, over the [realtime hub](realtime.md).
+A report is *private*, shared with *roles* (holders of one of them, directly or through groups), with *groups* or with the *organisation*. Shared with groups, it reaches the members of those groups and of the groups above them: the user's active groups (`IGroupScope.ActiveAsync`), so a group selection narrows the report list like it narrows the data. The owner shares only with own groups and the groups below them (`GET /api/v1/reports/groups`, `Reports.Share`), at most 100; another group answers `403` (`reports.foreign_group`). Groups shared before stay when the owner leaves one. The owner always sees the report.
+
+`SaveReportRequest` carries `Visibility`, `RoleIds` and `GroupIds` (`ReportDto` returns them). `Reports.Share` is checked only when the sharing changes, so an owner without it can still change a shared report. A client that saves a report it read passes `RoleIds` and `GroupIds` along: a report shared with roles or groups saved without them is refused with `400` (*Choose the groups to share with.*). Only the owner changes it; others duplicate it into a private copy. A change reaches everyone who has the report open, over the [realtime hub](realtime.md).
 
 ## Subscriptions by mail
 
-*Subscribe by mail* (envelope icon) on a report mails it on a schedule: every day, every week on a weekday or every month on a day (shorter months take their last day), at a time of a time zone (IANA ids like `Europe/Berlin`; the time follows summer time, a time the clock skips runs right after the gap, a time that happens twice runs the first time). The dialog can replace the report's date range (e.g. *Last month* for a monthly mail) and use the facets chosen at the moment; the Excel attachment can be switched off.
+*Subscribe by mail* (envelope icon) on a report mails it on a schedule: every day, every week on a weekday or every month on a day (shorter months take their last day) or on a weekday of a week (`ReportSchedule.Week`, e.g. the last Friday), every n-th day, week or month (`Every`), at a time of a time zone (IANA ids like `Europe/Berlin` or Windows ids; the time follows summer time, a time the clock skips runs right after the gap, a time that happens twice runs the first time). The dialog can replace the report's date range (e.g. *Last month* for a monthly mail) and use the facets chosen at the moment; the Excel attachment can be switched off. A user has at most 50 subscriptions; creating or changing one is refused while signed in as another user.
 
 The mail (template `Reports.Subscription`, in every shipped language, editable under *Mail templates*) shows each KPI with its value, threshold colour, sign and label, and the first ten rows of every chart, pivot and table (a chart over a date bucket shows its latest ten, oldest first), with a link to the report. It is written in the subscriber's language, else in the default language of the organisation (Languages page), like the unsubscribe page. The attached workbook has one sheet per widget with all its rows (tables up to 1,000), written like *Export Excel*. Images of the widgets or a PDF are not rendered on the server.
 
@@ -276,6 +280,18 @@ The template's dashboard page (*Personal > Dashboard*, above *Reports*) does thi
 
 - Report: image (PNG), PDF through the browser's print dialog (print styles hide navigation and tools) and the report file (`.report.json`) to import elsewhere.
 - Widget: CSV and Excel of what it shows; tables export their loaded rows.
+
+## Limits
+
+| | |
+|---|---|
+| Report | name 200 characters, description 2,000, 60 widgets, refresh every 10 seconds to a day or never, shared with at most 100 groups |
+| Widget | id 40 characters, title 200, text 20,000, `AppData` 20,000; width 1 to 12 columns, height 1 to 40 rows |
+| Values and switches | 8 values per query or switch, 8 value and 8 grouping switches, labels 100 characters |
+| Thresholds | 10 per widget |
+| Aggregation | 5,000 groups, top 1 to 1,000 |
+| AI prompt | 4,000 characters, three tries |
+| Subscriptions | 50 per user; mails show 10 rows per widget, the workbook up to 1,000 rows per table |
 
 ## Endpoints
 

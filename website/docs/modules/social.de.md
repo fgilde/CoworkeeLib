@@ -25,18 +25,9 @@ social.Authorize(async (services, access, ct) =>
     access.EntityId is not { } id || await services.GetRequiredService<IProductAccess>().CanSeeAsync(id, ct));
 ```
 
-## Berechtigungen
+## Datenbank
 
-| Baustein | Ansehen | Erstellen | Moderieren |
-|---|---|---|---|
-| Kommentare | `Social.Comments.View` | schreiben, eigene bearbeiten und löschen | jeden Kommentar löschen |
-| Tags | `Social.Tags.View` | Entitäten taggen, neue Tags kommen in die Sammlung | Tag aus der Sammlung entfernen |
-| Bewertungen | `Social.Ratings.View` | bewerten, eigene Bewertung zurücknehmen | jede Bewertung entfernen |
-| Reaktionen | `Social.Reactions.View` | reagieren, eigene Reaktion zurücknehmen | – |
-
-Moderieren schließt Erstellen ein, Erstellen schließt Ansehen ein.
-
-`Social.Comments.SetStatus` (schließt Ansehen ein) ändert den Status jedes Kommentars. Autoren geben einen Status nur beim Schreiben eines Kommentars an (wie in einem Anfrage-Thread); jede spätere Änderung, auch das Wiederöffnen eines geschlossenen Kommentars, braucht `Social.Comments.SetStatus`, beim Bearbeiten wie mit `PUT /api/v1/comments/{id}/status`.
+Das Modul bringt die Tabellen `cw.Comments` (mit `Status` und `Properties`), `cw.Tags`, `cw.EntityTags`, `cw.Ratings` und `cw.Reactions` mit; erzeuge in der App nach dem Hinzufügen und nach Updates, die sie ändern, eine Migration.
 
 ## Kommentare
 
@@ -73,20 +64,6 @@ Jeder Benutzer kann mehrere Emojis an eine Entität setzen, jedes einmal; dassel
 
 `CommentReactions()` schaltet sie für die Kommentare jedes Entitätstyps mit Kommentaren frei, Entitätstyp `Social.Comment` (`SocialReactions.Comment`) mit der Id des Kommentars. Wer die Kommentare einer Entität sehen oder schreiben darf, darf dort Reaktionen sehen oder setzen, zusätzlich mit den Reaktionsberechtigungen. Der Thread bringt die Reaktionen seiner Kommentare mit, sie ändern sich live über das Kommentar-Topic des Threads und verschwinden, wenn ihr Kommentar gelöscht wird.
 
-| Endpunkt | |
-|---|---|
-| `GET/POST /api/v1/comments/{entityType}/{entityId}` | der Thread / Kommentar mit `{ "text", "parentId" }` |
-| `PUT/DELETE /api/v1/comments/{id}` | bearbeiten / löschen |
-| `GET /api/v1/tags/{entityType}` | Tag-Wolke mit Anzahl |
-| `DELETE /api/v1/tags/{entityType}?tag=` | Tag aus der Sammlung entfernen |
-| `GET/PUT /api/v1/tags/{entityType}/{entityId}` | Tags einer Entität / ersetzen mit `{ "tags": [...] }` |
-| `GET/PUT/DELETE /api/v1/ratings/{entityType}/{entityId}` | Zusammenfassung / bewerten mit `{ "stars" }` / zurücknehmen (`?userId=` für Moderatoren) |
-| `GET/POST /api/v1/reactions/{entityType}/{entityId}` | Reaktionen mit den Reagierenden / eigene umschalten mit `{ "emoji" }` |
-
-## Datenbank
-
-Das Modul bringt die Tabellen `cw.Comments`, `cw.Tags`, `cw.EntityTags`, `cw.Ratings` und `cw.Reactions` mit; nach dem Hinzufügen in der App eine Migration erzeugen.
-
 ## Im Client
 
 ```razor
@@ -96,9 +73,48 @@ Das Modul bringt die Tabellen `cw.Comments`, `cw.Tags`, `cw.EntityTags`, `cw.Rat
 <CoworkeeComments EntityType="Products" EntityId="product.Id" />
 ```
 
-Die Komponenten fragen den Server, was der Benutzer darf, und blenden Eingaben sonst aus. `CoworkeeReactions` zeigt einen Chip pro Emoji mit Anzahl (die eigenen gefüllt), beim Überfahren, wer reagiert hat, und eine Auswahl mit `SocialReactions.Defaults` (👍 ❤️ 😂 🎉 😮 😢; `Emojis` setzt andere). Mit `CommentReactions()` zeigen die Kommentare dieselbe Zeile unter jedem Kommentar. `CoworkeeTagCloud` zeigt die Tag-Sammlung und macht aus dem gewählten Tag einen OData-Filter für eine Datentabelle:
+Die Komponenten fragen den Server, was der Benutzer darf, und blenden Eingaben sonst aus. `CoworkeeReactions` zeigt einen Chip pro Emoji mit Anzahl (die eigenen gefüllt), beim Überfahren, wer reagiert hat, und eine Auswahl mit `SocialReactions.Defaults` (👍 ❤️ 😂 🎉 😮 😢; `Emojis` setzt andere). Mit `CommentReactions()` zeigen die Kommentare dieselbe Zeile unter jedem Kommentar. `CoworkeeComments` zeigt den Status jedes Kommentars, bietet Inhabern von `Social.Comments.SetStatus` ein Status-Menü und gibt neuen Kommentaren den Status `NewStatus` (Standard `None`). `ISocialApi` (`SetCommentStatusAsync`, `AddCommentAsync(entityType, entityId, CommentRequest)`, Reaktionen, Tags, Bewertungen) ruft dieselben Endpunkte aus eigenen Komponenten auf. `CoworkeeTagCloud` zeigt die Tag-Sammlung und macht aus dem gewählten Tag einen OData-Filter für eine Datentabelle:
 
 ```razor
 <CoworkeeTagCloud EntityType="Products" @bind-Filter="_tagFilter" @bind-Filter:after="() => _table.ReloadAsync()" />
 <CoworkeeDataTable @ref="_table" T="Product" EntitySet="Products" Filter="@_tagFilter" />
 ```
+
+## Berechtigungen
+
+| Baustein | Ansehen | Erstellen | Moderieren |
+|---|---|---|---|
+| Kommentare | `Social.Comments.View` | schreiben, eigene bearbeiten und löschen | jeden Kommentar löschen |
+| Tags | `Social.Tags.View` | Entitäten taggen, neue Tags kommen in die Sammlung | Tag aus der Sammlung entfernen |
+| Bewertungen | `Social.Ratings.View` | bewerten, eigene Bewertung zurücknehmen | jede Bewertung entfernen |
+| Reaktionen | `Social.Reactions.View` | reagieren, eigene Reaktion zurücknehmen | – |
+
+Moderieren schließt Erstellen ein, Erstellen schließt Ansehen ein.
+
+`Social.Comments.SetStatus` (schließt Ansehen ein) ändert den Status jedes Kommentars. Autoren geben einen Status nur beim Schreiben eines Kommentars an (wie in einem Anfrage-Thread); jede spätere Änderung, auch das Wiederöffnen eines geschlossenen Kommentars, braucht `Social.Comments.SetStatus`, beim Bearbeiten wie mit `PUT /api/v1/comments/{id}/status`.
+
+## Grenzen
+
+| | |
+|---|---|
+| Kommentar | Text 4.000 Zeichen; `Properties` höchstens 20, Namen 50 und Werte 500 Zeichen |
+| Tags | 50 je Entität, Namen 50 Zeichen |
+| Reaktionen | 20 je Benutzer und Entität, ein Emoji 16 Zeichen |
+| Entitätstyp | Name 100 Zeichen |
+
+## Personenbezogene Daten
+
+Der Export personenbezogener Daten hat einen Abschnitt `social` mit den Kommentaren, Bewertungen und Reaktionen des Benutzers; das Löschen eines Benutzers entfernt sie.
+
+## Endpunkte
+
+| Endpunkt | |
+|---|---|
+| `GET/POST /api/v1/comments/{entityType}/{entityId}` | der Thread / Kommentar mit `{ "text", "parentId", "status", "properties" }` |
+| `PUT/DELETE /api/v1/comments/{id}` | den eigenen Kommentar bearbeiten mit `{ "text", "status", "properties" }` / löschen |
+| `PUT /api/v1/comments/{id}/status` | den Status setzen mit `{ "status" }` (`Social.Comments.SetStatus`) |
+| `GET /api/v1/tags/{entityType}` | Tag-Wolke mit Anzahl |
+| `DELETE /api/v1/tags/{entityType}?tag=` | Tag aus der Sammlung entfernen |
+| `GET/PUT /api/v1/tags/{entityType}/{entityId}` | Tags einer Entität / ersetzen mit `{ "tags": [...] }` |
+| `GET/PUT/DELETE /api/v1/ratings/{entityType}/{entityId}` | Zusammenfassung / bewerten mit `{ "stars" }` / zurücknehmen (`?userId=` für Moderatoren) |
+| `GET/POST /api/v1/reactions/{entityType}/{entityId}` | Reaktionen mit den Reagierenden / eigene umschalten mit `{ "emoji" }` |

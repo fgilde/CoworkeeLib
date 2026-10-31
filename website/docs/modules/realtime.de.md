@@ -1,5 +1,12 @@
 # Realtime und Benachrichtigungen
 
+`Coworkee.Realtime` (`CoworkeeRealtimeModule`) betreibt einen SignalR-Hub, der jedem offenen Tab Änderungen meldet; `Coworkee.Notifications` (`CoworkeeNotificationsModule`, hängt von Realtime und [Mailing](mailing.md) ab) bringt die Benachrichtigungen der Benutzer, ihren Eingang, Einstellungen, Mails und Push. Apps aus der Vorlage haben beide (Vorlagenoption `notifications`, standardmäßig an):
+
+```csharp
+[DependsOn(typeof(CoworkeeNotificationsModule))]
+public sealed class MyAppDatabaseModule : CoworkeeModule;
+```
+
 ## Was live ankommt
 
 Jeder offene Tab folgt diesen Änderungen ohne Neuladen:
@@ -26,13 +33,13 @@ Markiere eine Entity, und jedes festgeschriebene Anlegen, Ändern und Löschen g
 public sealed class Brand : AuditedEntity, IMultiTenant { }
 ```
 
-Eine `CoworkeeDataTable` folgt ihrer Entity von selbst: Das Thema ist `type:` plus der Zeilentyp ohne `Dto`, eine Tabelle von `BrandDto` lädt also bei jeder Änderung an `Brand` neu, einmal je Schwall (ein Massenlöschen schickt ein Ereignis je Zeile). Setz `RealtimeTopic`, wenn der Zeilentyp anders heißt, oder einen leeren Text, um es abzuschalten:
+Jede Änderung geht an zwei Themen: `type:Brand` (jede Zeile des Typs) und `entity:Brand:{id}` (diese Zeile). Eine `CoworkeeDataTable` folgt ihrer Entity von selbst: Das Thema ist `type:` plus der Zeilentyp ohne `Dto`, eine Tabelle von `BrandDto` lädt also bei jeder Änderung an `Brand` neu, einmal je Schwall (ein Massenlöschen schickt ein Ereignis je Zeile). Setz `RealtimeTopic`, wenn der Zeilentyp anders heißt, oder einen leeren Text, um es abzuschalten; eine Tabelle über eine `DataSource` folgt nichts, solange `RealtimeTopic` nicht gesetzt ist:
 
 ```razor
 <CoworkeeDataTable T="UserRow" EntitySet="Users" RealtimeTopic="type:User" ... />
 ```
 
-Eine Detailseite beobachtet ihren Eintrag:
+Eine Detailseite beobachtet ihren Eintrag (Thema `entity:{EntityType}:{EntityId}`):
 
 ```razor
 <EntityWatch EntityType="Brand" EntityId="Id" ReturnHref="/catalog/brands" OnChanged="LoadAsync" />
@@ -57,7 +64,23 @@ Private Daten brauchen mehr Sorgfalt: Entities, die nur manche Benutzer sehen d�
 await publisher.PublishAsync(tenantId, $"folder:{folder.Id}", "AssetAdded", new { asset.Id }, ct);
 ```
 
+Eine Entity kann auch eigene Themen nennen: `IHasRealtimeTopics.RealtimeTopics` an der Entity oder ein `IRealtimeTopicMapper`-Dienst für Entities, die nicht dir gehören (`TopicsFor(entity)`). Ihre Änderungen gehen ebenfalls als `EntityChanged` an diese Themen, auch ohne `[Realtime]`; die Benachrichtigungen eines Benutzers etwa gehen an `user:{id}`.
+
 Mit mehreren API-Instanzen setzt du den Connection-String `redis` für die SignalR-Backplane. Der AppHost macht das für jeden Dienst, der `Coworkee.Realtime` referenziert. Dieselbe Verbindung trägt die Sitzungsänderungen zwischen den Instanzen (siehe [Clients und Sitzungen](../security/clients.md)): Jede Instanz beendet die Hub-Verbindungen einer beendeten Sitzung, egal welche Instanz sie hält.
+
+## Themen
+
+Clients verbinden sich mit dem Hub unter `/hubs/realtime` (angemeldet; die Verbindung endet, wenn ihr Token abläuft) und rufen `Subscribe(topic)` und `Unsubscribe(topic)`; jede Nachricht kommt über `OnEvent` als `RealtimeEnvelope(Topic, Type, Payload)` an. Der Server lässt eine Verbindung einem Thema nur beitreten, wenn ein `IRealtimeTopicAuthorizer`, der dessen Präfix behandelt, zustimmt:
+
+| Thema | Wer ihm folgen darf | Was dort ankommt |
+|---|---|---|
+| `type:{Entity}`, `entity:{Entity}:{id}` | wer die Berechtigung des `[Realtime]`-Attributs der Entity hat; bei `entity:` auch, wer sie auf dieser Ressource hat (`[Realtime(permission, ResourceType = ...)]`) | `EntityChanged` |
+| `user:{id}` | dieser Benutzer | seine Benachrichtigungen, Chat, `SessionRevoked` |
+| `session:{sid}` (`RealtimeTopics.Session`) | Verbindungen, deren Token diese `sid` trägt | `ImpersonationEnded` (`ImpersonationEndedPayload`), wenn ein *Anmelden als* endet, siehe [Identity](../features/identity.md#als-anderer-benutzer-anmelden) |
+| `tenant:...` | jeder angemeldete Benutzer der Organisation | z. B. `tenant:permissions`, `tenant:presence` |
+| `global:...` | jeder angemeldete Benutzer | z. B. `global:permissions` |
+
+Andere Präfixe werden abgelehnt, außer eine App registriert einen eigenen `IRealtimeTopicAuthorizer` (`Handles(topic)`, `AuthorizeAsync(topic, ct)`), wie es die Module Social, Workflows und Datensatz-Anhänge für ihre Themen tun. `IRealtimePublisher.PublishAsync(tenantId, topic, type, payload)` sendet an ein Thema; Apps können ihn dekorieren, um Nachrichten an eigene Hubs weiterzugeben. `SessionRevoked` (`SessionRevokedPayload`: Grund, `KeptSessionId`) läuft pro Sitzungsänderung auf jeder Instanz durch den Publisher, `RealtimePublisher` schickt es aber an keine Gruppe: Das Identity-Modul beendet genau die Hub-Verbindungen dieser Sitzung (siehe [Clients und Sitzungen](../security/clients.md#uberall-abmelden-und-sperren)).
 
 ## Berechtigungen
 
@@ -108,22 +131,22 @@ Lokalisierbare Benachrichtigungen nehmen die englischen Texte als Schlüssel mit
 await notifier.NotifyLocalizedAsync(adminIds, "account.registration", "New registration", "{0} ({1}) waits for activation.", [name, email], $"/admin/users/{id}", ct);
 ```
 
-Benutzer sehen sie in der Glocke der App-Leiste und auf der Benachrichtigungsseite, live über SignalR. Eine tägliche Zusammenfassung verschickt ungelesene per Mail (`Coworkee:Notifications:DigestCron`), mit Links auf `PublicAppUrl`; Benachrichtigungen, die schon als eigene Mail hinausgingen (E-Mail-Kanal eines Typs), fehlen darin.
+Benutzer sehen sie in der Glocke der App-Leiste und auf der Benachrichtigungsseite, live über SignalR (Thema `user:{id}`). Eine tägliche Zusammenfassung verschickt die ungelesenen per Mail (siehe [Tägliche Zusammenfassung](#tagliche-zusammenfassung)).
 
 Die Glocke zeigt die Zahl der ungelesenen und die letzten zehn; eine neu eintreffende Benachrichtigung erscheint als Snackbar mit Link darauf. Ein Klick markiert sie als gelesen und öffnet ihren Link (nur Seiten der App). Jede lässt sich wieder als ungelesen markieren und löschen; die Glocke markiert alle als gelesen, die Seite `/notifications` (auch ein Reiter von `/profile`) blättert durch alle oder nur die ungelesenen und löscht alle. Jede Änderung erreicht sofort alle offenen Tabs des Benutzers: das `NotificationCenter` des Clients hält die Zahl der ungelesenen und meldet `Changed` einmal pro Schwall, auch nach „Alle als gelesen markieren“.
 
 | Endpunkt | |
 |---|---|
-| `GET /api/v1/notifications?unreadOnly=&type=&page=&pageSize=` | neueste zuerst |
+| `GET /api/v1/notifications?unreadOnly=&type=&category=&done=&search=&page=&pageSize=` | neueste zuerst (höchstens 100 pro Seite); Filter: ungelesen, Typ, Kategorie, offen (`done=false`) oder erledigt, Text in Titel oder Inhalt |
 | `GET /api/v1/notifications/unread-count` | |
+| `GET /api/v1/notifications/counts` | offene, ungelesene und offene pro Kategorie |
 | `POST /api/v1/notifications/{id}/read`, `/{id}/unread` | |
 | `POST /api/v1/notifications/read-all` | |
-| `GET /api/v1/notifications?category=&done=&search=` | Filter des Eingangs: Kategorie, offen (`done=false`) oder erledigt, Text in Titel oder Inhalt |
-| `GET /api/v1/notifications/counts` | offene, ungelesene und offene pro Kategorie |
 | `POST /api/v1/notifications/{id}/done`, `/{id}/undone` | erledigt markiert auch als gelesen |
 | `GET /api/v1/notifications/preferences`, `PUT .../preferences/{type}` | die Wahl des Benutzers pro registriertem Typ |
 | `GET /api/v1/notifications/follows`, `GET/PUT/DELETE .../follows/{entityType}/{entityId}` | verfolgte Entitäten, Status, verfolgen, nicht mehr verfolgen |
 | `DELETE /api/v1/notifications/{id}`, `DELETE /api/v1/notifications` | eine, alle |
+| `GET /api/v1/notifications/push`, `PUT .../push`, `DELETE .../push/{id}` | Web-Push-Schlüssel und die Geräte des Benutzers, ein Gerät anmelden, eines entfernen (siehe [Push](#push)) |
 
 ### Einstellungen, Verfolgen und verzögerte Mails
 
@@ -140,7 +163,8 @@ Ein Typ hat eine Kategorie (Filter und Zahlen des Eingangs), einen Namen (Übers
 
 !!! warning "`Followable(string)` prüft nichts"
     Mit `Followable("Type")` dürfen Benutzer jeder Id folgen, und niemand prüft, ob sie sie sehen dürfen. Benachrichtigungen über solche Entitäten erreichen Verfolger deshalb nur über ein `Audience`, darauf beschränkt; ohne Publikum bekommen ihre Verfolger nichts. Datensätze, die manche Benutzer nicht sehen dürfen, gehören zu `Followable<TEntity>`.
- `CoworkeeFollowButton` (`EntityType`, `EntityId`, `Title`) verfolgt und beendet das auf einer Detailseite; der Reiter *Gefolgt* listet, was der Benutzer verfolgt. `NotificationFollow` (`cw.NotificationFollows`) ist öffentlich, Apps filtern ihre Listen also danach (nur verfolgte, eine Spalte „verfolgt“).
+
+`CoworkeeFollowButton` (`EntityType`, `EntityId`, `Title`) verfolgt und beendet das auf einer Detailseite; der Reiter *Gefolgt* listet, was der Benutzer verfolgt. `NotificationFollow` (`cw.NotificationFollows`) ist öffentlich, Apps filtern ihre Listen also danach (nur verfolgte, eine Spalte „verfolgt“).
 
 `INotifier.PublishAsync(NotificationMessage)` sendet an drei Arten von Empfängern:
 
@@ -155,13 +179,13 @@ await notifier.PublishAsync(new NotificationMessage("shipment.eta", "Estimated a
 }, ct);
 ```
 
-Direkt Adressierte bekommen sie, wenn ihr Umfang nicht Off ist; Verfolger bei All oder Followed, wenn sie die Entität noch sehen: auf das Publikum beschränkt, wenn eines angegeben ist, sonst wird jeder Verfolger als er selbst gegen das Set der `Followable<TEntity>`-Registrierung geprüft (Berechtigung, Zeilenfilter, Gruppen); das Publikum bei All. Der Auslöser bekommt sie nur, wenn er adressiert ist. Pro Empfänger entscheiden die Kanäle: in der App eine Benachrichtigung, per E-Mail die Mail `Notifications.Notification` in der Sprache des Lesers, nur an eine aktive Adresse (ohne eine bleibt die Benachrichtigung in der täglichen Zusammenfassung). Ein Typ mit `emailDelay` lässt die Mail in `cw.PendingNotificationMails` warten; eine weitere Benachrichtigung desselben Benutzers, Typs und derselben Entität ersetzt sie vorher und wartet neu, ein Schwall von Änderungen endet also in einer Mail mit dem neuesten Text. Der Job `coworkee-notification-mails` verschickt fällige Mails jede Minute. Eine wartende Mail ist pro Benutzer, Typ und Entität eindeutig und wird über die Outbox geschrieben, nachdem der sendende Befehl festgeschrieben ist: Ein Befehl, der scheitert, sendet keine Mail, und parallele Benachrichtigungen oder der Job lassen den Befehl nie scheitern (der Outbox-Handler versucht es erneut; der API-Host betreibt die Outbox mit `AddCoworkeeOutboxProcessing`); der Job nimmt eine Mail nur in der Version, die er gelesen hat (`Version` ändert sich bei jedem Ersetzen), eine inzwischen ersetzte wartet neu. Veröffentlichen Sie innerhalb des Befehls, bevor seine Unit of Work gespeichert wird (in einem Handler speichert die Pipeline), oder nach dem Commit aus einem Domain-Event-Handler: Die Benachrichtigungen in der App, sofortige Mails und die Outbox-Nachricht einer verzögerten Mail gehören zu diesem Speichern, ein scheiternder Befehl sendet also nichts, und Code, der nach seinem letzten `SaveChangesAsync` veröffentlicht, muss erneut speichern.
+Direkt Adressierte bekommen sie, wenn ihr Umfang nicht Off ist; Verfolger bei All oder Followed, wenn sie die Entität noch sehen: auf das Publikum beschränkt, wenn eines angegeben ist, sonst wird jeder Verfolger als er selbst gegen das Set der `Followable<TEntity>`-Registrierung geprüft (Berechtigung, Zeilenfilter, Gruppen); das Publikum bei All. Der Auslöser bekommt sie nur, wenn er adressiert ist. Pro Empfänger entscheiden die Kanäle: in der App eine Benachrichtigung, per E-Mail die Mail `Notifications.Notification` in der Sprache des Lesers, nur an eine aktive Adresse (ohne eine bleibt die Benachrichtigung in der täglichen Zusammenfassung). Ein Typ mit `emailDelay` lässt die Mail in `cw.PendingNotificationMails` warten; eine weitere Benachrichtigung desselben Benutzers, Typs und derselben Entität ersetzt sie vorher und wartet neu, ein Schwall von Änderungen endet also in einer Mail mit dem neuesten Text (eine Nachricht ohne `EntityType` und `EntityId` wird nicht zusammengefasst: jede wartet für sich). Der Job `coworkee-notification-mails` verschickt fällige Mails jede Minute. Eine wartende Mail ist pro Benutzer, Typ und Entität eindeutig und wird über die Outbox geschrieben, nachdem der sendende Befehl festgeschrieben ist: Ein Befehl, der scheitert, sendet keine Mail, und parallele Benachrichtigungen oder der Job lassen den Befehl nie scheitern (der Outbox-Handler versucht es erneut; der API-Host betreibt die Outbox mit `AddCoworkeeOutboxProcessing`); der Job nimmt eine Mail nur in der Version, die er gelesen hat (`Version` ändert sich bei jedem Ersetzen), eine inzwischen ersetzte wartet neu. Veröffentliche innerhalb des Befehls, bevor seine Unit of Work gespeichert wird (in einem Handler speichert die Pipeline), oder nach dem Commit aus einem Domain-Event-Handler: Die Benachrichtigungen in der App, sofortige Mails und die Outbox-Nachricht einer verzögerten Mail gehören zu diesem Speichern, ein scheiternder Befehl sendet also nichts, und Code, der nach seinem letzten `SaveChangesAsync` veröffentlicht, muss erneut speichern.
 
-Die Prüfung der Verfolger kostet ohne `Audience` eine Abfrage pro Verfolger: Jeder wird als er selbst geprüft, weil Berechtigungen, Zeilenfilter und Gruppen pro Benutzer verschieden sind. Für Entitäten mit Hunderten von Verfolgern übergeben Sie ein `Audience` (die Benutzer, die die Entität sehen dürfen), das die Prüfung pro Verfolger durch eine Schnittmenge ersetzt.
+Die Prüfung der Verfolger kostet ohne `Audience` eine Abfrage pro Verfolger: Jeder wird als er selbst geprüft, weil Berechtigungen, Zeilenfilter und Gruppen pro Benutzer verschieden sind. Für Entitäten mit Hunderten von Verfolgern übergib ein `Audience` (die Benutzer, die die Entität sehen dürfen), das die Prüfung pro Verfolger durch eine Schnittmenge ersetzt.
 
 `NotifyAsync` und `NotifyLocalizedAsync` sind `PublishAsync` mit `Recipients`; nicht registrierte Typen erreichen sie wie bisher nur in der App.
 
-Der Eingang listet standardmäßig die offenen Benachrichtigungen; *Erledigt* nimmt eine heraus (und markiert sie als gelesen), die Reiter zeigen offene, erledigte oder alle, die Chips filtern nach Kategorie mit ihren offenen Zahlen, die Suche sucht in Titel und Inhalt.
+Der Eingang listet standardmäßig die offenen Benachrichtigungen; *Erledigt* nimmt eine heraus (und markiert sie als gelesen), die Chips *Zu erledigen*, *Erledigt* und *Alle* wechseln zwischen offenen, erledigten und allen, die Kategorie-Chips filtern nach Kategorie mit ihren offenen Zahlen, die Suche sucht in Titel und Inhalt.
 
 ### Mail-Vorlagen pro Typ und Verzögerung pro Organisation
 
@@ -183,9 +207,9 @@ await notifier.PublishAsync(new NotificationMessage("shipment.eta", "Estimated a
 }, ct);
 ```
 
-`mailTemplate` nennt eine Mail-Vorlage aus [Mailing](mailing.md) (registriert mit einem `IMailTemplateContributor` oder eine eigene Vorlage), Administratoren ändern sie also auf der Seite der Mail-Vorlagen pro Sprache und Organisation. Sie rendert `MailModel` (ein Objekt oder ein Dictionary): Seine Member sind die Namen der obersten Ebene der Vorlage, benannt wie die Member jedes Mail-Modells (`OldValue` wird `old_value`), neben `user` (`first_name`, `email`) und `notification` (`title`, `body` in der Sprache des Lesers, absoluter `link`). Die füllt die Bibliothek, `PublishAsync` weist daher ein Modell zurück, dessen oberste Ebene einen Member `user`, `notification`, eine Variable des Layouts (`subject`, `content`, `unsubscribe_url`) oder den Namen eines Scriban-Builtins (`string`, `html`, `date`, `array`, `math`, `object`, `regex`, `timespan`, ...) hat, in beliebiger Schreibweise und mit oder ohne Unterstriche (`ArgumentException`), ebenso eines, das als JSON größer als 32 KB ist (`NotificationMailModel.MaxBytes`). Das Modell wird als JSON mit der Outbox-Nachricht und der wartenden Mail gespeichert, eine verzögerte Mail rendert also das Modell der neuesten Benachrichtigung ihrer Entität; Werte kommen als Text, Zahlen, Wahrheitswerte, Listen und Objekte an, formatieren Sie Datumswerte also vor dem Veröffentlichen. Verzögerte Mails werden in der Organisation gerendert, die sie gesendet hat (ihre Vorlagenversionen, ihr Mail-Protokoll). Ein Typ ohne Vorlage oder mit einem Namen, den keine Vorlage hat (eine Warnung geht ins Log), und eine Mail ohne Modell (etwa eine, die schon wartete, bevor ihr Typ eine Vorlage bekam) senden wie bisher die allgemeine `Notifications.Notification`; das Modell wird auch ihr übergeben, so dass die Version einer Organisation von der allgemeinen Vorlage es lesen kann. Eine Vorlage, die sich nicht rendern lässt (etwa eine bearbeitete Version, zu der das Modell nicht passt), sendet stattdessen die allgemeine Mail, und scheitert auch die, entfällt die Mail; beides wird geloggt, und keins von beiden lässt den sendenden Befehl oder die anderen Mails des Joblaufs scheitern.
+`mailTemplate` nennt eine Mail-Vorlage aus [Mailing](mailing.md) (registriert mit einem `IMailTemplateContributor` oder eine eigene Vorlage), Administratoren ändern sie also auf der Seite der Mail-Vorlagen pro Sprache und Organisation. Sie rendert `MailModel` (ein Objekt oder ein Dictionary): Seine Member sind die Namen der obersten Ebene der Vorlage, benannt wie die Member jedes Mail-Modells (`OldValue` wird `old_value`), neben `user` (`first_name`, `email`) und `notification` (`title`, `body` in der Sprache des Lesers, absoluter `link`). Die füllt die Bibliothek, `PublishAsync` weist daher ein Modell zurück, dessen oberste Ebene einen Member `user`, `notification`, eine Variable des Layouts (`subject`, `content`, `unsubscribe_url`) oder den Namen eines Scriban-Builtins (`string`, `html`, `date`, `array`, `math`, `object`, `regex`, `timespan`, ...) hat, in beliebiger Schreibweise und mit oder ohne Unterstriche (`ArgumentException`), ebenso eines, das als JSON größer als 32 KB ist (`NotificationMailModel.MaxBytes`). Das Modell wird als JSON mit der Outbox-Nachricht und der wartenden Mail gespeichert, eine verzögerte Mail rendert also das Modell der neuesten Benachrichtigung ihrer Entität; Werte kommen als Text, Zahlen, Wahrheitswerte, Listen und Objekte an, formatiere Datumswerte also vor dem Veröffentlichen. Verzögerte Mails werden in der Organisation gerendert, die sie gesendet hat (ihre Vorlagenversionen, ihr Mail-Protokoll). Ein Typ ohne Vorlage oder mit einem Namen, den keine Vorlage hat (eine Warnung geht ins Log), und eine Mail ohne Modell (etwa eine, die schon wartete, bevor ihr Typ eine Vorlage bekam) senden wie bisher die allgemeine `Notifications.Notification`; das Modell wird auch ihr übergeben, so dass die Version einer Organisation von der allgemeinen Vorlage es lesen kann. Eine Vorlage, die sich nicht rendern lässt (etwa eine bearbeitete Version, zu der das Modell nicht passt), sendet stattdessen die allgemeine Mail, und scheitert auch die, entfällt die Mail; beides wird geloggt, und keins von beiden lässt den sendenden Befehl oder die anderen Mails des Joblaufs scheitern.
 
-Geben Sie der Definition der Vorlage `NotificationMailModel.Sample(model)` als Beispiel: Vorschau und Testmail auf der Seite der Mail-Vorlagen zeigen dann das Beispielmodell mit einem Beispiel-`user` und einer Beispiel-`notification`.
+Gib der Definition der Vorlage `NotificationMailModel.Sample(model)` als Beispiel: Vorschau und Testmail auf der Seite der Mail-Vorlagen zeigen dann das Beispielmodell mit einem Beispiel-`user` und einer Beispiel-`notification`.
 
 ```csharp
 context.Add(new MailTemplateDefinition("Shipments.EtaChanged", "Estimated arrival changed",
@@ -194,3 +218,15 @@ context.Add(new MailTemplateDefinition("Shipments.EtaChanged", "Estimated arriva
 ```
 
 `resolveEmailDelay` läuft beim Veröffentlichen einer Benachrichtigung, mit den Diensten des Scopes des Absenders (seine Organisation, Features und Einstellungen). Sein Ergebnis ist die Verzögerung für diese Benachrichtigung; `null` behält `emailDelay`, `TimeSpan.Zero` mailt sofort. Ein Resolver, der eine Ausnahme wirft, wird geloggt, und `emailDelay` gilt; er lässt den veröffentlichenden Befehl nie scheitern. Die wartende Mail behält die Fälligkeit, die sie bekam, eine neuere Benachrichtigung derselben Entität setzt eine neue.
+
+### Tägliche Zusammenfassung
+
+Der Job `coworkee-notification-digest` schickt jedem Benutzer mit ungelesenen Benachrichtigungen seit seiner letzten Zusammenfassung (höchstens einen Tag zurück, höchstens 50 pro Mail) eine Mail mit der Vorlage `Notifications.Digest`, in seiner Sprache und mit Links auf `Coworkee:Notifications:PublicAppUrl` (die Web-App; ohne sie bleiben die Links relativ). Benachrichtigungen, die schon als eigene Mail hinausgingen (E-Mail-Kanal eines Typs), fehlen darin. `Coworkee:Notifications:DigestCron` legt fest, wann er läuft (Cron in UTC, Standard `0 6 * * *`); mit der Einstellung `Notifications.Digest` („Daily e-mail with unread notifications“, System und Benutzer, standardmäßig an) schalten Benutzer sie ab.
+
+### Push
+
+Mit einem VAPID-Schlüsselpaar (`options.UsePush()` im AppHost oder `Coworkee:Notifications:Push:PublicKey`, `PrivateKey` und `Subject`) geht jede Benachrichtigung auch als Web Push an die Geräte, die ein Benutzer im Eingang eingeschaltet hat. Einrichtung und Zustellung: [Telefone, installierbare App und Push](../ui/phones-and-pwa.md#push-benachrichtigungen).
+
+### Aufbewahrung und personenbezogene Daten
+
+Benachrichtigungen bleiben, bis der Benutzer sie löscht; mit dem Modul [Aufbewahrung](retention.md) löscht das Ziel `notifications` sie nach den dort eingestellten Tagen. Der Export personenbezogener Daten hat einen Abschnitt `notifications` (die Benachrichtigungen und Push-Geräte des Benutzers); das Löschen des Benutzers entfernt sie.

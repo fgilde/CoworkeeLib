@@ -1,11 +1,22 @@
 # Auditing
 
-The audit trail records every change of audited entities field by field: who, when, old value, new value. It is written in the same transaction as the change, so it never lies.
+The audit trail records every change of the app's entities field by field: who (and who was signed in as him), when, old value, new value. It is written in the same transaction as the change (table `cw.AuditEntries`), so it never lies.
 
-- The **Audit log** page lists all changes with filters for user, entity type and time.
+`Coworkee.Auditing` (`CoworkeeAuditingModule`) adds the audit log, its endpoints and the record history; the template has it (option `auditing`, on by default). The trail itself is written by the app's DbContext.
+
+## Audit trail
+
+- Every added, changed and deleted entity is recorded, except owned types, [anonymous records](#anonymous-records) and what is excluded: `[NotAudited]` on a type or property (or `IsNotAudited()` in a model contributor) leaves it out, `[Sensitive]` (or `IsSensitive()`) records that a property changed without its value (`***`).
+- The **Audit log** page (*Administration > Monitoring > Audit log*, `/cw/admin/audit`) lists the changes of the own organisation (the system organisation also sees entries without one) as a data table with search, the period, *Only my changes* and who signed in as the actor (*impersonated by*).
 - `<AuditTimeline EntityType="Brand" EntityId="@brand.Id.ToString()" />` shows the history of one entity on its own page.
-- `[NotAudited]` excludes a type or property, `[Sensitive]` records that a property changed without its value.
-- Entities with `IVersioned` also keep full snapshots; `<VersionHistory Type="..." Id="..." />` lists them and restores an older revision.
+- Entities with `IVersioned` also keep full snapshots (`cw.EntitySnapshots`, a `Revision` per save). A module or app registers a type with an `IVersionedTypeContributor` (`context.Add<Theme>("Theme", permission)`); `<VersionHistory Type="Theme" Id="..." />` then lists the revisions and restores an older one for holders of that permission.
+
+| Endpoint | |
+|---|---|
+| `GET /api/v1/audit?entityType=&entityId=&actorId=&impersonatorId=&from=&to=&page=&pageSize=` | the entries (`Audit.View`); also the OData set `AuditEntries` |
+| `GET /api/v1/versions/{type}/{id}`, `GET .../{revision}`, `POST .../{revision}/restore` | snapshots of an `IVersioned` type (its registered permission) |
+
+The permission `Audit.View` shows the audit log and the history. With the [Retention](retention.md) module the targets `audit` and `snapshots` delete old entries; the personal data export has a section `activity` (what the user changed: type, id, action, time), and erasing a user keeps the trail without his name.
 
 ## Record history and restore
 
@@ -35,7 +46,7 @@ In the client, either turn on the row action of a table or put the timeline on a
 - Seeing the history needs `Audit.View` and the read permission of the entity set; restoring needs the permission you registered. Everything stays in the user's tenant.
 - `[Sensitive]` fields show as `***` and are never restored; properties hidden from the OData set stay out of the history.
 
-The audit log (`/admin/audit`) offers the same actions per entry when the entry's type belongs to such a set: open a row and pick **Undo this change** (only the fields of that entry go back, later changes of other fields stay), **Restore the state before this change** (that entry and everything after it is rolled back), **Restore record** for the delete of a soft-delete record, or **Open record history**. They use the same preview and confirmation. If a later entry changed one of the fields an undo puts back, the preview marks the field *Changed later* and warns that the newer value is replaced. Users without the restore permission see only the history; entries of other types show nothing.
+The audit log (`/cw/admin/audit`) offers the same actions per entry when the entry's type belongs to such a set: open a row and pick **Undo this change** (only the fields of that entry go back, later changes of other fields stay), **Restore the state before this change** (that entry and everything after it is rolled back), **Restore record** for the delete of a soft-delete record, or **Open record history**. They use the same preview and confirmation. If a later entry changed one of the fields an undo puts back, the preview marks the field *Changed later* and warns that the newer value is replaced. Users without the restore permission see only the history; entries of other types show nothing.
 
 The endpoints live under `/api/v1/history`: `GET /` (the sets the user may read, with `CanRestore`), and per set `/{entitySet}`: `GET /{id}`, `POST /{id}/preview`, `POST /{id}/restore` and `GET /deleted`. The request of preview and restore is `{ entryId, property?, mode, version? }` with `mode` `After` (default, the state right after the entry), `Before` or `Undo`. The preview returns a `version` of the record; the restore sends it back and answers `409` when the record changed in between (a value, the delete or a new history entry). The Blazor dialogs and the AirWorks record window then show the new preview.
 

@@ -7,12 +7,12 @@
 public sealed class MyAppApiModule : CoworkeeModule, IWebModule { ... }
 ```
 
-Nimm es nur in den API-Host auf: Elsa startet dort seine eigenen Hintergrunddienste.
+Nimm es nur in den API-Host auf: Elsa startet dort seine eigenen Hintergrunddienste. Das Modul hängt von `CoworkeeWorkflowsModule` ab.
 
 ## Was es einrichtet
 
 - **Datenbank**: Elsas Workflow-Definitionen und Laufzeittabellen liegen in der Datenbank der App (Postgres, SQL Server oder SQLite, dieselbe Verbindung wie die App) mit Elsas eigenen Migrationen, die beim Start der API laufen. `Coworkee:Workflows:Elsa:ConnectionString` legt sie woanders ab.
-- **API**: Elsas REST-API unter `/api/elsa`, erreichbar über den BFF wie der Rest der API. Nur angemeldete Benutzer mit der Berechtigung `Workflows.Elsa.Manage` kommen durch; Elsas eigene Benutzer und Rollen werden nicht verwendet.
+- **API**: Elsas REST-API unter `/api/elsa`, erreichbar über den BFF wie der Rest der API. Nur angemeldete Benutzer mit der Berechtigung `Workflows.Elsa.Manage` kommen durch; Elsas eigene Benutzer und Rollen werden nicht verwendet. Elsas Endpunkte fehlen im OpenAPI-Dokument und in den SDKs der App, und die Validierungsfehler der App behalten ihre Eigenschaftsnamen (`Brand.Name`).
 - **Workflows im Code**: `services.AddWorkflow<MyWorkflow>()` registriert einen in C# geschriebenen Workflow.
 
 ## Aktivitäten und Trigger
@@ -62,7 +62,7 @@ app.Run();
 
 Das Projekt ist `Microsoft.NET.Sdk.Web` mit `<RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>` (es hat keine eigenen `.razor`-Dateien, die Skripte des Frameworks müssen angefordert werden) und dem Paket `Coworkee.Workflows.Elsa.Studio`.
 
-- **Anmeldung**: Der Host meldet sich wie die Web-App am Auth-Server der App an, als eigener OIDC-Client (`Coworkee:Bff`, dieselben Einstellungen wie die Web-App, siehe [Clients and scopes](../security/authentication.md#clients-and-scopes)): dieselben Benutzer, dieselbe Anmeldeseite, Keycloak inklusive. Die Tokens bleiben auf dem Server, der Browser hält nur ein Sitzungscookie.
+- **Anmeldung**: Der Host meldet sich wie die Web-App am Auth-Server der App an, als eigener OIDC-Client (`Coworkee:Bff`, dieselben Einstellungen wie die Web-App, siehe [Clients und Scopes](../security/authentication.md#clients-und-scopes)): dieselben Benutzer, dieselbe Anmeldeseite, Keycloak inklusive. Die Tokens bleiben auf dem Server, der Browser hält nur ein Sitzungscookie.
 - **Berechtigung**: Studio ruft die Elsa-API der API (`Coworkee:Workflows:Elsa:Studio:BackendUrl`, z. B. `https://api.example.com/api/elsa`) serverseitig mit dem Access Token des Benutzers auf, die API entscheidet also. Wer `Workflows.Elsa.Manage` nicht hat, sieht statt des Designers eine Seite, die das sagt.
 - **Aktivitäten**: Die Palette zeigt die Kategorie *Coworkee* mit den Aktivitäten und Triggern von oben; ihre Ein- und Ausgaben kommen von der API.
 - **Link**: Der Navigationseintrag *Workflow designer* der App (Gruppe System, für `Workflows.Elsa.Manage`) führt auf `/api/v1/workflows/elsa/studio`, das auf `Coworkee:Workflows:Elsa:StudioUrl` weiterleitet.

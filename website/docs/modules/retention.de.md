@@ -1,17 +1,19 @@
 # Aufbewahrung
 
-`Coworkee.Retention` legt fest, wie lange Daten aufbewahrt werden. Module melden die Datenarten, die ohne Ende wachsen (Audit-Trail, Outbox, Protokolle, gelöschte Datensätze, Dateien, Tokens), ein nächtlicher Job löscht, was älter ist als die eingestellten Tage, und die Admin-Seite *Aufbewahrung* (`/admin/retention`) stellt die Tage ein und löscht auf Wunsch sofort.
+`Coworkee.Retention` legt fest, wie lange Daten aufbewahrt werden. Module melden die Datenarten, die ohne Ende wachsen (Audit-Trail, Outbox, Protokolle, gelöschte Datensätze, Dateien, Tokens), ein nächtlicher Job löscht, was älter ist als die eingestellten Tage, und die Admin-Seite *Aufbewahrung* (`/cw/admin/retention`) stellt die Tage ein und löscht auf Wunsch sofort.
+
+Neue Apps haben es (Option `retention` in Template, CLI und Studio, standardmäßig an). Von Hand:
 
 ```csharp
 [DependsOn(typeof(CoworkeeRetentionModule))]
 public sealed class MyAppDatabaseModule : CoworkeeModule;
 ```
 
-Das Modul bringt die Tabelle `cw.RetentionRuns` (letzter Lauf pro Datenart) mit: **Migration anlegen**, wenn du es in eine bestehende App aufnimmst.
+Das Modul hängt von den Modulen Settings und Background Jobs ab und bringt die Tabelle `cw.RetentionRuns` (letzter Lauf pro Datenart) mit: **Migration anlegen**, wenn du es in eine bestehende App aufnimmst.
 
 ## Datenarten
 
-Jede Datenart wird über alle Organisationen hinweg gelöscht. Die Bibliothek löscht nach einem Update nie von selbst: Alles, was bisher für immer blieb, bleibt für immer, bis jemand Tage einstellt. Nur das Zustellprotokoll der Webhooks behält seine 30 Tage, und Anhänge endgültig gelöschter Datensätze gehen nach einem Tag (sie nützen niemandem mehr).
+Jede Datenart wird über alle Organisationen hinweg gelöscht. Die Bibliothek löscht nach einem Update nie von selbst: Alles, was bisher für immer blieb, bleibt für immer, bis jemand Tage einstellt. Nur das Zustellprotokoll der Webhooks behält seine 30 Tage, und abgelaufene Zugriffstokens sowie Anhänge endgültig gelöschter Datensätze gehen nach einem Tag (sie nützen niemandem mehr).
 
 | Schlüssel | Modul | Daten | Alter nach | Standard |
 |---|---|---|---|---|
@@ -35,6 +37,7 @@ Jede Datenart wird über alle Organisationen hinweg gelöscht. Die Bibliothek l�
 - `audit`: Entity-Historie und Wiederherstellen lesen den Audit-Trail. Ältere Änderungen lassen sich dann nicht mehr anzeigen oder rückgängig machen.
 - `snapshots`: Versionshistorie und Wiederherstellen versionierter Entities (etwa Mail-Vorlagen) lesen sie; ältere Versionen lassen sich dann nicht mehr anzeigen oder wiederherstellen.
 - `soft-deleted`: jeder konkrete weich gelöschte Typ des Modells, einer nach dem anderen, auch unter einer Wurzel, die nicht weich gelöscht wird; ein Typ in einer Table-per-Hierarchy löscht genau seine eigenen Zeilen. Hält ein Fremdschlüssel einen Typ noch fest (ein weich gelöschter Besitzer, dessen Kinder bleiben) oder kann EF ihn nicht in Masse löschen (Table per Type), meldet der Lauf das als Fehler und nimmt sich den nächsten Typ vor. Typen, die mit `AddRetentionOwnedType<T>()` angemeldet sind, und ihre abgeleiteten Typen bleiben außen vor.
+- `access-tokens`: die Tokens temporärer [Datei- und Anhang-Links](files.md#temporare-links) und von Export-Downloads (`cw.AccessTokens`). Ohne das Retention-Modul werden abgelaufene Tokens gelöscht, sobald ein anderes Token eingelöst wird.
 - `deleted-files`: Ein Blob, der sich nicht löschen lässt, hält den Lauf nicht auf; er wird geloggt und im Fehler des Laufs genannt (die Zeile ist dann schon weg).
 - `auth-tokens`: Der Prune von OpenIddict löscht 1000 Zeilen pro Anweisung. Die Zählung lässt Autorisierungen aus, die erst im selben Prune ihre letzten Tokens verlieren.
 - `data-transfer-jobs`: Ein Import, dessen Job weg ist, lässt sich nicht mehr rückgängig machen.
@@ -43,7 +46,7 @@ Neue Apps aus dem Template starten mit technischen Standards in `src/MyApp.Api/a
 
 ## Einstellungen
 
-Jede Datenart hat die Global-Einstellung `Retention.{key}.Days` (leer oder `0`: alles behalten). Die Einstellungen stehen auf der Admin-Seite *Aufbewahrung*, nicht in den Einstellungs-Tabs. Der Standard kommt vom Modul oder aus der Konfiguration:
+Jede Datenart hat die Global-Einstellung `Retention.{key}.Days` (leer oder `0`: alles behalten; höchstens 36500). Die Einstellungen stehen auf der Admin-Seite *Aufbewahrung*, nicht in den Einstellungs-Tabs. Der Standard kommt vom Modul oder aus der Konfiguration:
 
 ```json
 {
@@ -62,20 +65,20 @@ Das Webhook-Modul liest `Coworkee:Webhooks:LogRetentionDays` weiterhin als Stand
 
 ## Die Admin-Seite
 
-*Monitoring → Aufbewahrung*, für Benutzer der Systemorganisation mit `Retention.Manage` (Administratoren bekommen sie wie jede andere Permission). Eine Zeile pro Datenart:
+*Monitoring → Aufbewahrung*, für Benutzer der Systemorganisation mit `Retention.Manage` (Administratoren bekommen sie wie jede andere Berechtigung). Eine Zeile pro Datenart:
 
 - **Behalten (Tage)**: leer behält alles; schon beim Tippen zählt *Betroffen jetzt*, was diese Tage löschen würden. *Speichern* speichert alle geänderten Zeilen.
 - **Letzter Lauf**: wann, wie viele Zeilen und der Fehler des letzten Laufs. Eine laufende Zeile zeigt einen Fortschrittsbalken; die Seite fragt alle 2 Sekunden den Laufzustand ab (`?counts=false`, ohne Zählung) und zählt neu, sobald der Lauf fertig ist.
 - **Jetzt löschen** arbeitet nur mit den gespeicherten Tagen: Solange eine Zeile ungespeicherte Änderungen hat, ist der Button aus (*Erst speichern*). Er fragt mit der Anzahl nach (*12.480 Einträge älter als 365 Tage löschen?*) und läuft als Hintergrundjob. Das Log und die Tabelle merken sich, wer ihn gestartet hat.
 
-Der Abschnitt *Aufbewahrung* der Systemstatus-Seite (`/admin/system-status`) zeigt den letzten Lauf und die Fehler jeder Datenart.
+Der Abschnitt *Aufbewahrung* der Systemstatus-Seite (`/cw/admin/system-status`) zeigt den letzten Lauf und die Fehler jeder Datenart.
 
 | Endpoint | |
 |---|---|
 | `GET /api/v1/retention` | Datenarten mit Tagen, Standard (nach der Konfiguration), betroffenen Zeilen, letztem Lauf; `?counts=false` lässt die Zählung weg |
-| `GET /api/v1/retention/{key}/count?days=N` | Zeilen älter als `N` Tage |
-| `PUT /api/v1/retention` | `{ "audit": 365, "mail-log": null }` speichert die Tage |
-| `POST /api/v1/retention/{key}/run` | Body `{ "days": N }` (mindestens 1): `202` und ein Hintergrundjob, `409`, solange der Schlüssel läuft |
+| `GET /api/v1/retention/{key}/count?days=N` | Zeilen älter als `N` Tage (1 bis 36500) |
+| `PUT /api/v1/retention` | `{ "audit": 365, "mail-log": null }` speichert die Tage (höchstens 36500; `null` oder `0` behält alles) |
+| `POST /api/v1/retention/{key}/run` | Body `{ "days": N }` (1 bis 36500): `202` und ein Hintergrundjob, `409`, solange der Schlüssel läuft |
 
 Alle brauchen `Retention.Manage` und die Systemorganisation (sonst `403` mit `retention.system_only`).
 

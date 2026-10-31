@@ -19,7 +19,7 @@ builder.Services.AddCoworkeeReporting(baseAddress, reports => reports
     .DrillDown("Products", "catalog/products"));
 ```
 
-Nimm `typeof(Coworkee.Client.Blazor.Reporting.ReportingOptions).Assembly` in die `AdditionalAssemblies` des Routers auf (in `Routes.razor` und in `AddAdditionalAssemblies` des Web-Hosts) und erzeuge eine Migration für die Tabellen `cw.Reports` und `cw.ReportFavorites`. Neue Apps bekommen das alles mit der Template-Option `--reports` (standardmäßig an).
+Nimm `typeof(Coworkee.Client.Blazor.Reporting.ReportingOptions).Assembly` in die `AdditionalAssemblies` des Routers auf (in `Routes.razor` und in `AddAdditionalAssemblies` des Web-Hosts) und erzeuge eine Migration für die Tabellen `cw.Reports`, `cw.ReportFavorites`, `cw.DashboardReports` und `cw.ReportSubscriptions`. Das Modul hängt vom [Mailing-Modul](mailing.md) ab (Abo-Mails), das `cw.OutgoingMailAttachments` mitbringt. Neue Apps bekommen das alles mit der Template-Option `--reports` (standardmäßig an).
 
 ## Deine Entitätsmengen als Datenquellen
 
@@ -30,7 +30,7 @@ services.AddODataEntity<SalesOrder>("SalesOrders", SalesPermissions.Orders.View)
 services.AddODataEntity<Customer>("Customers", SalesPermissions.Orders.View);
 ```
 
-- **Felder** kommen aus dem EDM: mit `AddODataEntity(..., o => o.Secret)` verborgene Eigenschaften erscheinen nie, weder als Feld noch in einem Filter.
+- **Felder** kommen aus dem EDM: mit `AddODataEntity(..., o => o.Hide(...))` verborgene Eigenschaften erscheinen nie, weder als Feld noch in einem Filter; solche hinter `HideUnless(..., permission)` nur für Benutzer mit dieser Berechtigung.
 - **Navigationen** zu einer anderen registrierten Menge ergänzen deren Felder, etwa `Customer/Name`; der Benutzer braucht auch die Berechtigung dieser Menge, und ihre Zeilenfilter gelten: ein Kunde, den der Benutzer nicht sehen darf, zählt als leer (`null`), nie unter seinem Namen.
 - **Beschriftungen** kommen aus `[ProvideFacet(Label = ...)]`, `[Display(Name = ...)]` oder dem Eigenschaftsnamen; Enum-Werte zeigen ihre `[Display]`-Namen.
 - **Zeilen** sind die, die auch die OData-Liste liefert: Mandantenfilter, Soft Delete und jeder `IODataEntityFilter<T>` gelten. Wer die Berechtigung der Menge nicht hat, bekommt für deren Widgets ein 403, der Rest des Berichts funktioniert weiter.
@@ -160,6 +160,10 @@ Diagramme nutzen [Blazor-ApexCharts](https://github.com/apexcharts/Blazor-ApexCh
 
 ![Dasselbe Dashboard im Dunkelmodus](../assets/screenshots/reporting-dark.png){ .shot }
 
+### App-Daten eines Widgets
+
+`ReportWidget.AppData` (ein Wörterbuch von JSON-Werten) sind Daten, die eine App oder ein zweiter Client mit einem Widget aufbewahrt, z. B. eigene Einstellungen dazu. Berichte lesen und ändern sie nicht; sie werden mit dem Bericht gespeichert, gelesen und dupliziert und sind auf 20.000 Zeichen JSON je Widget begrenzt (mehr lehnt das Speichern ab).
+
 ## Designer
 
 ![Designer mit dem Widget-Bereich](../assets/screenshots/reporting-designer.png){ .shot }
@@ -193,10 +197,6 @@ new ReportWidget
 ```
 
 ## Schwellenwerte
-
-Ein Widget kann `AppData` tragen, je Schlüssel ein JSON-Objekt, das eine App oder ein zweiter Client mit ihm aufbewahrt (z. B. eigene Einstellungen des Widgets); Berichte lesen und ändern es nicht, es wird mit dem Bericht kopiert und ist auf 20.000 Zeichen je Widget begrenzt.
-
-Ein Widget kann `AppData` tragen, je Schlüssel ein JSON-Objekt, das eine App oder ein zweiter Client mit ihm aufbewahrt (z. B. eigene Einstellungen des Widgets); Berichte lesen und ändern es nicht, es wird mit dem Bericht kopiert und ist auf 20.000 Zeichen je Widget begrenzt.
 
 *Schwellenwerte* im Widget-Bereich färben einen Wert nach Bändern (`WidgetOptions.Thresholds`, eine Liste von `ThresholdStop`): jeder Schwellenwert hat einen Startwert, eine Farbe und eine Bezeichnung, und ein Wert nimmt das Band des höchsten Schwellenwerts, den er erreicht (Werte unter dem ersten behalten ihre eigene Farbe). Farben sind `success`, `warning`, `error` und `info` des Themes (sie folgen eigenen Themes und dem Dunkelmodus) oder ein eigenes `#rrggbb`; alles andere wird beim Speichern abgelehnt.
 
@@ -238,11 +238,13 @@ Die Zeilen eines Widgets grenzen in dieser Reihenfolge ein: seine eigenen Query-
 | `Reports.Dashboard` | das Dashboard der Organisation wählen |
 | `Reports.Subscriptions` | die Berichtsabos der Organisation sehen und beenden |
 
-Ein Bericht ist *privat*, mit *Rollen* geteilt (Inhaber einer davon, direkt oder über Gruppen), mit *Gruppen* oder mit der *Organisation*. Mit Gruppen geteilt erreicht er die Mitglieder dieser Gruppen und der Gruppen darüber: die aktiven Gruppen des Benutzers (`IGroupScope.ActiveAsync`), eine Gruppenauswahl grenzt die Berichtsliste also ein wie die Daten. Der Besitzer teilt nur mit seinen Gruppen und den Gruppen darunter (`GET /api/v1/reports/groups`); früher geteilte Gruppen bleiben, wenn er eine verlässt. Der Besitzer sieht den Bericht immer. Nur der Besitzer ändert ihn; andere duplizieren ihn in eine private Kopie. Eine Änderung erreicht über den [Realtime-Hub](realtime.md) jeden, der den Bericht geöffnet hat.
+Ein Bericht ist *privat*, mit *Rollen* geteilt (Inhaber einer davon, direkt oder über Gruppen), mit *Gruppen* oder mit der *Organisation*. Mit Gruppen geteilt erreicht er die Mitglieder dieser Gruppen und der Gruppen darüber: die aktiven Gruppen des Benutzers (`IGroupScope.ActiveAsync`), eine Gruppenauswahl grenzt die Berichtsliste also ein wie die Daten. Der Besitzer teilt nur mit seinen Gruppen und den Gruppen darunter (`GET /api/v1/reports/groups`, `Reports.Share`), mit höchstens 100; eine andere Gruppe beantwortet die API mit `403` (`reports.foreign_group`). Früher geteilte Gruppen bleiben, wenn er eine verlässt. Der Besitzer sieht den Bericht immer.
+
+`SaveReportRequest` trägt `Visibility`, `RoleIds` und `GroupIds` (`ReportDto` liefert sie zurück). `Reports.Share` wird nur geprüft, wenn sich die Freigabe ändert; ein Besitzer ohne diese Berechtigung kann einen geteilten Bericht also weiter ändern. Ein Client, der einen gelesenen Bericht speichert, gibt `RoleIds` und `GroupIds` mit: Ein mit Rollen oder Gruppen geteilter Bericht ohne sie wird mit `400` abgelehnt (*Choose the groups to share with.*). Nur der Besitzer ändert ihn; andere duplizieren ihn in eine private Kopie. Eine Änderung erreicht über den [Realtime-Hub](realtime.md) jeden, der den Bericht geöffnet hat.
 
 ## Abos per Mail
 
-*Per Mail abonnieren* (Briefumschlag-Symbol) an einem Bericht schickt ihn nach Plan: jeden Tag, jede Woche an einem Wochentag oder jeden Monat an einem Tag (kürzere Monate nehmen ihren letzten Tag), zu einer Uhrzeit einer Zeitzone (IANA-Ids wie `Europe/Berlin`; die Zeit folgt der Sommerzeit, eine übersprungene Uhrzeit läuft direkt nach der Lücke, eine doppelte beim ersten Mal). Der Dialog kann den Zeitraum des Berichts ersetzen (z. B. *Letzter Monat* für eine monatliche Mail) und die gerade gewählten Facetten übernehmen; der Excel-Anhang lässt sich abschalten.
+*Per Mail abonnieren* (Briefumschlag-Symbol) an einem Bericht schickt ihn nach Plan: jeden Tag, jede Woche an einem Wochentag oder jeden Monat an einem Tag (kürzere Monate nehmen ihren letzten Tag) oder an einem Wochentag einer Woche (`ReportSchedule.Week`, z. B. am letzten Freitag), jeden n-ten Tag, jede n-te Woche oder jeden n-ten Monat (`Every`), zu einer Uhrzeit einer Zeitzone (IANA-Ids wie `Europe/Berlin` oder Windows-Ids; die Zeit folgt der Sommerzeit, eine übersprungene Uhrzeit läuft direkt nach der Lücke, eine doppelte beim ersten Mal). Der Dialog kann den Zeitraum des Berichts ersetzen (z. B. *Letzter Monat* für eine monatliche Mail) und die gerade gewählten Facetten übernehmen; der Excel-Anhang lässt sich abschalten. Ein Benutzer hat höchstens 50 Abos; anlegen oder ändern lässt sich keins, während man als ein anderer Benutzer angemeldet ist.
 
 Die Mail (Vorlage `Reports.Subscription`, in jeder mitgelieferten Sprache, bearbeitbar unter *Mail-Vorlagen*) zeigt jede Kennzahl mit Wert, Schwellenwert-Farbe, Zeichen und Bezeichnung und die ersten zehn Zeilen jedes Diagramms, Pivots und jeder Tabelle (ein Diagramm über einen Datumsbereich zeigt seine neuesten zehn, die älteste zuerst), mit einem Link zum Bericht. Sie ist in der Sprache des Abonnenten geschrieben, sonst in der Standardsprache der Organisation (Seite Sprachen), wie die Abmeldeseite. Die angehängte Arbeitsmappe hat ein Blatt je Widget mit allen Zeilen (Tabellen bis 1.000), geschrieben wie *Excel exportieren*. Bilder der Widgets oder ein PDF werden auf dem Server nicht erzeugt.
 
@@ -278,6 +280,18 @@ Die Dashboard-Seite des Templates (*Persönlich > Dashboard*, über *Berichte*) 
 
 - Bericht: Bild (PNG), PDF über den Druckdialog des Browsers (Druckstile blenden Navigation und Werkzeuge aus) und die Berichtsdatei (`.report.json`) zum Import an anderer Stelle.
 - Widget: CSV und Excel dessen, was es zeigt; Tabellen exportieren ihre geladenen Zeilen.
+
+## Grenzen
+
+| | |
+|---|---|
+| Bericht | Name 200 Zeichen, Beschreibung 2.000, 60 Widgets, Aktualisierung alle 10 Sekunden bis einmal am Tag oder nie, mit höchstens 100 Gruppen geteilt |
+| Widget | Id 40 Zeichen, Titel 200, Text 20.000, `AppData` 20.000; Breite 1 bis 12 Spalten, Höhe 1 bis 40 Zeilen |
+| Werte und Umschalter | 8 Werte je Abfrage oder Umschalter, 8 Wert- und 8 Gruppierungs-Umschalter, Bezeichnungen 100 Zeichen |
+| Schwellenwerte | 10 je Widget |
+| Aggregation | 5.000 Gruppen, Top 1 bis 1.000 |
+| KI-Prompt | 4.000 Zeichen, drei Versuche |
+| Abos | 50 je Benutzer; Mails zeigen 10 Zeilen je Widget, die Arbeitsmappe bis 1.000 Zeilen je Tabelle |
 
 ## Endpunkte
 

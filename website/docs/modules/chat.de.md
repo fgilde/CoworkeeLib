@@ -9,7 +9,9 @@
 public sealed class MyAppDatabaseModule : CoworkeeModule;
 ```
 
-Das Modul hängt von den Modulen Identity, Realtime und Storage ab (Dateien landen im [Blob-Speicher](storage.md)). Erwähnungen benachrichtigen über das Benachrichtigungsmodul (siehe [Realtime und Benachrichtigungen](realtime.md#benachrichtigungen)), wenn die App es hat.
+Das Modul hängt von den Modulen Identity, Realtime, Storage und Hintergrundjobs ab (Dateien landen im [Blob-Speicher](storage.md), ein Job löscht nie gesendete Dateien). Erwähnungen benachrichtigen über das Benachrichtigungsmodul (siehe [Realtime und Benachrichtigungen](realtime.md#benachrichtigungen)), wenn die App es hat. Die Vorlage fügt es mit der Option `chat` hinzu (standardmäßig an).
+
+Chatten braucht die Berechtigung `Chat.Use` (*Mit Personen der Organisation chatten*); sie zeigt die Seite *Chat* (`/chat`, `?c={id}` öffnet einen Chat) in der Navigation. Chats findet auch die [globale Suche](../web/global-search.md) (Provider `chats`).
 
 ## Schreiben
 
@@ -56,6 +58,15 @@ Eine Erwähnung benachrichtigt nur **Mitglieder** des Chats (Typ `chat.mention`,
 | Einstellung | |
 |---|---|
 | `Chat.MaxAttachmentMb` | größte Datei in MB, Standard 25 (Global, für den Client sichtbar, der vor dem Upload prüft) |
+| `Coworkee:Chat:UnsentAttachmentLifetime` | Konfiguration: wie lange eine hochgeladene Datei auf ihre Nachricht wartet, Standard `1.00:00:00` |
+
+| Grenze | |
+|---|---|
+| Text einer Nachricht | 4.000 Zeichen (Klartext), 16.000 als HTML |
+| Dateien pro Nachricht | 10 |
+| Name einer Gruppe oder Datei | 200 Zeichen |
+| Personen pro Anlegen oder Hinzufügen | weniger als 100 |
+| Nachrichten pro Seite | 50 |
 
 Ein Virenscanner oder eine andere Prüfung klinkt sich als `IChatAttachmentScanner` ein; sagt ein Scanner nein, wird der Upload abgelehnt:
 
@@ -101,6 +112,10 @@ await realtime.SubscribeAsync(RealtimeTopics.User(me), envelope =>
     if (envelope.Type == ChatEvents.Message) { /* envelope.Payload ist ein ChatMessageDto */ }
 });
 ```
+
+## Personenbezogene Daten
+
+Der Export personenbezogener Daten hat einen Abschnitt `chat`: was der Benutzer irgendwo gesendet und was er in Direkt-Chats empfangen hat. Das Löschen des Benutzers entfernt diese Nachrichten und ihre Dateien.
 
 ## Aktualisieren
 

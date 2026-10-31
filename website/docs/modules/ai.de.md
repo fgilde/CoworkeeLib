@@ -2,12 +2,16 @@
 
 `Coworkee.Ai` lässt ein Sprachmodell (Claude, GPT, ein lokales Modell über Ollama, ...) mit der App über dieselben Requests arbeiten, die auch die Oberfläche nutzt. Jedes Werkzeug ist ein Dispatcher-Request; Berechtigungen, Validierung und Audit gelten für den Assistenten genau wie für einen Menschen.
 
+Neue Apps haben es (Option `ai` in Template und CLI, standardmäßig an); von Hand hängt ein Modul von `CoworkeeAiModule` ab (es braucht das Settings-Modul). Es bringt die Tabellen `cw.AiToolCalls` (Werkzeug-Audit), `cw.AiChatSessions` und `cw.AiChatMessages` (Unterhaltungen) mit: Migration anlegen. Mit dem Modul [Aufbewahrung](retention.md) legen `ai-tool-calls` und `ai-sessions` fest, wie lange sie bleiben.
+
+## Werkzeuge
+
 ```csharp
 services.AddAiTool<SearchAssetsQuery>("search_assets", "Finds assets by text, folder and tags.");
 services.AddAiTool<TagAssetsCommand>("tag_assets", "Adds tags to assets.");
 ```
 
-Auch ohne Registrierung wird jeder Request eines Moduls zum Werkzeug, der ein `Result` liefert und `[RequiresPermission]` oder `[AiTool]` trägt. Seine `[Description]` ist die Werkzeugbeschreibung; `[AiTool(Exclude = true)]` hält einen Request heraus, zum Beispiel einen, der Berechtigungen ändert:
+Auch ohne Registrierung wird jeder Request eines geladenen Moduls zum Werkzeug, der ein `Result` liefert und `[RequiresPermission]` oder `[AiTool]` trägt. Sein Name ist der Typname in Snake Case ohne `Command` oder `Query` (`GetBrandsQuery` → `get_brands`) oder `[AiTool(Name = ...)]`; seine Beschreibung ist `[AiTool("...")]`, sonst `[Description]`. `[AiTool(Exclude = true)]` hält einen Request heraus, zum Beispiel einen, der Berechtigungen ändert; Requests mit einer `Stream`- oder Datei-Eigenschaft sind nie Werkzeuge. Ein mit `AddAiTool` registrierter Request geht dem gefundenen vor.
 
 ```csharp
 [RequiresPermission(CatalogPermissions.Brands.View)]
@@ -15,11 +19,22 @@ Auch ohne Registrierung wird jeder Request eines Moduls zum Werkzeug, der ein `R
 public sealed record GetBrandsQuery(string? Search) : IQuery<Result<IReadOnlyList<BrandDto>>>;
 ```
 
-Mit dem OData-Modul bekommt der Assistent zusätzlich die Werkzeuge `list_data_sets` (die Sets, die der Benutzer lesen darf, mit ihren Feldern) und `query_data`: es listet Zeilen jedes registrierten Entity-Sets mit OData-Filter, Sortierung und ausgewählten Feldern, mit denselben Berechtigungen, Zeilenfiltern und ausgeblendeten Eigenschaften wie die Tabellen.
+Ein Benutzer bekommt die Werkzeuge nur mit `Ai.Chat` und jedes Werkzeug nur mit jeder Berechtigung, die seine `[RequiresPermission]`-Attribute nennen (bei mehreren Attributen: alle). Der Request-Typ wird zum Eingabeschema des Werkzeugs, das `Result` zu seiner Ausgabe, geformt von den Response-Filtern wie die Antworten der API und nach 20.000 Zeichen gekürzt. Fehler erreichen das Modell als Meldungen, auf die es reagieren kann.
 
-Der Request-Typ wird zum Eingabeschema des Werkzeugs, das `Result` zu seiner Ausgabe. Fehler erreichen das Modell als Meldungen, auf die es reagieren kann.
+Die Bibliothek bringt diese Werkzeuge mit:
 
-- **Assistent-Fenster** für Benutzer mit `Ai.Chat`: ein Knopf unten rechts (oder `Strg+I`) öffnet einen Chat mit den Werkzeugen aller Module, als angemeldeter Benutzer. Es gibt ihn klein, groß oder als Vollbild, auf Telefonen immer als Vollbild; er fehlt, solange der Assistent nicht aktiv ist oder dem Benutzer `Ai.Chat` fehlt. Die alte Route `/assistant` öffnet das Fenster.
+| Werkzeug | Modul | |
+|---|---|---|
+| `list_data_sets` | OData | die Entity-Sets, die der Benutzer lesen darf, mit Name und Typ jedes Felds |
+| `query_data` | OData | Zeilen eines Sets mit `filter`, `orderBy`, `select`, `top` (1 bis 50, Standard 20) und `skip`: Berechtigungen, Zeilenfilter, ausgeblendete Eigenschaften und [Abfragegrenzen](../web/odata.md) der Tabellen gelten |
+| `global_search` | OData | die [globale Suche](../web/global-search.md) über jede Art von Datensatz, die der Benutzer lesen darf (`query`, `types`, `limit` 1 bis 50 pro Anbieter) |
+| `generate_report` | Reporting | baut mit dem KI-Modell der App eine Berichtsdefinition aus einer Beschreibung (`Reports.Manage`); `create_report` und `update_report` speichern sie, siehe [Bericht mit KI erstellen](reporting.md#einen-bericht-mit-ki-erstellen) |
+
+Weitere Requests der Module (Benutzer, Rollen, Berichte, ...) sind nach der Regel oben Werkzeuge.
+
+## Das Assistenten-Fenster
+
+- **Assistenten-Fenster** für Benutzer mit `Ai.Chat`: ein Knopf unten rechts (oder `Strg+I`) öffnet einen Chat mit den Werkzeugen aller Module, als angemeldeter Benutzer. Es gibt ihn klein, groß oder als Vollbild, auf Telefonen immer als Vollbild; er fehlt, solange der Assistent nicht aktiv ist oder dem Benutzer `Ai.Chat` fehlt. Die alte Route `/assistant` öffnet das Fenster.
 - **Unterhaltungen** bleiben pro Benutzer auf dem Server: benannt nach der ersten Nachricht, in der Seitenleiste umbenannt, gelöscht und durchsucht, live in jedem offenen Tab und Teil von Export und Löschung der personenbezogenen Daten.
 - **Gestreamte Antworten** erscheinen, während sie entstehen, als Markdown, das weder Markup noch Daten trägt: rohes HTML erscheint als Text, Bilder werden zu Links. Links zu anderen Sites verlieren Query und Fragment und zeigen ihren Host, App-Links bleiben, wie sie sind, Mail-Links behalten nur die Adresse, andere Schemata führen nirgendwohin; ein untergeschobener Link trägt so keine Daten hinaus.
 - **Werkzeug-Chips** unter jeder Antwort zeigen, was der Assistent getan hat; mit `AssistantLinks` verlinken sie auf das, was er angelegt oder geändert hat:
@@ -30,11 +45,13 @@ Der Request-Typ wird zum Eingabeschema des Werkzeugs, das `Result` zu seiner Aus
     ```
 
 - **[MCP-Server](mcp.md)** unter `/mcp` mit denselben Werkzeugen, für Claude Desktop, Claude Code, VS Code, Cursor und andere MCP-Clients, angemeldet mit einem [API-Schlüssel](../security/api-keys.md).
-- **Werkzeug-Audit** für Benutzer mit `Ai.Audit`: jeder Aufruf mit Eingabe, Ergebnis, Benutzer, Kanal und API-Schlüssel.
+- **Werkzeug-Audit** für Benutzer mit `Ai.Audit` (*Administration > Monitoring > KI-Werkzeugaufrufe*, `/cw/admin/ai-tool-calls`, OData-Set `AiToolCalls`): jeder Aufruf mit seiner Eingabe (Werte, die nach Geheimnissen aussehen, maskiert, nach 4.000 Zeichen gekürzt), Erfolg oder Fehler, Dauer, Benutzer, Kanal (`chat` oder `mcp`) und API-Schlüssel; die Ausgabe wird nicht gespeichert.
 - Queries laufen sofort. Jedes Command, das Daten ändert, wartet: das Fenster zeigt genau, was der Assistent ausführen will (Eingaben, die nach Geheimnissen aussehen, maskiert), mit *Ausführen* und *Abbrechen*, destruktive hervorgehoben, und erst der Klick des Benutzers führt es aus. Ein Produkt per Chat anlegen kostet einen Klick. Text, der in Daten oder in der Unterhaltung untergeschoben wurde, kann so nie eigenmächtig etwas ändern. Eine neue Nachricht verwirft einen wartenden Aufruf.
 - Ein wartender Aufruf wird mit ASP.NET Data Protection verschlüsselt gespeichert (den Schlüsselbund zwischen API-Instanzen teilen), nur einmal entschieden, auch wenn zwei Tabs gleichzeitig klicken, und läuft nie zweimal.
 
-Das Fenster spricht mit `/api/v1/ai`: `GET status`, `GET|POST sessions`, `GET|PUT|DELETE sessions/{id}` sowie `POST sessions/{id}/messages` und `POST sessions/{id}/confirm`, die mit `application/x-ndjson` antworten: ein `AiStreamEvent` pro Zeile, `delta` (Text), `tool` (ein Werkzeugaufruf), dann `done` (die gespeicherte Nachricht) oder `error`. Die Antwort läuft zu Ende und wird gespeichert, auch wenn der Browser geht.
+Das Fenster spricht mit `/api/v1/ai`: `GET status`, `GET tools` (die Werkzeuge des Benutzers), `GET|POST sessions` (`?search=`), `GET|PUT|DELETE sessions/{id}` sowie `POST sessions/{id}/messages` und `POST sessions/{id}/confirm`, die mit `application/x-ndjson` antworten: ein `AiStreamEvent` pro Zeile, `delta` (Text), `tool` (ein Werkzeugaufruf), dann `done` (die gespeicherte Nachricht) oder `error`. Die Antwort läuft zu Ende und wird gespeichert, auch wenn der Browser geht. Die KI-Seite nutzt `GET connection`, `POST connection/models` und `POST connection/test`, das Audit `GET tool-calls?channel=` (`Ai.Audit`).
+
+Nachrichten, Bestätigungen, Modelllisten und Verbindungstests laufen über die Rate-Limit-Policy `ai` (standardmäßig 30 Anfragen pro Minute und Benutzer, `Coworkee:RateLimiting:Policies:ai`), wie der MCP-Server.
 
 ![Assistenten-Fenster mit Unterhaltungen](../assets/screenshots/mcp-ai-window-dark.png){ .shot }
 
@@ -67,7 +84,7 @@ Anbieter ohne Werkzeugaufrufe (etwa Perplexity) passen nicht: Der Assistent arbe
 
 ### Die KI-Seite
 
-Host-Administratoren mit `Settings.Manage` richten ihn unter **Administration > System > KI** (`/admin/ai-settings`) ein: Assistent einschalten, eine Anbieter-Karte wählen, Adresse, Schlüssel und Modell eingeben und speichern. Änderungen gelten ab der nächsten Nachricht, ohne Neustart.
+Host-Administratoren mit `Settings.Manage` richten ihn unter **Administration > System > KI** (`/cw/admin/ai-settings`) ein: Assistent einschalten, eine Anbieter-Karte wählen, Adresse, Schlüssel und Modell eingeben und speichern. Änderungen gelten ab der nächsten Nachricht, ohne Neustart. Dieselbe Seite schaltet den [MCP-Server](mcp.md) an und aus.
 
 ![KI-Seite](../assets/screenshots/ai-admin-light.webp){ .shot }
 
@@ -80,19 +97,21 @@ Host-Administratoren mit `Settings.Manage` richten ihn unter **Administration > 
 
 ### Einstellungen
 
-Die Seite schreibt die globalen KI-Einstellungen; sie haben auch Standardwerte in der Konfiguration, etwa aus dem App-Host oder aus Umgebungsvariablen:
+Die Seite schreibt die KI-Einstellungen. Es gibt sie nur global, damit keine Organisation den Assistenten einschaltet oder Grenzen auf dem Schlüssel des Hosts anhebt; sie haben auch Standardwerte in der Konfiguration, etwa aus dem App-Host oder aus Umgebungsvariablen:
 
 | Einstellung | |
 |---|---|
-| `Ai.Enabled` | an oder aus |
+| `Ai.Enabled` | an oder aus, standardmäßig `false` |
 | `Ai.Provider` | eine Anbieter-Id der Tabelle oben, standardmäßig `anthropic` |
 | `Ai.Model` | leer: der Standard des Anbieters; Azure OpenAI: der Deployment-Name |
 | `Ai.Endpoint` | leer: die Adresse des Anbieters; Azure-OpenAI-Ressource (`https://acme.openai.azure.com`), Ollama- oder LM-Studio-Adresse oder die Basisadresse eines eigenen Servers |
 | `Ai.ApiKey` | API-Schlüssel (geheim) |
 | `Ai.Headers` | zusätzliche Header, ein `Name: Wert` pro Zeile |
 | `Ai.AuthHeader` | Header, der den Schlüssel statt `Authorization: Bearer` trägt |
-| `Ai.Temperature`, `Ai.MaxOutputTokens` | leer: die Standards des Modells |
-| `Ai.MaxToolRounds` | wie viele Werkzeugrunden eine Antwort dauern darf |
+| `Ai.Temperature` | leer: der Standard des Modells; 0 bis 2, niedriger antwortet vorhersehbarer |
+| `Ai.MaxOutputTokens` | leer: der Standard des Anbieters (16000 bei Anthropic) |
+| `Ai.MaxToolRounds` | wie viele Werkzeugrunden eine Antwort dauern darf, standardmäßig `10` |
+| `Mcp.Enabled` | der [MCP-Server](mcp.md) zur Laufzeit, standardmäßig `true`; braucht keinen Anbieter |
 
 ```json
 {

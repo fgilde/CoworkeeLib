@@ -69,7 +69,7 @@ Three layers decide which text a user sees, the last one wins:
 
 1. The shipped text of the library.
 2. The same key in a `Localization/{culture}.json` of the app: the app's resources are defined after those of the modules, so its text replaces the library's. A key the library does not know is simply added.
-3. An edit on *Translations* (`/admin/translations`), which works at runtime without a deployment and beats both.
+3. An edit on *Translations* (`/cw/admin/translations`), which works at runtime without a deployment and beats both.
 
 `coworkee texts export` copies library texts into the app's JSON so you do not have to look the keys up:
 
@@ -103,7 +103,9 @@ The account pages and mails read their own embedded texts and templates, not the
 <MudText>@L["Delete {0}? This cannot be undone.", brand.Name]</MudText>
 ```
 
-The user picks the language in the app bar. MudBlazor's own texts (pager, filters, dialogs) are translated as well. Set the culture before the first render:
+`L.Stored(text)` translates text that users or a seed stored (a report name, a widget title) when the app has a text for it and shows it as it is otherwise, without reporting it as missing; `L.Server(text, arguments)` fills a localizable text of the server (a notification).
+
+The user picks the language in the app bar; it is kept as the user setting `Localization.Culture` (*Default language*, also a system and an organisation setting that new users and the digest mails fall back to). The client takes the stored choice, then that setting, then the browser's language, then the default language. MudBlazor's own texts (pager, filters, dialogs) are translated as well. Set the culture before the first render:
 
 ```csharp title="Program.cs"
 var host = builder.Build();
@@ -113,12 +115,19 @@ await host.RunAsync();
 
 ## Administration
 
-- *Languages* (`/admin/languages`): every culture, grouped by language, with a switch. Switching one on translates the texts it lacks with the [translation service](#machine-translation) of the settings; a button translates what is still missing later. The star marks the default language, which cannot be switched off.
+- *Languages* (*Administration > Localization > Languages*, `/cw/admin/languages`): every culture, grouped by language, with a switch. Switching one on translates the texts it lacks with the [translation service](#machine-translation) of the settings; a button translates what is still missing later. The star marks the default language, which cannot be switched off.
 
 ![Languages](../assets/screenshots/languages.png){ .shot }
-- *Translations* (`/admin/translations`): every key with the module text and the edited text per language. Edits win over the module texts.
+- *Translations* (*Administration > Localization > Translations*, `/cw/admin/translations`): every key with the module text and the edited text per language. Edits win over the module texts.
 
 Both need `Localization.Manage`.
+
+| Endpoint | |
+|---|---|
+| `GET /api/v1/localization/languages`, `GET .../texts/{culture}` | the switched on languages and the texts of one (anonymous) |
+| `POST /api/v1/localization/missing` | keys the client did not find (signed in) |
+| `GET .../languages/all`, `POST .../languages`, `PUT .../languages/{id}`, `POST .../languages/delete`, `PUT .../languages/{culture}/enabled` | manage languages (`Localization.Manage`) |
+| `GET .../translations/{culture}`, `PUT .../translations`, `POST .../translations/{culture}/translate` | list and edit translations, machine translate what is missing (`Localization.Manage`) |
 
 Every change reaches all clients at once (`global:localization` realtime topic): they reload their texts, and users whose language was switched off move to the default language with a short notice.
 
@@ -158,7 +167,7 @@ Texts are keyed by their English wording, so English is the natural source. With
 
 ### In the app host
 
-`UseLibreTranslate` adds a LibreTranslate container that loads only the models of the given languages and the source language (`LT_LOAD_ONLY`, English is always there), keeps them in the volume `coworkee-libretranslate-models` that all apps on the machine share, and lets the services with the localization module wait until it answers `/health`. The first start downloads the models; later starts find them in the volume. It also seeds the settings `TranslationProvider` and `TranslationEndpoint`.
+`UseLibreTranslate` adds a LibreTranslate container that loads only the models of the given languages and the source language (`LT_LOAD_ONLY`, English is always there), keeps them in the volume `coworkee-libretranslate-models` that all apps on the machine share (`{app}-libretranslate-models` in a deployment), and lets the services with the localization module wait until it answers `/health`. The first start downloads the models; later starts find them in the volume. It also seeds the settings `TranslationProvider` and `TranslationEndpoint`.
 
 ```csharp title="AppHost.cs"
 builder.AddCoworkeeApp("myapp", options => options.UseLibreTranslate(["en", "de", "fr", "es", "it"]));

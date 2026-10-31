@@ -13,9 +13,10 @@ public sealed class MyAppDatabaseModule : CoworkeeModule;
 - `Files.View` liest, `Files.Upload` lädt hoch und legt Ordner an, `Files.Manage` benennt um, verschiebt und löscht. Wer eine Datei hochgeladen hat, darf sie selbst umbenennen, verschieben und löschen.
 - Pro Ordner: eine Rolle auf den Ressourcentyp `FileFolder` vergeben (`ResourcePermissionsPanel ResourceType="FileFolder"`); die Freigabe gilt für alle Unterordner. Die oberste Ebene braucht eine globale Berechtigung; ohne sie listet sie die für den Benutzer freigegebenen Ordner.
 - Der Baum *Registrations* mit den Registrierungsdokumenten liegt außerhalb globaler Berechtigungen: nur `Files.Registrations.View` (Administratoren) und die Freigabe jedes Benutzers auf seinen eigenen Ordner öffnen ihn. Benutzer mit `Files.View` sehen *Registrations* in der Wurzel, darin nur ihren eigenen Ordner. Die OData-Sets lassen den Baum aus.
-- Löschen ist ein Soft Delete des Ordners mit allem darunter; die Blobs bleiben erhalten. Jede Änderung landet im Audit-Log und geht über die Realtime-Topics `type:StoredFile` und `type:FileFolder` raus.
+- Löschen ist ein Soft Delete des Ordners mit allem darunter; die Blobs bleiben, bis das [Aufbewahrungs](retention.md)-Ziel `deleted-files` die Zeilen mit ihrem Inhalt entfernt (ohne Standard: aufbewahrt, bis Tage gesetzt sind). Jede Änderung landet im Audit-Log und geht über die Realtime-Topics `type:StoredFile` und `type:FileFolder` raus.
 - OData-Sets `StoredFiles` und `FileFolders` (`Files.View`) für Suche und Filter.
-- Ein Upload ist der rohe Request-Body; er wird in eine temporäre Datei und von dort in den Speicher gestreamt. Die Grenze ist `Coworkee:Files:MaxFileSize` (Bytes, Standard 2 GB).
+- Ein Upload ist der rohe Request-Body; er wird in eine temporäre Datei und von dort in den Speicher gestreamt. Die Grenze ist `Coworkee:Files:MaxFileSize` (Bytes, Standard 2 GB); ein Web-Host mit `Coworkee:Bff:MaxRequestBodySize` begrenzt weitergeleitete Uploads zusätzlich. Uploads in die Ablage haben keinen Prüf-Hook; Virenprüfung gibt es für [Datensatz-Anhänge](attachments.md) (`IAttachmentScanner`) und Chat-Dateien (`IChatAttachmentScanner`).
+- Der Export persönlicher Daten listet die Uploads des Benutzers im Abschnitt `files` (nur Metadaten); das Löschen behält die Dateien.
 
 | Endpunkt | |
 |---|---|
@@ -27,7 +28,11 @@ public sealed class MyAppDatabaseModule : CoworkeeModule;
 | `PUT /api/v1/files/{id}/name` | Datei umbenennen |
 | `POST /api/v1/files/move` | `{ "fileIds": [], "folderIds": [], "targetFolderId": null }` |
 | `POST /api/v1/files/delete` | `{ "fileIds": [], "folderIds": [] }` |
-| `GET /api/v1/files/{id}/content` | inline, mit `?download=true` als Anhang |
+| `GET /api/v1/files/{id}/content` | inline, mit `?download=true` als Anhang; auch `HEAD` |
+| `PUT /api/v1/files/{id}/public` | `{ "isPublic": true }`, siehe [Öffentliche Dateien](#offentliche-dateien) |
+| `GET /api/v1/files/public/{id}/{name}` | eine öffentliche Datei, ohne Anmeldung |
+| `POST /api/v1/files/{id}/token` | ein temporärer Link, siehe [Temporäre Links](#temporare-links) |
+| `GET /api/v1/files/token/{token}/{name}` | die Datei eines temporären Links, ohne Anmeldung |
 
 Die Inline-Antwort trägt `Content-Security-Policy: sandbox; default-src 'none'; ...` und `X-Content-Type-Options: nosniff`: Eine hochgeladene HTML- oder SVG-Datei lässt sich ansehen, führt aber kein Skript aus und lädt nichts nach. Eigene Endpunkte, die hochgeladene Inhalte ausliefern, geben dieselbe Antwort mit `BlobContentResult` (`Coworkee.AspNetCore.Http`):
 

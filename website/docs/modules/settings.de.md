@@ -13,23 +13,25 @@ Coworkee kennt zwei Arten von Konfiguration, die Administratoren zur Laufzeit ä
 ## Einstellungen
 
 ```csharp
-internal sealed class MailSettingDefinitions : ISettingDefinitionContributor
+internal sealed class SupportSettingDefinitions : ISettingDefinitionContributor
 {
     public void Define(SettingDefinitionContext context) =>
-        context.Group("Mail", "Mail")
-            .Add("Mail.Smtp.Host", "SMTP host", SettingType.String, [SettingScope.Global])
-            .Add("Mail.Smtp.Port", "SMTP port", SettingType.Int, [SettingScope.Global], defaultValue: "25")
-            .Add("Mail.Smtp.Password", "SMTP password", SettingType.Secret, [SettingScope.Global]);
+        context.Group("Support", "Support")
+            .Add("Support.Email", "Support address", SettingType.String, [SettingScope.Global, SettingScope.Tenant], visibleToClient: true)
+            .Add("Support.MaxTickets", "Open tickets per user", SettingType.Int, [SettingScope.Global], defaultValue: "5")
+            .Add("Support.ApiKey", "Ticket system API key", SettingType.Secret, [SettingScope.Global]);
 }
+
+context.Services.AddSingleton<ISettingDefinitionContributor, SupportSettingDefinitions>();
 ```
 
-Typen sind `String`, `Text`, `Bool`, `Int`, `Secret`, `Choice` und `Language`; Gültigkeitsbereiche `Global`, `Tenant` und `User`. Der spezifischste Wert gewinnt. Geheimnisse werden mit ASP.NET Core Data Protection verschlüsselt und nie an den Client geschickt; Einstellungen mit `visibleToClient: true` schon.
+Typen sind `String`, `Text`, `Bool`, `Int`, `Secret`, `Choice` und `Language`; Gültigkeitsbereiche `Global`, `Tenant` und `User`. Der spezifischste Wert gewinnt. Geheimnisse werden mit ASP.NET Core Data Protection verschlüsselt und nie an den Client geschickt; Einstellungen mit `visibleToClient: true` schon. Ein Name wird in der ganzen App nur einmal definiert: Zwei Contributors mit demselben Namen verhindern den Start. Gruppen dürfen geteilt werden, der erste Contributor benennt sie.
 
 ```csharp
 var allowed = await settings.GetAsync<bool>(AccountSettings.AllowRegistration, ct);
 ```
 
-Standardwerte können auch aus der Konfiguration kommen: `Coworkee:Settings:Defaults:Mail.Smtp.Host`. Der AppHost nutzt das für Mailpit.
+Standardwerte können auch aus der Konfiguration kommen, `Coworkee:Settings:Defaults:<Name>`: Der AppHost setzt `Coworkee:Settings:Defaults:Mail.Smtp.Host` und `Mail.Smtp.Port` für Mailpit.
 
 Der Abschnitt **Cloud-Dateiauswahl** im Reiter System enthält die IDs von Google Drive, OneDrive und Dropbox für jedes Upload-Feld, siehe [Dateien](files.md#cloud-dateiauswahl).
 
@@ -84,9 +86,26 @@ enabledWhen: new SettingCondition(LocalizationSettings.TranslationProvider, [Tra
 
 Das ist nur eine Erleichterung im Formular; der Server erzwingt sie nicht. Eine Bedingung auf eine Einstellung, die nicht im Formular steht (etwa in einem anderen Bereich), lässt das Feld aktiv.
 
+### Einstellungen mit eigener Berechtigung
+
+`Settings.Manage` öffnet die Einstellungs-Tabs. Eine Einstellung, die mehr braucht, nennt in ihrer Definition eine Berechtigung (`SettingDefinition.Permission`):
+
+```csharp
+context.Group("Support", "Support")
+    .Add("Support.Banner", "Banner text", SettingType.Text, [SettingScope.Global, SettingScope.Tenant], permission: SupportPermissions.Banner);
+```
+
+Die Einstellung ändert sich dann nur mit dieser Berechtigung zusätzlich zur Regel ihres Bereichs, auf jedem Weg: über die Einstellungs-Tabs, `PUT /api/v1/settings/global`, `PUT /api/v1/settings/tenant` und `PUT /api/v1/settings/user`. Ohne sie wird das ganze Speichern mit `403` abgelehnt (`settings.permission`, *Changing 'Support.Banner' needs the permission ...*). Das Formular zeigt das Feld weiter jedem, der den Tab sieht; da es nur geänderte Werte sendet, funktioniert das Speichern anderer Einstellungen weiter. Das Lesen schränkt sie nicht ein. Das Head-Skript unten ist so gebaut.
+
 ### Gruppen auf eigener Seite
 
-`context.Group(name, displayName, page: "/admin/ai-settings")` markiert eine Gruppe als auf einer eigenen Admin-Seite gepflegt. Die Einstellungs-Tabs überspringen sie, **Meine Einstellungen** des Benutzers zeigen weiter jede Gruppe ohne `page`. So arbeitet die KI-Gruppe: Ihre Einstellungen, auch der MCP-Schalter, liegen auf `/admin/ai-settings`. Ebenso Mail: Anbieter, Zugangsdaten und der Schalter für den eigenen Server einer Organisation liegen auf `/admin/mail-settings`, siehe [Mailversand](mailing.md#die-seite-mail-einstellungen).
+`context.Group(name, displayName, page: "/admin/ai-settings")` markiert eine Gruppe als auf einer eigenen Admin-Seite gepflegt. Die Einstellungs-Tabs überspringen sie, **Meine Einstellungen** des Benutzers zeigen weiter jede Gruppe ohne `page`. So arbeitet die KI-Gruppe: Ihre Einstellungen, auch der MCP-Schalter, liegen auf `/admin/ai-settings`. Ebenso Mail: Anbieter, Zugangsdaten und der Schalter für den eigenen Server einer Organisation liegen auf `/admin/mail-settings`, siehe [Mailversand](mailing.md#die-seite-mail-einstellungen). Die Aufbewahrung hält ihre Tage auf `/admin/retention`, siehe [Aufbewahrung](retention.md).
+
+### Spracheinstellungen
+
+`SettingType.Language` passt für Einstellungen, die eine Kultur halten. `Localization.Culture` (**Default language**) ist die Sprache, in der die App startet: Eine Organisation überschreibt den Systemwert, ein Benutzer überschreibt beide. Ein leerer Wert erbt.
+
+![Einstellungsseite](../assets/screenshots/settings.png){ .shot }
 
 ### Head-Skript
 
@@ -110,15 +129,22 @@ Die Content-Security-Policy der Web-App erlaubt keine Inline-Skripte. Das Layout
 !!! warning "Eine Skript-Einstellung ist gespeichertes Cross-Site-Scripting, mit Absicht"
     Das Skript läuft im Browser jedes Benutzers mit dessen Sitzung: Es kann die Seiten lesen und die API als dieser Benutzer aufrufen. Vergib `Settings.HeadScript` an wenige (die Systemrolle *Admin* hat jede Berechtigung, mit `perOrganisation` auch in jeder Organisation). Jede Änderung steht im Audit-Log (`SettingValue`, mit dem, der sie gemacht hat; der Wert selbst ist wie jeder Einstellungswert maskiert). Das Skript einer Organisation erreicht nur ihre eigenen Benutzer, nie die einer anderen Organisation oder der System-Organisation; wer sich als jemand anderes anmeldet, bekommt das Skript der Organisation dieses Benutzers, bis die Seite neu geladen wird.
 
-### Spracheinstellungen
+### Endpunkte und Berechtigungen
 
-`SettingType.Language` passt für Einstellungen, die eine Kultur halten. `Localization.Culture` (**Default language**) ist die Sprache, in der die App startet: Eine Organisation überschreibt den Systemwert, ein Benutzer überschreibt beide. Ein leerer Wert erbt.
+| Route | Wer |
+|---|---|
+| `GET /api/v1/settings/definitions` | `Settings.Manage`: die Gruppen und Definitionen der Tabs |
+| `GET`/`PUT /api/v1/settings/global` | `Settings.Manage`, nur aus der System-Organisation |
+| `GET`/`PUT /api/v1/settings/tenant` | `Settings.Manage`: die Werte der Organisation des Benutzers |
+| `GET /api/v1/settings/definitions/user`, `GET`/`PUT /api/v1/settings/user` | jeder angemeldete Benutzer: Definitionen und Werte des Bereichs `User` (*Meine Einstellungen*) |
+| `GET /api/v1/settings/client` | jeder angemeldete Benutzer: die Werte der Einstellungen mit `visibleToClient: true`, wie sie für ihn gelten |
+| `GET`/`PUT /api/v1/settings/head-script` | siehe [Head-Skript](#head-skript) |
 
-![Einstellungsseite](../assets/screenshots/settings.png){ .shot }
+Lesende Aufrufe listen jede Definition des Bereichs mit `hasValue`; Geheimnisse kommen nie zurück. Schreibende prüfen den Typ (`Expected true or false.`, `Expected a whole number.`, `Expected one of: ...`) und die eigene Berechtigung einer Definition und stehen im Audit-Log.
 
 ## Typisierte App-Einstellungen
 
-Die App beschreibt ihre Einstellungen als Klassen. Werte kommen aus appsettings und der Umgebung; was Administratoren ändern, liegt in `cw.ConfigurationEntries` und gilt darüber für jeden Dienst der App. Die Einstellungsseite zeigt jede Klasse mit `MudExObjectEditForm`, wie die klassische Einstellungsseite, und Dienste lesen `IOptionsMonitor<T>` und sehen Änderungen nach wenigen Sekunden. Werte, die nur beim Start gelesen werden, gelten nach einem Neustart.
+Die App beschreibt ihre Einstellungen als Klassen. Werte kommen aus appsettings und der Umgebung; was Administratoren ändern, liegt in `cw.ConfigurationEntries` und gilt darüber für jeden Dienst der App. Die Einstellungsseite zeigt jede Klasse mit `MudExObjectEditForm`, wie die klassische Einstellungsseite, und Dienste lesen `IOptionsMonitor<T>` und sehen Änderungen nach höchstens 15 Sekunden (`reloadInterval` von `AddCoworkeeDatabaseConfiguration`). Werte, die nur beim Start gelesen werden, gelten nach einem Neustart.
 
 Jeder Dienst, der die Änderungen sehen soll, nimmt die Datenbank-Schicht in seine Konfiguration auf:
 
@@ -188,6 +214,8 @@ builder.Services.AddCoworkeeSettings<ShopSettings>(section: "Shop", title: "Shop
 
 **Standardwerte wiederherstellen** verwirft die in der App geänderten Werte; appsettings und Umgebung gelten wieder.
 
+Hinter der Seite: `GET /api/v1/configuration` (die Abschnitte), `GET`/`PUT /api/v1/configuration/{section}` und `DELETE /api/v1/configuration/{section}` (Standardwerte wiederherstellen), alle mit `Settings.Manage` aus der System-Organisation.
+
 ### Editoren für Dateitypen, Größen, Zeitpläne und Übersetzungen
 
 Vier Attribute aus `Coworkee.Contracts.Configuration` wählen für eine Eigenschaft einen passenderen Editor, auf der Einstellungsseite und in jedem anderen Objektformular der App:
@@ -238,21 +266,21 @@ Weitere Klassen erscheinen als weitere Tabs neben den App-Einstellungen:
 
 ```csharp title="Server"
 builder.Configuration
-    .AddCoworkeeAppConfigurationDefaults(SharemeConfiguration.Defaults(), SharemeConfiguration.Section)
-    .AddCoworkeeDatabaseConfiguration("shareme");
+    .AddCoworkeeAppConfigurationDefaults(PortalConfiguration.Defaults(), PortalConfiguration.Section)
+    .AddCoworkeeDatabaseConfiguration("myapp");
 
-context.Services.AddCoworkeeAppConfiguration<SharemeConfiguration>(context.Configuration, SharemeConfiguration.Section, SharemeConfiguration.Title,
+context.Services.AddCoworkeeAppConfiguration<PortalConfiguration>(context.Configuration, PortalConfiguration.Section, PortalConfiguration.Title,
     rules => rules.Lock(c => c.Storage));
 ```
 
 ```csharp title="Blazor-Client"
-builder.Services.AddCoworkeeAppConfiguration<SharemeConfiguration>(SharemeConfiguration.Section, SharemeConfiguration.Title);
+builder.Services.AddCoworkeeAppConfiguration<PortalConfiguration>(PortalConfiguration.Section, PortalConfiguration.Title);
 ```
 
-`AddCoworkeeAppConfigurationDefaults` legt eine JSON-Datei des Abschnitts als unterste Schicht an. Sharemee erzeugt `SharemeConfiguration` mit `Nextended.CodeGen` aus `appconfig.json`; JSON-Standardwerte und Klasse können so nicht auseinanderlaufen:
+`AddCoworkeeAppConfigurationDefaults(stream, section)` legt ein JSON-Dokument des Abschnitts als unterste Schicht an: appsettings, Umgebung und die in der App geänderten Werte überschreiben es. Erzeuge die Klasse mit `Nextended.CodeGen` aus derselben `appconfig.json`; JSON-Standardwerte und Klasse können so nicht auseinanderlaufen:
 
 ```json title="CodeGen.config.json"
-{ "JsonConfigs": [ { "SourceFile": "Configuration/appconfig.json", "RootClassName": "SharemeConfiguration", "Namespace": "Shareme.Contracts.Configuration" } ] }
+{ "JsonConfigs": [ { "SourceFile": "Configuration/appconfig.json", "RootClassName": "PortalConfiguration", "Namespace": "MyApp.Contracts.Configuration" } ] }
 ```
 
 Die alte Adresse `/admin/configuration` führt zur Einstellungsseite.
