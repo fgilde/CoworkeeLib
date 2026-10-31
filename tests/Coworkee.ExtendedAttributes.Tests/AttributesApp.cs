@@ -8,6 +8,7 @@ using Coworkee.Domain;
 using Coworkee.Identity;
 using Coworkee.Identity.Setup;
 using Coworkee.Infrastructure.Persistence;
+using Coworkee.OData;
 using Coworkee.Testing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -66,12 +67,12 @@ public sealed class AttributesApp : DatabaseFixture
 
     public HttpClient As(Guid userId, Guid tenantId) => App.GetTestClient().AsUser(userId, tenantId);
 
-    public async Task<Guid> AddNoteAsync(Guid tenantId)
+    public async Task<Guid> AddNoteAsync(Guid tenantId, string text = "note")
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, tenantId));
         await using var scope = App.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AttributesTestDbContext>();
-        var note = new Note { Text = "note", TenantId = tenantId };
+        var note = new Note { Text = text, TenantId = tenantId };
         db.Add(note);
         await db.SaveChangesAsync();
         return note.Id;
@@ -93,6 +94,17 @@ internal sealed class NoteModelContributor : IModelContributor
     public void Apply(ModelBuilder modelBuilder) => modelBuilder.Entity<Note>(note => note.ToTable("Notes"));
 }
 
+/// <summary>The row filter of the Notes set: a hidden note is for the administrator only.</summary>
+internal sealed class HiddenNotes(ICurrentUser currentUser, IServiceProvider services) : Coworkee.OData.IODataEntityFilter<Note>
+{
+    public const string Hidden = "hidden";
+
+    public async Task<IQueryable<Note>> ApplyAsync(IQueryable<Note> query, CancellationToken cancellationToken) =>
+        await services.GetRequiredService<IPermissionChecker>().IsGrantedAsync(IdentityPermissions.Users.Manage, cancellationToken) || currentUser.UserId is null
+            ? query
+            : query.Where(n => n.Text != Hidden);
+}
+
 internal sealed class NotePermissions : IPermissionDefinitionContributor
 {
     public void Define(PermissionDefinitionContext context) =>
@@ -107,6 +119,8 @@ public sealed class TestAttributesModule : CoworkeeModule
         context.Services.AddSingleton<IModelContributor, NoteModelContributor>();
         context.Services.AddSingleton<IPermissionDefinitionContributor, NotePermissions>();
         context.Services.AddExtendedAttributes<Note>("Notes", AttributesApp.ViewNotes, AttributesApp.EditNotes);
+        context.Services.AddODataEntity<Note>("Notes", AttributesApp.ViewNotes);
+        context.Services.AddScoped<Coworkee.OData.IODataEntityFilter<Note>, HiddenNotes>();
         context.Services.AddCoworkeeDbContext<AttributesTestDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
     }

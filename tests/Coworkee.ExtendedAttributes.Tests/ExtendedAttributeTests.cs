@@ -55,6 +55,32 @@ public sealed class ExtendedAttributeTests(AttributesApp app) : IAsyncLifetime
         (await app.As(user!.Id, _setup.TenantId).GetAsync(Url, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
+    [Fact]
+    public async Task Rows_hidden_by_the_sets_row_filter_have_no_attributes_to_read_or_write()
+    {
+        var hidden = await app.AddNoteAsync(_setup.TenantId, HiddenNotes.Hidden);
+        var hiddenUrl = $"/api/v1/attributes/Notes/{hidden}";
+        var attribute = new SaveExtendedAttributesRequest([new ExtendedAttributeDto { Key = "Secret", Type = ExtendedAttributeType.Text, Text = "x" }]);
+        (await Admin.PutAsJsonAsync(hiddenUrl, attribute, Ct)).EnsureSuccessStatusCode();
+        var viewer = app.As(await UserWithAsync("editor@acme.test", AttributesApp.ViewNotes, AttributesApp.EditNotes), _setup.TenantId);
+
+        (await viewer.GetAsync(hiddenUrl, Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await viewer.PutAsJsonAsync(hiddenUrl, new SaveExtendedAttributesRequest([]), Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await Admin.GetFromJsonAsync<List<ExtendedAttributeDto>>(hiddenUrl, Ct))!.Single().Text.ShouldBe("x");
+
+        (await viewer.PutAsJsonAsync(Url, attribute, Ct)).EnsureSuccessStatusCode();
+        (await viewer.GetFromJsonAsync<List<ExtendedAttributeDto>>(Url, Ct))!.Single().Key.ShouldBe("Secret");
+    }
+
+    private async Task<Guid> UserWithAsync(string email, params string[] permissions)
+    {
+        var user = (await (await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest(email, "Passw0rd!x", null, null), Ct)).Content.ReadFromJsonAsync<UserDto>(Ct))!;
+        var role = await (await Admin.PostAsJsonAsync("/api/v1/identity/roles", new RoleRequest("R " + email, null), Ct)).Content.ReadFromJsonAsync<Guid>(Ct);
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest(permissions), Ct)).EnsureSuccessStatusCode();
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{user.Id}/roles", new IdListRequest([role]), Ct)).EnsureSuccessStatusCode();
+        return user.Id;
+    }
+
     private async Task<List<ExtendedAttributeDto>> SaveAsync(params ExtendedAttributeDto[] attributes)
     {
         var response = await PutAsync(attributes);
