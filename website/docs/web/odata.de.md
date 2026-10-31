@@ -21,11 +21,11 @@ public sealed class MyAppCatalogModule : CoworkeeModule
 | `GET /odata/Products({id})` | ein Produkt |
 | `GET /odata/Products?$select=Name,Rate` | nur diese Spalten |
 
-Die Berechtigung des Sets wird bei jedem Aufruf geprüft, Mandanten- und Soft-Delete-Filter gelten wie überall. `$top` ist auf 1000 begrenzt (`Coworkee:OData:MaxTop`); ungültige Abfragen beantworten `400` mit Problem Details.
-
-Die übrigen Abfragegrenzen von OData sind ebenfalls Optionen von `Coworkee:OData`. Sie gelten überall, wo die Bibliothek eine Abfrage eines Aufrufers liest: die Entity-Sets auf jeder Route, `IODataQueries`, Exporte, `query_data` (MCP und der Assistent), Facettenfilter (`FacetResponse.FilterAsync`), Zeilenfilter aus Code (`ODataEntityAccess.FilteredAsync`, etwa Mail-Empfänger) und Berichte samt berechneter Quellen; eigener Code prüft selbst geparste Optionen mit `ODataLimits.Check(options, services)`. Die Grenzen: `MaxNodeCount` (Knoten von `$filter` und `$orderby`, Standard 100, was eine Suche, die `contains` über viele Felder mit `or` verknüpft, schnell überschreitet), `MaxAnyAllExpressionDepth` (verschachtelte `any`/`all`, Standard 1), `MaxExpansionDepth` (verschachtelte `$expand`, Standard 2) und `MaxOrderByNodeCount` (Eigenschaften in `$orderby`, Standard 5). Werte unter 1 (unter 0 bei `MaxExpansionDepth`) verhindern den Start. Erhöhen Sie sie nur so weit, wie ein Client es braucht: Größere Grenzen erlauben jedem Benutzer teurere Abfragen. Eine Menge, deren Clients lange Filter senden (ein Dashboard, das viele gewählte Werte mit `or` verknüpft), bekommt eine eigene Knotengrenze statt einer höheren für alle Mengen: `AddODataEntity<T>(set, permission, o => o.MaxNodeCount(1000))`; sie gilt überall, wo die Abfragen dieser Menge geprüft werden (ihre Routen, `IODataQueries`, Exporte, Facettenfilter, Zeilenfilter im Code, `query_data`).
+Die Berechtigung des Sets wird bei jedem Aufruf geprüft, Mandanten- und Soft-Delete-Filter gelten wie überall. `$top` ist auf 1000 begrenzt, und weitere [Abfragegrenzen](#abfragegrenzen) gelten; ungültige Abfragen beantworten `400` mit Problem Details.
 
 Das Service-Dokument (`GET /odata`) und `GET /odata/$metadata` nennen jedes Set und jeden Eigenschaftsnamen des Modells; sie brauchen deshalb auf jeder Route eine Anmeldung (`401` ohne), unabhängig von den Berechtigungen des Benutzers. `Coworkee:OData:AnonymousMetadata` (`CoworkeeODataOptions.AnonymousMetadata`, Standard `false`) öffnet beide wieder für Clients, die das Modell anonym lesen; die Sets behalten ihre Prüfungen.
+
+Namen in der URI passen unabhängig von Groß- und Kleinschreibung, ein camelCase-Client darf also `$filter=name eq 'x'`, `$orderby=price` oder `$expand=brand` senden; `Coworkee:OData:CaseInsensitive` (Standard `true`) schaltet das ab. Antworten auf `/odata` behalten die Namen der C#-Eigenschaften (`Name`); eine [Route mit anderen Namen](#routen-mit-anderen-namen) antwortet in camelCase. Enum-Eigenschaften vergleichen mit Namen (`Status eq 'Shipped'`) und mit der Zahl des Members (`Status ne 16`); `in` braucht Namen. Abfrageoptionen brauchen ihr `$`: `filter=` wird nicht gelesen. Eine Antwort `400` erklärt ODatas eigene Fehler in `detail`; andere Fehler einer Abfrage (etwa wenn EF sie nicht übersetzen kann) kommen ohne Detail und werden protokolliert, weil ihre Meldungen Zeilenfilter zitieren können.
 
 ### Schlüssel außer `Id`
 
@@ -36,8 +36,6 @@ services.AddODataEntity<Country>("Countries", MasterDataPermissions.View, o => o
 ```
 
 `GET /odata/Countries('DE')` liest eine Zeile (`/odata/Ranks(2)` bei einem Zahlenschlüssel). Listen, `$count`, Facetten, die globale Suche (die Id des Treffers ist der Schlüssel), Exporte, Berichte und `query_data` funktionieren wie bei jedem Set. Funktionen, die Zeilen über eine Guid-`Id` ansprechen, weisen eine Entity ohne sie schon bei der Registrierung ab: Datensatz-Anhänge, Social (Kommentare, Tags, Bewertungen, Reaktionen), Workflows, Entity-Historie und Webhook-Entity-Ereignisse. Client-Entities lassen solche Sets auf dem Server. Importe, die aktualisieren oder upserten (`AddODataImport` mit Id), finden Zeilen über den Schlüssel des Sets, der eine Guid sein muss; bei anderen Schlüsseln den Import ohne Id registrieren (nur Anlegen), sonst wirft die Registrierung. `AddExtendedAttributes` weist eine Entity ohne Guid-`Id` ab. Eine Entity, die neben einem anderen OData-Schlüssel eine Guid-`Id` behält, hat sie alle weiterhin.
-
-Namen in der URI passen unabhängig von Groß- und Kleinschreibung, ein camelCase-Client darf also `$filter=name eq 'x'`, `$orderby=price` oder `$expand=brand` senden; `Coworkee:OData:CaseInsensitive` (Standard `true`) schaltet das ab. Antworten auf `/odata` behalten die Namen der C#-Eigenschaften (`Name`); eine [Route mit anderen Namen](#routen-mit-anderen-namen) antwortet in camelCase. Enum-Eigenschaften vergleichen mit Namen (`Status eq 'Shipped'`) und mit der Zahl des Members (`Status ne 16`); `in` braucht Namen. Abfrageoptionen brauchen ihr `$`: `filter=` wird nicht gelesen. Eine Antwort `400` erklärt ODatas eigene Fehler in `detail`; andere Fehler einer Abfrage (etwa wenn EF sie nicht übersetzen kann) kommen ohne Detail und werden protokolliert, weil ihre Meldungen Zeilenfilter zitieren können.
 
 ### Routen mit anderen Namen
 
@@ -53,7 +51,7 @@ services.AddCoworkeeODataRoute("rt/odata", route => route
 
 `/rt/odata/Shipments?$filter=creationTime gt 2026-01-01T00:00:00Z&$orderby=creationTime&$select=name,creationTime&$expand=customer` funktioniert und antwortet mit diesen Namen; den C#-Namen einer Eigenschaft mit Alias kennt diese Route nicht. Die Route hat ein eigenes Modell aus denselben Registrierungen und läuft genau durch die Schritte von `/odata`: die Berechtigung des Sets, Zeilenfilter, `Hide` und `HideUnless`, berechnete Eigenschaften und ihre Berechtigungen, den Navigationsbereich, die Abfrageprüfungen, `$search` und Facetten. Die Regeln folgen dem C#-Member, wie er auch heißt, eine `HideUnless`-Eigenschaft mit Alias wird also abgewiesen und weggelassen wie unter ihrem eigenen Namen. Facetten auf der Route nennen Feld, Wertpfad und Optionsfilter in den Namen der Route, ihre Filter funktionieren dort also als `$filter`; auch der Facetten-Kontext-Header wird in ihnen gelesen. `ODataRoutes.Find("rt/odata").AliasOf(type, "DateCreatedUtc")` liefert den Alias für eigenes JSON, das zur Route passen soll. Zwei Member eines Typs, die denselben Namen bekämen (Groß- und Kleinschreibung zählt nicht), lassen den Start scheitern.
 
-`/odata` bleibt, wie es ist: der Blazor-Client, Exporte, Berichte, `query_data` und Client-Entities nutzen es. Exporte (`/api/v1/data/{set}/export`), `query_data`, Berichte und die globale Suche nehmen nur C#-Namen, gleich über welche Route der Client liest: ein Alias oder ein Name in lower camel case, der vom C#-Namen abweicht, beantwortet dort `400` (eine unbekannte Eigenschaft); ein Client einer umbenennenden Route übersetzt die Namen also zurück, bevor er sie aufruft.
+`/odata` bleibt, wie es ist: der Blazor-Client, Berichte, `query_data` und Client-Entities nutzen es. `query_data`, Berichte und die globale Suche nehmen nur C#-Namen, gleich über welche Route der Client liest: Ein Alias oder ein Name in lower camel case, der vom C#-Namen abweicht, beantwortet dort `400` (eine unbekannte Eigenschaft); ein Client einer umbenennenden Route übersetzt die Namen also zurück, bevor er sie aufruft. Exporte lesen die Namen einer Route mit `route=` (`/api/v1/data/Shipments/export?route=rt/odata&$filter=creationTime gt 2026-01-01T00:00:00Z`, siehe [Import und Export](import-export.md#export)); ohne ihn nehmen auch sie die C#-Namen.
 
 ### Abfragen im Code
 
@@ -213,6 +211,30 @@ Für einen Benutzer ohne die Berechtigung:
 - Webhooks eines Endpunkts, dessen Besitzer die Berechtigung fehlt, lassen sie weg.
 
 Geprüft wird pro Berechtigung, nicht pro Zeile. Das Audit-Log für Admins (`Audit.View`) zeigt weiterhin jede Änderung.
+
+## Abfragegrenzen
+
+`$top` ist auf `Coworkee:OData:MaxTop` begrenzt (Standard 1000). Die übrigen Abfragegrenzen von OData sind ebenfalls Optionen von `Coworkee:OData`. Sie gelten überall, wo die Bibliothek eine Abfrage eines Aufrufers liest: die Entity-Sets auf jeder Route, `IODataQueries`, Exporte, `query_data` (MCP und der Assistent), Facettenfilter (`FacetResponse.FilterAsync`), Zeilenfilter aus Code (`ODataEntityAccess.FilteredAsync`, etwa Mail-Empfänger) und Berichte samt berechneter Quellen; eigener Code prüft selbst geparste Optionen mit `ODataLimits.Check(options, services)`.
+
+| Option | Standard | Begrenzt |
+|---|---|---|
+| `MaxTop` | 1000 | Zeilen einer Seite (`$top`) |
+| `MaxNodeCount` | 100 | Knoten von `$filter` und `$orderby` (jeder Operator, jede Eigenschaft, jedes Literal und jeder Funktionsaufruf); eine Suche, die `contains` über 20 Felder mit `or` verknüpft, überschreitet 100 |
+| `MaxAnyAllExpressionDepth` | 1 | verschachtelte `any`/`all` |
+| `MaxExpansionDepth` | 2 | verschachtelte `$expand`; 0 erlaubt jede Tiefe |
+| `MaxOrderByNodeCount` | 5 | Eigenschaften in `$orderby` |
+
+```json
+{ "Coworkee": { "OData": { "MaxNodeCount": 200, "MaxExpansionDepth": 3 } } }
+```
+
+Werte unter 1 (unter 0 bei `MaxExpansionDepth`) verhindern den Start. Erhöhe sie nur so weit, wie ein Client es braucht: Größere Grenzen erlauben jedem Benutzer teurere Abfragen. Ein Set, dessen Clients lange Filter senden (ein Dashboard, das viele gewählte Werte mit `or` verknüpft), bekommt eine eigene Knotengrenze statt einer höheren für alle Sets:
+
+```csharp
+services.AddODataEntity<Shipment>("Shipments", ShippingPermissions.Shipments.View, o => o.MaxNodeCount(1000));
+```
+
+Sie gilt überall, wo die Abfragen dieses Sets geprüft werden: auf seinen Routen (`/odata` und jeder [Route mit anderen Namen](#routen-mit-anderen-namen)), in `IODataQueries`, Exporten, Facettenfiltern, Zeilenfiltern aus Code und `query_data`. `ODataLimits.Settings(services, entityType)` liefert die Grenzen der Zeilen eines Sets samt seiner eigenen Knotengrenze für eigene Prüfungen. Ein Wert unter 1 wirft bei der Registrierung.
 
 ## Aus dem Blazor-Client
 

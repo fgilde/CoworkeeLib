@@ -21,11 +21,11 @@ public sealed class MyAppCatalogModule : CoworkeeModule
 | `GET /odata/Products({id})` | one product |
 | `GET /odata/Products?$select=Name,Rate` | only these columns |
 
-The permission of the set is checked on every call, tenants and soft delete filters apply as everywhere. `$top` is capped at 1000 (`Coworkee:OData:MaxTop`); invalid queries answer `400` with problem details.
-
-OData's other query limits are options of `Coworkee:OData` too. They apply wherever the library reads a caller's query: the entity sets on every route, `IODataQueries`, exports, `query_data` (MCP and the assistant), facet filters (`FacetResponse.FilterAsync`), row filters of code (`ODataEntityAccess.FilteredAsync`, e.g. mail recipients) and reports, computed sources included; own code checks options it parses with `ODataLimits.Check(options, services)`. The limits: `MaxNodeCount` (nodes of `$filter` and `$orderby`, default 100, which a search ORing `contains` over many fields soon exceeds), `MaxAnyAllExpressionDepth` (nested `any`/`all`, default 1), `MaxExpansionDepth` (nested `$expand`, default 2) and `MaxOrderByNodeCount` (properties in `$orderby`, default 5). Values below 1 (below 0 for `MaxExpansionDepth`) stop the start. Raise them only as far as a client needs: larger limits let every user send more expensive queries. A set whose clients send long filters (a dashboard that ORs many chosen values) gets a node limit of its own instead of a higher one for every set: `AddODataEntity<T>(set, permission, o => o.MaxNodeCount(1000))`; it applies wherever that set's queries are checked (its routes, `IODataQueries`, exports, facet filters, row filters of code, `query_data`).
+The permission of the set is checked on every call, tenants and soft delete filters apply as everywhere. `$top` is capped at 1000 and further [query limits](#query-limits) apply; invalid queries answer `400` with problem details.
 
 The service document (`GET /odata`) and `GET /odata/$metadata` list every set and property name of the model, so they need a sign-in on every route (`401` without one), whatever the user's permissions. `Coworkee:OData:AnonymousMetadata` (`CoworkeeODataOptions.AnonymousMetadata`, default `false`) opens both again for clients that read the model anonymously; the sets keep their checks.
+
+Names in the URI match regardless of case, so a camelCase client may send `$filter=name eq 'x'`, `$orderby=price` or `$expand=brand`; `Coworkee:OData:CaseInsensitive` (default `true`) turns that off. Responses on `/odata` keep the names of the C# properties (`Name`); a [route with other names](#routes-with-other-names) answers in camelCase. Enum properties compare with names (`Status eq 'Shipped'`) and with the member's number (`Status ne 16`); `in` needs names. Query options need their `$`: `filter=` is not read. A `400` answer explains OData's own errors in `detail`; other failures of a query (for example EF cannot translate it) carry no detail and are logged, because their messages can quote row filters.
 
 ### Keys other than `Id`
 
@@ -36,8 +36,6 @@ services.AddODataEntity<Country>("Countries", MasterDataPermissions.View, o => o
 ```
 
 `GET /odata/Countries('DE')` reads one row (`/odata/Ranks(2)` for a number key). Lists, `$count`, facets, the global search (the hit's id is the key), exports, reports and `query_data` work as for any set. Features that address rows by a Guid `Id` refuse an entity without one when they are registered: record attachments, social (comments, tags, ratings, reactions), workflows, entity history and webhook entity events. Client entities leave such sets on the server. Imports that update or upsert (`AddODataImport` with an id) find rows by the set's key, which must be a Guid; for other keys register the import without an id (create only), else the registration throws. `AddExtendedAttributes` refuses an entity without a Guid `Id`. An entity that keeps a Guid `Id` next to another OData key still has them all.
-
-Names in the URI match regardless of case, so a camelCase client may send `$filter=name eq 'x'`, `$orderby=price` or `$expand=brand`; `Coworkee:OData:CaseInsensitive` (default `true`) turns that off. Responses on `/odata` keep the names of the C# properties (`Name`); a [route with other names](#routes-with-other-names) answers in camelCase. Enum properties compare with names (`Status eq 'Shipped'`) and with the member's number (`Status ne 16`); `in` needs names. Query options need their `$`: `filter=` is not read. A `400` answer explains OData's own errors in `detail`; other failures of a query (for example EF cannot translate it) carry no detail and are logged, because their messages can quote row filters.
 
 ### Routes with other names
 
@@ -53,7 +51,7 @@ services.AddCoworkeeODataRoute("rt/odata", route => route
 
 `/rt/odata/Shipments?$filter=creationTime gt 2026-01-01T00:00:00Z&$orderby=creationTime&$select=name,creationTime&$expand=customer` works and answers with these names; the C# name of an aliased property is unknown on that route. The route has its own model built from the same registrations and runs exactly the steps of `/odata`: the set's permission, row filters, `Hide` and `HideUnless`, computed properties and their permissions, the navigation scope, the query checks, `$search` and facets. The rules follow the C# member whatever it is called, so an aliased `HideUnless` property is refused and left out like under its own name. Facets on the route name their field, value path and option filters in the route's names, so their filters work as `$filter` there; the facet context header is read in them too. `ODataRoutes.Find("rt/odata").AliasOf(type, "DateCreatedUtc")` gives the alias for own JSON that should match the route. Two members of one type that end up with the same name (case does not count) fail at startup.
 
-`/odata` stays as it is: the Blazor client, exports, reports, `query_data` and client entities use it. Exports (`/api/v1/data/{set}/export`), `query_data`, reports and the global search take C# names only, whatever route the client reads: an alias or a lower camel case name that differs from the C# name answers `400` there (an unknown property), so a client of a renaming route translates names back before it calls them.
+`/odata` stays as it is: the Blazor client, reports, `query_data` and client entities use it. `query_data`, reports and the global search take C# names only, whatever route the client reads: an alias or a lower camel case name that differs from the C# name answers `400` there (an unknown property), so a client of a renaming route translates names back before it calls them. Exports read the names of a route with `route=` (`/api/v1/data/Shipments/export?route=rt/odata&$filter=creationTime gt 2026-01-01T00:00:00Z`, see [import and export](import-export.md#export)); without it they take the C# names as well.
 
 ### Queries in code
 
@@ -213,6 +211,30 @@ For a user without the permission:
 - webhooks of an endpoint whose owner lacks the permission leave it out.
 
 The check is per permission, not per row. The admin audit log (`Audit.View`) still shows every change.
+
+## Query limits
+
+`$top` is capped at `Coworkee:OData:MaxTop` (default 1000). OData's other query limits are options of `Coworkee:OData` too. They apply wherever the library reads a caller's query: the entity sets on every route, `IODataQueries`, exports, `query_data` (MCP and the assistant), facet filters (`FacetResponse.FilterAsync`), row filters of code (`ODataEntityAccess.FilteredAsync`, e.g. mail recipients) and reports, computed sources included; own code checks options it parses with `ODataLimits.Check(options, services)`.
+
+| Option | Default | Limits |
+|---|---|---|
+| `MaxTop` | 1000 | rows of one page (`$top`) |
+| `MaxNodeCount` | 100 | nodes of `$filter` and `$orderby` (each operator, property, literal and function call); a search ORing `contains` over 20 fields exceeds 100 |
+| `MaxAnyAllExpressionDepth` | 1 | nested `any`/`all` |
+| `MaxExpansionDepth` | 2 | nested `$expand`; 0 allows any depth |
+| `MaxOrderByNodeCount` | 5 | properties in `$orderby` |
+
+```json
+{ "Coworkee": { "OData": { "MaxNodeCount": 200, "MaxExpansionDepth": 3 } } }
+```
+
+Values below 1 (below 0 for `MaxExpansionDepth`) stop the start. Raise them only as far as a client needs: larger limits let every user send more expensive queries. A set whose clients send long filters (a dashboard that ORs many chosen values) gets a node limit of its own instead of a higher one for every set:
+
+```csharp
+services.AddODataEntity<Shipment>("Shipments", ShippingPermissions.Shipments.View, o => o.MaxNodeCount(1000));
+```
+
+It applies wherever that set's queries are checked: its routes (`/odata` and every [route with other names](#routes-with-other-names)), `IODataQueries`, exports, facet filters, row filters of code and `query_data`. `ODataLimits.Settings(services, entityType)` gives the limits of a set's rows, its own node limit included, for own validation. A value below 1 throws at registration.
 
 ## From the Blazor client
 
