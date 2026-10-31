@@ -3,7 +3,7 @@ title: "Lokalisierung und maschinelle Übersetzung für Blazor"
 description: "Coworkee liefert Oberfläche, Kontoseiten und Mails in 23 Sprachen, Administratoren schalten Sprachen zur Laufzeit zu, den Rest übersetzt ein Dienst."
 ---
 
-# Sprachen und Übersetzung
+# Lokalisierung
 
 Die eigenen Seiten zu übersetzen ist der kleinere Teil der Arbeit. Der größere ist alles, was du nicht selbst geschrieben hast: die Tabelle, ihre Filter, die Anmeldeseiten, die Mail mit dem Link zum Zurücksetzen des Passworts.
 

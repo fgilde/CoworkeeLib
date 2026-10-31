@@ -3,7 +3,7 @@ title: "Dashboards and reporting for Blazor apps"
 description: "Self-service dashboards for Blazor and ASP.NET Core: a drag and drop designer, KPIs, charts and pivots over your OData sets, cross filters and SQL-side aggregation."
 ---
 
-# Dashboards and reports
+# Reporting and dashboards
 
 ```csharp
 [DependsOn(typeof(CoworkeeReportingModule))]

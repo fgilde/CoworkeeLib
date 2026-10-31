@@ -3,7 +3,7 @@ title: ".NET Aspire hosting with Grafana and dev tools"
 description: "One AddCoworkeeApp call wires databases, Redis, Mailpit, Elasticsearch and Keycloak in the .NET Aspire app host, with Grafana dashboards and a database browser."
 ---
 
-# Hosting and developer tools
+# Aspire and observability
 
 ```csharp title="MyApp.AppHost/AppHost.cs"
 var builder = DistributedApplication.CreateBuilder(args);

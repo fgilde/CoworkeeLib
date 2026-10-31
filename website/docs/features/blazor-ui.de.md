@@ -3,7 +3,7 @@ title: "Blazor-Admin-Oberfläche mit MudBlazor und Datentabellen"
 description: "Eine fertige Admin-Oberfläche mit Blazor WebAssembly und MudBlazor: Navigation, Admin-Seiten, Datentabellen mit Facetten und Ansichten, Themes, Anmeldedesigns."
 ---
 
-# Admin-Oberfläche
+# Blazor-Admin-Oberfläche
 
 ![Produkttabelle nach Marke gruppiert, mit dem durchschnittlichen Preis je Gruppe](../assets/screenshots/products-grouped-light.webp){ .shot loading=lazy }
 

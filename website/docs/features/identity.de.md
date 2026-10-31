@@ -3,7 +3,7 @@ title: "Identität und Berechtigungen für ASP.NET Core"
 description: "Benutzer, Rollen, Gruppen und Berechtigungen bis auf einzelne Ressourcen, ein OpenIddict-Auth-Server mit BFF, Keycloak oder jeder OIDC-Anbieter, API-Schlüssel."
 ---
 
-# Identität und Berechtigungen
+# Identity und Sicherheit
 
 Die Anmeldung läuft auf einem eigenen Host, einem OpenID-Connect-Server auf Basis von OpenIddict. Der Web-Host arbeitet als Backend for Frontend: Er wickelt den Code-Flow mit PKCE ab, hält die Tokens in einer serverseitigen Sitzung und gibt dem Browser nur ein Cookie. Die API prüft Bearer-Tokens. Ein Access Token bekommt der Browser nie zu sehen.
 

@@ -3,7 +3,7 @@ title: "Identity and permissions for ASP.NET Core apps"
 description: "Users, roles, groups and permissions down to single resources, an OpenIddict auth server with BFF, Keycloak or any OIDC provider, API keys and data export."
 ---
 
-# Identity and permissions
+# Identity and security
 
 Sign-in runs on its own host, an OpenID Connect server built on OpenIddict. The web host acts as backend for frontend: it does the code flow with PKCE, keeps the tokens in a server-side session and hands the browser a cookie. The API checks bearer tokens. The browser never holds an access token.
 

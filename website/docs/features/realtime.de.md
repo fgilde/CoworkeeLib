@@ -3,7 +3,7 @@ title: "Echtzeit und Zusammenarbeit in Blazor-Apps"
 description: "SignalR-Echtzeit für ASP.NET Core und Blazor: Tabellen und Detailseiten live, Präsenz, Benachrichtigungen, Chat, Kommentare, Hintergrundjobs und Redis-Backplane."
 ---
 
-# Echtzeit und Zusammenarbeit
+# Realtime und Zusammenarbeit
 
 Eine Coworkee-App hält pro Tab eine SignalR-Verbindung, und das meiste, was andere tun, kommt darüber an. Eine Tabelle lädt neu, wenn sich ihre Entity ändert. Eine Detailseite merkt, dass ihr Datensatz gelöscht wurde, und springt zurück zur Liste. Nimmt ein Admin eine Rolle weg, schrumpft die Navigation, während der Benutzer noch draufschaut.
 

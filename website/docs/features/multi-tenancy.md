@@ -3,7 +3,7 @@ title: "Multi-tenant SaaS foundation for .NET"
 description: "Multi-tenancy for ASP.NET Core and Blazor: tenant filters in EF Core, settings per installation, tenant and user, typed app configuration, features and editions."
 ---
 
-# Tenants, settings and editions
+# Multi-tenancy and settings
 
 ```csharp
 public sealed class Brand : AuditedEntity, IMultiTenant

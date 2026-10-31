@@ -3,7 +3,7 @@ title: "Localization and machine translation for Blazor"
 description: "Coworkee ships its UI, account pages and mails in 23 languages, lets administrators switch languages on at runtime and machine translates the rest."
 ---
 
-# Languages and translation
+# Localization
 
 Translating your own pages is the smaller part of the job. The larger part is everything you did not write: the data grid, its filters, the sign-in pages, the mail with the password reset link.
 

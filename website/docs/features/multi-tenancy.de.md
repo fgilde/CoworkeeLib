@@ -3,7 +3,7 @@ title: "Mandantenfähige SaaS-Basis für .NET"
 description: "Mandantenfähigkeit für ASP.NET Core und Blazor: Mandantenfilter in EF Core, Einstellungen pro Installation, Mandant und Benutzer, typisierte Konfiguration, Editionen."
 ---
 
-# Mandanten, Einstellungen und Editionen
+# Mandanten und Einstellungen
 
 ```csharp
 public sealed class Brand : AuditedEntity, IMultiTenant

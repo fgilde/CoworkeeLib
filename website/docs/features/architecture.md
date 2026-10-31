@@ -3,7 +3,7 @@ title: "Modular monolith architecture for ASP.NET Core"
 description: "Coworkee builds .NET business apps as a modular monolith on ASP.NET Core: modules with [DependsOn], one request pipeline, an outbox, and a CLI that scaffolds it."
 ---
 
-# Modules and tooling
+# Modular architecture
 
 ```csharp
 [DependsOn(typeof(CoworkeeODataModule), typeof(CoworkeeStorageModule))]

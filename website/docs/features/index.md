@@ -33,7 +33,7 @@ The pages below go through it area by area, with code from the real APIs and scr
 
 -   **[Realtime and collaboration](realtime.md)**
 
-    Live entity changes, notifications, presence, chat, comments and ratings, mail campaigns and background jobs.
+    Live entity changes, notifications with preferences and following, presence, group chats, comments, ratings and reactions, mail campaigns and background jobs.
 
 -   **[AI assistant and MCP](ai.md)**
 

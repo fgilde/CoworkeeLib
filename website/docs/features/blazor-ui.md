@@ -3,7 +3,7 @@ title: "Blazor admin UI with MudBlazor and data tables"
 description: "A complete Blazor WebAssembly admin UI on MudBlazor: navigation, admin pages, data tables with facets, grouping and saved views, themes and sign-in designs."
 ---
 
-# Admin UI
+# Blazor admin UI
 
 ![Products table grouped by brand with the average rate per group](../assets/screenshots/products-grouped-light.webp){ .shot loading=lazy }
 

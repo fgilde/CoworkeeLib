@@ -33,7 +33,7 @@ Die Seiten unten gehen Bereich für Bereich durch, mit Code aus den echten APIs 
 
 -   **[Realtime und Zusammenarbeit](realtime.md)**
 
-    Live-Änderungen an Entities, Benachrichtigungen, Präsenz, Chat, Kommentare und Bewertungen, Mail-Kampagnen und Hintergrundjobs.
+    Live-Änderungen an Entities, Benachrichtigungen mit Einstellungen und Folgen, Präsenz, Gruppenchats, Kommentare, Bewertungen und Reaktionen, Mail-Kampagnen und Hintergrundjobs.
 
 -   **[KI-Assistent und MCP](ai.md)**
 
