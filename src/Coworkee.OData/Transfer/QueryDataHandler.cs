@@ -87,6 +87,6 @@ internal sealed class QueryDataHandler(IServiceProvider services, ODataEntityReg
             throw new ODataException($"Unknown field in select; the fields are {string.Join(", ", all.Select(c => c.Name))}.");
         }
 
-        return new DataPage([.. rows.Select(row => (IReadOnlyDictionary<string, object?>)columns.ToDictionary(c => c.Name, c => c.GetValue(row)))], total);
+        return new DataPage([.. rows.Select(row => (IReadOnlyDictionary<string, object?>)columns.ToDictionary(c => c.Name, c => c.Property.GetValue(row)))], total);
     }
 }

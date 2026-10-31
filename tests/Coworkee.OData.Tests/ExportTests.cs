@@ -67,19 +67,214 @@ public sealed class ExportTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task A_stream_of_more_rows_than_a_request_takes_hands_over_to_the_export_job()
+    public async Task A_stream_of_more_rows_than_a_request_takes_follows_its_export_job_to_a_link()
     {
-        await app.InDbAsync(_setup.TenantId, async db =>
+        await BulkAsync();
+
+        var lines = await StreamAsync(Admin, "?format=csv&fileName=Bulk list");
+
+        lines.ShouldNotContain(l => l.Phase == DataExportProgress.Queued);
+        lines.Select(l => l.JobId).Distinct().ShouldHaveSingleItem();
+        var last = lines[^1];
+        (last.Phase, last.FileName).ShouldBe((DataExportProgress.Ready, "Bulk list.csv"));
+        using (var file = await app.App.GetTestClient().GetAsync("/" + last.Url, Ct))
         {
-            db.AddRange(Enumerable.Range(1, 4).Select(i => new Gadget { Name = $"Bulk {i}", Category = "Bulk", Price = i, TenantId = _setup.TenantId }));
-            return await db.SaveChangesAsync(Ct);
-        });
+            (await file.Content.ReadAsStringAsync(Ct)).ShouldContain("Bulk 4");
+        }
 
-        var last = (await StreamAsync(Admin, "?format=csv"))[^1];
+        var job = await JobAsync(last.JobId!.Value);
+        (job.Status, job.ResultFileName, job.Total, job.Processed, job.MailOwner).ShouldBe((DataTransferStatus.Completed, "Bulk list.csv", 7, 7, false));
+        app.Mails.Sent.ShouldBeEmpty();
+    }
 
-        (last.Phase, last.Url).ShouldBe((DataExportProgress.Queued, null));
-        var job = (await Admin.GetFromJsonAsync<DataTransferJobDto>($"/api/v1/data/jobs/{last.JobId}", Ct))!;
-        (job.Status, job.ResultFileName).ShouldBe((DataTransferStatus.Completed, "Gadgets.csv"));
+    [Fact]
+    public async Task A_followed_export_job_reports_its_progress_and_mails_the_owner_when_the_client_left()
+    {
+        await BulkAsync();
+        var root = app.App.Services.GetRequiredService<InlineBackgroundJobs.Root>();
+        root.Held = [];
+        try
+        {
+            // the client stays: the progress the job saves becomes reading lines, its end the ready line
+            using (var response = await Admin.GetAsync("/api/v1/data/Gadgets/export/stream?format=csv", HttpCompletionOption.ResponseHeadersRead, Ct))
+            {
+                using var reader = new StreamReader(await response.Content.ReadAsStreamAsync(Ct));
+                var id = Line(await reader.ReadLineAsync(Ct)).JobId!.Value;
+                await WaitForAsync(id, DataTransferStatus.Queued);
+                await app.InDbAsync(_setup.TenantId, db => db.Set<DataTransferJob>().Where(j => j.Id == id).ExecuteUpdateAsync(j => j
+                    .SetProperty(x => x.Status, DataTransferStatus.Running).SetProperty(x => x.Total, 8).SetProperty(x => x.Processed, 4), Ct));
+                var reading = Line(await reader.ReadLineAsync(Ct));
+                while (reading.Phase == DataExportProgress.Counting)
+                {
+                    reading = Line(await reader.ReadLineAsync(Ct));
+                }
+
+                (reading.Phase, reading.Percent, reading.Rows, reading.Total).ShouldBe((DataExportProgress.Reading, 40, 4, 8));
+
+                await app.InDbAsync(_setup.TenantId, db => db.Set<DataTransferJob>().Where(j => j.Id == id).ExecuteUpdateAsync(j => j.SetProperty(x => x.Status, DataTransferStatus.Queued), Ct));
+                await RunHeldAsync(root);
+                var last = Line((await reader.ReadToEndAsync(Ct)).Split('\n', StringSplitOptions.RemoveEmptyEntries)[^1]);
+                (last.Phase, last.JobId).ShouldBe((DataExportProgress.Ready, id));
+                last.Url.ShouldNotBeNull();
+                app.Mails.Sent.ShouldBeEmpty();
+            }
+
+            // the client leaves while the job waits: the job mails the file to the owner only, once it is written
+            using var actor = CurrentUserScope.Begin(new ImpersonatedUser(_setup.AdminUserId, _setup.TenantId));
+            await using var scope = app.App.Services.CreateAsyncScope();
+            using var aborted = new CancellationTokenSource();
+            var http = new DefaultHttpContext { RequestServices = scope.ServiceProvider, RequestAborted = aborted.Token };
+            http.Request.QueryString = new QueryString("?format=csv&fileName=Left");
+            http.Response.Body = new MemoryStream();
+            var streaming = scope.ServiceProvider.GetRequiredService<DataExports>().StreamAsync("Gadgets", http);
+            var left = await WaitForAsync(null, DataTransferStatus.Queued, "Left.csv");
+            await aborted.CancelAsync();
+            await streaming;
+            (await JobAsync(left)).MailOwner.ShouldBeTrue();
+            app.Mails.Sent.ShouldBeEmpty();
+
+            await RunHeldAsync(root);
+            var mail = app.Mails.Sent.ShouldHaveSingleItem();
+            (mail.OwnerId, mail.File.Name, mail.Recipients.Count).ShouldBe((_setup.AdminUserId, "Left.csv", 0));
+        }
+        finally
+        {
+            root.Held = null;
+        }
+    }
+
+    [Fact]
+    public async Task A_client_that_leaves_when_the_followed_job_is_done_gets_the_file_by_mail_once()
+    {
+        await BulkAsync();
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(_setup.AdminUserId, _setup.TenantId));
+        await using var scope = app.App.Services.CreateAsyncScope();
+        using var aborted = new CancellationTokenSource();
+        var http = new DefaultHttpContext { RequestServices = scope.ServiceProvider, RequestAborted = aborted.Token };
+        http.Request.QueryString = new QueryString("?format=csv");
+        // the first line arrives, the ready line no longer does
+        http.Response.Body = new LeavingClient(aborted, accepted: 1);
+
+        await scope.ServiceProvider.GetRequiredService<DataExports>().StreamAsync("Gadgets", http);
+
+        var mail = app.Mails.Sent.ShouldHaveSingleItem();
+        (mail.OwnerId, mail.File.Name, mail.Recipients.Count).ShouldBe((_setup.AdminUserId, "Gadgets.csv", 0));
+        var job = await app.InDbAsync(_setup.TenantId, db => db.Set<DataTransferJob>().AsNoTracking().SingleAsync(Ct));
+        (job.Status, job.MailOwner).ShouldBe((DataTransferStatus.Completed, false));
+    }
+
+    [Fact]
+    public async Task Columns_take_headers_for_csv_and_excel_and_keep_field_names_in_json()
+    {
+        var columns = ExportColumns.Format([("Name", "Product"), ("Price", "Price, EUR"), ("Category", null)]);
+        ExportColumns.Parse(columns).ShouldBe([("Name", "Product"), ("Price", "Price, EUR"), ("Category", null)]);
+        ExportColumns.Parse(" Name , Price:Price: net ,,").ShouldBe([("Name", null), ("Price", "Price: net")]);
+        var query = $"$filter=Category eq 'Tools'&$orderby=Name&columns={Uri.EscapeDataString(columns)}";
+        const string header = "Product;Price, EUR;Category";
+
+        var csv = await Admin.GetStringAsync($"/api/v1/data/Gadgets/export?format=csv&{query}", Ct);
+        CsvLines(csv).ShouldSatisfyAllConditions(l => l.Count.ShouldBe(3), l => l[0].ShouldBe(header), l => l[1].ShouldStartWith("Drill;"));
+        using (var workbook = new XLWorkbook(await Admin.GetStreamAsync($"/api/v1/data/Gadgets/export?{query}", Ct)))
+        {
+            workbook.Worksheet(1).Row(1).Cells(1, 3).Select(c => c.GetString()).ShouldBe(["Product", "Price, EUR", "Category"]);
+        }
+
+        var json = await Admin.GetStringAsync($"/api/v1/data/Gadgets/export?format=json&{query}", Ct);
+        JsonDocument.Parse(json).RootElement[0].EnumerateObject().Select(p => p.Name).ShouldBe(["Name", "Price", "Category"]);
+
+        // mailed and scheduled exports keep them with their query
+        (await Admin.PostAsJsonAsync("/api/v1/data/Gadgets/export/mail", new MailExportRequest($"format=csv&{query}"), Ct)).StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        CsvLines(app.Mails.Sent.ShouldHaveSingleItem().File.Content)[0].ShouldBe(header);
+        app.Mails.Sent.Clear();
+        (await Admin.PostAsJsonAsync("/api/v1/data/export-schedules", Request() with { Query = $"format=csv&{query}" }, Ct)).EnsureSuccessStatusCode();
+        await app.InDbAsync(null, db => db.Set<ExportSchedule>().IgnoreQueryFilters().ExecuteUpdateAsync(s => s.SetProperty(x => x.NextRunAt, DateTimeOffset.UtcNow.AddMinutes(-1)), Ct));
+        await using (var scope = app.App.Services.CreateAsyncScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<ExportScheduleJob>().ExecuteAsync(Ct);
+        }
+
+        CsvLines(app.Mails.Sent.ShouldHaveSingleItem().File.Content)[0].ShouldBe(header);
+    }
+
+    [Fact]
+    public async Task An_export_reads_the_names_of_the_route_it_names_with_the_rules_of_the_set()
+    {
+        const string aliased = "route=alias/odata&format=csv&$filter=Kind eq 'Tools'&$orderby=Kind,Name&columns=Name,Kind:Category";
+
+        CsvLines(await Admin.GetStringAsync($"/api/v1/data/Gadgets/export?{aliased}", Ct)).ShouldBe(["Name;Category", "Drill;Tools", "Hammer;Tools"]);
+        (await Admin.GetAsync("/api/v1/data/Gadgets/export?format=csv&$filter=Kind eq 'Tools'", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await Admin.GetAsync("/api/v1/data/Gadgets/export?route=nowhere/odata", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        CsvLines(await Admin.GetStringAsync("/api/v1/data/Gadgets/export?route=rt/odata&format=csv&$filter=price lt 20&columns=name,price", Ct))
+            .ShouldSatisfyAllConditions(l => l.Count.ShouldBe(2), l => l[0].ShouldBe("name;price"), l => l[1].ShouldStartWith("Hammer;"));
+
+        // the stream, mail and schedule take the route along
+        (await StreamAsync(Admin, $"?{aliased}"))[^1].Phase.ShouldBe(DataExportProgress.Ready);
+        (await Admin.PostAsJsonAsync("/api/v1/data/Gadgets/export/mail", new MailExportRequest(aliased), Ct)).StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        CsvLines(app.Mails.Sent.ShouldHaveSingleItem().File.Content).ShouldContain("Hammer;Tools");
+        (await Admin.PostAsJsonAsync("/api/v1/data/export-schedules", Request() with { Query = aliased }, Ct)).EnsureSuccessStatusCode();
+        (await Admin.PostAsJsonAsync("/api/v1/data/export-schedules", Request() with { Query = "$filter=Kind eq 'Tools'" }, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        // a renamed protected property stays protected, and an alias with a hidden member's name reads the aliased member only
+        var viewer = app.As(await UserWithAsync(ODataApp.ViewGadgets), _setup.TenantId);
+        (await viewer.GetAsync($"/api/v1/data/Gadgets/export?{aliased}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        CsvLines(await viewer.GetStringAsync("/api/v1/data/Gadgets/export?route=alias/odata&format=csv&$orderby=Name&columns=Name,Kind", Ct))[0].ShouldBe("Name");
+        await app.InDbAsync(_setup.TenantId, db => db.Set<Gadget>().ExecuteUpdateAsync(g => g.SetProperty(x => x.SerialCode, "SECRET"), Ct));
+        CsvLines(await Admin.GetStringAsync("/api/v1/data/Gadgets/export?route=hidden/odata&format=csv&$orderby=SerialCode&columns=SerialCode", Ct))
+            .ShouldBe(["SerialCode", "Drill", "Hammer", "Lamp"]);
+    }
+
+    [Fact]
+    public async Task The_file_name_of_the_query_names_the_download_the_job_and_the_ready_line()
+    {
+        using (var direct = await Admin.GetAsync("/api/v1/data/Gadgets/export?format=csv&fileName=My gadgets", Ct))
+        {
+            direct.Content.Headers.ContentDisposition!.FileNameStar.ShouldBe("My gadgets.csv");
+        }
+
+        var ready = (await StreamAsync(Admin, "?fileName=Tools.xlsx"))[^1];
+        ready.FileName.ShouldBe("Tools.xlsx");
+        (await JobAsync(ready.JobId!.Value)).ResultFileName.ShouldBe("Tools.xlsx");
+        (await StreamAsync(Admin, "?format=json"))[^1].FileName.ShouldBe("Gadgets.json");
+    }
+
+    private Task<int> BulkAsync() => app.InDbAsync(_setup.TenantId, async db =>
+    {
+        db.AddRange(Enumerable.Range(1, 4).Select(i => new Gadget { Name = $"Bulk {i}", Category = "Bulk", Price = i, TenantId = _setup.TenantId }));
+        return await db.SaveChangesAsync(Ct);
+    });
+
+    private static DataExportProgress Line(string? line) => JsonSerializer.Deserialize<DataExportProgress>(line!, JsonSerializerOptions.Web)!;
+
+    private static List<string> CsvLines(byte[] content) => CsvLines(System.Text.Encoding.UTF8.GetString(content));
+
+    private static List<string> CsvLines(string text) => [.. text.TrimStart('﻿').Split("\r\n", StringSplitOptions.RemoveEmptyEntries)];
+
+    // the job of the id, or the one with the file name, once it has the status
+    private async Task<Guid> WaitForAsync(Guid? id, DataTransferStatus status, string? fileName = null)
+    {
+        for (var i = 0; i < 200; i++)
+        {
+            var found = await app.InDbAsync(_setup.TenantId, db => db.Set<DataTransferJob>().AsNoTracking()
+                .Where(j => (id == null || j.Id == id) && (fileName == null || j.FileName == fileName) && j.Status == status).Select(j => (Guid?)j.Id).FirstOrDefaultAsync(Ct));
+            if (found is { } job)
+            {
+                return job;
+            }
+
+            await Task.Delay(50, Ct);
+        }
+
+        throw new TimeoutException($"No export job became {status}.");
+    }
+
+    private static async Task RunHeldAsync(InlineBackgroundJobs.Root root)
+    {
+        var held = root.Held!.ToList();
+        root.Held!.Clear();
+        foreach (var job in held)
+        {
+            await job();
+        }
     }
 
     [Fact]
@@ -566,8 +761,8 @@ public sealed class ExportTests(ODataApp app) : IAsyncLifetime
         return user!.Id;
     }
 
-    /// <summary>A browser that went away: the first line cancels the request and fails.</summary>
-    private sealed class LeavingClient(CancellationTokenSource aborted) : MemoryStream
+    /// <summary>A browser that went away: the write after the <paramref name="accepted"/> ones cancels the request and fails.</summary>
+    private sealed class LeavingClient(CancellationTokenSource aborted, int accepted = 0) : MemoryStream
     {
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) => Leave();
 
@@ -575,6 +770,11 @@ public sealed class ExportTests(ODataApp app) : IAsyncLifetime
 
         private Task Leave()
         {
+            if (accepted-- > 0)
+            {
+                return Task.CompletedTask;
+            }
+
             aborted.Cancel();
             throw new IOException("The client left.");
         }

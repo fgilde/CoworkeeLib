@@ -1870,6 +1870,9 @@ namespace MyApp.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<bool>("MailOwner")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Message")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
@@ -5090,6 +5093,9 @@ namespace MyApp.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<bool>("MailOwner")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Message")
                         .HasMaxLength(2000)
