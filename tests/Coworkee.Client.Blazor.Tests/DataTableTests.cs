@@ -183,17 +183,27 @@ public sealed class DataTableTests : ClientTestBase
             .Add(t => t.EntitySet, "Gadgets")
             .Add(t => t.Filter, "Price gt 1")
             .Add(t => t.Importable, true)
-            .Add(t => t.Columns, Columns()));
+            .Add(t => t.ExportFileName, "gadgets")
+            .Add(t => t.Columns, Columns("Gadget, name")));
         table.WaitForAssertion(() => table.Markup.ShouldContain("Drill"));
 
         await table.Find("[data-testid='export'] button").ClickAsync(new());
         await popovers.WaitForElement("[data-testid='export-excel']").ClickAsync(new());
         table.WaitForAssertion(() => NSubstitute.Received.InOrder(() => Transfer.StreamExportAsync("Gadgets",
-            ExportQueries.Of(ExportFileFormat.Xlsx, new ODataQuery { Filter = "Price gt 1" }, ["Name"]), NSubstitute.Arg.Any<CancellationToken>())));
+            ExportQueries.Of(ExportFileFormat.Xlsx, new ODataQuery { Filter = "Price gt 1" }, [("Name", "Gadget, name")], "gadgets"), NSubstitute.Arg.Any<CancellationToken>())));
         dialogs.WaitForAssertion(() => dialogs.FindAll("[data-testid='export-progress']").ShouldBeEmpty());
 
         _ = table.Find("[data-testid='import']").ClickAsync(new()); // the wizard stays open, so the click does not finish
         dialogs.WaitForAssertion(() => dialogs.Markup.ShouldContain("Choose a CSV, Excel or JSON file"));
+    }
+
+    [Fact]
+    public void The_export_query_escapes_the_headers_and_names_the_file()
+    {
+        var query = System.Web.HttpUtility.ParseQueryString(ExportQueries.Of(ExportFileFormat.Csv, new ODataQuery(), [("Name", "Gadget, name: full"), ("Category", null)], "my gadgets"));
+
+        ExportColumns.Parse(query["columns"]).ShouldBe([("Name", "Gadget, name: full"), ("Category", null)]);
+        query["fileName"].ShouldBe("my gadgets");
     }
 
     [Fact]
@@ -229,10 +239,15 @@ public sealed class DataTableTests : ClientTestBase
         TableExport.ToCsv([new Gadget(Guid.Empty, "=HYPERLINK(1)", "-x")]).ShouldContain("'=HYPERLINK(1);'-x");
     }
 
-    private static RenderFragment Columns() => builder =>
+    private static RenderFragment Columns(string? title = null) => builder =>
     {
         builder.OpenComponent<PropertyColumn<Gadget, string>>(0);
         builder.AddComponentParameter(1, nameof(PropertyColumn<Gadget, string>.Property), (System.Linq.Expressions.Expression<Func<Gadget, string>>)(g => g.Name));
+        if (title is not null)
+        {
+            builder.AddComponentParameter(2, nameof(PropertyColumn<Gadget, string>.Title), title);
+        }
+
         builder.CloseComponent();
     };
 
