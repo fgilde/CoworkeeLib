@@ -88,6 +88,28 @@ This is a convenience of the form only; the server does not enforce it. A condit
 
 `context.Group(name, displayName, page: "/admin/ai-settings")` marks a group as maintained on its own admin page. The settings tabs skip it, and the user's **My settings** keep every group that has no page. The AI group works this way: its settings, including the MCP switch, live on `/admin/ai-settings`. So does Mail: provider, credentials and the own-server switch of an organisation live on `/admin/mail-settings`, see [Mailing](mailing.md#the-mail-settings-page).
 
+### Head script
+
+A tag manager or an analytics snippet belongs in the head of every page. The head script is a setting for that, off until the app turns it on in a server module:
+
+```csharp
+context.Services.AddCoworkeeHeadScript();                         // one script for the installation, set from the system organisation
+context.Services.AddCoworkeeHeadScript(perOrganisation: true);    // every organisation may set its own for its users
+```
+
+| | |
+|---|---|
+| Settings | `HeadScript.Enabled` (*Head script on*) and `HeadScript.Value` (*Head script*, HTML with `<script>` tags) in the group *Head script*, scopes `Global` (and `Tenant` with `perOrganisation`); a default goes into `Coworkee:Settings:Defaults:HeadScript.Value` |
+| Permission | `Settings.HeadScript` (*Change the head script*). Every change needs it, also through the settings tabs and `PUT /api/v1/settings/{scope}`, where `Settings.Manage` is needed on top |
+| Read | `GET /api/v1/settings/head-script` answers `{ enabled, value }` without sign-in (the installation's script), signed in with the script of the user's organisation, else the installation's. Signed-in clients get both values with the client settings |
+| Change | `PUT /api/v1/settings/head-script` with `{ enabled, value }`: from the system organisation the installation's script, from any other organisation its own (with `perOrganisation`, else `403`); at most 50,000 characters. The AI assistant and MCP cannot call it |
+| Blazor app | the layout adds the script once the app has started: inline JavaScript runs in the global scope, `<script src>` loads as a tag, `<noscript>` and `<iframe>` go to the end of the body. A changed script applies after a reload |
+
+The web app's Content-Security-Policy allows no inline scripts. The layout therefore runs inline JavaScript through `eval`, which the policy allows for Blazor already; a script loaded from another host (`https://www.googletagmanager.com` for Google Tag Manager) needs that host in `script-src`, and whatever it sends or shows needs `connect-src`, `img-src` or `frame-src`: `Coworkee:Bff:SecurityHeaders:Sources`, see [Security headers of the web app](../security/authentication.md#security-headers-of-the-web-app). A replaced policy without `'unsafe-eval'` runs no inline head script.
+
+!!! warning "A script setting is stored cross-site scripting by design"
+    The script runs in the browser of every user with the user's session: it can read the pages and call the API as the user. Grant `Settings.HeadScript` to few people (the system role *Admin* has every permission, with `perOrganisation` also in each organisation). Every change is in the audit log (`SettingValue`, with who changed it; the value itself is masked like every setting value). An organisation's script reaches only its own users, never another organisation's or those of the system organisation; a user who signs in as someone else gets the script of that user's organisation until the page is loaded again.
+
 ### Language settings
 
 `SettingType.Language` fits settings that hold a culture. `Localization.Culture` (**Default language**) is the language the app starts in: an organisation overrides the system value, and a user overrides both. An empty value inherits.

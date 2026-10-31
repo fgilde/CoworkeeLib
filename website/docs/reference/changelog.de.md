@@ -2,6 +2,17 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- Das Head-Skript: `AddCoworkeeHeadScript(perOrganisation)` schaltet die Einstellungen `HeadScript.Enabled` und `HeadScript.Value` (HTML mit Script-Tags, z. B. ein Tag-Manager), die Berechtigung `Settings.HeadScript`, das anonyme `GET /api/v1/settings/head-script` und `PUT /api/v1/settings/head-script` ein; das Blazor-Layout fügt das Skript in die Seite ein. Aus, solange die App es nicht aufruft. Siehe [Einstellungen](../modules/settings.md#head-skript).
+- `SettingDefinition.Permission` (`Add(..., permission: ...)`): eine Einstellung ändert sich nur mit dieser Berechtigung zusätzlich zur Regel ihres Bereichs, auch über `PUT /api/v1/settings/{scope}`.
+
+### Behoben
+
+- Zwei Module, die Berechtigungen in dieselbe Gruppe legen, zeigten diese Gruppe im Berechtigungsbaum doppelt. Kein Handlungsbedarf.
+
 ## 0.0.1.52 (2026-10-31)
 
 ### Hinzugefügt

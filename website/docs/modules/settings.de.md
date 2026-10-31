@@ -88,6 +88,28 @@ Das ist nur eine Erleichterung im Formular; der Server erzwingt sie nicht. Eine 
 
 `context.Group(name, displayName, page: "/admin/ai-settings")` markiert eine Gruppe als auf einer eigenen Admin-Seite gepflegt. Die Einstellungs-Tabs überspringen sie, **Meine Einstellungen** des Benutzers zeigen weiter jede Gruppe ohne `page`. So arbeitet die KI-Gruppe: Ihre Einstellungen, auch der MCP-Schalter, liegen auf `/admin/ai-settings`. Ebenso Mail: Anbieter, Zugangsdaten und der Schalter für den eigenen Server einer Organisation liegen auf `/admin/mail-settings`, siehe [Mailversand](mailing.md#die-seite-mail-einstellungen).
 
+### Head-Skript
+
+Ein Tag-Manager oder ein Analyse-Snippet gehört in den Kopf jeder Seite. Dafür gibt es das Head-Skript, eine Einstellung, die aus ist, bis die App sie in einem Server-Modul einschaltet:
+
+```csharp
+context.Services.AddCoworkeeHeadScript();                         // ein Skript für die Installation, gesetzt aus der System-Organisation
+context.Services.AddCoworkeeHeadScript(perOrganisation: true);    // jede Organisation darf ein eigenes für ihre Benutzer setzen
+```
+
+| | |
+|---|---|
+| Einstellungen | `HeadScript.Enabled` (*Head-Skript an*) und `HeadScript.Value` (*Head-Skript*, HTML mit `<script>`-Tags) in der Gruppe *Head-Skript*, Bereiche `Global` (und `Tenant` mit `perOrganisation`); ein Standardwert kommt nach `Coworkee:Settings:Defaults:HeadScript.Value` |
+| Berechtigung | `Settings.HeadScript` (*Head-Skript ändern*). Jede Änderung braucht sie, auch über die Einstellungs-Tabs und `PUT /api/v1/settings/{scope}`, wo zusätzlich `Settings.Manage` nötig ist |
+| Lesen | `GET /api/v1/settings/head-script` antwortet `{ enabled, value }` ohne Anmeldung (das Skript der Installation), angemeldet mit dem Skript der Organisation des Benutzers, sonst dem der Installation. Angemeldete Clients bekommen beide Werte mit den Client-Einstellungen |
+| Ändern | `PUT /api/v1/settings/head-script` mit `{ enabled, value }`: aus der System-Organisation das Skript der Installation, aus jeder anderen Organisation ihr eigenes (mit `perOrganisation`, sonst `403`); höchstens 50.000 Zeichen. Der KI-Assistent und MCP können es nicht aufrufen |
+| Blazor-App | das Layout fügt das Skript ein, sobald die App gestartet ist: Inline-JavaScript läuft im globalen Bereich, `<script src>` lädt als Tag, `<noscript>` und `<iframe>` kommen ans Ende des Body. Ein geändertes Skript gilt nach dem Neuladen |
+
+Die Content-Security-Policy der Web-App erlaubt keine Inline-Skripte. Das Layout führt Inline-JavaScript deshalb mit `eval` aus, das die Policy für Blazor ohnehin erlaubt; ein Skript von einem anderen Host (`https://www.googletagmanager.com` für den Google Tag Manager) braucht diesen Host in `script-src`, und was es sendet oder zeigt, braucht `connect-src`, `img-src` oder `frame-src`: `Coworkee:Bff:SecurityHeaders:Sources`, siehe [Sicherheits-Header der Web-App](../security/authentication.md#sicherheits-header-der-web-app). Eine ersetzte Policy ohne `'unsafe-eval'` führt kein Inline-Head-Skript aus.
+
+!!! warning "Eine Skript-Einstellung ist gespeichertes Cross-Site-Scripting, mit Absicht"
+    Das Skript läuft im Browser jedes Benutzers mit dessen Sitzung: Es kann die Seiten lesen und die API als dieser Benutzer aufrufen. Vergib `Settings.HeadScript` an wenige (die Systemrolle *Admin* hat jede Berechtigung, mit `perOrganisation` auch in jeder Organisation). Jede Änderung steht im Audit-Log (`SettingValue`, mit dem, der sie gemacht hat; der Wert selbst ist wie jeder Einstellungswert maskiert). Das Skript einer Organisation erreicht nur ihre eigenen Benutzer, nie die einer anderen Organisation oder der System-Organisation; wer sich als jemand anderes anmeldet, bekommt das Skript der Organisation dieses Benutzers, bis die Seite neu geladen wird.
+
 ### Spracheinstellungen
 
 `SettingType.Language` passt für Einstellungen, die eine Kultur halten. `Localization.Culture` (**Default language**) ist die Sprache, in der die App startet: Eine Organisation überschreibt den Systemwert, ein Benutzer überschreibt beide. Ein leerer Wert erbt.

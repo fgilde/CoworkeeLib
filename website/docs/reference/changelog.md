@@ -2,6 +2,17 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- The head script: `AddCoworkeeHeadScript(perOrganisation)` turns on the settings `HeadScript.Enabled` and `HeadScript.Value` (HTML with script tags, e.g. a tag manager), the permission `Settings.HeadScript`, the anonymous `GET /api/v1/settings/head-script` and `PUT /api/v1/settings/head-script`; the Blazor layout adds the script to the page. Off unless the app calls it. See [Settings](../modules/settings.md#head-script).
+- `SettingDefinition.Permission` (`Add(..., permission: ...)`): a setting changes only with that permission on top of the scope's own rule, also through `PUT /api/v1/settings/{scope}`.
+
+### Fixed
+
+- Two modules adding permissions to the same group listed that group twice in the permission tree. No action needed.
+
 ## 0.0.1.52 (2026-10-31)
 
 ### Added

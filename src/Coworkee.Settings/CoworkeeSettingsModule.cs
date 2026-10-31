@@ -57,6 +57,9 @@ public sealed class CoworkeeSettingsModule : CoworkeeModule, IWebModule
         api.MapGet("/client", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetClientSettings(), ct).ToHttpResult());
         api.MapGet("/user", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetUserSettings(), ct).ToHttpResult());
         api.MapPut("/user", (SetSettingsRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetUserSettings(body.Values), ct).ToHttpResult());
+        api.MapGet("/head-script", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetHeadScript(), ct).ToHttpResult()).AllowAnonymous();
+        api.MapPut("/head-script", (SetHeadScriptRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new SetHeadScript(body.Enabled, body.Value), ct).ToHttpResult());
         var configuration = app.MapCoworkeeApi("/api/v1/configuration").WithTags("Configuration").RequireAuthorization();
         configuration.MapGet("/", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetAppConfigurations(), ct).ToHttpResult());
         configuration.MapGet("/{section}", (string section, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetAppConfiguration(section), ct).ToHttpResult());

@@ -66,7 +66,29 @@ public static class SettingsPermissions
 {
     public const string GroupName = "Settings";
     public const string Manage = "Settings.Manage";
+
+    /// <summary>Changes the head script (<see cref="HeadScriptSettings"/>); defined only in apps that turn the head script on.</summary>
+    public const string HeadScript = "Settings.HeadScript";
 }
+
+/// <summary>
+/// HTML with script blocks (a tag manager, analytics) the Blazor app adds to its page once it starts, and other clients read anonymously
+/// (<c>GET /api/v1/settings/head-script</c>). Off unless the app calls <c>AddCoworkeeHeadScript</c>; only <see cref="SettingsPermissions.HeadScript"/> changes it.
+/// </summary>
+public static class HeadScriptSettings
+{
+    public const string Enabled = "HeadScript.Enabled";
+    public const string Value = "HeadScript.Value";
+
+    /// <summary>The longest value the server takes.</summary>
+    public const int MaxLength = 50_000;
+}
+
+/// <summary>The head script as it applies to the caller: of the organisation, else of the installation.</summary>
+public sealed record HeadScriptDto(bool Enabled, string Value);
+
+/// <summary>Sets the head script of the caller's organisation, or of the installation when the caller is in the system organisation.</summary>
+public sealed record SetHeadScriptRequest(bool Enabled, string? Value);
 
 /// <summary>A setting applies only while <see cref="Setting"/> holds one of <see cref="Values"/> (bool as true/false); otherwise its field is disabled.</summary>
 public sealed record SettingCondition(string Setting, IReadOnlyList<string> Values)

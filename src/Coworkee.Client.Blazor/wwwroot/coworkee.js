@@ -63,6 +63,42 @@ export function resizeImage(dataUrl, max) {
 }
 
 // null brings back the icon the page came with
+// the head script setting: its script tags run once per page load. The app's Content-Security-Policy allows no inline scripts but eval, so inline
+// JavaScript runs through an indirect eval (global scope, as a script tag); scripts with src load as tags and need their host in script-src
+export function injectHeadScript(html) {
+    if (!html || document.head.querySelector('meta[name="cw-head-script"]')) {
+        return;
+    }
+
+    document.head.appendChild(Object.assign(document.createElement('meta'), { name: 'cw-head-script' }));
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    for (const old of template.content.querySelectorAll('script')) {
+        const javascript = !old.type || /^(text|application)\/javascript$/i.test(old.type);
+        if (javascript && !old.src) {
+            try {
+                (0, eval)(old.textContent);
+            } catch (error) {
+                console.warn('The head script failed', error);
+            }
+
+            continue;
+        }
+
+        const script = document.createElement('script');
+        for (const attribute of old.attributes) {
+            script.setAttribute(attribute.name, attribute.value);
+        }
+
+        script.text = old.textContent;
+        document.head.appendChild(script);
+    }
+
+    for (const element of template.content.querySelectorAll('noscript, iframe')) {
+        document.body.appendChild(element.cloneNode(true));
+    }
+}
+
 export function setFavicon(href) {
     let links = [...document.querySelectorAll('link[rel~="icon"]')];
     if (!links.length) {
