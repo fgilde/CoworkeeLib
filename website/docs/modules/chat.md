@@ -9,7 +9,9 @@
 public sealed class MyAppDatabaseModule : CoworkeeModule;
 ```
 
-The module depends on the identity, realtime and storage modules (files go to the [blob storage](storage.md)). Mentions notify through the notifications module (see [Realtime and notifications](realtime.md#notifications)) when the app has it.
+The module depends on the identity, realtime, storage and background job modules (files go to the [blob storage](storage.md), a job deletes unsent files). Mentions notify through the notifications module (see [Realtime and notifications](realtime.md#notifications)) when the app has it. The template adds it with the option `chat` (on by default).
+
+Chatting needs the permission `Chat.Use` (*Chat with people of the organisation*); it shows the page *Chat* (`/chat`, `?c={id}` opens a chat) in the navigation. Chats are also found by the [global search](../web/global-search.md) (provider `chats`).
 
 ## Writing
 
@@ -56,6 +58,15 @@ A mention notifies only **members** of the chat (type `chat.mention`, link `/cha
 | Setting | |
 |---|---|
 | `Chat.MaxAttachmentMb` | largest file in MB, default 25 (Global, visible to the client, which checks before uploading) |
+| `Coworkee:Chat:UnsentAttachmentLifetime` | configuration: how long an uploaded file waits for its message, default `1.00:00:00` |
+
+| Limit | |
+|---|---|
+| Text of a message | 4,000 characters (plain text), 16,000 as HTML |
+| Files per message | 10 |
+| Name of a group or file | 200 characters |
+| People per create or add | fewer than 100 |
+| Messages per page | 50 |
 
 A virus scanner or other check plugs in as `IChatAttachmentScanner`; any scanner that says no rejects the upload:
 
@@ -101,6 +112,10 @@ await realtime.SubscribeAsync(RealtimeTopics.User(me), envelope =>
     if (envelope.Type == ChatEvents.Message) { /* envelope.Payload is a ChatMessageDto */ }
 });
 ```
+
+## Personal data
+
+The personal data export has a section `chat`: what the user sent anywhere and what he received in direct chats. Erasing the user removes those messages and their files.
 
 ## Upgrading
 
