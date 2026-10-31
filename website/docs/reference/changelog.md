@@ -6,6 +6,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Added
 
+- `IODataQueries.QueryAsync<T>(route, entitySet, query, facets, facetContext, ct)` takes a table's facet choice (`FacetContextDto`), so an endpoint that answers a `CoworkeeDataTable` through a `DataSource` counts each facet group without its own choice, as the OData route does. The overload without it stays. See [OData](../web/odata.md).
 - Column headers in exports: `columns=Field:Header` heads a CSV or Excel column (`columns=Number:Shipment no.,Total`); a backslash escapes a comma or colon in a header, and `ExportColumns.Format`/`Parse` (`Coworkee.Contracts.Data`) write and read the value. `columns=Field` works as before, JSON keys stay the field names, and mailed and scheduled exports keep the headers with their query. See [import and export](../web/import-export.md#export).
 - `route=<prefix>` in an export query (`GET .../export`, the stream, `MailExportRequest.Query`, `SaveExportScheduleRequest.Query`) reads `$filter`, `$orderby` and `columns` in the names of that OData route (`AddCoworkeeODataRoute`), e.g. `route=rt/odata&$filter=creationTime gt 2026-01-01T00:00:00Z`; without it the names of `/odata`. The set's permission, hidden and protected properties, row filters and groups apply as on the route; an unknown route answers `400`.
 - `fileName=<name>` in an export query names the file of the export and of the stream (job, ready line, download), as `MailExportRequest.FileName` does for mailed exports; the extension of the format is added.

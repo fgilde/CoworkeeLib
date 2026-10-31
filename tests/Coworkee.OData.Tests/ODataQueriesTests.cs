@@ -199,6 +199,34 @@ public sealed class ODataQueriesTests(ODataApp app) : IAsyncLifetime
         (await InProcessAsync<Crate>(_setup.AdminUserId, "odata", "Crates", "$count=true")).Ok().Count.ShouldBe(2, "no selection outside a request");
     }
 
+    [Fact]
+    public async Task A_facet_context_counts_each_group_without_its_own_choice_like_the_route()
+    {
+        // a table that picked the category Tools: the route counts the category facet without that choice, the other facets with it
+        var context = new FacetContextDto(null, new Dictionary<string, string> { ["category"] = "Category eq 'Tools'" });
+        const string query = "$filter=Category eq 'Tools'&$count=true";
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/odata/Gadgets?" + query);
+        request.Headers.Add("Prefer", "odata.include-annotations=\"cn.facets\"");
+        request.Headers.Add(FacetContextDto.Header, context.Encode());
+        using var response = await Admin.SendAsync(request, Ct);
+        var routeFacets = JsonDocument.Parse(await response.Content.ReadAsStringAsync(Ct)).RootElement.GetProperty("@cn.facets").Deserialize<List<FacetGroupDto>>(JsonSerializerOptions.Web)!;
+
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(_setup.AdminUserId, _setup.TenantId));
+        await using var scope = app.App.Services.CreateAsyncScope();
+        var queries = scope.ServiceProvider.GetRequiredService<IODataQueries>();
+        var page = (await queries.QueryAsync<Gadget>("odata", "Gadgets", query, facets: true, context, Ct)).Ok();
+        var without = (await queries.QueryAsync<Gadget>("odata", "Gadgets", query, facets: true, Ct)).Ok();
+
+        page.Rows.Select(g => g.Name).ShouldBe(["Drill", "Hammer"], ignoreOrder: true);
+        JsonSerializer.Serialize(page.Facets).ShouldBe(JsonSerializer.Serialize(routeFacets));
+        // the category group counts the other categories too, which the whole filter leaves out
+        LightCount(page.Facets!).ShouldBe(1);
+        LightCount(without.Facets!).ShouldBe(0);
+    }
+
+    private static int LightCount(IReadOnlyList<FacetGroupDto> facets) =>
+        facets.Single(f => f.Key == "category").Options.Where(o => o.Label == "Light").Sum(o => o.Count);
+
     private async Task<Result<ODataQueryResult<T>>> InProcessAsync<T>(Guid? user, string route, string set, string? query, IServiceProvider? services = null, bool facets = false)
         where T : class
     {
