@@ -7,7 +7,7 @@ Zwei Entwicklungswerkzeuge laufen im Aspire-AppHost neben der App, in einer neue
 - **Grafana** mit Prometheus, Loki, Tempo und einem OpenTelemetry-Collector: Metriken, Logs und Traces jedes Dienstes, die App-Datenbank und fertige Dashboards.
 - **WebDataStudio**: die App-Datenbank im Browser, mit Tabellen, SQL, Diagrammen und Exporten.
 
-Beide melden sich mit dem Administrator der App an (dieselbe E-Mail und dasselbe Passwort wie in der App, siehe `LOGIN.md`) und, wenn [Keycloak](../security/authentication.md) aktiv ist, zusätzlich über den Keycloak-Knopf. Sie kommen aus den Paketen `Nextended.Aspire.Hosting.Grafana` und `Nextended.Aspire.Hosting.WebDataStudio`, die `Coworkee.Aspire` mitbringt.
+Beide melden sich mit dem Administrator der App an (dieselbe E-Mail und dasselbe Passwort wie in der App, siehe `LOGIN.md`) und die Administratoren der Systemorganisation zusätzlich am Auth-Server der App (über [Keycloak](../security/authentication.md), wenn es aktiv ist). Sie kommen aus den Paketen `Nextended.Aspire.Hosting.Grafana` und `Nextended.Aspire.Hosting.WebDataStudio`, die `Coworkee.Aspire` mitbringt.
 
 ![Grafana-Übersichtsdashboard](../assets/screenshots/grafana-overview-dark.webp)
 
@@ -52,10 +52,10 @@ Jedes Dashboard filtert nach Dienst und verweist auf die anderen. Sie werden bei
 
 ## Anmeldung
 
-| | Lokale Anmeldung | Keycloak |
+| | Lokale Anmeldung | Auth-Server der App |
 |---|---|---|
-| Grafana | E-Mail und Passwort des Administrators, als Grafana-Server-Admin | *Sign in with Keycloak*: die Realm-Rolle `Administrator` (oder die E-Mail des Administrators) wird Grafana-Server-Admin, alle anderen Viewer |
-| WebDataStudio | E-Mail und Passwort des Administrators, als Studio-Admin | *Keycloak*: die Realm-Rolle `Administrator` (oder die E-Mail des Administrators) wird Studio-Admin, alle anderen Viewer |
+| Grafana | E-Mail und Passwort des Administrators, als Grafana-Server-Admin | *Sign in with MyApp*: Administratoren der Systemorganisation, als Grafana-Admins |
+| WebDataStudio | E-Mail und Passwort des Administrators, als Studio-Admin | der Knopf der App: Administratoren der Systemorganisation, als Studio-Admins |
 
 Der generierte AppHost nimmt den Administrator aus `src/MyApp.Migrations/DemoUsers.cs`, der Datei, die auch der Seed und der Keycloak-Realm lesen:
 
@@ -66,7 +66,7 @@ options.Administrator = new(administrator.Email, administrator.Password);
 
 Ohne `options.Administrator` bekommen beide Werkzeuge den Benutzer `admin` mit einem generierten Passwort: dem Parameter `myapp-admin-password` im Aspire-Dashboard.
 
-Mit Keycloak legt der AppHost die Clients `myapp-grafana` und `myapp-webdatastudio` mit ihren Weiterleitungsadressen im Realm der App an und gibt den Realm-Benutzern ihre Realm-Rollen (`KeycloakUser.Roles`; der generierte AppHost ergänzt `Administrator` für Benutzer mit `IsAdmin`). Jeder Client des Realms bekommt die Rollen im Claim `roles`. Die Container erreichen Keycloak über das Container-Netz, der Browser über seine eigene Adresse: Keycloak nennt sich dann mit der Adresse des Browsers (`KC_HOSTNAME`), sodass alle Tokens denselben Aussteller tragen.
+Mit einem Auth-Server im AppHost bekommt jedes Werkzeug einen vertraulichen Client bei ihm (`myapp-grafana`, `myapp-webdatastudio`) mit seiner Weiterleitungsadresse, nicht im Launcher sichtbar. Der Auth-Server lässt nur Administratoren der Systemorganisation durch (`SystemAdministratorsOnly`), alle anderen bekommen `access_denied`; wer auf diesem Weg kommt, ist also Admin des Werkzeugs, und ein Benutzer des Auth-Servers mit der E-Mail des Administrators ist derselbe Grafana-Benutzer. Mit Keycloak leitet der Auth-Server wie bei der App zu Keycloak weiter; die Werkzeuge haben keine Clients im Realm. Die Container erreichen den Auth-Server über das Container-Netz, der Browser über seine eigene Adresse, siehe [Tools melden sich am Auth-Server an](aspire.md#tools-melden-sich-am-auth-server-an).
 
 ## Ein- und ausschalten
 
@@ -117,12 +117,17 @@ Eine App, die vor diesen Optionen erzeugt wurde, braucht außerdem den zweiten E
 ```csharp
 if (builder.Configuration["GRAFANA_OTLP_ENDPOINT"] is { Length: > 0 } grafana)
 {
-    void Grafana(OtlpExporterOptions o) => (o.Endpoint, o.Protocol, o.Headers) = (new Uri(grafana), OtlpExportProtocol.Grpc, string.Empty);
-    telemetry.WithLogging(l => l.AddOtlpExporter("grafana", Grafana)).WithMetrics(m => m.AddOtlpExporter("grafana", Grafana)).WithTracing(t => t.AddOtlpExporter("grafana", Grafana));
+    // ein deployter Collector nimmt OTLP über HTTP, mit einem eigenen Pfad je Signal
+    var http = builder.Configuration["GRAFANA_OTLP_PROTOCOL"] == "http/protobuf";
+    Action<OtlpExporterOptions> Grafana(string signal) => o => (o.Endpoint, o.Protocol, o.Headers) = http
+        ? (new Uri($"{grafana.TrimEnd('/')}/v1/{signal}"), OtlpExportProtocol.HttpProtobuf, string.Empty)
+        : (new Uri(grafana), OtlpExportProtocol.Grpc, string.Empty);
+    telemetry.WithLogging(l => l.AddOtlpExporter("grafana-logs", Grafana("logs"))).WithMetrics(m => m.AddOtlpExporter("grafana-metrics", Grafana("metrics")))
+        .WithTracing(t => t.AddOtlpExporter("grafana-traces", Grafana("traces")));
 }
 ```
 
-`telemetry` ist dabei der Builder von `builder.Services.AddOpenTelemetry()`, und der Exporter für das Aspire-Dashboard wird je Signal angehängt (`AddOtlpExporter()`) statt mit `UseOtlpExporter()`, das sich nicht mit einem zweiten Exporter verträgt.
+`GRAFANA_OTLP_PROTOCOL` ist in einem Deployment `http/protobuf` (lokal gRPC). `telemetry` ist dabei der Builder von `builder.Services.AddOpenTelemetry()`, und der Exporter für das Aspire-Dashboard wird je Signal angehängt (`AddOtlpExporter()`) statt mit `UseOtlpExporter()`, das sich nicht mit einem zweiten Exporter verträgt.
 
 ## Datenbanken
 
@@ -133,5 +138,5 @@ if (builder.Configuration["GRAFANA_OTLP_ENDPOINT"] is { Length: > 0 } grafana)
 | SQLite | keine Datenbank-Datenquelle und kein Dashboard *App data* | die Datenbankdatei, aus `.data` eingebunden |
 | `UseDatabase(...)` | keine Datenbank-Datenquelle | Verbindung mit dem übergebenen Connection-String |
 
-!!! note "Nur für die Entwicklung"
-    Beide Werkzeuge kommen mit `coworkee deploy` mit: Grafanas Konfiguration und die Dashboards der App stecken in seinen Images, WebDataStudio bekommt ein Volume, beide eine öffentliche Adresse hinter deinem Proxy und den Administrator aus den Deploy-Parametern (mit Keycloak auch dessen Anmeldung). `coworkee deploy --without grafana` oder `DeployTool(CoworkeeTools.Grafana, false)` lässt eins weg, siehe [Deployment](deployment.md#tools). Generierte Konfigurationen landen in `src/MyApp.AppHost/observability/.generated` (von git ignoriert).
+!!! note "In einem Deployment"
+    Beide Werkzeuge kommen mit `coworkee deploy` mit: Grafanas Konfiguration und die Dashboards der App stecken in seinen Images, WebDataStudio bekommt ein Volume, beide eine öffentliche Adresse hinter deinem Proxy und den Administrator aus den Deploy-Parametern (und die Anmeldung am Auth-Server). `coworkee deploy --without grafana` oder `DeployTool(CoworkeeTools.Grafana, false)` lässt eins weg, siehe [Deployment](deployment.md#tools). Generierte Konfigurationen landen in `src/MyApp.AppHost/observability/.generated` (von git ignoriert).
