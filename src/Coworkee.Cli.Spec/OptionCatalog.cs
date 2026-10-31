@@ -67,6 +67,9 @@ public static class OptionCatalog
     public const string Code = "Code";
     public const string Tooling = "Tooling";
 
+    /// <summary>Every group, for texts that name them.</summary>
+    public const string GroupNames = General + ", " + Modules + ", " + Infrastructure + ", " + Branding + ", " + SignIn + ", " + Code + " or " + Tooling;
+
     /// <summary>Cultures the library ships texts for (Localization/{culture}.json of its modules), English being the keys; apps start with <see cref="DefaultLanguages"/>.</summary>
     public static readonly IReadOnlyList<string> ShippedLanguages =
         ["en", "ar", "bg", "cs", "da", "de", "el", "es", "fr", "hr", "id", "it", "ja", "km", "ko", "nl", "pl", "pt", "ru", "sv", "tr", "uk", "zh"];

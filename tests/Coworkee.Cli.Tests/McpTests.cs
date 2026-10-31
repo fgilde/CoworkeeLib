@@ -46,6 +46,10 @@ public sealed class McpTests : IAsyncLifetime
             ["list_options", "get_spec_schema", "get_spec_example", "validate_spec", "create_app", "add_module", "add_entity", "import_entities", "add_migration", "add_option", "run_doctor", "update_packages", "search_docs"],
             ignoreOrder: true);
         tools.ShouldAllBe(t => !string.IsNullOrWhiteSpace(t.Description));
+        // coworkee mcp --help names every tool, and list_options every group it may filter by
+        tools.ShouldAllBe(t => Commands.McpCommand.Help.Contains(t.Name));
+        var group = tools.Single(t => t.Name == "list_options").JsonSchema.GetProperty("properties").GetProperty("group").GetProperty("description").GetString()!;
+        OptionCatalog.All.Select(o => o.Group).Distinct().ShouldAllBe(g => group.Contains(g));
         tools.Single(t => t.Name == "create_app").JsonSchema.GetRawText().ShouldNotContain("templateSource");
         _client.ServerInfo.Name.ShouldBe("coworkee");
         _client.ServerInstructions!.ShouldContain("create_app");

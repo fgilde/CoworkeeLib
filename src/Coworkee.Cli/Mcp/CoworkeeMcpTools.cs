@@ -20,7 +20,7 @@ internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
 {
     [McpServerTool(Name = "list_options", ReadOnly = true, Title = "List the options of coworkee new")]
     [Description("Every option of a new Coworkee app (modules, infrastructure, branding, sign-in, code generation) with id, flag, kind, default, choices, pros, cons and when to use it. Use the ids in the options of a spec.")]
-    public static string ListOptions([Description("Only this group: General, Modules, Infrastructure, Branding, Sign-in or Code.")] string? group = null) =>
+    public static string ListOptions([Description("Only this group: " + OptionCatalog.GroupNames + ".")] string? group = null) =>
         OptionsCommand.CatalogJson(group);
 
     [McpServerTool(Name = "get_spec_schema", ReadOnly = true, Title = "JSON Schema of an app spec")]
