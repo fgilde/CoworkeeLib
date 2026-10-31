@@ -13,23 +13,25 @@ Coworkee has two kinds of configuration that administrators change at runtime.
 ## Settings
 
 ```csharp
-internal sealed class MailSettingDefinitions : ISettingDefinitionContributor
+internal sealed class SupportSettingDefinitions : ISettingDefinitionContributor
 {
     public void Define(SettingDefinitionContext context) =>
-        context.Group("Mail", "Mail")
-            .Add("Mail.Smtp.Host", "SMTP host", SettingType.String, [SettingScope.Global])
-            .Add("Mail.Smtp.Port", "SMTP port", SettingType.Int, [SettingScope.Global], defaultValue: "25")
-            .Add("Mail.Smtp.Password", "SMTP password", SettingType.Secret, [SettingScope.Global]);
+        context.Group("Support", "Support")
+            .Add("Support.Email", "Support address", SettingType.String, [SettingScope.Global, SettingScope.Tenant], visibleToClient: true)
+            .Add("Support.MaxTickets", "Open tickets per user", SettingType.Int, [SettingScope.Global], defaultValue: "5")
+            .Add("Support.ApiKey", "Ticket system API key", SettingType.Secret, [SettingScope.Global]);
 }
+
+context.Services.AddSingleton<ISettingDefinitionContributor, SupportSettingDefinitions>();
 ```
 
-Types are `String`, `Text`, `Bool`, `Int`, `Secret`, `Choice` and `Language`; scopes are `Global`, `Tenant` and `User`. The most specific value wins. Secrets are encrypted with ASP.NET Core data protection and never sent to the client; settings with `visibleToClient: true` are.
+Types are `String`, `Text`, `Bool`, `Int`, `Secret`, `Choice` and `Language`; scopes are `Global`, `Tenant` and `User`. The most specific value wins. Secrets are encrypted with ASP.NET Core data protection and never sent to the client; settings with `visibleToClient: true` are. A name is defined once in the whole app: two contributors adding the same name stop the start. Groups may be shared, the first contributor names them.
 
 ```csharp
 var allowed = await settings.GetAsync<bool>(AccountSettings.AllowRegistration, ct);
 ```
 
-Defaults can also come from configuration: `Coworkee:Settings:Defaults:Mail.Smtp.Host`. The app host uses that for Mailpit.
+Defaults can also come from configuration, `Coworkee:Settings:Defaults:<name>`: the app host sets `Coworkee:Settings:Defaults:Mail.Smtp.Host` and `Mail.Smtp.Port` for Mailpit.
 
 The section **Cloud file pickers** of the System tab holds the ids of Google Drive, OneDrive and Dropbox for every upload field, see [Files](files.md#cloud-file-pickers).
 
@@ -84,9 +86,26 @@ enabledWhen: new SettingCondition(LocalizationSettings.TranslationProvider, [Tra
 
 This is a convenience of the form only; the server does not enforce it. A condition on a setting that is not part of the form (another scope, for example) leaves the field enabled.
 
+### Settings with their own permission
+
+`Settings.Manage` opens the settings tabs. A setting that needs more names a permission in its definition (`SettingDefinition.Permission`):
+
+```csharp
+context.Group("Support", "Support")
+    .Add("Support.Banner", "Banner text", SettingType.Text, [SettingScope.Global, SettingScope.Tenant], permission: SupportPermissions.Banner);
+```
+
+The setting then changes only with that permission on top of the scope's own rule, on every way in: the settings tabs, `PUT /api/v1/settings/global`, `PUT /api/v1/settings/tenant` and `PUT /api/v1/settings/user`. Without it the whole save is refused with `403` (`settings.permission`, *Changing 'Support.Banner' needs the permission ...*). The form still shows the field to everyone who sees the tab; as it sends only changed values, saving other settings keeps working. Reading is not restricted by it. The head script below is built this way.
+
 ### Groups on their own page
 
-`context.Group(name, displayName, page: "/admin/ai-settings")` marks a group as maintained on its own admin page. The settings tabs skip it, and the user's **My settings** keep every group that has no page. The AI group works this way: its settings, including the MCP switch, live on `/admin/ai-settings`. So does Mail: provider, credentials and the own-server switch of an organisation live on `/admin/mail-settings`, see [Mailing](mailing.md#the-mail-settings-page).
+`context.Group(name, displayName, page: "/admin/ai-settings")` marks a group as maintained on its own admin page. The settings tabs skip it, and the user's **My settings** keep every group that has no page. The AI group works this way: its settings, including the MCP switch, live on `/admin/ai-settings`. So does Mail: provider, credentials and the own-server switch of an organisation live on `/admin/mail-settings`, see [Mailing](mailing.md#the-mail-settings-page). Retention keeps its days on `/admin/retention`, see [Retention](retention.md).
+
+### Language settings
+
+`SettingType.Language` fits settings that hold a culture. `Localization.Culture` (**Default language**) is the language the app starts in: an organisation overrides the system value, and a user overrides both. An empty value inherits.
+
+![Settings page](../assets/screenshots/settings.png){ .shot }
 
 ### Head script
 
@@ -110,15 +129,22 @@ The web app's Content-Security-Policy allows no inline scripts. The layout there
 !!! warning "A script setting is stored cross-site scripting by design"
     The script runs in the browser of every user with the user's session: it can read the pages and call the API as the user. Grant `Settings.HeadScript` to few people (the system role *Admin* has every permission, with `perOrganisation` also in each organisation). Every change is in the audit log (`SettingValue`, with who changed it; the value itself is masked like every setting value). An organisation's script reaches only its own users, never another organisation's or those of the system organisation; a user who signs in as someone else gets the script of that user's organisation until the page is loaded again.
 
-### Language settings
+### Endpoints and permissions
 
-`SettingType.Language` fits settings that hold a culture. `Localization.Culture` (**Default language**) is the language the app starts in: an organisation overrides the system value, and a user overrides both. An empty value inherits.
+| Route | Who |
+|---|---|
+| `GET /api/v1/settings/definitions` | `Settings.Manage`: the groups and definitions of the tabs |
+| `GET`/`PUT /api/v1/settings/global` | `Settings.Manage`, from the system organisation only |
+| `GET`/`PUT /api/v1/settings/tenant` | `Settings.Manage`: the values of the user's organisation |
+| `GET /api/v1/settings/definitions/user`, `GET`/`PUT /api/v1/settings/user` | every signed-in user: the definitions and values of scope `User` (*My settings*) |
+| `GET /api/v1/settings/client` | every signed-in user: the values of the settings with `visibleToClient: true`, as they apply to the user |
+| `GET`/`PUT /api/v1/settings/head-script` | see [Head script](#head-script) |
 
-![Settings page](../assets/screenshots/settings.png){ .shot }
+Reads list every definition of the scope with `hasValue`; secrets never come back. Writes check the type (`Expected true or false.`, `Expected a whole number.`, `Expected one of: ...`) and a definition's own permission, and are kept in the audit log.
 
 ## Typed app settings
 
-The app describes its settings as classes. Values come from appsettings and the environment; what administrators change is stored in `cw.ConfigurationEntries` and lies on top for every service of the app. The Settings page renders each class with `MudExObjectEditForm`, the way the classic settings page did, and services read `IOptionsMonitor<T>` and see changes within seconds. Values read once at startup apply after a restart.
+The app describes its settings as classes. Values come from appsettings and the environment; what administrators change is stored in `cw.ConfigurationEntries` and lies on top for every service of the app. The Settings page renders each class with `MudExObjectEditForm`, the way the classic settings page did, and services read `IOptionsMonitor<T>` and see changes within 15 seconds (`reloadInterval` of `AddCoworkeeDatabaseConfiguration`). Values read once at startup apply after a restart.
 
 Every service that should see the changes adds the database layer to its configuration:
 
@@ -188,6 +214,8 @@ builder.Services.AddCoworkeeSettings<ShopSettings>(section: "Shop", title: "Shop
 
 **Restore defaults** drops the values changed in the app; appsettings and environment apply again.
 
+Behind the page: `GET /api/v1/configuration` (the sections), `GET`/`PUT /api/v1/configuration/{section}` and `DELETE /api/v1/configuration/{section}` (restore defaults), all with `Settings.Manage` from the system organisation.
+
 ### Editors for file types, sizes, schedules and translations
 
 Four attributes from `Coworkee.Contracts.Configuration` pick a better editor for a property, in the Settings page and in every other object form of the app:
@@ -238,21 +266,21 @@ Further classes show as further tabs next to the app settings:
 
 ```csharp title="Server"
 builder.Configuration
-    .AddCoworkeeAppConfigurationDefaults(SharemeConfiguration.Defaults(), SharemeConfiguration.Section)
-    .AddCoworkeeDatabaseConfiguration("shareme");
+    .AddCoworkeeAppConfigurationDefaults(PortalConfiguration.Defaults(), PortalConfiguration.Section)
+    .AddCoworkeeDatabaseConfiguration("myapp");
 
-context.Services.AddCoworkeeAppConfiguration<SharemeConfiguration>(context.Configuration, SharemeConfiguration.Section, SharemeConfiguration.Title,
+context.Services.AddCoworkeeAppConfiguration<PortalConfiguration>(context.Configuration, PortalConfiguration.Section, PortalConfiguration.Title,
     rules => rules.Lock(c => c.Storage));
 ```
 
 ```csharp title="Blazor client"
-builder.Services.AddCoworkeeAppConfiguration<SharemeConfiguration>(SharemeConfiguration.Section, SharemeConfiguration.Title);
+builder.Services.AddCoworkeeAppConfiguration<PortalConfiguration>(PortalConfiguration.Section, PortalConfiguration.Title);
 ```
 
-`AddCoworkeeAppConfigurationDefaults` adds a JSON file of the section as the lowest layer. Sharemee generates `SharemeConfiguration` from `appconfig.json` with `Nextended.CodeGen`, so the JSON defaults and the class cannot drift apart:
+`AddCoworkeeAppConfigurationDefaults(stream, section)` adds a JSON document of the section as the lowest layer: appsettings, the environment and the values changed in the app all override it. Generate the class from the same `appconfig.json` with `Nextended.CodeGen`, so the JSON defaults and the class cannot drift apart:
 
 ```json title="CodeGen.config.json"
-{ "JsonConfigs": [ { "SourceFile": "Configuration/appconfig.json", "RootClassName": "SharemeConfiguration", "Namespace": "Shareme.Contracts.Configuration" } ] }
+{ "JsonConfigs": [ { "SourceFile": "Configuration/appconfig.json", "RootClassName": "PortalConfiguration", "Namespace": "MyApp.Contracts.Configuration" } ] }
 ```
 
 The old address `/admin/configuration` leads to the Settings page.
