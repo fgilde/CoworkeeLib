@@ -49,7 +49,8 @@ internal sealed class SettingDefinitionHandlers(ISettingDefinitionManager defini
 }
 
 internal sealed class SettingValueHandlers(
-    CoworkeeDbContext db, ICurrentUser currentUser, ISettingDefinitionManager definitions, SettingWriter writer, ISettingProvider provider, IServiceProvider services)
+    CoworkeeDbContext db, ICurrentUser currentUser, ISettingDefinitionManager definitions, SettingWriter writer, ISettingProvider provider, IPermissionChecker permissions,
+    IServiceProvider services)
     : IHandler<GetManagedSettings, Result<IReadOnlyList<SettingValueDto>>>,
       IHandler<SetManagedSettings, Result>,
       IHandler<GetUserSettings, Result<IReadOnlyList<SettingValueDto>>>,
@@ -97,6 +98,15 @@ internal sealed class SettingValueHandlers(
         if (!TryScopeKey(scope, out var key, out var error) || !await MayUseAsync(scope, cancellationToken))
         {
             return error ?? GlobalForbidden;
+        }
+
+        // a setting with its own permission (the head script) changes only with that permission on top
+        foreach (var name in values.Keys)
+        {
+            if (definitions.Find(name)?.Permission is { } permission && !await permissions.IsGrantedAsync(permission, cancellationToken))
+            {
+                return Error.Forbidden("settings.permission", $"Changing '{name}' needs the permission {permission}.");
+            }
         }
 
         return await writer.WriteAsync(scope, key, values, cancellationToken) is { } invalid ? invalid : Result.Success();

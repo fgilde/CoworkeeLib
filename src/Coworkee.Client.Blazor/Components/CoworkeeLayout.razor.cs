@@ -111,6 +111,7 @@ public partial class CoworkeeLayout : IAsyncDisposable
     {
         await Preferences.LoadAsync();
         await ThemeService.LoadAsync();
+        await InjectHeadScriptAsync();
         // ponytail: upload fields of the first page rendered before this keep no pickers until they render again
         Blazor.Files.CloudFilePickers.Apply(MudEx, ThemeService.ClientSettings);
         await Data.DialogPlacement.StartAsync(JS);
@@ -119,6 +120,25 @@ public partial class CoworkeeLayout : IAsyncDisposable
         _systemDark = _provider is not null && await _provider.GetSystemDarkModeAsync();
         _started = true;
         Refresh();
+    }
+
+    // the head script setting (AddCoworkeeHeadScript on the server), once per page load; a new value applies after a reload
+    private async Task InjectHeadScriptAsync()
+    {
+        var settings = ThemeService.ClientSettings;
+        if (settings.GetValueOrDefault(HeadScriptSettings.Enabled) != "true" || settings.GetValueOrDefault(HeadScriptSettings.Value) is not { Length: > 0 } html)
+        {
+            return;
+        }
+
+        try
+        {
+            _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
+            await _module.InvokeVoidAsync("injectHeadScript", html);
+        }
+        catch (JSException)
+        {
+        }
     }
 
     // the favicon follows the theme logo; without one the page keeps its own icon

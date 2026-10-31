@@ -15,7 +15,12 @@ public sealed class PermissionDefinitionContext
 
     public PermissionGroupBuilder Group(string name, string displayName)
     {
-        Groups.Add((name, displayName));
+        // a module may add to a group of another module (the head script to Settings)
+        if (!Groups.Exists(g => g.Name == name))
+        {
+            Groups.Add((name, displayName));
+        }
+
         return new PermissionGroupBuilder(this, name);
     }
 }

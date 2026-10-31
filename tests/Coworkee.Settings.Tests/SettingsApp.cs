@@ -141,6 +141,7 @@ public sealed class TestSettingsModule : CoworkeeModule
     public override void ConfigureServices(ModuleServiceContext context)
     {
         context.Services.AddSingleton<ISettingDefinitionContributor, TestSettingDefinitions>();
+        context.Services.AddCoworkeeHeadScript(perOrganisation: true);
         context.Services.AddCoworkeeAppConfiguration<TestAppConfig>(context.Configuration, "TestApp", "Test app");
         context.Services.AddCoworkeeAppConfiguration<MaskedConfig>(context.Configuration, "Masked", "Masked");
         context.Services.AddCoworkeeAppConfiguration<RulesConfig>(context.Configuration, "Rules", "Rules", rules => rules.Lock(c => c.Fixed).Protect(c => c.Guarded));

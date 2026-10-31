@@ -110,6 +110,42 @@ public sealed class LayoutTests : ClientTestBase
         module.Invocations["setFavicon"].ShouldBeEmpty();
     }
 
+    [Fact]
+    public void The_head_script_is_added_once_when_it_is_on()
+    {
+        var module = JSInterop.SetupModule("./_content/Coworkee.Client.Blazor/coworkee.js");
+        Api.GetClientSettingsAsync(Arg.Any<CancellationToken>()).Returns(new Dictionary<string, string?>
+        {
+            [Coworkee.Contracts.Settings.HeadScriptSettings.Enabled] = "true",
+            [Coworkee.Contracts.Settings.HeadScriptSettings.Value] = "<script>window.tag = 1;</script>",
+        });
+        AddAuthorization().SetAuthorized("Ada");
+
+        var layout = Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
+
+        layout.WaitForAssertion(() => module.Invocations["injectHeadScript"].Single().Arguments.ShouldBe(["<script>window.tag = 1;</script>"]));
+    }
+
+    [Theory]
+    [InlineData("false", "<script>window.tag = 1;</script>")]
+    [InlineData("true", "")]
+    [InlineData(null, null)]
+    public void The_head_script_stays_out_while_it_is_off_or_empty(string? enabled, string? value)
+    {
+        var module = JSInterop.SetupModule("./_content/Coworkee.Client.Blazor/coworkee.js");
+        Api.GetClientSettingsAsync(Arg.Any<CancellationToken>()).Returns(enabled is null ? new Dictionary<string, string?>() : new Dictionary<string, string?>
+        {
+            [Coworkee.Contracts.Settings.HeadScriptSettings.Enabled] = enabled,
+            [Coworkee.Contracts.Settings.HeadScriptSettings.Value] = value,
+        });
+        AddAuthorization().SetAuthorized("Ada");
+
+        var layout = Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
+
+        layout.WaitForAssertion(() => layout.Markup.ShouldContain("body"));
+        module.Invocations["injectHeadScript"].ShouldBeEmpty();
+    }
+
     private static Coworkee.Contracts.Theming.ThemeDto Theme(string? logo) => new(
         Guid.CreateVersion7(), "Brand", false, true, System.Text.Json.JsonSerializer.SerializeToElement(new { }), System.Text.Json.JsonSerializer.SerializeToElement(new { }),
         null, null, logo, null, 1);
