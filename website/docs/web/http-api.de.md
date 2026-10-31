@@ -20,7 +20,7 @@ Dienste mit vielen Endpunkten können sich das Mapping sparen: [Anwendungsdienst
 | `Error.Unauthorized` / `Forbidden` / `NotFound` / `Conflict` | `401` / `403` / `404` / `409` Problem Details |
 | `Error.Unexpected` | `500` Problem Details |
 
-Jede Problem-Details-Antwort enthält den `code` des Fehlers, damit Clients auf `catalog.brand_name_taken` reagieren können, statt Text auszuwerten.
+Jede Problem-Details-Antwort enthält die Meldung des Fehlers als `title` und seinen `code`, damit Clients auf `catalog.brand_name_taken` reagieren können, statt Text auszuwerten.
 
 ## Konventionen für alle API-Gruppen
 
@@ -68,8 +68,9 @@ Jede Version bekommt ein eigenes Dokument, `/openapi/v2.json`, und einen Eintrag
 
 | Policy | Standard | Gilt für |
 |---|---|---|
-| `auth` | 60 pro Minute | Anmelde-, Registrierungs- und Passwortseiten des Auth-Servers |
-| `ai` | 30 pro Minute | `/api/v1/ai/*` und `/mcp` |
+| `auth` | 60 pro Minute | Anmelde-, Registrierungs- und Passwortseiten des Auth-Servers, `POST /api/v1/identity/me/email`, `PUT /api/v1/identity/me/password` |
+| `ai` | 30 pro Minute | Assistenten-Sitzungen (`/api/v1/ai/sessions`), Modelle auflisten und eine KI-Verbindung testen, `/mcp` |
+| `apiKeys` | 10 pro Minute | API-Schlüssel anlegen (`POST /api/v1/identity/api-keys`) |
 | `upload` | 120 pro Minute | nichts Eingebautes; für eigene Upload-Endpunkte |
 | `tokens` | 120 pro Minute | anonyme Token-Links: temporäre Datei- und Anhang-Links, Export-Downloads |
 | global | aus | jede Anfrage, sobald konfiguriert |
