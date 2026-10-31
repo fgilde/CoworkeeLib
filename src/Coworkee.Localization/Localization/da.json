@@ -382,7 +382,7 @@
   "Rating": "Vurdering",
   "{0} from {1} ratings": "{0} ud af {1} vurderinger",
   "Remove my rating": "Fjern min vurdering",
-  "Comments, tags and ratings": "Kommentarer, tags og vurderinger",
+  "Comments, tags, ratings and reactions": "Kommentarer, tags, vurderinger og reaktioner",
   "View comments": "Se kommentarer",
   "Write comments": "Skriv kommentarer",
   "Moderate comments": "Moderér kommentarer",
@@ -1891,5 +1891,11 @@
   "You have too many exports running. Wait until one is ready.": "Du har for mange eksporter i gang. Vent, til en er klar.",
   "The export query is not valid.": "Eksportens forespørgsel er ugyldig.",
   "You may not export this list.": "Du må ikke eksportere denne liste.",
-  "The export was cancelled.": "Eksporten blev annulleret."
+  "The export was cancelled.": "Eksporten blev annulleret.",
+  "Daily e-mail with unread notifications": "Daglig e-mail med ulæste notifikationer",
+  "Head script": "Head-script",
+  "Head script on": "Head-script slået til",
+  "The app adds the head script to its page.": "Appen tilføjer head-scriptet til sin side.",
+  "HTML with script tags, e.g. a tag manager. It runs in every user's browser.": "HTML med script-tags, f.eks. en tag manager. Det kører i hver brugers browser.",
+  "Accounts": "Konti"
 }

@@ -382,7 +382,7 @@
   "Rating": "평점",
   "{0} from {1} ratings": "평점 {1}개 중 {0}",
   "Remove my rating": "내 평점 삭제",
-  "Comments, tags and ratings": "댓글, 태그 및 평점",
+  "Comments, tags, ratings and reactions": "댓글, 태그, 평점 및 반응",
   "View comments": "댓글 보기",
   "Write comments": "댓글 작성",
   "Moderate comments": "댓글 관리",
@@ -1891,5 +1891,11 @@
   "You have too many exports running. Wait until one is ready.": "실행 중인 내보내기가 너무 많습니다. 하나가 완료될 때까지 기다리세요.",
   "The export query is not valid.": "내보내기 쿼리가 올바르지 않습니다.",
   "You may not export this list.": "이 목록을 내보낼 권한이 없습니다.",
-  "The export was cancelled.": "내보내기가 취소되었습니다."
+  "The export was cancelled.": "내보내기가 취소되었습니다.",
+  "Daily e-mail with unread notifications": "읽지 않은 알림을 매일 이메일로 받기",
+  "Head script": "헤드 스크립트",
+  "Head script on": "헤드 스크립트 사용",
+  "The app adds the head script to its page.": "앱이 헤드 스크립트를 페이지에 추가합니다.",
+  "HTML with script tags, e.g. a tag manager. It runs in every user's browser.": "script 태그가 포함된 HTML(예: 태그 관리자). 모든 사용자의 브라우저에서 실행됩니다.",
+  "Accounts": "계정"
 }

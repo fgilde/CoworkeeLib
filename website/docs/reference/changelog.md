@@ -27,6 +27,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixed
 
+- Texts: `Reports.Share` reads *Share reports with roles, groups or the organisation*, the social permission group *Comments, tags, ratings and reactions*; the settings *Daily e-mail with unread notifications*, the head script fields and the group *Accounts* are translated in every shipped language.
 - Blazor exports of `CoworkeeDataTable` sent neither the column titles nor `ExportFileName` to the server, and `ExportQueries.Of` joined the columns without escaping. The export now asks with the titles as headers and `fileName=`; `ExportQueries.Of(format, query, columns, fileName)` takes `(Field, Header)` pairs and escapes them with `ExportColumns.Format`.
 - The settings form showed settings with their own permission (the head script) to everyone with `Settings.Manage`; saving them answered 403. The definitions leave such a setting out for whoever lacks its permission.
 - A mail stayed in `Sending` forever when the sender stopped between the provider and saving the result. The recurring job `coworkee-mail-stuck-sending` now fails such mails after `Coworkee:Mail:SendingTimeout` (30 minutes) with *Delivery unknown*, never sending them twice; `Coworkee:Mail:RetryStuckSending` queues them again instead (a mail may then arrive twice). New column `cw.OutgoingMails.SendingSince` and an index on `Status`: add a migration. See [Delivery and the mail log](../modules/mailing.md#delivery-and-the-mail-log).

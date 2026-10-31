@@ -74,7 +74,7 @@ public sealed class CoworkeeSocialModule : CoworkeeModule, IWebModule
 internal sealed class SocialPermissionDefinitions : IPermissionDefinitionContributor
 {
     public void Define(PermissionDefinitionContext context) =>
-        context.Group(SocialPermissions.GroupName, "Comments, tags and ratings")
+        context.Group(SocialPermissions.GroupName, "Comments, tags, ratings and reactions")
             .Add(SocialPermissions.Comments.View, "View comments")
             .Add(SocialPermissions.Comments.Create, "Write comments", SocialPermissions.Comments.View)
             .Add(SocialPermissions.Comments.Moderate, "Moderate comments", SocialPermissions.Comments.Create)
