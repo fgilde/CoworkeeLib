@@ -25,6 +25,19 @@ public sealed class LayoutParityTests : ClientTestBase
         Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
 
     [Fact]
+    public void Tab_badges_flow_inline_after_the_tab_text_so_long_counts_show_in_full()
+    {
+        var tabs = Render<MudTabs>(p => p.AddChildContent<MudTabPanel>(panel => panel.Add(t => t.Text, "Orders").Add(t => t.BadgeData, "1,234")));
+        var layout = RenderLayout();
+
+        // the rules match MudBlazor's markup of a tab badge and come with every app's layout (MudBlazor's absolute badge clipped longer numbers)
+        tabs.Find(".mud-tab .mud-tab-badge .mud-badge-wrapper .mud-badge").TextContent.Trim().ShouldBe("1,234");
+        var css = string.Concat(layout.FindAll("style").Select(s => s.TextContent));
+        css.ShouldContain(".mud-tab .mud-tab-badge .mud-badge-wrapper { position: static;");
+        css.ShouldContain(".mud-tab .mud-tab-badge .mud-badge { position: static;");
+    }
+
+    [Fact]
     public void Embedded_pages_show_without_app_bar_and_menu_and_stay_so_while_navigating()
     {
         var nav = Services.GetRequiredService<NavigationManager>();

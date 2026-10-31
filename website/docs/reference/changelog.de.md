@@ -27,6 +27,7 @@
 
 ### Behoben
 
+- MudBlazor-Tab-Badges schnitten Zahlen mit mehr als einer Stelle ab. `CoworkeeLayout` stellt sie jetzt in jeder App inline hinter den Tab-Text; Apps mit eigener Regel dafür (`.mud-tab .mud-tab-badge` in CoShipee) können sie entfernen.
 - Vorlage: Die Berechtigungen `Catalog.Brands.Export`, `Catalog.Products.Export` und `Documents.Export` waren definiert, aber nirgends geprüft (Exporte brauchen die Ansehen-Berechtigung des Sets); neue Apps und die Rollen einer Spec kennen sie nicht mehr. Bestehende Apps können sie löschen. Startseite und `AppDescription` lauten *Modular business app for Blazor, built on Coworkee.*
 - Texte: `Reports.Share` heißt *Share reports with roles, groups or the organisation*, die Berechtigungsgruppe von Social *Comments, tags, ratings and reactions*; die Einstellungen *Tägliche E-Mail mit ungelesenen Benachrichtigungen*, die Felder des Head-Skripts und die Gruppe *Konten* sind in jeder mitgelieferten Sprache übersetzt.
 - Blazor-Exporte von `CoworkeeDataTable` schickten dem Server weder die Spaltentitel noch `ExportFileName`, und `ExportQueries.Of` fügte die Spalten ohne Maskierung zusammen. Der Export fragt jetzt mit den Titeln als Köpfen und `fileName=`; `ExportQueries.Of(format, query, columns, fileName)` nimmt `(Field, Header)`-Paare und maskiert sie mit `ExportColumns.Format`.
