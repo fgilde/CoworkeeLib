@@ -39,6 +39,7 @@ Middleware umschließt jeden Request in fester Reihenfolge:
 |---|---|---|
 | 100 | Logging | protokolliert den Request, warnt ab `MessagingOptions.SlowRequestThreshold` (500 ms) |
 | 200 | Authorization | prüft `[RequiresPermission]` am Request-Typ |
+| 250 | Features | prüft `[RequiresFeature]` am Request-Typ (mit `Coworkee.Features`, siehe [Features](../modules/features.md)) |
 | 300 | Validation | führt alle FluentValidation-Validatoren aus, liefert `Error.Validation` mit Feldmeldungen |
 | 350 | Caching | beantwortet `ICachedQuery` aus dem HybridCache, leert nach Erfolg die Tags von `IInvalidatesCache` |
 | 400 | Unit of Work | speichert den `DbContext` nach einem erfolgreichen Command |
@@ -73,7 +74,7 @@ internal sealed class TimingMiddleware(ILogger<TimingMiddleware> logger) : IRequ
 services.AddRequestMiddleware<TimingMiddleware>();
 ```
 
-Ein Behavior ist typisiert und gilt für einen Request oder, als offener Generic, für alle:
+Ein Behavior ist typisiert und gilt für einen Request oder, als offener Generic, für alle. Behaviors laufen innerhalb der Middleware, direkt um den Handler, in der Reihenfolge ihrer Registrierung:
 
 ```csharp
 internal sealed class AuditBrandChanges : IRequestBehavior<AddEditBrandCommand, Result<BrandDto>>
@@ -104,7 +105,7 @@ public sealed record GetDashboardQuery : IQuery<Result<DashboardDto>>, ICachedQu
 }
 ```
 
-`CacheScope` legt fest, wer einen Eintrag teilt: `Tenant` (Standard), `User` (getrennt je API-Schlüssel, Sitzung und „Anmelden als"-Sitzung) oder `Global`; jeder Eintrag gilt je Kultur (`CurrentCulture` und `CurrentUICulture`), und bei `Tenant` haben angemeldete Benutzer ohne Mandant und anonyme Aufrufer eigene Einträge. Fehler werden nie gecacht. Commands, die die zugrunde liegenden Daten ändern, nennen dasselbe Tag in `IInvalidatesCache.CacheTags`.
+`CacheScope` legt fest, wer einen Eintrag teilt: `Tenant` (Standard), `User` oder `Global`. Bei `Tenant` haben angemeldete Benutzer ohne Mandant und anonyme Aufrufer eigene Einträge. Bei `User` teilen sich die Sitzungen eines Benutzers einen Eintrag, jeder seiner API-Schlüssel und jede „Anmelden als"-Sitzung bekommen einen eigenen, weil sie weniger sehen können; ein Aufrufer ohne Benutzer wird gar nicht gecacht. Jeder Eintrag gilt je Kultur (`CurrentCulture` und `CurrentUICulture`), die Sprache des ersten Aufrufers antwortet also nicht allen. `CacheDuration` legt fest, wie lange ein Eintrag lebt; ohne sie gelten die Standards von HybridCache. Fehler werden nie gecacht; sie erreichen jede Anfrage, die auf das Laden gewartet hat. Commands, die die zugrunde liegenden Daten ändern, nennen dasselbe Tag in `IInvalidatesCache.CacheTags`: Nach dem erfolgreichen Command werden die Einträge mit diesem Tag in der Organisation des Benutzers des Commands entfernt.
 
 Anfragen, die einen Eintrag verlangen, während er lädt, warten auf dieses eine Laden. Deshalb läuft der Handler einer gecachten Query in einem eigenen Service-Scope, als der aufrufende Benutzer, mit dem Abbruch des Caches (abgebrochen erst, wenn jede wartende Anfrage abbricht): Die Anfrage, die das Laden begann, darf zuerst enden, etwa weil der Browser sie beim Navigieren abbricht, ohne dass die anderen scheitern. Der Handler sieht keinen Scoped-Zustand der Anfrage; was er braucht, gehört in die Query. Eigene Ladevorgänge über `HybridCache`, die Scoped-Services lesen (einen DbContext, `IDispatcher`), machen es ebenso mit `GetOrCreateInScopeAsync`:
 
@@ -115,7 +116,7 @@ var stats = await cache.GetOrCreateInScopeAsync(services, new ImpersonatedUser(n
 
 `services` sind die des Aufrufers, `actor` ist, als wer das Laden handelt: Es läuft immer auf einem Pool-Thread ohne die Umgebungswerte des Aufrufers (`AsyncLocal`s, den HTTP-Kontext). `CurrentUserScope.Capture(currentUser)` hält dafür den ganzen aktuellen Benutzer fest.
 
-In einer offenen Transaktion des DbContext der App (`IUnitOfWork.InTransaction`) umgehen beide den Cache: Eine gecachte Query läuft in der Pipeline des Aufrufers, ein Laden im Scope des Aufrufers, und das Ergebnis wird nicht gecacht. Eine andere Verbindung sähe nicht, was die Transaktion schrieb (oder wartete auf ihre Sperren), und sie kann noch zurückgerollt werden.
+In einer offenen Transaktion des DbContext der App (`IUnitOfWork.InTransaction`) umgehen beide den Cache, ebenso die gemeinsamen Ladevorgänge der Bibliothek für Berechtigungen, Einstellungen, Features und Texte: Eine gecachte Query läuft in der Pipeline des Aufrufers, ein Laden im Scope des Aufrufers, und das Ergebnis wird nicht gecacht. Eine andere Verbindung sähe nicht, was die Transaktion schrieb (oder wartete auf ihre Sperren), und sie kann noch zurückgerollt werden.
 
 ## Domain-Events
 
