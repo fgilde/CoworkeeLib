@@ -13,6 +13,8 @@ Eine Anmeldung per Passkey gilt als starke Anmeldung: Die Bestätigung in zwei S
 
 Eine Registrierung ohne Passwort gibt es nicht; ein Passkey kommt immer zu einem bestehenden Konto hinzu.
 
+Solange jemand als der Benutzer angemeldet ist ([Anmelden als](../features/identity.md#als-anderer-benutzer-anmelden)), antwortet die Passkey-Seite wie jede Kontoseite mit `403`: Ein Impersonator fügt dem Konto nie einen Zugang hinzu.
+
 ## Für Administratoren
 
 Der Anmeldebereich eines Benutzers (**Administration › Benutzer**, Benutzerseite) zeigt *Passkeys: n* und *Alle entfernen*, zum Beispiel nach einem verlorenen Gerät. Das braucht `Identity.Users.Manage`, erneuert den Security-Stamp und meldet den Benutzer damit überall ab. Anders als die eigene Seite des Benutzers entfernt es auch den letzten Passkey eines Kontos ohne Passwort; einem solchen Benutzer schicken Sie dann einen Passwort-Reset oder eine Einladung. Dasselbe über die API:

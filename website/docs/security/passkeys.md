@@ -13,6 +13,8 @@ A passkey sign-in counts as a strong sign-in: two-step verification does not fol
 
 Registering without a password is not possible; a passkey always joins an existing account.
 
+While someone is signed in as the user ([Log in as](../features/identity.md#log-in-as-another-user)), the passkey page answers `403` like every account page: an impersonator never adds a way into the account.
+
 ## For administrators
 
 The sign-in panel of a user (**Administration › Users**, user page) shows *Passkeys: n* and *Remove all*, for example after a lost device. It needs `Identity.Users.Manage`, renews the security stamp and so signs the user out everywhere. Unlike the user's own page it also removes the last passkey of an account without password; send such a user a password reset or an invitation. The same through the API:
