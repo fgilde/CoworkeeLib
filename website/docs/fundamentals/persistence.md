@@ -42,7 +42,6 @@ Limits to know:
 - **Migrations belong to one provider.** An app keeps the migrations of the provider it was created with. To switch, delete `Migrations` and run `coworkee migrations add Initial` again. To ship one app for several providers, follow the EF Core guide [Migrations with multiple providers](https://learn.microsoft.com/ef/core/managing-schemas/migrations/providers) with one migrations assembly per provider.
 - **[Database backups](../modules/backups.md) need Postgres.** The template leaves the module out for the other providers.
 - **SQLite** has one writer at a time, keeps background jobs in memory (queued and delayed jobs are lost on restart), stores `DateTimeOffset` as a number and `decimal` as `double`, does not enforce `HasMaxLength` and knows no schemas (tables lose their `cw.` prefix). It is meant for development and small single machine installations.
-- Facets over `bool` columns (`[ProvideFacet]` on `IsActive`) fail on SQL Server and SQLite, which hand the value back as `1`/`0`; fixed in the next Nextended release.
 - MySQL and MariaDB are not offered: Pomelo, the usual provider, has no release for EF Core 10 yet.
 
 ## Base classes and markers
@@ -121,9 +120,10 @@ return await host.RunCoworkeeMigrationsAsync();
 
 `AddCoworkeeMigrations` (`Coworkee.Identity.Setup`) plans the run and `RunCoworkeeMigrationsAsync` carries it out, with exit code 0 or 1:
 
-1. migrate the database, retried every 3 seconds while its server does not accept connections yet (`Migrations:Attempts`, default 20, or `options.Attempts`);
+1. migrate the database, retried every 3 seconds while its server does not accept connections yet (`Migrations:Attempts`, default 20, or `options.Attempts`), and give groups without a `Code` path theirs;
 2. seed: with a first administrator from the deploy parameters (`Coworkee:InitialAdmin`, see [Setup wizard or seed](../security/authentication.md#setup-wizard-or-seed)) `DeploymentSeed` with it; otherwise `DevelopmentSeed` in the Development environment (`options.DevelopmentUsers` decides elsewhere), followed by `SyncDevelopmentUsersAsync`; otherwise nothing, and the setup page with its token sets the system up;
-3. bring a deployed Keycloak in line (`ReconcileKeycloakRealmAsync`).
+3. run `options.AfterSeed`, the app's own data steps, if set;
+4. bring a deployed Keycloak in line (`ReconcileKeycloakRealmAsync`).
 
 It also builds the container with the production defaults: a local run is Development, whose scope checks fail on the MVC services of OData in a host without a web environment.
 
