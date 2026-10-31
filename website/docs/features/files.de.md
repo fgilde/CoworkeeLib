@@ -30,6 +30,12 @@ Die Bibliothek nutzt ihn selbst. Der Theme-Editor holt sein Logo aus den Dateien
 
 Diese Medien müssen ohne Sitzung laden, deshalb kommen sie aus einer öffentlichen Datei. Jede einzelne Datei kannst du öffentlich machen (*Öffentlich machen*, dann *Öffentlichen Link kopieren*); sie ist danach unter `/api/v1/files/public/{id}/{name}` für jeden abrufbar. Browser cachen sie höchstens fünf Minuten, machst du sie wieder privat, greift das also kurz danach. `PublicFileChooser.ChooseAsync(...)` erledigt Auswahl, Rückfrage und Veröffentlichen in einem Aufruf.
 
+Eine private Datei lässt sich stattdessen kurz herausgeben: *Copy temporary link* (`POST /api/v1/files/{id}/token`) liefert einen Link, der sie fünf Minuten lang ohne Anmeldung öffnet ([temporäre Links](../modules/files.md#temporare-links)).
+
+## Dateien an einem Datensatz
+
+[Anhänge an Datensätzen](../modules/attachments.md) hängen Dateien in benannten Slots an eine Zeile deiner eigenen Entity (`services.AddRecordAttachments<LeaveRequest>("LeaveRequests", a => a.Slot("certificate", ...))`). Wer sie lesen darf, folgt der Sichtbarkeit der Zeile in ihrem OData-Set; die Komponente `RecordAttachment` lädt sie hoch, zeigt und löscht sie.
+
 ## Suche
 
 `Coworkee.Search` beschreibt einen Index, das Elasticsearch-Paket setzt ihn um, und deine App entscheidet, was hineinkommt:
@@ -45,6 +51,8 @@ await index.EnsureAsync(schema, ct);
 
 Volltext, Filter, Facetten und Cursor-Paging sind dabei. `CreateIndexAsync` und `SwapAsync` bauen einen Index im Hintergrund neu auf und schalten den Alias ohne Ausfallzeit um.
 
-**Stand:** Öffentliche Dateien sind neu in [0.0.1.24](../reference/changelog.md) und brauchen in Apps mit dem Files-Modul eine Migration. Ordner kennen keinen öffentlichen Zustand; jede Datei wird einzeln veröffentlicht.
+Die [globale Suche](../web/global-search.md) braucht keinen Index: eine Suche über Benutzer, Rollen, Gruppen, Dateien, Berichte, Chats und die Sets, die du mit `AddGlobalSearch<T>` registrierst, mit denselben Rechten und Zeilenregeln wie die Listen. Die Befehlspalette und `/search` nutzen sie; ein Elasticsearch-Alias kommt mit `AddGlobalSearchIndex` dazu.
 
-Referenz: [Dateiablage](../modules/storage.md), [Dateien](../modules/files.md), [öffentliche Dateien](../modules/files.md#offentliche-dateien), [Suche](../modules/search.md).
+**Stand:** Öffentliche Dateien kamen mit [0.0.1.24](../reference/changelog.md) und brauchen in Apps mit dem Files-Modul eine Migration. Ordner kennen keinen öffentlichen Zustand; jede Datei wird einzeln veröffentlicht.
+
+Referenz: [Dateiablage](../modules/storage.md), [Dateien](../modules/files.md), [öffentliche Dateien](../modules/files.md#offentliche-dateien), [Anhänge an Datensätzen](../modules/attachments.md), [Suche](../modules/search.md), [Globale Suche](../web/global-search.md).
