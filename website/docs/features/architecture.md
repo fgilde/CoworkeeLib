@@ -25,7 +25,7 @@ var app = builder.Build();
 app.UseCoworkee();
 ```
 
-That is the documents module of the generated template (the demo app runs the same one), plus the lines that put it into the API host. A module registers its services, maps its endpoints and names the modules it needs. Coworkee loads the graph once, in dependency order.
+That is the documents module of the generated template, trimmed to its core (the demo app runs the full one), plus the lines that put it into the API host. A module registers its services, maps its endpoints and names the modules it needs. Coworkee loads the graph once, in dependency order.
 
 The result is a modular monolith on ASP.NET Core: one process per host, one database, code split along features. The API, the auth server and the migration service each name their own root module and get different graphs from the same packages. The auth host never loads the documents module, so it pays nothing for it.
 
@@ -39,11 +39,12 @@ Each use case is a command or a query sent through `IDispatcher`. Endpoints, bac
 |---|---|---|
 | 100 | Logging | warns when a request takes longer than 500 ms |
 | 200 | Authorization | `[RequiresPermission]` on the request type |
+| 250 | Features | `[RequiresFeature]` while the tenant's edition has the feature off |
 | 300 | Validation | FluentValidation, with field messages |
 | 350 | Caching | `ICachedQuery` from HybridCache, `IInvalidatesCache` clears tags |
 | 400 | Unit of work | saves the `DbContext` once after a successful command |
 
-Handlers return a `Result` for expected failures, and `ToHttpResult` maps it to 400, 404, 403 or 409. Your own cross-cutting code goes in as `IRequestMiddleware`, or as a typed `IRequestBehavior` when it concerns one request only.
+Handlers return a `Result` for expected failures, and `ToHttpResult` maps it to 400, 401, 403, 404 or 409. Your own cross-cutting code goes in as `IRequestMiddleware`, or as a typed `IRequestBehavior` when it concerns one request only.
 
 Aggregates raise domain events; their handlers run after the commit, through the outbox, as the user who caused them. Integration events use the same outbox through `IEventBus`. Without a transport they stay inside the app. With `Coworkee.EventBus.RabbitMq` they travel over RabbitMQ, and an inbox table keeps the handlers idempotent.
 
@@ -60,7 +61,7 @@ coworkee run
 
 `coworkee new` creates the solution (Aspire app host, API, auth server, Blazor web app, migrations), restores it and adds the first migration if the chosen modules need one. A JSON spec can describe the whole app up front, own modules and entities included: `coworkee new --spec shop.json`. Later, `coworkee entity add` generates a feature from the entity down to a Blazor page with a data table.
 
-For people who would rather click, `coworkee ui` installs and opens Coworkee Studio, a desktop wizard for Windows, macOS and Linux. It explains each option with its trade-off (the Architecture page starts with presets from *Minimal* to *SaaS platform*), shows what an entity will generate and can start the new app afterwards.
+For people who would rather click, `coworkee ui` installs and opens Coworkee Studio, a desktop wizard for Windows, macOS and Linux. It explains each option with its trade-off (the Architecture page starts with presets from *Minimal* to *Everything*), shows what an entity will generate and can start the new app afterwards.
 
 ![Entity designer in Coworkee Studio with a property grid and a preview of the generated routes and files](../assets/screenshots/studio-entities-light.webp){ .shot loading=lazy }
 
