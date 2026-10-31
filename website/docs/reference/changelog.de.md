@@ -23,6 +23,9 @@
 
 ### Breaking Changes
 
+- Apps brauchen eine Migration: neue Tabelle `cw.ClientEntityTouches`, neue Spalte `cw.OutgoingMails.SendingSince` (nullable) mit einem Index auf `Status`.
+- Registrierte `IAttachmentScanner` prüfen auch Uploads in die Ablage (`EntityType` `StoredFile`); ein Scanner, der `EntityType` als Datensatztyp liest, behandelt das.
+- Eine Client-Entity-Kopie, die zuletzt vor mehr als `Coworkee:ClientEntities:ChangeLogLifetime` (30 Tagen) aktualisiert wurde, lädt neu.
 - Der Abschnitt `chat` des Exports ist ein Objekt (`messages`, `memberships`, `reactions`, `attachments`) statt der Liste der Nachrichten.
 - Das Löschen schreibt `PersonalDataSubject.ErasedUserId` auch in `CreatedBy`, `ModifiedBy` und `DeletedBy` der Tabellen der App; Code, der den Ersteller nachschlägt, findet dafür keinen Benutzer.
 

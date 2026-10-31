@@ -23,6 +23,9 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Breaking changes
 
+- Apps need a migration: new table `cw.ClientEntityTouches`, new column `cw.OutgoingMails.SendingSince` (nullable) with an index on `Status`.
+- Registered `IAttachmentScanner`s also check uploads to the files (`EntityType` `StoredFile`); a scanner that reads `EntityType` as a record type handles it.
+- A client entity copy last refreshed more than `Coworkee:ClientEntities:ChangeLogLifetime` (30 days) ago downloads again.
 - The `chat` section of the personal data export is an object (`messages`, `memberships`, `reactions`, `attachments`) instead of the list of messages.
 - An erase writes `PersonalDataSubject.ErasedUserId` into `CreatedBy`, `ModifiedBy` and `DeletedBy` of the app's tables too; code that looks the creator up finds no user for it.
 
