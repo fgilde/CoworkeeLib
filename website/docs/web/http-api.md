@@ -38,7 +38,7 @@ The API validates the bearer tokens of the Coworkee auth server:
 context.Services.AddCoworkeeApiAuthentication(context.Configuration, audience: "myapp_api");
 ```
 
-Authority and audience come from `Coworkee:ApiAuth`; the [app host](../hosting/aspire.md) sets them. Browsers never hold these tokens: the BFF does, see [Authentication](../security/authentication.md).
+Authority and audience come from `Coworkee:ApiAuth`; the [app host](../hosting/aspire.md) sets them. Browsers never hold these tokens: the BFF does, see [Authentication](../security/authentication.md). A single-page app on another origin calls the API with its own token; the API answers it only from the exact origins in `Coworkee:Cors:Origins`, without credentials, and an endpoint that needs them opts in with `.RequireCors(CoworkeeCors.WithCredentials)`, see [cross-origin calls](../security/clients.md#cross-origin-calls-cors).
 
 ## OpenAPI
 

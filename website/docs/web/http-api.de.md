@@ -38,7 +38,7 @@ Die API prüft die Bearer-Tokens des Coworkee-Auth-Servers:
 context.Services.AddCoworkeeApiAuthentication(context.Configuration, audience: "myapp_api");
 ```
 
-Authority und Audience kommen aus `Coworkee:ApiAuth`; der [AppHost](../hosting/aspire.md) setzt sie. Browser halten diese Tokens nie: Das übernimmt der BFF, siehe [Anmeldung](../security/authentication.md).
+Authority und Audience kommen aus `Coworkee:ApiAuth`; der [AppHost](../hosting/aspire.md) setzt sie. Browser halten diese Tokens nie: Das übernimmt der BFF, siehe [Anmeldung](../security/authentication.md). Eine Single-Page-App auf einem anderen Origin ruft die API mit ihrem eigenen Token auf; die API antwortet ihr nur von den exakten Origins in `Coworkee:Cors:Origins`, ohne Credentials, und ein Endpunkt, der sie braucht, schaltet sie mit `.RequireCors(CoworkeeCors.WithCredentials)` ein, siehe [Aufrufe von anderen Origins](../security/clients.md#aufrufe-von-anderen-origins-cors).
 
 ## OpenAPI
 
