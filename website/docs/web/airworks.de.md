@@ -75,7 +75,7 @@ Die Administrations-Apps bekommen keine eigene Desktop-Verknüpfung: Die App *Ad
 | Bereich | Apps (Berechtigung) |
 |---|---|
 | Identität | Benutzer (`Identity.Users.View`; bearbeiten, Rollen, Gruppen, Berechtigungen, Passwort, sperren, Reset-Mail, überall abmelden), Gruppen (`Identity.Groups.View`), Rollen mit ihren Berechtigungen (`Identity.Roles.View`), Anwendungen und Scopes (`Identity.Clients.Manage`, System), API-Schlüssel (`ApiKeys.Manage`) |
-| System | Themes (`Themes.Manage`; der Theme-Editor der Web-App in einem Fenster, wenn die BFF die Web-App kennt, sonst neu aus einem eingebauten Theme, Paletten, Logo, CSS, Standard, Keycloak-Anmeldeseite), Workflow-Designer (`Workflows.Elsa.Manage`; öffnet Elsa Studio in einem Browser-Tab), Backups, Dienste, Editionen, Mandanten mit ihren Features (System), KI-Einstellungen mit Verbindungstest (System) |
+| System | Themes (`Themes.Manage`; der Theme-Editor der Web-App in einem Fenster, wenn die BFF die Web-App kennt, sonst neu aus einem eingebauten Theme, Paletten, Logo, CSS, Standard, Keycloak-Anmeldeseite), Workflow-Designer (`Workflows.Elsa.Manage`; öffnet Elsa Studio in einem Browser-Tab), Backups, Dienste, Editionen und Mandanten mit ihren Features (jeweils System), KI-Einstellungen mit Verbindungstest (System) |
 | Kommunikation | Mail-Vorlagen (`Mail.Templates.Manage`; der Vorlagen-Editor der Web-App in einem Fenster, wenn die BFF die Web-App kennt, sonst Betreff und Text mit Live-Vorschau und Testmail), Mail-Kampagnen mit Empfängervorschau, Test, Planen und Abbrechen, Empfängerlisten (`Mail.Campaigns.Send`), Mail-Protokoll (`Mail.Log.View`), Mail-Einstellungen mit Verbindungstest (`Settings.Manage`) |
 | Lokalisierung | Sprachen (ein-/ausschalten, Standard), Übersetzungen mit maschineller Übersetzung der fehlenden Texte (`Localization.Manage`) |
 | Überwachung | Audit-Log mit den geänderten Feldern und dem Verlauf des Datensatzes (`Audit.View`), KI-Tool-Aufrufe (`Ai.Audit`), API-Dokumentation (`ApiDocs.View`) |
@@ -95,6 +95,8 @@ await coworkee.register(...defaultApps, ordersApp);
 
 Listen mit Anlegen, Bearbeiten, Löschen und Zeilenaktionen sind ein Aufruf: `crudApp({ id, title, icon, permissions, load, columns, create, edit, remove, actions })` (die Administrations-Apps sind damit gebaut); `formDialog`, `confirmDialog` und `infoDialog` sind die Dialoge dazu.
 
+Neben der App-Definition von AirWorks nimmt eine `CoworkeeApp` `probe`, einen API-Pfad, der für den angemeldeten Benutzer auf ein `GET` antworten muss, bevor die App hinzukommt (so bleibt eine App eines optionalen Moduls weg, wenn das Modul fehlt), `hostOnly` nur für Benutzer der Systemorganisation und die Felder des Starters `group`, `launcherGroup` und `shortcut` (siehe [App-Starter](#app-starter)).
+
 ### Icons
 
 Als `icon` einer App gilt ein Name aus dem kleinen Icon-Satz von AirWorks (`fn-planning.png`, `ratio-product.png`, ...) oder eine Adresse. Wo dieser Satz nichts Passendes hat (Chat, Benachrichtigungen, Schlüssel, Übersetzungen, ...), liefert das Paket weiße Glyphen von [Material Symbols](https://fonts.google.com/icons) als `data:`-URLs, auf die Kachel zugeschnitten wie die AirWorks-Icons. Sie stehen auch eigenen Apps zur Verfügung (Lizenz der Glyphen: Apache 2.0):
@@ -108,7 +110,7 @@ const alertsApp = (coworkee: Coworkee): CoworkeeApp => ({
 });
 ```
 
-Verfügbar sind `chat`, `sparkles`, `smartToy`, `notifications`, `dataObject`, `adminPanel`, `manageAccounts`, `groups`, `roles`, `apps`, `checklist`, `key`, `language`, `translate`, `backup`, `dns`, `domain`, `history`, `drafts`, `campaign`, `contactMail`, `receiptLong`, `mail`, `build`, `table`, `description` und `dashboardCustomize`.
+Verfügbar sind `inbox`, `web`, `chat`, `sparkles`, `smartToy`, `notifications`, `dataObject`, `adminPanel`, `manageAccounts`, `groups`, `roles`, `apps`, `checklist`, `key`, `language`, `translate`, `backup`, `dns`, `domain`, `history`, `drafts`, `campaign`, `contactMail`, `receiptLong`, `mail`, `build`, `table`, `description` und `dashboardCustomize`.
 
 ### Realtime
 

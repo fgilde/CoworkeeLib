@@ -75,7 +75,7 @@ The administration apps get no desktop shortcut of their own: the app *Administr
 | Section | Apps (permission) |
 |---|---|
 | Identity | Users (`Identity.Users.View`; edit, roles, groups, permissions, password, lock, reset mail, sign out everywhere), Groups (`Identity.Groups.View`), Roles with their permissions (`Identity.Roles.View`), Applications and Scopes (`Identity.Clients.Manage`, system), API keys (`ApiKeys.Manage`) |
-| System | Themes (`Themes.Manage`; the theme editor of the web app in a window when the BFF knows the web app, otherwise new from a built-in theme, palettes, logo, CSS, default, Keycloak sign-in page), Workflow designer (`Workflows.Elsa.Manage`; opens Elsa Studio in a browser tab), Backups, Services, Editions, Tenants with their features (system), AI settings with a connection test (system) |
+| System | Themes (`Themes.Manage`; the theme editor of the web app in a window when the BFF knows the web app, otherwise new from a built-in theme, palettes, logo, CSS, default, Keycloak sign-in page), Workflow designer (`Workflows.Elsa.Manage`; opens Elsa Studio in a browser tab), Backups, Services, Editions and Tenants with their features (each system), AI settings with a connection test (system) |
 | Communication | Mail templates (`Mail.Templates.Manage`; the template editor of the web app in a window when the BFF knows the web app, otherwise subject and body with live preview and test mail), Mail campaigns with recipient preview, test, schedule and cancel, Recipient lists (`Mail.Campaigns.Send`), Mail log (`Mail.Log.View`), Mail settings with a connection test (`Settings.Manage`) |
 | Localization | Languages (switch on/off, default), Translations with machine translation of the missing texts (`Localization.Manage`) |
 | Monitoring | Audit log with the changed fields and the record's history (`Audit.View`), AI tool calls (`Ai.Audit`), API documentation (`ApiDocs.View`) |
@@ -95,6 +95,8 @@ await coworkee.register(...defaultApps, ordersApp);
 
 Lists with create, edit, delete and row actions are one call: `crudApp({ id, title, icon, permissions, load, columns, create, edit, remove, actions })` (the administration apps are built with it); `formDialog`, `confirmDialog` and `infoDialog` are the dialogs it uses.
 
+Besides the AirWorks app definition a `CoworkeeApp` takes `probe`, an API path that must answer a `GET` for the signed-in user before the app is added (so an app of an optional module stays away when the module is not there), `hostOnly` for users of the system organisation only, and the launcher fields `group`, `launcherGroup` and `shortcut` (see [App launcher](#app-launcher)).
+
 ### Icons
 
 The `icon` of an app is a name from the small AirWorks icon set (`fn-planning.png`, `ratio-product.png`, ...) or an address. Where that set has nothing that fits (chat, notifications, keys, translations, ...), the package ships white [Material Symbols](https://fonts.google.com/icons) glyphs as `data:` URLs, sized for the tile like the AirWorks icons. They are open to your own apps too (license of the glyphs: Apache 2.0):
@@ -108,7 +110,7 @@ const alertsApp = (coworkee: Coworkee): CoworkeeApp => ({
 });
 ```
 
-Available are `chat`, `sparkles`, `smartToy`, `notifications`, `dataObject`, `adminPanel`, `manageAccounts`, `groups`, `roles`, `apps`, `checklist`, `key`, `language`, `translate`, `backup`, `dns`, `domain`, `history`, `drafts`, `campaign`, `contactMail`, `receiptLong`, `mail`, `build`, `table`, `description` and `dashboardCustomize`.
+Available are `inbox`, `web`, `chat`, `sparkles`, `smartToy`, `notifications`, `dataObject`, `adminPanel`, `manageAccounts`, `groups`, `roles`, `apps`, `checklist`, `key`, `language`, `translate`, `backup`, `dns`, `domain`, `history`, `drafts`, `campaign`, `contactMail`, `receiptLong`, `mail`, `build`, `table`, `description` and `dashboardCustomize`.
 
 ### Realtime
 
