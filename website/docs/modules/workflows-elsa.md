@@ -7,12 +7,12 @@
 public sealed class MyAppApiModule : CoworkeeModule, IWebModule { ... }
 ```
 
-Add it to the API host only: Elsa runs its own background services there.
+Add it to the API host only: Elsa runs its own background services there. The module depends on `CoworkeeWorkflowsModule`.
 
 ## What it sets up
 
 - **Database**: Elsa's workflow definitions and runtime tables live in the app's database (Postgres, SQL Server or SQLite, the same connection as the app) with Elsa's own migrations, which run when the API starts. `Coworkee:Workflows:Elsa:ConnectionString` puts them elsewhere.
-- **API**: Elsa's REST API under `/api/elsa`, reached through the BFF like the rest of the API. Only signed-in users with the permission `Workflows.Elsa.Manage` get through; Elsa's own users and roles are not used.
+- **API**: Elsa's REST API under `/api/elsa`, reached through the BFF like the rest of the API. Only signed-in users with the permission `Workflows.Elsa.Manage` get through; Elsa's own users and roles are not used. Elsa's endpoints are left out of the app's OpenAPI document and SDKs, and the app's validation errors keep their property names (`Brand.Name`).
 - **Code-first workflows**: `services.AddWorkflow<MyWorkflow>()` registers a workflow written in C#.
 
 ## Activities and triggers
