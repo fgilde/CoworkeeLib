@@ -17,7 +17,7 @@ Die Seiten unten gehen Bereich für Bereich durch, mit Code aus den echten APIs 
 
 -   **[Identity und Sicherheit](identity.md)**
 
-    Benutzer, Rollen, Gruppen, Berechtigungen bis auf einen einzelnen Datensatz, ein OpenIddict-Auth-Server, Keycloak oder jeder OpenID-Connect-Anbieter, persönliche API-Schlüssel.
+    Benutzer, Rollen, ein Baum von Gruppen, Berechtigungen bis auf einen einzelnen Datensatz, ein OpenIddict-Auth-Server mit Passkeys, Keycloak oder jeder OpenID-Connect-Anbieter, *Anmelden als* anderer Benutzer, persönliche API-Schlüssel.
 
 -   **[Mandanten und Einstellungen](multi-tenancy.md)**
 
@@ -39,9 +39,13 @@ Die Seiten unten gehen Bereich für Bereich durch, mit Code aus den echten APIs 
 
     Ein Assistent, der mit den Rechten des Benutzers arbeitet, 14 Modellanbieter und ein MCP-Server in jeder App.
 
+-   **[Mit KI bauen](building-with-ai.md)**
+
+    Coding-Agenten schreiben die Fachlichkeit: das CLI als MCP-Server, App-Specs als JSON und eine `AGENTS.md` in jeder neuen App.
+
 -   **[Berichte und Dashboards](reporting.md)**
 
-    Dashboards, im Browser auf deinen OData-Sets gebaut und von der Datenbank in Millisekunden aggregiert.
+    Dashboards, im Browser auf deinen OData-Sets gebaut, von der Datenbank in Millisekunden aggregiert, mit Rollen, Gruppen oder der Organisation geteilt und als Abonnement per Mail verschickt.
 
 -   **[Lokalisierung](localization.md)**
 
@@ -53,7 +57,7 @@ Die Seiten unten gehen Bereich für Bereich durch, mit Code aus den echten APIs 
 
 -   **[Dateien und Suche](files.md)**
 
-    Eine Dateiablage mit Vorschau und öffentlichen Links auf Blob-Storage, dazu Volltextsuche.
+    Eine Dateiablage mit Vorschau, öffentlichen und befristeten Links auf Blob-Storage, Anhänge an Datensätzen, eine globale Suche und Volltextsuche.
 
 -   **[Einsatzbeispiele](use-cases.md)**
 
