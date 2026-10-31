@@ -8,6 +8,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 - `ODataEntityOptions<T>.MaxNodeCount(int)`: a node limit of one set instead of `Coworkee:OData:MaxNodeCount` (`AddODataEntity<T>(set, permission, o => o.MaxNodeCount(1000))`), for clients that send long filters to that set only. It applies to the set's routes, `IODataQueries`, exports, facet filters, row filters of code and `query_data`; `ODataLimits.Settings(services, entityType)` reads it. No action needed. See [OData](../web/odata.md).
 
+### Fixed
+
+- A mailed export (`POST /api/v1/data/{set}/export/mail`, `DataExports.MailAsync`) and a streamed export whose client left wrote the file but never sent the mail: the export job did not save the mail the mailing module queued. No action needed.
+
 ## 0.0.1.50 (2026-10-31)
 
 ### Added
