@@ -82,7 +82,8 @@ public sealed class ODataApp : DatabaseFixture
         builder.Services.AddSingleton<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor>(Commands);
         builder.Services.AddSingleton(provider => new InlineBackgroundJobs.Root(provider));
         builder.Services.AddScoped<Coworkee.BackgroundJobs.IBackgroundJobs, InlineBackgroundJobs>();
-        builder.Services.AddSingleton<Transfer.IExportMailer>(Mails);
+        // the recorder, and what a real mailer does: it queues the mail in the context of the scope that mails
+        builder.Services.AddScoped<Transfer.IExportMailer>(provider => new QueueingExportMailer(Mails, provider));
         builder.Services.AddSingleton<FakeGroupScope>();
         builder.Services.AddSingleton<Coworkee.Application.Groups.IGroupScope>(provider => provider.GetRequiredService<FakeGroupScope>());
         foreach (var (key, value) in settings ?? new Dictionary<string, string>())
@@ -261,7 +262,8 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddODataEntity<Gadget>("Gadgets", ODataApp.ViewGadgets, o => o.Hide(g => g.SerialCode).HideUnless(g => g.Category, ODataApp.SeeCategories));
         context.Services.AddScoped<IODataEntityFilter<Gadget>, HideSecretGadgets>();
         context.Services.AddGlobalSearch<Gadget>(s => s.Fields(g => g.Name, g => g.Category).Subtitle(g => g.Category).Page("/gadgets"));
-        context.Services.AddODataEntity<Widget>("Widgets", ODataApp.ViewGadgets);
+        // a set whose clients send long filters: its own node limit (QueryLimitTests)
+        context.Services.AddODataEntity<Widget>("Widgets", ODataApp.ViewGadgets, o => o.MaxNodeCount(1000));
         context.Services.ConfigureFacet<Widget>(w => w.Color, f => f.View = Contracts.Data.FacetView.Buttons);
         context.Services.AddODataEntity<Pump>("Pumps", ODataApp.ViewGadgets);
         context.Services.AddSingleton<Coworkee.OData.Computed.IODataComputedPropertySource, PumpSize>();
@@ -340,6 +342,16 @@ internal sealed class HideSecretGadgets : IODataEntityFilter<Gadget>
 {
     public Task<IQueryable<Gadget>> ApplyAsync(IQueryable<Gadget> query, CancellationToken cancellationToken) =>
         Task.FromResult(query.Where(g => g.Category != "Secret"));
+}
+
+/// <summary>Records the mail and, like the mailing module, adds a row for it to the scope's context without saving it (a widget named after the file).</summary>
+internal sealed class QueueingExportMailer(RecordingExportMailer recorder, IServiceProvider services) : Transfer.IExportMailer
+{
+    public async Task MailAsync(Transfer.DataExportMail mail, CancellationToken cancellationToken)
+    {
+        await recorder.MailAsync(mail, cancellationToken);
+        services.GetRequiredService<Coworkee.Infrastructure.Persistence.CoworkeeDbContext>().Add(new Widget { Name = "mailed " + mail.File.Name, Color = "none" });
+    }
 }
 
 public sealed class RecordingExportMailer : Transfer.IExportMailer

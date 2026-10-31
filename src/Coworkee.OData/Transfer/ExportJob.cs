@@ -90,7 +90,9 @@ internal sealed class ExportJob(
 
         try
         {
+            // the mailer queues the mail (and its attachment) in this context: saved here, or it is never sent
             await exports.MailAsync(mail, cancellationToken);
+            await db.SaveChangesAsync(CancellationToken.None);
         }
         catch (Exception exception)
         {

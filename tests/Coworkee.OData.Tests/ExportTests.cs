@@ -588,6 +588,8 @@ public sealed class ExportTests(ODataApp app) : IAsyncLifetime
         response.StatusCode.ShouldBe(HttpStatusCode.Accepted);
         var mail = app.Mails.Sent.ShouldHaveSingleItem();
         (mail.File.Name, mail.Recipients.Single()).ShouldBe(("Lights.xlsx", "boss@acme.test"));
+        // what the mailer queued in the job's context is saved with the job (the mailing module's outgoing mail)
+        (await app.InDbAsync(_setup.TenantId, db => db.Set<Widget>().CountAsync(w => w.Name == "mailed Lights.xlsx", Ct))).ShouldBe(1);
         (await Admin.PostAsJsonAsync("/api/v1/data/Gadgets/export/mail", new MailExportRequest(null, ["no address"]), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 

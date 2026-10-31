@@ -15,9 +15,10 @@ internal sealed class ScopedEnableQueryAttribute : EnableQueryAttribute
     private const AllowedQueryOptions Narrowing = AllowedQueryOptions.Apply | AllowedQueryOptions.Filter | AllowedQueryOptions.Search;
 
     /// <param name="options">The validation limits.</param>
-    internal ScopedEnableQueryAttribute(CoworkeeODataOptions options)
+    /// <param name="maxNodeCount">The set's own node limit, if it has one.</param>
+    internal ScopedEnableQueryAttribute(CoworkeeODataOptions options, int? maxNodeCount = null)
     {
-        MaxNodeCount = options.MaxNodeCount;
+        MaxNodeCount = maxNodeCount ?? options.MaxNodeCount;
         MaxAnyAllExpressionDepth = options.MaxAnyAllExpressionDepth;
         MaxExpansionDepth = options.MaxExpansionDepth;
         MaxOrderByNodeCount = options.MaxOrderByNodeCount;

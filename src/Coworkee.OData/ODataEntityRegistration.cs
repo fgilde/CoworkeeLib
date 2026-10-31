@@ -8,6 +8,9 @@ public sealed record ODataEntityRegistration(Type EntityType, string EntitySet, 
     /// <summary>The key property of the set, <c>Id</c> unless <see cref="ODataEntityOptions{TEntity}.Key"/> named another.</summary>
     public string Key { get; init; } = "Id";
 
+    /// <summary>The node limit of the set's queries (<see cref="ODataEntityOptions{TEntity}.MaxNodeCount"/>); null: <c>Coworkee:OData:MaxNodeCount</c>.</summary>
+    public int? MaxNodeCount { get; init; }
+
     internal bool HasGuidId => Key == "Id" && EntityType.GetProperty("Id")?.PropertyType == typeof(Guid);
 
     internal Type KeyType => EntityType.GetProperty(Key)?.PropertyType ?? throw new InvalidOperationException($"{EntityType.Name} needs a {Key} property as the key of its OData set.");

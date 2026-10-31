@@ -2,6 +2,16 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- `ODataEntityOptions<T>.MaxNodeCount(int)`: eine Knotengrenze für eine Menge statt `Coworkee:OData:MaxNodeCount` (`AddODataEntity<T>(set, permission, o => o.MaxNodeCount(1000))`), für Clients, die nur an diese Menge lange Filter senden. Sie gilt für die Routen der Menge, `IODataQueries`, Exporte, Facettenfilter, Zeilenfilter im Code und `query_data`; `ODataLimits.Settings(services, entityType)` liest sie. Kein Handlungsbedarf. Siehe [OData](../web/odata.md).
+
+### Behoben
+
+- Ein gemailter Export (`POST /api/v1/data/{set}/export/mail`, `DataExports.MailAsync`) und ein gestreamter Export, dessen Client gegangen war, schrieben die Datei, verschickten die Mail aber nie: der Exportjob speicherte die Mail nicht, die das Mailing-Modul eingereiht hatte. Kein Handlungsbedarf.
+
 ## 0.0.1.50 (2026-10-31)
 
 ### Hinzugefügt
