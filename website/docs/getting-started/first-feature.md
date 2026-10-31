@@ -1,6 +1,6 @@
 # Your first feature
 
-This page builds the brands of the template from scratch: an entity, its table, permissions, a command with validation, an HTTP endpoint, an OData set with facets and a Blazor page. Every snippet is the real code of the template.
+This page builds the brands of the template from scratch: an entity, its table, permissions, a command with validation, an HTTP endpoint, an OData set with facets, the global search, the import and a Blazor page. Every snippet is the real code of the template, shortened to the brands where products share the file.
 
 ## 1. Contracts
 
@@ -68,6 +68,7 @@ internal sealed class CatalogModelContributor : IModelContributor
         {
             brand.ToTable("Brands", "app");
             brand.Property(b => b.Name).HasMaxLength(200);
+            brand.Property(b => b.Description).HasMaxLength(2000);
             brand.Property(b => b.Tax).HasPrecision(9, 4);
             brand.HasIndex(b => new { b.TenantId, b.Name }).IsUnique();
         });
@@ -78,6 +79,8 @@ Add a migration in the infrastructure project:
 
 ```bash
 dotnet ef migrations add Brands --project src/MyApp.Infrastructure
+# or
+coworkee migrations add Brands
 ```
 
 ## 3. Permissions
@@ -96,11 +99,18 @@ internal sealed class CatalogPermissionDefinitions : IPermissionDefinitionContri
 
 The third argument is the parent: granting *Create brands* in the role editor implies *View brands*.
 
+The demo roles of a local run get their permissions in the seed, here the *Brand Manager*:
+
+```csharp title="MyApp.Migrations/DemoSeed.cs"
+seed.Roles.Add(new SeedRole("Brand Manager", "Maintains brands", [.. Shared, CatalogPermissions.Brands.View, CatalogPermissions.Brands.Create, CatalogPermissions.Brands.Edit, CatalogPermissions.Brands.Delete]));
+```
+
 ## 4. The command
 
 A use case is a request, a handler and, when there is input, a validator.
 
 ```csharp title="Features/Brands/Commands/AddEdit/AddEditBrandCommand.cs"
+[AiTool("Creates a brand, or changes it when Id is given.")]
 public sealed record AddEditBrandCommand(Guid? Id, AddEditBrandRequest Brand) : ICommand<Result<BrandDto>>, IInvalidatesCache
 {
     public IReadOnlyList<string> CacheTags => [DashboardCache.Tag];
@@ -113,6 +123,7 @@ internal sealed class AddEditBrandValidator : AbstractValidator<AddEditBrandComm
     public AddEditBrandValidator()
     {
         RuleFor(c => c.Brand.Name).NotEmpty().MaximumLength(200);
+        RuleFor(c => c.Brand.Description).MaximumLength(2000);
         RuleFor(c => c.Brand.Tax).InclusiveBetween(0, 100);
     }
 }
@@ -156,7 +167,9 @@ internal sealed class AddEditBrandHandler(CoworkeeDbContext db, IPermissionCheck
 }
 ```
 
-Note what the handler does not do: it does not call `SaveChangesAsync`, catch validation errors or write logs. The [pipeline](../fundamentals/messaging.md) does that around every request. When a request needs a single permission, an attribute is enough: `[RequiresPermission(CatalogPermissions.Brands.Delete)]` on the delete command.
+Note what the handler does not do: it does not call `SaveChangesAsync`, catch validation errors or write logs. The [pipeline](../fundamentals/messaging.md) does that around every request. When a request needs a single permission, an attribute is enough: `[RequiresPermission(CatalogPermissions.Brands.Delete)]` on the delete command. A request with neither the attribute nor a check in its handler is open to every signed-in user.
+
+`IInvalidatesCache` drops the cached queries with these tags, here the dashboard counts ([caching](../fundamentals/messaging.md#caching)). `[AiTool]` offers the command to the [assistant and the MCP server](../modules/ai.md), with the same permission checks as for a person.
 
 ## 5. Endpoint and OData set
 
@@ -166,6 +179,7 @@ internal static class BrandEndpoints
     public static void MapBrandEndpoints(this IEndpointRouteBuilder app)
     {
         var brands = app.MapCoworkeeApi("/api/v1/brands").WithTags("Brands").RequireAuthorization();
+        brands.MapGet("/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetBrandByIdQuery(id), ct).ToHttpResult());
         brands.MapPost("/", (AddEditBrandRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new AddEditBrandCommand(null, body), ct).ToHttpResult());
         brands.MapPut("/{id:guid}", (Guid id, AddEditBrandRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new AddEditBrandCommand(id, body), ct).ToHttpResult());
         brands.MapPost("/delete", (IdsRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteBrandsCommand(body.Ids), ct).ToHttpResult());
@@ -187,13 +201,15 @@ public sealed class MyAppCatalogModule : CoworkeeModule, IWebModule
         context.Services.AddSingleton<IModelContributor, CatalogModelContributor>();
         context.Services.AddSingleton<IPermissionDefinitionContributor, CatalogPermissionDefinitions>();
         context.Services.AddODataEntity<Brand>("Brands", CatalogPermissions.Brands.View);
+        context.Services.AddGlobalSearch<Brand>(s => s.Fields(b => b.Name, b => b.Description).Subtitle(b => b.Description).Page("/catalog/brands").Icon("Label"));
+        context.Services.AddODataImport("Brands", (Guid? id, AddEditBrandRequest row) => new AddEditBrandCommand(id, row), id => new DeleteBrandsCommand([id]));
     }
 
     public void ConfigureApplication(WebApplication app) => app.MapBrandEndpoints();
 }
 ```
 
-`GET /odata/Brands?$filter=contains(Name,'a')&$orderby=Name&$count=true` now works for everyone with *View brands*.
+`GET /odata/Brands?$filter=contains(Name,'a')&$orderby=Name&$count=true` now works for everyone with *View brands*. `AddGlobalSearch` lets Ctrl+K and `/search` find brands ([global search](../web/global-search.md)); `AddODataImport` opens the import wizard of the table, and every row runs through `AddEditBrandCommand` ([import and export](../web/import-export.md)).
 
 ## 6. The Blazor page
 
@@ -202,13 +218,13 @@ public sealed class MyAppCatalogModule : CoworkeeModule, IWebModule
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + CatalogPermissions.Brands.View)]
 
 <PageHeader Title="Brands" Description="Manage brands." />
-<CoworkeeDataTable @ref="_table" T="BrandDto" EntitySet="Brands" SearchFields="SearchFields" MultiSelection="true" DescribeItem="b => b.Name"
-                   CreatePermission="@CatalogPermissions.Brands.Create" EditPermission="@CatalogPermissions.Brands.Edit" DeletePermission="@CatalogPermissions.Brands.Delete"
+<CoworkeeDataTable @ref="_table" T="BrandDto" EntitySet="Brands" SearchFields="SearchFields" MultiSelection="true" Importable="true" ImportPermission="@CatalogPermissions.Brands.Create" ExportFileName="brands" DescribeItem="b => b.Name"
+                   CreateText="New brand" CreatePermission="@CatalogPermissions.Brands.Create" EditPermission="@CatalogPermissions.Brands.Edit" DeletePermission="@CatalogPermissions.Brands.Delete"
                    OnCreate="CreateAsync" OnEdit="EditAsync" OnDelete="DeleteAsync">
     <Columns>
-        <PropertyColumn Property="b => b.Name" />
-        <PropertyColumn Property="b => b.Description" />
-        <PropertyColumn Property="b => b.Tax" Format="0.##" />
+        <PropertyColumn Property="b => b.Name" Title="@L["Name"]" />
+        <PropertyColumn Property="b => b.Description" Title="@L["Description"]" />
+        <PropertyColumn Property="b => b.Tax" Title="@L["Tax"]" Format="0.##" />
     </Columns>
 </CoworkeeDataTable>
 ```
@@ -216,6 +232,8 @@ public sealed class MyAppCatalogModule : CoworkeeModule, IWebModule
 ```csharp title="MyApp.Web.Client/Pages/Catalog/Brands.razor.cs"
 public partial class Brands
 {
+    [Inject] private CoworkeeLocalizer L { get; set; } = null!;
+
     private static readonly string[] SearchFields = [nameof(BrandDto.Name), nameof(BrandDto.Description)];
     private CoworkeeDataTable<BrandDto> _table = null!;
 
@@ -232,9 +250,9 @@ public partial class Brands
 
     private async Task EditAsync(Guid? id, AddEditBrandRequest model)
     {
-        if (await Dialogs.ShowEditAsync(id is null ? "New brand" : "Edit brand", model) is { } saved)
+        if (await Dialogs.ShowEditAsync(L[id is null ? "New brand" : "Edit brand"], model, saved => Api.SaveBrandAsync(id, saved)))
         {
-            await Snackbar.RunAsync(() => Api.SaveBrandAsync(id, saved), "Brand saved");
+            Snackbar.Add(L["Brand saved"], Severity.Success);
         }
     }
 
@@ -244,7 +262,7 @@ public partial class Brands
 
 ![Brand dialog generated from the request](../assets/screenshots/brand-dialog.png){ .shot }
 
-Buttons the user lacks the permission for are not rendered. `ShowEditAsync` builds the form from the request type with MudBlazor.Extensions; for anything special, write your own dialog like `ProductDialog` in the template.
+Buttons the user lacks the permission for are not rendered. `ShowEditAsync` builds the form from the request type with MudBlazor.Extensions; with a save function it saves inside the dialog and stays open with the messages of the API when saving fails. For anything special, write your own dialog like `ProductDialog` in the template. `PageHeader` and `CreateText` take text keys and translate them; other texts go through `L[...]`, with translations in `MyApp.Contracts/Localization/<culture>.json`.
 
 Last step, the navigation entry:
 
@@ -260,9 +278,11 @@ internal sealed class MyAppNavigation : INavigationContributor
 
 ## What you did not write
 
-Logging, transactions, validation responses, permission checks for the list, paging and filtering on the server, CSV export, the delete confirmation, live reload when someone else changes a brand, the audit trail. They come from the packages.
+Logging, transactions, validation responses, permission checks for the list, paging and filtering on the server, export to Excel, CSV and JSON, the import wizard, the delete confirmation, live reload when someone else changes a brand, the audit trail. They come from the packages.
 
 ## Next steps
 
-- [Application services](../web/application-services.md): instead of mapping endpoints and writing an API client, declare an interface in the contracts; the server endpoints and the Blazor client are generated. The *Sales Orders* of the template are built that way.
-- [Client entities](../ui/client-entities.md): mark an entity `[ClientEntity]` and the browser keeps its rows, so the table filters, sorts and groups without a round trip. The template does it with 100,000 sales orders.
+- [Application services](../web/application-services.md): instead of mapping endpoints and writing an API client, declare an interface in the contracts; the server endpoints and the Blazor client are generated. The *Sales Orders* of the [demo app](installation.md#the-demo-application) are built that way.
+- [Client entities](../ui/client-entities.md): mark an entity `[ClientEntity]` and the browser keeps its rows, so the table filters, sorts and groups without a round trip. The demo app does it with 100,000 sales orders.
+- [Testing](../testing.md): the template's `MyApp.Api.Tests` prove the permission checks of the brands against a real database (`Catalog_needs_its_permissions`: `200` with *View brands*, `403` without it).
+- [Command line](cli.md): `coworkee entity add` writes entity, table, permissions, commands, endpoints, OData set and page of a new entity in one go.
