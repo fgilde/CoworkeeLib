@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Files.Attachments;
 
-/// <summary>Files the user attached to records. Like other files they belong to the organisation's records, so erasing keeps them; the uploader id points to nobody afterwards.</summary>
+/// <summary>Files the user attached to records. Like other files they belong to the organisation's records, so erasing keeps them, with Coworkee.Application.Privacy.PersonalDataSubject.ErasedUserId as uploader.</summary>
 internal sealed class AttachmentPersonalData(CoworkeeDbContext db) : IPersonalDataContributor
 {
     public string Section => "attachments";

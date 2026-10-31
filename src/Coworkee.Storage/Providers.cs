@@ -53,7 +53,13 @@ internal sealed class FileSystemBlobStorage(FileSystemStorageOptions options) : 
 
     public Task DeleteAsync(string key, CancellationToken cancellationToken)
     {
-        File.Delete(PathOf(key));
+        // a key whose directory is gone is no error either, as on the other stores
+        var path = PathOf(key);
+        if (File.Exists(path))
+        {
+            File.Delete(path);
+        }
+
         return Task.CompletedTask;
     }
 
@@ -124,7 +130,14 @@ internal sealed class S3BlobStorage(S3StorageOptions options) : IBlobStorage, ID
     public async Task DeleteAsync(string key, CancellationToken cancellationToken)
     {
         BlobKeys.Validate(key);
-        await _client.DeleteObjectAsync(options.Bucket, key, cancellationToken);
+        try
+        {
+            await _client.DeleteObjectAsync(options.Bucket, key, cancellationToken);
+        }
+        catch (AmazonS3Exception exception) when (exception.ErrorCode == "NoSuchBucket")
+        {
+            // nothing was ever stored
+        }
     }
 
     public async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken)

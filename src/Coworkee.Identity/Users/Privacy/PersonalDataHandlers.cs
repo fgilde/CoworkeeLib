@@ -4,12 +4,14 @@ using Coworkee.Core.Results;
 using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
 using Coworkee.Infrastructure.Persistence;
+using Coworkee.Infrastructure.Privacy;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Identity.Users.Privacy;
 
 // ponytail: the export is built synchronously in memory; a background job with a download link pays off once a user's data reaches many megabytes
-internal sealed class PersonalDataHandlers(CoworkeeDbContext db, ICurrentUser currentUser, IEnumerable<IPersonalDataContributor> contributors, AccountGuard guard)
+internal sealed class PersonalDataHandlers(
+    CoworkeeDbContext db, ICurrentUser currentUser, IEnumerable<IPersonalDataContributor> contributors, AccountGuard guard, PersonalDataReferences references, SessionSignal sessions)
     : IHandler<ExportMyPersonalData, Result<IReadOnlyDictionary<string, object>>>, IHandler<DeleteMyAccount, Result>, IHandler<DeleteUser, Result>
 {
     public async Task<Result<IReadOnlyDictionary<string, object>>> HandleAsync(ExportMyPersonalData query, CancellationToken cancellationToken)
@@ -72,8 +74,14 @@ internal sealed class PersonalDataHandlers(CoworkeeDbContext db, ICurrentUser cu
             await contributor.EraseAsync(subject, cancellationToken);
         }
 
+        // saved first, so the audit entries of the contributors' tracked changes are in the trail the references step cleans
+        await db.SaveChangesAsync(cancellationToken);
+        await references.EraseAsync(subject, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+
+        // the user row went with a direct delete, which no interceptor sees: drop the cached stamp, so his tokens stop at once on every instance
+        await sessions.PublishAsync([new SessionChange(subject.UserId, "signed-out")], cancellationToken);
         return Result.Success();
     }
 

@@ -29,6 +29,7 @@ public sealed class CoworkeeRetentionModule : CoworkeeModule, IWebModule
         services.AddSingleton<ISettingDefinitionContributor, RetentionSettingDefinitions>();
         services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<RetentionRunner>();
+        services.AddScoped<Application.Privacy.IPersonalDataContributor, RetentionPersonalData>();
         services.AddRetentionTarget<AuditRetention>().AddRetentionTarget<SnapshotRetention>().AddRetentionTarget<OutboxRetention>().AddRetentionTarget<SoftDeletedRetention>()
             .AddRetentionTarget<AccessTokenRetention>();
         services.AddSingleton<Infrastructure.Tokens.RetentionCleansAccessTokens>();

@@ -88,9 +88,12 @@ public sealed class IdentityApp : DatabaseFixture
         return (await response.Content.ReadFromJsonAsync<SetupResultDto>())!;
     }
 
-    public async Task<T> InDbAsync<T>(Guid? tenantId, Func<IdentityTestDbContext, Task<T>> action)
+    public Task<T> InDbAsync<T>(Guid? tenantId, Func<IdentityTestDbContext, Task<T>> action) => InDbAsAsync(new ImpersonatedUser(null, tenantId), action);
+
+    /// <summary>Saves as <paramref name="user"/>: its id lands in CreatedBy and the audit trail.</summary>
+    public async Task<T> InDbAsAsync<T>(ImpersonatedUser user, Func<IdentityTestDbContext, Task<T>> action)
     {
-        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, tenantId));
+        using var actor = CurrentUserScope.Begin(user);
         await using var scope = App.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<IdentityTestDbContext>();
         var result = await action(db);

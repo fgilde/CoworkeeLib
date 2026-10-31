@@ -1,18 +1,15 @@
 using Coworkee.Application.Privacy;
 using Coworkee.Contracts.Identity;
 using Coworkee.Identity.Domain;
-using Coworkee.Infrastructure.Auditing;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Identity.Users.Privacy;
 
-/// <summary>Profile, address, picture and memberships; erasing deletes the user and blanks the values in the user's own audit trail.</summary>
+/// <summary>Profile, address, picture, memberships, claims and own grants; erasing deletes the user with all of it (the library blanks his audit trail afterwards).</summary>
 internal sealed class IdentityPersonalData(CoworkeeDbContext db) : IPersonalDataContributor
 {
-    private const string Erased = "\"***\"";
-
     public string Section => "profile";
 
     public async Task<object?> ExportAsync(PersonalDataSubject subject, CancellationToken cancellationToken)
@@ -25,6 +22,15 @@ internal sealed class IdentityPersonalData(CoworkeeDbContext db) : IPersonalData
                             select userGroup.Name).ToListAsync(cancellationToken);
         var logins = await db.Set<IdentityUserLogin<Guid>>().Where(l => l.UserId == user.Id).Select(l => l.LoginProvider).ToListAsync(cancellationToken);
         var passkeys = await db.Set<IdentityUserPasskey<Guid>>().AsNoTracking().Where(p => p.UserId == user.Id).ToListAsync(cancellationToken);
+        var claims = await db.Set<IdentityUserClaim<Guid>>().Where(c => c.UserId == user.Id).Select(c => new { c.ClaimType, c.ClaimValue }).ToListAsync(cancellationToken);
+        var grants = await Grants(subject).AsNoTracking().OrderBy(g => g.Name).Select(g => g.Name).ToListAsync(cancellationToken);
+        var resources = await (from permission in ResourceGrants(subject).AsNoTracking()
+                               join role in db.Set<Role>().IgnoreQueryFilters() on permission.RoleId equals role.Id
+                               select new { permission.ResourceType, permission.ResourceId, Role = role.Name }).ToListAsync(cancellationToken);
+        var selected = await (from selection in db.Set<GroupSelection>()
+                              join userGroup in db.Set<UserGroup>().IgnoreQueryFilters() on selection.GroupId equals userGroup.Id
+                              where selection.UserId == user.Id
+                              select userGroup.Name).ToListAsync(cancellationToken);
         return new
         {
             user.Id,
@@ -44,29 +50,25 @@ internal sealed class IdentityPersonalData(CoworkeeDbContext db) : IPersonalData
             Groups = groups,
             ExternalLogins = logins,
             Passkeys = passkeys.Select(p => new { p.Data.Name, p.Data.CreatedAt, p.Data.IsBackedUp }),
+            Claims = claims,
+            PermissionGrants = grants,
+            ResourcePermissions = resources,
+            SelectedGroups = selected,
         };
     }
 
     public async Task EraseAsync(PersonalDataSubject subject, CancellationToken cancellationToken)
     {
-        var id = subject.UserId.ToString();
-        foreach (var entry in await db.Set<AuditEntry>().Where(e => e.EntityType == nameof(User) && e.EntityId == id).ToListAsync(cancellationToken))
-        {
-            var changes = entry.Changes.Select(c => new AuditChange
-            {
-                Property = c.Property,
-                OldValue = c.OldValue is null ? null : Erased,
-                NewValue = c.NewValue is null ? null : Erased,
-            }).ToList();
-            entry.Changes.Clear();
-            entry.Changes.AddRange(changes);
-        }
+        await Grants(subject).ExecuteDeleteAsync(cancellationToken);
+        await ResourceGrants(subject).ExecuteDeleteAsync(cancellationToken);
 
-        await db.Set<PermissionGrant>().Where(g => g.ProviderType == PermissionProviderType.User && g.ProviderKey == subject.UserId).ExecuteDeleteAsync(cancellationToken);
-        await db.Set<ResourcePermission>().IgnoreQueryFilters()
-            .Where(p => p.PrincipalType == PrincipalType.User && p.PrincipalId == subject.UserId).ExecuteDeleteAsync(cancellationToken);
-
-        // a direct delete writes no audit entry with the old values; roles, claims, logins, tokens, passkeys and memberships go with it by cascade
+        // a direct delete writes no audit entry with the old values; roles, claims, logins, tokens, passkeys, memberships and group selections go with it by cascade
         await db.Set<User>().Where(u => u.Id == subject.UserId).ExecuteDeleteAsync(cancellationToken);
     }
+
+    private IQueryable<PermissionGrant> Grants(PersonalDataSubject subject) =>
+        db.Set<PermissionGrant>().Where(g => g.ProviderType == PermissionProviderType.User && g.ProviderKey == subject.UserId);
+
+    private IQueryable<ResourcePermission> ResourceGrants(PersonalDataSubject subject) =>
+        db.Set<ResourcePermission>().IgnoreQueryFilters().Where(p => p.PrincipalType == PrincipalType.User && p.PrincipalId == subject.UserId);
 }
