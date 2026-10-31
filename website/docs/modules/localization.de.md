@@ -69,7 +69,7 @@ Drei Ebenen bestimmen, welchen Text ein Benutzer sieht, die letzte gewinnt:
 
 1. Der mitgelieferte Text der Bibliothek.
 2. Derselbe Schlüssel in einer `Localization/{culture}.json` der App: Die Ressourcen der App werden nach denen der Module definiert, ihr Text ersetzt also den der Bibliothek. Ein Schlüssel, den die Bibliothek nicht kennt, kommt einfach dazu.
-3. Eine Bearbeitung unter *Übersetzungen* (`/admin/translations`), die zur Laufzeit ohne Deployment wirkt und beide schlägt.
+3. Eine Bearbeitung unter *Übersetzungen* (`/cw/admin/translations`), die zur Laufzeit ohne Deployment wirkt und beide schlägt.
 
 `coworkee texts export` kopiert Bibliothekstexte in die JSON der App, damit du die Schlüssel nicht suchen musst:
 
@@ -103,7 +103,9 @@ Die Kontoseiten und Mails lesen ihre eigenen eingebetteten Texte und Vorlagen, n
 <MudText>@L["Delete {0}? This cannot be undone.", brand.Name]</MudText>
 ```
 
-Die Sprache wählt der Benutzer in der App-Leiste. Auch die Texte von MudBlazor (Pager, Filter, Dialoge) werden übersetzt. Die Kultur wird vor dem ersten Rendern gesetzt:
+`L.Stored(text)` übersetzt Text, den Benutzer oder ein Seed gespeichert haben (ein Berichtsname, ein Widget-Titel), wenn die App einen Text dafür hat, und zeigt ihn sonst unverändert, ohne ihn als fehlend zu melden; `L.Server(text, arguments)` füllt einen lokalisierbaren Text des Servers (eine Benachrichtigung).
+
+Die Sprache wählt der Benutzer in der App-Leiste; sie wird als Benutzereinstellung `Localization.Culture` gespeichert (*Standardsprache*, auch eine Einstellung des Systems und der Organisation, auf die neue Benutzer und die Zusammenfassungsmails zurückfallen). Der Client nimmt die gespeicherte Wahl, dann diese Einstellung, dann die Sprache des Browsers, dann die Standardsprache. Auch die Texte von MudBlazor (Pager, Filter, Dialoge) werden übersetzt. Die Kultur wird vor dem ersten Rendern gesetzt:
 
 ```csharp title="Program.cs"
 var host = builder.Build();
@@ -113,12 +115,19 @@ await host.RunAsync();
 
 ## Verwaltung
 
-- *Sprachen* (`/admin/languages`): alle Kulturen, nach Sprache gruppiert, mit einem Schalter. Beim Einschalten werden fehlende Texte mit dem [Übersetzungsdienst](#maschinelle-ubersetzung) der Einstellungen übersetzt; ein Knopf übersetzt später noch Fehlendes. Der Stern markiert die Standardsprache, die sich nicht abschalten lässt.
+- *Sprachen* (*Administration > Lokalisierung > Sprachen*, `/cw/admin/languages`): alle Kulturen, nach Sprache gruppiert, mit einem Schalter. Beim Einschalten werden fehlende Texte mit dem [Übersetzungsdienst](#maschinelle-ubersetzung) der Einstellungen übersetzt; ein Knopf übersetzt später noch Fehlendes. Der Stern markiert die Standardsprache, die sich nicht abschalten lässt.
 
 ![Sprachen](../assets/screenshots/languages.png){ .shot }
-- *Übersetzungen* (`/admin/translations`): jeder Schlüssel mit Modultext und bearbeitetem Text je Sprache. Bearbeitungen gewinnen gegen die Modultexte.
+- *Übersetzungen* (*Administration > Lokalisierung > Übersetzungen*, `/cw/admin/translations`): jeder Schlüssel mit Modultext und bearbeitetem Text je Sprache. Bearbeitungen gewinnen gegen die Modultexte.
 
 Beides braucht `Localization.Manage`.
+
+| Endpunkt | |
+|---|---|
+| `GET /api/v1/localization/languages`, `GET .../texts/{culture}` | die eingeschalteten Sprachen und die Texte einer davon (anonym) |
+| `POST /api/v1/localization/missing` | Schlüssel, die der Client nicht gefunden hat (angemeldet) |
+| `GET .../languages/all`, `POST .../languages`, `PUT .../languages/{id}`, `POST .../languages/delete`, `PUT .../languages/{culture}/enabled` | Sprachen verwalten (`Localization.Manage`) |
+| `GET .../translations/{culture}`, `PUT .../translations`, `POST .../translations/{culture}/translate` | Übersetzungen auflisten und bearbeiten, Fehlendes maschinell übersetzen (`Localization.Manage`) |
 
 Jede Änderung erreicht alle Clients sofort (Realtime-Topic `global:localization`): sie laden ihre Texte neu, und Benutzer, deren Sprache abgeschaltet wurde, wechseln mit kurzem Hinweis zur Standardsprache.
 
@@ -158,7 +167,7 @@ Texte sind nach ihrem englischen Wortlaut geschlüsselt, Englisch ist also die n
 
 ### Im AppHost
 
-`UseLibreTranslate` fügt einen LibreTranslate-Container hinzu, der nur die Modelle der angegebenen Sprachen und der Ausgangssprache lädt (`LT_LOAD_ONLY`, Englisch ist immer dabei), sie im Volume `coworkee-libretranslate-models` hält, das alle Apps auf dem Rechner teilen, und die Dienste mit dem Lokalisierungsmodul warten lässt, bis er auf `/health` antwortet. Der erste Start lädt die Modelle herunter; spätere Starts finden sie im Volume. Außerdem setzt er die Einstellungen `TranslationProvider` und `TranslationEndpoint`.
+`UseLibreTranslate` fügt einen LibreTranslate-Container hinzu, der nur die Modelle der angegebenen Sprachen und der Ausgangssprache lädt (`LT_LOAD_ONLY`, Englisch ist immer dabei), sie im Volume `coworkee-libretranslate-models` hält, das alle Apps auf dem Rechner teilen (`{app}-libretranslate-models` in einem Deployment), und die Dienste mit dem Lokalisierungsmodul warten lässt, bis er auf `/health` antwortet. Der erste Start lädt die Modelle herunter; spätere Starts finden sie im Volume. Außerdem setzt er die Einstellungen `TranslationProvider` und `TranslationEndpoint`.
 
 ```csharp title="AppHost.cs"
 builder.AddCoworkeeApp("myapp", options => options.UseLibreTranslate(["en", "de", "fr", "es", "it"]));
