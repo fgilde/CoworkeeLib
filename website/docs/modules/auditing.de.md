@@ -1,11 +1,22 @@
 # Audit
 
-Das Audit protokolliert jede Änderung an auditierten Entities Feld für Feld: wer, wann, alter Wert, neuer Wert. Es wird in derselben Transaktion wie die Änderung geschrieben und lügt deshalb nie.
+Das Audit protokolliert jede Änderung an den Entities der App Feld für Feld: wer (und wer als er angemeldet war), wann, alter Wert, neuer Wert. Es wird in derselben Transaktion wie die Änderung geschrieben (Tabelle `cw.AuditEntries`) und lügt deshalb nie.
 
-- Die Seite **Audit log** listet alle Änderungen mit Filtern für Benutzer, Entity-Typ und Zeitraum.
+`Coworkee.Auditing` (`CoworkeeAuditingModule`) bringt das Audit-Log, seine Endpunkte und den Verlauf eines Datensatzes; die Vorlage hat es (Option `auditing`, standardmäßig an). Das Protokoll selbst schreibt der DbContext der App.
+
+## Audit-Protokoll
+
+- Jede angelegte, geänderte und gelöschte Entity wird protokolliert, außer Owned Types, [anonyme Datensätze](#anonyme-datensatze) und was ausgenommen ist: `[NotAudited]` an einem Typ oder Feld (oder `IsNotAudited()` in einem Model-Contributor) lässt es weg, `[Sensitive]` (oder `IsSensitive()`) protokolliert, dass sich ein Feld geändert hat, ohne den Wert (`***`).
+- Die Seite **Audit-Log** (*Administration > Überwachung > Audit-Log*, `/cw/admin/audit`) listet die Änderungen der eigenen Organisation (die System-Organisation sieht auch Einträge ohne Organisation) als Datentabelle mit Suche, Zeitraum, *Nur meine Änderungen* und wer als der Akteur angemeldet war (*angemeldet durch*).
 - `<AuditTimeline EntityType="Brand" EntityId="@brand.Id.ToString()" />` zeigt die Historie einer Entity auf ihrer eigenen Seite.
-- `[NotAudited]` nimmt einen Typ oder ein Feld aus, `[Sensitive]` protokolliert, dass sich ein Feld geändert hat, ohne den Wert.
-- Entities mit `IVersioned` behalten zusätzlich vollständige Schnappschüsse; `<VersionHistory Type="..." Id="..." />` listet sie und stellt eine ältere Revision wieder her.
+- Entities mit `IVersioned` behalten zusätzlich vollständige Schnappschüsse (`cw.EntitySnapshots`, eine `Revision` pro Speichern). Ein Modul oder eine App registriert einen Typ mit einem `IVersionedTypeContributor` (`context.Add<Theme>("Theme", permission)`); `<VersionHistory Type="Theme" Id="..." />` listet dann die Revisionen und stellt für Inhaber dieser Berechtigung eine ältere wieder her.
+
+| Endpunkt | |
+|---|---|
+| `GET /api/v1/audit?entityType=&entityId=&actorId=&impersonatorId=&from=&to=&page=&pageSize=` | die Einträge (`Audit.View`); auch das OData-Set `AuditEntries` |
+| `GET /api/v1/versions/{type}/{id}`, `GET .../{revision}`, `POST .../{revision}/restore` | Schnappschüsse eines `IVersioned`-Typs (mit seiner registrierten Berechtigung) |
+
+Die Berechtigung `Audit.View` zeigt das Audit-Log und den Verlauf. Mit dem Modul [Aufbewahrung](retention.md) löschen die Ziele `audit` und `snapshots` alte Einträge; der Export personenbezogener Daten hat einen Abschnitt `activity` (was der Benutzer geändert hat: Typ, Id, Aktion, Zeit), und das Löschen eines Benutzers behält das Protokoll ohne seinen Namen.
 
 ## Verlauf eines Datensatzes und Wiederherstellen
 
@@ -35,7 +46,7 @@ Im Client schaltest du entweder die Zeilenaktion einer Tabelle ein oder setzt di
 - Für den Verlauf brauchst du `Audit.View` und die Leseberechtigung des Entity-Sets, fürs Wiederherstellen die registrierte Berechtigung. Alles bleibt im Mandanten des Benutzers.
 - `[Sensitive]`-Felder erscheinen als `***` und werden nie zurückgeschrieben; Felder, die das OData-Set verbirgt, tauchen im Verlauf nicht auf.
 
-Das Audit-Log (`/admin/audit`) bietet dieselben Aktionen pro Eintrag, wenn dessen Typ zu so einem Set gehört: Öffne eine Zeile und wähle **Diese Änderung rückgängig machen** (nur die Felder dieses Eintrags gehen zurück, spätere Änderungen an anderen Feldern bleiben), **Stand vor dieser Änderung wiederherstellen** (dieser Eintrag und alles danach wird zurückgerollt), **Datensatz wiederherstellen** beim Löschen eines Soft-Delete-Datensatzes oder **Verlauf des Datensatzes öffnen**. Alle zeigen dieselbe Vorschau und fragen nach. Hat ein späterer Eintrag ein Feld geändert, das ein Rückgängigmachen zurücksetzt, markiert die Vorschau das Feld mit *Später geändert* und warnt dich, dass der neuere Wert ersetzt wird. Ohne die Berechtigung zum Wiederherstellen siehst du nur den Verlauf; Einträge anderer Typen zeigen nichts.
+Das Audit-Log (`/cw/admin/audit`) bietet dieselben Aktionen pro Eintrag, wenn dessen Typ zu so einem Set gehört: Öffne eine Zeile und wähle **Diese Änderung rückgängig machen** (nur die Felder dieses Eintrags gehen zurück, spätere Änderungen an anderen Feldern bleiben), **Stand vor dieser Änderung wiederherstellen** (dieser Eintrag und alles danach wird zurückgerollt), **Datensatz wiederherstellen** beim Löschen eines Soft-Delete-Datensatzes oder **Verlauf des Datensatzes öffnen**. Alle zeigen dieselbe Vorschau und fragen nach. Hat ein späterer Eintrag ein Feld geändert, das ein Rückgängigmachen zurücksetzt, markiert die Vorschau das Feld mit *Später geändert* und warnt dich, dass der neuere Wert ersetzt wird. Ohne die Berechtigung zum Wiederherstellen siehst du nur den Verlauf; Einträge anderer Typen zeigen nichts.
 
 Die Endpunkte liegen unter `/api/v1/history`: `GET /` (die Sets, die du lesen darfst, mit `CanRestore`) und pro Set `/{entitySet}`: `GET /{id}`, `POST /{id}/preview`, `POST /{id}/restore` und `GET /deleted`. Vorschau und Wiederherstellen nehmen `{ entryId, property?, mode, version? }` mit `mode` `After` (Standard, der Stand direkt nach dem Eintrag), `Before` oder `Undo`. Die Vorschau liefert eine `version` des Datensatzes; das Wiederherstellen schickt sie zurück und antwortet `409`, wenn sich der Datensatz dazwischen geändert hat (ein Wert, das Löschen oder ein neuer Verlaufseintrag). Die Blazor-Dialoge und das AirWorks-Datensatzfenster zeigen dann die neue Vorschau.
 
