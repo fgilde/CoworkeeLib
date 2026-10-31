@@ -112,7 +112,7 @@ or without touching the entity:
 services.ConfigureFacet<SalesOrder>(o => o.Region, f => { f.View = FacetView.Select; f.AllowExclude = true; });
 ```
 
-`Switchable` lets users switch between *any of* and *all of* (where values can hold together) and between the views that fit (the tune menu of a facet); their pick is part of saved views. Unset, `MultiSelect = false` on `[ProvideFacet]` means `Single` and `GroupOperator = And` means `All`.
+`Switchable` lets users switch between *any of* and *all of* (where values can hold together) and between the views that fit (the tune menu of a facet); their pick is part of saved views. Unset, `MultiSelect = false` on `[ProvideFacet]` means `Single` and `GroupOperator = And` means `All`. `TreeSeparator` splits values for the `Tree` view (`"Europe / Germany"`), `Buckets` sets the bars of a number histogram (12).
 
 The page has the last word:
 

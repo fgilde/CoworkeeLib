@@ -112,7 +112,7 @@ oder ohne die Entität anzufassen:
 services.ConfigureFacet<SalesOrder>(o => o.Region, f => { f.View = FacetView.Select; f.AllowExclude = true; });
 ```
 
-Mit `Switchable` wechseln Benutzer zwischen *eines von* und *alle von* (wo Werte zugleich gelten können) und zwischen den passenden Ansichten (das Regler-Menü einer Facette); ihre Wahl gehört zu gespeicherten Ansichten. Ohne Angabe bedeutet `MultiSelect = false` an `[ProvideFacet]` `Single` und `GroupOperator = And` `All`.
+Mit `Switchable` wechseln Benutzer zwischen *eines von* und *alle von* (wo Werte zugleich gelten können) und zwischen den passenden Ansichten (das Regler-Menü einer Facette); ihre Wahl gehört zu gespeicherten Ansichten. Ohne Angabe bedeutet `MultiSelect = false` an `[ProvideFacet]` `Single` und `GroupOperator = And` `All`. `TreeSeparator` teilt Werte für die Ansicht `Tree` (`"Europe / Germany"`), `Buckets` legt die Balken eines Zahlen-Histogramms fest (12).
 
 Die Seite hat das letzte Wort:
 
