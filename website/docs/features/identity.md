@@ -17,7 +17,9 @@ Permissions are strings that modules define. They are granted to roles, to group
 
 Grants can also target a single resource, one folder for example, and inherit down a hierarchy you describe with `IResourceHierarchy`. Blazor pages hide buttons and menu entries the user can't use, but that is cosmetic. The server decides.
 
-Administrators edit everything about a user on one page, from the email address to lockout and two-step verification reset. *Sign out everywhere* and *Lock* act at once: tokens carry a hash of the security stamp, the API compares it on every request, and with Redis the other instances hear about it immediately.
+Permissions can also come from data: `services.AddComputedPermission(...)` grants one while a check of your own holds (the user leads a team, say), and it counts wherever a role grant does ([computed permissions](../security/permissions.md#computed-permissions)). `IPermissionChecker.UsersGrantedAsync` and `GET /api/v1/identity/users/granted` list who holds a permission through roles, own and group grants ([who holds a permission](../security/permissions.md#who-holds-a-permission)), and `ISystemDispatcher` runs a request as the system with exactly the permissions it names ([acting as the system](../security/permissions.md#acting-as-the-system)).
+
+Administrators edit everything about a user on one page, from the email address to lockout and two-step verification reset. *Sign out everywhere* and *Lock* act at once: tokens carry a hash of the security stamp, the API compares it on every request, and with Redis the other instances hear about it immediately. Open tabs of the ended sessions learn it over realtime (`SessionRevoked`) and sign out at once. Users change their own password on the account page or with `PUT /api/v1/identity/me/password`; their other sessions end, the calling one stays ([signing out everywhere](../security/clients.md#signing-out-everywhere-and-locking)).
 
 ## Log in as another user
 
@@ -135,9 +137,11 @@ Any OpenID Connect provider can sign users in; each one is a section under `Cowo
 
 Whether people sign in with a password, a provider or both is the setting `Auth.LoginMode`, changeable at runtime. Self registration (off unless `Account.AllowRegistration` is set) can require activation by an administrator, a confirmed address, allowed address patterns and uploaded documents. Password rules are settings too, up to a history of 24 passwords, and every password field lists the rules in force.
 
+[Passkeys](../security/passkeys.md) (WebAuthn) sign in without a password and skip two-step verification; users manage up to 20 on the account page, administrators can remove all of a user's, and `Account.Passkeys.Enabled` turns them off. Single-page apps of other origins sign in as public clients with PKCE (`app.AddSpaClient(...)` in the [app host](../hosting/aspire.md#single-page-apps)) and call the API under the CORS policy of `Coworkee:Cors:Origins` ([CORS](../security/clients.md#cross-origin-calls-cors)).
+
 ## Keys and personal data
 
-Scripts and AI clients use personal API keys: `cwk_` plus 64 hex characters, shown once, stored as a SHA-256 hash, valid for 7 to 365 days. A key never has more than its user has right now; take a role away from the user and the key loses it on the next request.
+Scripts and AI clients use personal API keys: `cwk_` plus 64 hex characters, shown once, stored as a SHA-256 hash, valid for up to a year (the dialog offers 7 to 365 days). A key never has more than its user has right now, and its scopes narrow it further; take a role away from the user and the key loses it on the next request.
 
 Modules that store data about a person implement `IPersonalDataContributor`. The *Privacy* tab of the account page then downloads everything as `personal-data.json`, or deletes the account.
 
