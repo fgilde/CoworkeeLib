@@ -50,7 +50,7 @@
   "Uploaded": "Diunggah",
   "Not found.": "Tidak ditemukan.",
   "You need to sign in, or you lack the permission for this page.": "Silakan masuk, atau Anda tidak memiliki izin untuk halaman ini.",
-  "Clean Architecture starter for Blazor, built on Coworkee modules.": "Templat awal Clean Architecture untuk Blazor, berbasis modul Coworkee.",
+  "Modular business app for Blazor, built on Coworkee.": "Aplikasi bisnis modular untuk Blazor, berbasis Coworkee.",
   "Permissions, OData tables with facets, realtime and theming come with the packages; the UI uses": "Izin, tabel OData dengan facet, realtime, dan tema sudah tersedia dalam paket; antarmuka menggunakan",
   "and": "dan",
   "Project page": "Halaman proyek",

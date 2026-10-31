@@ -28,7 +28,7 @@ builder.Services.AddCoworkeeClient(baseAddress, options =>
     options.AssistantLinks["add_edit_product"] = "/catalog/products";
     options.AssistantLinks["add_edit_brand"] = "/catalog/brands";
 #endif
-    options.AppDescription = "Clean Architecture starter for Blazor, built on Coworkee modules.";
+    options.AppDescription = "Modular business app for Blazor, built on Coworkee.";
     options.AboutLinks.Add(new AboutLink("Project page", "https://github.com/fgilde/CoworkeeLib"));
     options.AboutLinks.Add(new AboutLink("Documentation", "https://fgilde.github.io/CoworkeeLib/"));
 #if (airworks)

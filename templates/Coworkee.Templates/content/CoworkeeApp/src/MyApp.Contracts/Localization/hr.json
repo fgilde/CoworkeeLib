@@ -50,7 +50,7 @@
   "Uploaded": "Učitano",
   "Not found.": "Nije pronađeno.",
   "You need to sign in, or you lack the permission for this page.": "Morate se prijaviti ili nemate ovlaštenje za ovu stranicu.",
-  "Clean Architecture starter for Blazor, built on Coworkee modules.": "Polazni predložak Clean Architecture za Blazor, izgrađen na Coworkee modulima.",
+  "Modular business app for Blazor, built on Coworkee.": "Modularna poslovna aplikacija za Blazor, izgrađena na Coworkeeju.",
   "Permissions, OData tables with facets, realtime and theming come with the packages; the UI uses": "Ovlaštenja, OData tablice s facetama, realtime i teme dolaze s paketima; korisničko sučelje koristi",
   "and": "i",
   "Project page": "Stranica projekta",

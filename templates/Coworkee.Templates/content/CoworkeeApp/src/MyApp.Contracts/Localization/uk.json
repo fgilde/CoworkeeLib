@@ -50,7 +50,7 @@
   "Uploaded": "Завантажено",
   "Not found.": "Не знайдено.",
   "You need to sign in, or you lack the permission for this page.": "Потрібно увійти, або у вас немає дозволу на цю сторінку.",
-  "Clean Architecture starter for Blazor, built on Coworkee modules.": "Стартовий шаблон Clean Architecture для Blazor на основі модулів Coworkee.",
+  "Modular business app for Blazor, built on Coworkee.": "Модульний бізнес-застосунок для Blazor на основі Coworkee.",
   "Permissions, OData tables with facets, realtime and theming come with the packages; the UI uses": "Дозволи, таблиці OData з фасетами, робота в реальному часі та теми постачаються з пакетами; інтерфейс використовує",
   "and": "і",
   "Project page": "Сторінка проєкту",

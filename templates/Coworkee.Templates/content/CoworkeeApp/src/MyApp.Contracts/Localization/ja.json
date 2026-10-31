@@ -50,7 +50,7 @@
   "Uploaded": "アップロード日時",
   "Not found.": "見つかりませんでした。",
   "You need to sign in, or you lack the permission for this page.": "ログインが必要か、このページを表示する権限がありません。",
-  "Clean Architecture starter for Blazor, built on Coworkee modules.": "Coworkeeモジュールをベースにした、Blazor向けのクリーンアーキテクチャのスターターです。",
+  "Modular business app for Blazor, built on Coworkee.": "Coworkee で構築された Blazor 向けモジュール式ビジネスアプリ。",
   "Permissions, OData tables with facets, realtime and theming come with the packages; the UI uses": "権限管理、ファセット付きのODataテーブル、リアルタイム機能、テーマ機能はパッケージに含まれています。UIには次を使用しています:",
   "and": "および",
   "Project page": "プロジェクトページ",

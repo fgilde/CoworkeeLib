@@ -50,7 +50,7 @@
   "Uploaded": "បានផ្ទុកឡើង",
   "Not found.": "រកមិនឃើញ។",
   "You need to sign in, or you lack the permission for this page.": "អ្នកត្រូវចូលគណនី ឬអ្នកមិនមានសិទ្ធិចូលទំព័រនេះ។",
-  "Clean Architecture starter for Blazor, built on Coworkee modules.": "គំរូចាប់ផ្តើម Clean Architecture សម្រាប់ Blazor ដែលបង្កើតលើម៉ូឌុល Coworkee។",
+  "Modular business app for Blazor, built on Coworkee.": "កម្មវិធីអាជីវកម្មជាម៉ូឌុលសម្រាប់ Blazor ដែលបង្កើតលើ Coworkee។",
   "Permissions, OData tables with facets, realtime and theming come with the packages; the UI uses": "សិទ្ធិ តារាង OData ដែលមានតម្រង (facets) ពេលវេលាជាក់ស្តែង (realtime) និងធីម មកជាមួយកញ្ចប់; ចំណុចប្រទាក់ប្រើ",
   "and": "និង",
   "Project page": "ទំព័រគម្រោង",

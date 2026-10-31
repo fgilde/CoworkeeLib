@@ -50,7 +50,7 @@
   "Uploaded": "Μεταφορτώθηκε",
   "Not found.": "Δεν βρέθηκε.",
   "You need to sign in, or you lack the permission for this page.": "Πρέπει να συνδεθείτε ή δεν έχετε δικαίωμα πρόσβασης σε αυτή τη σελίδα.",
-  "Clean Architecture starter for Blazor, built on Coworkee modules.": "Πρότυπο εκκίνησης Clean Architecture για Blazor, βασισμένο σε ενότητες Coworkee.",
+  "Modular business app for Blazor, built on Coworkee.": "Αρθρωτή επιχειρηματική εφαρμογή για Blazor, βασισμένη στο Coworkee.",
   "Permissions, OData tables with facets, realtime and theming come with the packages; the UI uses": "Τα δικαιώματα, οι πίνακες OData με φίλτρα (facets), η λειτουργία σε πραγματικό χρόνο και τα θέματα παρέχονται από τα πακέτα· το περιβάλλον χρήστη χρησιμοποιεί",
   "and": "και",
   "Project page": "Σελίδα έργου",

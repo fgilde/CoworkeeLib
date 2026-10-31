@@ -27,6 +27,7 @@
 
 ### Behoben
 
+- Vorlage: Die Berechtigungen `Catalog.Brands.Export`, `Catalog.Products.Export` und `Documents.Export` waren definiert, aber nirgends geprüft (Exporte brauchen die Ansehen-Berechtigung des Sets); neue Apps und die Rollen einer Spec kennen sie nicht mehr. Bestehende Apps können sie löschen. Startseite und `AppDescription` lauten *Modular business app for Blazor, built on Coworkee.*
 - Texte: `Reports.Share` heißt *Share reports with roles, groups or the organisation*, die Berechtigungsgruppe von Social *Comments, tags, ratings and reactions*; die Einstellungen *Tägliche E-Mail mit ungelesenen Benachrichtigungen*, die Felder des Head-Skripts und die Gruppe *Konten* sind in jeder mitgelieferten Sprache übersetzt.
 - Blazor-Exporte von `CoworkeeDataTable` schickten dem Server weder die Spaltentitel noch `ExportFileName`, und `ExportQueries.Of` fügte die Spalten ohne Maskierung zusammen. Der Export fragt jetzt mit den Titeln als Köpfen und `fileName=`; `ExportQueries.Of(format, query, columns, fileName)` nimmt `(Field, Header)`-Paare und maskiert sie mit `ExportColumns.Format`.
 - Das Einstellungsformular zeigte Einstellungen mit eigener Berechtigung (das Head-Skript) jedem mit `Settings.Manage`; Speichern antwortete 403. Die Definitionen lassen eine solche Einstellung für jeden weg, dem ihre Berechtigung fehlt.

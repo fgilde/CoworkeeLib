@@ -26,9 +26,9 @@ public static class PermissionCatalog
         ("elsa", ["Workflows.Elsa.Manage"]),
         ("webhooks", ["Webhooks.Manage"]),
         ("samples", [
-            "Catalog.Products.View", "Catalog.Products.Create", "Catalog.Products.Edit", "Catalog.Products.Delete", "Catalog.Products.Export",
-            "Catalog.Brands.View", "Catalog.Brands.Create", "Catalog.Brands.Edit", "Catalog.Brands.Delete", "Catalog.Brands.Export", "Dashboards.View",
-            "Documents.View", "Documents.Create", "Documents.Edit", "Documents.Delete", "Documents.Export", "Documents.ManageAll",
+            "Catalog.Products.View", "Catalog.Products.Create", "Catalog.Products.Edit", "Catalog.Products.Delete",
+            "Catalog.Brands.View", "Catalog.Brands.Create", "Catalog.Brands.Edit", "Catalog.Brands.Delete", "Dashboards.View",
+            "Documents.View", "Documents.Create", "Documents.Edit", "Documents.Delete", "Documents.ManageAll",
             "DocumentTypes.View", "DocumentTypes.Create", "DocumentTypes.Edit", "DocumentTypes.Delete",
         ]),
     ];

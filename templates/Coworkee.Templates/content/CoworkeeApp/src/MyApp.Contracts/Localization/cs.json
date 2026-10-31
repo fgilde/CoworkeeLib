@@ -50,7 +50,7 @@
   "Uploaded": "Nahráno",
   "Not found.": "Nenalezeno.",
   "You need to sign in, or you lack the permission for this page.": "Musíte se přihlásit, nebo pro tuto stránku nemáte oprávnění.",
-  "Clean Architecture starter for Blazor, built on Coworkee modules.": "Startovací šablona Clean Architecture pro Blazor, postavená na modulech Coworkee.",
+  "Modular business app for Blazor, built on Coworkee.": "Modulární podniková aplikace pro Blazor postavená na Coworkee.",
   "Permissions, OData tables with facets, realtime and theming come with the packages; the UI uses": "Oprávnění, tabulky OData s fasetami, realtime a motivy jsou součástí balíčků; uživatelské rozhraní používá",
   "and": "a",
   "Project page": "Stránka projektu",

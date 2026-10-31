@@ -27,6 +27,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixed
 
+- Template: the permissions `Catalog.Brands.Export`, `Catalog.Products.Export` and `Documents.Export` were defined but checked nowhere (exports need the set's view permission); they are gone from new apps and from the roles a spec may name. Existing apps may delete them. The home page and `AppDescription` read *Modular business app for Blazor, built on Coworkee.*
 - Texts: `Reports.Share` reads *Share reports with roles, groups or the organisation*, the social permission group *Comments, tags, ratings and reactions*; the settings *Daily e-mail with unread notifications*, the head script fields and the group *Accounts* are translated in every shipped language.
 - Blazor exports of `CoworkeeDataTable` sent neither the column titles nor `ExportFileName` to the server, and `ExportQueries.Of` joined the columns without escaping. The export now asks with the titles as headers and `fileName=`; `ExportQueries.Of(format, query, columns, fileName)` takes `(Field, Header)` pairs and escapes them with `ExportColumns.Format`.
 - The settings form showed settings with their own permission (the head script) to everyone with `Settings.Manage`; saving them answered 403. The definitions leave such a setting out for whoever lacks its permission.

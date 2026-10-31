@@ -8,7 +8,7 @@ var baseAddress = new Uri(builder.HostEnvironment.BaseAddress);
 builder.Services.AddCoworkeeClient(baseAddress, options =>
 {
     options.AppTitle = "MyApp";
-    options.AppDescription = "Clean Architecture starter for Blazor, built on Coworkee modules.";
+    options.AppDescription = "Modular business app for Blazor, built on Coworkee.";
     options.AboutLinks.Add(new AboutLink("Documentation", "https://fgilde.github.io/CoworkeeLib/"));
 });
 builder.Services.AddHttpClient<ICatalogApi, CatalogApi>(client => client.BaseAddress = baseAddress);
