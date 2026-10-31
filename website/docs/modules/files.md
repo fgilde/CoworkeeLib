@@ -13,9 +13,10 @@ public sealed class MyAppDatabaseModule : CoworkeeModule;
 - `Files.View` reads, `Files.Upload` uploads and creates folders, `Files.Manage` renames, moves and deletes. Uploaders may rename, move and delete their own files.
 - Per folder: grant a role on the resource type `FileFolder` (`ResourcePermissionsPanel ResourceType="FileFolder"`); the grant covers all subfolders. The root needs a global permission; without one it lists the folders granted to the user.
 - The *Registrations* tree of the registration documents is out of reach of global grants: only `Files.Registrations.View` (administrators) and the grant of each user on his own folder open it. Users with `Files.View` see *Registrations* at the root with only their own folder in it. The OData sets leave the tree out.
-- Deleting is a soft delete of the folder with everything below it; the blobs stay. Every change lands in the audit log and is pushed on the realtime topics `type:StoredFile` and `type:FileFolder`.
+- Deleting is a soft delete of the folder with everything below it; the blobs stay until the [retention](retention.md) target `deleted-files` removes the rows with their content (no default: kept until days are set). Every change lands in the audit log and is pushed on the realtime topics `type:StoredFile` and `type:FileFolder`.
 - OData sets `StoredFiles` and `FileFolders` (`Files.View`) for search and filters.
-- Uploads are the raw request body, streamed to a temp file and then into the storage. The limit is `Coworkee:Files:MaxFileSize` (bytes, default 2 GB).
+- Uploads are the raw request body, streamed to a temp file and then into the storage. The limit is `Coworkee:Files:MaxFileSize` (bytes, default 2 GB); a web host with `Coworkee:Bff:MaxRequestBodySize` caps forwarded uploads as well. Uploads to the drive have no scan hook; virus scanning exists for [record attachments](attachments.md) (`IAttachmentScanner`) and chat files (`IChatAttachmentScanner`).
+- The personal data export lists the user's uploads in the section `files` (metadata only); erasing keeps the files.
 
 | Endpoint | |
 |---|---|
@@ -27,7 +28,11 @@ public sealed class MyAppDatabaseModule : CoworkeeModule;
 | `PUT /api/v1/files/{id}/name` | rename a file |
 | `POST /api/v1/files/move` | `{ "fileIds": [], "folderIds": [], "targetFolderId": null }` |
 | `POST /api/v1/files/delete` | `{ "fileIds": [], "folderIds": [] }` |
-| `GET /api/v1/files/{id}/content` | inline, `?download=true` as attachment |
+| `GET /api/v1/files/{id}/content` | inline, `?download=true` as attachment; `HEAD` too |
+| `PUT /api/v1/files/{id}/public` | `{ "isPublic": true }`, see [Public files](#public-files) |
+| `GET /api/v1/files/public/{id}/{name}` | a public file, without sign-in |
+| `POST /api/v1/files/{id}/token` | a temporary link, see [Temporary links](#temporary-links) |
+| `GET /api/v1/files/token/{token}/{name}` | the file of a temporary link, without sign-in |
 
 The inline answer carries `Content-Security-Policy: sandbox; default-src 'none'; ...` and `X-Content-Type-Options: nosniff`, so an uploaded HTML or SVG file can be viewed but runs no script and loads nothing. Endpoints of your own that serve uploaded content return the same answer with `BlobContentResult` (`Coworkee.AspNetCore.Http`):
 
