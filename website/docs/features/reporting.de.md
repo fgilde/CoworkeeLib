@@ -13,7 +13,7 @@ builder.Services.AddCoworkeeReporting(baseAddress, reports => reports
     .DrillDown("SalesOrders", "sales/orders"));
 ```
 
-Mehr Einrichtung ist es nicht (dazu eine Migration für `cw.Reports` und `cw.ReportFavorites`). Neue Apps aus dem Template haben das schon, `--reports` ist standardmäßig an. Die Benutzer bekommen Seiten unter `/reports` und bauen dort Dashboards aus den Entitätsmengen, die du für OData registriert hast:
+Mehr Einrichtung ist es nicht (dazu eine Migration für die Tabellen des Moduls, `cw.Reports`, `cw.ReportFavorites`, `cw.ReportSubscriptions` und `cw.DashboardReports`; das Modul hängt vom Mailing-Modul ab, das die Abos verschickt). Neue Apps aus dem Template haben das schon, `--reports` ist standardmäßig an. Die Benutzer bekommen Seiten unter `/reports` und bauen dort Dashboards aus den Entitätsmengen, die du für OData registriert hast:
 
 ```csharp
 services.AddODataEntity<SalesOrder>("SalesOrders", SalesPermissions.Orders.View);
@@ -41,7 +41,7 @@ Der Server prüft jedes Feld gegen die Quelle, baut `GroupBy` und `Select` als E
 
 Gemessen an den 100.000 Aufträgen der Demo (Postgres, warm): Anzahl nach Status 9 ms, Summe nach Monat 29 ms, Anzahl nach Woche 55 ms, Region nach Kanal 23 ms, Top 10 Kunden mit Join 30 ms, vier KPI-Werte 58 ms.
 
-**Stand:** Berichte haben noch keine Versionsgeschichte, keinen öffentlichen Link und kein Karten-Widget. Unter SQLite werden Zeiträume auf `DateTimeOffset`-Feldern abgelehnt, weil EF sie dort als Text speichert; `DateTime` und `DateOnly` funktionieren.
+**Stand:** Berichte haben noch keine Versionsgeschichte, keinen öffentlichen Link und kein Karten-Widget. Unter SQLite funktionieren Zeiträume auf `DateTimeOffset`-Feldern im eigenen DbContext der App (in UTC aus der gespeicherten Zahl berechnet); in einem [externen DbContext](../fundamentals/persistence.md#externe-datenbanken) werden sie abgelehnt.
 
 ## Designer, Kreuzfilter und Drill-down
 
@@ -54,6 +54,16 @@ Widget-Typen: Kennzahl mit Trend und Ziel, Diagramme (Balken, Linie, Fläche, To
 Jede Gruppe kommt vom Server mit einem OData-Filter für genau ihre Zeilen zurück. Ein Klick auf einen Balken oder ein Tortenstück grenzt damit die anderen Widgets derselben Menge ein; *Daten öffnen* springt auf die Seite, die du mit `DrillDown` registriert hast, schon gefiltert auf die Zeilen hinter der Zahl.
 
 Ein Bericht ist privat, für Rollen, für Gruppen (deren Mitglieder und die der Gruppen darüber; eine Gruppenauswahl grenzt die Liste ein) oder für die ganze Organisation freigegeben (`Reports.Share`). Andere können ihn duplizieren, ändern darf ihn nur der Besitzer, und eine gespeicherte Änderung erreicht alle, die ihn gerade offen haben. Exportieren lässt er sich als PNG, als PDF über den Druckdialog oder je Widget als CSV und Excel.
+
+## Mehr als der Designer
+
+- **[Abos per Mail](../modules/reporting.md#abos-per-mail):** *Subscribe by mail* schickt einen Bericht täglich, wöchentlich oder monatlich zu einer Uhrzeit einer Zeitzone, mit Kennzahlen, den ersten Zeilen jedes Widgets und einer Excel-Mappe. Er läuft als der Abonnent, es gelten also dieselben Rechte und Zeilenfilter.
+- **[Schwellenwerte](../modules/reporting.md#schwellenwerte)** färben Kennzahlen, Tachos, Pivot-Zellen, eine Tabellenspalte und Balken nach Bändern, mit Symbol und Beschriftung.
+- **[Umschalter für Betrachter](../modules/reporting.md#umschalter-fur-betrachter):** andere Werte und Gruppierungen, die Betrachter im Kopf des Widgets wählen, je Benutzer gemerkt, ohne den Bericht zu ändern.
+- **[Mit KI erstellen](../modules/reporting.md#einen-bericht-mit-ki-erstellen):** *Create with AI* und *Ask AI to change this report* machen aus einem Prompt eine Definition, die wie beim Speichern geprüft wird und ungespeichert im Designer aufgeht; der Assistent hat dasselbe als Tool `generate_report`.
+- **[Eigene Datenquellen](../modules/reporting.md#eigene-datenquellen):** `AddReportSource<T>` stellt Zeilen eines einfachen Typs (eine Datenbankabfrage oder eine Liste) neben die Entitätsmengen.
+- **[Ein Bericht als Dashboard](../modules/reporting.md#ein-bericht-als-dashboard):** jeder Benutzer kann einen Bericht zu seinem Dashboard machen, wer `Reports.Dashboard` hat, den Standard der Organisation.
+- Ein Widget kann `AppData` tragen, JSON, das eine App oder ein zweiter Client mit ihm aufbewahrt; Berichte lesen und ändern es nicht.
 
 ## Der Vertriebsbericht der Demo, Schritt für Schritt
 
