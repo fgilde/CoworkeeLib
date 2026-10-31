@@ -159,8 +159,13 @@ internal sealed class PrivateTickets(ICurrentUser currentUser) : IODataEntityFil
 /// <summary>Refuses every file with "virus" in its name, as a scanner would.</summary>
 internal sealed class NameScanner : IAttachmentScanner
 {
-    public Task<string?> ScanAsync(AttachmentUpload upload, Stream content, CancellationToken cancellationToken) =>
-        Task.FromResult(upload.FileName.Contains("virus", StringComparison.OrdinalIgnoreCase) ? "The file is infected." : null);
+    public static ConcurrentBag<AttachmentUpload> Seen { get; } = [];
+
+    public Task<string?> ScanAsync(AttachmentUpload upload, Stream content, CancellationToken cancellationToken)
+    {
+        Seen.Add(upload);
+        return Task.FromResult(upload.FileName.Contains("virus", StringComparison.OrdinalIgnoreCase) ? "The file is infected." : null);
+    }
 }
 
 internal sealed class TicketModelContributor : IModelContributor

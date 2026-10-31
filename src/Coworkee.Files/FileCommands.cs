@@ -3,6 +3,7 @@ using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Files;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
+using Coworkee.Files.Attachments;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Storage;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +25,8 @@ public sealed record SetFilePublic(Guid Id, bool IsPublic) : ICommand<Result<Sto
 /// <summary>Streams <paramref name="Content"/> into the blob storage; read only after the permission check.</summary>
 public sealed record UploadFile(Guid? FolderId, string Name, string? ContentType, Stream Content) : ICommand<Result<StoredFileDto>>;
 
-internal sealed class FileCommandHandlers(CoworkeeDbContext db, FolderAccess access, ICurrentUser currentUser, IBlobStorage storage, TimeProvider clock)
+internal sealed class FileCommandHandlers(
+    CoworkeeDbContext db, FolderAccess access, ICurrentUser currentUser, IBlobStorage storage, TimeProvider clock, IEnumerable<IAttachmentScanner> scanners)
     : IHandler<CreateFolder, Result<FolderDto>>,
       IHandler<RenameFolder, Result<FolderDto>>,
       IHandler<RenameFile, Result<StoredFileDto>>,
@@ -207,11 +209,22 @@ internal sealed class FileCommandHandlers(CoworkeeDbContext db, FolderAccess acc
         await using var buffer = new FileStream(Path.GetTempFileName(), FileMode.Create, System.IO.FileAccess.ReadWrite, FileShare.None, 81920,
             FileOptions.DeleteOnClose | FileOptions.Asynchronous);
         await command.Content.CopyToAsync(buffer, cancellationToken);
-        buffer.Position = 0;
 
         var contentType = MediaTypeHeaderValue.TryParse(command.ContentType, out var parsed) && parsed.MediaType is { Length: <= 200 } mediaType
             ? mediaType
             : FallbackContentType;
+        // the scanners of record attachments check these uploads too; a refused file is never stored
+        var upload = new AttachmentUpload(FileUploads.EntityType, command.FolderId ?? Guid.Empty, FileUploads.Slot, name, contentType, buffer.Length);
+        foreach (var scanner in scanners)
+        {
+            buffer.Position = 0;
+            if (await scanner.ScanAsync(upload, buffer, cancellationToken) is { } reason)
+            {
+                return Error.Validation("content", reason);
+            }
+        }
+
+        buffer.Position = 0;
         var key = BlobKeys.New(tenantId, clock);
         await storage.PutAsync(key, buffer, contentType, cancellationToken);
         var file = new StoredFile

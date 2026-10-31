@@ -26,6 +26,7 @@
 
 ### Behoben
 
+- Uploads in die Ablage (Seite Dateien, `POST /api/v1/files`) wurden nie auf Viren geprüft. Die registrierten `IAttachmentScanner` prüfen sie jetzt, bevor sie gespeichert werden (`FileUploads.EntityType`, der Ordner als `EntityId`); eine abgelehnte Datei antwortet 400. Eine App, deren Scanner `EntityType` oder `Slot` als Datensatztyp liest, behandelt `FileUploads.EntityType`.
 - Ein `CacheScope.Global`-Eintrag trug das Tag der Organisation des Aufrufers, der ihn lud: Ein Command in einer anderen Organisation hat ihn nie invalidiert. Globale Einträge tragen jetzt ein globales Tag, das jedes `IInvalidatesCache`-Command leert; Einträge der anderen Bereiche bleiben je Organisation.
 - Der Blob-Speicher im Dateisystem scheiterte beim Löschen eines Schlüssels ohne vorhandenes Verzeichnis, der S3-Speicher bei einem noch nicht angelegten Bucket; beide übergehen das jetzt wie jeden anderen fehlenden Blob (das Löschen eines Benutzers, dessen Chat-Datei schon fehlte, antwortete mit 500).
 

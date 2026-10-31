@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using Coworkee.Contracts.Files;
 using Coworkee.Contracts.Identity;
+using Coworkee.Files.Attachments;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,6 +42,19 @@ public sealed class FileTests(FilesApp app) : IAsyncLifetime
         download.Content.Headers.ContentDisposition.FileNameStar.ShouldBe("page.html");
         using var head = await Admin.SendAsync(new HttpRequestMessage(HttpMethod.Head, $"/api/v1/files/{file.Id}/content"), Ct);
         (head.StatusCode, head.Content.Headers.ContentType!.MediaType, head.Content.Headers.ContentLength).ShouldBe((HttpStatusCode.OK, "text/html", 25L));
+    }
+
+    [Fact]
+    public async Task The_attachment_scanners_refuse_an_upload_before_it_is_stored()
+    {
+        var folder = await CreateFolderAsync(null, "Scanned");
+
+        var refused = await Upload(Admin, folder.Id, "virus.exe", "MZ");
+
+        refused.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await refused.Content.ReadAsStringAsync(Ct)).ShouldContain("The file is infected.");
+        (await ContentAsync(Admin, folder.Id)).Files.ShouldBeEmpty();
+        NameScanner.Seen.ShouldContain(u => u.EntityType == FileUploads.EntityType && u.EntityId == folder.Id && u.FileName == "virus.exe");
     }
 
     [Fact]
