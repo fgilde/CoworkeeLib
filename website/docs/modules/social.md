@@ -25,18 +25,9 @@ social.Authorize(async (services, access, ct) =>
     access.EntityId is not { } id || await services.GetRequiredService<IProductAccess>().CanSeeAsync(id, ct));
 ```
 
-## Permissions
+## Database
 
-| Block | View | Create | Moderate |
-|---|---|---|---|
-| Comments | `Social.Comments.View` | write, edit and delete own comments | delete any comment |
-| Tags | `Social.Tags.View` | tag entities, new tags join the set | remove a tag from the set |
-| Ratings | `Social.Ratings.View` | rate, take back the own rating | remove the rating of anyone |
-| Reactions | `Social.Reactions.View` | react, take back the own reaction | – |
-
-Moderate implies Create, Create implies View.
-
-`Social.Comments.SetStatus` (implies View) changes the status of any comment. Authors give a status only when they write a comment (as in a request thread); every later change, also reopening a comment someone closed, needs `Social.Comments.SetStatus`, with an edit as well as with `PUT /api/v1/comments/{id}/status`.
+The module adds the tables `cw.Comments` (with `Status` and `Properties`), `cw.Tags`, `cw.EntityTags`, `cw.Ratings` and `cw.Reactions`; create a migration in the app after adding it and after updates that change them.
 
 ## Comments
 
@@ -73,20 +64,6 @@ Every user can put several emojis on an entity, each once; reacting with the sam
 
 `CommentReactions()` turns them on for the comments of every entity type with comments, entity type `Social.Comment` (`SocialReactions.Comment`) with the comment's id. Who may see or write the comments of an entity may see or add reactions there, with the reaction permissions on top. The thread carries the reactions of its comments, they change live on the thread's comments topic and go when their comment is deleted.
 
-| Endpoint | |
-|---|---|
-| `GET/POST /api/v1/comments/{entityType}/{entityId}` | the thread / comment with `{ "text", "parentId" }` |
-| `PUT/DELETE /api/v1/comments/{id}` | edit / delete |
-| `GET /api/v1/tags/{entityType}` | tag cloud with counts |
-| `DELETE /api/v1/tags/{entityType}?tag=` | remove a tag from the set |
-| `GET/PUT /api/v1/tags/{entityType}/{entityId}` | tags of an entity / replace with `{ "tags": [...] }` |
-| `GET/PUT/DELETE /api/v1/ratings/{entityType}/{entityId}` | summary / rate with `{ "stars" }` / take back (`?userId=` for moderators) |
-| `GET/POST /api/v1/reactions/{entityType}/{entityId}` | reactions with who reacted / toggle the own `{ "emoji" }` |
-
-## Database
-
-The module adds the tables `cw.Comments`, `cw.Tags`, `cw.EntityTags`, `cw.Ratings` and `cw.Reactions`; create a migration in the app after adding it.
-
 ## In the client
 
 ```razor
@@ -96,9 +73,48 @@ The module adds the tables `cw.Comments`, `cw.Tags`, `cw.EntityTags`, `cw.Rating
 <CoworkeeComments EntityType="Products" EntityId="product.Id" />
 ```
 
-The components ask the server what the user may do and hide the inputs otherwise. `CoworkeeReactions` shows a chip per emoji with its count (the own ones filled), who reacted on hover and a picker with `SocialReactions.Defaults` (👍 ❤️ 😂 🎉 😮 😢; `Emojis` sets others). With `CommentReactions()` the comments show the same row under each comment. `CoworkeeTagCloud` lists the tag set and turns the chosen tag into an OData filter for a data table:
+The components ask the server what the user may do and hide the inputs otherwise. `CoworkeeReactions` shows a chip per emoji with its count (the own ones filled), who reacted on hover and a picker with `SocialReactions.Defaults` (👍 ❤️ 😂 🎉 😮 😢; `Emojis` sets others). With `CommentReactions()` the comments show the same row under each comment. `CoworkeeComments` shows the status of each comment, offers holders of `Social.Comments.SetStatus` a status menu and gives new comments the status `NewStatus` (default `None`). `ISocialApi` (`SetCommentStatusAsync`, `AddCommentAsync(entityType, entityId, CommentRequest)`, reactions, tags, ratings) calls the same endpoints from own components. `CoworkeeTagCloud` lists the tag set and turns the chosen tag into an OData filter for a data table:
 
 ```razor
 <CoworkeeTagCloud EntityType="Products" @bind-Filter="_tagFilter" @bind-Filter:after="() => _table.ReloadAsync()" />
 <CoworkeeDataTable @ref="_table" T="Product" EntitySet="Products" Filter="@_tagFilter" />
 ```
+
+## Permissions
+
+| Block | View | Create | Moderate |
+|---|---|---|---|
+| Comments | `Social.Comments.View` | write, edit and delete own comments | delete any comment |
+| Tags | `Social.Tags.View` | tag entities, new tags join the set | remove a tag from the set |
+| Ratings | `Social.Ratings.View` | rate, take back the own rating | remove the rating of anyone |
+| Reactions | `Social.Reactions.View` | react, take back the own reaction | – |
+
+Moderate implies Create, Create implies View.
+
+`Social.Comments.SetStatus` (implies View) changes the status of any comment. Authors give a status only when they write a comment (as in a request thread); every later change, also reopening a comment someone closed, needs `Social.Comments.SetStatus`, with an edit as well as with `PUT /api/v1/comments/{id}/status`.
+
+## Limits
+
+| | |
+|---|---|
+| Comment | text 4,000 characters; `Properties` at most 20, names 50 and values 500 characters |
+| Tags | 50 per entity, names 50 characters |
+| Reactions | 20 per user and entity, an emoji 16 characters |
+| Entity type | name 100 characters |
+
+## Personal data
+
+The personal data export has a section `social` with the user's comments, ratings and reactions; erasing a user deletes them.
+
+## Endpoints
+
+| Endpoint | |
+|---|---|
+| `GET/POST /api/v1/comments/{entityType}/{entityId}` | the thread / comment with `{ "text", "parentId", "status", "properties" }` |
+| `PUT/DELETE /api/v1/comments/{id}` | edit the own comment with `{ "text", "status", "properties" }` / delete |
+| `PUT /api/v1/comments/{id}/status` | set the status with `{ "status" }` (`Social.Comments.SetStatus`) |
+| `GET /api/v1/tags/{entityType}` | tag cloud with counts |
+| `DELETE /api/v1/tags/{entityType}?tag=` | remove a tag from the set |
+| `GET/PUT /api/v1/tags/{entityType}/{entityId}` | tags of an entity / replace with `{ "tags": [...] }` |
+| `GET/PUT/DELETE /api/v1/ratings/{entityType}/{entityId}` | summary / rate with `{ "stars" }` / take back (`?userId=` for moderators) |
+| `GET/POST /api/v1/reactions/{entityType}/{entityId}` | reactions with who reacted / toggle the own `{ "emoji" }` |
