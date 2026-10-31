@@ -3,7 +3,10 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Coworkee.Contracts.Data;
 using Coworkee.Contracts.Identity;
+using Coworkee.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.OData.Tests;
 
@@ -104,6 +107,74 @@ public sealed class ClientEntityFeedTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_snapshot_pages_by_the_last_id_in_the_order_of_the_database()
+    {
+        var names = new List<string>();
+        string? after = null;
+        while (true)
+        {
+            var filter = after is null ? "" : $"&$filter=Id gt {after}";
+            var rows = (await Admin.GetFromJsonAsync<JsonElement>($"/odata/Gadgets?$orderby=Id&$top=2{filter}", Ct)).GetProperty("value").EnumerateArray().ToList();
+            names.AddRange(rows.Select(g => g.GetProperty("Name").GetString()!));
+            if (rows.Count < 2)
+            {
+                break;
+            }
+
+            after = rows[^1].GetProperty("Id").GetString();
+        }
+
+        names.Order().ShouldBe(["Drill", "Hammer", "Lamp"]);
+    }
+
+    [Fact]
+    public async Task Many_changes_come_in_pages_to_a_client_that_asks_with_a_skip_and_ask_others_for_a_reset()
+    {
+        // ten pages of one row: more than ten changed rows used to reset every client's copy
+        await using var small = await app.StartAnotherAsync(new Dictionary<string, string>
+        {
+            ["Coworkee:ClientEntities:Default:BatchSize"] = "1",
+            ["Coworkee:ClientEntities:Default:ParallelPages"] = "3",
+        });
+        var client = small.GetTestClient().AsUser(_setup.AdminUserId, _setup.TenantId);
+        var start = await ChangesAsync(null, client: client);
+        var added = await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            var gadgets = Enumerable.Range(0, 12).Select(i => new Gadget { Name = $"New {i}", Category = "Tools", Price = i, TenantId = _setup.TenantId }).ToList();
+            db.AddRange(gadgets);
+            await db.SaveChangesAsync(Ct);
+            return gadgets.Select(g => g.Id).ToList();
+        });
+
+        var old = await ChangesAsync(start.Version, client: client);
+        var first = await ChangesAsync(start.Version, 0, client);
+        var second = await ChangesAsync(start.Version, 10, client);
+
+        old.Reset.ShouldBeTrue();
+        (first.Changed.Count, first.More, second.Changed.Count, second.More).ShouldBe((10, true, 2, false));
+        first.Changed.Concat(second.Changed).Order().ShouldBe(added.Order());
+        (await client.GetFromJsonAsync<ClientEntityManifest>("/api/v1/client-entities", Ct))!.Sets.Single(s => s.EntitySet == "Gadgets").ParallelPages.ShouldBe(3);
+    }
+
+    [Fact]
+    public async Task The_feed_names_the_partition_which_follows_the_group_selection_while_the_owner_stays()
+    {
+        var scope = app.App.Services.GetRequiredService<FakeGroupScope>();
+        var all = await Admin.GetFromJsonAsync<ClientEntityManifest>("/api/v1/client-entities", Ct);
+        var feed = await ChangesAsync(null);
+        scope.Stored = [FakeGroupScope.A];
+        var narrowed = await Admin.GetFromJsonAsync<ClientEntityManifest>("/api/v1/client-entities", Ct);
+        var other = await app.As(_setup.AdminUserId, _otherTenant).GetFromJsonAsync<ClientEntityManifest>("/api/v1/client-entities", Ct);
+
+        feed.Partition.ShouldBe(all!.Partition);
+        (await ChangesAsync(feed.Version)).Partition.ShouldBe(narrowed!.Partition);
+        narrowed.Partition.ShouldNotBe(all.Partition);
+        narrowed.Owner.ShouldBe(all.Owner);
+        all.Owner.ShouldNotBeNullOrEmpty();
+        other!.Owner.ShouldNotBe(all.Owner);
+    }
+
+    [Fact]
     public async Task Without_the_permission_the_feed_is_forbidden_and_the_manifest_empty()
     {
         var email = $"viewer-{Guid.NewGuid():N}@acme.test";
@@ -115,7 +186,8 @@ public sealed class ClientEntityFeedTests(ODataApp app) : IAsyncLifetime
         (await Admin.GetAsync("/api/v1/client-entities/Unknown/ids", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
-    private async Task<ClientEntityChanges> ChangesAsync(DateTimeOffset? since) =>
-        (await Admin.GetFromJsonAsync<ClientEntityChanges>(
-            "/api/v1/client-entities/Gadgets/changes" + (since is null ? "" : $"?since={Uri.EscapeDataString(since.Value.ToString("O"))}"), Ct))!;
+    private async Task<ClientEntityChanges> ChangesAsync(DateTimeOffset? since, int? skip = null, HttpClient? client = null) =>
+        (await (client ?? Admin).GetFromJsonAsync<ClientEntityChanges>(
+            "/api/v1/client-entities/Gadgets/changes" + (since is null ? "" : $"?since={Uri.EscapeDataString(since.Value.ToString("O"))}")
+            + (skip is null ? "" : $"&skip={skip}"), Ct))!;
 }

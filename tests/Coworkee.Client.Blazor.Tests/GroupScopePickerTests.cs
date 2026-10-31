@@ -47,7 +47,7 @@ public sealed class GroupScopePickerTests : ClientTestBase
             _loads++;
             _calls.Add("query");
         };
-        _cache.ClearAsync().Returns(_ =>
+        _cache.ScopeChangedAsync().Returns(_ =>
         {
             _calls.Add("clear");
             return Task.CompletedTask;
@@ -115,7 +115,7 @@ public sealed class GroupScopePickerTests : ClientTestBase
         Realtime.Push($"user:{Me}", GroupSelectionEvents.Changed, new { groupIds = new[] { Hamburg.Id } });
 
         _calls.Count(c => c == "mine").ShouldBe(2);
-        await _cache.Received(1).ClearAsync();
+        await _cache.Received(1).ScopeChangedAsync();
     }
 
     [Fact]
@@ -131,7 +131,7 @@ public sealed class GroupScopePickerTests : ClientTestBase
         picker.WaitForAssertion(() => Api.Received(1).SelectGroupsAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>()));
         _popovers.WaitForAssertion(() => Check(Bremen).HasAttribute("checked").ShouldBeFalse());
         Button(picker).TextContent.Trim().ShouldBe("All my groups");
-        await _cache.DidNotReceive().ClearAsync();
+        await _cache.DidNotReceive().ScopeChangedAsync();
         // nothing changed: another tab announcing "all groups" is this tab's state, not news
         Realtime.Push($"user:{Me}", GroupSelectionEvents.Changed, new { groupIds = Array.Empty<Guid>() });
         _calls.Count(c => c == "mine").ShouldBe(1);
@@ -154,7 +154,7 @@ public sealed class GroupScopePickerTests : ClientTestBase
     [Fact]
     public async Task A_failed_clear_still_raises_changed()
     {
-        _cache.ClearAsync().ThrowsAsync(new InvalidOperationException("storage gone"));
+        _cache.ScopeChangedAsync().ThrowsAsync(new InvalidOperationException("storage gone"));
         var state = Services.GetRequiredService<GroupScopeState>();
         var changed = 0;
         state.Changed += () => changed++;
@@ -208,7 +208,7 @@ public sealed class GroupScopePickerTests : ClientTestBase
         Realtime.Push($"user:{Me}", GroupSelectionEvents.Changed, new { groupIds = new[] { Supplier.Id } });
 
         picker.WaitForAssertion(() => Button(picker).TextContent.Trim().ShouldBe("Supplier"));
-        _cache.Received(1).ClearAsync();
+        _cache.Received(1).ScopeChangedAsync();
     }
 
     [Fact]

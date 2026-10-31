@@ -2,6 +2,24 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- Client-Entities: `ClientEntitySettings.Expand` und `[ClientEntity(Expand = "...")]` benennen die Navigationseigenschaften, die eine Kopie mitführt, egal welche Abfrage das Set zuerst erreicht; `ClientEntitySettings.ParallelPages` (Standard 2, wie bisher) legt fest, wie viele Seiten des Downloads gleichzeitig laden. Benenne das Expand eines Sets, dessen Liste `$expand` nutzt, während andere Seiten (ein Dashboard, eine Karte) es ebenfalls abfragen; ohne entschied die erste Abfrage eines Besuchs, und die Kopie wurde neu geladen, wann immer eine andere Seite zuerst kam.
+- `IClientEntityStorage.DeleteAsync(prefix)` (Standard: entfernt nichts) und `IClientDataCache.ScopeChangedAsync()` (Standard: `ClearAsync()`). Ein eigener `IClientEntityStorage` sollte `DeleteAsync` umsetzen, damit die Seiten fertiger Downloads und die Kopien alter Gruppenauswahlen den Browser-Speicher verlassen.
+- Der Änderungs-Feed der Client-Entities nimmt ein `skip` und liefert viele geänderte Ids dann in Seiten (`more`); seine Antworten tragen die Partition des Aufrufers, das Manifest einen `owner` (Benutzer, Mandant, Client).
+
+### Breaking Changes
+
+- Client-Entities behalten ihren Stand zwischen Besuchen: Der Download blättert über die letzte Id durch das Set und legt jede Runde in IndexedDB ab, ein Neuladen oder eine fehlgeschlagene Anfrage macht also dort weiter, wo er stand; eine vollständige Kopie holt danach nur Änderungen, auch nach mehr als `BatchSize × 10` Änderungen, die den Download nicht mehr bei null beginnen lassen. Eine wiederhergestellte Kopie antwortet, sobald ihre erste Aktualisierung da ist (inzwischen gelöschte oder nicht mehr sichtbare Zeilen sind dann fort); bis dahin fragt die Tabelle den Server.
+- Eine neue Gruppenauswahl behält die Kopien der letzten drei Auswahlen im Browser-Speicher, statt jede Kopie zu verwerfen; der Wechsel zurück holt nur die Änderungen. Die Kopie eines anderen Benutzers oder Mandanten verlässt das Gerät, bevor etwas gelesen wird, auch ohne Abmelden; eine Kopie, für die der Server eine andere Partition meldet (Auswahl in einem anderen Tab geändert), wird sofort verworfen. Nach dem Update werden die abgelegten Kopien älterer Versionen einmal neu geladen.
+- Abfragen mit `$select` oder `$search` starten keine Kopie eines Client-Entity-Sets.
+
+### Behoben
+
+- Eine Kopie, die gespeichert wurde, während ihre Spalten noch indiziert wurden, konnte uneinheitlich geschrieben werden und ließ sich nicht wiederherstellen, der nächste Besuch lud sie also neu. Kein Handlungsbedarf.
+
 ## 0.0.1.53 (2026-10-31)
 
 ### Hinzugefügt

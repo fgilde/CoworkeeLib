@@ -41,18 +41,53 @@ internal sealed class FakeServer : HttpMessageHandler, IODataClient
 
     public int BatchSize { get; set; } = 2;
 
-    public ClientEntitySetInfo Info => new("Gadgets", BatchSize, MaxRows, TimeSpan.Zero, RealtimeTopic);
+    public int ParallelPages { get; set; } = 2;
 
-    public ClientEntitySet<Gadget> Set(IClientEntityStorage? storage = null) =>
-        new(Info, "Brand", "p1", this, new ClientEntityApi(new HttpClient(this) { BaseAddress = new Uri("http://app/") }), storage ?? new NoClientEntityStorage(), NullLogger.Instance);
+    public string? Expand { get; set; }
 
-    public Task<ODataPage<T>> QueryAsync<T>(string entitySet, ODataQuery query, CancellationToken cancellationToken = default)
+    public ClientEntitySetInfo Info => new("Gadgets", BatchSize, MaxRows, TimeSpan.Zero, RealtimeTopic, Expand, ParallelPages);
+
+    public ClientEntitySet<Gadget> Set(IClientEntityStorage? storage = null, string partition = "p1") =>
+        new(Info, "Brand", partition, this, Api, storage ?? new NoClientEntityStorage(), NullLogger.Instance);
+
+    public ClientEntityApi Api => new(new HttpClient(this) { BaseAddress = new Uri("http://app/") });
+
+    public ClientEntities Entities(IClientEntityStorage? storage = null) =>
+        new(Api, this, storage ?? new NoClientEntityStorage(), null, new ClientEntitySignal(), NullLogger<ClientEntities>.Instance);
+
+    public async Task<ODataPage<T>> QueryAsync<T>(string entitySet, ODataQuery query, CancellationToken cancellationToken = default)
     {
+        await RowsGate;
         Queries.Add(query);
-        var rows = string.IsNullOrWhiteSpace(query.Filter) ? Rows : Rows.Where(Matches(query.Filter)).ToList();
+        if (FailRowsAfter is { } fail && Queries.Count(q => q.OrderBy == "Id") > fail)
+        {
+            throw new HttpRequestException("the server went away");
+        }
+
+        // the keyset of the download: ids in the order the rows are sorted by (here .NET's, on SQL Server the database's)
+        var rows = string.IsNullOrWhiteSpace(query.Filter) ? Rows
+            : query.Filter.StartsWith("Id gt ", StringComparison.Ordinal) ? Rows.Where(r => r.Id.CompareTo(Guid.Parse(query.Filter[6..])) > 0).ToList()
+            : Rows.Where(Matches(query.Filter)).ToList();
         var page = ODataLinq.OrderBy(rows, query.OrderBy).Skip(query.Skip ?? 0).Take(query.Top ?? int.MaxValue).ToList();
-        return Task.FromResult((ODataPage<T>)(object)new ODataPage<Gadget>(page, rows.Count, query.Facets ? Facets : []));
+        return (ODataPage<T>)(object)new ODataPage<Gadget>(page, rows.Count, query.Facets ? Facets : []);
     }
+
+    /// <summary>Holds the row queries back.</summary>
+    public Task RowsGate { get; set; } = Task.CompletedTask;
+
+    /// <summary>Row pages of the download after this many fail.</summary>
+    public int? FailRowsAfter { get; set; }
+
+    /// <summary>The partition the feed reports: another one than the copy's means another user, tenant or group selection.</summary>
+    public string Partition { get; set; } = "p1";
+
+    public string Owner { get; set; } = "o1";
+
+    /// <summary>The changes pages the client asked for, with their skip.</summary>
+    public List<string> ChangeRequests { get; } = [];
+
+    /// <summary>Further pages of changed ids, served to a client that asks with a skip.</summary>
+    public Queue<ClientEntityChanges> MoreChanges { get; } = new();
 
     // the real server knows more of OData than the local copy; answering nothing is enough here
     private static Func<Gadget, bool> Matches(string filter)
@@ -76,14 +111,24 @@ internal sealed class FakeServer : HttpMessageHandler, IODataClient
             return new HttpResponseMessage(HttpStatusCode.Forbidden);
         }
 
+        var query = request.RequestUri.Query;
+        if (path.EndsWith("/changes", StringComparison.Ordinal))
+        {
+            ChangeRequests.Add(query);
+        }
+
         object body = path switch
         {
-            "/api/v1/client-entities" => new ClientEntityManifest("p1", [Info]),
+            "/api/v1/client-entities" => new ClientEntityManifest(Partition, [Info], Owner),
             _ when path.EndsWith("/ids", StringComparison.Ordinal) => Rows.Select(r => r.Id).ToArray(),
-            _ when request.RequestUri.Query.Contains("since", StringComparison.Ordinal) => NextChanges ?? new ClientEntityChanges(Now, Rows.Count, [], [], false),
-            _ => new ClientEntityChanges(Now, Rows.Count, [], [], false),
+            _ when query.Contains("skip=", StringComparison.Ordinal) && !query.Contains("skip=0", StringComparison.Ordinal) => MoreChanges.Dequeue() with { Partition = Partition },
+            _ when query.Contains("since", StringComparison.Ordinal) => (NextChanges ?? new ClientEntityChanges(Now, Rows.Count, [], [], false)) with { Partition = Partition },
+            _ => new ClientEntityChanges(Now, Rows.Count, [], [], false, Partition: Partition),
         };
-        NextChanges = null;
+        if (query.Contains("since", StringComparison.Ordinal) && !query.Contains("skip=", StringComparison.Ordinal) || query.Contains("skip=0", StringComparison.Ordinal))
+        {
+            NextChanges = null;
+        }
         return new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(body, body.GetType(), options: JsonSerializerOptions.Web) };
     }
 }
@@ -105,6 +150,19 @@ internal sealed class MemoryStorage : IClientEntityStorage
         Saved.Clear();
         return Task.CompletedTask;
     }
+
+    public Task DeleteAsync(string prefix)
+    {
+        foreach (var key in Saved.Keys.Where(k => k.StartsWith(prefix, StringComparison.Ordinal)).ToList())
+        {
+            Saved.Remove(key);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>The keys holding data; an empty entry counts as dropped.</summary>
+    public IEnumerable<string> Kept => Saved.Where(e => e.Value.Length > 0).Select(e => e.Key).Order(StringComparer.Ordinal);
 }
 
 internal sealed class FakeRealtime : Realtime.IRealtimeConnection

@@ -6,8 +6,11 @@ namespace Coworkee.Client.Blazor.ClientEntities;
 /// <summary>Sends queries of mirrored sets to their local copy, so every data table and picker profits without a change.</summary>
 internal sealed class ClientEntityODataClient(IODataClient server, ClientEntities entities) : IODataClient
 {
+    // a query no copy answers (a select, a search: a map, a lookup) starts no download, nor does its expand decide the copy's
     public async Task<ODataPage<T>> QueryAsync<T>(string entitySet, ODataQuery query, CancellationToken cancellationToken = default) =>
-        await entities.SetAsync<T>(entitySet, query.Expand, cancellationToken) is { } set
+        (entities.Find(entitySet) is null && (!string.IsNullOrWhiteSpace(query.Select) || !string.IsNullOrWhiteSpace(query.Search))
+            ? null
+            : await entities.SetAsync<T>(entitySet, query.Expand, cancellationToken)) is { } set
             ? await set.QueryAsync(query, cancellationToken)
             : await server.QueryAsync<T>(entitySet, query, cancellationToken);
 }

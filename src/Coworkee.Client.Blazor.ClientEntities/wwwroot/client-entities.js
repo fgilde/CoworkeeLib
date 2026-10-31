@@ -24,3 +24,6 @@ export const load = key => run('readonly', store => store.get(key)).then(data =>
 export const save = (key, data) => run('readwrite', store => store.put(data, key));
 
 export const clear = () => run('readwrite', store => store.clear());
+
+// every key starting with the prefix: the pages of a download, the copies of an old group selection
+export const remove = prefix => run('readwrite', store => store.delete(IDBKeyRange.bound(prefix, prefix + '\uffff')));

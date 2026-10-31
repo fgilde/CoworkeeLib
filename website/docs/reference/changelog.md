@@ -2,6 +2,24 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- Client entities: `ClientEntitySettings.Expand` and `[ClientEntity(Expand = "...")]` name the navigation properties a copy carries, whatever query reaches the set first; `ClientEntitySettings.ParallelPages` (default 2, as before) sets how many download pages load side by side. Name the expand of a set whose list uses `$expand` while other pages (a dashboard, a map) query it too; without it the first query of a visit decided, and the copy was downloaded again whenever another page came first.
+- `IClientEntityStorage.DeleteAsync(prefix)` (default: removes nothing) and `IClientDataCache.ScopeChangedAsync()` (default: `ClearAsync()`). An own `IClientEntityStorage` should implement `DeleteAsync`, so the pages of finished downloads and the copies of old group selections leave the browser storage.
+- The change feed of client entities takes a `skip` and then answers many changed ids in pages (`more`); its answers carry the caller's partition, the manifest an `owner` (user, tenant, client).
+
+### Breaking changes
+
+- Client entities keep their state between visits: the download pages through the set by the last id and keeps every round in IndexedDB, so a reload or a failed request goes on where it stopped; a complete copy only takes changes afterwards, also after more than `BatchSize × 10` changes, which no longer start the download from zero. A restored copy answers once its first update arrived (rows deleted or no longer visible meanwhile are gone by then); the table asks the server until then.
+- A new group selection keeps the copies of the last three selections in the browser storage instead of dropping every copy; switching back takes only the changes. A copy of another user or tenant leaves the device before anything is read, also without a sign-out; a copy the server answers for another partition (selection changed in another tab) is dropped at once. After the update, the stored copies of older versions are downloaded once more.
+- Queries with `$select` or `$search` start no copy of a client entity set.
+
+### Fixed
+
+- A copy saved while its columns were still being indexed could be written inconsistently and failed to restore, so the next visit downloaded it again. No action needed.
+
 ## 0.0.1.53 (2026-10-31)
 
 ### Added

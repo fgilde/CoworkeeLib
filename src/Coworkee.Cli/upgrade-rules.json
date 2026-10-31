@@ -508,6 +508,26 @@
           ]
         }
       ]
+    },
+    {
+      "version": "0.0.1.54",
+      "breaking": [
+        "Client entities: a new group selection calls IClientDataCache.ScopeChangedAsync instead of ClearAsync and keeps the copies of the last three selections; a restored copy answers once its first update arrived, the server until then; the copies stored by older versions are downloaded once more."
+      ],
+      "manual": [
+        {
+          "text": "Client entities: name the expand of a mirrored set whose list asks with $expand ([ClientEntity(Expand = \"...\")] or o.For<T>(s => s.Expand = \"...\")), so other pages querying the set first (a dashboard, a map, a picker) no longer decide the copy's expand and its storage key.",
+          "find": "\\[ClientEntity\\b|AddCoworkeeClientEntities\\(\\s*o\\b|\\.ClientEntity<",
+          "files": [ "src/**/*.cs" ],
+          "unless": "Expand ="
+        },
+        {
+          "text": "An own IClientEntityStorage implements DeleteAsync(prefix): remove every entry whose key starts with the prefix (the pages of a finished download, the copies of old group selections); the default keeps them until ClearAsync.",
+          "find": ":\\s*IClientEntityStorage\\b",
+          "files": [ "src/**/*.cs" ],
+          "unless": "DeleteAsync"
+        }
+      ]
     }
   ]
 }

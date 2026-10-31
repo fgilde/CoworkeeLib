@@ -7449,6 +7449,7 @@ export interface paths {
             parameters: {
                 query?: {
                     since?: string;
+                    skip?: number | string;
                 };
                 header?: never;
                 path: {

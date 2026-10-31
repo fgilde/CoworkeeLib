@@ -4,4 +4,7 @@ namespace Coworkee.Client.Blazor.Data;
 public interface IClientDataCache
 {
     Task ClearAsync();
+
+    /// <summary>The rows the user sees changed as a whole (a new group selection): copies of the old scope must not answer any more. The default drops everything.</summary>
+    Task ScopeChangedAsync() => ClearAsync();
 }

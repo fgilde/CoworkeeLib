@@ -405,8 +405,10 @@ internal sealed class Column<TValue>(TValue[] values, int[]? order) : Column
     public override void Write(BinaryWriter writer)
     {
         WriteArray(writer, values);
-        writer.Write(_sorted is not null);
-        if (_sorted is { } sorted)
+        // read once: the column may get sorted meanwhile (indexing runs beside the saving), the flag and the order must agree
+        var sorted = _sorted;
+        writer.Write(sorted is not null);
+        if (sorted is not null)
         {
             WriteValues(writer, sorted.Order);
         }

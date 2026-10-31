@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.Json;
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Realtime;
 using Coworkee.Contracts.Data;
@@ -11,6 +13,11 @@ namespace Coworkee.Client.Blazor.ClientEntities;
 /// </summary>
 public sealed class ClientEntities : IClientDataCache, IAsyncDisposable
 {
+    // ponytail: the copies of the last three group selections stay for switching back; make it an option if users juggle more
+    private const int KeptPartitions = 3;
+    private const string OwnerKey = "#owner";
+    private const string PartitionsKey = "#partitions";
+
     private readonly ClientEntityApi _api;
     private readonly IODataClient _server;
     private readonly IClientEntityStorage _storage;
@@ -64,9 +71,11 @@ public sealed class ClientEntities : IClientDataCache, IAsyncDisposable
             return existing as ClientEntitySet<T>;
         }
 
-        var set = new ClientEntitySet<T>(info, expand, manifest.Partition, _server, _api, _storage, _logger);
+        // an expand named by the server is the same in every session, whichever page asks first
+        var set = new ClientEntitySet<T>(info, info.Expand ?? expand, manifest.Partition, _server, _api, _storage, _logger);
         _sets[entitySet] = set;
         set.Changed += s => Changed?.Invoke(s);
+        set.Rescoped += () => _ = ScopeChangedAsync();
         set.Start();
         _ = ApplyModeAsync(set);
         if (info.RealtimeTopic is { } topic && _realtime is not null)
@@ -100,10 +109,15 @@ public sealed class ClientEntities : IClientDataCache, IAsyncDisposable
     public async Task ClearAsync()
     {
         await DisposeSetsAsync();
-        _manifest = null;
         _modes?.Clear();
         await _storage.ClearAsync();
     }
+
+    /// <summary>
+    /// The rows the user sees changed as a whole (another group selection): the copies here go and the sets start over with the manifest's new
+    /// partition. The browser storage keeps the copies of the last selections, so switching back only brings their changes.
+    /// </summary>
+    public Task ScopeChangedAsync() => DisposeSetsAsync();
 
     public async ValueTask DisposeAsync()
     {
@@ -133,30 +147,70 @@ public sealed class ClientEntities : IClientDataCache, IAsyncDisposable
 
     private async Task<ClientEntityManifest?> LoadManifestAsync()
     {
+        ClientEntityManifest manifest;
         try
         {
-            return await _api.ManifestAsync(CancellationToken.None);
+            manifest = await _api.ManifestAsync(CancellationToken.None);
         }
         catch (Exception exception)
         {
             _logger.LogDebug(exception, "No client entities: the manifest did not load");
             return null;
         }
+
+        await KeepAsync(manifest);
+        return manifest;
     }
 
+    // before any set reads the storage: the copies of another user or tenant leave the device (also those a sign-out did not drop, e.g. after an
+    // expired session); unmarked copies (from an older version) count as another user's. Of this user's group selections the last few stay.
+    private async Task KeepAsync(ClientEntityManifest manifest)
+    {
+        try
+        {
+            if (manifest.Owner is { } owner && await _storage.LoadAsync(OwnerKey) is var stored && (stored is null || Encoding.UTF8.GetString(stored) != owner))
+            {
+                await _storage.ClearAsync();
+                await _storage.SaveAsync(OwnerKey, Encoding.UTF8.GetBytes(owner));
+            }
+
+            var partitions = await _storage.LoadAsync(PartitionsKey) is { Length: > 0 } known ? JsonSerializer.Deserialize<List<string>>(known) ?? [] : [];
+            if (partitions.FirstOrDefault() == manifest.Partition)
+            {
+                return;
+            }
+
+            partitions.Remove(manifest.Partition);
+            partitions.Insert(0, manifest.Partition);
+            foreach (var old in partitions.Skip(KeptPartitions))
+            {
+                await _storage.DeleteAsync(old + "/");
+            }
+
+            await _storage.SaveAsync(PartitionsKey, JsonSerializer.SerializeToUtf8Bytes(partitions.Take(KeptPartitions).ToList()));
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Tidying the kept client entities failed");
+        }
+    }
+
+    // the sets and the manifest go first: a query meanwhile starts a set of the new partition, none joins the ones being disposed
     private async Task DisposeSetsAsync()
     {
-        foreach (var subscription in _subscriptions)
+        _manifest = null;
+        List<Task<IAsyncDisposable>> subscriptions = [.. _subscriptions];
+        List<ClientEntitySet> sets = [.. _sets.Values];
+        _subscriptions.Clear();
+        _sets.Clear();
+        foreach (var subscription in subscriptions)
         {
             await (await subscription).DisposeAsync();
         }
 
-        foreach (var set in _sets.Values)
+        foreach (var set in sets)
         {
             await set.DisposeAsync();
         }
-
-        _subscriptions.Clear();
-        _sets.Clear();
     }
 }

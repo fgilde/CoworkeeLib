@@ -56,7 +56,6 @@ public abstract class ClientEntitySet : IAsyncDisposable
 public sealed class ClientEntitySet<T> : ClientEntitySet
 {
     private const int FetchChunk = 50;
-    private const int ParallelPages = 2;
     private const int MaxViews = 16;
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
@@ -79,6 +78,12 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     private readonly CancellationTokenSource _stop = new();
     private TaskCompletionSource _local = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private LocalTable<T>? _table;
+
+    // a copy restored from the browser storage: it answers once the first update brought it up to date and dropped what the user may no longer see
+    private LocalTable<T>? _kept;
+
+    // a download cut off (failed, page closed) goes on from here
+    private Download? _download;
     private DateTimeOffset? _version;
     private IReadOnlyList<FacetGroupDto>? _facets;
     private Task<IReadOnlyList<FacetGroupDto>>? _facetsLoading;
@@ -173,6 +178,10 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         }
     }
 
+    /// <summary>The server answered for another user, tenant or group selection than this copy's: the copy is dropped here, the storage keeps it.</summary>
+    internal event Action? Rescoped;
+
+    // a disposed set holds no rows: whoever kept it must not see the copy of a scope that ended
     public override async ValueTask DisposeAsync()
     {
         await _stop.CancelAsync();
@@ -181,6 +190,9 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
             await _running;
         }
 
+        _table = null;
+        _kept = null;
+        _download = null;
         _stop.Dispose();
     }
 
@@ -313,6 +325,13 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
             await ForgetAsync();
             Publish(ClientEntityStatus.Initial with { State = ClientEntitySyncState.Failed, Error = exception.Message, Revision = Status.Revision + 1 });
         }
+        catch (RescopedException)
+        {
+            // another user, tenant or group selection: nothing of this copy may answer or be saved any more; ClientEntities starts over
+            Drop();
+            Publish(ClientEntityStatus.Initial with { Revision = Status.Revision + 1 });
+            Rescoped?.Invoke();
+        }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             _logger.LogWarning(exception, "Syncing {EntitySet} failed", EntitySet);
@@ -330,54 +349,88 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         }
     }
 
+    private async Task<ClientEntityChanges> ChangesAsync(DateTimeOffset? since, int? skip, CancellationToken cancellationToken)
+    {
+        var changes = await _api.ChangesAsync(EntitySet, since, skip, cancellationToken);
+        return changes.Partition is { } partition && partition != _partition ? throw new RescopedException() : changes;
+    }
+
+    // keyset pages (Id gt the last row) in the order of the ids: each round is kept in the browser storage, so a reload or a failure goes on from
+    // the last round instead of from zero; the rows changed meanwhile come with the next update, which starts at the version taken before the download
     private async Task DownloadAsync(CancellationToken cancellationToken)
     {
-        var start = await _api.ChangesAsync(EntitySet, null, cancellationToken);
+        var start = await ChangesAsync(null, null, cancellationToken);
         if (start.Count > _info.MaxRows)
         {
+            _download = null;
+            await DropPagesAsync();
             Publish(Status with { State = ClientEntitySyncState.TooLarge, Total = start.Count, Error = null });
             _local.TrySetException(new InvalidOperationException($"{EntitySet} has more than {_info.MaxRows} rows and stays on the server."));
             return;
         }
 
-        var rows = new Dictionary<Guid, T>((int)start.Count);
-        var batch = _info.BatchSize;
-        var known = (int)((start.Count + batch - 1) / batch);
-        Publish(Status with { State = ClientEntitySyncState.Downloading, Loaded = 0, Total = start.Count, Error = null });
-        for (var first = 0; ; first += ParallelPages)
+        if (_download is null)
         {
-            // pages known from the count load side by side; rows added meanwhile follow one page at a time
-            var pages = await Task.WhenAll(Enumerable.Range(first, first < known ? Math.Min(ParallelPages, known - first) : 1).Select(page =>
-                RowsAsync(new ODataQuery { OrderBy = "Id", Top = batch, Skip = page * batch, Count = false }, cancellationToken)));
-            foreach (var item in pages.SelectMany(p => p.Items))
+            await DropPagesAsync();
+            _download = new Download(start.Version);
+        }
+
+        var download = _download;
+        var batch = _info.BatchSize;
+        var parallel = Math.Max(1, _info.ParallelPages);
+        Publish(Status with { State = ClientEntitySyncState.Downloading, Loaded = download.Rows.Count, Total = Math.Max(start.Count, download.Rows.Count), Error = null });
+        while (true)
+        {
+            var after = download.Cursor is { } cursor ? $"Id gt {cursor}" : null;
+            var pages = await Task.WhenAll(Enumerable.Range(0, parallel).Select(page =>
+                RowsAsync(new ODataQuery { Filter = after, OrderBy = "Id", Top = batch, Skip = page * batch, Count = false }, cancellationToken)));
+            var items = pages.SelectMany(p => p.Items).ToList();
+            foreach (var item in items)
             {
-                rows[IdOf!(item)] = item;
+                download.Rows[IdOf!(item)] = item;
             }
 
-            Publish(Status with { Loaded = rows.Count, Total = Math.Max(start.Count, rows.Count) });
+            if (items.Count > 0)
+            {
+                download.Cursor = IdOf!(items[^1]);
+                await SavePageAsync(download, items);
+            }
+
+            Publish(Status with { Loaded = download.Rows.Count, Total = Math.Max(start.Count, download.Rows.Count) });
             if (pages[^1].Items.Count < batch)
             {
                 break;
             }
+
+            await Pause();
         }
 
-        // rows changed meanwhile come with the next update, which starts at the version taken before the download
-        Commit(LocalTable<T>.Of(rows.Values), start.Version, changed: true);
+        _download = null;
+        Commit(LocalTable<T>.Of(download.Rows.Values), download.Version, changed: true);
         await SaveAsync();
+        await DropPagesAsync();
     }
 
     private async Task UpdateAsync(CancellationToken cancellationToken)
     {
         Publish(Status with { State = ClientEntitySyncState.Updating, Error = null });
-        var changes = await _api.ChangesAsync(EntitySet, _version, cancellationToken);
+        var changes = await ChangesAsync(_version, 0, cancellationToken);
         if (changes.Reset)
         {
             await DownloadAsync(cancellationToken);
             return;
         }
 
-        var table = _table!;
-        if (changes.Changed.Count == 0 && changes.Deleted.Count == 0 && changes.Count == table.Count)
+        // many changes (a bulk update on the server) come in pages instead of a download from zero
+        List<Guid> changedIds = [.. changes.Changed];
+        for (var page = changes; page.More;)
+        {
+            page = await ChangesAsync(_version, changedIds.Count, cancellationToken);
+            changedIds.AddRange(page.Changed);
+        }
+
+        var table = _table ?? _kept!;
+        if (changedIds.Count == 0 && changes.Deleted.Count == 0 && changes.Count == table.Count)
         {
             Commit(table, changes.Version, changed: false);
             return;
@@ -385,7 +438,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
 
         var rows = table.All().ToDictionary(IdOf!);
         var changed = changes.Deleted.Count(rows.Remove) > 0;
-        changed |= await FetchIntoAsync(rows, changes.Changed, cancellationToken);
+        changed |= await FetchIntoAsync(rows, changedIds, cancellationToken);
         if (rows.Count != changes.Count)
         {
             // rows vanished unseen: hard deleted, moved to another tenant or no longer visible to this user
@@ -407,10 +460,11 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
 
     private async Task<bool> FetchIntoAsync(Dictionary<Guid, T> rows, IReadOnlyList<Guid> ids, CancellationToken cancellationToken)
     {
-        foreach (var chunk in ids.Chunk(FetchChunk))
+        foreach (var round in ids.Chunk(FetchChunk).Chunk(Math.Max(1, _info.ParallelPages)))
         {
-            var page = await RowsAsync(new ODataQuery { Filter = $"Id in ({string.Join(",", chunk)})", Top = chunk.Length, Count = false }, cancellationToken);
-            foreach (var item in page.Items)
+            var pages = await Task.WhenAll(round.Select(chunk =>
+                RowsAsync(new ODataQuery { Filter = $"Id in ({string.Join(",", chunk)})", Top = chunk.Length, Count = false }, cancellationToken)));
+            foreach (var item in pages.SelectMany(p => p.Items))
             {
                 rows[IdOf!(item)] = item;
             }
@@ -443,6 +497,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     private void Commit(LocalTable<T> table, DateTimeOffset version, bool changed)
     {
         _version = version;
+        _kept = null;
         var revision = Status.Revision;
         if (changed || _table is null)
         {
@@ -484,9 +539,23 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         }
     }
 
+    private void Drop()
+    {
+        _table = null;
+        _kept = null;
+        _download = null;
+        _version = null;
+        _facets = null;
+        var waiting = _local;
+        _local = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        waiting.TrySetException(new InvalidOperationException($"The copy of {EntitySet} belonged to another user or scope."));
+    }
+
     private async Task ForgetAsync()
     {
         _table = null;
+        _kept = null;
+        _download = null;
         _version = null;
         _facets = null;
         if (_local.Task.IsCompleted)
@@ -494,14 +563,63 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
             _local = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         }
 
+        await WriteAsync(async () =>
+        {
+            await _storage.SaveAsync(StorageKey, []);
+            await _storage.SaveAsync(ProgressKey, []);
+            await _storage.DeleteAsync(PagesPrefix);
+        }, "Dropping the kept copy of {EntitySet} failed");
+    }
+
+    private string StorageKey => $"{_partition}/{EntitySet}/{Expand}";
+
+    // the rounds of an unfinished download: "#progress" says how many there are, up to where and from which version
+    private string PagesPrefix => StorageKey + "#";
+
+    private string ProgressKey => PagesPrefix + "progress";
+
+    private string PageKey(int page) => PagesPrefix + page.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+    private async Task SavePageAsync(Download download, IReadOnlyList<T> items)
+    {
+        if (!download.Kept)
+        {
+            return;
+        }
+
+        var data = await PackAsync(LocalTable<T>.Of(items), download.Version);
+        var progress = JsonSerializer.SerializeToUtf8Bytes(new Progress(download.Version, download.Cursor, download.Pages + 1), Json);
+        // a page that was not kept would leave a gap behind the next progress: this download keeps no further pages, a reload goes on from the last kept one
+        download.Kept = await WriteAsync(async () =>
+        {
+            await _storage.SaveAsync(PageKey(download.Pages), data);
+            await _storage.SaveAsync(ProgressKey, progress);
+        }, "Keeping a page of {EntitySet} failed");
+        if (download.Kept)
+        {
+            download.Pages++;
+        }
+    }
+
+    private Task DropPagesAsync() => WriteAsync(async () =>
+    {
+        await _storage.SaveAsync(ProgressKey, []);
+        await _storage.DeleteAsync(PagesPrefix);
+    }, "Dropping the pages of {EntitySet} failed");
+
+    // one write to the browser storage at a time; a full or blocked storage costs the next visit a download, nothing more
+    private async Task<bool> WriteAsync(Func<Task> write, string failure)
+    {
         await _writes.WaitAsync();
         try
         {
-            await _storage.SaveAsync(StorageKey, []);
+            await write();
+            return true;
         }
         catch (Exception exception)
         {
-            _logger.LogWarning(exception, "Dropping the kept copy of {EntitySet} failed", EntitySet);
+            _logger.LogWarning(exception, failure, EntitySet);
+            return false;
         }
         finally
         {
@@ -509,9 +627,6 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         }
     }
 
-    private string StorageKey => $"{_partition}/{EntitySet}/{Expand}";
-
-    // rows whose type splits into columns are kept as columns, which come back without parsing; others as JSON
     private async Task SaveAsync()
     {
         if (_table is not { } table || _version is not { } version)
@@ -521,67 +636,94 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
 
         try
         {
-            using var buffer = new MemoryStream();
-            await using (var zip = new GZipStream(buffer, CompressionLevel.Fastest, leaveOpen: true))
-            {
-                if (LocalTable<T>.Shape is not null)
-                {
-                    table.Write(zip, version);
-                }
-                else
-                {
-                    await JsonSerializer.SerializeAsync(zip, new Snapshot(version, Schema, table.All()), Json);
-                }
-            }
-
-            await _writes.WaitAsync();
-            try
-            {
-                // the copy was replaced or dropped while it was being packed
-                if (_table == table)
-                {
-                    await _storage.SaveAsync(StorageKey, buffer.ToArray());
-                }
-            }
-            finally
-            {
-                _writes.Release();
-            }
+            var data = await PackAsync(table, version);
+            // the copy was replaced or dropped while it was being packed
+            await WriteAsync(() => _table == table ? _storage.SaveAsync(StorageKey, data) : Task.CompletedTask, "Keeping {EntitySet} for the next visit failed");
         }
         catch (Exception exception)
         {
-            // a full or blocked browser storage costs the next visit a download, nothing more
             _logger.LogWarning(exception, "Keeping {EntitySet} for the next visit failed", EntitySet);
         }
     }
 
+    // rows whose type splits into columns are kept as columns, which come back without parsing; others as JSON
+    private static async Task<byte[]> PackAsync(LocalTable<T> table, DateTimeOffset version)
+    {
+        using var buffer = new MemoryStream();
+        await using (var zip = new GZipStream(buffer, CompressionLevel.Fastest, leaveOpen: true))
+        {
+            if (LocalTable<T>.Shape is not null)
+            {
+                await table.WriteAsync(zip, version, Pause);
+            }
+            else
+            {
+                await JsonSerializer.SerializeAsync(zip, new Snapshot(version, Schema, table.All()), Json);
+            }
+        }
+
+        return buffer.ToArray();
+    }
+
+    /// <summary>Null when the data was written for another row type.</summary>
+    private static async Task<(LocalTable<T> Table, DateTimeOffset Version)?> UnpackAsync(byte[] data)
+    {
+        using var plain = new MemoryStream();
+        await using (var zip = new GZipStream(new MemoryStream(data), CompressionMode.Decompress))
+        {
+            // in slices with a pause between them, so unpacking a large copy does not hold the page
+            var slice = new byte[1 << 20];
+            int read;
+            while ((read = await zip.ReadAsync(slice)) > 0)
+            {
+                plain.Write(slice, 0, read);
+                await Pause();
+            }
+        }
+
+        plain.Position = 0;
+        if (LocalTable<T>.IsColumns(plain.GetBuffer().AsSpan(0, (int)plain.Length)))
+        {
+            return await LocalTable<T>.ReadAsync(plain, Pause);
+        }
+
+        return await JsonSerializer.DeserializeAsync<Snapshot>(plain, Json) is { } snapshot && snapshot.Schema == Schema
+            ? (LocalTable<T>.Of(snapshot.Items), snapshot.Version)
+            : null;
+    }
+
+    // a complete copy waits for its first update (see _kept); without one, the pages of a cut off download are picked up
     private async Task RestoreAsync()
     {
         try
         {
-            if (await _storage.LoadAsync(StorageKey) is not { Length: > 0 } data)
+            if (await _storage.LoadAsync(StorageKey) is { Length: > 0 } data && await UnpackAsync(data) is { } kept)
+            {
+                _kept = kept.Table;
+                _version = kept.Version;
+                return;
+            }
+
+            if (await _storage.LoadAsync(ProgressKey) is not { Length: > 0 } saved || JsonSerializer.Deserialize<Progress>(saved, Json) is not { } progress)
             {
                 return;
             }
 
-            using var plain = new MemoryStream();
-            await using (var zip = new GZipStream(new MemoryStream(data), CompressionMode.Decompress))
+            var download = new Download(progress.Version) { Cursor = progress.Cursor, Pages = progress.Pages };
+            for (var page = 0; page < progress.Pages; page++)
             {
-                await zip.CopyToAsync(plain);
-            }
-
-            plain.Position = 0;
-            if (LocalTable<T>.IsColumns(plain.GetBuffer().AsSpan(0, (int)plain.Length)))
-            {
-                if (await LocalTable<T>.ReadAsync(plain, Pause) is { } restored)
+                if (await _storage.LoadAsync(PageKey(page)) is not { Length: > 0 } part || await UnpackAsync(part) is not { } rows)
                 {
-                    Commit(restored.Table, restored.Version, changed: true);
+                    return;
+                }
+
+                foreach (var row in rows.Table.All())
+                {
+                    download.Rows[IdOf!(row)] = row;
                 }
             }
-            else if (await JsonSerializer.DeserializeAsync<Snapshot>(plain, Json) is { } snapshot && snapshot.Schema == Schema)
-            {
-                Commit(LocalTable<T>.Of(snapshot.Items), snapshot.Version, changed: true);
-            }
+
+            _download = download;
         }
         catch (Exception exception)
         {
@@ -595,4 +737,21 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     }
 
     private sealed record Snapshot(DateTimeOffset Version, string Schema, T[] Items);
+
+    private sealed record Progress(DateTimeOffset Version, Guid? Cursor, int Pages);
+
+    private sealed class Download(DateTimeOffset version)
+    {
+        public DateTimeOffset Version { get; } = version;
+
+        public Dictionary<Guid, T> Rows { get; } = [];
+
+        public Guid? Cursor { get; set; }
+
+        public int Pages { get; set; }
+
+        public bool Kept { get; set; } = true;
+    }
+
+    private sealed class RescopedException : Exception;
 }

@@ -11,8 +11,8 @@ using Microsoft.Extensions.Logging;
 namespace Coworkee.Client.Blazor.Components.Groups;
 
 /// <summary>
-/// The groups the signed-in user works in (<see cref="GroupScopePicker"/>). A new selection, here or in another tab of the user, drops the
-/// client entities and raises <see cref="Changed"/>, on which data tables reload.
+/// The groups the signed-in user works in (<see cref="GroupScopePicker"/>). A new selection, here or in another tab of the user, moves the
+/// client entities to the copies of that selection and raises <see cref="Changed"/>, on which data tables reload.
 /// </summary>
 public sealed class GroupScopeState(
     ICoworkeeApi api, RealtimeClient realtime, AuthenticationStateProvider authentication, ILogger<GroupScopeState> logger, IClientDataCache? cache = null)
@@ -98,12 +98,12 @@ public sealed class GroupScopeState(
         {
             if (cache is not null)
             {
-                await cache.ClearAsync();
+                await cache.ScopeChangedAsync();
             }
         }
         catch (Exception exception)
         {
-            logger.LogWarning(exception, "The client entities were not dropped after a new group selection");
+            logger.LogWarning(exception, "The client entities did not follow the new group selection");
         }
 
         Changed?.Invoke();
