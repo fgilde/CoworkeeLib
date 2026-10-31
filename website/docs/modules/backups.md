@@ -9,11 +9,15 @@
 public sealed class MyAppDatabaseModule : CoworkeeModule;
 ```
 
+The module depends on the storage module. The template adds it with the option `backup` (on by default) when the database is Postgres. For a local database outside the app, `coworkee db backup` and `coworkee db restore` of the [CLI](../getting-started/cli.md) work with every database.
+
 - Every table of the model is written with Postgres `COPY ... (FORMAT BINARY)`; a manifest records the tables and the last applied migration.
 - A restore replaces every table in one transaction. It refuses a backup made at another migration or with other tables.
 - A downloaded zip can be uploaded again (also into another installation): it shows up in the list and is restored like any other backup. An upload without a manifest is refused; whether it fits the database is checked at the restore.
 - Caches are cleared after a restore.
-- Backups hold every organisation, so only users of the system organisation with `Backups.Manage` see them. The admin page is `/admin/backups`.
+- Backups hold every organisation, so only users of the system organisation with `Backups.Manage` see them; other organisations get `403` (`backup.system_only`). The admin page is *Administration > System > Backups* (`/cw/admin/backups`).
+- A restore onto another migration or other tables answers `409` (`backup.mismatch`); an uploaded file name needs 1 to 200 characters, the upload itself has no size limit.
+- With the [Retention](retention.md) module the target `backups` deletes old backups with their zip; the newest backup always stays.
 
 | Endpoint | |
 |---|---|

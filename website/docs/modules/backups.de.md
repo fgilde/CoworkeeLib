@@ -9,11 +9,15 @@
 public sealed class MyAppDatabaseModule : CoworkeeModule;
 ```
 
+Das Modul hängt vom Speichermodul ab. Die Vorlage fügt es mit der Option `backup` (standardmäßig an) hinzu, wenn die Datenbank Postgres ist. Für eine lokale Datenbank außerhalb der App funktionieren `coworkee db backup` und `coworkee db restore` der [CLI](../getting-started/cli.md) mit jeder Datenbank.
+
 - Jede Tabelle des Modells wird mit Postgres `COPY ... (FORMAT BINARY)` geschrieben; ein Manifest hält die Tabellen und die zuletzt angewendete Migration fest.
 - Eine Wiederherstellung ersetzt alle Tabellen in einer Transaktion. Sie lehnt Backups ab, die auf einer anderen Migration oder mit anderen Tabellen erstellt wurden.
 - Ein heruntergeladenes Zip lässt sich wieder hochladen (auch in eine andere Installation): Es erscheint in der Liste und wird wie jedes Backup wiederhergestellt. Ein Upload ohne Manifest wird abgelehnt; ob es zur Datenbank passt, prüft die Wiederherstellung.
 - Nach einer Wiederherstellung werden die Caches geleert.
-- Backups enthalten alle Organisationen, deshalb sehen sie nur Benutzer der System-Organisation mit `Backups.Manage`. Die Admin-Seite ist `/admin/backups`.
+- Backups enthalten alle Organisationen, deshalb sehen sie nur Benutzer der System-Organisation mit `Backups.Manage`; andere Organisationen bekommen `403` (`backup.system_only`). Die Admin-Seite ist *Administration > System > Backups* (`/cw/admin/backups`).
+- Eine Wiederherstellung auf eine andere Migration oder andere Tabellen antwortet `409` (`backup.mismatch`); ein hochgeladener Dateiname braucht 1 bis 200 Zeichen, der Upload selbst hat keine Größengrenze.
+- Mit dem Modul [Aufbewahrung](retention.md) löscht das Ziel `backups` alte Backups samt Zip; das neueste Backup bleibt immer.
 
 | Endpunkt | |
 |---|---|
