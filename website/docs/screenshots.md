@@ -5,7 +5,7 @@ description: "Sign-in, data tables, administration, Grafana and Coworkee Studio 
 
 # Screenshots
 
-Everything from the demo app in the Ocean theme. Click a picture to see it large; the arrow keys move on, Esc closes.
+The demo app in the Ocean theme, the tools of its app host and Coworkee Studio. Click a picture to see it large; the arrow keys move on, Esc closes.
 
 <div class="cw-shots" markdown>
 

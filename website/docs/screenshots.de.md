@@ -5,7 +5,7 @@ description: "Anmeldung, Datentabellen, Administration, Grafana und Coworkee Stu
 
 # Screenshots
 
-Alles aus der Demo-App im Ocean-Theme. Ein Klick vergrößert ein Bild, die Pfeiltasten blättern weiter, Esc schließt. Die App-Screenshots sind auf Englisch, Coworkee Studio zeigt sich auf Deutsch.
+Die Demo-App im Ocean-Theme, die Werkzeuge ihres AppHosts und Coworkee Studio. Ein Klick vergrößert ein Bild, die Pfeiltasten blättern weiter, Esc schließt. Die App-Screenshots sind auf Englisch, Coworkee Studio zeigt sich auf Deutsch.
 
 <div class="cw-shots" markdown>
 
