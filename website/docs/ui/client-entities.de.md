@@ -4,7 +4,7 @@ Eine Client-Entity ist ein [OData-Set](../web/odata.md), von dem der Browser ein
 
 **Wozu**: Listen, die Benutzer den ganzen Tag filtern (Aufträge, Kunden, Artikel, Tickets), antworten sofort, der Server sieht einen Download pro Benutzer statt einer Abfrage pro Klick, und die Tabelle bleibt bedienbar, wenn die API langsam ist. **Wann nicht**: Sets mit Millionen Zeilen, Zeilen, die ein Benutzer nicht auf dem Gerät haben darf, Daten, die sich jede Sekunde ändern.
 
-Das Template zeigt es mit 100.000 Aufträgen (*Vertrieb → Aufträge*). Diese Seite geht das Beispiel Schritt für Schritt durch.
+Diese Seite geht Schritt für Schritt durch eine Demo-App, die aus dem Template entstanden ist und ein Vertriebsmodul mit 100.000 Aufträgen hat (*Vertrieb → Aufträge*); das Modul gehört zur Demo, das Template hat keins. Das Template verdrahtet nur den Client: `--client-entities` (`clientEntities`, standardmäßig aus; Spec-Entities mit `clientEntity` schalten es ein) fügt das Paket und `AddCoworkeeClientEntities()` aus Schritt 3 hinzu.
 
 ```mermaid
 sequenceDiagram
@@ -87,7 +87,7 @@ Jedes Set startet mit den Standardwerten, dann wirken das Attribut, die Optionen
 
 === "Pro Anwendungsdienst"
 
-    Ein [Anwendungsdienst](../web/application-services.md) kann die Entity nennen, die er schreibt, und die Einstellungen ihres Sets mitbringen. Das Template hebt so die Grenze an, denn 100.000 Aufträge sind mehr als die standardmäßigen 50.000:
+    Ein [Anwendungsdienst](../web/application-services.md) kann die Entity nennen, die er schreibt, und die Einstellungen ihres Sets mitbringen. Die Demo hebt so die Grenze an, denn 100.000 Aufträge sind mehr als die standardmäßigen 50.000:
 
     ```csharp title="MyApp.Sales/SalesModule.cs"
     services.Configure<ApplicationServiceOptions>(options => options.Configure<ISalesOrderAppService>(service =>
@@ -105,7 +105,7 @@ builder.Services.AddCoworkeeClient(baseAddress, ...);
 builder.Services.AddCoworkeeClientEntities();
 ```
 
-Ab jetzt fragt jede `CoworkeeDataTable` und jeder `ODataPicker` bei einem gespiegelten Set die lokale Kopie, sobald sie vollständig ist. Die Seite im Template ist eine gewöhnliche Datentabelle, nichts darauf handelt von Client-Entities:
+Ab jetzt fragt jede `CoworkeeDataTable` und jeder `ODataPicker` bei einem gespiegelten Set die lokale Kopie, sobald sie vollständig ist. Die Seite der Demo ist eine gewöhnliche Datentabelle, nichts darauf handelt von Client-Entities:
 
 ```razor title="MyApp.Web.Client/Pages/Sales/SalesOrders.razor"
 <CoworkeeDataTable @ref="_table" T="SalesOrderDto" EntitySet="SalesOrders" Expand="Customer" SearchFields="SearchFields" ...>
@@ -137,7 +137,7 @@ Beim Abmelden werden alle Kopien aus dem Browser-Speicher entfernt. Ein Set, das
 
 ## Schritt 4: Schreiben
 
-Eine Client-Entity ist eine Kopie zum Lesen; geschrieben wird wie bisher auf dem Server. Im Template über `ISalesOrderAppService` (siehe [Anwendungsdienste](../web/application-services.md)), dessen generierten Client die Seite injiziert:
+Eine Client-Entity ist eine Kopie zum Lesen; geschrieben wird wie bisher auf dem Server. In der Demo über `ISalesOrderAppService` (siehe [Anwendungsdienste](../web/application-services.md)), dessen generierten Client die Seite injiziert:
 
 ```csharp title="MyApp.Web.Client/Pages/Sales/SalesOrders.razor.cs"
 [Inject] private ISalesOrderAppService Orders { get; set; } = null!;
@@ -212,7 +212,7 @@ WebAssembly interpretiert .NET-Code; Arbeit pro Zeile ist im Browser also teuer:
 - **Speicher**: Spalten und ihre Sortierungen werden als Binär-Arrays (gzip) in IndexedDB geschrieben. Ein Neuladen liest sie in einigen hundert Millisekunden zurück, Spalte für Spalte mit Pausen dazwischen; bis dahin fragt die Tabelle den Server und zeigt sofort Zeilen.
 - **Download**: Nur die Eigenschaften des Zeilentyps kommen über die Leitung (`$select`, verschachteltes `$expand`), zwei Seiten gleichzeitig, in einem Durchgang gelesen.
 
-Gemessen in Chromium mit den 100.000 Aufträgen des Templates (Release-Build, lokaler Rechner; der Server antwortet aus Postgres auf derselben Maschine):
+Gemessen in Chromium mit den 100.000 Aufträgen der Demo (Release-Build, lokaler Rechner; der Server antwortet aus Postgres auf derselben Maschine):
 
 | | vorher | jetzt |
 |---|---|---|
@@ -220,7 +220,7 @@ Gemessen in Chromium mit den 100.000 Aufträgen des Templates (Release-Build, lo
 | Neuladen: erste Zeilen sichtbar | 20,6 s | 2,9 s |
 | Neuladen: Abfragen lokal | (nach den 20 s) | 0,3 s nach den ersten Zeilen |
 
-Nur die Abfragezeit, *Vergleichen und das Schnellere wählen* des [Schalters](#der-schalter-in-der-tabelle) (Median aus drei Läufen der Tabellenabfrage mit ihren Facetten und 25 Zeilen, je mit einer Bedingung, die verhindert, dass eine Seite ein Ergebnis wiederverwendet). Gemessen am 15.10.2026 mit den Facetten des Templates (Status, Kanal, Flags, Region, Kunde, 35 Monate Auftragsdatum, 16 Summenbereiche, Positionen, bezahlt):
+Nur die Abfragezeit, *Vergleichen und das Schnellere wählen* des [Schalters](#der-schalter-in-der-tabelle) (Median aus drei Läufen der Tabellenabfrage mit ihren Facetten und 25 Zeilen, je mit einer Bedingung, die verhindert, dass eine Seite ein Ergebnis wiederverwendet). Gemessen am 15.10.2026 mit den Facetten der Demo (Status, Kanal, Flags, Region, Kunde, 35 Monate Auftragsdatum, 16 Summenbereiche, Positionen, bezahlt):
 
 | aktueller Filter | Server | Browser vorher | Browser jetzt |
 |---|---|---|---|
@@ -270,7 +270,7 @@ Die Tests der Bibliothek (`LargeSetTests`, `LocalTableTests`) prüfen dasselbe m
 | `GET /api/v1/client-entities/{set}/changes?since=…` | neue Version, Zahl der sichtbaren Zeilen, geänderte und gelöschte Ids |
 | `GET /api/v1/client-entities/{set}/ids` | alle sichtbaren Ids, um unbemerkt verschwundene Zeilen zu finden |
 
-## Dateien des Beispiels
+## Dateien der Demo
 
 | Datei | |
 |---|---|

@@ -4,7 +4,7 @@ A client entity is an [OData set](../web/odata.md) the browser keeps a copy of. 
 
 **Why**: list data that users filter all day (orders, customers, articles, tickets) answers at once, the server sees one download per user instead of a query per click, and the table keeps working while the API is slow. **When not**: sets with millions of rows, rows a user must not keep on the device, data that changes every second.
 
-The template shows it with 100,000 sales orders (*Sales → Sales Orders*). This page walks through that sample step by step.
+This page walks step by step through a demo app made from the template with a Sales module of 100,000 sales orders (*Sales → Sales Orders*); the module is the demo's, the template has none. The template only wires the client: `--client-entities` (`clientEntities`, off by default; spec entities with `clientEntity` turn it on) adds the package and `AddCoworkeeClientEntities()` of step 3.
 
 ```mermaid
 sequenceDiagram
@@ -87,7 +87,7 @@ Each set starts from the defaults, then the attribute, then the options, then it
 
 === "Per application service"
 
-    An [application service](../web/application-services.md) can name the entity it writes and carry the settings of its set. The template raises the limit this way, because 100,000 orders are more than the default 50,000:
+    An [application service](../web/application-services.md) can name the entity it writes and carry the settings of its set. The demo raises the limit this way, because 100,000 orders are more than the default 50,000:
 
     ```csharp title="MyApp.Sales/SalesModule.cs"
     services.Configure<ApplicationServiceOptions>(options => options.Configure<ISalesOrderAppService>(service =>
@@ -105,7 +105,7 @@ builder.Services.AddCoworkeeClient(baseAddress, ...);
 builder.Services.AddCoworkeeClientEntities();
 ```
 
-From now on every `CoworkeeDataTable` and `ODataPicker` asks the local copy of a mirrored set as soon as it is complete. The page of the template is an ordinary data table, nothing on it is about client entities:
+From now on every `CoworkeeDataTable` and `ODataPicker` asks the local copy of a mirrored set as soon as it is complete. The page of the demo is an ordinary data table, nothing on it is about client entities:
 
 ```razor title="MyApp.Web.Client/Pages/Sales/SalesOrders.razor"
 <CoworkeeDataTable @ref="_table" T="SalesOrderDto" EntitySet="SalesOrders" Expand="Customer" SearchFields="SearchFields" ...>
@@ -137,7 +137,7 @@ Signing out removes all copies from the browser storage. A set the user may no l
 
 ## Step 4: writes
 
-A client entity is a read-only copy; writes go to the server as before. In the template they go through `ISalesOrderAppService` (see [Application services](../web/application-services.md)), whose generated client the page injects:
+A client entity is a read-only copy; writes go to the server as before. In the demo they go through `ISalesOrderAppService` (see [Application services](../web/application-services.md)), whose generated client the page injects:
 
 ```csharp title="MyApp.Web.Client/Pages/Sales/SalesOrders.razor.cs"
 [Inject] private ISalesOrderAppService Orders { get; set; } = null!;
@@ -212,7 +212,7 @@ WebAssembly interprets .NET code, so per row work is expensive in the browser: p
 - **Storage**: columns and their sort orders are written as binary arrays (gzip) to IndexedDB. A reload reads them back in a few hundred milliseconds, column by column with pauses in between; until then the table asks the server, so it shows rows at once.
 - **Download**: only the properties of the row type travel (`$select`, nested `$expand`), two pages at a time, read in one pass.
 
-Measured in Chromium with the 100,000 orders of the template (Release build, local machine; the server answers from Postgres in the same machine):
+Measured in Chromium with the 100,000 orders of the demo (Release build, local machine; the server answers from Postgres in the same machine):
 
 | | before | now |
 |---|---|---|
@@ -220,7 +220,7 @@ Measured in Chromium with the 100,000 orders of the template (Release build, loc
 | page reload: first rows visible | 20.6 s | 2.9 s |
 | page reload: queries local | (after the 20 s) | 0.3 s after the first rows |
 
-Query time only, *Compare and choose the faster* of the [switch](#the-switch-in-the-table) (median of three runs of the table's query with its facets and 25 rows, each with a condition that keeps either side from reusing a result). Measured on 2026-10-15 with the template's facets (status, channel, flags, region, customer, 35 order date months, 16 total ranges, items, paid):
+Query time only, *Compare and choose the faster* of the [switch](#the-switch-in-the-table) (median of three runs of the table's query with its facets and 25 rows, each with a condition that keeps either side from reusing a result). Measured on 2026-10-15 with the demo's facets (status, channel, flags, region, customer, 35 order date months, 16 total ranges, items, paid):
 
 | current filter | server | browser before | browser now |
 |---|---|---|---|
@@ -270,7 +270,7 @@ The library's tests (`LargeSetTests`, `LocalTableTests`) check the same with 100
 | `GET /api/v1/client-entities/{set}/changes?since=…` | new version, visible row count, changed and deleted ids |
 | `GET /api/v1/client-entities/{set}/ids` | all visible ids, to find rows that vanished unseen |
 
-## Files of the sample
+## Files of the demo
 
 | File | |
 |---|---|
