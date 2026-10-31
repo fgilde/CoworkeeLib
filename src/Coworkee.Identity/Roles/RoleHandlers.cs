@@ -99,7 +99,7 @@ internal sealed class UpdateRoleHandler(CoworkeeDbContext db, ICurrentUser curre
     }
 }
 
-internal sealed class DeleteRoleHandler(CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<DeleteRole, Result>
+internal sealed class DeleteRoleHandler(CoworkeeDbContext db, ICurrentUser currentUser, Users.AccountGuard guard) : IHandler<DeleteRole, Result>
 {
     public async Task<Result> HandleAsync(DeleteRole command, CancellationToken cancellationToken)
     {
@@ -114,6 +114,12 @@ internal sealed class DeleteRoleHandler(CoworkeeDbContext db, ICurrentUser curre
             return Error.Conflict("identity.role_system", "System roles cannot be deleted.");
         }
 
+        // its members lose what it grants
+        if (await guard.CheckRolesAsync([role.Id], cancellationToken) is { } restricted)
+        {
+            return restricted;
+        }
+
         db.RemoveRange(await db.Set<PermissionGrant>().Where(g => g.ProviderType == PermissionProviderType.Role && g.ProviderKey == role.Id).ToListAsync(cancellationToken));
         db.Remove(role);
         return Result.Success();
@@ -124,7 +130,7 @@ internal sealed class DeleteRoleHandler(CoworkeeDbContext db, ICurrentUser curre
 /// What new users get (a default role, a role offered in the registration, the roles of the default group) goes to people nobody vetted:
 /// only who may manage users and holds every permission of it (as for impersonation) hands it out, also by granting such a role more.
 /// </summary>
-internal sealed class RoleOffer(IPermissionChecker permissions, CoworkeeDbContext db, IPermissionDefinitionManager definitions, ICurrentUser currentUser)
+internal sealed class RoleOffer(IPermissionChecker permissions, CoworkeeDbContext db, ICurrentUser currentUser, Users.AccountGuard guard)
 {
     public static readonly Error MorePermissions = Error.Forbidden("identity.role_offer_more_permissions",
         "Only a user who may manage users and holds every permission of the role can give it to new users or offer it in the registration.");
@@ -141,8 +147,7 @@ internal sealed class RoleOffer(IPermissionChecker permissions, CoworkeeDbContex
         var names = ids.Count == 0 ? [] : await db.Set<PermissionGrant>()
             .Where(g => g.ProviderType == PermissionProviderType.Role && EF.Parameter(ids).Contains(g.ProviderKey) && (g.TenantId == null || g.TenantId == currentUser.TenantId))
             .Select(g => g.Name).ToListAsync(cancellationToken);
-        var mine = await permissions.GetGrantedAsync(cancellationToken);
-        return definitions.Expand(names.Concat(grants ?? [])).Except(mine, StringComparer.Ordinal).Any() ? MorePermissions : null;
+        return await guard.CheckGrantAsync(names.Concat(grants ?? []), cancellationToken) is null ? null : MorePermissions;
     }
 
     /// <summary>The role is a default role, offered in the registration or a role of the tenant's default group.</summary>

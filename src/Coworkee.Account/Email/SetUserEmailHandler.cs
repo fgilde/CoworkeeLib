@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Account.Email;
 
-internal sealed class SetUserEmailHandler(CoworkeeDbContext db, ICurrentUser currentUser, UserManager<User> users, IAccountMailer mailer)
+internal sealed class SetUserEmailHandler(CoworkeeDbContext db, ICurrentUser currentUser, UserManager<User> users, IAccountMailer mailer, Identity.Users.AccountGuard guard)
     : IHandler<SetUserEmail, Result>
 {
     public async Task<Result> HandleAsync(SetUserEmail command, CancellationToken cancellationToken)
@@ -16,6 +16,11 @@ internal sealed class SetUserEmailHandler(CoworkeeDbContext db, ICurrentUser cur
         if (await db.Set<User>().SingleOrDefaultAsync(u => u.Id == command.Id && u.TenantId == currentUser.TenantId, cancellationToken) is not { } user)
         {
             return AccountErrors.UserNotFound;
+        }
+
+        if (await guard.CheckUserAsync(user.Id, cancellationToken) is { } refused)
+        {
+            return refused;
         }
 
         var (email, previous) = (command.Email.Trim(), user.Email);

@@ -53,6 +53,26 @@ public sealed class ServiceClientTests(AuthApp app) : IAsyncLifetime
         (await SendAsync(new CreateClient(Service("ghost", permissions: ["Not.A.Permission"])))).Error!.Kind.ShouldBe(ErrorKind.Validation);
     }
 
+    [Fact]
+    public async Task Only_who_holds_every_permission_of_a_client_changes_it_rotates_its_secret_or_deletes_it()
+    {
+        var manager = (await SendAsync(new Coworkee.Identity.Users.CreateUser(new CreateUserRequest("clients@acme.test", "Passw0rd!x", null, null)))).Value.Id;
+        (await SendAsync(new Coworkee.Identity.Users.SetUserRoles(manager, [await RoleWithAsync("Client managers", IdentityPermissions.Clients.Manage)]))).IsSuccess.ShouldBeTrue();
+        var rich = (await SendAsync(new CreateClient(Service("rich", permissions: [IdentityPermissions.Users.Manage])))).Value.Id;
+        var plain = (await SendAsync(new CreateClient(Service("plain", permissions: [IdentityPermissions.Clients.Manage])))).Value.Id;
+
+        Task<T> AsManager<T>(Coworkee.Application.Messaging.IRequest<T> request) => OidcFlow.SendAsync(app, manager, _setup.TenantId, request);
+        (await AsManager(new CreateClient(Service("more", permissions: [IdentityPermissions.Users.Manage])))).Error!.Code.ShouldBe("auth.client_rights_restricted");
+        (await AsManager(new RegenerateClientSecret(rich))).Error!.Code.ShouldBe("auth.client_rights_restricted");
+        (await AsManager(new UpdateClient(rich, Service("rich")))).Error!.Code.ShouldBe("auth.client_rights_restricted");
+        (await AsManager(new DeleteClient(rich))).Error!.Code.ShouldBe("auth.client_rights_restricted");
+
+        (await AsManager(new RegenerateClientSecret(plain))).IsSuccess.ShouldBeTrue();
+        (await AsManager(new UpdateClient(plain, Service("plain")))).IsSuccess.ShouldBeTrue();
+        (await SendAsync(new RegenerateClientSecret(rich))).IsSuccess.ShouldBeTrue();
+        (await SendAsync(new DeleteClient(rich))).IsSuccess.ShouldBeTrue();
+    }
+
     private static ClientRequest Service(string clientId, IReadOnlyList<Guid>? roles = null, IReadOnlyList<string>? permissions = null) =>
         new(clientId, null, "confidential", "implicit", [], [], [ClientGrantTypes.ClientCredentials], ["test_api"], roles, permissions);
 

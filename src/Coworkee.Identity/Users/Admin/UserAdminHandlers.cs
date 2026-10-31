@@ -10,7 +10,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Identity.Users.Admin;
 
-internal sealed class UserAdminHandlers(CoworkeeDbContext db, ICurrentUser currentUser, UserManager<User> users, UserChanges changes, TimeProvider clock)
+internal sealed class UserAdminHandlers(
+    CoworkeeDbContext db, ICurrentUser currentUser, UserManager<User> users, UserChanges changes, TimeProvider clock, AccountGuard guard)
     : IHandler<SetUserAvatar, Result>,
       IHandler<ResetUserTwoFactor, Result>,
       IHandler<ResetUserPasskeys, Result>,
@@ -22,10 +23,13 @@ internal sealed class UserAdminHandlers(CoworkeeDbContext db, ICurrentUser curre
 
     public async Task<Result> HandleAsync(SetUserAvatar command, CancellationToken cancellationToken)
     {
-        if (await FindAsync(command.Id, cancellationToken) is not { } user)
+        var target = await TargetAsync(command.Id, cancellationToken);
+        if (!target.IsSuccess)
         {
-            return UserErrors.NotFound;
+            return target.Error!;
         }
+
+        var user = target.Value;
 
         user.AvatarUrl = command.DataUrl;
         user.AvatarChangedAt = clock.GetUtcNow();
@@ -34,19 +38,25 @@ internal sealed class UserAdminHandlers(CoworkeeDbContext db, ICurrentUser curre
         return Result.Success();
     }
 
-    public async Task<Result> HandleAsync(ResetUserTwoFactor command, CancellationToken cancellationToken) =>
-        await FindAsync(command.Id, cancellationToken) is not { } user ? UserErrors.NotFound
-        : await users.SetTwoFactorEnabledAsync(user, false) is { Succeeded: false } disabled ? IdentityErrors.ToError(disabled)
-        : await users.ResetAuthenticatorKeyAsync(user) is { Succeeded: false } reset ? IdentityErrors.ToError(reset)
-        : await users.RemoveAuthenticationTokenAsync(user, "[AspNetUserStore]", RecoveryCodes) is { Succeeded: false } codes ? IdentityErrors.ToError(codes)
-        : Result.Success();
+    public async Task<Result> HandleAsync(ResetUserTwoFactor command, CancellationToken cancellationToken)
+    {
+        var target = await TargetAsync(command.Id, cancellationToken);
+        return !target.IsSuccess ? target.Error!
+            : await users.SetTwoFactorEnabledAsync(target.Value, false) is { Succeeded: false } disabled ? IdentityErrors.ToError(disabled)
+            : await users.ResetAuthenticatorKeyAsync(target.Value) is { Succeeded: false } reset ? IdentityErrors.ToError(reset)
+            : await users.RemoveAuthenticationTokenAsync(target.Value, "[AspNetUserStore]", RecoveryCodes) is { Succeeded: false } codes ? IdentityErrors.ToError(codes)
+            : Result.Success();
+    }
 
     public async Task<Result> HandleAsync(ResetUserPasskeys command, CancellationToken cancellationToken)
     {
-        if (await FindAsync(command.Id, cancellationToken) is not { } user)
+        var target = await TargetAsync(command.Id, cancellationToken);
+        if (!target.IsSuccess)
         {
-            return UserErrors.NotFound;
+            return target.Error!;
         }
+
+        var user = target.Value;
 
         var passkeys = db.Set<IdentityUserPasskey<Guid>>();
         passkeys.RemoveRange(await passkeys.Where(p => p.UserId == user.Id).ToListAsync(cancellationToken));
@@ -55,10 +65,13 @@ internal sealed class UserAdminHandlers(CoworkeeDbContext db, ICurrentUser curre
 
     public async Task<Result> HandleAsync(SetUserPassword command, CancellationToken cancellationToken)
     {
-        if (await FindAsync(command.Id, cancellationToken) is not { } user)
+        var target = await TargetAsync(command.Id, cancellationToken);
+        if (!target.IsSuccess)
         {
-            return UserErrors.NotFound;
+            return target.Error!;
         }
+
+        var user = target.Value;
 
         var reset = await users.ResetPasswordAsync(user, await users.GeneratePasswordResetTokenAsync(user), command.Password);
         if (!reset.Succeeded)
@@ -70,16 +83,19 @@ internal sealed class UserAdminHandlers(CoworkeeDbContext db, ICurrentUser curre
         return Result.Success();
     }
 
-    public async Task<Result> HandleAsync(RemoveUserLogin command, CancellationToken cancellationToken) =>
-        await FindAsync(command.Id, cancellationToken) is not { } user ? UserErrors.NotFound
-        : await users.RemoveLoginAsync(user, command.LoginProvider, command.ProviderKey) is { Succeeded: false } removed ? IdentityErrors.ToError(removed)
-        : Result.Success();
+    public async Task<Result> HandleAsync(RemoveUserLogin command, CancellationToken cancellationToken)
+    {
+        var target = await TargetAsync(command.Id, cancellationToken);
+        return !target.IsSuccess ? target.Error!
+            : await users.RemoveLoginAsync(target.Value, command.LoginProvider, command.ProviderKey) is { Succeeded: false } removed ? IdentityErrors.ToError(removed)
+            : Result.Success();
+    }
 
     public async Task<Result> HandleAsync(SetUserGroups command, CancellationToken cancellationToken)
     {
-        if (await FindAsync(command.Id, cancellationToken) is null)
+        if ((await TargetAsync(command.Id, cancellationToken)).Error is { } refused)
         {
-            return UserErrors.NotFound;
+            return refused;
         }
 
         var wanted = command.GroupIds.Distinct().ToList();
@@ -88,6 +104,13 @@ internal sealed class UserAdminHandlers(CoworkeeDbContext db, ICurrentUser curre
         if (groups.Count(g => wanted.Contains(g.Id)) != wanted.Count)
         {
             return Error.Validation(nameof(command.GroupIds), "Unknown group.");
+        }
+
+        // joining or leaving a group gives or takes what the group grants
+        var changed = groups.Where(g => wanted.Contains(g.Id) != g.Members.Any(m => m.UserId == command.Id)).Select(g => g.Id);
+        if (await guard.CheckGroupsAsync(changed, cancellationToken) is { } restricted)
+        {
+            return restricted;
         }
 
         foreach (var group in groups)
@@ -102,6 +125,9 @@ internal sealed class UserAdminHandlers(CoworkeeDbContext db, ICurrentUser curre
         return Result.Success();
     }
 
-    private Task<User?> FindAsync(Guid id, CancellationToken cancellationToken) =>
-        db.Set<User>().SingleOrDefaultAsync(u => u.Id == id && u.TenantId == currentUser.TenantId, cancellationToken);
+    // a user of the caller's organisation whose account he may change
+    private async Task<Result<User>> TargetAsync(Guid id, CancellationToken cancellationToken) =>
+        await db.Set<User>().SingleOrDefaultAsync(u => u.Id == id && u.TenantId == currentUser.TenantId, cancellationToken) is not { } user ? UserErrors.NotFound
+        : await guard.CheckUserAsync(user.Id, cancellationToken) is { } refused ? refused
+        : user;
 }

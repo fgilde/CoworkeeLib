@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Coworkee.Account.Users;
 
 // the language is the user's own setting; administrators read and write it for users of their organisation
-internal sealed class UserLanguageHandlers(CoworkeeDbContext db, ICurrentUser currentUser)
+internal sealed class UserLanguageHandlers(CoworkeeDbContext db, ICurrentUser currentUser, Identity.Users.AccountGuard guard)
     : IHandler<GetUserLanguage, Result<UserLanguageDto>>, IHandler<SetUserLanguage, Result>
 {
     public async Task<Result<UserLanguageDto>> HandleAsync(GetUserLanguage query, CancellationToken cancellationToken) =>
@@ -25,6 +25,11 @@ internal sealed class UserLanguageHandlers(CoworkeeDbContext db, ICurrentUser cu
         if (!await InTenantAsync(command.Id, cancellationToken))
         {
             return AccountErrors.UserNotFound;
+        }
+
+        if (await guard.CheckUserAsync(command.Id, cancellationToken) is { } refused)
+        {
+            return refused;
         }
 
         var stored = await Stored(command.Id).SingleOrDefaultAsync(cancellationToken);

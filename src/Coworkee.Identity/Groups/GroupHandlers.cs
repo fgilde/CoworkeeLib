@@ -138,7 +138,7 @@ internal sealed class UpdateGroupHandler(CoworkeeDbContext db) : IHandler<Update
     }
 }
 
-internal sealed class DeleteGroupHandler(CoworkeeDbContext db) : IHandler<DeleteGroup, Result>
+internal sealed class DeleteGroupHandler(CoworkeeDbContext db, Users.AccountGuard guard) : IHandler<DeleteGroup, Result>
 {
     public async Task<Result> HandleAsync(DeleteGroup command, CancellationToken cancellationToken)
     {
@@ -154,6 +154,12 @@ internal sealed class DeleteGroupHandler(CoworkeeDbContext db) : IHandler<Delete
             : [];
         subtree.Add(group);
         var ids = subtree.Select(g => g.Id).ToList();
+
+        // the members lose what the groups grant
+        if (await guard.CheckGroupsAsync(ids, cancellationToken) is { } restricted)
+        {
+            return restricted;
+        }
         db.RemoveRange(await db.Set<PermissionGrant>().Where(g => g.ProviderType == PermissionProviderType.Group && EF.Parameter(ids).Contains(g.ProviderKey)).ToListAsync(cancellationToken));
         db.RemoveRange(await db.Set<ResourcePermission>().Where(p => p.PrincipalType == PrincipalType.Group && EF.Parameter(ids).Contains(p.PrincipalId)).ToListAsync(cancellationToken));
         db.RemoveRange(subtree);
@@ -161,7 +167,7 @@ internal sealed class DeleteGroupHandler(CoworkeeDbContext db) : IHandler<Delete
     }
 }
 
-internal sealed class SetGroupMembersHandler(CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<SetGroupMembers, Result>
+internal sealed class SetGroupMembersHandler(CoworkeeDbContext db, ICurrentUser currentUser, Users.AccountGuard guard) : IHandler<SetGroupMembers, Result>
 {
     public async Task<Result> HandleAsync(SetGroupMembers command, CancellationToken cancellationToken)
     {
@@ -177,13 +183,19 @@ internal sealed class SetGroupMembersHandler(CoworkeeDbContext db, ICurrentUser 
             return GroupMembers.UnknownUser;
         }
 
+        var changed = wanted.Where(id => group.Members.All(m => m.UserId != id)).Concat(group.Members.Where(m => !wanted.Contains(m.UserId)).Select(m => m.UserId));
+        if (await GroupMembers.CheckAsync(guard, [group.Id], changed, cancellationToken) is { } refused)
+        {
+            return refused;
+        }
+
         group.Members.RemoveAll(m => !wanted.Contains(m.UserId));
         GroupMembers.AddMissing(group, wanted);
         return Result.Success();
     }
 }
 
-internal sealed class SetGroupRolesHandler(CoworkeeDbContext db, ICurrentUser currentUser, Roles.RoleOffer offer) : IHandler<SetGroupRoles, Result>
+internal sealed class SetGroupRolesHandler(CoworkeeDbContext db, ICurrentUser currentUser, Roles.RoleOffer offer, Users.AccountGuard guard) : IHandler<SetGroupRoles, Result>
 {
     public async Task<Result> HandleAsync(SetGroupRoles command, CancellationToken cancellationToken)
     {
@@ -200,8 +212,14 @@ internal sealed class SetGroupRolesHandler(CoworkeeDbContext db, ICurrentUser cu
             return Error.Validation(nameof(command.RoleIds), "Unknown role or system role. System roles cannot be assigned to groups.");
         }
 
-        // new users join the default group and get its roles
+        // the members gain or lose what the roles grant
         var added = wanted.Where(id => group.Roles.All(r => r.RoleId != id)).ToList();
+        if (await guard.CheckRolesAsync(added.Concat(group.Roles.Where(r => !wanted.Contains(r.RoleId)).Select(r => r.RoleId)), cancellationToken) is { } restricted)
+        {
+            return restricted;
+        }
+
+        // new users join the default group and get its roles
         if (group.IsDefault && added.Count > 0 && await offer.RefusedAsync(added, null, cancellationToken) is { } refused)
         {
             return refused;

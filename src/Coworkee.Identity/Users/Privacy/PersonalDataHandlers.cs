@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Coworkee.Identity.Users.Privacy;
 
 // ponytail: the export is built synchronously in memory; a background job with a download link pays off once a user's data reaches many megabytes
-internal sealed class PersonalDataHandlers(CoworkeeDbContext db, ICurrentUser currentUser, IEnumerable<IPersonalDataContributor> contributors)
+internal sealed class PersonalDataHandlers(CoworkeeDbContext db, ICurrentUser currentUser, IEnumerable<IPersonalDataContributor> contributors, AccountGuard guard)
     : IHandler<ExportMyPersonalData, Result<IReadOnlyDictionary<string, object>>>, IHandler<DeleteMyAccount, Result>, IHandler<DeleteUser, Result>
 {
     public async Task<Result<IReadOnlyDictionary<string, object>>> HandleAsync(ExportMyPersonalData query, CancellationToken cancellationToken)
@@ -50,9 +50,9 @@ internal sealed class PersonalDataHandlers(CoworkeeDbContext db, ICurrentUser cu
             return UserErrors.NotFound;
         }
 
-        if (await AdminGuard.IsAdminAsync(db, subject.UserId, cancellationToken) && !await AdminGuard.IsAdminAsync(db, currentUser.UserId, cancellationToken))
+        if (await guard.CheckUserAsync(subject.UserId, cancellationToken) is { } refused)
         {
-            return Error.Forbidden("identity.admin_role_restricted", "Only administrators can delete an administrator.");
+            return refused;
         }
 
         return await EraseAsync(subject, cancellationToken);

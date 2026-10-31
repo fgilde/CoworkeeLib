@@ -18,7 +18,7 @@ internal sealed class PermissionChecker(
     : IPermissionChecker
 {
     private readonly IComputedPermission[] _computed = [.. computed];
-    private readonly Dictionary<(Guid, Guid?, bool), IReadOnlyCollection<string>> _withComputed = [];
+    private readonly Dictionary<(Guid, Guid?, bool, bool), IReadOnlyCollection<string>> _withComputed = [];
 
     public async Task<IReadOnlyCollection<string>> GetGrantedAsync(CancellationToken cancellationToken)
     {
@@ -159,12 +159,15 @@ internal sealed class PermissionChecker(
         return grants.Where(g => allowedRoles.Contains(g.RoleId)).Select(g => g.ResourceId).Distinct().ToList();
     }
 
-    /// <summary>What <paramref name="userId"/> holds; <paramref name="narrow"/> false ignores the active role, so the result is everything his roles give.</summary>
-    internal async Task<string[]> GetGrantedForAsync(Guid userId, Guid? tenantId, CancellationToken cancellationToken, bool narrow = true)
+    /// <summary>
+    /// What <paramref name="userId"/> holds; <paramref name="narrow"/> false ignores the active role, so the result is everything his roles give.
+    /// <paramref name="evenInactive"/> counts a deactivated user as active: what he would hold once someone activates him again.
+    /// </summary>
+    internal async Task<string[]> GetGrantedForAsync(Guid userId, Guid? tenantId, CancellationToken cancellationToken, bool narrow = true, bool evenInactive = false)
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(userId, tenantId));
         narrow = narrow && await activeRoles.IsEnabledAsync(cancellationToken);
-        return [.. await WithComputedAsync(userId, tenantId, narrow, await LoadAsync(userId, tenantId, narrow, cancellationToken), cancellationToken)];
+        return [.. await WithComputedAsync(userId, tenantId, narrow, await LoadAsync(userId, tenantId, narrow, cancellationToken, evenInactive), cancellationToken, evenInactive)];
     }
 
     /// <summary>Every permission <paramref name="userId"/> holds on a single resource, directly or through his groups (resource type, id, permission).</summary>
@@ -189,21 +192,22 @@ internal sealed class PermissionChecker(
     }
 
     // ponytail: computed permissions run once per scope (request) and user, never across requests: data changes show on the next request without invalidation
-    private async Task<IReadOnlyCollection<string>> WithComputedAsync(Guid userId, Guid? tenantId, bool narrow, IReadOnlyCollection<string> granted, CancellationToken cancellationToken)
+    private async Task<IReadOnlyCollection<string>> WithComputedAsync(
+        Guid userId, Guid? tenantId, bool narrow, IReadOnlyCollection<string> granted, CancellationToken cancellationToken, bool evenInactive = false)
     {
         if (_computed.Length == 0)
         {
             return granted;
         }
 
-        var key = (userId, tenantId, narrow);
+        var key = (userId, tenantId, narrow, evenInactive);
         if (_withComputed.TryGetValue(key, out var cached))
         {
             return cached;
         }
 
         var extra = new List<string>();
-        if (await IsActiveMemberAsync(userId, tenantId, cancellationToken))
+        if (await IsActiveMemberAsync(userId, tenantId, cancellationToken, evenInactive))
         {
             var context = new ComputedPermissionContext(userId, tenantId, granted, services);
             foreach (var permission in _computed.Where(c => !granted.Contains(c.Permission)))
@@ -268,9 +272,9 @@ internal sealed class PermissionChecker(
     }
 
     // the active role narrows to that role alone, without direct grants, so it never adds to what the roles give
-    private async Task<string[]> LoadAsync(Guid userId, Guid? tenantId, bool narrow, CancellationToken cancellationToken)
+    private async Task<string[]> LoadAsync(Guid userId, Guid? tenantId, bool narrow, CancellationToken cancellationToken, bool evenInactive = false)
     {
-        if (!await IsActiveMemberAsync(userId, tenantId, cancellationToken))
+        if (!await IsActiveMemberAsync(userId, tenantId, cancellationToken, evenInactive))
         {
             return [];
         }
@@ -346,8 +350,8 @@ internal sealed class PermissionChecker(
         return new Contracts.PagedResult<Guid>(ids, total, page.Page, page.PageSize);
     }
 
-    private Task<bool> IsActiveMemberAsync(Guid userId, Guid? tenantId, CancellationToken cancellationToken) =>
-        db.Set<User>().AnyAsync(u => u.Id == userId && u.TenantId == tenantId && u.IsActive, cancellationToken);
+    private Task<bool> IsActiveMemberAsync(Guid userId, Guid? tenantId, CancellationToken cancellationToken, bool evenInactive = false) =>
+        db.Set<User>().AnyAsync(u => u.Id == userId && u.TenantId == tenantId && (u.IsActive || evenInactive), cancellationToken);
 
     private Task<List<Guid>> GroupIdsAsync(Guid userId, CancellationToken cancellationToken) =>
         (from member in db.Set<UserGroupMember>()

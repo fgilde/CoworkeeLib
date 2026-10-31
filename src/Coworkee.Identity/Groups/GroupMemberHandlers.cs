@@ -38,11 +38,18 @@ internal static class GroupMembers
     public static void AddMissing(UserGroup group, IEnumerable<Guid> userIds) =>
         group.Members.AddRange(userIds.Where(id => group.Members.All(m => m.UserId != id)).Select(id => new UserGroupMember { GroupId = group.Id, UserId = id }));
 
+    /// <summary>Joining or leaving groups changes the users' accounts and gives or takes what the groups grant (<see cref="Users.AccountGuard"/>).</summary>
+    public static async Task<Error?> CheckAsync(Users.AccountGuard guard, IEnumerable<Guid> groupIds, IEnumerable<Guid> userIds, CancellationToken ct)
+    {
+        var users = userIds.ToList();
+        return users.Count == 0 ? null : await guard.CheckUsersAsync(users, ct) ?? await guard.CheckGroupsAsync(groupIds, ct);
+    }
+
     public static Task<UserGroup?> LoadAsync(CoworkeeDbContext db, Guid id, CancellationToken ct) =>
         db.Set<UserGroup>().Include(g => g.Members).SingleOrDefaultAsync(g => g.Id == id, ct);
 }
 
-internal sealed class AddGroupMembersHandler(CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<AddGroupMembers, Result>
+internal sealed class AddGroupMembersHandler(CoworkeeDbContext db, ICurrentUser currentUser, Users.AccountGuard guard) : IHandler<AddGroupMembers, Result>
 {
     public async Task<Result> HandleAsync(AddGroupMembers command, CancellationToken cancellationToken)
     {
@@ -58,12 +65,17 @@ internal sealed class AddGroupMembersHandler(CoworkeeDbContext db, ICurrentUser 
             return GroupMembers.UnknownUser;
         }
 
+        if (await GroupMembers.CheckAsync(guard, [group.Id], wanted.Where(id => group.Members.All(m => m.UserId != id)), cancellationToken) is { } refused)
+        {
+            return refused;
+        }
+
         GroupMembers.AddMissing(group, wanted);
         return Result.Success();
     }
 }
 
-internal sealed class RemoveGroupMembersHandler(CoworkeeDbContext db) : IHandler<RemoveGroupMembers, Result>
+internal sealed class RemoveGroupMembersHandler(CoworkeeDbContext db, Users.AccountGuard guard) : IHandler<RemoveGroupMembers, Result>
 {
     public async Task<Result> HandleAsync(RemoveGroupMembers command, CancellationToken cancellationToken)
     {
@@ -73,12 +85,17 @@ internal sealed class RemoveGroupMembersHandler(CoworkeeDbContext db) : IHandler
             return GroupErrors.NotFound;
         }
 
+        if (await GroupMembers.CheckAsync(guard, [group.Id], group.Members.Where(m => command.UserIds.Contains(m.UserId)).Select(m => m.UserId), cancellationToken) is { } refused)
+        {
+            return refused;
+        }
+
         group.Members.RemoveAll(m => command.UserIds.Contains(m.UserId));
         return Result.Success();
     }
 }
 
-internal sealed class MoveGroupMembersHandler(CoworkeeDbContext db) : IHandler<MoveGroupMembers, Result>
+internal sealed class MoveGroupMembersHandler(CoworkeeDbContext db, Users.AccountGuard guard) : IHandler<MoveGroupMembers, Result>
 {
     public async Task<Result> HandleAsync(MoveGroupMembers command, CancellationToken cancellationToken)
     {
@@ -92,6 +109,11 @@ internal sealed class MoveGroupMembersHandler(CoworkeeDbContext db) : IHandler<M
         if (from != to)
         {
             var moved = from.Members.Select(m => m.UserId).ToList();
+            if (await GroupMembers.CheckAsync(guard, [from.Id, to.Id], moved, cancellationToken) is { } refused)
+            {
+                return refused;
+            }
+
             from.Members.Clear();
             GroupMembers.AddMissing(to, moved);
         }
@@ -100,7 +122,7 @@ internal sealed class MoveGroupMembersHandler(CoworkeeDbContext db) : IHandler<M
     }
 }
 
-internal sealed class SetGroupOwnersHandler(CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<SetGroupOwners, Result>
+internal sealed class SetGroupOwnersHandler(CoworkeeDbContext db, ICurrentUser currentUser, Users.AccountGuard guard) : IHandler<SetGroupOwners, Result>
 {
     public async Task<Result> HandleAsync(SetGroupOwners command, CancellationToken cancellationToken)
     {
@@ -114,6 +136,11 @@ internal sealed class SetGroupOwnersHandler(CoworkeeDbContext db, ICurrentUser c
         if (!await GroupMembers.AllInTenantAsync(db, currentUser, wanted, cancellationToken))
         {
             return GroupMembers.UnknownUser;
+        }
+
+        if (await GroupMembers.CheckAsync(guard, [group.Id], wanted.Where(id => group.Members.All(m => m.UserId != id)), cancellationToken) is { } refused)
+        {
+            return refused;
         }
 
         GroupMembers.AddMissing(group, wanted);

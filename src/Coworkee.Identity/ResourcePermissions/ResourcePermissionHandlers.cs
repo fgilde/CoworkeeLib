@@ -34,7 +34,7 @@ internal sealed class GetResourcePermissionsHandler(CoworkeeDbContext db) : IHan
             .ToListAsync(cancellationToken);
 }
 
-internal sealed class GrantResourcePermissionHandler(CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<GrantResourcePermission, Result<Guid>>
+internal sealed class GrantResourcePermissionHandler(CoworkeeDbContext db, ICurrentUser currentUser, Users.AccountGuard guard) : IHandler<GrantResourcePermission, Result<Guid>>
 {
     public async Task<Result<Guid>> HandleAsync(GrantResourcePermission command, CancellationToken cancellationToken)
     {
@@ -54,6 +54,11 @@ internal sealed class GrantResourcePermissionHandler(CoworkeeDbContext db, ICurr
             return Error.Conflict("identity.resource_permission_exists", "This permission is already granted.");
         }
 
+        if (await guard.CheckResourceGrantAsync(grant.RoleId, command.ResourceType, command.ResourceId, cancellationToken) is { } restricted)
+        {
+            return restricted;
+        }
+
         var permission = new ResourcePermission
         {
             ResourceType = command.ResourceType,
@@ -67,7 +72,7 @@ internal sealed class GrantResourcePermissionHandler(CoworkeeDbContext db, ICurr
     }
 }
 
-internal sealed class RevokeResourcePermissionHandler(CoworkeeDbContext db) : IHandler<RevokeResourcePermission, Result>
+internal sealed class RevokeResourcePermissionHandler(CoworkeeDbContext db, Users.AccountGuard guard) : IHandler<RevokeResourcePermission, Result>
 {
     public async Task<Result> HandleAsync(RevokeResourcePermission command, CancellationToken cancellationToken)
     {
@@ -76,6 +81,11 @@ internal sealed class RevokeResourcePermissionHandler(CoworkeeDbContext db) : IH
         if (permission is null)
         {
             return Error.NotFound("identity.resource_permission_not_found", "Resource permission not found.");
+        }
+
+        if (await guard.CheckResourceGrantAsync(permission.RoleId, command.ResourceType, command.ResourceId, cancellationToken) is { } restricted)
+        {
+            return restricted;
         }
 
         db.Remove(permission);

@@ -11,7 +11,7 @@ namespace Coworkee.Identity.ApiKeys;
 
 internal sealed class ApiKeyHandlers(
     CoworkeeDbContext db, ICurrentUser currentUser, IPermissionChecker permissions, IPermissionDefinitionManager definitions, TimeProvider clock,
-    IOptions<ApiKeyOptions> options)
+    IOptions<ApiKeyOptions> options, Users.AccountGuard guard)
     : IHandler<GetMyApiKeys, Result<IReadOnlyList<ApiKeyDto>>>, IHandler<GetApiKeyScopes, Result<IReadOnlyList<PermissionGroupDto>>>,
       IHandler<CreateApiKey, Result<CreatedApiKeyDto>>, IHandler<RevokeApiKey, Result>
 {
@@ -97,6 +97,12 @@ internal sealed class ApiKeyHandlers(
         if (key is null || (key.UserId != Me && !await permissions.IsGrantedAsync(ApiKeyPermissions.Manage, cancellationToken)))
         {
             return NotFound;
+        }
+
+        // someone else's key: his account
+        if (await guard.CheckUserAsync(key.UserId, cancellationToken) is { } refused)
+        {
+            return refused;
         }
 
         if (key.RevokedAt is null)

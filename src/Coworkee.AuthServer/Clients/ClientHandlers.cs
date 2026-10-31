@@ -181,8 +181,14 @@ internal sealed class ClientHandlers(IOpenIddictApplicationManager applications,
             return (null, NotFound);
         }
 
-        return (await applications.GetPropertiesAsync(application, cancellationToken)).ContainsKey(AuthClientSeeder.ManagedProperty)
-            ? (null, Managed)
+        var properties = await applications.GetPropertiesAsync(application, cancellationToken);
+        if (properties.ContainsKey(AuthClientSeeder.ManagedProperty))
+        {
+            return (null, Managed);
+        }
+
+        return await rights.HeldAsync(ServiceClient.Roles(properties), ServiceClient.Permissions(properties), cancellationToken) is { } restricted
+            ? (null, restricted)
             : (application, null);
     }
 

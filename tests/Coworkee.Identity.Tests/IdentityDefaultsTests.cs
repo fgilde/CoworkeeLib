@@ -281,7 +281,8 @@ public sealed class IdentityDefaultsTests(IdentityApp app) : IAsyncLifetime
 
         (await groups.PutAsJsonAsync($"/api/v1/identity/groups/{standard}/roles", new IdListRequest([powerful]), Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await groups.PutAsJsonAsync($"/api/v1/identity/groups/{standard}/roles", new IdListRequest([plain]), Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
-        (await groups.PutAsJsonAsync($"/api/v1/identity/groups/{other}/roles", new IdListRequest([powerful]), Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        // any other group too, as its members get the role (AccountGuard)
+        (await groups.PutAsJsonAsync($"/api/v1/identity/groups/{other}/roles", new IdListRequest([powerful]), Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
         // the default role, a role of the default group and the default group itself get nothing the caller lacks
         foreach (var (type, key) in new[] { ("Role", harmless), ("Role", plain), ("Group", standard) })
@@ -290,7 +291,8 @@ public sealed class IdentityDefaultsTests(IdentityApp app) : IAsyncLifetime
             (await GrantRequestAsync(grants, type, key, IdentityPermissions.Users.Manage)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
         }
 
-        (await GrantRequestAsync(grants, "Role", powerful, IdentityPermissions.Groups.ScopeAll)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        // and any other role: nobody grants what he lacks
+        (await GrantRequestAsync(grants, "Role", powerful, IdentityPermissions.Groups.ScopeAll)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     [Fact]
@@ -302,8 +304,10 @@ public sealed class IdentityDefaultsTests(IdentityApp app) : IAsyncLifetime
         await using var scope = app.App.Services.CreateAsyncScope();
         var services = scope.ServiceProvider;
         var decorated = new DecoratedChecker(services.GetRequiredService<Coworkee.Application.Authorization.IPermissionChecker>());
-        var offer = new Coworkee.Identity.Roles.RoleOffer(decorated, services.GetRequiredService<IdentityTestDbContext>(),
-            services.GetRequiredService<Coworkee.Application.Authorization.IPermissionDefinitionManager>(), services.GetRequiredService<ICurrentUser>());
+        var db = services.GetRequiredService<IdentityTestDbContext>();
+        var guard = new Coworkee.Identity.Users.AccountGuard(db, services.GetRequiredService<ICurrentUser>(), decorated,
+            services.GetRequiredService<Coworkee.Application.Authorization.IPermissionDefinitionManager>(), services);
+        var offer = new Coworkee.Identity.Roles.RoleOffer(decorated, db, services.GetRequiredService<ICurrentUser>(), guard);
 
         (await offer.RefusedAsync([role], null, Ct)).ShouldBeNull();
         decorated.Without = IdentityPermissions.Permissions.Manage;
