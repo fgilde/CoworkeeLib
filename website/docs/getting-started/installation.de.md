@@ -2,9 +2,10 @@
 
 ## Voraussetzungen
 
-- .NET SDK 10
+- .NET SDK 10 (die `global.json` des Templates verlangt 10.0.300 oder ein späteres Feature-Band)
 - Docker (Postgres, Redis, Mailpit und bei Bedarf Keycloak laufen als Container)
 - Eine IDE mit Aspire-Unterstützung oder einfach die `dotnet`-CLI
+- `dotnet-ef` für Migrationen, Node.js nur für den AirWorks-Client; `coworkee doctor` prüft die Werkzeuge und ihre Versionen
 
 ## Eine neue App in einer Minute
 
@@ -49,7 +50,7 @@ Was das Template anlegt, Schritt für Schritt. Alle Pakete beginnen mit `Coworke
 ```xml title="Directory.Packages.props"
 <PropertyGroup>
   <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-  <CoworkeeVersion>1.0.0</CoworkeeVersion>
+  <CoworkeeVersion>0.0.1.53</CoworkeeVersion> <!-- das neueste Release, siehe Änderungsprotokoll -->
 </PropertyGroup>
 <ItemGroup>
   <PackageVersion Include="Coworkee.Aspire" Version="$(CoworkeeVersion)" />
@@ -98,6 +99,7 @@ Eine Design-Time-Factory lässt `dotnet ef` den Kontext bauen: sie ruft `service
 ```csharp title="Shop.Api/Program.cs"
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+builder.Configuration.AddCoworkeeDatabaseConfiguration(ShopInfrastructureModule.ConnectionStringName);
 builder.AddCoworkee<ShopApiModule>();
 
 var app = builder.Build();
@@ -105,17 +107,23 @@ app.MapDefaultEndpoints();
 app.UseCoworkee();
 app.Run();
 
+public partial class Program; // für die API-Tests
+
 [DependsOn(typeof(ShopDatabaseModule))]
 public sealed class ShopApiModule : CoworkeeModule
 {
-    public override void ConfigureServices(ModuleServiceContext context) =>
+    public override void ConfigureServices(ModuleServiceContext context)
+    {
+        context.Services.AddCoworkeeOutboxProcessing<ShopDbContext>(); // verschickt die Events, die Commands gespeichert haben
         context.Services.AddCoworkeeApiAuthentication(context.Configuration, "shop_api");
+    }
 }
 ```
 
 ```csharp title="Shop.Auth/Program.cs"
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+builder.Configuration.AddCoworkeeDatabaseConfiguration(ShopInfrastructureModule.ConnectionStringName);
 builder.AddCoworkee<ShopAuthModule>();
 
 var app = builder.Build();
@@ -126,6 +134,21 @@ app.Run();
 [DependsOn(typeof(ShopInfrastructureModule), typeof(CoworkeeAuthServerModule))]
 internal sealed class ShopAuthModule : CoworkeeModule;
 ```
+
+```csharp title="Shop.Migrations/Program.cs"
+var builder = Host.CreateApplicationBuilder(args);
+builder.AddServiceDefaults();
+builder.Services.AddCoworkeeModules<ShopDatabaseModule>(builder.Configuration);
+builder.AddCoworkeeMigrations<ShopDbContext>(options =>
+{
+    options.DevelopmentSeed = DemoSeed.Configure;          // Rollen, Rechte und Benutzer eines lokalen Laufs
+    options.DeploymentSeed = DemoSeed.ConfigureDeployment; // der erste Administrator eines Deployments
+});
+using var host = builder.Build();
+return await host.RunCoworkeeMigrationsAsync();
+```
+
+`AddCoworkeeDatabaseConfiguration` legt die in der App geänderten Werte (Tabelle `cw.ConfigurationEntries`) über die Konfiguration, siehe [typisierte App-Einstellungen](../modules/settings.md#typisierte-app-einstellungen). Der Migrations-Host migriert mit Wiederholungen, legt den Seed an und beendet sich dann, siehe [Migrationen und Seed](../fundamentals/persistence.md#migrationen-und-seed).
 
 ```csharp title="Shop.Web/Program.cs"
 var builder = WebApplication.CreateBuilder(args);
