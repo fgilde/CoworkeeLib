@@ -56,8 +56,10 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--auditing` | `auditing` | bool | `true` | Seiten für Audit-Log, Verlauf und Wiederherstellen; das Protokoll selbst wird immer geschrieben |
 | `--notifications` | `notifications` | bool | `true` | Benachrichtigungen in der App mit Sammel-Mails |
 | `--chat` | `chat` | bool | `true` | Direkt- und Gruppenchat |
+| `--reports` | `reports` | bool | `true` | [Berichte und Dashboards](../modules/reporting.md) über den OData-Sets |
 | `--ai` | `ai` | bool | `true` | KI-Assistent, MCP-Endpunkt der App und Protokoll der Tool-Aufrufe |
 | `--backup` | `backup` | bool | `true` | Datenbank-Backups aus den Admin-Seiten |
+| `--retention` | `retention` | bool | `true` | [Aufbewahrung](../modules/retention.md): Tage pro Art von Daten, ein nächtlicher Job und die Admin-Seite *Aufbewahrung* |
 | `--files` | `files` | bool | `false` | Ordner und Dateien mit Vorschau und Rechten pro Ordner |
 | `--features` | `features` | bool | `false` | Features, Editionen und die Mandantenverwaltung |
 | `--social` | `social` | bool | `false` | Kommentare, Tags und Bewertungen |
@@ -101,11 +103,11 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 
 Ein bool-Schalter ohne Wert bedeutet `true` (`--files`), `--chat false` schaltet aus.
 
-**Optionen, die eine andere brauchen.** Manche Optionen gelten nur mit einer anderen: `--airworks-packages` und `--airworks-launcher` mit `--airworks`, `--ai-provider`, `--ai-model` und `--ai-endpoint` mit dem KI-Assistenten (`--ai`), `--backup` mit `--database postgres`, `--sign-in-media` mit dem Layout `Split` oder `Slide` und `--sign-in-media-side` mit einem Anmeldemedium. Ohne sie fragt die CLI nicht danach (es gibt keine Rückfragen, jeder Wert ist ein Schalter oder ein Schlüssel der Spezifikation), gibt sie nicht weiter, die App ist also die ohne den Schalter, und warnt: `warn  airworksPackages: ignored, it only matters with airworks (coworkee options).` `coworkee spec validate` gibt dieselben Warnungen nach `ok` aus. `coworkee options` nennt die Voraussetzung (`Needs: airworks`), `--json` als `dependsOn`, und das Studio blendet die Karte aus, bis die andere Option an ist. `--backup true` mit einer anderen Datenbank als `postgres` bleibt ein Fehler.
+**Optionen, die eine andere brauchen.** Manche Optionen gelten nur mit einer anderen: `--airworks-packages` und `--airworks-launcher` mit `--airworks`, `--ai-provider`, `--ai-model` und `--ai-endpoint` mit dem KI-Assistenten (`--ai`), `--backup` mit `--database postgres`, `--elsa` mit `--workflows`, `--elsa-studio` mit `--elsa`, `--kibana` mit `--elasticsearch`, `--open-web-ui` mit `--ai-provider ollama`, `--sign-in-media` mit dem Layout `Split` oder `Slide` (oder `--loading-screen SignInMedia`) und `--sign-in-media-side` mit einem Anmeldemedium. Ohne sie fragt die CLI nicht danach (es gibt keine Rückfragen, jeder Wert ist ein Schalter oder ein Schlüssel der Spezifikation), gibt sie nicht weiter, die App ist also die ohne den Schalter, und warnt: `warn  airworksPackages: ignored, it only matters with airworks (coworkee options).` `coworkee spec validate` gibt dieselben Warnungen nach `ok` aus. `coworkee options` nennt die Voraussetzung (`Needs: airworks`), `--json` als `dependsOn`, und das Studio deaktiviert die Karte, mit dem Grund als Tooltip, bis die andere Option an ist. `--backup true` mit einer anderen Datenbank als `postgres` bleibt ein Fehler.
 
-**Links.** `coworkee options` gibt die Webseite dessen aus, was eine Option mitbringt (`More:`): AirWorks, AspireUI, WebDataStudio, Grafana, Keycloak, Redis, Elasticsearch, GitHub Actions und den Dev-Container; bei Auswahlen eine Zeile je Produkt (`More (postgres):`): PostgreSQL, SQL Server, SQLite, RabbitMQ, Azure Blob Storage, Mapperly, Ollama, LM Studio, LibreTranslate, MyMemory, DeepL, Azure AI Translator und Google Cloud Translation. `--json` enthält sie als `infoUrl` der Option und der Auswahl. Das Studio zeigt sie als Öffnen-Knopf auf der Karte.
+**Links.** `coworkee options` gibt die Webseite dessen aus, was eine Option mitbringt (`More:`): Git, AirWorks, installierbare Web-Apps, GitHub, Elsa, Elasticsearch, Kibana, Keycloak, Redis, Grafana, WebDataStudio, Open WebUI, AspireUI, GitHub Actions und den Dev-Container; bei Auswahlen eine Zeile je Produkt (`More (postgres):`): npm, PostgreSQL, SQL Server, SQLite, RabbitMQ, Azure Blob Storage, Mapperly, Ollama, LM Studio, LibreTranslate, MyMemory, DeepL, Azure AI Translator und Google Cloud Translation. `--json` enthält sie als `infoUrl` der Option und der Auswahl. Das Studio zeigt sie als Öffnen-Knopf auf der Karte.
 
-Die mitgelieferte erste Migration deckt die Standardmodule ab (mit oder ohne Beispiele). Schaltest du ein Modul mit Tabellen ein oder aus (Chat, KI, Backup, Benachrichtigungen, Dateien, Features, Social, Workflows, Webhooks, Event-Bus, erweiterte Attribute ohne Beispiele) oder wählst eine andere Datenbank als `postgres`, lässt das Template die Migration weg und `coworkee new` legt nach dem Restore `Initial` mit `dotnet ef` an. Mit reinem `dotnet new` führst du `coworkee migrations add Initial` einmal selbst aus.
+Die mitgelieferte erste Migration deckt die Standardmodule ab (mit oder ohne Beispiele). Schaltest du ein Modul mit Tabellen ein oder aus (Chat, KI, Berichte, Backup, Aufbewahrung, Benachrichtigungen, Dateien, Features, Social, Workflows, Webhooks, Event-Bus, erweiterte Attribute ohne Beispiele) oder wählst eine andere Datenbank als `postgres`, lässt das Template die Migration weg und `coworkee new` legt nach dem Restore `Initial` mit `dotnet ef` an. Mit reinem `dotnet new` führst du `coworkee migrations add Initial` einmal selbst aus.
 
 ## App-Spezifikationen
 
@@ -212,7 +214,7 @@ coworkee entity add Sales Delivery -p Name:required:100 -p Carrier:ref=Logistics
 coworkee migrations add AddSales
 ```
 
-`--property` liest `Name[:typ][:required][:maxLänge][:flag][:schlüssel=wert]` (Standard: `Name:string:required:200`). Flags: `required`, `unique`, `display`, `facet`, `searchable`. Schlüssel wie in einer Spezifikation: `enum`, `ref` (oder `reference`), `referenceDisplay`, `onDelete`, `inverse`, `default`, `label`, `precision`, `scale`, `searchable`. `--enum Name=Wert1,Wert2` legt ein Enum in den Contracts an. Eine Referenz darf auf jede Entity der App mit OData-Set zeigen, erzeugt oder aus den Beispielen (`ref=Catalog.Brand`); das Modul verweist dann auf das Projekt des Ziels. `entity add` braucht ein von der CLI angelegtes Modul.
+`--property` liest `Name[:typ][:required][:maxLänge][:flag][:schlüssel=wert]` (Standard: `Name:string:required:200`). Flags: `required`, `unique`, `display`, `facet`, `searchable`. Schlüssel wie in einer Spezifikation: `enum`, `ref` (oder `reference`), `referenceDisplay`, `onDelete`, `inverse`, `default`, `label`, `precision`, `scale`, `searchable`. `--enum Name=Wert1,Wert2` legt ein Enum in den Contracts an, `--plural` setzt den Plural (Standard: Name + s). Eine Referenz darf auf jede Entity der App mit OData-Set zeigen, erzeugt oder aus den Beispielen (`ref=Catalog.Brand`); das Modul verweist dann auf das Projekt des Ziels. `entity add` braucht ein von der CLI angelegtes Modul.
 
 ## Entities importieren
 
@@ -296,9 +298,11 @@ coworkee ui --spec shop.json
 | `coworkee migrations add <name>` | `dotnet ef migrations add <name>` mit dem `*.Infrastructure`-Projekt als Projekt und Startprojekt |
 | `coworkee module add <name>` | Ein Feature-Modul mit seiner ersten Entity, siehe oben |
 | `coworkee entity add <modul> <name>` | Eine weitere Entity in einem Modul, siehe oben |
+| `coworkee entity import --from db\|openapi\|csv <quelle>` | Entities aus einer Datenbank, einem OpenAPI-Dokument oder einer CSV-Datei, siehe oben |
 | `coworkee texts export --lang <code> [--keys <glob>] [--out <datei>]` | Kopiert die Bibliothekstexte einer Sprache zum Ändern nach `src/<App>.Contracts/Localization/<code>.json` und führt sie mit dem Vorhandenen zusammen, siehe [Lokalisierung](../modules/localization.md#bibliothekstexte-andern) |
 | `coworkee options [--json]` | Die Optionen von `coworkee new` |
-| `coworkee spec schema`, `example`, `validate <datei>` | App-Spezifikationen |
+| `coworkee spec schema`, `example`, `validate <datei>`, `show <datei>` | App-Spezifikationen |
+| `coworkee specs list`, `show <id>` | Die [Startvorlagen](gallery.md) |
 | `coworkee add <option> [wert]`, `coworkee remove <option>` | Optionen einer bestehenden App, siehe oben |
 | `coworkee db reset`, `seed`, `backup`, `restore` | Die lokale Datenbank, siehe oben |
 | `coworkee spec current` | Die Optionen der App in diesem Ordner |

@@ -28,7 +28,7 @@ For local builds of Coworkee: `coworkee ui --add-source <folder> --studio-versio
 
 ## The pages
 
-The panel on the left shows where you are; every page you have seen is one click away. `Alt+→` and `Alt+←` go forward and back, `Ctrl+O` and `Ctrl+S` open and save a spec, `F1` opens the help. The badge at the top shows whether the spec is valid; problems appear on the page they belong to.
+The panel on the left shows where you are; every page you have seen is one click away. `Alt+→` and `Alt+←` go forward and back, `Ctrl+N` starts a new app, `Ctrl+O` and `Ctrl+S` open and save a spec, `F1` opens the help. The badge at the top shows whether the spec is valid; problems appear on the page they belong to.
 
 ### Welcome
 
@@ -62,7 +62,7 @@ Logo, the twenty-one [built-in themes](../modules/theming.md) as cards in light 
 
 ### Sign-in
 
-Card, Split or Slide, drawn as small animated sketches of the real [sign-in pages](../security/sign-in-pages.md), with an image or video next to the form and its side.
+Card, Split or Slide, drawn as small animated sketches of the real [sign-in pages](../security/sign-in-pages.md), with an image or video next to the form and its side. Below: the background of the [loading screen](../modules/theming.md#loading-screen) (`Animated`, `SignInMedia` or `Plain`).
 
 ![Sign-in](../assets/screenshots/studio-signin-light.webp)
 
@@ -79,9 +79,9 @@ A compact row of presets for the app type sets the modules and the infrastructur
 | Local demo | SQLite | Ollama | off | Offline on one machine without keys; one writer at a time, no backups |
 | Everything | Postgres | Ollama | on | Every module and every container |
 
-**Infrastructure** comes next: first the choices that decide how the app runs, each with what it means right below, then Keycloak and the blob storage, then the AI provider:
+**Infrastructure** comes next: first the choices that decide how the app runs, each with what it means right below, then Keycloak, the blob storage and Open WebUI, then the AI provider:
 
-- **Database**: PostgreSQL (every module, backups from the admin pages), SQL Server (no backups from the admin pages, a heavy container) or SQLite (no container, one file under `.data`, one writer at a time, background jobs in memory, no backups). Off Postgres, the *Database backups* card is hidden and the module left out of the app.
+- **Database**: PostgreSQL (every module, backups from the admin pages), SQL Server (no backups from the admin pages, a heavy container) or SQLite (no container, one file under `.data`, one writer at a time, background jobs in memory, no backups). Off Postgres, the *Database backups* card is disabled and the module left out of the app.
 - **Redis**: SignalR backplane, shared presence, caches and sign-in sessions across instances; without it everything stays in each process, which is fine for one instance.
 - **Grafana** and **WebDataStudio**: dashboards over the telemetry of every service and the app database, and the database in the browser, both with the administrator's sign-in ([Grafana and WebDataStudio](../hosting/observability.md)).
 - **AspireUI** (off by default): a web UI in the app host to host and try more apps and stacks next to the app; they show up on the admin page *Services* ([AspireUI](../hosting/aspire.md#aspireui-in-a-generated-app)).
@@ -90,7 +90,7 @@ A compact row of presets for the app type sets the modules and the infrastructur
 
 ![AI assistant](../assets/screenshots/studio-ai-light.webp)
 
-Below come the other groups (*General*, *Modules*, *Code*, *Tooling*) with every other option of `coworkee options`: description, pros, cons, when to use it, the package and the switch of `coworkee new`. Every card has an icon. Where an option brings a tool or product, an open button on the card opens its website: AirWorks, AspireUI, WebDataStudio, Grafana, Keycloak, Redis, Elasticsearch, GitHub Actions, the dev container, and for the database, event bus, blob storage and DTO mapping the product of the chosen choice (PostgreSQL, SQL Server, SQLite, RabbitMQ, Azure Blob Storage, Mapperly). An option that only makes sense with another is hidden until that one is on, and stays out of the spec meanwhile: the *AirWorks packages* (`bundled` or `npm`) appear with *AirWorks client*, the AI provider with *AI assistant*, *Database backups* with PostgreSQL, the media side of the sign-in with a sign-in media, which in turn needs the Split or Slide layout. What you chose stays when you switch the other option off and on again. *General* also holds the [AirWorks client](../web/airworks.md) (its card links to the AirWorks documentation), the color mode, self registration and the GitHub repository (`owner/repo`, for the [QuickRun](https://quickrun.org) badge in the README); *Tooling* adds a GitHub Actions workflow and a dev container. The panel on the right lists what the solution will contain: projects, the containers of the Aspire app host (PostgreSQL or SQL Server, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak, Ollama, LibreTranslate, Grafana with Prometheus, Loki, Tempo and the collector, WebDataStudio) and the Coworkee packages.
+Below come the other groups (*General*, *Modules*, *Code*, *Tooling*) with every other option of `coworkee options`: description, pros, cons, when to use it, the package and the switch of `coworkee new`. Every card has an icon. Where an option brings a tool or product, an open button on the card opens its website: AirWorks, AspireUI, WebDataStudio, Grafana, Keycloak, Redis, Elasticsearch, GitHub Actions, the dev container, and for the database, event bus, blob storage and DTO mapping the product of the chosen choice (PostgreSQL, SQL Server, SQLite, RabbitMQ, Azure Blob Storage, Mapperly), and the sites of Elsa, Kibana and Open WebUI; `coworkee options` prints the same links. An option that only makes sense with another stays visible but disabled until that one is on, with the reason as tooltip, and stays out of the spec meanwhile: the *AirWorks packages* (`bundled` or `npm`) and the *AirWorks app launcher* with *AirWorks client*, *Elsa workflows* with *Workflows and approvals*, the *Workflow designer* with *Elsa workflows*, *Kibana* (right after *Search*) with Elasticsearch, *Open WebUI* with the Ollama provider, *Database backups* with PostgreSQL, the media side of the sign-in with a sign-in media, which in turn needs the Split or Slide layout or the loading screen *SignInMedia*. What you chose stays when you switch the other option off and on again. *General* also holds the [AirWorks client](../web/airworks.md) (its card links to the AirWorks documentation), the color mode, self registration and the GitHub repository (`owner/repo`, for the [QuickRun](https://quickrun.org) badge in the README); *Tooling* adds a GitHub Actions workflow and a dev container. The panel on the right lists what the solution will contain: projects, the containers of the Aspire app host (PostgreSQL or SQL Server, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak, Ollama, Open WebUI, LibreTranslate, Grafana with Prometheus, Loki, Tempo, the collector and on Postgres `postgres_exporter`, WebDataStudio, Kibana with oauth2-proxy, AspireUI) and the Coworkee packages.
 
 ![Architecture](../assets/screenshots/studio-architecture-dark.webp)
 
@@ -132,7 +132,7 @@ The Studio writes the spec, runs `coworkee spec validate` and `coworkee new --sp
 
 ![Create](../assets/screenshots/studio-generate-dark.webp)
 
-**Run the app** starts `dotnet run --project <app host>` inside the Studio. The card shows whether the app host is starting, running or has failed, and on failure the line that explains it (a port in use, a build error). Once it is up it links the Aspire dashboard (the login address with its token, read from the output) and the addresses of the web app, the API and the auth server (from their launch settings). The output of the app host is one click away; **Stop** ends the app host and what it started, and so does closing the Studio.
+**Run the app** starts `dotnet run --project <app host>` inside the Studio. The card shows whether the app host is starting, running or has failed, and on failure the line that explains it (a port in use, a build error). Once it is up it links the Aspire dashboard (the login address with its token, read from the output) and the addresses of the web app, the API and the auth server (from their launch settings). While the app is not set up yet, the card shows the [setup token](../security/authentication.md#setup-wizard-or-seed) with a copy button, as *My apps* does. The output of the app host is one click away; **Stop** ends the app host and what it started, and so does closing the Studio.
 
 **Deploy** is the optional last step: pick a target (`compose`, `azure` or `k8s`) and the Studio runs `coworkee deploy` in the app's folder with its output live, ending with the addresses of the services and tools and the administrator's sign-in. See [Deployment](../hosting/deployment.md).
 

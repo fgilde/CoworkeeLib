@@ -86,7 +86,7 @@ plugins:
             Getting started: Erste Schritte
             Installation: Installation
             Command line: Kommandozeile
-            MCP server: MCP-Server
+            MCP server of the CLI: MCP-Server der CLI
             Solution structure: Aufbau der Solution
             Your first feature: Das erste Feature
             Starter specs: Startvorlagen
@@ -108,7 +108,7 @@ plugins:
             Security: Sicherheit
             Permissions: Berechtigungen
             Authentication and Keycloak: Anmeldung und Keycloak
-            Clients, sessions and passwords: Clients, Sitzungen und Passwörter
+            Clients, sessions and password rules: Clients, Sitzungen und Passwortregeln
             Registration and sign-in rules: Registrierung und Anmelderegeln
             Sign-in pages and designs: Anmeldeseiten und Designs
             Privacy and personal data: Datenschutz und personenbezogene Daten
@@ -199,12 +199,12 @@ nav:
       - Screenshots: screenshots.md
   - Getting started:
       - Installation: getting-started/installation.md
+      - Solution structure: getting-started/solution-structure.md
+      - Your first feature: getting-started/first-feature.md
       - Command line: getting-started/cli.md
       - Coworkee Studio: getting-started/studio.md
       - Starter specs: getting-started/gallery.md
-      - MCP server: getting-started/mcp.md
-      - Solution structure: getting-started/solution-structure.md
-      - Your first feature: getting-started/first-feature.md
+      - MCP server of the CLI: getting-started/mcp.md
   - Fundamentals:
       - Modules: fundamentals/modules.md
       - Messaging and pipeline: fundamentals/messaging.md
@@ -224,12 +224,12 @@ nav:
   - Security:
       - Permissions: security/permissions.md
       - Authentication and Keycloak: security/authentication.md
-      - Clients, sessions and passwords: security/clients.md
+      - Passkeys: security/passkeys.md
+      - Clients, sessions and password rules: security/clients.md
       - Registration and sign-in rules: security/registration.md
       - Sign-in pages and designs: security/sign-in-pages.md
-      - Passkeys: security/passkeys.md
-      - Privacy and personal data: security/privacy.md
       - API keys: security/api-keys.md
+      - Privacy and personal data: security/privacy.md
   - Blazor UI:
       - Client and layout: ui/client.md
       - Data tables: ui/data-table.md
@@ -244,27 +244,27 @@ nav:
   - Modules in detail:
       - Settings and app configuration: modules/settings.md
       - Features and editions: modules/features.md
+      - Localization: modules/localization.md
+      - Theming: modules/theming.md
+      - Auditing: modules/auditing.md
       - Mailing: modules/mailing.md
       - Background jobs: modules/background-jobs.md
+      - Realtime and notifications: modules/realtime.md
       - File storage: modules/storage.md
       - Files: modules/files.md
       - Record attachments: modules/attachments.md
       - Search: modules/search.md
-      - Realtime and notifications: modules/realtime.md
-      - Theming: modules/theming.md
-      - Auditing: modules/auditing.md
-      - Localization: modules/localization.md
-      - Database backups: modules/backups.md
       - Chat: modules/chat.md
-      - Reporting: modules/reporting.md
-      - Extended attributes: modules/extended-attributes.md
       - Comments, tags, ratings and reactions: modules/social.md
+      - Extended attributes: modules/extended-attributes.md
+      - Reporting: modules/reporting.md
       - Workflows and approvals: modules/workflows.md
       - Elsa workflows: modules/workflows-elsa.md
       - Webhooks: modules/webhooks.md
-      - Retention: modules/retention.md
       - AI assistant and MCP: modules/ai.md
       - MCP server of the app: modules/mcp.md
+      - Database backups: modules/backups.md
+      - Retention: modules/retention.md
   - Hosting:
       - Aspire app host: hosting/aspire.md
       - Deployment: hosting/deployment.md

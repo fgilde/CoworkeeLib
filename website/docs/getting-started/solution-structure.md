@@ -24,7 +24,10 @@ flowchart LR
 | `MyApp.Contracts` | DTOs, requests and permission names shared by server and client |
 | `MyApp.Catalog`, `MyApp.Documents` | Feature modules: domain, persistence, features, endpoints |
 | `MyApp.Application` | Interfaces modules share, for example the dashboard counts |
-| `MyApp.Infrastructure` | `MyAppDbContext`, migrations and the module that ties the database together |
+| `MyApp.Infrastructure` | `MyAppDbContext`, migrations, the design time factory for `dotnet ef` and the module that ties the database together (`MyAppDatabaseModule`) |
+| `MyApp.ServiceDefaults` | OpenTelemetry, health checks, service discovery and resilience for every service |
+| `MyApp.AirWorks`, `MyApp.ElsaStudio` | Only with `--airworks` (the [AirWorks client](../web/airworks.md)) or `--elsa-studio` (the [workflow designer](../modules/workflows-elsa.md#elsa-studio)) |
+| `tests/` | `MyApp.Api.Tests` against a real database, `MyApp.Migrations.Tests`, `MyApp.Web.Client.Tests` (bUnit) and `MyApp.AppHost.Tests`, see [Testing](../testing.md) |
 
 At the root: `README.md`, `LOGIN.md` (the development users), `quickrun.yml`, and `AGENTS.md` with the rules for coding agents (`CLAUDE.md` imports it), see [Building with AI](../features/building-with-ai.md).
 
@@ -49,11 +52,12 @@ One type per file, the use case in the folder name. Lists do not need a query: t
 
 ## How the hosts start
 
-Every server host has the same three lines; the root module decides what the host contains.
+Every server host has the same few lines; the root module decides what the host contains.
 
 ```csharp title="MyApp.Api/Program.cs"
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+builder.Configuration.AddCoworkeeDatabaseConfiguration(MyAppInfrastructureModule.ConnectionStringName); // values changed in the app
 builder.AddCoworkee<MyAppApiModule>();
 
 var app = builder.Build();

@@ -56,8 +56,10 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--auditing` | `auditing` | bool | `true` | Audit log pages, entity history and restore; the trail itself is always written |
 | `--notifications` | `notifications` | bool | `true` | In-app notifications with mail digests |
 | `--chat` | `chat` | bool | `true` | Direct and group chat |
+| `--reports` | `reports` | bool | `true` | [Reports and dashboards](../modules/reporting.md) over the OData sets |
 | `--ai` | `ai` | bool | `true` | AI assistant, MCP endpoint of the app and tool call audit |
 | `--backup` | `backup` | bool | `true` | Database backups from the admin pages |
+| `--retention` | `retention` | bool | `true` | [Retention](../modules/retention.md): days to keep per kind of data, a nightly job and the admin page *Retention* |
 | `--files` | `files` | bool | `false` | Folders and files with preview and per-folder permissions |
 | `--features` | `features` | bool | `false` | Features, editions and the tenant administration |
 | `--social` | `social` | bool | `false` | Comments, tags and ratings |
@@ -101,11 +103,11 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 
 A boolean switch without value means `true` (`--files`), `--chat false` switches off.
 
-**Options that need another one.** Some options only matter with another: `--airworks-packages` and `--airworks-launcher` with `--airworks`, `--ai-provider`, `--ai-model` and `--ai-endpoint` with the AI assistant (`--ai`), `--backup` with `--database postgres`, `--sign-in-media` with the layout `Split` or `Slide` and `--sign-in-media-side` with a sign-in media. Without it the CLI does not ask for them (there are no prompts, every value is a switch or a spec key), does not pass them on, so the app is the one without the switch, and warns: `warn  airworksPackages: ignored, it only matters with airworks (coworkee options).` `coworkee spec validate` prints the same warnings after `ok`. `coworkee options` names the need (`Needs: airworks`), `--json` has it as `dependsOn`, and the Studio hides the card until the other option is on. `--backup true` with another database than `postgres` stays an error.
+**Options that need another one.** Some options only matter with another: `--airworks-packages` and `--airworks-launcher` with `--airworks`, `--ai-provider`, `--ai-model` and `--ai-endpoint` with the AI assistant (`--ai`), `--backup` with `--database postgres`, `--elsa` with `--workflows`, `--elsa-studio` with `--elsa`, `--kibana` with `--elasticsearch`, `--open-web-ui` with `--ai-provider ollama`, `--sign-in-media` with the layout `Split` or `Slide` (or `--loading-screen SignInMedia`) and `--sign-in-media-side` with a sign-in media. Without it the CLI does not ask for them (there are no prompts, every value is a switch or a spec key), does not pass them on, so the app is the one without the switch, and warns: `warn  airworksPackages: ignored, it only matters with airworks (coworkee options).` `coworkee spec validate` prints the same warnings after `ok`. `coworkee options` names the need (`Needs: airworks`), `--json` has it as `dependsOn`, and the Studio disables the card, with the reason as tooltip, until the other option is on. `--backup true` with another database than `postgres` stays an error.
 
-**Links.** `coworkee options` prints the website of what an option brings (`More:`): AirWorks, AspireUI, WebDataStudio, Grafana, Keycloak, Redis, Elasticsearch, GitHub Actions and the dev container; for choices one line per product (`More (postgres):`): PostgreSQL, SQL Server, SQLite, RabbitMQ, Azure Blob Storage, Mapperly, Ollama, LM Studio, LibreTranslate, MyMemory, DeepL, Azure AI Translator and Google Cloud Translation. `--json` has them as `infoUrl` of the option and of the choice. The Studio shows them as an open button on the card.
+**Links.** `coworkee options` prints the website of what an option brings (`More:`): Git, AirWorks, installable web apps, GitHub, Elsa, Elasticsearch, Kibana, Keycloak, Redis, Grafana, WebDataStudio, Open WebUI, AspireUI, GitHub Actions and the dev container; for choices one line per product (`More (postgres):`): npm, PostgreSQL, SQL Server, SQLite, RabbitMQ, Azure Blob Storage, Mapperly, Ollama, LM Studio, LibreTranslate, MyMemory, DeepL, Azure AI Translator and Google Cloud Translation. `--json` has them as `infoUrl` of the option and of the choice. The Studio shows them as an open button on the card.
 
-The shipped initial migration covers the default modules (with or without samples). When you switch a module with tables on or off (chat, AI, backup, notifications, files, features, social, workflows, webhooks, event bus, extended attributes without samples) or choose another database than `postgres`, the template leaves the migration out and `coworkee new` creates `Initial` with `dotnet ef` after the restore. With plain `dotnet new`, run `coworkee migrations add Initial` once yourself.
+The shipped initial migration covers the default modules (with or without samples). When you switch a module with tables on or off (chat, AI, reports, backup, retention, notifications, files, features, social, workflows, webhooks, event bus, extended attributes without samples) or choose another database than `postgres`, the template leaves the migration out and `coworkee new` creates `Initial` with `dotnet ef` after the restore. With plain `dotnet new`, run `coworkee migrations add Initial` once yourself.
 
 ## App specs
 
@@ -212,7 +214,7 @@ coworkee entity add Sales Delivery -p Name:required:100 -p Carrier:ref=Logistics
 coworkee migrations add AddSales
 ```
 
-`--property` reads `Name[:type][:required][:maxLength][:flag][:key=value]` (default: `Name:string:required:200`). Flags: `required`, `unique`, `display`, `facet`, `searchable`. Keys like in a spec: `enum`, `ref` (or `reference`), `referenceDisplay`, `onDelete`, `inverse`, `default`, `label`, `precision`, `scale`, `searchable`. `--enum Name=Value1,Value2` adds an enum to the contracts. A reference may point to every entity of the app with an OData set, generated or sample (`ref=Catalog.Brand`); the module then references the target's project. `entity add` needs a module created by the CLI.
+`--property` reads `Name[:type][:required][:maxLength][:flag][:key=value]` (default: `Name:string:required:200`). Flags: `required`, `unique`, `display`, `facet`, `searchable`. Keys like in a spec: `enum`, `ref` (or `reference`), `referenceDisplay`, `onDelete`, `inverse`, `default`, `label`, `precision`, `scale`, `searchable`. `--enum Name=Value1,Value2` adds an enum to the contracts, `--plural` sets the plural (default: name + s). A reference may point to every entity of the app with an OData set, generated or sample (`ref=Catalog.Brand`); the module then references the target's project. `entity add` needs a module created by the CLI.
 
 ## Import entities
 
@@ -296,9 +298,11 @@ coworkee ui --spec shop.json
 | `coworkee migrations add <name>` | `dotnet ef migrations add <name>` with the `*.Infrastructure` project as project and startup project |
 | `coworkee module add <name>` | A feature module with its first entity, see above |
 | `coworkee entity add <module> <name>` | Another entity in a module, see above |
+| `coworkee entity import --from db\|openapi\|csv <source>` | Entities from a database, an OpenAPI document or a CSV file, see above |
 | `coworkee texts export --lang <code> [--keys <glob>] [--out <file>]` | Copies the library texts of a language into `src/<App>.Contracts/Localization/<code>.json` to change them, merging with what is there, see [Localization](../modules/localization.md#changing-library-texts) |
 | `coworkee options [--json]` | The options of `coworkee new` |
-| `coworkee spec schema`, `example`, `validate <file>` | App specs |
+| `coworkee spec schema`, `example`, `validate <file>`, `show <file>` | App specs |
+| `coworkee specs list`, `show <id>` | The [starter specs](gallery.md) |
 | `coworkee add <option> [value]`, `coworkee remove <option>` | Options of an existing app, see above |
 | `coworkee db reset`, `seed`, `backup`, `restore` | The local database, see above |
 | `coworkee spec current` | The options of the app in this folder |

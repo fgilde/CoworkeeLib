@@ -17,7 +17,7 @@ The pages below go through it area by area, with code from the real APIs and scr
 
 -   **[Identity and security](identity.md)**
 
-    Users, roles, groups, permissions down to a single record, an OpenIddict auth server, Keycloak or any OpenID Connect provider, personal API keys.
+    Users, roles, a tree of groups, permissions down to a single record, an OpenIddict auth server with passkeys, Keycloak or any OpenID Connect provider, *Log in as* another user, personal API keys.
 
 -   **[Multi-tenancy and settings](multi-tenancy.md)**
 
@@ -33,15 +33,19 @@ The pages below go through it area by area, with code from the real APIs and scr
 
 -   **[Realtime and collaboration](realtime.md)**
 
-    Live entity changes, notifications, presence, chat, comments and ratings, mail campaigns and background jobs.
+    Live entity changes, notifications with preferences and following, presence, group chats, comments, ratings and reactions, mail campaigns and background jobs.
 
 -   **[AI assistant and MCP](ai.md)**
 
     An assistant that works with the user's permissions, 14 model providers and an MCP server in every app.
 
+-   **[Building with AI](building-with-ai.md)**
+
+    Coding agents write the domain: the CLI as MCP server, app specs as JSON and an `AGENTS.md` in every new app.
+
 -   **[Reporting and dashboards](reporting.md)**
 
-    Dashboards built in the browser on top of your OData sets, aggregated by the database in milliseconds.
+    Dashboards built in the browser on top of your OData sets, aggregated by the database in milliseconds, shared with roles, groups or the organisation and mailed as subscriptions.
 
 -   **[Localization](localization.md)**
 
@@ -53,7 +57,7 @@ The pages below go through it area by area, with code from the real APIs and scr
 
 -   **[Files and search](files.md)**
 
-    A file manager with previews and public links on top of blob storage, plus full text search.
+    A file manager with previews, public and temporary links on top of blob storage, attachments on records, a global search and full text search.
 
 -   **[Use cases](use-cases.md)**
 

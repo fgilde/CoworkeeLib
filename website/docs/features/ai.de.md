@@ -21,6 +21,8 @@ public sealed record GetBrandsQuery(string? Search) : IQuery<Result<IReadOnlyLis
 
 Mit `[AiTool(Exclude = true)]` bleibt ein Request draußen; alles, was Berechtigungen ändert, ist ein naheliegender Kandidat. Mit dem OData-Modul kommen `list_data_sets` und `query_data` dazu, die jede registrierte Entitätsmenge lesen, mit denselben Zeilenfiltern wie die Tabellen. In der Demo beantwortet der Assistent damit Fragen zu den 100.000 Aufträgen, ohne dass jemand ein Tool dafür geschrieben hat.
 
+Ein Request mit mehreren `[RequiresPermission]`-Attributen ist ein Tool, das alle davon braucht. Module bringen auf demselben Weg eigene Tools mit, etwa `global_search` über die [globale Suche](../web/global-search.md) und `generate_report`, das einen [Bericht aus einer Beschreibung](../modules/reporting.md#einen-bericht-mit-ki-erstellen) baut.
+
 Abfragen laufen sofort. Commands warten:
 
 ![Der Assistent wartet auf Bestätigung, bevor er einen destruktiven Command ausführt](../assets/screenshots/mcp-ai-confirm-light.png){ .shot loading=lazy }

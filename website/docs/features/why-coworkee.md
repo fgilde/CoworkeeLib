@@ -21,9 +21,9 @@ Each area is a module in its own package: identity, settings, mailing, files, se
 
 - **Security.** An OpenIddict auth server with Keycloak or any OpenID Connect provider, tokens kept on the server behind a session cookie, permissions down to a single resource, personal [API keys](../security/api-keys.md), rate limits and a Content-Security-Policy on the sign-in pages and the web app. See [Identity and security](identity.md).
 - **Multi-tenancy.** `IMultiTenant` on an entity filters every query by organisation; features and editions turn an app into a SaaS product. See [Multi-tenancy](multi-tenancy.md).
-- **Audit and history.** Field-level audit in the same transaction as the change, record history with restore and undo.
+- **Audit and history.** Field-level audit in the same transaction as the change, record history with restore and undo. [Retention](../modules/retention.md) deletes audit entries, logs, tokens and deleted records after the days you set, and [database backups](../modules/backups.md) are made, downloaded, uploaded and restored from the admin pages.
 - **Observability.** One [Aspire app host](observability.md) starts the app with PostgreSQL or SQL Server, Redis, Mailpit and, when you want them, Grafana with Prometheus, Loki and Tempo. `coworkee deploy` publishes the same app host for Docker Compose, Azure Container Apps or Kubernetes.
-- **Testing.** `Coworkee.Testing` runs API tests against a real PostgreSQL, SQL Server or SQLite database and acts as any user; the generated solution comes with test projects for the API, the app host, the migrations and the Blazor client. The library itself has more than 1,500 tests; CI runs the persistence-heavy suites on all three databases. See [Testing](../testing.md).
+- **Testing.** `Coworkee.Testing` runs API tests against a real PostgreSQL, SQL Server or SQLite database and acts as any user; the generated solution comes with test projects for the API, the app host, the migrations and the Blazor client. The library itself has more than 2,000 tests; CI runs the persistence-heavy suites on all three databases. See [Testing](../testing.md).
 
 ## A base for building with AI
 

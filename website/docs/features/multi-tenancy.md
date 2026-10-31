@@ -3,7 +3,7 @@ title: "Multi-tenant SaaS foundation for .NET"
 description: "Multi-tenancy for ASP.NET Core and Blazor: tenant filters in EF Core, settings per installation, tenant and user, typed app configuration, features and editions."
 ---
 
-# Tenants, settings and editions
+# Multi-tenancy and settings
 
 ```csharp
 public sealed class Brand : AuditedEntity, IMultiTenant
@@ -42,7 +42,9 @@ context.Group("Billing", "Billing")
     .Add("Billing.ApiKey", "API key", SettingType.Secret, [SettingScope.Global]);
 ```
 
-Scopes are `Global`, `Tenant` and `User`, and the most specific value wins: an organisation can override the default language of the installation, a user can override both. Once the `ISettingDefinitionContributor` is registered, the setting shows up on the admin page in the tab of its scope, with no form code. Secrets are encrypted with ASP.NET Core data protection and never reach the browser.
+Scopes are `Global`, `Tenant` and `User`, and the most specific value wins: an organisation can override the default language of the installation, a user can override both. Once the `ISettingDefinitionContributor` is registered, the setting shows up on the admin page in the tab of its scope, with no form code. Secrets are encrypted with ASP.NET Core data protection and never reach the browser. A setting can also require a permission of its own on top of its scope's rule (`Add(..., permission: ...)`), checked on the admin page and on `PUT /api/v1/settings/{scope}` alike.
+
+`services.AddCoworkeeHeadScript()` adds one such setting: HTML with script tags (a tag manager, for example) that the layout puts into every page once it is switched on, changed only with `Settings.HeadScript`. It is set by the system organisation for everyone, or per organisation with `AddCoworkeeHeadScript(perOrganisation: true)`; see [Head script](../modules/settings.md#head-script).
 
 ![Settings page with the tabs App settings, System and Organisation](../assets/screenshots/app-configuration-light.webp){ .shot loading=lazy }
 

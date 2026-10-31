@@ -3,7 +3,7 @@ title: "Dashboards and reporting for Blazor apps"
 description: "Self-service dashboards for Blazor and ASP.NET Core: a drag and drop designer, KPIs, charts and pivots over your OData sets, cross filters and SQL-side aggregation."
 ---
 
-# Dashboards and reports
+# Reporting and dashboards
 
 ```csharp
 [DependsOn(typeof(CoworkeeReportingModule))]
@@ -13,7 +13,7 @@ builder.Services.AddCoworkeeReporting(baseAddress, reports => reports
     .DrillDown("SalesOrders", "sales/orders"));
 ```
 
-That is the setup (plus one migration for `cw.Reports` and `cw.ReportFavorites`). New apps from the template have it already, `--reports` is on by default. Users get pages under `/reports` where they build dashboards from the entity sets you registered for OData:
+That is the setup (plus one migration for the module's tables, `cw.Reports`, `cw.ReportFavorites`, `cw.ReportSubscriptions` and `cw.DashboardReports`; the module depends on the mailing module, which sends the subscriptions). New apps from the template have it already, `--reports` is on by default. Users get pages under `/reports` where they build dashboards from the entity sets you registered for OData:
 
 ```csharp
 services.AddODataEntity<SalesOrder>("SalesOrders", SalesPermissions.Orders.View);
@@ -41,7 +41,7 @@ The server checks each field against the source, builds `GroupBy` and `Select` a
 
 Measured on the demo's 100,000 sales orders (Postgres, warm): count by status 9 ms, sum by month 29 ms, count by week 55 ms, region by channel 23 ms, top 10 customers with join 30 ms, four KPI values 58 ms.
 
-**Status:** reports have no version history, no public link and no map widget yet. On SQLite, date buckets on `DateTimeOffset` fields are rejected because EF stores them as text; `DateTime` and `DateOnly` work.
+**Status:** reports have no version history, no public link and no map widget yet. On SQLite, date buckets on `DateTimeOffset` fields work for the app's own DbContext (computed in UTC from the stored number); on an [external DbContext](../fundamentals/persistence.md#external-databases) they are refused.
 
 ## Designer, cross filter and drill-down
 
@@ -54,6 +54,16 @@ Widget types: KPI with trend and target, charts (bar, line, area, pie, donut, sc
 Each group comes back from the server with an OData filter for exactly its rows. Click a bar or a pie slice and that filter narrows the other widgets on the same set; click *Open the data* and it lands on the page you registered with `DrillDown`, already filtered to the rows behind the number.
 
 A report is private, shared with roles, with groups (their members and those of the groups above; a group selection narrows the list) or with the organisation (`Reports.Share`). Others can duplicate it, only the owner changes it, and a saved change reaches everyone who has it open. Export goes to PNG, PDF via the print dialog, or CSV and Excel per widget.
+
+## Beyond the designer
+
+- **[Subscriptions by mail](../modules/reporting.md#subscriptions-by-mail):** *Subscribe by mail* sends a report daily, weekly or monthly at a time of a time zone, with KPIs, the first rows of each widget and an Excel workbook. It runs as the subscriber, so the same permissions and row filters apply.
+- **[Thresholds](../modules/reporting.md#thresholds)** colour KPI values, gauges, pivot cells, a table column and bars by bands with an icon and a label.
+- **[Switches for viewers](../modules/reporting.md#switches-for-viewers):** alternative values and groupings that viewers pick in the widget header, kept per user, without changing the report.
+- **[Create with AI](../modules/reporting.md#create-a-report-with-ai):** *Create with AI* and *Ask AI to change this report* turn a prompt into a definition that is checked like a save and opens unsaved in the designer; the assistant has the same as the tool `generate_report`.
+- **[Own data sources](../modules/reporting.md#own-data-sources):** `AddReportSource<T>` adds rows of a plain type (a database query or a list) next to the entity sets.
+- **[A report as dashboard](../modules/reporting.md#a-report-as-dashboard):** every user can make a report their dashboard, holders of `Reports.Dashboard` the organisation's default.
+- A widget can carry `AppData`, JSON an app or a second client keeps with it; reports neither read nor change it.
 
 ## The sales report of the demo, step by step
 

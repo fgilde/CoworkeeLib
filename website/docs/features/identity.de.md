@@ -3,7 +3,7 @@ title: "Identität und Berechtigungen für ASP.NET Core"
 description: "Benutzer, Rollen, Gruppen und Berechtigungen bis auf einzelne Ressourcen, ein OpenIddict-Auth-Server mit BFF, Keycloak oder jeder OIDC-Anbieter, API-Schlüssel."
 ---
 
-# Identität und Berechtigungen
+# Identity und Sicherheit
 
 Die Anmeldung läuft auf einem eigenen Host, einem OpenID-Connect-Server auf Basis von OpenIddict. Der Web-Host arbeitet als Backend for Frontend: Er wickelt den Code-Flow mit PKCE ab, hält die Tokens in einer serverseitigen Sitzung und gibt dem Browser nur ein Cookie. Die API prüft Bearer-Tokens. Ein Access Token bekommt der Browser nie zu sehen.
 
@@ -17,7 +17,9 @@ Berechtigungen sind Strings, die die Module festlegen. Vergeben werden sie an Ro
 
 Freigaben gehen auch auf eine einzelne Ressource, etwa einen Ordner, und vererben sich entlang einer Hierarchie, die du mit `IResourceHierarchy` beschreibst. Blazor-Seiten blenden Schaltflächen und Menüeinträge aus, die der Benutzer nicht nutzen darf, aber das ist Kosmetik. Entscheiden tut der Server.
 
-Auf der Seite eines Benutzers bearbeiten Administratoren alles, von der E-Mail-Adresse bis zur Sperre und zum Zurücksetzen der Zwei-Schritt-Verifizierung. *Überall abmelden* und *Sperren* greifen sofort: Tokens enthalten einen Hash des Security Stamps, die API vergleicht ihn bei jedem Request, und mit Redis erfahren es die anderen Instanzen ohne Verzögerung.
+Berechtigungen können auch aus Daten kommen: `services.AddComputedPermission(...)` vergibt eine, solange eine eigene Prüfung zutrifft (der Benutzer leitet etwa ein Team), und sie zählt überall, wo eine Rollenvergabe zählt ([berechnete Berechtigungen](../security/permissions.md#berechnete-berechtigungen)). `IPermissionChecker.UsersGrantedAsync` und `GET /api/v1/identity/users/granted` listen, wer eine Berechtigung über Rollen, eigene und Gruppenfreigaben hat ([wer eine Berechtigung hat](../security/permissions.md#wer-eine-berechtigung-hat)), und `ISystemDispatcher` führt einen Request als System mit genau den genannten Berechtigungen aus ([als System handeln](../security/permissions.md#als-system-handeln)).
+
+Auf der Seite eines Benutzers bearbeiten Administratoren alles, von der E-Mail-Adresse bis zur Sperre und zum Zurücksetzen der Zwei-Schritt-Verifizierung. *Überall abmelden* und *Sperren* greifen sofort: Tokens enthalten einen Hash des Security Stamps, die API vergleicht ihn bei jedem Request, und mit Redis erfahren es die anderen Instanzen ohne Verzögerung. Offene Tabs der beendeten Sitzungen erfahren es über Realtime (`SessionRevoked`) und melden sich sofort ab. Ihr eigenes Passwort ändern Benutzer auf der Kontoseite oder mit `PUT /api/v1/identity/me/password`; ihre anderen Sitzungen enden, die aufrufende bleibt ([überall abmelden](../security/clients.md#uberall-abmelden-und-sperren)).
 
 ## Als anderer Benutzer anmelden
 
@@ -135,9 +137,11 @@ Jeder OpenID-Connect-Anbieter kann Benutzer anmelden, jeder bekommt einen Abschn
 
 Ob man sich per Passwort, über einen Anbieter oder auf beiden Wegen anmeldet, regelt die Einstellung `Auth.LoginMode`, auch im laufenden Betrieb. Die Selbstregistrierung (aus, solange `Account.AllowRegistration` nicht gesetzt ist) kann eine Freischaltung durch einen Administrator verlangen, dazu eine bestätigte Adresse, erlaubte Adressmuster und hochgeladene Dokumente. Auch die Passwortregeln sind Einstellungen, bis hin zu einem Verlauf von 24 Passwörtern, und jedes Passwortfeld nennt die gerade geltenden Regeln.
 
+[Passkeys](../security/passkeys.md) (WebAuthn) melden ohne Passwort an und überspringen die Zwei-Schritt-Verifizierung; Benutzer verwalten bis zu 20 auf der Kontoseite, Administratoren können alle eines Benutzers entfernen, und `Account.Passkeys.Enabled` schaltet sie ab. Single-Page-Apps anderer Origins melden sich als öffentliche Clients mit PKCE an (`app.AddSpaClient(...)` im [AppHost](../hosting/aspire.md#single-page-apps)) und rufen die API unter der CORS-Policy von `Coworkee:Cors:Origins` auf ([CORS](../security/clients.md#aufrufe-von-anderen-origins-cors)).
+
 ## Schlüssel und persönliche Daten
 
-Skripte und KI-Clients nutzen persönliche API-Schlüssel: `cwk_` plus 64 Hex-Zeichen, einmal angezeigt, als SHA-256-Hash gespeichert, 7 bis 365 Tage gültig. Ein Schlüssel hat nie mehr Rechte als sein Benutzer im Moment; nimmst du dem Benutzer eine Rolle weg, ist sie beim nächsten Request auch beim Schlüssel weg.
+Skripte und KI-Clients nutzen persönliche API-Schlüssel: `cwk_` plus 64 Hex-Zeichen, einmal angezeigt, als SHA-256-Hash gespeichert, bis zu einem Jahr gültig (der Dialog bietet 7 bis 365 Tage). Ein Schlüssel hat nie mehr Rechte als sein Benutzer im Moment, und seine Scopes schränken ihn weiter ein; nimmst du dem Benutzer eine Rolle weg, ist sie beim nächsten Request auch beim Schlüssel weg.
 
 Module, die Daten über eine Person speichern, implementieren `IPersonalDataContributor`. Über den Reiter *Datenschutz* der Kontoseite lädt man dann alles als `personal-data.json` herunter oder löscht das Konto.
 

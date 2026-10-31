@@ -24,7 +24,10 @@ flowchart LR
 | `MyApp.Contracts` | DTOs, Requests und Berechtigungsnamen für Server und Client |
 | `MyApp.Catalog`, `MyApp.Documents` | Fachmodule: Domäne, Persistenz, Features, Endpunkte |
 | `MyApp.Application` | Schnittstellen, die Module teilen, etwa die Dashboard-Zähler |
-| `MyApp.Infrastructure` | `MyAppDbContext`, Migrationen und das Modul, das die Datenbank zusammenführt |
+| `MyApp.Infrastructure` | `MyAppDbContext`, Migrationen, die Design-Time-Factory für `dotnet ef` und das Modul, das die Datenbank zusammenführt (`MyAppDatabaseModule`) |
+| `MyApp.ServiceDefaults` | OpenTelemetry, Health Checks, Service Discovery und Resilienz für jeden Dienst |
+| `MyApp.AirWorks`, `MyApp.ElsaStudio` | Nur mit `--airworks` (der [AirWorks-Client](../web/airworks.md)) oder `--elsa-studio` (der [Workflow-Designer](../modules/workflows-elsa.md#elsa-studio)) |
+| `tests/` | `MyApp.Api.Tests` gegen eine echte Datenbank, `MyApp.Migrations.Tests`, `MyApp.Web.Client.Tests` (bUnit) und `MyApp.AppHost.Tests`, siehe [Tests](../testing.md) |
 
 Im Wurzelordner: `README.md`, `LOGIN.md` (die Entwicklungsbenutzer), `quickrun.yml` und `AGENTS.md` mit den Regeln für Coding-Agenten (`CLAUDE.md` bindet sie ein), siehe [Mit KI bauen](../features/building-with-ai.md).
 
@@ -49,11 +52,12 @@ Ein Typ pro Datei, der Anwendungsfall steckt im Ordnernamen. Für Listen braucht
 
 ## Wie die Hosts starten
 
-Jeder Server-Host besteht aus denselben drei Zeilen; das Root-Modul bestimmt, was der Host enthält.
+Jeder Server-Host besteht aus denselben wenigen Zeilen; das Root-Modul bestimmt, was der Host enthält.
 
 ```csharp title="MyApp.Api/Program.cs"
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+builder.Configuration.AddCoworkeeDatabaseConfiguration(MyAppInfrastructureModule.ConnectionStringName); // in der App geänderte Werte
 builder.AddCoworkee<MyAppApiModule>();
 
 var app = builder.Build();

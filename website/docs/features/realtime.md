@@ -38,11 +38,13 @@ await notifier.NotifyAsync([reviewerId], "review.requested", "Review requested",
     $"{asset.Name} waits for you", link: $"/assets/{asset.Id}", ct);
 ```
 
-`NotifyLocalizedAsync` does the same with English texts as keys, so each reader gets their own language. `Coworkee.Chat` adds direct messages inside an organisation; a new message pops up as a snackbar unless the conversation is already open.
+`NotifyLocalizedAsync` does the same with English texts as keys, so each reader gets their own language. Registered notification types (`AddNotificationTypes`) add categories and per-user preferences in the app and by e-mail, following of records (`Followable<T>`, `CoworkeeFollowButton`), `INotifier.PublishAsync` for recipients, followers and an audience, and mails per notification with delay, debounce and a mail template per type ([preferences, following and delayed mails](../modules/realtime.md#preferences-following-and-delayed-mails)).
 
-## Comments, tags and ratings
+`Coworkee.Chat` adds direct and group chats inside an organisation: formatted messages, `@` mentions of people and `#` mentions of records, replies, reactions, files and pictures, read marks and a typing indicator. A new message pops up as a snackbar unless the chat is already open, and mini chats dock at the bottom right ([chat](../modules/chat.md)).
 
-`Coworkee.Social` hangs threaded comments, tags and 1 to 5 star ratings on entities you opt in:
+## Comments, tags, ratings and reactions
+
+`Coworkee.Social` hangs threaded comments, tags, 1 to 5 star ratings and emoji reactions on entities you opt in:
 
 ```csharp
 context.Services.AddCoworkeeSocial(social => social
@@ -50,7 +52,7 @@ context.Services.AddCoworkeeSocial(social => social
     .Tags<Product>("Products"));
 ```
 
-Each block has its own view, create and moderate permission. `CoworkeeComments`, `CoworkeeTags` and `CoworkeeRating` take entity type and id and hide the inputs the user may not use, and comment threads reload live.
+Each block has its own view, create and moderate permission. `CoworkeeComments`, `CoworkeeTags` and `CoworkeeRating` take entity type and id and hide the inputs the user may not use, and comment threads reload live. Comments can carry a status (open, closed) that `Social.Comments.SetStatus` changes, and `CoworkeeReactions` shows the emoji row ([status, app values and checks](../modules/social.md#status-app-values-and-checks), [reactions](../modules/social.md#reactions)).
 
 ## Mail, jobs and the Redis backplane
 
@@ -68,6 +70,6 @@ One instance needs nothing else. With several API instances, a `redis` connectio
 **Status:** a campaign whose worker shuts down mid-run stays in `Sending` and is not resumed, and the presence query reads one Redis hash per instance, so it is meant for a handful of instances.
 
 - [Realtime and notifications](../modules/realtime.md): topics, active role, presence, notification endpoints
-- [Chat](../modules/chat.md) and [comments, tags and ratings](../modules/social.md)
+- [Chat](../modules/chat.md) and [comments, tags, ratings and reactions](../modules/social.md)
 - [Mailing](../modules/mailing.md): templates, campaigns, mail providers
 - [Background jobs](../modules/background-jobs.md) and [scaling out with Redis](../hosting/redis.md)

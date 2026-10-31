@@ -3,7 +3,7 @@ title: "Echtzeit und Zusammenarbeit in Blazor-Apps"
 description: "SignalR-Echtzeit für ASP.NET Core und Blazor: Tabellen und Detailseiten live, Präsenz, Benachrichtigungen, Chat, Kommentare, Hintergrundjobs und Redis-Backplane."
 ---
 
-# Echtzeit und Zusammenarbeit
+# Realtime und Zusammenarbeit
 
 Eine Coworkee-App hält pro Tab eine SignalR-Verbindung, und das meiste, was andere tun, kommt darüber an. Eine Tabelle lädt neu, wenn sich ihre Entity ändert. Eine Detailseite merkt, dass ihr Datensatz gelöscht wurde, und springt zurück zur Liste. Nimmt ein Admin eine Rolle weg, schrumpft die Navigation, während der Benutzer noch draufschaut.
 
@@ -38,11 +38,13 @@ await notifier.NotifyAsync([reviewerId], "review.requested", "Review requested",
     $"{asset.Name} waits for you", link: $"/assets/{asset.Id}", ct);
 ```
 
-`NotifyLocalizedAsync` macht dasselbe mit englischen Texten als Schlüssel, jeder Leser bekommt dann seine Sprache. `Coworkee.Chat` bringt Direktnachrichten innerhalb einer Organisation; eine neue Nachricht erscheint als Snackbar, außer die Unterhaltung ist schon offen.
+`NotifyLocalizedAsync` macht dasselbe mit englischen Texten als Schlüssel, jeder Leser bekommt dann seine Sprache. Registrierte Benachrichtigungstypen (`AddNotificationTypes`) bringen Kategorien und Einstellungen pro Benutzer, in der App und per E-Mail, das Verfolgen von Datensätzen (`Followable<T>`, `CoworkeeFollowButton`), `INotifier.PublishAsync` für Empfänger, Verfolgende und ein Publikum sowie Mails pro Benachrichtigung mit Verzögerung, Bündelung und einer Mail-Vorlage pro Typ ([Einstellungen, Verfolgen und verzögerte Mails](../modules/realtime.md#einstellungen-verfolgen-und-verzogerte-mails)).
 
-## Kommentare, Tags und Bewertungen
+`Coworkee.Chat` bringt Direkt- und Gruppenchats innerhalb einer Organisation: formatierte Nachrichten, `@`-Erwähnungen von Personen und `#`-Erwähnungen von Datensätzen, Antworten, Reaktionen, Dateien und Bilder, Lesemarken und eine Tipp-Anzeige. Eine neue Nachricht erscheint als Snackbar, außer der Chat ist schon offen, und Mini-Chats docken unten rechts an ([Chat](../modules/chat.md)).
 
-`Coworkee.Social` hängt Kommentare mit Antworten, Tags und Bewertungen von 1 bis 5 Sternen an Entities, die du dafür freigibst:
+## Kommentare, Tags, Bewertungen und Reaktionen
+
+`Coworkee.Social` hängt Kommentare mit Antworten, Tags, Bewertungen von 1 bis 5 Sternen und Emoji-Reaktionen an Entities, die du dafür freigibst:
 
 ```csharp
 context.Services.AddCoworkeeSocial(social => social
@@ -50,7 +52,7 @@ context.Services.AddCoworkeeSocial(social => social
     .Tags<Product>("Products"));
 ```
 
-Jeder Baustein hat eigene Rechte zum Ansehen, Anlegen und Moderieren. `CoworkeeComments`, `CoworkeeTags` und `CoworkeeRating` bekommen Entity-Typ und Id und blenden aus, was der Benutzer nicht darf; Kommentar-Threads laden live nach.
+Jeder Baustein hat eigene Rechte zum Ansehen, Anlegen und Moderieren. `CoworkeeComments`, `CoworkeeTags` und `CoworkeeRating` bekommen Entity-Typ und Id und blenden aus, was der Benutzer nicht darf; Kommentar-Threads laden live nach. Kommentare können einen Status tragen (offen, geschlossen), den `Social.Comments.SetStatus` ändert, und `CoworkeeReactions` zeigt die Emoji-Leiste ([Status, App-Werte und Prüfungen](../modules/social.md#status-app-werte-und-prufungen), [Reaktionen](../modules/social.md#reaktionen)).
 
 ## Mails, Jobs und die Redis-Backplane
 
@@ -68,6 +70,6 @@ Eine Instanz braucht nichts weiter. Bei mehreren API-Instanzen schaltet ein Conn
 **Stand:** Fährt der Worker mitten in einer Kampagne herunter, bleibt sie auf `Sending` stehen und wird nicht fortgesetzt. Die Präsenzabfrage liest einen Redis-Hash pro Instanz und ist damit für eine Handvoll Instanzen gedacht.
 
 - [Realtime und Benachrichtigungen](../modules/realtime.md): Topics, aktive Rolle, Präsenz, Endpunkte für Benachrichtigungen
-- [Chat](../modules/chat.md) und [Kommentare, Tags und Bewertungen](../modules/social.md)
+- [Chat](../modules/chat.md) und [Kommentare, Tags, Bewertungen und Reaktionen](../modules/social.md)
 - [Mailing](../modules/mailing.md): Vorlagen, Kampagnen, Mail-Anbieter
 - [Hintergrundjobs](../modules/background-jobs.md) und [Skalierung mit Redis](../hosting/redis.md)

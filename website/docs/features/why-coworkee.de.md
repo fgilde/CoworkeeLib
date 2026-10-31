@@ -21,9 +21,9 @@ Jeder Bereich ist ein Modul in einem eigenen Paket: Identity, Einstellungen, Mai
 
 - **Sicherheit.** Ein OpenIddict-Auth-Server mit Keycloak oder einem beliebigen OpenID-Connect-Anbieter, Tokens auf dem Server hinter einem Sitzungscookie, Berechtigungen bis auf die einzelne Ressource, persönliche [API-Schlüssel](../security/api-keys.md), Rate-Limits und eine Content-Security-Policy auf den Anmeldeseiten und in der Web-App. Siehe [Identity und Sicherheit](identity.md).
 - **Mandanten.** `IMultiTenant` an einer Entity filtert jede Abfrage nach Organisation; Features und Editionen machen aus einer App ein SaaS-Produkt. Siehe [Mandanten](multi-tenancy.md).
-- **Audit und Verlauf.** Audit auf Feldebene in derselben Transaktion wie die Änderung, Verlauf eines Datensatzes mit Wiederherstellen und Rückgängig.
+- **Audit und Verlauf.** Audit auf Feldebene in derselben Transaktion wie die Änderung, Verlauf eines Datensatzes mit Wiederherstellen und Rückgängig. Die [Aufbewahrung](../modules/retention.md) löscht Audit-Einträge, Logs, Tokens und gelöschte Datensätze nach den Tagen, die du festlegst, und [Datenbank-Backups](../modules/backups.md) werden in der Administration erstellt, heruntergeladen, hochgeladen und wiederhergestellt.
 - **Observability.** Ein [Aspire-AppHost](observability.md) startet die App mit PostgreSQL oder SQL Server, Redis, Mailpit und auf Wunsch Grafana mit Prometheus, Loki und Tempo. `coworkee deploy` veröffentlicht denselben AppHost für Docker Compose, Azure Container Apps oder Kubernetes.
-- **Tests.** `Coworkee.Testing` führt API-Tests gegen eine echte PostgreSQL-, SQL-Server- oder SQLite-Datenbank aus und handelt als beliebiger Benutzer; die erzeugte Solution bringt Testprojekte für API, AppHost, Migrationen und Blazor-Client mit. Die Bibliothek selbst hat mehr als 1.500 Tests; die CI führt die datenbanklastigen Suiten auf allen drei Datenbanken aus. Siehe [Tests](../testing.md).
+- **Tests.** `Coworkee.Testing` führt API-Tests gegen eine echte PostgreSQL-, SQL-Server- oder SQLite-Datenbank aus und handelt als beliebiger Benutzer; die erzeugte Solution bringt Testprojekte für API, AppHost, Migrationen und Blazor-Client mit. Die Bibliothek selbst hat mehr als 2.000 Tests; die CI führt die datenbanklastigen Suiten auf allen drei Datenbanken aus. Siehe [Tests](../testing.md).
 
 ## Eine Basis, um mit KI zu bauen
 

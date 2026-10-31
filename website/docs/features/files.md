@@ -30,6 +30,12 @@ The library uses it too. The theme editor takes its logo from the files, and the
 
 That sign-in media has to load without a session, so it comes from a public file. Any single file can be made public (*Make public*, then *Copy public link*) and is then served under `/api/v1/files/public/{id}/{name}` to anyone. Browsers cache it for five minutes at most, so making it private again takes effect shortly after. `PublicFileChooser.ChooseAsync(...)` does the picking, the question and the publishing in one call.
 
+A private file can be handed out for a moment instead: *Copy temporary link* (`POST /api/v1/files/{id}/token`) gives a link that opens it without sign-in for five minutes ([temporary links](../modules/files.md#temporary-links)).
+
+## Files on a record
+
+[Record attachments](../modules/attachments.md) put files on a row of your own entity, in named slots (`services.AddRecordAttachments<LeaveRequest>("LeaveRequests", a => a.Slot("certificate", ...))`). Who may read them follows the row's visibility in its OData set; the `RecordAttachment` component uploads, shows and deletes them.
+
 ## Search
 
 `Coworkee.Search` describes an index, the Elasticsearch package implements it, and your app decides what goes in:
@@ -45,6 +51,8 @@ await index.EnsureAsync(schema, ct);
 
 Full text, filters, facets and cursor paging are there. `CreateIndexAsync` and `SwapAsync` rebuild an index in the background and switch the alias without downtime.
 
-**Status:** public files are new in [0.0.1.24](../reference/changelog.md) and need a migration in apps that use the Files module. Folders have no public state; each file is published on its own.
+The [global search](../web/global-search.md) needs no index: one search over users, roles, groups, files, reports, chats and the sets you register with `AddGlobalSearch<T>`, under the same permissions and row rules as the lists. The command palette and `/search` use it; an Elasticsearch alias joins it with `AddGlobalSearchIndex`.
 
-Reference: [File storage](../modules/storage.md), [Files](../modules/files.md), [public files](../modules/files.md#public-files), [Search](../modules/search.md).
+**Status:** public files came in [0.0.1.24](../reference/changelog.md) and need a migration in apps that use the Files module. Folders have no public state; each file is published on its own.
+
+Reference: [File storage](../modules/storage.md), [Files](../modules/files.md), [public files](../modules/files.md#public-files), [Record attachments](../modules/attachments.md), [Search](../modules/search.md), [Global search](../web/global-search.md).
