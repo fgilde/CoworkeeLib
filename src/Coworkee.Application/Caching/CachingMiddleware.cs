@@ -33,7 +33,8 @@ internal sealed class CachingMiddleware(HybridCache cache, ICurrentUser currentU
         var result = await next();
         if (request is IInvalidatesCache invalidation && Succeeded(result))
         {
-            await cache.RemoveByTagAsync(invalidation.CacheTags.Select(Tag).ToList(), cancellationToken);
+            // a global entry is shared by every organisation: a command anywhere invalidates it
+            await cache.RemoveByTagAsync(invalidation.CacheTags.SelectMany(tag => new[] { Tag(tag), GlobalTag(tag) }).ToList(), cancellationToken);
         }
 
         return result;
@@ -85,7 +86,7 @@ internal sealed class CachingMiddleware(HybridCache cache, ICurrentUser currentU
             Key(query, requestType),
             async ct => await InCallerContext(caller, () => load(ct)),
             options,
-            query.CacheTags.Select(Tag).ToList(),
+            query.CacheTags.Select(tag => query.CacheScope == CacheScope.Global ? GlobalTag(tag) : Tag(tag)).ToList(),
             cancellationToken);
     }
 
@@ -118,6 +119,8 @@ internal sealed class CachingMiddleware(HybridCache cache, ICurrentUser currentU
         (currentUser.ApiKeyId is { } key ? $"key-{key}" : "session") + (currentUser.ImpersonatorId is { } impersonator ? $"-as-{impersonator}" : string.Empty);
 
     private string Tag(string tag) => $"coworkee:{currentUser.TenantId?.ToString() ?? "anonymous"}:{tag}";
+
+    private static string GlobalTag(string tag) => $"coworkee:global:{tag}";
 
     private static bool Succeeded<TResult>(TResult result) => result is not Result { IsSuccess: false };
 

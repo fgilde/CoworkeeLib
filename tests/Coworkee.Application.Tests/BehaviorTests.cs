@@ -52,6 +52,23 @@ public sealed class BehaviorTests
     }
 
     [Fact]
+    public async Task A_command_in_any_organisation_invalidates_global_entries_and_tenant_entries_only_its_own()
+    {
+        var counter = new Counter();
+        var a = Build(services => services.AddSingleton(counter), Guid.CreateVersion7());
+        var b = Build(services => services.AddSingleton(counter), Guid.CreateVersion7(), a.Cache);
+
+        (await a.SendAsync(new GlobalCount(), Ct)).Value.ShouldBe(1);
+        (await b.SendAsync(new GlobalCount(), Ct)).Value.ShouldBe(1);
+        (await a.SendAsync(new Count(), Ct)).Value.ShouldBe(2);
+
+        (await b.SendAsync(new Bump(), Ct)).IsSuccess.ShouldBeTrue();
+
+        (await a.SendAsync(new GlobalCount(), Ct)).Value.ShouldBe(3);
+        (await a.SendAsync(new Count(), Ct)).Value.ShouldBe(2);
+    }
+
+    [Fact]
     public async Task Cached_query_handlers_run_in_the_async_context_of_the_caller()
     {
         var dispatcher = Build(_ => { });
@@ -319,6 +336,20 @@ public sealed class BehaviorTests
         public string CacheKey => "count";
 
         public IReadOnlyList<string> CacheTags => ["counter"];
+    }
+
+    public sealed record GlobalCount : IQuery<Result<int>>, ICachedQuery
+    {
+        public string CacheKey => "global-count";
+
+        public IReadOnlyList<string> CacheTags => ["counter"];
+
+        public CacheScope CacheScope => CacheScope.Global;
+    }
+
+    internal sealed class GlobalCountHandler(Counter counter) : IHandler<GlobalCount, Result<int>>
+    {
+        public Task<Result<int>> HandleAsync(GlobalCount request, CancellationToken cancellationToken) => Task.FromResult(Result<int>.Success(++counter.Value));
     }
 
     public sealed record ReadAmbient : IQuery<Result<string>>, ICachedQuery

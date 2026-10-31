@@ -26,6 +26,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixed
 
+- A `CacheScope.Global` entry was tagged with the organisation of the caller who loaded it: a command in another organisation never invalidated it. Global entries carry a global tag now, which every `IInvalidatesCache` command clears; entries of the other scopes stay per organisation.
 - The file system blob storage failed to delete a key whose directory did not exist, the S3 storage one whose bucket did not exist yet; both ignore it now like any other missing blob (erasing a user whose chat file was already gone answered 500).
 
 ## 0.0.1.55 (2026-10-31)

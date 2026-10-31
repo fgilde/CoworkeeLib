@@ -26,6 +26,7 @@
 
 ### Behoben
 
+- Ein `CacheScope.Global`-Eintrag trug das Tag der Organisation des Aufrufers, der ihn lud: Ein Command in einer anderen Organisation hat ihn nie invalidiert. Globale Einträge tragen jetzt ein globales Tag, das jedes `IInvalidatesCache`-Command leert; Einträge der anderen Bereiche bleiben je Organisation.
 - Der Blob-Speicher im Dateisystem scheiterte beim Löschen eines Schlüssels ohne vorhandenes Verzeichnis, der S3-Speicher bei einem noch nicht angelegten Bucket; beide übergehen das jetzt wie jeden anderen fehlenden Blob (das Löschen eines Benutzers, dessen Chat-Datei schon fehlte, antwortete mit 500).
 
 ## 0.0.1.55 (2026-10-31)
