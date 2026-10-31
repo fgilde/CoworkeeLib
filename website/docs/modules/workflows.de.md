@@ -25,6 +25,10 @@ public sealed class MyAppCatalogModule : CoworkeeModule
 
 `AddCoworkeeWorkflows` darf von mehreren Modulen aufgerufen werden. Die Entität wird über den `DbContext` geladen, Mandantenfilter gelten also; die Id einer anderen Organisation wird schlicht nicht gefunden.
 
+## Datenbank
+
+Das Modul bringt die Tabellen `cw.WorkflowItems`, `cw.WorkflowSteps`, `cw.WorkflowApprovals` (mit `RequestedBy`, wer den Übergang in die Genehmigung ausgeführt hat) und `cw.WorkflowApprovers` mit; leg nach dem Hinzufügen eine Migration in der App an.
+
 ## Zustände und Übergänge
 
 - **`Initial`** nennt den Zustand, in dem eine neue Entität beginnt. Der Zustand liegt in der eigenen Tabelle des Moduls, die Entitätsklasse ändert sich also nicht. `MirrorTo(p => p.Status)` schreibt den Namen des Zustands zusätzlich in eine Eigenschaft der Entität, für Spalten, Filter und Facetten.
@@ -35,7 +39,7 @@ public sealed class MyAppCatalogModule : CoworkeeModule
 
 Angeboten werden nur Übergänge, deren Bedingungen erfüllt sind, und der Server prüft sie beim Ausführen noch einmal.
 
-Aus einem eigenen Command führen `WorkflowEngine.LoadAsync(entityType, id, ct)` und `RunAsync(subject, transition, comment, ct)` einen Übergang aus. Eine Entität, die der Command gerade hinzugefügt hat (noch nicht gespeichert), wird im Change Tracker gefunden, so legt ein Command einen Datensatz an und führt seinen ersten Übergang in einer Unit of Work aus: Datensatz, Workflow-Zeile, Historie und Genehmigung werden zusammen gespeichert, ein abgelehnter Übergang speichert nichts davon. Eine solche neue Entität überspringt die Sichtbarkeitsprüfung ihres OData-Sets, denn der Command, der sie hinzugefügt hat, hat schon entschieden. Ihre `Include(...)`-Referenzen werden über den Fremdschlüssel geladen, wenn der Command nur die ID gesetzt hat (`CategoryId`, nicht `Category`); tiefere Pfade und Collections bleiben, wie der Command sie gesetzt hat.
+Aus einem eigenen Command führen `WorkflowEngine.LoadAsync(entityType, id, ct)` und `RunAsync(subject, transition, comment, ct)` einen Übergang aus. `LoadAsync` nimmt optional ein `WorkflowAccess`: `See` (Standard: nur Benutzer, die die Zeile über ihr OData-Set sehen), `SeeOrDecide` (auch die Genehmigenden ihrer offenen Genehmigung) oder `System` (keine Prüfung, für Jobs). Eine Entität, die der Command gerade hinzugefügt hat (noch nicht gespeichert), wird im Change Tracker gefunden, so legt ein Command einen Datensatz an und führt seinen ersten Übergang in einer Unit of Work aus: Datensatz, Workflow-Zeile, Historie und Genehmigung werden zusammen gespeichert, ein abgelehnter Übergang speichert nichts davon. Eine solche neue Entität überspringt die Sichtbarkeitsprüfung ihres OData-Sets, denn der Command, der sie hinzugefügt hat, hat schon entschieden. Ihre `Include(...)`-Referenzen werden über den Fremdschlüssel geladen, wenn der Command nur die ID gesetzt hat (`CategoryId`, nicht `Category`); tiefere Pfade und Collections bleiben, wie der Command sie gesetzt hat.
 
 ```csharp
 db.Add(leave);
@@ -61,7 +65,7 @@ Ein Zustand mit `Approval(approved, rejected, ...)` fordert beim Betreten eine G
 
     `ApprovedTo(...)`/`RejectedTo(...)` zählen jeden Zustand auf, den die Wahl liefern darf; ohne sie startet der Workflow nicht (so kennen Filter, Facetten und der Designer jeden Zustand), und eine Entscheidung, die einen nicht aufgeführten Zustand wählt, schlägt fehl. Der Kontext enthält die Entität, den Kommentar der Entscheidung und wer entschieden hat. Historie, Posteingang, Domain-Events und Elsa-Trigger sehen den gewählten Zustand wie einen festen.
 
-Erinnerungen und Fristen erledigt der wiederkehrende Job `workflow-deadlines` (alle fünf Minuten; `Coworkee:Workflows:DeadlineCron` ändert das). Genehmigende bekommen In-App-Benachrichtigungen, wenn eine Genehmigung startet, wenn sie überfällig ist und als Erinnerung.
+Erinnerungen und Fristen erledigt der wiederkehrende Job `workflow-deadlines` (alle fünf Minuten; `Coworkee:Workflows:DeadlineCron` ändert das). Er läuft über `TenantJobRunner` einmal je aktiver Organisation; ein Fehler in einer Organisation wird protokolliert, die anderen laufen weiter. Genehmigende bekommen In-App-Benachrichtigungen, wenn eine Genehmigung startet, wenn sie überfällig ist und als Erinnerung.
 
 ## Historie, Audit und Echtzeit
 
@@ -70,27 +74,6 @@ Jeder Übergang, jede Entscheidung, Erinnerung, Eskalation und jeder Verfall ist
 ## Erweitern
 
 Handler der Domain-Events `WorkflowTransitioned`, `ApprovalStarted` und `ApprovalDecided` (`IDomainEventHandler<T>`) laufen nach dem Commit über die Outbox, etwa um eine Mail zu schicken, ein anderes System aufzurufen oder einen [Elsa-Workflow](workflows-elsa.md) zu starten. Die Befehle sind gewöhnliche Requests (`RunTransitionCommand`, `DecideApprovalCommand`), also können auch der [KI-Assistent und MCP-Clients](ai.md) sie nutzen, mit den Berechtigungen des Benutzers.
-
-## Berechtigungen
-
-| Berechtigung | |
-|---|---|
-| `Workflows.View` | Zustände, Historien und den eigenen Genehmigungs-Posteingang sehen; Genehmigungen entscheiden, bei denen man genehmigt |
-| `Workflows.Transition` | überhaupt Übergänge ausführen; jeder Übergang kann mehr verlangen |
-
-Darüber hinaus gibt es den Workflow einer Zeile nur für Benutzer, die die Zeile so sehen, wie ihr [OData-Set](../web/odata.md) sie zeigt: Berechtigung des Sets, Organisation, Soft Delete und jeder Zeilenfilter `IODataEntityFilter<T>`. Alle anderen bekommen 404 auf Zustand, Historie, Kommentare, Übergänge und das Echtzeit-Topic, als gäbe es die Zeile nicht. Eine Ausnahme: Wer bei der offenen Genehmigung der Zeile genehmigt, sieht deren Zustand und Historie und entscheidet, auch ohne die Zeile in ihrer Liste zu sehen, denn man muss sehen, worüber man entscheidet; Übergänge sind darüber nicht möglich, und mit der Entscheidung endet die Ausnahme. Der Genehmigungs-Posteingang zeigt immer die eigenen offenen Genehmigungen.
-
-| Endpunkt | |
-|---|---|
-| `GET /api/v1/workflows/{entityType}/{entityId}` | Zustand, die erlaubten Übergänge, die offene Genehmigung und die Historie |
-| `POST /api/v1/workflows/{entityType}/states` | Zustände von bis zu 200 Zeilen `{ "ids": [...] }` in einer Anfrage, ohne Historie; Zeilen, die der Benutzer nicht sehen darf, fehlen |
-| `POST /api/v1/workflows/{entityType}/{entityId}/{transition}` | Übergang ausführen mit `{ "comment" }` |
-| `GET /api/v1/workflows/approvals` | die offenen Genehmigungen, die auf den Benutzer warten |
-| `POST /api/v1/workflows/approvals/{id}` | entscheiden mit `{ "approve": true, "comment" }` |
-
-## Datenbank
-
-Das Modul bringt die Tabellen `cw.WorkflowItems`, `cw.WorkflowSteps`, `cw.WorkflowApprovals` und `cw.WorkflowApprovers` mit; leg nach dem Hinzufügen eine Migration in der App an.
 
 ## Im Client
 
@@ -137,6 +120,33 @@ Beide Eigenschaften brauchen `Workflows.View`; ohne die Berechtigung wird eine A
     In den Browser gespiegelte Zeilen (Client-Entitäten) werden lokal abgefragt, und dort gibt es `WorkflowState` nicht. Spiegle für solche Mengen den Zustand in eine String-Eigenschaft (`MirrorTo(o => o.ApprovalState)`), gib ihr mit `[ProvideFacet]` eine Facette und nenne sie in der Spalte: `<CoworkeeWorkflowColumn ... MirrorProperty="ApprovalState" />`. Die Spalte filtert, sortiert und gruppiert dann auf dieser Eigenschaft, im Browser wie auf dem Server. Ein gespiegelter Workflow hat keine Facette `WorkflowState` (die Facette der Eigenschaft ersetzt sie); `$filter=WorkflowState ...` funktioniert weiter und liest die gespiegelte Spalte.
 
 Ein Übergang mit Pflichtkommentar und jede Ablehnung fragen in einem kleinen Dialog danach. Die Seite **Genehmigungen** (`/workflows/approvals`) listet alles, was auf die Entscheidung des Benutzers wartet, älteste zuerst, mit Frist; sie erscheint in der Navigation für Benutzer mit `Workflows.View`. Namen von Zuständen und Übergängen laufen durch den Localizer, nimm sie also in die Texte der App auf.
+
+## Berechtigungen
+
+| Berechtigung | |
+|---|---|
+| `Workflows.View` | Zustände, Historien und den eigenen Genehmigungs-Posteingang sehen; Genehmigungen entscheiden, bei denen man genehmigt |
+| `Workflows.Transition` | überhaupt Übergänge ausführen; jeder Übergang kann mehr verlangen |
+
+Darüber hinaus gibt es den Workflow einer Zeile nur für Benutzer, die die Zeile so sehen, wie ihr [OData-Set](../web/odata.md) sie zeigt: Berechtigung des Sets, Organisation, Soft Delete und jeder Zeilenfilter `IODataEntityFilter<T>`. Alle anderen bekommen 404 auf Zustand, Historie, Kommentare, Übergänge und das Echtzeit-Topic, als gäbe es die Zeile nicht. Eine Ausnahme: Wer bei der offenen Genehmigung der Zeile genehmigt, sieht deren Zustand und Historie und entscheidet, auch ohne die Zeile in ihrer Liste zu sehen, denn man muss sehen, worüber man entscheidet; Übergänge sind darüber nicht möglich, und mit der Entscheidung endet die Ausnahme. Der Genehmigungs-Posteingang zeigt immer die eigenen offenen Genehmigungen.
+
+## Grenzen
+
+| | |
+|---|---|
+| Namen | Entitätstyp, Zustand und Übergang 100 Zeichen |
+| Kommentar | 2.000 Zeichen, bei Übergängen und Entscheidungen |
+| Zustände in einer Anfrage | 200 Ids |
+
+## Endpunkte
+
+| Endpunkt | |
+|---|---|
+| `GET /api/v1/workflows/{entityType}/{entityId}` | Zustand, die erlaubten Übergänge, die offene Genehmigung und die Historie |
+| `POST /api/v1/workflows/{entityType}/states` | Zustände von bis zu 200 Zeilen `{ "ids": [...] }` in einer Anfrage, ohne Historie; Zeilen, die der Benutzer nicht sehen darf, fehlen |
+| `POST /api/v1/workflows/{entityType}/{entityId}/{transition}` | Übergang ausführen mit `{ "comment" }` |
+| `GET /api/v1/workflows/approvals` | die offenen Genehmigungen, die auf den Benutzer warten |
+| `POST /api/v1/workflows/approvals/{id}` | entscheiden mit `{ "approve": true, "comment" }` |
 
 ## In einer neuen App
 

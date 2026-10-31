@@ -25,6 +25,10 @@ public sealed class MyAppCatalogModule : CoworkeeModule
 
 `AddCoworkeeWorkflows` may be called by several modules. The entity is loaded through the `DbContext`, so tenant filters apply; an id of another organisation is simply not found.
 
+## Database
+
+The module adds the tables `cw.WorkflowItems`, `cw.WorkflowSteps`, `cw.WorkflowApprovals` (with `RequestedBy`, who ran the transition into the approval) and `cw.WorkflowApprovers`; create a migration in the app after adding it.
+
 ## States and transitions
 
 - **`Initial`** names the state a new entity starts in. The state lives in the module's own table, so the entity class does not change. `MirrorTo(p => p.Status)` writes the state name into a property of the entity as well, for columns, filters and facets.
@@ -35,7 +39,7 @@ public sealed class MyAppCatalogModule : CoworkeeModule
 
 Only the transitions whose guards pass are offered to the user, and the server checks them again when one runs.
 
-From your own command, `WorkflowEngine.LoadAsync(entityType, id, ct)` and `RunAsync(subject, transition, comment, ct)` run a transition. An entity the command has just added (not saved yet) is found in the change tracker, so a command can create a record and run its first transition in one unit of work: the record, the workflow row, its history and the approval are saved together, and a refused transition saves none of them. Such a new entity skips the visibility check of its OData set, since the command that added it already decided. Its `Include(...)` references are loaded through the foreign key when the command set only the id (`CategoryId`, not `Category`); deeper paths and collections stay as the command left them.
+From your own command, `WorkflowEngine.LoadAsync(entityType, id, ct)` and `RunAsync(subject, transition, comment, ct)` run a transition. `LoadAsync` takes an optional `WorkflowAccess`: `See` (the default: only users who see the row through its OData set), `SeeOrDecide` (also the approvers of its open approval) or `System` (no check, for jobs). An entity the command has just added (not saved yet) is found in the change tracker, so a command can create a record and run its first transition in one unit of work: the record, the workflow row, its history and the approval are saved together, and a refused transition saves none of them. Such a new entity skips the visibility check of its OData set, since the command that added it already decided. Its `Include(...)` references are loaded through the foreign key when the command set only the id (`CategoryId`, not `Category`); deeper paths and collections stay as the command left them.
 
 ```csharp
 db.Add(leave);
@@ -61,7 +65,7 @@ A state with `Approval(approved, rejected, ...)` asks for an approval when the w
 
     `ApprovedTo(...)`/`RejectedTo(...)` list every state the choice may return; the workflow refuses to start without them (so filters, facets and the designer know every state), and a decision that chooses an unlisted state fails. The context has the entity, the decision's comment and who decided. History, inbox, domain events and Elsa triggers see the chosen state like a fixed one.
 
-The reminders and deadlines are handled by the recurring job `workflow-deadlines` (every five minutes; `Coworkee:Workflows:DeadlineCron` changes it). Approvers get in-app notifications when an approval starts, when it is overdue and as a reminder.
+The reminders and deadlines are handled by the recurring job `workflow-deadlines` (every five minutes; `Coworkee:Workflows:DeadlineCron` changes it). It runs once per active organisation through `TenantJobRunner`, so an error in one organisation is logged and the others go on. Approvers get in-app notifications when an approval starts, when it is overdue and as a reminder.
 
 ## History, audit and realtime
 
@@ -70,27 +74,6 @@ Every transition, decision, reminder, escalation and expiry is a line of the his
 ## Extending it
 
 Handlers of the domain events `WorkflowTransitioned`, `ApprovalStarted` and `ApprovalDecided` (`IDomainEventHandler<T>`) run after the commit through the outbox, e.g. to send a mail, call another system or start an [Elsa workflow](workflows-elsa.md). The commands are ordinary requests (`RunTransitionCommand`, `DecideApprovalCommand`), so the [AI assistant and MCP clients](ai.md) can use them too, with the user's permissions.
-
-## Permissions
-
-| Permission | |
-|---|---|
-| `Workflows.View` | see states, histories and the own approvals inbox; decide approvals the user is an approver of |
-| `Workflows.Transition` | run transitions at all; each transition may ask for more |
-
-On top of that, the workflow of a row is only there for users who see the row the way its [OData set](../web/odata.md) shows it: the set's permission, the organisation, soft delete and every `IODataEntityFilter<T>` row filter. Everyone else gets 404 on the state, the history, the comments, transitions and the realtime topic, as if the row did not exist. One exception: the approvers of the row's open approval see its state and history and decide, even without seeing the row in its list, because they have to see what they decide; they cannot run transitions through it, and once the approval is decided the exception ends. The approvals inbox always shows a user's own open approvals.
-
-| Endpoint | |
-|---|---|
-| `GET /api/v1/workflows/{entityType}/{entityId}` | state, the transitions the user may run, the open approval and the history |
-| `POST /api/v1/workflows/{entityType}/states` | states of up to 200 rows `{ "ids": [...] }` in one request, without history; rows the user cannot see are left out |
-| `POST /api/v1/workflows/{entityType}/{entityId}/{transition}` | run a transition with `{ "comment" }` |
-| `GET /api/v1/workflows/approvals` | the open approvals waiting for the user |
-| `POST /api/v1/workflows/approvals/{id}` | decide with `{ "approve": true, "comment" }` |
-
-## Database
-
-The module adds the tables `cw.WorkflowItems`, `cw.WorkflowSteps`, `cw.WorkflowApprovals` and `cw.WorkflowApprovers`; create a migration in the app after adding it.
 
 ## In the client
 
@@ -137,6 +120,33 @@ Both properties need `Workflows.View`; without it a query that names them is ref
     Rows mirrored into the browser (client entities) are queried locally, where `WorkflowState` does not exist. For such sets mirror the state into a string property (`MirrorTo(o => o.ApprovalState)`), give it a facet with `[ProvideFacet]` and name it in the column: `<CoworkeeWorkflowColumn ... MirrorProperty="ApprovalState" />`. The column then filters, sorts and groups on the property, in the browser and on the server alike. A mirrored workflow has no `WorkflowState` facet (the property's own facet replaces it); `$filter=WorkflowState ...` still works and reads the mirrored column.
 
 A transition that needs a comment and every rejection ask for it in a small dialog. The page **Approvals** (`/workflows/approvals`) lists everything that waits for the user's decision, oldest first, with the deadline; it appears in the navigation for users with `Workflows.View`. State and transition names go through the localizer, so add them to the app's texts.
+
+## Permissions
+
+| Permission | |
+|---|---|
+| `Workflows.View` | see states, histories and the own approvals inbox; decide approvals the user is an approver of |
+| `Workflows.Transition` | run transitions at all; each transition may ask for more |
+
+On top of that, the workflow of a row is only there for users who see the row the way its [OData set](../web/odata.md) shows it: the set's permission, the organisation, soft delete and every `IODataEntityFilter<T>` row filter. Everyone else gets 404 on the state, the history, the comments, transitions and the realtime topic, as if the row did not exist. One exception: the approvers of the row's open approval see its state and history and decide, even without seeing the row in its list, because they have to see what they decide; they cannot run transitions through it, and once the approval is decided the exception ends. The approvals inbox always shows a user's own open approvals.
+
+## Limits
+
+| | |
+|---|---|
+| Names | entity type, state and transition 100 characters |
+| Comment | 2,000 characters, of a transition and of a decision |
+| States in one request | 200 ids |
+
+## Endpoints
+
+| Endpoint | |
+|---|---|
+| `GET /api/v1/workflows/{entityType}/{entityId}` | state, the transitions the user may run, the open approval and the history |
+| `POST /api/v1/workflows/{entityType}/states` | states of up to 200 rows `{ "ids": [...] }` in one request, without history; rows the user cannot see are left out |
+| `POST /api/v1/workflows/{entityType}/{entityId}/{transition}` | run a transition with `{ "comment" }` |
+| `GET /api/v1/workflows/approvals` | the open approvals waiting for the user |
+| `POST /api/v1/workflows/approvals/{id}` | decide with `{ "approve": true, "comment" }` |
 
 ## In a new app
 
