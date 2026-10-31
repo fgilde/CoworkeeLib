@@ -28,7 +28,7 @@ context.Services.AddGlobalSearch<Product>(s => s
     .Icon("ViewCarousel"));
 ```
 
-Die Suche sieht genau das, was die OData-Liste des Sets liefert: ihre Berechtigung, die Organisation, [Zeilenregeln](odata.md#row-level-rules) und das weiche Löschen. Wer eine versteckte Eigenschaft durchsucht, bekommt beim Start einen Fehler. Gesucht wird in zwei Runden: Werte, die mit dem Text beginnen (oder der Datensatz einer eingegebenen Id), kommen sofort, Werte, die jedes Wort enthalten, folgen.
+Die Suche sieht genau das, was die OData-Liste des Sets liefert: ihre Berechtigung, die Organisation, [Zeilenregeln](odata.md#regeln-pro-zeile) und das weiche Löschen. Wer eine versteckte Eigenschaft durchsucht, bekommt beim Start einen Fehler. Gesucht wird in zwei Runden: Werte, die mit dem Text beginnen (oder der Datensatz einer eingegebenen Id), kommen sofort, Werte, die jedes Wort enthalten, folgen.
 
 Felder dürfen über eine Navigation lesen (`t => t.Customer!.Name`): sie werden in der Abfrage gelesen und folgen den [Navigationsregeln](odata.md#navigationen-folgen-ihrem-ziel), ein ausgeblendetes Ziel passt also weder noch erscheint es. `Title`, `Subtitle`, `Url` und `Thumbnail` laufen auf der geladenen Zeile, die keine Navigationen hat; Werte anderer Zeilen gehören in Felder.
 
