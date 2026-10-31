@@ -2,7 +2,7 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
-## 0.0.1.55 (2026-10-31)
+## Unveröffentlicht
 
 ### Sicherheit
 
@@ -18,18 +18,26 @@
 ### Hinzugefügt
 
 - `PersonalDataSubject.ErasedUserId`: der Platzhalter, den eigene Contributors anstelle der ID eines gelöschten Benutzers schreiben. `tests/Coworkee.ArchitectureTests/PersonalDataCoverageTests` scheitert an einer Spalte der Bibliothek, die einen Benutzer nennt und keinen Contributor hat.
-- Gruppenbezogene Verwaltung: Mit `Coworkee:Identity:GroupScopedAdministration` (standardmäßig aus) erreichen Verwalter ohne `Identity.Groups.ScopeAll`, die keine Administratoren der Organisation sind, nur ihre Gruppen, deren Untergruppen und Mitglieder. Alles andere antwortet mit 404 und fehlt in Listen, Zählungen, Nachschlagen, den OData-Sets `Users`, `Groups`, `ApiKeys`, Exporten, Suche und KI-Werkzeugen; Benutzer, die auch zu einer Gruppe außerhalb der Reichweite gehören, ändert nur, wer alle ihre Gruppen erreicht (`403 identity.user_other_groups`), hinzugefügte Mitglieder dürfen zu keiner Gruppe außerhalb gehören, und Gruppen auf oberster Ebene, die Standardgruppe und Rollen brauchen die ganze Organisation (`403 identity.all_groups_required`). Die Standardgruppe zählt für niemanden. `AdminReach` (`Coworkee.Identity.Users`) wendet die Regeln in eigenen Requests an; `AccountGuard.CheckUserAsync` enthält sie. Siehe [gruppenbezogene Verwaltung](../security/permissions.md#gruppenbezogene-verwaltung).
-- `CreateUserRequest.GroupIds`: die Gruppen, denen ein neuer Benutzer beitritt (braucht `Identity.Groups.ManageMembers`); der Dialog *Neuer Benutzer* bietet sie an, wer Mitglieder verwaltet. Ein gruppenbezogener Verwalter nennt mindestens eine seiner Gruppen.
 
 ### Breaking Changes
 
-- `CreateUserRequest` hat einen neuen letzten Parameter `GroupIds`: Quellcode, der den Konstruktor aufruft, kompiliert unverändert, gegen den alten kompilierte Assemblies werden neu gebaut.
 - Der Abschnitt `chat` des Exports ist ein Objekt (`messages`, `memberships`, `reactions`, `attachments`) statt der Liste der Nachrichten.
 - Das Löschen schreibt `PersonalDataSubject.ErasedUserId` auch in `CreatedBy`, `ModifiedBy` und `DeletedBy` der Tabellen der App; Code, der den Ersteller nachschlägt, findet dafür keinen Benutzer.
 
 ### Behoben
 
 - Der Blob-Speicher im Dateisystem scheiterte beim Löschen eines Schlüssels ohne vorhandenes Verzeichnis, der S3-Speicher bei einem noch nicht angelegten Bucket; beide übergehen das jetzt wie jeden anderen fehlenden Blob (das Löschen eines Benutzers, dessen Chat-Datei schon fehlte, antwortete mit 500).
+
+## 0.0.1.55 (2026-10-31)
+
+### Hinzugefügt
+
+- Gruppenbezogene Verwaltung: Mit `Coworkee:Identity:GroupScopedAdministration` (standardmäßig aus) erreichen Verwalter ohne `Identity.Groups.ScopeAll`, die keine Administratoren der Organisation sind, nur ihre Gruppen, deren Untergruppen und Mitglieder. Alles andere antwortet mit 404 und fehlt in Listen, Zählungen, Nachschlagen, den OData-Sets `Users`, `Groups`, `ApiKeys`, Exporten, Suche und KI-Werkzeugen; Benutzer, die auch zu einer Gruppe außerhalb der Reichweite gehören, ändert nur, wer alle ihre Gruppen erreicht (`403 identity.user_other_groups`), hinzugefügte Mitglieder dürfen zu keiner Gruppe außerhalb gehören, und Gruppen auf oberster Ebene, die Standardgruppe und Rollen brauchen die ganze Organisation (`403 identity.all_groups_required`). Die Standardgruppe zählt für niemanden. `AdminReach` (`Coworkee.Identity.Users`) wendet die Regeln in eigenen Requests an; `AccountGuard.CheckUserAsync` enthält sie. Siehe [gruppenbezogene Verwaltung](../security/permissions.md#gruppenbezogene-verwaltung).
+- `CreateUserRequest.GroupIds`: die Gruppen, denen ein neuer Benutzer beitritt (braucht `Identity.Groups.ManageMembers`); der Dialog *Neuer Benutzer* bietet sie an, wer Mitglieder verwaltet. Ein gruppenbezogener Verwalter nennt mindestens eine seiner Gruppen.
+
+### Breaking Changes
+
+- `CreateUserRequest` hat einen neuen letzten Parameter `GroupIds`: Quellcode, der den Konstruktor aufruft, kompiliert unverändert, gegen den alten kompilierte Assemblies werden neu gebaut.
 
 ## 0.0.1.54 (2026-10-31)
 

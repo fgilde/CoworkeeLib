@@ -2,7 +2,7 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
-## 0.0.1.55 (2026-10-31)
+## Unreleased
 
 ### Security
 
@@ -18,18 +18,26 @@ Changes that need action in apps built on Coworkee. Newest first.
 ### Added
 
 - `PersonalDataSubject.ErasedUserId`: the placeholder own contributors write where an erased user's id stood. `tests/Coworkee.ArchitectureTests/PersonalDataCoverageTests` fails for a column of the library that names a user without a contributor.
-- Group-scoped administration: with `Coworkee:Identity:GroupScopedAdministration` (off by default) administrators without `Identity.Groups.ScopeAll` who are no administrators of the organisation reach only their groups, the sub-groups and their members. Everything else answers 404 and is absent from lists, counts, lookups, the OData sets `Users`, `Groups`, `ApiKeys`, exports, search and AI tools; users who also belong to a group outside the reach are changed only by someone reaching all their groups (`403 identity.user_other_groups`), members added must belong to no group outside the reach, and top-level groups, the default group and roles need the whole organisation (`403 identity.all_groups_required`). The default group counts for nobody. `AdminReach` (`Coworkee.Identity.Users`) applies the rules in own requests; `AccountGuard.CheckUserAsync` includes them. See [group-scoped administration](../security/permissions.md#group-scoped-administration).
-- `CreateUserRequest.GroupIds`: the groups a new user joins (needs `Identity.Groups.ManageMembers`); the *New user* dialog offers them to who manages members. A group-scoped administrator names at least one of his groups.
 
 ### Breaking changes
 
-- `CreateUserRequest` has a new last parameter `GroupIds`: source that calls the constructor compiles unchanged, assemblies compiled against the old one are rebuilt.
 - The `chat` section of the personal data export is an object (`messages`, `memberships`, `reactions`, `attachments`) instead of the list of messages.
 - An erase writes `PersonalDataSubject.ErasedUserId` into `CreatedBy`, `ModifiedBy` and `DeletedBy` of the app's tables too; code that looks the creator up finds no user for it.
 
 ### Fixed
 
 - The file system blob storage failed to delete a key whose directory did not exist, the S3 storage one whose bucket did not exist yet; both ignore it now like any other missing blob (erasing a user whose chat file was already gone answered 500).
+
+## 0.0.1.55 (2026-10-31)
+
+### Added
+
+- Group-scoped administration: with `Coworkee:Identity:GroupScopedAdministration` (off by default) administrators without `Identity.Groups.ScopeAll` who are no administrators of the organisation reach only their groups, the sub-groups and their members. Everything else answers 404 and is absent from lists, counts, lookups, the OData sets `Users`, `Groups`, `ApiKeys`, exports, search and AI tools; users who also belong to a group outside the reach are changed only by someone reaching all their groups (`403 identity.user_other_groups`), members added must belong to no group outside the reach, and top-level groups, the default group and roles need the whole organisation (`403 identity.all_groups_required`). The default group counts for nobody. `AdminReach` (`Coworkee.Identity.Users`) applies the rules in own requests; `AccountGuard.CheckUserAsync` includes them. See [group-scoped administration](../security/permissions.md#group-scoped-administration).
+- `CreateUserRequest.GroupIds`: the groups a new user joins (needs `Identity.Groups.ManageMembers`); the *New user* dialog offers them to who manages members. A group-scoped administrator names at least one of his groups.
+
+### Breaking changes
+
+- `CreateUserRequest` has a new last parameter `GroupIds`: source that calls the constructor compiles unchanged, assemblies compiled against the old one are rebuilt.
 
 ## 0.0.1.54 (2026-10-31)
 
