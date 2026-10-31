@@ -114,6 +114,23 @@ Gruppen haben zwei Aufgaben. Als Träger von Berechtigungen wirken sie wie Rolle
 
 Welche Zeilen ein Benutzer sieht, entscheiden die Zeilenfilter der App (`IODataEntityFilter<T>` gegen `IGroupScope.ActiveAsync`); siehe [Welche Gruppen ein Benutzer sieht](../features/identity.md#welche-gruppen-ein-benutzer-sieht).
 
+## Andere Konten und Berechtigungen weitergeben
+
+Wer `Identity.Users.Manage` (oder `Groups.ManageMembers`, `Permissions.Manage`, `Roles.Manage`) hat, übernimmt damit kein stärkeres Konto und gibt nicht mehr weiter, als er selbst hat. Eine Regel, `AccountGuard` (`Coworkee.Identity.Users`), läuft in jedem Request, der das Konto eines anderen Benutzers ändert oder steuert, und in jedem Request, der Berechtigungen gibt oder nimmt:
+
+- **Am Konto eines anderen** (Passwort, E-Mail-Adresse, Zwei-Schritt-Verifizierung, Passkeys, externe Anmeldungen, Avatar, Profil und Benutzername, Aktivierung, Sperren und Entsperren, Abmelden, Löschen, Rollen, Gruppen, eigene Berechtigungen, Sprache, Einladungs- und Passwort-Mails, seine API-Schlüssel widerrufen) scheitert jede Aktion mit `403 identity.user_more_permissions`, solange der Benutzer eine Berechtigung hat, die dem Aufrufer fehlt. Es zählen alle Rollen des Benutzers, egal welche er als aktive gewählt hat, auch während er deaktiviert ist (was er zurückbekäme); eine Berechtigung auf einer einzelnen Ressource zählt, außer der Aufrufer hat sie global oder auf dieser Ressource. Das ist die Regel von [Als anderer Benutzer anmelden](#als-anderer-benutzer-anmelden). Nur Administratoren handeln an Administratoren (`403 identity.admin_role_restricted`), auch wenn ein anderer jede Berechtigung hat. Administratoren haben jede Berechtigung und handeln deshalb an jedem ihrer Organisation; die Regeln zum letzten Administrator bleiben.
+- **Berechtigungen vergeben oder entziehen** (Freigaben an Rollen, Benutzer und Gruppen), eine Rolle geben oder nehmen (`SetUserRoles`, `CreateUser` mit Rollen, `SetGroupRoles`, eine Rolle löschen), einer Gruppe beitreten lassen oder sie verlassen lassen (`SetUserGroups`, die Mitglieder-Requests, eine Gruppe löschen: die Mitglieder bekommen oder verlieren ihre Rollen, Freigaben und Ressourcenfreigaben) und eine Rolle auf einer Ressource vergeben oder entziehen braucht jede beteiligte Berechtigung samt der mitgegebenen, sonst `403 identity.grant_restricted`. Auf einer Ressource darf der Aufrufer sie dort statt global haben. Die Administratorrolle braucht einen Administrator (`identity.admin_role_restricted`). Standardrollen und die Standardgruppe gehen durch: jedes Konto, das ein Benutzerverwalter anlegt, bekommt sie ohnehin, und Standard machen konnte sie nur, wer ihre Berechtigungen hatte ([Standardrolle](../features/identity.md#besitzer-standardgruppe-und-standardrolle)).
+- **Service-Clients** folgen derselben Regel: einen Client anlegen, ändern, sein Secret erneuern und ihn löschen braucht jede Berechtigung seiner Rollen und seiner Liste (`403 auth.client_rights_restricted`).
+
+Der Aufrufer zählt mit dem, was er gerade hat: seiner aktiven Rolle, den Scopes seines [API-Schlüssels](api-keys.md) (ein Schlüssel schränkt nur ein) und einem dekorierten `IPermissionChecker`. Der Benutzer, an dem er handelt, zählt mit allem, was seine Rollen geben. Eigene Requests, die das Konto eines anderen ändern, rufen den Guard nach dem Laden des Benutzers:
+
+```csharp
+if (await guard.CheckUserAsync(userId, ct) is { } refused) return refused;
+if (await guard.CheckRolesAsync(addedOrRemovedRoleIds, ct) is { } restricted) return restricted;
+```
+
+Verwaltung auf Gruppen beschränkt (ein Verwalter nur für die Benutzer seiner Gruppen) gehört noch nicht zur Regel.
+
 ## Als anderer Benutzer anmelden
 
 Mit `Identity.Users.Impersonate` (schließt `Identity.Users.View` ein, gehört nicht zu `Identity.Users.Manage`) melden sich Support-Mitarbeiter als ein anderer aktiver Benutzer ihrer Organisation an. Das Ziel darf keine Berechtigung haben, die dem Aufrufer fehlt, und jede seiner Gruppen muss in den Gruppen des Aufrufers oder darunter liegen (`Identity.Groups.ScopeAll` hebt das auf); geprüft wird beim Ausstellen des Tickets und bei jeder Autorisierung und Token-Erneuerung, eine spätere Berechtigung für das Ziel beendet die Sitzung also. Details, Tokens und das Ende einer Sitzung: [Als anderer Benutzer anmelden](../features/identity.md#als-anderer-benutzer-anmelden).

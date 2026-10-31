@@ -508,6 +508,25 @@
           ]
         }
       ]
+    },
+    {
+      "version": "0.0.1.54",
+      "breaking": [
+        "Identity: requests that change or control another user's account (password, e-mail, two-step verification, passkeys, logins, avatar, update, unlock, lock, sign-out, delete, roles, groups, own grants, language, invitation and password reset mails, revoking his API keys, group memberships) are refused with 403 identity.user_more_permissions while the user holds a permission the caller lacks, and with 403 identity.admin_role_restricted on an administrator unless the caller is one. Signing out or locking an administrator answers identity.admin_role_restricted instead of identity.admin_session_restricted.",
+        "Identity: granting or revoking permissions (grants of roles, users and groups), giving or taking roles (users, new users, groups, deleting a role), group memberships, deleting groups and resource grants need every permission involved (403 identity.grant_restricted); the caller counts with his active role and his API key's scopes. Default roles and the default group stay assignable.",
+        "Auth server: changing, rotating the secret of or deleting a service client needs every permission of its roles and list (403 auth.client_rights_restricted).",
+        "Extended attributes: reading and writing need the row to be visible through the entity's OData set (permission and row filters); a hidden row answers 404."
+      ],
+      "manual": [
+        {
+          "text": "Own requests that change another user's account (load a User by an id from the request) call AccountGuard.CheckUserAsync(userId) after loading him, and requests that hand out roles or permissions call CheckRolesAsync / CheckGrantAsync / CheckGroupsAsync (Coworkee.Identity.Users.AccountGuard). Tests or seeds where a non-administrator manages stronger users or grants permissions he lacks now get 403; give that caller the permissions or act as an administrator.",
+          "find": "UserManager<User>|Set<User>\\(\\)|identity\\.admin_session_restricted",
+          "files": [
+            "src/**/*.cs",
+            "tests/**/*.cs"
+          ]
+        }
+      ]
     }
   ]
 }

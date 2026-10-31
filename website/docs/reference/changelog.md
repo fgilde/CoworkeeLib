@@ -2,6 +2,21 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Security
+
+- User managers could take over stronger accounts: setting the password, the e-mail address (also as confirmed), resetting two-step verification or passkeys, removing external logins, changing the avatar or groups of another user checked only the organisation. Now every request that changes or controls another user's account (also update, unlock, roles, own grants, language, invitation and password reset mails, revoking his API keys, group memberships) is refused while the user holds a permission the caller lacks (`403 identity.user_more_permissions`), and only administrators act on administrators (`403 identity.admin_role_restricted`). See [other accounts](../security/permissions.md#other-accounts-and-handing-out-permissions).
+- Permissions could be handed out further than the caller held them: grants to roles, users and groups, user and group roles, new users with roles, group memberships, deleting roles and groups and resource grants now need every permission involved (`403 identity.grant_restricted`); the administrator role needs an administrator. Default roles and the default group stay assignable.
+- Service clients: changing, rotating the secret of or deleting a client now needs every permission it has (`403 auth.client_rights_restricted`), so a client manager cannot take over a stronger client.
+- Extended attributes now check that the caller sees the row through the entity's OData set (its permission and row filters): `GET`/`PUT /api/v1/attributes/{type}/{id}` on a hidden row answers 404.
+- Erasing a user removes his notification preferences, followed records and pending notification mails; the personal data export lists them and the digest state.
+
+### Changed
+
+- Signing out or locking an administrator as a non-administrator answers `identity.admin_role_restricted` instead of `identity.admin_session_restricted`.
+- `ExtendedAttributeRegistration` built by `AddExtendedAttributes<T>` checks visibility through `ODataEntityAccess.VisibleIdsAsync<T>`; the package references `Coworkee.OData`. Setting extended attributes leaves the save to the pipeline.
+
 ## 0.0.1.53 (2026-10-31)
 
 ### Added

@@ -2,6 +2,21 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Sicherheit
+
+- Benutzerverwalter konnten stärkere Konten übernehmen: Passwort und E-Mail-Adresse (auch als bestätigt) setzen, Zwei-Schritt-Verifizierung oder Passkeys zurücksetzen, externe Anmeldungen entfernen, Avatar oder Gruppen eines anderen Benutzers ändern prüfte nur die Organisation. Jetzt scheitert jeder Request, der das Konto eines anderen ändert oder steuert (auch Bearbeiten, Entsperren, Rollen, eigene Berechtigungen, Sprache, Einladungs- und Passwort-Mails, seine API-Schlüssel widerrufen, Gruppenmitgliedschaften), solange der Benutzer eine Berechtigung hat, die dem Aufrufer fehlt (`403 identity.user_more_permissions`), und nur Administratoren handeln an Administratoren (`403 identity.admin_role_restricted`). Siehe [andere Konten](../security/permissions.md#andere-konten-und-berechtigungen-weitergeben).
+- Berechtigungen ließen sich weiter geben, als der Aufrufer sie hatte: Freigaben an Rollen, Benutzer und Gruppen, Benutzer- und Gruppenrollen, neue Benutzer mit Rollen, Gruppenmitgliedschaften, Rollen und Gruppen löschen und Ressourcenfreigaben brauchen jetzt jede beteiligte Berechtigung (`403 identity.grant_restricted`); die Administratorrolle braucht einen Administrator. Standardrollen und die Standardgruppe bleiben zuweisbar.
+- Service-Clients: einen Client ändern, sein Secret erneuern oder ihn löschen braucht jetzt jede Berechtigung, die er hat (`403 auth.client_rights_restricted`), damit ein Client-Verwalter keinen stärkeren Client übernimmt.
+- Erweiterte Attribute prüfen jetzt, dass der Aufrufer den Datensatz über das OData-Set der Entität sieht (seine Berechtigung und Zeilenfilter): `GET`/`PUT /api/v1/attributes/{type}/{id}` auf einen verborgenen Datensatz antwortet 404.
+- Das Löschen eines Benutzers entfernt seine Benachrichtigungseinstellungen, gefolgten Datensätze und wartenden Benachrichtigungs-Mails; der Export personenbezogener Daten listet sie und den Digest-Status.
+
+### Geändert
+
+- Einen Administrator als Nicht-Administrator abmelden oder sperren antwortet `identity.admin_role_restricted` statt `identity.admin_session_restricted`.
+- Die von `AddExtendedAttributes<T>` gebaute `ExtendedAttributeRegistration` prüft die Sichtbarkeit über `ODataEntityAccess.VisibleIdsAsync<T>`; das Paket referenziert `Coworkee.OData`. Erweiterte Attribute setzen überlässt das Speichern der Pipeline.
+
 ## 0.0.1.53 (2026-10-31)
 
 ### Hinzugefügt

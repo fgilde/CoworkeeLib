@@ -25,7 +25,7 @@ services.AddScoped<IPersonalDataContributor, TaskPersonalData>();
 |---|---|---|
 | `profile` | Identity: name, e-mail, phone, address, picture, two-step verification on or off, roles, groups, external logins, passkeys (name, date, backup state) | user deleted (roles, claims, logins, tokens, passkeys, memberships by cascade), own permission grants and resource grants removed, values in the user's own audit trail replaced by `***` |
 | `settings` | Settings: values with user scope (secrets as `***`) | deleted |
-| `notifications` | Notifications: the notifications and the devices with Web Push | deleted, with the digest state and the push devices |
+| `notifications` | Notifications: the notifications, the devices with Web Push, the preferences, the followed records, mails waiting for their delay and when the last digest went out | deleted, all of it |
 | `chat` | Chat: sent messages, received direct messages | sent messages with their files, reactions and group memberships deleted; direct chats deleted with both sides |
 | `aiToolCalls` | AI: what the user had the assistant and MCP clients do (tool, channel, input, success or error) | deleted |
 | `aiConversations` | AI: the assistant's conversations (title, messages) | deleted |
@@ -45,7 +45,7 @@ Database backups keep earlier data until they are rotated.
 |---|---|---|
 | `GET /api/v1/identity/me/personal-data` | the user | JSON object with one property per section, sorted by name |
 | `POST /api/v1/identity/me/delete` with `{ "email": "…" }` | the user | erases everything; the address must match the account (`400` otherwise) |
-| `DELETE /api/v1/identity/users/{id}` | `Identity.Users.Manage` | the same for another user of the tenant; only administrators delete administrators (`403 identity.admin_role_restricted`) |
+| `DELETE /api/v1/identity/users/{id}` | `Identity.Users.Manage` | the same for another user of the tenant; only administrators delete administrators (`403 identity.admin_role_restricted`), nobody deletes a user holding a permission he lacks (`403 identity.user_more_permissions`) |
 
 The last active administrator cannot be deleted (`409 identity.last_admin`). None of these requests is offered to the AI assistant. Someone signed in as another user ([Log in as](../features/identity.md#log-in-as-another-user)) can neither export the user's data nor delete the account (`403 auth.impersonating`).
 
