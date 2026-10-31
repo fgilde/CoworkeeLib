@@ -36,5 +36,8 @@ public sealed class SystemDispatcherTests(IdentityApp app) : IAsyncLifetime
         created.IsSuccess.ShouldBeTrue();
         CurrentUserScope.Current!.UserId.ShouldBe(member);
         (await app.As(_setup.AdminUserId, _setup.TenantId).GetStringAsync("/api/v1/identity/groups", Ct)).ShouldContain("Team Blue");
+
+        // the app decided: the system is not held to the account guard, which would compare the members with the one permission it names
+        (await system.SendAsync(new SetGroupMembers(created.Value, [_setup.AdminUserId]), [IdentityPermissions.Groups.ManageMembers], Ct)).IsSuccess.ShouldBeTrue();
     }
 }

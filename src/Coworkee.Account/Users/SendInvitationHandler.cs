@@ -7,13 +7,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Account.Users;
 
-internal sealed class SendInvitationHandler(CoworkeeDbContext db, ICurrentUser currentUser, IAccountMailer mailer) : IHandler<SendInvitation, Result>
+internal sealed class SendInvitationHandler(CoworkeeDbContext db, ICurrentUser currentUser, IAccountMailer mailer, Identity.Users.AccountGuard guard)
+    : IHandler<SendInvitation, Result>
 {
     public async Task<Result> HandleAsync(SendInvitation command, CancellationToken cancellationToken)
     {
         if (await db.Set<User>().SingleOrDefaultAsync(u => u.Id == command.Id && u.TenantId == currentUser.TenantId, cancellationToken) is not { } user)
         {
             return AccountErrors.UserNotFound;
+        }
+
+        if (await guard.CheckUserAsync(user.Id, cancellationToken) is { } refused)
+        {
+            return refused;
         }
 
         if (!user.IsActive || string.IsNullOrEmpty(user.Email))

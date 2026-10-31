@@ -97,7 +97,7 @@ sequenceDiagram
 - The BFF ends its cookie session when the API answers `401` to a request it sent a token with.
 - Refresh tokens are revoked and, issued with the old stamp, refused anyway; the auth server's own sign-in cookie no longer counts at `/connect/authorize`.
 
-The three actions need `Identity.Users.Manage` (`POST /api/v1/identity/users/{id}/sign-out`, `/lock` with an optional `until`, `/unlock`). Nobody ends his own session this way (`409 identity.own_session`; the user menu signs out), and only administrators can sign out or lock other administrators (`403 identity.admin_session_restricted`).
+The three actions need `Identity.Users.Manage` (`POST /api/v1/identity/users/{id}/sign-out`, `/lock` with an optional `until`, `/unlock`). Nobody ends his own session this way (`409 identity.own_session`; the user menu signs out), only administrators can sign out or lock other administrators (`403 identity.admin_role_restricted`), and nobody signs out or locks a user who holds a permission he lacks (`403 identity.user_more_permissions`, [other accounts](permissions.md#other-accounts-and-handing-out-permissions)).
 
 A [Log in as](../features/identity.md#log-in-as-another-user) session ends as well when the impersonator's stamp changes: when he is signed out everywhere, locked or deactivated, or changes his password, the next authorization or token refresh revokes the impersonation's tokens and signs the browser out.
 

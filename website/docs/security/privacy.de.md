@@ -25,7 +25,7 @@ services.AddScoped<IPersonalDataContributor, TaskPersonalData>();
 |---|---|---|
 | `profile` | Identity: Name, E-Mail, Telefon, Adresse, Bild, Zwei-Faktor an oder aus, Rollen, Gruppen, externe Anmeldungen, Passkeys (Name, Datum, Sicherungsstatus) | Benutzer gelöscht (Rollen, Claims, Anmeldungen, Tokens, Passkeys, Mitgliedschaften per Kaskade), eigene Berechtigungen und Ressourcen-Berechtigungen entfernt, Werte im Audit-Verlauf des Benutzers durch `***` ersetzt |
 | `settings` | Einstellungen: Werte mit Benutzerbereich (Geheimnisse als `***`) | gelöscht |
-| `notifications` | Benachrichtigungen: die Benachrichtigungen und die Geräte mit Web Push | gelöscht, samt Digest-Status und Push-Geräten |
+| `notifications` | Benachrichtigungen: die Benachrichtigungen, die Geräte mit Web Push, die Einstellungen, die gefolgten Datensätze, auf ihre Verzögerung wartende Mails und wann der letzte Digest verschickt wurde | gelöscht, alles davon |
 | `chat` | Chat: gesendete Nachrichten, empfangene Direktnachrichten | gesendete Nachrichten samt Dateien, Reaktionen und Gruppenmitgliedschaften gelöscht; Direkt-Chats mit beiden Seiten gelöscht |
 | `aiToolCalls` | KI: was der Benutzer den Assistenten und MCP-Clients tun ließ (Tool, Kanal, Eingabe, Erfolg oder Fehler) | gelöscht |
 | `aiConversations` | KI: die Unterhaltungen mit dem Assistenten (Titel, Nachrichten) | gelöscht |
@@ -45,7 +45,7 @@ Datenbank-Backups behalten frühere Daten, bis sie rotiert werden.
 |---|---|---|
 | `GET /api/v1/identity/me/personal-data` | der Benutzer | JSON-Objekt mit einer Eigenschaft pro Abschnitt, nach Namen sortiert |
 | `POST /api/v1/identity/me/delete` mit `{ "email": "…" }` | der Benutzer | löscht alles; die Adresse muss zum Konto passen (sonst `400`) |
-| `DELETE /api/v1/identity/users/{id}` | `Identity.Users.Manage` | dasselbe für einen anderen Benutzer des Mandanten; nur Administratoren löschen Administratoren (`403 identity.admin_role_restricted`) |
+| `DELETE /api/v1/identity/users/{id}` | `Identity.Users.Manage` | dasselbe für einen anderen Benutzer des Mandanten; nur Administratoren löschen Administratoren (`403 identity.admin_role_restricted`), niemand löscht einen Benutzer, der eine Berechtigung hat, die dem Aufrufer fehlt (`403 identity.user_more_permissions`) |
 
 Der letzte aktive Administrator lässt sich nicht löschen (`409 identity.last_admin`). Keiner dieser Requests steht dem KI-Assistenten zur Verfügung. Wer als anderer Benutzer angemeldet ist ([Anmelden als](../features/identity.md#als-anderer-benutzer-anmelden)), kann weder dessen Daten exportieren noch das Konto löschen (`403 auth.impersonating`).
 

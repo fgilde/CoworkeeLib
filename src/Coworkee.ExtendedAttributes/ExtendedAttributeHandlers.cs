@@ -32,6 +32,7 @@ internal sealed class ExtendedAttributeHandlers(
         var existing = await Attributes(command.EntityType, command.EntityId).ToDictionaryAsync(a => a.Key, StringComparer.OrdinalIgnoreCase, cancellationToken);
         var wanted = command.Attributes.ToDictionary(a => a.Key.Trim(), StringComparer.OrdinalIgnoreCase);
         db.RemoveRange(existing.Values.Where(a => !wanted.ContainsKey(a.Key)));
+        var kept = new List<ExtendedAttribute>();
         foreach (var (key, dto) in wanted)
         {
             if (!existing.TryGetValue(key, out var attribute))
@@ -41,10 +42,11 @@ internal sealed class ExtendedAttributeHandlers(
             }
 
             Apply(attribute, dto);
+            kept.Add(attribute);
         }
 
-        await db.SaveChangesAsync(cancellationToken);
-        return await LoadAsync(command.EntityType, command.EntityId, cancellationToken);
+        // the pipeline saves the command
+        return kept.OrderBy(a => a.Group, StringComparer.Ordinal).ThenBy(a => a.Key, StringComparer.Ordinal).Select(ToDto).ToList();
     }
 
     private async Task<Error?> CheckAsync(string entityType, Guid entityId, bool edit, CancellationToken cancellationToken)
@@ -59,7 +61,7 @@ internal sealed class ExtendedAttributeHandlers(
             return Forbidden;
         }
 
-        // ponytail: only the tenant filter applies here, not row level OData filters; check them in a decorator if an entity needs that
+        // a row the caller cannot see (tenant, soft delete, the OData set's permission and row filters) does not exist for him
         return await registration.ExistsAsync(services, entityId, cancellationToken) ? null : NotFound;
     }
 

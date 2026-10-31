@@ -121,7 +121,8 @@ internal sealed class RegistrationApprovedMail(IAccountMailer mailer) : Coworkee
 [RequiresPermission(IdentityPermissions.Users.Manage)]
 public sealed record SendPasswordReset(Guid UserId) : ICommand<Result>;
 
-internal sealed class SendPasswordResetHandler(CoworkeeDbContext db, ICurrentUser currentUser, IAccountMailer mailer) : IHandler<SendPasswordReset, Result>
+internal sealed class SendPasswordResetHandler(CoworkeeDbContext db, ICurrentUser currentUser, IAccountMailer mailer, Identity.Users.AccountGuard guard)
+    : IHandler<SendPasswordReset, Result>
 {
     public async Task<Result> HandleAsync(SendPasswordReset command, CancellationToken cancellationToken)
     {
@@ -129,6 +130,11 @@ internal sealed class SendPasswordResetHandler(CoworkeeDbContext db, ICurrentUse
         if (user is null)
         {
             return AccountErrors.UserNotFound;
+        }
+
+        if (await guard.CheckUserAsync(user.Id, cancellationToken) is { } refused)
+        {
+            return refused;
         }
 
         if (!user.IsActive || string.IsNullOrEmpty(user.Email))

@@ -4,5 +4,6 @@
     <ProjectReference Include="..\Coworkee.Contracts\Coworkee.Contracts.csproj" />
     <ProjectReference Include="..\Coworkee.Infrastructure\Coworkee.Infrastructure.csproj" />
     <ProjectReference Include="..\Coworkee.AspNetCore\Coworkee.AspNetCore.csproj" />
+    <ProjectReference Include="..\Coworkee.OData\Coworkee.OData.csproj" />
   </ItemGroup>
 </Project>

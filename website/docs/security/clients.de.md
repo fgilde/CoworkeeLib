@@ -97,7 +97,7 @@ sequenceDiagram
 - Der BFF beendet seine Cookie-Sitzung, wenn die API auf eine Anfrage mit Token `401` antwortet.
 - Refresh-Tokens werden widerrufen und, mit dem alten Stamp ausgestellt, ohnehin abgelehnt; das Anmelde-Cookie des Auth-Servers zählt bei `/connect/authorize` nicht mehr.
 
-Die drei Aktionen brauchen `Identity.Users.Manage` (`POST /api/v1/identity/users/{id}/sign-out`, `/lock` mit optionalem `until`, `/unlock`). Die eigene Sitzung beendet so niemand (`409 identity.own_session`; dafür meldet das Benutzermenü ab), und nur Administratoren können andere Administratoren abmelden oder sperren (`403 identity.admin_session_restricted`).
+Die drei Aktionen brauchen `Identity.Users.Manage` (`POST /api/v1/identity/users/{id}/sign-out`, `/lock` mit optionalem `until`, `/unlock`). Die eigene Sitzung beendet so niemand (`409 identity.own_session`; dafür meldet das Benutzermenü ab), nur Administratoren können andere Administratoren abmelden oder sperren (`403 identity.admin_role_restricted`), und niemand meldet einen Benutzer ab oder sperrt ihn, der eine Berechtigung hat, die dem Aufrufer fehlt (`403 identity.user_more_permissions`, [andere Konten](permissions.md#andere-konten-und-berechtigungen-weitergeben)).
 
 Eine Sitzung [als anderer Benutzer](../features/identity.md#als-anderer-benutzer-anmelden) endet ebenfalls, wenn sich der Stempel des Impersonators ändert: Wird er überall abgemeldet, gesperrt oder deaktiviert oder ändert er sein Passwort, widerruft die nächste Autorisierung oder Token-Erneuerung die Tokens der Übernahme und meldet den Browser ab.
 

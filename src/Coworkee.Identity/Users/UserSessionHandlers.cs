@@ -27,12 +27,10 @@ public sealed record LockUser(Guid Id, DateTimeOffset? Until) : ICommand<Result>
 /// whose clients hear why and sign out.
 /// </summary>
 internal sealed class UserSessionHandlers(
-    CoworkeeDbContext db, ICurrentUser currentUser, IEnumerable<IUserSessionListener> listeners, TimeProvider clock)
+    CoworkeeDbContext db, ICurrentUser currentUser, IEnumerable<IUserSessionListener> listeners, TimeProvider clock, AccountGuard guard)
     : IHandler<SignOutUser, Result>, IHandler<LockUser, Result>
 {
     private static readonly Error Self = Error.Conflict("identity.own_session", "Use the sign-out of the user menu for your own session.");
-
-    private static readonly Error AdminOnly = Error.Forbidden("identity.admin_session_restricted", "Only administrators can sign out or lock administrators.");
 
     public async Task<Result> HandleAsync(SignOutUser command, CancellationToken cancellationToken) =>
         await EndAsync(command.Id, _ => { }, cancellationToken);
@@ -63,9 +61,9 @@ internal sealed class UserSessionHandlers(
             return Self;
         }
 
-        if (await AdminGuard.IsAdminAsync(db, user.Id, cancellationToken) && !await AdminGuard.IsAdminAsync(db, currentUser.UserId, cancellationToken))
+        if (await guard.CheckUserAsync(user.Id, cancellationToken) is { } refused)
         {
-            return AdminOnly;
+            return refused;
         }
 
         change(user);

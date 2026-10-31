@@ -43,7 +43,8 @@ internal sealed class GetGrantsHandler(CoworkeeDbContext db, ICurrentUser curren
             .ToListAsync(cancellationToken);
 }
 
-internal sealed class SetGrantsHandler(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionDefinitionManager definitions, Roles.RoleOffer offer)
+internal sealed class SetGrantsHandler(
+    CoworkeeDbContext db, ICurrentUser currentUser, IPermissionDefinitionManager definitions, Roles.RoleOffer offer, Users.AccountGuard guard)
     : IHandler<SetGrants, Result>
 {
     public async Task<Result> HandleAsync(SetGrants command, CancellationToken cancellationToken)
@@ -59,10 +60,22 @@ internal sealed class SetGrantsHandler(CoworkeeDbContext db, ICurrentUser curren
             return Error.NotFound("identity.grant_target_not_found", "The role, user or group does not exist.");
         }
 
+        if (command.ProviderType == PermissionProviderType.User && await guard.CheckUserAsync(command.ProviderKey, cancellationToken) is { } forbidden)
+        {
+            return forbidden;
+        }
+
         var wanted = command.Names.Distinct(StringComparer.Ordinal).ToList();
         var current = await db.Set<PermissionGrant>()
             .Where(g => g.ProviderType == command.ProviderType && g.ProviderKey == command.ProviderKey && g.TenantId == currentUser.TenantId)
             .ToListAsync(cancellationToken);
+
+        // granted or revoked: only what the caller holds himself
+        var changed = wanted.Where(n => current.All(g => g.Name != n)).Concat(current.Where(g => !wanted.Contains(g.Name)).Select(g => g.Name));
+        if (await guard.CheckGrantAsync(changed, cancellationToken) is { } restricted)
+        {
+            return restricted;
+        }
 
         // a role or group new users get passes what is added on to them
         var added = wanted.Where(n => current.All(g => g.Name != n)).ToList();

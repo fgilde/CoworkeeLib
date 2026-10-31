@@ -114,6 +114,23 @@ Groups play two parts. As holders of permissions they act like roles: a role of 
 
 Rows the user may see are the business of the app's row filters (`IODataEntityFilter<T>` against `IGroupScope.ActiveAsync`); see [which groups a user sees](../features/identity.md#which-groups-a-user-sees).
 
+## Other accounts and handing out permissions
+
+Holding `Identity.Users.Manage` (or `Groups.ManageMembers`, `Permissions.Manage`, `Roles.Manage`) does not let anyone take over a stronger account or hand out more than he holds. One rule, `AccountGuard` (`Coworkee.Identity.Users`), runs in every request that changes or controls another user's account and in every request that gives or takes permissions:
+
+- **Acting on another account** (password, e-mail address, two-step verification, passkeys, external logins, avatar, profile and user name, activation, lock and unlock, sign-out, deletion, roles, groups, own grants, language, invitation and password reset mails, revoking his API keys) is refused with `403 identity.user_more_permissions` while the user holds a permission the caller lacks. All of the user's roles count, whichever he picked as active, also while he is deactivated (what he would get back); a permission he holds on a single resource counts unless the caller holds it globally or on that resource. It is the rule of [Log in as another user](#log-in-as-another-user). Only administrators act on administrators (`403 identity.admin_role_restricted`), also when someone else holds every permission. Administrators hold every permission, so they act on everyone of their organisation; the last-administrator rules stay.
+- **Granting or revoking** a permission (grants of roles, users and groups), giving or taking a role (`SetUserRoles`, `CreateUser` with roles, `SetGroupRoles`, deleting a role), joining or leaving a group (`SetUserGroups`, the member requests, deleting a group: the members get or lose its roles, grants and resource grants) and granting or revoking a role on a resource needs every permission involved, implied ones included, otherwise `403 identity.grant_restricted`. On a resource the caller may hold them there instead of globally. The administrator role needs an administrator (`identity.admin_role_restricted`). Default roles and the default group pass: every account a user manager creates gets them anyway, and only who held their permissions could make them default ([default role](../features/identity.md#owners-default-group-and-default-role)).
+- **Service clients** follow the same rule: creating, changing, rotating the secret of and deleting a client needs every permission of its roles and its list (`403 auth.client_rights_restricted`).
+
+The caller counts with what he holds right now: his active role, the scopes of his [API key](api-keys.md) (a key only narrows) and a decorated `IPermissionChecker`. The user he acts on counts with everything his roles give. Requests sent [as the system](#acting-as-the-system) pass: the code that sends them has decided already. Your own requests that change another user's account call the guard after loading the user:
+
+```csharp
+if (await guard.CheckUserAsync(userId, ct) is { } refused) return refused;
+if (await guard.CheckRolesAsync(addedOrRemovedRoleIds, ct) is { } restricted) return restricted;
+```
+
+Group-scoped administration (a manager limited to the users of his groups) is not part of the rule yet.
+
 ## Log in as another user
 
 With `Identity.Users.Impersonate` (implies `Identity.Users.View`, not part of `Identity.Users.Manage`) support staff sign in as another active user of their organisation. The target must hold no permission the caller lacks, and each of its groups must lie in the caller's groups or below them (`Identity.Groups.ScopeAll` waives that); the rules are checked when the ticket is issued and on every authorization and token refresh, so a later grant to the target ends the impersonation. Details, tokens and the end of an impersonation: [Log in as another user](../features/identity.md#log-in-as-another-user).

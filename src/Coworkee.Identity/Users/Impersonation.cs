@@ -53,7 +53,7 @@ internal sealed class StartImpersonationHandler(ICurrentUser currentUser, Impers
 }
 
 /// <summary>Who may sign in as whom; checked when the ticket is issued, when the auth server redeems it and on every authorize and refresh of the impersonation.</summary>
-public sealed class ImpersonationRules(CoworkeeDbContext db, IPermissionChecker checker, TimeProvider clock)
+public sealed class ImpersonationRules(CoworkeeDbContext db, IPermissionChecker checker, AccountGuard guard, TimeProvider clock)
 {
     internal static readonly Error Forbidden = Error.Forbidden("identity.impersonate_forbidden", "You may not sign in as other users.");
 
@@ -103,14 +103,9 @@ public sealed class ImpersonationRules(CoworkeeDbContext db, IPermissionChecker 
             return Forbidden;
         }
 
-        var theirs = await permissions.GetGrantedForAsync(targetId, tenantId, cancellationToken, narrow: false);
-        if (theirs.Except(mine, StringComparer.Ordinal).Any())
-        {
-            return MorePermissions;
-        }
-
+        // the superset rule every change of another account follows (AccountGuard)
         var myResources = await permissions.GetResourceGrantsForAsync(impersonatorId, tenantId, cancellationToken);
-        if ((await permissions.GetResourceGrantsForAsync(targetId, tenantId, cancellationToken)).Any(g => !mine.Contains(g.Permission) && !myResources.Contains(g)))
+        if (await guard.ExceedsAsync(mine, g => Task.FromResult(myResources.Contains(g)), targetId, tenantId, cancellationToken))
         {
             return MorePermissions;
         }

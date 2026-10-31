@@ -129,7 +129,7 @@ internal sealed class GetUsersHandler(CoworkeeDbContext db, ICurrentUser current
     }
 }
 
-internal sealed class CreateUserHandler(UserManager<User> users, CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<CreateUser, Result<UserDto>>
+internal sealed class CreateUserHandler(UserManager<User> users, CoworkeeDbContext db, ICurrentUser currentUser, AccountGuard guard) : IHandler<CreateUser, Result<UserDto>>
 {
     public async Task<Result<UserDto>> HandleAsync(CreateUser command, CancellationToken cancellationToken)
     {
@@ -171,13 +171,11 @@ internal sealed class CreateUserHandler(UserManager<User> users, CoworkeeDbConte
             return Error.Validation(nameof(CreateUserRequest.RoleIds), "Unknown role.");
         }
 
-        return roleIds.Contains(await AdminGuard.AdminRoleIdAsync(db, cancellationToken)) && !await AdminGuard.IsAdminAsync(db, currentUser.UserId, cancellationToken)
-            ? AdminGuard.AdminRoleRestricted
-            : null;
+        return await guard.CheckRolesAsync(roleIds, cancellationToken);
     }
 }
 
-internal sealed class UserDetailHandlers(CoworkeeDbContext db, ICurrentUser currentUser, TimeProvider clock)
+internal sealed class UserDetailHandlers(CoworkeeDbContext db, ICurrentUser currentUser, TimeProvider clock, AccountGuard guard)
     : IHandler<GetUser, Result<UserDetailDto>>, IHandler<UnlockUser, Result>
 {
     public async Task<Result<UserDetailDto>> HandleAsync(GetUser query, CancellationToken cancellationToken)
@@ -209,6 +207,11 @@ internal sealed class UserDetailHandlers(CoworkeeDbContext db, ICurrentUser curr
             return UserErrors.NotFound;
         }
 
+        if (await guard.CheckUserAsync(user.Id, cancellationToken) is { } refused)
+        {
+            return refused;
+        }
+
         user.LockoutEnd = null;
         user.AccessFailedCount = 0;
         return Result.Success();
@@ -231,7 +234,8 @@ internal sealed class UpdateUserValidator : AbstractValidator<UpdateUser>
 }
 
 internal sealed class UpdateUserHandler(
-    CoworkeeDbContext db, ICurrentUser currentUser, UserManager<User> users, Profile.UserChanges changes, IEnumerable<IUserActivationListener> activation)
+    CoworkeeDbContext db, ICurrentUser currentUser, UserManager<User> users, Profile.UserChanges changes, IEnumerable<IUserActivationListener> activation,
+    AccountGuard guard)
     : IHandler<UpdateUser, Result>
 {
     public async Task<Result> HandleAsync(UpdateUser command, CancellationToken cancellationToken)
@@ -240,6 +244,11 @@ internal sealed class UpdateUserHandler(
         if (user is null)
         {
             return UserErrors.NotFound;
+        }
+
+        if (await guard.CheckUserAsync(user.Id, cancellationToken) is { } refused)
+        {
+            return refused;
         }
 
         if (user.IsActive && !command.User.IsActive && await AdminGuard.IsAdminAsync(db, user.Id, cancellationToken)
@@ -288,13 +297,18 @@ internal sealed class UpdateUserHandler(
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
 
-internal sealed class SetUserRolesHandler(CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<SetUserRoles, Result>
+internal sealed class SetUserRolesHandler(CoworkeeDbContext db, ICurrentUser currentUser, AccountGuard guard) : IHandler<SetUserRoles, Result>
 {
     public async Task<Result> HandleAsync(SetUserRoles command, CancellationToken cancellationToken)
     {
         if (!await db.Set<User>().AnyAsync(u => u.Id == command.Id && u.TenantId == currentUser.TenantId, cancellationToken))
         {
             return UserErrors.NotFound;
+        }
+
+        if (await guard.CheckUserAsync(command.Id, cancellationToken) is { } refused)
+        {
+            return refused;
         }
 
         var wanted = command.RoleIds.Distinct().ToList();
@@ -307,9 +321,10 @@ internal sealed class SetUserRolesHandler(CoworkeeDbContext db, ICurrentUser cur
         var adminRoleId = await AdminGuard.AdminRoleIdAsync(db, cancellationToken);
         var current = await db.Set<IdentityUserRole<Guid>>().Where(r => r.UserId == command.Id).ToListAsync(cancellationToken);
         var hadAdmin = current.Any(r => r.RoleId == adminRoleId);
-        if (hadAdmin != wanted.Contains(adminRoleId) && !await AdminGuard.IsAdminAsync(db, currentUser.UserId, cancellationToken))
+        var changed = wanted.Where(id => current.All(r => r.RoleId != id)).Concat(current.Where(r => !wanted.Contains(r.RoleId)).Select(r => r.RoleId));
+        if (await guard.CheckRolesAsync(changed, cancellationToken) is { } restricted)
         {
-            return AdminGuard.AdminRoleRestricted;
+            return restricted;
         }
 
         if (hadAdmin && !wanted.Contains(adminRoleId) && !await AdminGuard.OtherActiveAdminExistsAsync(db, currentUser.TenantId, command.Id, cancellationToken))
