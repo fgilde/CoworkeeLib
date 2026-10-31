@@ -23,7 +23,7 @@ Das Modul bringt die Tabelle `cw.RecordAttachments` mit: **Migration anlegen**, 
 | `WriteRequires(permission)` | Uploads und Löschen brauchen diese Berechtigung zusätzlich zum Sehen des Datensatzes |
 | `Authorize((services, access, ct) => ...)` | eine zusätzliche Prüfung beim Lesen (`access.Write == false`) und Schreiben; jede Prüfung muss bestehen |
 
-`maxBytes` ist standardmäßig 10 MB, ohne Inhaltstypen wird jeder angenommen; `image/*` nimmt jeden Bildtyp. Der Name in der Adresse (`LeaveRequests`) ist meist der Name des OData-Sets des Typs.
+`maxBytes` ist standardmäßig 10 MB, ohne Inhaltstypen wird jeder angenommen; `image/*` nimmt jeden Bildtyp. Der Name in der Adresse (`LeaveRequests`) ist meist der Name des OData-Sets des Typs. Die Entität braucht eine `Guid`-`Id`; ein anderer Schlüssel verhindert den Start.
 
 ## Wer die Dateien sieht und ändert
 
@@ -38,6 +38,8 @@ Lesen (Liste, Öffnen, Herunterladen) folgt dem Datensatz: Hat der Typ ein [ODat
 | `GET /api/v1/attachments/{type}/{id}/{slot}/{attachmentId}` | der Inhalt, inline in einer Sandbox; `?download=true` als Download; antwortet auf HEAD |
 | `POST /api/v1/attachments/{type}/{id}/{slot}?name=cv.pdf` | Upload: der Body ist die Datei, sein `Content-Type` der Typ der Datei |
 | `DELETE /api/v1/attachments/{type}/{id}/{slot}/{attachmentId}` | Datei samt Blob löschen |
+| `POST /api/v1/attachments/{type}/{id}/{slot}/{attachmentId}/token` | ein temporärer Link, siehe unten |
+| `GET /api/v1/attachments/token/{token}/{name}` | die Datei eines temporären Links, ohne Anmeldung (Rate-Limit `tokens`) |
 
 Eine Datei über der Grenze des Slots, eines Typs, den der Slot nicht nimmt, mit leerem oder pfadartigem Namen oder von einem Scanner abgelehnt, ergibt 400.
 
@@ -82,4 +84,4 @@ Der [Export personenbezogener Daten](../security/privacy.md) hat einen Abschnitt
 
 `IAttachmentsApi` ist die API dahinter; `AttachmentUrls.Content(attachment, download)` ist die Adresse einer Datei.
 
-Grenzen: Uploads werden in eine temporäre Datei gepuffert (für Provider, die eine bekannte Länge brauchen, und für die Scanner); die Größengrenze des Upload-Endpunkts ist die größte Slot-Grenze.
+Grenzen: Uploads werden in eine temporäre Datei gepuffert (für Provider, die eine bekannte Länge brauchen, und für die Scanner); die Größengrenze des Upload-Endpunkts ist die größte Slot-Grenze plus 64 KB, danach prüft jeder Slot seine eigene.

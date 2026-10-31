@@ -23,7 +23,7 @@ The module brings the table `cw.RecordAttachments`: **add a migration** when you
 | `WriteRequires(permission)` | uploads and deletes need this permission on top of seeing the record |
 | `Authorize((services, access, ct) => ...)` | an extra check on reads (`access.Write == false`) and writes; every check must pass |
 
-`maxBytes` defaults to 10 MB, no content types take any; `image/*` takes every image type. The name in the address (`LeaveRequests`) is usually the OData set name of the type.
+`maxBytes` defaults to 10 MB, no content types take any; `image/*` takes every image type. The name in the address (`LeaveRequests`) is usually the OData set name of the type. The entity needs a `Guid` `Id`; another key stops the start.
 
 ## Who sees and changes the files
 
@@ -38,6 +38,8 @@ Reading (list, open, download) follows the record: when the type has an [OData s
 | `GET /api/v1/attachments/{type}/{id}/{slot}/{attachmentId}` | the content, inline in a sandbox; `?download=true` as download; answers HEAD |
 | `POST /api/v1/attachments/{type}/{id}/{slot}?name=cv.pdf` | upload: the body is the file, its `Content-Type` the file's type |
 | `DELETE /api/v1/attachments/{type}/{id}/{slot}/{attachmentId}` | delete the file and its blob |
+| `POST /api/v1/attachments/{type}/{id}/{slot}/{attachmentId}/token` | a temporary link, see below |
+| `GET /api/v1/attachments/token/{token}/{name}` | the file of a temporary link, without sign-in (rate limit `tokens`) |
 
 A file over the slot's limit, of a type the slot does not take, with an empty or path-like name, or refused by a scanner answers 400.
 
@@ -82,4 +84,4 @@ The [personal data export](../security/privacy.md) has a section `attachments` w
 
 `IAttachmentsApi` is the API behind it; `AttachmentUrls.Content(attachment, download)` is the address of one file.
 
-Limits: uploads are buffered to a temporary file (for providers that need a known length and for the scanners); the request size limit of the upload endpoint is the largest slot limit.
+Limits: uploads are buffered to a temporary file (for providers that need a known length and for the scanners); the request size limit of the upload endpoint is the largest slot limit plus 64 KB, each slot then checks its own.
