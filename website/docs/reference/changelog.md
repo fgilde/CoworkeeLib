@@ -26,6 +26,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixed
 
+- A mail stayed in `Sending` forever when the sender stopped between the provider and saving the result. The recurring job `coworkee-mail-stuck-sending` now fails such mails after `Coworkee:Mail:SendingTimeout` (30 minutes) with *Delivery unknown*, never sending them twice; `Coworkee:Mail:RetryStuckSending` queues them again instead (a mail may then arrive twice). New column `cw.OutgoingMails.SendingSince` and an index on `Status`: add a migration. See [Delivery and the mail log](../modules/mailing.md#delivery-and-the-mail-log).
 - Uploads to the files (Files page, `POST /api/v1/files`) were never virus-scanned. The registered `IAttachmentScanner`s check them now before they are stored (`FileUploads.EntityType`, the folder as `EntityId`); a refused file answers 400. An app whose scanner reads `EntityType` or `Slot` as a record type handles `FileUploads.EntityType`.
 - A `CacheScope.Global` entry was tagged with the organisation of the caller who loaded it: a command in another organisation never invalidated it. Global entries carry a global tag now, which every `IInvalidatesCache` command clears; entries of the other scopes stay per organisation.
 - The file system blob storage failed to delete a key whose directory did not exist, the S3 storage one whose bucket did not exist yet; both ignore it now like any other missing blob (erasing a user whose chat file was already gone answered 500).

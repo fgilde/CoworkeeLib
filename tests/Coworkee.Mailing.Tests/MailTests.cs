@@ -171,6 +171,48 @@ public sealed class MailTests(MailApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_mail_left_in_sending_past_the_timeout_fails_as_unknown_and_is_not_sent_again()
+    {
+        var (stuck, fresh) = (Recipient(), Recipient());
+        await AddSendingAsync(stuck, DateTimeOffset.UtcNow.AddHours(-1));
+        await AddSendingAsync(fresh, DateTimeOffset.UtcNow);
+
+        await app.AsActorAsync(null, null, async sp => { await ActivatorUtilities.CreateInstance<StuckMailSweep>(sp).ExecuteAsync(Ct); return 0; });
+
+        (await app.InDbAsync(db => db.Set<OutgoingMail>().SingleAsync(m => m.To == stuck, Ct))).ShouldSatisfyAllConditions(
+            m => m.Status.ShouldBe(OutgoingMailStatus.Failed), m => m.LastError.ShouldBe(StuckMailSweep.Message));
+        (await StatusAsync(fresh)).ShouldBe(OutgoingMailStatus.Sending);
+        await Task.Delay(TimeSpan.FromSeconds(2), Ct);
+        (await app.MessagesToAsync(stuck)).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task With_retry_a_mail_left_in_sending_is_queued_and_sent_again()
+    {
+        var to = Recipient();
+        await AddSendingAsync(to, DateTimeOffset.UtcNow.AddHours(-1));
+
+        await app.AsActorAsync(null, null, async sp =>
+        {
+            await ActivatorUtilities.CreateInstance<StuckMailSweep>(sp, Microsoft.Extensions.Options.Options.Create(new MailOptions { RetryStuckSending = true })).ExecuteAsync(Ct);
+            return 0;
+        });
+
+        await MailApp.Eventually(async () => await StatusAsync(to) == OutgoingMailStatus.Sent);
+        (await app.MessagesToAsync(to)).Count.ShouldBe(1);
+    }
+
+    private Task<Guid> AddSendingAsync(string to, DateTimeOffset since) => app.InDbAsync(async db =>
+    {
+        var mail = OutgoingMail.Queue(to, new RenderedMail("Stuck", "<p>stuck</p>"), "Test.Hello", _setup.TenantId, since);
+        mail.ClearDomainEvents();
+        (mail.Status, mail.Attempts, mail.SendingSince) = (OutgoingMailStatus.Sending, 1, since);
+        db.Add(mail);
+        await db.SaveChangesAsync(Ct);
+        return mail.Id;
+    });
+
+    [Fact]
     public async Task Rolled_back_mail_is_never_sent()
     {
         var to = Recipient();

@@ -53,12 +53,21 @@ Eine eingereihte Mail startet den Hintergrundjob `SendMailJob` in der Queue `mai
 | Status | Bedeutung |
 |---|---|
 | `Queued` | wartet auf den Job, auch zwischen zwei Versuchen |
-| `Sending` | eine Instanz hat sie übernommen |
+| `Sending` | eine Instanz hat sie übernommen (`SendingSince`) |
 | `Sent` | der Anbieter hat sie angenommen (`SentAt`) |
 | `Failed` | jeder Versuch ist fehlgeschlagen; der letzte Fehler (Geheimnisse maskiert) steht in `LastError` |
 | `Skipped` | der Empfänger steht nicht auf der Whitelist (`Recipient is not on the whitelist.`); nichts wurde versendet |
 
 Ein fehlgeschlagener Versuch wird wie jeder Hintergrundjob wiederholt: `Coworkee:Jobs:Attempts` (3) Versuche mit `Coworkee:Jobs:RetryDelaysInSeconds` (10, 60, 300) Wartezeit dazwischen. Die Whitelist `Mail.Whitelist` nimmt Adressen und `@domain`-Einträge, einen pro Zeile (Kommas und Semikolons trennen auch); leer lässt jeden Empfänger durch. Nutze sie auf Testsystemen mit Kopien echter Daten.
+
+Ein Sender, der zwischen der Übergabe an den Anbieter und dem Speichern des Ergebnisses stoppt (Absturz, Neustart), lässt die Mail in `Sending`. Ob der Anbieter sie verschickt hat, ist unbekannt; der wiederkehrende Job `coworkee-mail-stuck-sending` (alle fünf Minuten) entscheidet nach `Coworkee:Mail`:
+
+| Einstellung | Standard | |
+|---|---|---|
+| `SendingTimeout` | `00:30:00` | eine Mail länger als das in `Sending` hängt |
+| `RetryStuckSending` | `false` | `false`: die Mail wird `Failed` mit *Delivery unknown: ... may have been sent* und nie wieder gesendet. `true`: sie wird neu eingereiht und noch einmal gesendet |
+
+Der Standard sendet keine Mail doppelt, kann aber eine verlieren; suche im Mail-Log nach *Delivery unknown* und sende von Hand neu. Schalte `RetryStuckSending` ein, wo eine verlorene Mail schlimmer ist als eine doppelte (Anmeldecodes, Passwort-Resets). Halte `SendingTimeout` über der längsten Zeit, die dein Anbieter für eine Mail braucht.
 
 **Administration > Communication > Mail log** (`/cw/admin/mail/log`, Berechtigung `Mail.Log.View`) listet die Mails der eigenen Organisation mit Status, Versuchen und Fehler, gefiltert nach Status oder Kampagne (`?campaign=<id>`). API: `GET /api/v1/mail/outgoing?status=Failed&campaignId=...` (seitenweise) und die OData-Menge `Mails` (ohne den Inhalt). Mit dem Modul [Aufbewahrung](retention.md) löscht das Ziel `mail-log` alte Mails (ohne Standard: aufbewahrt, bis Tage gesetzt sind; wartende und sendende Mails bleiben). Der Export persönlicher Daten listet die Mails an die Adresse des Benutzers in seiner Organisation (Abschnitt `mails`); das Löschen entfernt sie dort, Mails einer anderen Organisation an dieselbe Adresse bleiben.
 

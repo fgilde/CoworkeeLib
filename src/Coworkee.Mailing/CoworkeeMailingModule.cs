@@ -57,6 +57,8 @@ public sealed class CoworkeeMailingModule : CoworkeeModule, IWebModule
         services.AddScoped<MailUnsubscribe>();
         services.AddScoped<CampaignMailModels>();
         services.AddScoped<MailCampaignJob>();
+        services.AddOptions<MailOptions>().BindConfiguration(MailOptions.Section);
+        services.AddRecurringJob<StuckMailSweep>(StuckMailSweep.Id, StuckMailSweep.Cron);
     }
 
     public void ConfigureApplication(WebApplication app)
