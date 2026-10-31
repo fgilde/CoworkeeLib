@@ -39,7 +39,8 @@ Which package goes where, and what to put in the `using` block.
 | `Coworkee.Workflows.Elsa.Studio` | Studio host | `Coworkee.Workflows.Elsa.Studio` | `AddCoworkeeElsaStudio`, `MapCoworkeeElsaStudio`: Elsa Studio as an app of its own, signed in at the auth server |
 | `Coworkee.Webhooks` | API, workers | `Coworkee.Webhooks` | `CoworkeeWebhooksModule`, `AddCoworkeeWebhooks`, `IWebhookPublisher`, `WebhookSignature` |
 | `Coworkee.EventBus`, `Coworkee.EventBus.RabbitMq` | API, workers | `Coworkee.EventBus` | `IEventBus`, `IIntegrationEvent`, `IIntegrationEventHandler<T>`, `CoworkeeRabbitMqEventBusModule` |
-| `Coworkee.Cli` | your machine | | `coworkee new` (options or `--spec`), `options`, `spec`, `run`, `migrations add`, `module add`, `entity add`, `update`, `doctor`, `ui`, `mcp` |
+| `Coworkee.Cli` | your machine | | `coworkee new` (options or `--spec`), `options`, `spec`, `specs`, `add`, `remove`, `run`, `migrations add`, `module add`, `entity add`, `entity import`, `db`, `texts`, `deploy`, `update`, `self-update`, `doctor`, `ui`, `mcp` ([CLI](../getting-started/cli.md)) |
+| `Coworkee.Studio` | your machine | | Coworkee Studio, the desktop wizard (tool `coworkee-ui`, started by `coworkee ui`, see [Studio](../getting-started/studio.md)) |
 | `Coworkee.Templates` | your machine | | `dotnet new coworkee` |
 | `Coworkee.Client` | SDKs, other .NET apps | `Coworkee.Client` | `CoworkeeApiClient`, `CoworkeeApiException`, `BearerTokenHandler`, `ODataResult<T>` |
 | `Coworkee.Client.Blazor` | WebAssembly client | `Coworkee.Client.Blazor`, `.Components`, `.Components.Data`, `.Data`, `.Api`, `.Navigation`, `.Security`, `.Customization` | `AddCoworkeeClient`, `CoworkeeLayout`, `CoworkeeDataTable<T>`, `IODataClient`, `ApiClientBase`, `ReplaceComponent` |
