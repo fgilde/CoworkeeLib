@@ -34,8 +34,8 @@ public sealed class CoworkeeODataOptions
     public int FacetRowLimit { get; set; } = 50_000;
 
     /// <summary>
-    /// A filtered set of more rows than this gets no facets: every group would read all of it. Checked with one count that stops after this many rows,
-    /// before any facet query. 0 (the default) counts the facets of every set.
+    /// A filtered set of more rows than this gets no facets: every group would read all of it. Checked with one full count of the filtered set
+    /// (the same count <see cref="FacetRowLimit"/> uses) before any facet query. 0 (the default) counts the facets of every set.
     /// </summary>
     public int MaxFacetRows { get; set; }
 
