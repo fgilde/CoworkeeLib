@@ -13,7 +13,7 @@ Coworkee bringt diese Texte in 23 Sprachen mit. Sprachen und Übersetzungen lieg
 
 Arabisch, Bulgarisch, Chinesisch (vereinfacht), Dänisch, Deutsch, Englisch, Französisch, Griechisch, Indonesisch, Italienisch, Japanisch, Khmer, Koreanisch, Kroatisch, Niederländisch, Polnisch, Portugiesisch (Brasilien), Russisch, Schwedisch, Spanisch, Tschechisch, Türkisch und Ukrainisch. Das gilt für die Seiten und Komponenten der Module, die Kontoseiten des Auth-Servers und die Mailvorlagen.
 
-Schlüssel jedes Textes ist der englische Wortlaut, eine englische Datei musst du also nicht pflegen. Eine frische Installation bietet Englisch und Deutsch an, alle anderen Sprachen schaltest du auf der Seite *Sprachen* zu. Willst du gleich mit einer anderen Auswahl starten, gib sie der CLI mit:
+Schlüssel jedes Textes ist der englische Wortlaut, eine englische Datei musst du also nicht pflegen; die übrigen 22 Sprachen kommen als Übersetzungsdateien mit. Eine frische Installation bietet Englisch und Deutsch an, alle anderen Sprachen schaltest du auf der Seite *Sprachen* zu. Willst du gleich mit einer anderen Auswahl starten, gib sie der CLI mit:
 
 ```bash
 coworkee new Shop --languages en,de,fr --default-language de
