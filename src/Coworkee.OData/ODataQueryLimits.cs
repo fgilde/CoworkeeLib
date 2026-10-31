@@ -17,23 +17,27 @@ internal sealed class ODataQueryLimits(IOptions<CoworkeeODataOptions> options) :
 /// </summary>
 public static class ODataLimits
 {
-    /// <summary>The configured limits as OData's validation settings.</summary>
-    public static ODataValidationSettings Settings(IServiceProvider services)
+    /// <summary>The configured limits as OData's validation settings; for the rows of <paramref name="entityType"/> with its set's own node limit.</summary>
+    public static ODataValidationSettings Settings(IServiceProvider services, Type? entityType = null)
     {
         var options = services.GetRequiredService<IOptions<CoworkeeODataOptions>>().Value;
+        var set = entityType is null ? null : services.GetService<ODataEntityRegistry>()?.Find(entityType);
         return new ODataValidationSettings
         {
-            MaxNodeCount = options.MaxNodeCount,
+            MaxNodeCount = set?.MaxNodeCount ?? options.MaxNodeCount,
             MaxAnyAllExpressionDepth = options.MaxAnyAllExpressionDepth,
             MaxExpansionDepth = options.MaxExpansionDepth,
             MaxOrderByNodeCount = options.MaxOrderByNodeCount,
         };
     }
 
-    /// <summary>Checks the $filter, $orderby and $expand of <paramref name="options"/>; a query beyond a limit throws an ODataException.</summary>
+    /// <summary>
+    /// Checks the $filter, $orderby and $expand of <paramref name="options"/> (with the node limit of the set of their rows); a query beyond a limit throws
+    /// an ODataException.
+    /// </summary>
     public static void Check(ODataQueryOptions options, IServiceProvider services)
     {
-        var settings = Settings(services);
+        var settings = Settings(services, options.Context.ElementClrType);
         options.Filter?.Validate(settings);
         options.OrderBy?.Validate(settings);
         options.SelectExpand?.Validate(settings);

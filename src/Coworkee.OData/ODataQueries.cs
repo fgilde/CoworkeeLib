@@ -96,7 +96,7 @@ internal sealed class ODataQueries(
             // what [EnableQuery] does on the route: validate with the configured limits (before the facets read the filter), page by the model's page
             // size, then apply in the scope's two steps
             var options = http.Request.ODataQueryOptions<T>(model, edmSet);
-            var enableQuery = new ScopedEnableQueryAttribute(limits.Value);
+            var enableQuery = new ScopedEnableQueryAttribute(limits.Value, set.MaxNodeCount);
             enableQuery.ValidateQuery(http.Request, options);
             var rows = await ODataPipeline.RowsAsync<T>(http, profile, cancellationToken);
             enableQuery.UseModelPageSize(model, edmSet.EntityType);

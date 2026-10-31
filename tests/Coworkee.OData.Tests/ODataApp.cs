@@ -261,7 +261,8 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddODataEntity<Gadget>("Gadgets", ODataApp.ViewGadgets, o => o.Hide(g => g.SerialCode).HideUnless(g => g.Category, ODataApp.SeeCategories));
         context.Services.AddScoped<IODataEntityFilter<Gadget>, HideSecretGadgets>();
         context.Services.AddGlobalSearch<Gadget>(s => s.Fields(g => g.Name, g => g.Category).Subtitle(g => g.Category).Page("/gadgets"));
-        context.Services.AddODataEntity<Widget>("Widgets", ODataApp.ViewGadgets);
+        // a set whose clients send long filters: its own node limit (QueryLimitTests)
+        context.Services.AddODataEntity<Widget>("Widgets", ODataApp.ViewGadgets, o => o.MaxNodeCount(1000));
         context.Services.ConfigureFacet<Widget>(w => w.Color, f => f.View = Contracts.Data.FacetView.Buttons);
         context.Services.AddODataEntity<Pump>("Pumps", ODataApp.ViewGadgets);
         context.Services.AddSingleton<Coworkee.OData.Computed.IODataComputedPropertySource, PumpSize>();

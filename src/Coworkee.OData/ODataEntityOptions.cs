@@ -12,6 +12,20 @@ public sealed class ODataEntityOptions<TEntity>
 
     internal string? KeyName { get; private set; }
 
+    internal int? NodeLimit { get; private set; }
+
+    /// <summary>
+    /// Nodes a <c>$filter</c> or <c>$orderby</c> of this set may have, instead of <c>Coworkee:OData:MaxNodeCount</c>: for a set whose clients send long
+    /// filters (a dashboard ORing many chosen values). It applies wherever the set's queries are checked: the routes, <see cref="IODataQueries"/>, exports,
+    /// facet filters, row filters of code and the assistant's data tools.
+    /// </summary>
+    public ODataEntityOptions<TEntity> MaxNodeCount(int nodes)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(nodes, 1);
+        NodeLimit = nodes;
+        return this;
+    }
+
     /// <summary>
     /// The key of the set when it is not <c>Id</c>, e.g. <c>o =&gt; o.Key(c =&gt; c.IsoCode)</c>: any primitive type, by-key reads are
     /// <c>/odata/Countries('DE')</c>. Features that need a Guid <c>Id</c> (client entities, attachments, social, workflows, history, webhooks) refuse such an entity.

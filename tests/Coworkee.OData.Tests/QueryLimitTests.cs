@@ -68,6 +68,28 @@ public sealed class QueryLimitTests(ODataApp app) : IAsyncLifetime
             FacetResponse.FilterAsync(services.GetRequiredService<GadgetDbContext>().Set<Gadget>(), filter, new DefaultHttpContext { RequestServices = services }, Ct, clrNames: true));
     }
 
+    [Fact]
+    public async Task A_set_with_its_own_node_limit_takes_longer_filters_everywhere_its_queries_are_checked()
+    {
+        // Widgets allow 1000 nodes, Gadgets keep the default of 100
+        (await GetUrlAsync(app.App, $"Widgets?{Search(40)}")).ShouldBe(HttpStatusCode.OK);
+        (await GetUrlAsync(app.App, $"Widgets?{Search(400)}")).ShouldBe(HttpStatusCode.BadRequest);
+        (await GetAsync(app.App, Search(40))).ShouldBe(HttpStatusCode.BadRequest);
+
+        var admin = app.As(_setup.AdminUserId, _setup.TenantId);
+        (await admin.GetAsync($"/api/v1/data/Widgets/export?{Search(40)}", Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(_setup.AdminUserId, _setup.TenantId));
+        await using var scope = app.App.Services.CreateAsyncScope();
+        var services = scope.ServiceProvider;
+        (await services.GetRequiredService<IODataQueries>().QueryAsync<Widget>("rt/odata", "Widgets", Search(40), cancellationToken: Ct)).IsSuccess.ShouldBeTrue();
+        (await services.GetRequiredService<IODataQueries>().QueryAsync<Widget>("rt/odata", "Widgets", Search(400), cancellationToken: Ct)).Error!.Kind
+            .ShouldBe(ErrorKind.Validation);
+        (await ODataEntityAccess.FilteredAsync<Widget>(services, Search(40)["$filter=".Length..], Ct)).ShouldNotBeNull();
+        (await services.GetRequiredService<IDispatcher>().SendAsync(new QueryDataQuery("Widgets", Search(40)["$filter=".Length..]), Ct)).IsSuccess.ShouldBeTrue();
+        ODataLimits.Settings(services, typeof(Widget)).MaxNodeCount.ShouldBe(1000);
+        ODataLimits.Settings(services, typeof(Gadget)).MaxNodeCount.ShouldBe(100);
+    }
+
     public static TheoryData<string, string, string> Siblings => new()
     {
         { "Shelves?$filter=Bins/any(b: b/Labels/any(l: l/Text eq 'x'))", "MaxAnyAllExpressionDepth", "2" },

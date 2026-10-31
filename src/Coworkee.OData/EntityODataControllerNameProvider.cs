@@ -33,7 +33,7 @@ internal sealed class EntityODataControllerNameProvider(ODataEntityRegistry regi
                     {
                         if (filters[i].GetType() == typeof(Microsoft.AspNetCore.OData.Query.EnableQueryAttribute))
                         {
-                            filters[i] = new ScopedEnableQueryAttribute(options);
+                            filters[i] = new ScopedEnableQueryAttribute(options, entity.MaxNodeCount);
                         }
                     }
                 }
