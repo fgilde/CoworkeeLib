@@ -62,7 +62,7 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--retention` | `retention` | bool | `true` | [Retention](../modules/retention.md): days to keep per kind of data, a nightly job and the admin page *Retention* |
 | `--files` | `files` | bool | `false` | Folders and files with preview and per-folder permissions |
 | `--features` | `features` | bool | `false` | Features, editions and the tenant administration |
-| `--social` | `social` | bool | `false` | Comments, tags and ratings |
+| `--social` | `social` | bool | `false` | Comments, tags, ratings and reactions |
 | `--workflows` | `workflows` | bool | `false` | States, transitions and approvals for entities; with the samples, products go through an approval |
 | `--elsa` | `elsa` | bool | `false` | Elsa Workflows 3 in the API (needs `--workflows`) |
 | `--elsa-studio` | `elsaStudio` | bool | `false` | [Workflow designer](../modules/workflows-elsa.md#elsa-studio): Elsa Studio as project `MyApp.ElsaStudio` in the app host, signed in at the auth server (needs `--elsa`) |

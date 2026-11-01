@@ -1,6 +1,6 @@
 # Coworkee.Social
 
-Comments, tags and ratings for any entity, with realtime updates and notifications.
+Comments, tags, ratings and reactions for any entity, with realtime updates and notifications.
 
 Part of [Coworkee](https://fgilde.github.io/CoworkeeLib/), a modular application framework for .NET 10, Blazor and Aspire. Start a new app with the CLI:
 

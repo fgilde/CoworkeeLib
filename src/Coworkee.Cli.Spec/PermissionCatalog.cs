@@ -19,8 +19,8 @@ public static class PermissionCatalog
         ("files", ["Files.View", "Files.Upload", "Files.Manage", "Files.Registrations.View"]),
         ("features", ["Features.Tenants", "Features.Editions"]),
         ("social", [
-            "Social.Comments.View", "Social.Comments.Create", "Social.Comments.Moderate", "Social.Tags.View", "Social.Tags.Create", "Social.Tags.Moderate",
-            "Social.Ratings.View", "Social.Ratings.Create", "Social.Ratings.Moderate",
+            "Social.Comments.View", "Social.Comments.Create", "Social.Comments.Moderate", "Social.Comments.SetStatus", "Social.Tags.View", "Social.Tags.Create", "Social.Tags.Moderate",
+            "Social.Ratings.View", "Social.Ratings.Create", "Social.Ratings.Moderate", "Social.Reactions.View", "Social.Reactions.Create",
         ]),
         ("workflows", ["Workflows.View", "Workflows.Transition"]),
         ("elsa", ["Workflows.Elsa.Manage"]),

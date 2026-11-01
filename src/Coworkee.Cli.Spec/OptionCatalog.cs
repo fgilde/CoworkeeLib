@@ -139,7 +139,7 @@ public static class OptionCatalog
             "When users share documents like on a drive.", ["File manager with preview of nearly every type"], ["Blob storage grows"], Package: "Coworkee.Files"),
         new("features", Modules, "Features and editions", "Features switched per tenant, editions and the tenant administration of the host.", OptionKind.Bool, "false",
             "Multi-tenant SaaS with plans.", ["[RequiresFeature] and feature gates"], ["Only useful with several tenants"], Package: "Coworkee.Features"),
-        new("social", Modules, "Comments, tags and ratings", "Comments, tags and star ratings for any entity, opted in per entity type.", OptionKind.Bool, "false",
+        new("social", Modules, "Comments, tags, ratings and reactions", "Comments, tags and star ratings for any entity, opted in per entity type.", OptionKind.Bool, "false",
             "Content that people discuss or rate.", ["Ready-made components"], ["Each entity type has to be registered"], Package: "Coworkee.Social"),
         new("workflows", Modules, "Workflows and approvals", "States and transitions per entity type, approvals by roles or users with deadlines, reminders and escalation, a history, the approvals inbox; declared in code. With the samples, products go through an approval.", OptionKind.Bool, "false",
             "When entities move through steps that people decide on, such as review and release.", ["Guards by permission, role or condition", "Buttons, timeline and inbox ready-made"], ["Each entity type has to be declared"], Package: "Coworkee.Workflows"),
