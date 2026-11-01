@@ -4,8 +4,6 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
-### Security
-
 ### Added
 
 - `Coworkee:Bff:Pwa:Icons` (`BffPwaOptions.Icons`): several icons of the web manifest with sizes, type and purpose (e.g. 192 and 512 pixel PNGs), listed instead of the single `Icon` while the theme has no logo. See [phones and PWA](../ui/phones-and-pwa.md).

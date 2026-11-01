@@ -4,8 +4,6 @@
 
 ## Unveröffentlicht
 
-### Sicherheit
-
 ### Hinzugefügt
 
 - `Coworkee:Bff:Pwa:Icons` (`BffPwaOptions.Icons`): mehrere Icons des Web-Manifests mit Größe, Typ und Zweck (z. B. PNGs mit 192 und 512 Pixeln), statt des einen `Icon` gelistet, solange das Theme kein Logo hat. Siehe [Smartphones und PWA](../ui/phones-and-pwa.md).
