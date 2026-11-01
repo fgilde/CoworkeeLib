@@ -2,6 +2,32 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Sicherheit
+
+### Hinzugefügt
+
+- `Coworkee:Bff:Pwa:Icons` (`BffPwaOptions.Icons`): mehrere Icons des Web-Manifests mit Größe, Typ und Zweck (z. B. PNGs mit 192 und 512 Pixeln), statt des einen `Icon` gelistet, solange das Theme kein Logo hat. Siehe [Smartphones und PWA](../ui/phones-and-pwa.md).
+- `IClientEntityChangeLog.Touch<T>(ids)` (L86): meldet Zeilen an die Client-Entity-Kopien, wenn keine `ChangedAt`/`ModifiedAt`-Spalte sich bewegt hat (ein Tag über eine Verknüpfungstabelle); gespeichert mit dem Command in der neuen Tabelle `cw.ClientEntityTouches` und vom Änderungs-Feed für die Zeilen gelesen, die der Leser sieht. Tags, Bewertungen, Kommentare und Reaktionen der Bibliothek melden typisiert registrierte Entities (`Tags<T>(...)`) selbst. Eine Kopie, die zuletzt vor mehr als `Coworkee:ClientEntities:ChangeLogLifetime` (30 Tage) aktualisiert wurde, lädt neu. Migration anlegen. Siehe [Änderungen, die kein Datum sieht](../ui/client-entities.md#anderungen-die-kein-datum-sieht).
+
+### Breaking Changes
+
+- Apps brauchen eine Migration: neue Tabelle `cw.ClientEntityTouches`, neue Spalte `cw.OutgoingMails.SendingSince` (nullable) mit einem Index auf `Status`.
+- Registrierte `IAttachmentScanner` prüfen auch Uploads in die Ablage (`EntityType` `StoredFile`); ein Scanner, der `EntityType` als Datensatztyp liest, behandelt das.
+- Eine Client-Entity-Kopie, die zuletzt vor mehr als `Coworkee:ClientEntities:ChangeLogLifetime` (30 Tagen) aktualisiert wurde, lädt neu.
+
+### Behoben
+
+- MudBlazor-Tab-Badges schnitten Zahlen mit mehr als einer Stelle ab. `CoworkeeLayout` stellt sie jetzt in jeder App inline hinter den Tab-Text; Apps mit eigener Regel dafür (`.mud-tab .mud-tab-badge` in CoShipee) können sie entfernen.
+- Vorlage: Die Berechtigungen `Catalog.Brands.Export`, `Catalog.Products.Export` und `Documents.Export` waren definiert, aber nirgends geprüft (Exporte brauchen die Ansehen-Berechtigung des Sets); neue Apps und die Rollen einer Spec kennen sie nicht mehr. Bestehende Apps können sie löschen. Startseite und `AppDescription` lauten *Modular business app for Blazor, built on Coworkee.*
+- Texte: `Reports.Share` heißt *Share reports with roles, groups or the organisation*, die Berechtigungsgruppe von Social *Comments, tags, ratings and reactions*; die Einstellungen *Tägliche E-Mail mit ungelesenen Benachrichtigungen*, die Felder des Head-Skripts und die Gruppe *Konten* sind in jeder mitgelieferten Sprache übersetzt.
+- Blazor-Exporte von `CoworkeeDataTable` schickten dem Server weder die Spaltentitel noch `ExportFileName`, und `ExportQueries.Of` fügte die Spalten ohne Maskierung zusammen. Der Export fragt jetzt mit den Titeln als Köpfen und `fileName=`; `ExportQueries.Of(format, query, columns, fileName)` nimmt `(Field, Header)`-Paare und maskiert sie mit `ExportColumns.Format`.
+- Das Einstellungsformular zeigte Einstellungen mit eigener Berechtigung (das Head-Skript) jedem mit `Settings.Manage`; Speichern antwortete 403. Die Definitionen lassen eine solche Einstellung für jeden weg, dem ihre Berechtigung fehlt.
+- Eine Mail blieb für immer in `Sending`, wenn der Sender zwischen Anbieter und Speichern des Ergebnisses stoppte. Der wiederkehrende Job `coworkee-mail-stuck-sending` lässt solche Mails jetzt nach `Coworkee:Mail:SendingTimeout` (30 Minuten) mit *Delivery unknown* fehlschlagen und sendet sie nie doppelt; `Coworkee:Mail:RetryStuckSending` reiht sie stattdessen neu ein (eine Mail kann dann zweimal ankommen). Neue Spalte `cw.OutgoingMails.SendingSince` und ein Index auf `Status`: Migration anlegen. Siehe [Versand und Mail-Log](../modules/mailing.md#zustellung-und-mail-log).
+- Uploads in die Ablage (Seite Dateien, `POST /api/v1/files`) wurden nie auf Viren geprüft. Die registrierten `IAttachmentScanner` prüfen sie jetzt, bevor sie gespeichert werden (`FileUploads.EntityType`, der Ordner als `EntityId`); eine abgelehnte Datei antwortet 400. Eine App, deren Scanner `EntityType` oder `Slot` als Datensatztyp liest, behandelt `FileUploads.EntityType`.
+- Ein `CacheScope.Global`-Eintrag trug das Tag der Organisation des Aufrufers, der ihn lud: Ein Command in einer anderen Organisation hat ihn nie invalidiert. Globale Einträge tragen jetzt ein globales Tag, das jedes `IInvalidatesCache`-Command leert; Einträge der anderen Bereiche bleiben je Organisation.
+
 ## 0.0.1.56 (2026-10-31)
 
 ### Sicherheit
@@ -17,28 +43,15 @@
 
 ### Hinzugefügt
 
-- `Coworkee:Bff:Pwa:Icons` (`BffPwaOptions.Icons`): mehrere Icons des Web-Manifests mit Größe, Typ und Zweck (z. B. PNGs mit 192 und 512 Pixeln), statt des einen `Icon` gelistet, solange das Theme kein Logo hat. Siehe [Smartphones und PWA](../ui/phones-and-pwa.md).
-- `IClientEntityChangeLog.Touch<T>(ids)` (L86): meldet Zeilen an die Client-Entity-Kopien, wenn keine `ChangedAt`/`ModifiedAt`-Spalte sich bewegt hat (ein Tag über eine Verknüpfungstabelle); gespeichert mit dem Command in der neuen Tabelle `cw.ClientEntityTouches` und vom Änderungs-Feed für die Zeilen gelesen, die der Leser sieht. Tags, Bewertungen, Kommentare und Reaktionen der Bibliothek melden typisiert registrierte Entities (`Tags<T>(...)`) selbst. Eine Kopie, die zuletzt vor mehr als `Coworkee:ClientEntities:ChangeLogLifetime` (30 Tage) aktualisiert wurde, lädt neu. Migration anlegen. Siehe [Änderungen, die kein Datum sieht](../ui/client-entities.md#anderungen-die-kein-datum-sieht).
 - `PersonalDataSubject.ErasedUserId`: der Platzhalter, den eigene Contributors anstelle der ID eines gelöschten Benutzers schreiben. `tests/Coworkee.ArchitectureTests/PersonalDataCoverageTests` scheitert an einer Spalte der Bibliothek, die einen Benutzer nennt und keinen Contributor hat.
 
 ### Breaking Changes
 
-- Apps brauchen eine Migration: neue Tabelle `cw.ClientEntityTouches`, neue Spalte `cw.OutgoingMails.SendingSince` (nullable) mit einem Index auf `Status`.
-- Registrierte `IAttachmentScanner` prüfen auch Uploads in die Ablage (`EntityType` `StoredFile`); ein Scanner, der `EntityType` als Datensatztyp liest, behandelt das.
-- Eine Client-Entity-Kopie, die zuletzt vor mehr als `Coworkee:ClientEntities:ChangeLogLifetime` (30 Tagen) aktualisiert wurde, lädt neu.
 - Der Abschnitt `chat` des Exports ist ein Objekt (`messages`, `memberships`, `reactions`, `attachments`) statt der Liste der Nachrichten.
 - Das Löschen schreibt `PersonalDataSubject.ErasedUserId` auch in `CreatedBy`, `ModifiedBy` und `DeletedBy` der Tabellen der App; Code, der den Ersteller nachschlägt, findet dafür keinen Benutzer.
 
 ### Behoben
 
-- MudBlazor-Tab-Badges schnitten Zahlen mit mehr als einer Stelle ab. `CoworkeeLayout` stellt sie jetzt in jeder App inline hinter den Tab-Text; Apps mit eigener Regel dafür (`.mud-tab .mud-tab-badge` in CoShipee) können sie entfernen.
-- Vorlage: Die Berechtigungen `Catalog.Brands.Export`, `Catalog.Products.Export` und `Documents.Export` waren definiert, aber nirgends geprüft (Exporte brauchen die Ansehen-Berechtigung des Sets); neue Apps und die Rollen einer Spec kennen sie nicht mehr. Bestehende Apps können sie löschen. Startseite und `AppDescription` lauten *Modular business app for Blazor, built on Coworkee.*
-- Texte: `Reports.Share` heißt *Share reports with roles, groups or the organisation*, die Berechtigungsgruppe von Social *Comments, tags, ratings and reactions*; die Einstellungen *Tägliche E-Mail mit ungelesenen Benachrichtigungen*, die Felder des Head-Skripts und die Gruppe *Konten* sind in jeder mitgelieferten Sprache übersetzt.
-- Blazor-Exporte von `CoworkeeDataTable` schickten dem Server weder die Spaltentitel noch `ExportFileName`, und `ExportQueries.Of` fügte die Spalten ohne Maskierung zusammen. Der Export fragt jetzt mit den Titeln als Köpfen und `fileName=`; `ExportQueries.Of(format, query, columns, fileName)` nimmt `(Field, Header)`-Paare und maskiert sie mit `ExportColumns.Format`.
-- Das Einstellungsformular zeigte Einstellungen mit eigener Berechtigung (das Head-Skript) jedem mit `Settings.Manage`; Speichern antwortete 403. Die Definitionen lassen eine solche Einstellung für jeden weg, dem ihre Berechtigung fehlt.
-- Eine Mail blieb für immer in `Sending`, wenn der Sender zwischen Anbieter und Speichern des Ergebnisses stoppte. Der wiederkehrende Job `coworkee-mail-stuck-sending` lässt solche Mails jetzt nach `Coworkee:Mail:SendingTimeout` (30 Minuten) mit *Delivery unknown* fehlschlagen und sendet sie nie doppelt; `Coworkee:Mail:RetryStuckSending` reiht sie stattdessen neu ein (eine Mail kann dann zweimal ankommen). Neue Spalte `cw.OutgoingMails.SendingSince` und ein Index auf `Status`: Migration anlegen. Siehe [Versand und Mail-Log](../modules/mailing.md#zustellung-und-mail-log).
-- Uploads in die Ablage (Seite Dateien, `POST /api/v1/files`) wurden nie auf Viren geprüft. Die registrierten `IAttachmentScanner` prüfen sie jetzt, bevor sie gespeichert werden (`FileUploads.EntityType`, der Ordner als `EntityId`); eine abgelehnte Datei antwortet 400. Eine App, deren Scanner `EntityType` oder `Slot` als Datensatztyp liest, behandelt `FileUploads.EntityType`.
-- Ein `CacheScope.Global`-Eintrag trug das Tag der Organisation des Aufrufers, der ihn lud: Ein Command in einer anderen Organisation hat ihn nie invalidiert. Globale Einträge tragen jetzt ein globales Tag, das jedes `IInvalidatesCache`-Command leert; Einträge der anderen Bereiche bleiben je Organisation.
 - Der Blob-Speicher im Dateisystem scheiterte beim Löschen eines Schlüssels ohne vorhandenes Verzeichnis, der S3-Speicher bei einem noch nicht angelegten Bucket; beide übergehen das jetzt wie jeden anderen fehlenden Blob (das Löschen eines Benutzers, dessen Chat-Datei schon fehlte, antwortete mit 500).
 
 ## 0.0.1.55 (2026-10-31)
