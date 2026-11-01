@@ -123,6 +123,9 @@ public sealed class ClientEntityFeedTests(ODataApp app) : IAsyncLifetime
         delta.Reset.ShouldBeFalse();
         delta.Changed.ShouldBe([lamp]);
         (await app.InDbAsync(null, db => db.Set<Coworkee.OData.ClientEntities.ClientEntityTouch>().CountAsync(t => t.EntityId == widget, Ct))).ShouldBe(0);
+        // bookkeeping, not a change of data: no audit entries
+        (await app.InDbAsync(null, db => db.Set<Coworkee.Infrastructure.Auditing.AuditEntry>().IgnoreQueryFilters()
+            .CountAsync(a => a.EntityType == nameof(Coworkee.OData.ClientEntities.ClientEntityTouch), Ct))).ShouldBe(0);
         (await ChangesAsync(DateTimeOffset.UtcNow.AddDays(-31))).Reset.ShouldBeTrue();
     }
 
