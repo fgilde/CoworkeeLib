@@ -62,6 +62,12 @@ public sealed class HeadScriptTests(SettingsApp app) : IAsyncLifetime
     public async Task Changing_it_needs_the_head_script_permission_also_through_the_settings()
     {
         var manager = await UserAsync(SettingsPermissions.Manage);
+        // the settings form never shows him the fields he could not save
+        var names = (await manager.GetFromJsonAsync<List<SettingGroupDto>>("/api/v1/settings/definitions", Ct))!.SelectMany(g => g.Settings).Select(s => s.Name).ToList();
+        names.ShouldContain("Test.Text");
+        names.ShouldNotContain(HeadScriptSettings.Value);
+        names.ShouldNotContain(HeadScriptSettings.Enabled);
+        (await Admin.GetFromJsonAsync<List<SettingGroupDto>>("/api/v1/settings/definitions", Ct))!.SelectMany(g => g.Settings).ShouldContain(s => s.Name == HeadScriptSettings.Value);
 
         (await manager.PutAsJsonAsync(Url, new SetHeadScriptRequest(true, "<script></script>"), Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         foreach (var name in new[] { HeadScriptSettings.Value, HeadScriptSettings.Enabled })

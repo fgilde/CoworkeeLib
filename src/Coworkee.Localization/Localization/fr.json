@@ -382,7 +382,7 @@
   "Rating": "Évaluation",
   "{0} from {1} ratings": "{0} sur {1} évaluations",
   "Remove my rating": "Supprimer mon évaluation",
-  "Comments, tags and ratings": "Commentaires, tags et évaluations",
+  "Comments, tags, ratings and reactions": "Commentaires, tags, évaluations et réactions",
   "View comments": "Consulter les commentaires",
   "Write comments": "Écrire des commentaires",
   "Moderate comments": "Modérer les commentaires",
@@ -1891,5 +1891,11 @@
   "You have too many exports running. Wait until one is ready.": "Vous avez trop d'exports en cours. Attendez que l'un d'eux soit prêt.",
   "The export query is not valid.": "La requête de l'export n'est pas valide.",
   "You may not export this list.": "Vous n'êtes pas autorisé à exporter cette liste.",
-  "The export was cancelled.": "L'export a été annulé."
+  "The export was cancelled.": "L'export a été annulé.",
+  "Daily e-mail with unread notifications": "E-mail quotidien des notifications non lues",
+  "Head script": "Script d'en-tête",
+  "Head script on": "Script d'en-tête activé",
+  "The app adds the head script to its page.": "L'application ajoute le script d'en-tête à sa page.",
+  "HTML with script tags, e.g. a tag manager. It runs in every user's browser.": "HTML avec des balises script, p. ex. un gestionnaire de balises. Il s'exécute dans le navigateur de chaque utilisateur.",
+  "Accounts": "Comptes"
 }

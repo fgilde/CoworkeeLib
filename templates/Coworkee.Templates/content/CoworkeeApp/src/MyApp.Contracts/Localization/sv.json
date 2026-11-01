@@ -50,7 +50,7 @@
   "Uploaded": "Uppladdad",
   "Not found.": "Hittades inte.",
   "You need to sign in, or you lack the permission for this page.": "Du måste logga in, eller så saknar du behörighet till den här sidan.",
-  "Clean Architecture starter for Blazor, built on Coworkee modules.": "Startmall för Clean Architecture i Blazor, byggd på Coworkee-moduler.",
+  "Modular business app for Blazor, built on Coworkee.": "Modulär affärsapp för Blazor, byggd på Coworkee.",
   "Permissions, OData tables with facets, realtime and theming come with the packages; the UI uses": "Behörigheter, OData-tabeller med fasetter, realtid och teman följer med paketen; gränssnittet använder",
   "and": "och",
   "Project page": "Projektsida",

@@ -42,6 +42,10 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         services.AddDataTransfer();
         services.Configure<ClientEntityOptions>(context.Configuration.GetSection(ClientEntityOptions.Section));
         services.AddSingleton<Microsoft.Extensions.Options.IPostConfigureOptions<ClientEntityOptions>, ServiceClientEntities>();
+        services.AddScoped<ClientEntityChangeLog>();
+        services.AddScoped<IClientEntityChangeLog>(sp => sp.GetRequiredService<ClientEntityChangeLog>());
+        services.AddSingleton<Coworkee.Infrastructure.Persistence.IModelContributor, ClientEntityTouchModel>();
+        Coworkee.BackgroundJobs.RecurringJobExtensions.AddRecurringJob<ClientEntityTouchCleanup>(services, ClientEntityTouchCleanup.Id, ClientEntityTouchCleanup.Cron);
         services.AddSingleton<Microsoft.Extensions.Options.IPostConfigureOptions<ODataOptions>, ODataQueryLimits>();
         services.AddSingleton<Microsoft.AspNetCore.Mvc.ApplicationModels.IApplicationModelProvider>(provider =>
             new EntityODataControllerNameProvider(registry, provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<CoworkeeODataOptions>>().Value));

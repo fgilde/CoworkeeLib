@@ -103,7 +103,7 @@
       "type": "parameter",
       "datatype": "bool",
       "defaultValue": "false",
-      "description": "Comments, tags and ratings for entities (Coworkee.Social)."
+      "description": "Comments, tags, ratings and reactions for entities (Coworkee.Social)."
     },
     "workflows": {
       "type": "parameter",

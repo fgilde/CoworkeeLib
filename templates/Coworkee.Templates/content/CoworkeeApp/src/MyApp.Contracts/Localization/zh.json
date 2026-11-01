@@ -50,7 +50,7 @@
   "Uploaded": "上传时间",
   "Not found.": "未找到。",
   "You need to sign in, or you lack the permission for this page.": "您需要登录，或者您没有访问此页面的权限。",
-  "Clean Architecture starter for Blazor, built on Coworkee modules.": "基于 Coworkee 模块构建的 Blazor Clean Architecture 入门模板。",
+  "Modular business app for Blazor, built on Coworkee.": "基于 Coworkee 构建的模块化 Blazor 业务应用。",
   "Permissions, OData tables with facets, realtime and theming come with the packages; the UI uses": "权限、带分面的 OData 表格、实时功能和主题均由程序包提供；界面使用",
   "and": "和",
   "Project page": "项目页面",

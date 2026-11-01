@@ -67,4 +67,26 @@ public sealed class BffPwaOptions
 
     /// <summary>Icon path of the web app for themes without a logo, e.g. <c>/coworkee-icon.svg</c>.</summary>
     public string? Icon { get; set; }
+
+    /// <summary>
+    /// Icons of the web app with their sizes for themes without a logo, e.g. a 192x192 and a 512x512 PNG; the manifest lists them instead of
+    /// <see cref="Icon"/>. Paths are local (<c>/icons/192.png</c>).
+    /// </summary>
+    public List<BffPwaIcon> Icons { get; set; } = [];
+}
+
+/// <summary>An icon of the web manifest.</summary>
+public sealed class BffPwaIcon
+{
+    /// <summary>Local path, e.g. <c>/icons/512.png</c>.</summary>
+    public string Src { get; set; } = string.Empty;
+
+    /// <summary>As in the manifest, e.g. <c>512x512</c>; default <c>any</c>.</summary>
+    public string? Sizes { get; set; }
+
+    /// <summary>The media type; default from the file extension.</summary>
+    public string? Type { get; set; }
+
+    /// <summary><c>any</c> (default), <c>maskable</c> or <c>monochrome</c>.</summary>
+    public string? Purpose { get; set; }
 }

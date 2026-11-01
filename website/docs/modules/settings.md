@@ -95,7 +95,7 @@ context.Group("Support", "Support")
     .Add("Support.Banner", "Banner text", SettingType.Text, [SettingScope.Global, SettingScope.Tenant], permission: SupportPermissions.Banner);
 ```
 
-The setting then changes only with that permission on top of the scope's own rule, on every way in: the settings tabs, `PUT /api/v1/settings/global`, `PUT /api/v1/settings/tenant` and `PUT /api/v1/settings/user`. Without it the whole save is refused with `403` (`settings.permission`, *Changing 'Support.Banner' needs the permission ...*). The form still shows the field to everyone who sees the tab; as it sends only changed values, saving other settings keeps working. Reading is not restricted by it. The head script below is built this way.
+The setting then changes only with that permission on top of the scope's own rule, on every way in: the settings tabs, `PUT /api/v1/settings/global`, `PUT /api/v1/settings/tenant` and `PUT /api/v1/settings/user`. Without it the whole save is refused with `403` (`settings.permission`, *Changing 'Support.Banner' needs the permission ...*). The definitions (`GET /api/v1/settings/definitions`, `/definitions/user`) leave the setting out for whoever lacks the permission, so the form does not show a field he could not save. Reading the values is not restricted by it. The head script below is built this way.
 
 ### Groups on their own page
 

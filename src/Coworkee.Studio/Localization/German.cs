@@ -451,7 +451,7 @@ public static class German
         ["Multi-tenant SaaS with plans."] = "Mandantenfähiges SaaS mit Tarifen.",
         ["[RequiresFeature] and feature gates"] = "[RequiresFeature] und Feature-Gates",
         ["Only useful with several tenants"] = "Nur mit mehreren Mandanten sinnvoll",
-        ["Comments, tags and ratings"] = "Kommentare, Tags und Bewertungen",
+        ["Comments, tags, ratings and reactions"] = "Kommentare, Tags, Bewertungen und Reaktionen",
         ["Comments, tags and star ratings for any entity, opted in per entity type."] = "Kommentare, Tags und Sternebewertungen für jede Entity, pro Entity-Typ zugeschaltet.",
         ["Content that people discuss or rate."] = "Inhalte, die Menschen diskutieren oder bewerten.",
         ["Ready-made components"] = "Fertige Komponenten",

@@ -26,14 +26,29 @@ public sealed record SetUserSettings(IReadOnlyDictionary<string, string?> Values
 
 public sealed record GetClientSettings : IQuery<Result<IReadOnlyDictionary<string, string?>>>;
 
-internal sealed class SettingDefinitionHandlers(ISettingDefinitionManager definitions)
+internal sealed class SettingDefinitionHandlers(ISettingDefinitionManager definitions, IPermissionChecker permissions)
     : IHandler<GetSettingDefinitions, Result<IReadOnlyList<SettingGroupDto>>>, IHandler<GetUserSettingDefinitions, Result<IReadOnlyList<SettingGroupDto>>>
 {
     public Task<Result<IReadOnlyList<SettingGroupDto>>> HandleAsync(GetSettingDefinitions query, CancellationToken cancellationToken) =>
-        Task.FromResult(Groups(_ => true));
+        GroupsAsync(_ => true, cancellationToken);
 
     public Task<Result<IReadOnlyList<SettingGroupDto>>> HandleAsync(GetUserSettingDefinitions query, CancellationToken cancellationToken) =>
-        Task.FromResult(Groups(d => d.Scopes.Contains(SettingScope.User)));
+        GroupsAsync(d => d.Scopes.Contains(SettingScope.User), cancellationToken);
+
+    // a setting with its own permission (the head script) is left out for whoever lacks it: the form would show it, saving would answer 403
+    private async Task<Result<IReadOnlyList<SettingGroupDto>>> GroupsAsync(Func<SettingDefinition, bool> filter, CancellationToken cancellationToken)
+    {
+        var denied = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var permission in definitions.All.Select(d => d.Permission).OfType<string>().Distinct())
+        {
+            if (!await permissions.IsGrantedAsync(permission, cancellationToken))
+            {
+                denied.Add(permission);
+            }
+        }
+
+        return Groups(d => filter(d) && (d.Permission is null || !denied.Contains(d.Permission)));
+    }
 
     private Result<IReadOnlyList<SettingGroupDto>> Groups(Func<SettingDefinition, bool> filter)
     {

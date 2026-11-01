@@ -50,7 +50,7 @@
   "Uploaded": "Yüklendi",
   "Not found.": "Bulunamadı.",
   "You need to sign in, or you lack the permission for this page.": "Oturum açmanız gerekiyor veya bu sayfa için izniniz yok.",
-  "Clean Architecture starter for Blazor, built on Coworkee modules.": "Coworkee modülleri üzerine kurulu, Blazor için Clean Architecture başlangıç şablonu.",
+  "Modular business app for Blazor, built on Coworkee.": "Coworkee üzerine kurulu, Blazor için modüler iş uygulaması.",
   "Permissions, OData tables with facets, realtime and theming come with the packages; the UI uses": "İzinler, facet filtreli OData tabloları, gerçek zamanlı özellikler ve temalar paketlerle birlikte gelir; arayüz şunu kullanır:",
   "and": "ve",
   "Project page": "Proje sayfası",

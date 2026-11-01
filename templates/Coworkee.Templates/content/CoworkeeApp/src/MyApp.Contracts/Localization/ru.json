@@ -50,7 +50,7 @@
   "Uploaded": "Загружено",
   "Not found.": "Не найдено.",
   "You need to sign in, or you lack the permission for this page.": "Необходимо войти в систему, либо у вас нет разрешения на доступ к этой странице.",
-  "Clean Architecture starter for Blazor, built on Coworkee modules.": "Стартовый шаблон Clean Architecture для Blazor на основе модулей Coworkee.",
+  "Modular business app for Blazor, built on Coworkee.": "Модульное бизнес-приложение для Blazor на основе Coworkee.",
   "Permissions, OData tables with facets, realtime and theming come with the packages; the UI uses": "Разрешения, таблицы OData с фасетами, режим реального времени и темы входят в состав пакетов; интерфейс использует",
   "and": "и",
   "Project page": "Страница проекта",

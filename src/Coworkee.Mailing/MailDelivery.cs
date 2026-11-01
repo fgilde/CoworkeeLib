@@ -102,6 +102,7 @@ internal sealed class SendMailJob(CoworkeeDbContext db, MailConnectionResolver r
             .Where(m => m.Id == mailId && m.Status == OutgoingMailStatus.Queued)
             .ExecuteUpdateAsync(update => update
                 .SetProperty(m => m.Status, OutgoingMailStatus.Sending)
+                .SetProperty(m => m.SendingSince, clock.GetUtcNow())
                 .SetProperty(m => m.Attempts, m => m.Attempts + 1), cancellationToken);
         if (claimed == 0)
         {
@@ -140,7 +141,7 @@ internal sealed class SendMailJob(CoworkeeDbContext db, MailConnectionResolver r
             return;
         }
 
-        // ponytail: a crash between SMTP and this write leaves the mail in Sending (never resent); add a reconciler if that shows up
+        // a crash between the provider and this write leaves the mail in Sending; StuckMailSweep ends it
         mail.Status = OutgoingMailStatus.Sent;
         mail.SentAt = clock.GetUtcNow();
         mail.LastError = null;

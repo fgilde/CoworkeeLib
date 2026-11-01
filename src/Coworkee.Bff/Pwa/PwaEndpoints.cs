@@ -34,7 +34,6 @@ internal static class PwaEndpoints
         var theme = (await source.GetAsync(context, LoadingScreenPreferences.Read(context.Request).ThemeId))?.Theme;
         var pwa = options.Value.Pwa;
         var name = pwa.Name is { Length: > 0 } configured ? configured : context.Request.Host.Host;
-        var (type, sizes) = Icon(theme, pwa.Icon);
         context.Response.Headers.CacheControl = "private, no-cache";
         context.Response.Headers.Vary = "Cookie";
         return Results.Json(new Dictionary<string, object?>
@@ -47,7 +46,7 @@ internal static class PwaEndpoints
             ["display"] = "standalone",
             ["background_color"] = LoadingScreenMarkup.PaletteColor(theme?.PaletteLight, "Background") ?? "#ffffff",
             ["theme_color"] = BarColor(theme?.PaletteLight) ?? "#594ae2",
-            ["icons"] = new[] { new Dictionary<string, string?> { ["src"] = IconPath, ["type"] = type, ["sizes"] = sizes, ["purpose"] = "any" } },
+            ["icons"] = Icons(theme, pwa),
         }, JsonSerializerOptions.Web, "application/manifest+json");
     }
 
@@ -64,8 +63,31 @@ internal static class PwaEndpoints
             return await LoadingScreenLogo.ServeAsync(context, source, null);
         }
 
-        return options.Value.Pwa.Icon is { Length: > 1 } icon && icon[0] == '/' && icon[1] != '/' && icon[1] != '\\' ? Results.Redirect(icon) : Results.NotFound();
+        var pwa = options.Value.Pwa;
+        return (pwa.Icon ?? pwa.Icons.Select(i => i.Src).FirstOrDefault(IsLocal)) is { } icon && IsLocal(icon) ? Results.Redirect(icon) : Results.NotFound();
     }
+
+    private static bool IsLocal(string? path) => path is { Length: > 1 } && path[0] == '/' && path[1] != '/' && path[1] != '\\';
+
+    // the theme's logo; without one the app's icons with their sizes, else its one icon
+    private static List<Dictionary<string, string?>> Icons(ThemeDto? theme, BffPwaOptions pwa)
+    {
+        if ((theme is null || !ThemeLogo.TryRead(theme.Logo, out _, out _)) && pwa.Icons.Where(i => IsLocal(i.Src)).ToList() is { Count: > 0 } icons)
+        {
+            return [.. icons.Select(i => Entry(i.Src, i.Type ?? TypeOf(i.Src), i.Sizes is { Length: > 0 } sizes ? sizes : "any", i.Purpose))];
+        }
+
+        var (type, size) = Icon(theme, pwa.Icon);
+        return [Entry(IconPath, type, size, null)];
+    }
+
+    private static Dictionary<string, string?> Entry(string src, string? type, string sizes, string? purpose) =>
+        new() { ["src"] = src, ["type"] = type, ["sizes"] = sizes, ["purpose"] = purpose is { Length: > 0 } ? purpose : "any" };
+
+    private static string? TypeOf(string? path) => Path.GetExtension(path ?? string.Empty).ToLowerInvariant() switch
+    {
+        ".svg" => ThemeLogo.Svg, ".png" => "image/png", ".webp" => "image/webp", ".jpg" or ".jpeg" => "image/jpeg", _ => null,
+    };
 
     private static (string? Type, string Sizes) Icon(ThemeDto? theme, string? icon)
     {
@@ -77,8 +99,7 @@ internal static class PwaEndpoints
                 : "any");
         }
 
-        var extension = Path.GetExtension(icon ?? string.Empty).ToLowerInvariant();
-        return (extension switch { ".svg" => ThemeLogo.Svg, ".png" => "image/png", ".webp" => "image/webp", ".jpg" or ".jpeg" => "image/jpeg", _ => null }, "any");
+        return (TypeOf(icon), "any");
     }
 
     /// <summary>Shown by the service worker for a page while there is no network: the organisation's colours and logo, a hint and a reload link.</summary>

@@ -250,6 +250,22 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ClientEntityTouches",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: true),
+                    EntityType = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    EntityId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TouchedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ClientEntityTouches", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ConfigurationEntries",
                 schema: "cw",
                 columns: table => new
@@ -743,7 +759,8 @@ namespace MyApp.Infrastructure.Migrations
                     LastError = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
                     CampaignId = table.Column<Guid>(type: "uuid", nullable: true),
                     QueuedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    SentAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
+                    SentAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    SendingSince = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1685,6 +1702,12 @@ namespace MyApp.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ClientEntityTouches_EntityType_TouchedAt",
+                schema: "cw",
+                table: "ClientEntityTouches",
+                columns: new[] { "EntityType", "TouchedAt" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CustomMailTemplates_TenantId_Name",
                 schema: "cw",
                 table: "CustomMailTemplates",
@@ -1948,6 +1971,12 @@ namespace MyApp.Infrastructure.Migrations
                 column: "CampaignId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_OutgoingMails_Status",
+                schema: "cw",
+                table: "OutgoingMails",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_OutgoingMails_TenantId_QueuedAt",
                 schema: "cw",
                 table: "OutgoingMails",
@@ -2198,6 +2227,10 @@ namespace MyApp.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "ChatReactions",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "ClientEntityTouches",
                 schema: "cw");
 
             migrationBuilder.DropTable(
@@ -2659,6 +2692,22 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ClientEntityTouches",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: true),
+                    EntityType = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    EntityId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TouchedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ClientEntityTouches", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ConfigurationEntries",
                 schema: "cw",
                 columns: table => new
@@ -3104,7 +3153,8 @@ namespace MyApp.Infrastructure.Migrations
                     LastError = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
                     CampaignId = table.Column<Guid>(type: "uuid", nullable: true),
                     QueuedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    SentAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
+                    SentAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    SendingSince = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -3973,6 +4023,12 @@ namespace MyApp.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ClientEntityTouches_EntityType_TouchedAt",
+                schema: "cw",
+                table: "ClientEntityTouches",
+                columns: new[] { "EntityType", "TouchedAt" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CustomMailTemplates_TenantId_Name",
                 schema: "cw",
                 table: "CustomMailTemplates",
@@ -4208,6 +4264,12 @@ namespace MyApp.Infrastructure.Migrations
                 schema: "cw",
                 table: "OutgoingMails",
                 column: "CampaignId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OutgoingMails_Status",
+                schema: "cw",
+                table: "OutgoingMails",
+                column: "Status");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OutgoingMails_TenantId_QueuedAt",
@@ -4454,6 +4516,10 @@ namespace MyApp.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "ChatReactions",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "ClientEntityTouches",
                 schema: "cw");
 
             migrationBuilder.DropTable(

@@ -37,6 +37,7 @@ internal sealed class RatingHandlers(CoworkeeDbContext db, SocialGuard guard, IP
         }
 
         rating.Stars = command.Stars;
+        guard.Touch(SocialFeature.Ratings, command.EntityType, [command.EntityId]);
         await db.SaveChangesAsync(cancellationToken);
         return await LoadAsync(command.EntityType, command.EntityId, cancellationToken);
     }
@@ -55,6 +56,7 @@ internal sealed class RatingHandlers(CoworkeeDbContext db, SocialGuard guard, IP
         }
 
         await Of(command.EntityType, command.EntityId).Where(r => r.UserId == userId).ExecuteDeleteAsync(cancellationToken);
+        guard.Touch(SocialFeature.Ratings, command.EntityType, [command.EntityId]);
         return await LoadAsync(command.EntityType, command.EntityId, cancellationToken);
     }
 

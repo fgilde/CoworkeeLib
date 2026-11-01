@@ -165,6 +165,24 @@ private Task CancelAsync(SalesOrderDto order) => Snackbar.RunAsync(() => Orders.
 
 The `POST` succeeds, the copy asks for the changes since its version, fetches the changed order by id and the table reloads.
 
+### Changes no date sees
+
+The feed finds changed rows by `ModifiedAt` (or `ChangedAt`). A change that moves no such column, for example a tag put on an order through a link table that the copy shows with `Expand = "Tags"`, would leave the copy stale until its next full download. Report such rows with `IClientEntityChangeLog` (`Coworkee.OData.ClientEntities`) in the command that makes the change:
+
+```csharp
+internal sealed class TagOrderHandler(AppDbContext db, IClientEntityChangeLog changes) : IHandler<TagOrder, Result>
+{
+    public async Task<Result> HandleAsync(TagOrder command, CancellationToken ct)
+    {
+        db.Add(new OrderTag { OrderId = command.OrderId, TagId = command.TagId });
+        changes.Touch<SalesOrder>(command.OrderId);   // saved with the command, in cw.ClientEntityTouches
+        return Result.Success();
+    }
+}
+```
+
+The next refresh of every copy reloads these rows, but only those its reader sees (tenant, row filters and group scope apply as for any row); types without a client entity set are ignored. The library's tags, ratings, comments and reactions report the entity themselves when it is registered typed (`Tags<SalesOrder>("SalesOrders")`). Touches are kept for `Coworkee:ClientEntities:ChangeLogLifetime` (30 days, the job `coworkee-client-entity-touches` deletes older ones); a copy last refreshed before that downloads again.
+
 ## Step 5: your own UI
 
 `ClientEntities.SetAsync<T>` gives you the copy of a set. It is `null` when the server does not offer the set to this user.
@@ -276,7 +294,7 @@ The library's tests (`LargeSetTests`, `LocalTableTests`) check the same with 100
 - Everything is plain .NET: no native SQLite, no `wasm-tools` workload, no extra files to serve.
 - Memory: 100,000 orders take some tens of MB in the browser tab; keep `MaxRows` in proportion and expand only what you show.
 - The first download of a large set takes a while (14.5 s for 100,000 rows) and keeps the browser busy; the table answers from the server meanwhile, slower than usual. Response compression in the API (or the BFF) helps on slow networks.
-- Changes come from `IAuditable` (`CreatedAt`, `ModifiedAt`), deletions from `ISoftDelete` (`DeletedAt`). When the row count after a delta differs from the server's, the client compares ids, so hard deletes and rows that are no longer visible disappear too. Entities without `IAuditable` and without `ChangedAt` are downloaded again at each refresh.
+- Changes come from `IAuditable` (`CreatedAt`, `ModifiedAt`), deletions from `ISoftDelete` (`DeletedAt`). When the row count after a delta differs from the server's, the client compares ids, so hard deletes and rows that are no longer visible disappear too. Entities without `IAuditable` and without `ChangedAt` are downloaded again at each refresh. Changes that move no date are reported with [`IClientEntityChangeLog`](#changes-no-date-sees).
 - Text sorts ignoring case with the culture of the browser; the server sorts with the collation of its database, so the order of special characters can differ.
 - Clients mirror the rows a user may see, so a copy contains nothing an OData query would not return. It is not encrypted on the device; leave sets with sensitive data on the server.
 
@@ -285,7 +303,7 @@ The library's tests (`LargeSetTests`, `LocalTableTests`) check the same with 100
 | Request | Answer |
 |---|---|
 | `GET /api/v1/client-entities` | the sets this user may mirror with their settings, a partition key per user, tenant and group selection and an owner key per user and tenant |
-| `GET /api/v1/client-entities/{set}/changes?since=…&skip=…` | new version, visible row count, changed and deleted ids and the caller's partition; with `skip` the changed ids come in pages of `BatchSize × 10` (`more`), without it more than that answers `reset` |
+| `GET /api/v1/client-entities/{set}/changes?since=…&skip=…` | new version, visible row count, changed and deleted ids and the caller's partition; with `skip` the changed ids come in pages of `BatchSize × 10` (`more`), without it more than that answers `reset`; also `reset` when `since` is older than `ChangeLogLifetime` |
 | `GET /api/v1/client-entities/{set}/ids` | all visible ids, to find rows that vanished unseen |
 
 ## Files of the demo

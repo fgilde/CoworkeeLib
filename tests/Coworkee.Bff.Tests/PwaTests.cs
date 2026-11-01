@@ -44,6 +44,27 @@ public sealed class PwaTests
     }
 
     [Fact]
+    public async Task Without_a_theme_logo_the_manifest_lists_the_apps_icons_with_their_sizes()
+    {
+        await using var app = await StartAsync(Screen with { Theme = Screen.Theme! with { Logo = null } }, new()
+        {
+            ["Coworkee:Bff:Pwa:Icons:0:Src"] = "/icons/192.png",
+            ["Coworkee:Bff:Pwa:Icons:0:Sizes"] = "192x192",
+            ["Coworkee:Bff:Pwa:Icons:1:Src"] = "/icons/512.png",
+            ["Coworkee:Bff:Pwa:Icons:1:Sizes"] = "512x512",
+            ["Coworkee:Bff:Pwa:Icons:1:Purpose"] = "maskable",
+            ["Coworkee:Bff:Pwa:Icons:2:Src"] = "https://evil.test/icon.png",
+        });
+
+        var icons = JsonDocument.Parse(await app.GetTestClient().GetStringAsync("/manifest.webmanifest", Ct)).RootElement.GetProperty("icons").EnumerateArray()
+            .Select(i => (i.GetProperty("src").GetString(), i.GetProperty("sizes").GetString(), i.GetProperty("type").GetString(), i.GetProperty("purpose").GetString())).ToList();
+
+        icons.ShouldBe([("/icons/192.png", "192x192", "image/png", "any"), ("/icons/512.png", "512x512", "image/png", "maskable")]);
+        using var icon = await new HttpClient(app.GetTestServer().CreateHandler()) { BaseAddress = new Uri("http://localhost") }.GetAsync("/bff/pwa/icon", Ct);
+        icon.Headers.Location!.OriginalString.ShouldBe("/icons/192.png");
+    }
+
+    [Fact]
     public async Task The_service_worker_only_answers_failed_page_loads_and_waits_for_the_user_to_update()
     {
         await using var app = await StartAsync();
@@ -88,7 +109,7 @@ public sealed class PwaTests
         html.ShouldContain("<meta name=\"theme-color\" media=\"(prefers-color-scheme: dark)\" content=\"#abcdef\" />");
     }
 
-    private static async Task<WebApplication> StartAsync()
+    private static async Task<WebApplication> StartAsync(LoadingScreenDto? screen = null, Dictionary<string, string?>? settings = null)
     {
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -96,20 +117,25 @@ public sealed class PwaTests
         builder.Configuration["Coworkee:Bff:ApiAddress"] = "http://api.test";
         builder.Configuration["Coworkee:Bff:ClientId"] = "web";
         builder.Configuration["Coworkee:Bff:Pwa:Name"] = "Demo Shop";
+        foreach (var (key, value) in settings ?? [])
+        {
+            builder.Configuration[key] = value;
+        }
+
         builder.AddCoworkeeBff();
-        builder.Services.AddHttpClient(LoadingScreenSource.Client).ConfigurePrimaryHttpMessageHandler(() => new Answering());
+        builder.Services.AddHttpClient(LoadingScreenSource.Client).ConfigurePrimaryHttpMessageHandler(() => new Answering(screen ?? Screen));
         var app = builder.Build();
         app.MapCoworkeeBff();
         await app.StartAsync();
         return app;
     }
 
-    private sealed class Answering : HttpMessageHandler
+    private sealed class Answering(LoadingScreenDto screen) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
             Task.FromResult(request.RequestUri!.AbsolutePath.Contains("/localization/", StringComparison.Ordinal)
                 ? new HttpResponseMessage(HttpStatusCode.NotFound)
-                : new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(JsonSerializer.Serialize(Screen, JsonSerializerOptions.Web), System.Text.Encoding.UTF8, "application/json") });
+                : new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(JsonSerializer.Serialize(screen, JsonSerializerOptions.Web), System.Text.Encoding.UTF8, "application/json") });
     }
 
     private sealed class Host : ComponentBase

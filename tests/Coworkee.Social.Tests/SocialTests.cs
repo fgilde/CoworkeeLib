@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Coworkee.Contracts.Data;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Realtime;
 using Coworkee.Contracts.Social;
@@ -234,6 +235,25 @@ public sealed class SocialTests(SocialApp app) : IAsyncLifetime
 
         public int GetHashCode(ReactionDto obj) => obj.Emoji.GetHashCode();
     }
+
+    [Fact]
+    public async Task Tags_and_ratings_report_the_entity_to_its_client_entity_copies()
+    {
+        await app.AgeNoteAsync(_note);
+        var start = await ChangesAsync(null);
+
+        await SaveTagsAsync(_note, "Urgent");
+        var tagged = await ChangesAsync(start.Version);
+        (await Admin.PutAsJsonAsync($"/api/v1/ratings/Notes/{_note}", new RateRequest(4), Ct)).EnsureSuccessStatusCode();
+
+        tagged.Changed.ShouldBe([_note]);
+        (await ChangesAsync(DateTimeOffset.UtcNow.AddSeconds(-1))).Changed.ShouldBe([_note]);
+        (await ChangesAsync(DateTimeOffset.UtcNow.AddDays(1))).Changed.ShouldBeEmpty();
+    }
+
+    private async Task<ClientEntityChanges> ChangesAsync(DateTimeOffset? since) =>
+        (await Admin.GetFromJsonAsync<ClientEntityChanges>(
+            "/api/v1/client-entities/Notes/changes" + (since is null ? "" : $"?since={Uri.EscapeDataString(since.Value.ToString("O"))}"), Ct))!;
 
     private async Task<EntityTagsDto> SaveTagsAsync(Guid note, params string[] tags) =>
         await ReadAsync<EntityTagsDto>(await Admin.PutAsJsonAsync($"/api/v1/tags/Notes/{note}", new SaveTagsRequest(tags), Ct));

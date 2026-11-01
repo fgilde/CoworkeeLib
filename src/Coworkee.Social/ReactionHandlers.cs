@@ -51,6 +51,7 @@ internal sealed class ReactionHandlers(CoworkeeDbContext db, SocialGuard guard, 
             });
         }
 
+        guard.Touch(SocialFeature.Reactions, command.EntityType, [command.EntityId]);
         await db.SaveChangesAsync(cancellationToken);
         return await LoadAsync(command.EntityType, command.EntityId, cancellationToken);
     }

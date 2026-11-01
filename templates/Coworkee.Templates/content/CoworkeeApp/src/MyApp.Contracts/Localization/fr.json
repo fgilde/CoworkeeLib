@@ -50,7 +50,7 @@
   "Uploaded": "Téléversé",
   "Not found.": "Introuvable.",
   "You need to sign in, or you lack the permission for this page.": "Veuillez vous connecter, ou vous n’avez pas l’autorisation d’accéder à cette page.",
-  "Clean Architecture starter for Blazor, built on Coworkee modules.": "Modèle de démarrage Clean Architecture pour Blazor, basé sur les modules Coworkee.",
+  "Modular business app for Blazor, built on Coworkee.": "Application métier modulaire pour Blazor, basée sur Coworkee.",
   "Permissions, OData tables with facets, realtime and theming come with the packages; the UI uses": "Les autorisations, les tables OData avec facettes, le temps réel et les thèmes proviennent des packages ; l’interface utilise",
   "and": "et",
   "Project page": "Page du projet",

@@ -382,7 +382,7 @@
   "Rating": "Βαθμολογία",
   "{0} from {1} ratings": "{0} από {1} βαθμολογίες",
   "Remove my rating": "Αφαίρεση της βαθμολογίας μου",
-  "Comments, tags and ratings": "Σχόλια, ετικέτες και βαθμολογίες",
+  "Comments, tags, ratings and reactions": "Σχόλια, ετικέτες, βαθμολογίες και αντιδράσεις",
   "View comments": "Προβολή σχολίων",
   "Write comments": "Συγγραφή σχολίων",
   "Moderate comments": "Συντονισμός σχολίων",
@@ -1891,5 +1891,11 @@
   "You have too many exports running. Wait until one is ready.": "Έχετε πάρα πολλές εξαγωγές σε εξέλιξη. Περιμένετε μέχρι να ολοκληρωθεί μία.",
   "The export query is not valid.": "Το ερώτημα της εξαγωγής δεν είναι έγκυρο.",
   "You may not export this list.": "Δεν επιτρέπεται να εξαγάγετε αυτή τη λίστα.",
-  "The export was cancelled.": "Η εξαγωγή ακυρώθηκε."
+  "The export was cancelled.": "Η εξαγωγή ακυρώθηκε.",
+  "Daily e-mail with unread notifications": "Ημερήσιο email με τις μη αναγνωσμένες ειδοποιήσεις",
+  "Head script": "Σενάριο κεφαλίδας",
+  "Head script on": "Σενάριο κεφαλίδας ενεργό",
+  "The app adds the head script to its page.": "Η εφαρμογή προσθέτει το σενάριο κεφαλίδας στη σελίδα της.",
+  "HTML with script tags, e.g. a tag manager. It runs in every user's browser.": "HTML με ετικέτες script, π.χ. ένας διαχειριστής ετικετών. Εκτελείται στον browser κάθε χρήστη.",
+  "Accounts": "Λογαριασμοί"
 }

@@ -118,6 +118,9 @@ public sealed class OutgoingMail : AggregateRoot
 
     public DateTimeOffset? SentAt { get; set; }
 
+    /// <summary>When the last attempt took the mail into <see cref="OutgoingMailStatus.Sending"/>; <see cref="StuckMailSweep"/> measures from it.</summary>
+    public DateTimeOffset? SendingSince { get; set; }
+
     public static OutgoingMail Queue(string to, RenderedMail mail, string templateName, Guid? tenantId, DateTimeOffset now, Guid? campaignId = null)
     {
         var outgoing = new OutgoingMail
@@ -182,6 +185,7 @@ internal sealed class MailModelContributor : IModelContributor
             mail.Property(m => m.LastError).HasMaxLength(2000);
             mail.HasIndex(m => new { m.TenantId, m.QueuedAt });
             mail.HasIndex(m => m.CampaignId);
+            mail.HasIndex(m => m.Status);
         });
 
         modelBuilder.Entity<OutgoingMailAttachment>(attachment =>

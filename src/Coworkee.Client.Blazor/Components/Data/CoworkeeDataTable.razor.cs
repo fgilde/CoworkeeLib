@@ -336,9 +336,10 @@ public partial class CoworkeeDataTable<T> : IDisposable
         await ReloadAsync();
     }
 
-    private List<string> ExportColumns() => _grid is null ? [] : DataGridLayout<T>.Named(_grid)
+    // the headers are the titles the table shows; a column without its own title keeps the field name
+    private List<(string Field, string? Header)> ExportColumns() => _grid is null ? [] : DataGridLayout<T>.Named(_grid)
         .Where(c => DataGridLayout<T>.IsProperty(c) && !DataGridLayout<T>.IsHidden(c) && c.PropertyName?.Contains('.') == false)
-        .Select(c => c.PropertyName!)
+        .Select(c => (c.PropertyName!, string.IsNullOrEmpty(c.Title) || c.Title == c.PropertyName ? (string?)null : c.Title))
         .ToList();
 
     /// <summary>Mails this list as it is filtered and sorted now, on a schedule.</summary>
@@ -357,7 +358,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
         if (DataSource is null)
         {
             var fileFormat = format switch { ExportFormat.Csv => ExportFileFormat.Csv, ExportFormat.Json => ExportFileFormat.Json, _ => ExportFileFormat.Xlsx };
-            var query = ExportQueries.Of(fileFormat, new ODataQuery { Filter = CurrentFilter, OrderBy = _orderBy }, ExportColumns());
+            var query = ExportQueries.Of(fileFormat, new ODataQuery { Filter = CurrentFilter, OrderBy = _orderBy }, ExportColumns(), ExportFileName);
             await ExportProgressDialog.ShowAsync(Dialogs, L["Export"], EntitySet, query, ExportFileName);
             return;
         }

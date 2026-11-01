@@ -47,6 +47,12 @@ Name and icon come from the configuration; Aspire sets both from `DisplayName` a
 "Coworkee": { "Bff": { "Pwa": { "Name": "My Shop", "Icon": "/coworkee-icon.svg" } } }
 ```
 
+`Icon` goes into the manifest with the size `any`. Some platforms install only with PNG icons of given sizes (192 and 512 pixels); list them in `Icons`, which the manifest then names instead (`Sizes` default `any`, `Type` from the extension, `Purpose` `any`, `maskable` or `monochrome`; local paths only). A theme with a logo still wins: its logo is the icon.
+
+```json
+"Pwa": { "Icons": [ { "Src": "/icons/192.png", "Sizes": "192x192" }, { "Src": "/icons/512.png", "Sizes": "512x512", "Purpose": "maskable" } ] }
+```
+
 What the service worker does:
 
 - It keeps one static file, the offline page, and shows it when a page cannot load without network. Blazor keeps its framework files in its own cache.

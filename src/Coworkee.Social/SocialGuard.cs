@@ -2,7 +2,9 @@ using Coworkee.Application.Authorization;
 using Coworkee.Contracts.Social;
 using Coworkee.Core.Results;
 using Coworkee.Infrastructure.Persistence;
+using Coworkee.OData.ClientEntities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Social;
 
@@ -56,6 +58,15 @@ internal sealed class SocialGuard(CoworkeeDbContext db, SocialOptions options, I
         options.Targets[(feature, entityType)].VisibleIdsAsync is { } visibleIds ? await visibleIds(services, cancellationToken) : null;
 
     public SocialTarget Target(SocialFeature feature, string entityType) => options.Targets[(feature, entityType)];
+
+    /// <summary>Reports written entities to their client entity copies (a row may show its tags, ratings, comments or reactions); saved with the unit of work.</summary>
+    public void Touch(SocialFeature feature, string entityType, IEnumerable<Guid> ids)
+    {
+        if (options.Targets.GetValueOrDefault((feature, entityType))?.ClrType is { } type && services.GetService<IClientEntityChangeLog>() is { } log)
+        {
+            log.Touch(type, ids);
+        }
+    }
 
     public bool HasCommentReactions => options.Targets.ContainsKey((SocialFeature.Reactions, SocialReactions.Comment));
 

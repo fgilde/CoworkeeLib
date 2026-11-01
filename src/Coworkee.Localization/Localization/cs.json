@@ -382,7 +382,7 @@
   "Rating": "Hodnocení",
   "{0} from {1} ratings": "{0} z {1} hodnocení",
   "Remove my rating": "Odebrat moje hodnocení",
-  "Comments, tags and ratings": "Komentáře, štítky a hodnocení",
+  "Comments, tags, ratings and reactions": "Komentáře, štítky, hodnocení a reakce",
   "View comments": "Zobrazit komentáře",
   "Write comments": "Psát komentáře",
   "Moderate comments": "Moderovat komentáře",
@@ -1891,5 +1891,11 @@
   "You have too many exports running. Wait until one is ready.": "Máte spuštěno příliš mnoho exportů. Počkejte, až bude jeden hotový.",
   "The export query is not valid.": "Dotaz exportu není platný.",
   "You may not export this list.": "Tento seznam nemůžete exportovat.",
-  "The export was cancelled.": "Export byl zrušen."
+  "The export was cancelled.": "Export byl zrušen.",
+  "Daily e-mail with unread notifications": "Denní e-mail s nepřečtenými oznámeními",
+  "Head script": "Skript v hlavičce",
+  "Head script on": "Skript v hlavičce zapnut",
+  "The app adds the head script to its page.": "Aplikace přidá skript v hlavičce na svou stránku.",
+  "HTML with script tags, e.g. a tag manager. It runs in every user's browser.": "HTML se značkami script, např. správce značek. Spouští se v prohlížeči každého uživatele.",
+  "Accounts": "Účty"
 }

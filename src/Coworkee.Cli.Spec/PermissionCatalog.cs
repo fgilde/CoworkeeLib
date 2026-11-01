@@ -19,16 +19,16 @@ public static class PermissionCatalog
         ("files", ["Files.View", "Files.Upload", "Files.Manage", "Files.Registrations.View"]),
         ("features", ["Features.Tenants", "Features.Editions"]),
         ("social", [
-            "Social.Comments.View", "Social.Comments.Create", "Social.Comments.Moderate", "Social.Tags.View", "Social.Tags.Create", "Social.Tags.Moderate",
-            "Social.Ratings.View", "Social.Ratings.Create", "Social.Ratings.Moderate",
+            "Social.Comments.View", "Social.Comments.Create", "Social.Comments.Moderate", "Social.Comments.SetStatus", "Social.Tags.View", "Social.Tags.Create", "Social.Tags.Moderate",
+            "Social.Ratings.View", "Social.Ratings.Create", "Social.Ratings.Moderate", "Social.Reactions.View", "Social.Reactions.Create",
         ]),
         ("workflows", ["Workflows.View", "Workflows.Transition"]),
         ("elsa", ["Workflows.Elsa.Manage"]),
         ("webhooks", ["Webhooks.Manage"]),
         ("samples", [
-            "Catalog.Products.View", "Catalog.Products.Create", "Catalog.Products.Edit", "Catalog.Products.Delete", "Catalog.Products.Export",
-            "Catalog.Brands.View", "Catalog.Brands.Create", "Catalog.Brands.Edit", "Catalog.Brands.Delete", "Catalog.Brands.Export", "Dashboards.View",
-            "Documents.View", "Documents.Create", "Documents.Edit", "Documents.Delete", "Documents.Export", "Documents.ManageAll",
+            "Catalog.Products.View", "Catalog.Products.Create", "Catalog.Products.Edit", "Catalog.Products.Delete",
+            "Catalog.Brands.View", "Catalog.Brands.Create", "Catalog.Brands.Edit", "Catalog.Brands.Delete", "Dashboards.View",
+            "Documents.View", "Documents.Create", "Documents.Edit", "Documents.Delete", "Documents.ManageAll",
             "DocumentTypes.View", "DocumentTypes.Create", "DocumentTypes.Edit", "DocumentTypes.Delete",
         ]),
     ];

@@ -588,6 +588,56 @@
           ]
         }
       ]
+    },
+    {
+      "version": "0.0.1.57",
+      "breaking": [
+        "Files: uploads to the files (POST /api/v1/files) pass the registered IAttachmentScanners too, with EntityType StoredFile (FileUploads.EntityType), the folder as EntityId and the slot files; a refused file answers 400.",
+        "Mailing: a mail left in Sending longer than Coworkee:Mail:SendingTimeout (30 minutes) becomes Failed with 'Delivery unknown' (never sent twice); Coworkee:Mail:RetryStuckSending queues it again instead. New column cw.OutgoingMails.SendingSince and an index on Status.",
+        "Client entities: a copy last refreshed longer ago than Coworkee:ClientEntities:ChangeLogLifetime (30 days) downloads again; rows reported through IClientEntityChangeLog (new table cw.ClientEntityTouches) join the changes, also the entities the library's tags, ratings, comments and reactions change.",
+        "Settings: GET /api/v1/settings/definitions and /definitions/user leave out settings whose own permission the caller lacks (the head script for whoever lacks Settings.HeadScript).",
+        "Blazor: CoworkeeDataTable exports send the column titles as headers and ExportFileName as fileName; ExportQueries.Of escapes the columns with ExportColumns.Format."
+      ],
+      "needsMigration": true,
+      "manual": [
+        {
+          "text": "Add a migration for the new table cw.ClientEntityTouches and the new column cw.OutgoingMails.SendingSince with its index on Status (coworkee migrations add CoworkeeLib057). The column is nullable and the table new, so no default is needed on PostgreSQL or SQL Server; mails already in Sending count from QueuedAt.",
+          "find": "class \\w+DbContext\\b",
+          "files": [
+            "src/**/*.cs"
+          ]
+        },
+        {
+          "text": "An own IAttachmentScanner that reads upload.EntityType or upload.Slot as a record type also gets uploads to the files now (EntityType FileUploads.EntityType = StoredFile, EntityId the folder or the empty GUID, Slot files); handle them or let them pass.",
+          "find": ":\\s*IAttachmentScanner\\b",
+          "files": [
+            "src/**/*.cs"
+          ]
+        },
+        {
+          "text": "Client entities: commands that change what a mirrored row shows without moving its ModifiedAt or ChangedAt (rows of a link table, such as tags of an entity that the copy expands) report the entity with IClientEntityChangeLog.Touch<T>(ids) (Coworkee.OData.ClientEntities) in the same command, so the copies reload it.",
+          "find": "\\[ClientEntity\\b|AddCoworkeeClientEntities\\(\\s*o\\b|\\.ClientEntity<",
+          "files": [
+            "src/**/*.cs"
+          ],
+          "unless": "IClientEntityChangeLog"
+        },
+        {
+          "text": "Coworkee:Mail:RetryStuckSending (default false): turn it on where a lost mail is worse than a duplicate; keep Coworkee:Mail:SendingTimeout above the longest time the provider takes for a mail.",
+          "find": "\"Mail\"\\s*:|Mail\\.Provider",
+          "files": [
+            "src/**/appsettings*.json"
+          ]
+        },
+        {
+          "text": "Own CSS that puts MudBlazor tab badges inline after the tab text (.mud-tab .mud-tab-badge) can go: CoworkeeLayout does it for every app.",
+          "find": "\\.mud-tab-badge",
+          "files": [
+            "src/**/*.css",
+            "src/**/*.razor"
+          ]
+        }
+      ]
     }
   ]
 }

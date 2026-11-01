@@ -53,12 +53,21 @@ A queued mail starts the background job `SendMailJob` on the queue `mail`. The j
 | Status | Meaning |
 |---|---|
 | `Queued` | waiting for the job, also between two attempts |
-| `Sending` | an instance claimed it |
+| `Sending` | an instance claimed it (`SendingSince`) |
 | `Sent` | the provider took it (`SentAt`) |
 | `Failed` | every attempt failed; the last error (secrets masked) is in `LastError` |
 | `Skipped` | the recipient is not on the whitelist (`Recipient is not on the whitelist.`); nothing was sent |
 
 A failed attempt is retried like every background job: `Coworkee:Jobs:Attempts` (3) attempts, waiting `Coworkee:Jobs:RetryDelaysInSeconds` (10, 60, 300) in between. The whitelist `Mail.Whitelist` takes addresses and `@domain` entries, one per line (commas and semicolons separate too); empty lets every recipient through. Use it on test systems that hold copies of real data.
+
+A sender that stops between handing the mail to the provider and saving the result (a crash, a restart) leaves the mail in `Sending`. Whether the provider sent it is unknown, so the recurring job `coworkee-mail-stuck-sending` (every five minutes) decides by `Coworkee:Mail`:
+
+| Setting | Default | |
+|---|---|---|
+| `SendingTimeout` | `00:30:00` | a mail in `Sending` longer than this is stuck |
+| `RetryStuckSending` | `false` | `false`: the mail becomes `Failed` with *Delivery unknown: ... may have been sent* and is never sent again. `true`: it is queued again and sent once more |
+
+The default never sends a mail twice but may lose one; check the mail log for *Delivery unknown* and resend by hand. Turn on `RetryStuckSending` where a lost mail is worse than a duplicate (sign-in codes, password resets). Keep `SendingTimeout` above the longest time your provider takes for a mail.
 
 **Administration > Communication > Mail log** (`/cw/admin/mail/log`, permission `Mail.Log.View`) lists the mails of the own organisation with status, attempts and error, filtered by status or campaign (`?campaign=<id>`). API: `GET /api/v1/mail/outgoing?status=Failed&campaignId=...` (paged) and the OData set `Mails` (without the body). With the [Retention](retention.md) module the target `mail-log` deletes old mails (no default: kept until days are set; queued and sending mails stay). The personal data export lists the mails sent to the user's address in his organisation (section `mails`); erasing removes them there, mails of another organisation to the same address stay.
 
