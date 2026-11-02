@@ -10,6 +10,35 @@ products.MapPost("/", (AddEditProductRequest body, IDispatcher d, CancellationTo
 
 Dienste mit vielen Endpunkten können sich das Mapping sparen: [Anwendungsdienste](application-services.md) werden per Konvention bereitgestellt und bekommen einen generierten Blazor-Client.
 
+## Routen am Request
+
+Ein Request kann seine Route selbst nennen; `UseCoworkee` hängt jeden Request der Modul-Assemblies ein, der `[Get]`, `[Post]`, `[Put]`, `[Patch]`, `[Delete]` (oder `[Endpoint("METHODE", route)]`) trägt, ohne `MapGet` und ohne Endpunkt-Klasse:
+
+```csharp
+[Get("/api/v1/brands/{brandId:guid}/products")]
+[RequiresPermission(CatalogPermissions.Products.View)]
+public sealed record GetBrandProductsQuery(Guid BrandId) : IQuery<Result<IReadOnlyList<ProductDto>>>;
+
+[Post("/api/v1/brands/{id:guid}/rename")]
+public sealed record RenameBrandCommand(Guid Id, RenameBody Body) : ICommand<Result>;
+```
+
+| Request | Bindung |
+|---|---|
+| `POST`, `PUT`, `PATCH` ohne Routenwerte | der ganze Request ist der JSON-Body |
+| alles andere | wie `[AsParameters]`: Eigenschaften mit dem Namen eines Routenwerts aus der Route, einfache aus der Query, komplexe aus dem Body |
+
+Die Route ist absolut; `/api/v{n}` davor ordnet sie dieser [Version](#versionen) zu. Die Antwort folgt dem [Result](#aus-results-werden-antworten) (`Result<T>` → 200 mit dem Wert, `Result` → 204, jeder andere Typ → 200). Endpunkte verlangen einen angemeldeten Benutzer, außer mit `AllowAnonymous = true`; die Pipeline prüft `[RequiresPermission]` und validiert wie bei jedem Request. `Tag` setzt die OpenAPI-Gruppe, standardmäßig das erste Routensegment nach der Version (`brands` → *Brands*), der Typname des Requests ist der Endpunktname.
+
+## Welcher Weg
+
+| Weg | Wofür |
+|---|---|
+| `[Get]`/`[Post]`/... am Request | ein Anwendungsfall, ein Endpunkt: Request, Handler und Route in einem Ordner |
+| `MapCoworkeeApi(...).MapGet(...)` | eine HTTP-Form, die der Request nicht hat (Uploads, Dateien, Streams, Body und Request unterscheiden sich) |
+| [Anwendungsdienst](application-services.md) | mehrere Operationen einer Sache hinter einem Interface, mit generiertem .NET-Client |
+| MVC-Controller | Code, der MVC braucht (Filter, Model Binding von Formularen); Controller der Modul-Assemblies findet und hängt `UseCoworkee` ein |
+
 ## Aus Results werden Antworten
 
 | Result | Antwort |

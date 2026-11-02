@@ -1,5 +1,6 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using System.Text.Json.Serialization;
 using Coworkee.AspNetCore.Http;
 using Coworkee.AspNetCore.RateLimiting;
@@ -39,6 +40,13 @@ public static class CoworkeeWebApplicationExtensions
         builder.Services.AddOptions<RateLimiterOptions>().Configure<IOptions<CoworkeeRateLimitOptions>>(CoworkeeRateLimiter.Configure);
         var modules = builder.Services.AddCoworkeeModules<TRoot>(builder.Configuration);
         builder.Services.AddCoworkeeApplicationServices(modules.Select(m => m.GetType().Assembly));
+        builder.Services.AddControllers().ConfigureApplicationPartManager(parts =>
+        {
+            foreach (var assembly in modules.Select(m => m.GetType().Assembly).Distinct().Where(a => parts.ApplicationParts.All(p => p.Name != a.GetName().Name)))
+            {
+                parts.ApplicationParts.Add(new AssemblyPart(assembly));
+            }
+        });
         builder.Services.AddProblemDetails();
         builder.Services.AddExceptionHandler<CoworkeeExceptionHandler>();
         builder.Services.AddApiVersioning(options =>
@@ -65,12 +73,15 @@ public static class CoworkeeWebApplicationExtensions
         // before the modules: the auth server answers discovery and token requests in its authentication handler
         app.UseCors(CoworkeeCors.Policy);
         app.UseRequestLocalization(RequestCultures);
-        foreach (var module in app.Services.GetRequiredService<IReadOnlyList<CoworkeeModule>>().OfType<IWebModule>())
+        var modules = app.Services.GetRequiredService<IReadOnlyList<CoworkeeModule>>();
+        foreach (var module in modules.OfType<IWebModule>())
         {
             module.ConfigureApplication(app);
         }
 
         app.MapCoworkeeApplicationServices();
+        app.MapCoworkeeRequests(modules.Select(m => m.GetType().Assembly));
+        app.MapControllers();
 
         app.UseAuthentication();
         app.UseAuthorization();

@@ -10,6 +10,35 @@ products.MapPost("/", (AddEditProductRequest body, IDispatcher d, CancellationTo
 
 Services with many endpoints can skip the mapping: [application services](application-services.md) are exposed by convention and get a generated Blazor client.
 
+## Routes on the request
+
+A request can name its route itself; `UseCoworkee` maps every request of the module assemblies that carries `[Get]`, `[Post]`, `[Put]`, `[Patch]`, `[Delete]` (or `[Endpoint("METHOD", route)]`), with no `MapGet` and no endpoint class:
+
+```csharp
+[Get("/api/v1/brands/{brandId:guid}/products")]
+[RequiresPermission(CatalogPermissions.Products.View)]
+public sealed record GetBrandProductsQuery(Guid BrandId) : IQuery<Result<IReadOnlyList<ProductDto>>>;
+
+[Post("/api/v1/brands/{id:guid}/rename")]
+public sealed record RenameBrandCommand(Guid Id, RenameBody Body) : ICommand<Result>;
+```
+
+| Request | Binding |
+|---|---|
+| `POST`, `PUT`, `PATCH` without route values | the whole request is the JSON body |
+| everything else | like `[AsParameters]`: properties named like a route value from the route, simple ones from the query, complex ones from the body |
+
+The route is absolute; `/api/v{n}` in front maps it to that [version](#versions). The response follows the [result](#results-become-responses) (`Result<T>` → 200 with the value, `Result` → 204, any other type → 200). Endpoints require a signed-in user unless `AllowAnonymous = true`; the pipeline checks `[RequiresPermission]` and validates as for every request. `Tag` sets the OpenAPI group, by default the first route segment after the version (`brands` → *Brands*), and the request's type name is the endpoint name.
+
+## Which way
+
+| Way | Use it for |
+|---|---|
+| `[Get]`/`[Post]`/... on the request | one use case, one endpoint: the request, its handler and its route in one folder |
+| `MapCoworkeeApi(...).MapGet(...)` | an HTTP shape the request does not have (uploads, files, streams, a body and a request that differ) |
+| [application service](application-services.md) | several operations of one thing behind an interface, with a generated .NET client |
+| MVC controller | code that needs MVC (filters, model binding of forms); controllers of module assemblies are found and mapped by `UseCoworkee` |
+
 ## Results become responses
 
 | Result | Response |

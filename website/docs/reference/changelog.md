@@ -2,6 +2,14 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- Nextended's `[RegisterAs]` registers services without `services.Add...`: `AddCoworkeeModules` (and `AddCoworkee`) registers the marked classes of every module assembly after `ConfigureServices`; `services.AddRegisterAsServices(assemblies)` for other assemblies. Registrations that are there already are not added twice. `Coworkee.Core` references `Nextended.Core` now. See [registering with an attribute](../fundamentals/modules.md#registering-with-an-attribute).
+- `[Get]`, `[Post]`, `[Put]`, `[Patch]`, `[Delete]` and `[Endpoint]` (`Coworkee.Application.Messaging`) on a request map it as an endpoint that dispatches it; `UseCoworkee` maps the requests of all module assemblies (`MapCoworkeeRequests`). See [routes on the request](../web/http-api.md#routes-on-the-request).
+- MVC controllers of module assemblies are found and mapped: `AddCoworkee` adds the controllers with the module assemblies as application parts, `UseCoworkee` maps them.
+
 ## 0.0.1.57 (2026-11-01)
 
 ### Added

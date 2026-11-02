@@ -50,6 +50,29 @@ Module ändern nie eine zentrale Liste. Sie fügen Contributor hinzu, die das zu
 
 Deshalb lässt sich ein Modul hinzufügen oder entfernen, ohne anderswo etwas anzufassen.
 
+## Registrieren per Attribut
+
+Statt `services.AddScoped<...>()` in `ConfigureServices` kann eine Klasse Nextendeds `[RegisterAs]` tragen. `AddCoworkeeModules` (und damit `AddCoworkee`) registriert die markierten Klassen jeder Modul-Assembly, nachdem die Module ihre Dienste konfiguriert haben:
+
+```csharp
+using Nextended.Core.Attributes;
+
+[RegisterAs(typeof(IModelContributor), ServiceLifetime = ServiceLifetime.Singleton)]
+internal sealed class CatalogModelContributor : IModelContributor { ... }
+
+[RegisterAs(typeof(IPriceCalculator), ServiceLifetime = ServiceLifetime.Scoped)]
+internal sealed class PriceCalculator : IPriceCalculator { ... }
+```
+
+| Eigenschaft | |
+|---|---|
+| `ServiceLifetime` | `Transient`, wenn nicht gesetzt |
+| `ReplaceServices` | ersetzt, was ein Modul (oder die Bibliothek) für den Dienst registriert hat |
+| `ServiceKey` | ein Keyed Service |
+| `RegisterAsImplementation` | registriert die Klasse zusätzlich als sich selbst |
+
+Durchsucht werden nur die Assemblies der Module; eine Registrierung, die schon da ist (gleicher Dienst, Key, Klasse und Lebensdauer), kommt nicht doppelt dazu, eine App, die `RegisterAllWithRegisterAsAttribute` selbst aufruft, läuft also weiter. Andere Assemblies rufen `services.AddRegisterAsServices(assembly)` auf (`Coworkee.Core.Modularity`, mit derselben Doppelprüfung); der Blazor-Client, der keine Module hat, ruft Nextendeds `builder.Services.RegisterAllWithRegisterAsAttribute(typeof(Program).Assembly)` auf. Beide Wege lassen sich mischen; `ConfigureServices` bleibt der Ort für Registrierungen mit Optionen oder Factories.
+
 ## Usings
 
 Der meiste Code braucht wenige Namespaces:

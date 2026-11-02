@@ -2,6 +2,14 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- Nextendeds `[RegisterAs]` registriert Dienste ohne `services.Add...`: `AddCoworkeeModules` (und `AddCoworkee`) registriert die markierten Klassen jeder Modul-Assembly nach `ConfigureServices`; `services.AddRegisterAsServices(assemblies)` für andere Assemblies. Registrierungen, die schon da sind, kommen nicht doppelt dazu. `Coworkee.Core` referenziert jetzt `Nextended.Core`. Siehe [Registrieren per Attribut](../fundamentals/modules.md#registrieren-per-attribut).
+- `[Get]`, `[Post]`, `[Put]`, `[Patch]`, `[Delete]` und `[Endpoint]` (`Coworkee.Application.Messaging`) an einem Request hängen ihn als Endpunkt ein, der ihn dispatcht; `UseCoworkee` hängt die Requests aller Modul-Assemblies ein (`MapCoworkeeRequests`). Siehe [Routen am Request](../web/http-api.md#routen-am-request).
+- MVC-Controller der Modul-Assemblies werden gefunden und eingehängt: `AddCoworkee` fügt die Controller mit den Modul-Assemblies als Application Parts hinzu, `UseCoworkee` hängt sie ein.
+
 ## 0.0.1.57 (2026-11-01)
 
 ### Hinzugefügt

@@ -50,6 +50,29 @@ Modules never edit a central list. They add contributors that the owning package
 
 That is why a module can be added or removed without touching anything else.
 
+## Registering with an attribute
+
+Instead of `services.AddScoped<...>()` in `ConfigureServices`, a class can carry Nextended's `[RegisterAs]`. `AddCoworkeeModules` (and so `AddCoworkee`) registers the marked classes of every module assembly after the modules configured their services:
+
+```csharp
+using Nextended.Core.Attributes;
+
+[RegisterAs(typeof(IModelContributor), ServiceLifetime = ServiceLifetime.Singleton)]
+internal sealed class CatalogModelContributor : IModelContributor { ... }
+
+[RegisterAs(typeof(IPriceCalculator), ServiceLifetime = ServiceLifetime.Scoped)]
+internal sealed class PriceCalculator : IPriceCalculator { ... }
+```
+
+| Property | |
+|---|---|
+| `ServiceLifetime` | `Transient` unless set |
+| `ReplaceServices` | replaces what a module (or the library) registered for the service |
+| `ServiceKey` | a keyed service |
+| `RegisterAsImplementation` | also registers the class as itself |
+
+Only the assemblies of modules are scanned; a registration that is there already (same service, key, class and lifetime) is not added twice, so an app that calls `RegisterAllWithRegisterAsAttribute` itself keeps working. Other assemblies call `services.AddRegisterAsServices(assembly)` (`Coworkee.Core.Modularity`, with the same duplicate check); the Blazor client, which has no modules, calls Nextended's `builder.Services.RegisterAllWithRegisterAsAttribute(typeof(Program).Assembly)`. Both ways can be mixed; `ConfigureServices` stays the place for registrations with options or factories.
+
 ## Usings
 
 Most code needs few namespaces:
