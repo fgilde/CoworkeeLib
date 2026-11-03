@@ -51,10 +51,18 @@ public sealed class RealtimeTests(RealtimeApp app) : IAsyncLifetime
     [Fact]
     public async Task Rollback_publishes_nothing()
     {
+        var existing = await CreateTicketAsync("One");
         await using var admin = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
         await admin.SubscribeAsync("type:Ticket");
 
-        await Should.ThrowAsync<DbUpdateException>(() => CreateTicketAsync(new string('x', 50)));
+        // a second row with the same key fails on every provider (SQLite checks no lengths)
+        await Should.ThrowAsync<DbUpdateException>(() => app.AsActorAsync(_setup.AdminUserId, _setup.TenantId, async db =>
+        {
+            var twin = new Ticket { Title = "Twin" };
+            db.Add(twin);
+            db.Entry(twin).Property(nameof(Ticket.Id)).CurrentValue = existing;
+            return await db.SaveChangesAsync(Ct);
+        }));
 
         await Task.Delay(TimeSpan.FromSeconds(2), Ct);
         admin.Events.ShouldBeEmpty();
