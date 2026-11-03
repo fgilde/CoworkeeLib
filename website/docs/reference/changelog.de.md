@@ -2,6 +2,13 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- `AddRealtimeWatch<T>(permission, watch => watch.CreatedAt(…).ChangedAt(…))` sendet Änderungen an Zeilen, die ein anderes System schreibt (eine externe Datenbank), wie Änderungen in der App: Solange jemand `type:X` oder `entity:X:{id}` folgt, wird das Set in jedem Intervall (30 s) über seine Datumsspalten gelesen, und jede neuere Zeile geht als `EntityChanged` raus. Tabellen, Detailseiten und Client-Entity-Kopien folgen ihr; zum Folgen braucht man die angegebene Berechtigung. Siehe [Realtime](../modules/realtime.de.md).
+- Gecachte Queries: `ICachedQuery.CacheRefreshAfter` liefert einen älteren Eintrag sofort und lädt ihn im Hintergrund neu (Stale-while-revalidate), `CacheByGroups` hält einen Eintrag pro Auswahl aktiver Gruppen. Die neue Einstellungsgruppe *Cache* (`CacheSettings`) enthält die Standards für Queries ohne eigene Zeiten: Dauer, Neu laden nach und einen Schalter für das Neuladen im Hintergrund (`ICacheDefaults`).
+
 ## 0.0.1.60 (2026-11-03)
 
 ### Hinzugefügt
