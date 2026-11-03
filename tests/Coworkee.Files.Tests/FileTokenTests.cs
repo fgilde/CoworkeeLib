@@ -144,6 +144,12 @@ public sealed class FileTokenTests(FilesApp app) : IAsyncLifetime
         app.Logs.Lines.ShouldContain(line => line.Contains("/api/v1/files/token/***/secret.pdf"));
         app.Logs.Lines.ShouldContain(line => line.Contains("RequestPath=/api/v1/files/token/***/secret.pdf"), "the hosting scope of the request");
         app.Logs.Lines.ShouldNotContain(line => line.Contains(token.Token));
+        // the request activity stops after the response reached the client
+        for (var waited = 0; waited < 50 && !tags.Any(t => t.Contains("/api/v1/files/token/", StringComparison.Ordinal)); waited++)
+        {
+            await Task.Delay(100, Ct);
+        }
+
         tags.ShouldContain(t => t.Contains("/api/v1/files/token/***/secret.pdf"));
         tags.ShouldNotContain(t => t.Contains(token.Token));
     }
