@@ -4,6 +4,7 @@ using Coworkee.Contracts.Realtime;
 using Coworkee.Realtime.Watch;
 using Coworkee.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Realtime.Tests;
@@ -38,6 +39,23 @@ public sealed class RealtimeWatchTests(RealtimeApp app) : IAsyncLifetime
         envelope.Payload.GetProperty("entityType").GetString().ShouldBe(nameof(Parcel));
         envelope.Payload.GetProperty("entityId").GetString().ShouldBe(id.ToString());
         envelope.Payload.GetProperty("action").GetString().ShouldBe(EntityChangedPayload.Created);
+        // a look reads the key and the dates, not the rows (a hub shipment has a hundred columns)
+        var looks = app.Logs.Lines.Where(l => l.Contains("UpdatedUtc", StringComparison.Ordinal) && l.Contains("Parcel", StringComparison.Ordinal) && l.Contains(" > ", StringComparison.Ordinal)).ToList();
+        looks.ShouldNotBeEmpty();
+        looks.ShouldAllBe(l => !l.Contains("Code", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task The_first_row_of_an_empty_set_reaches_the_followers()
+    {
+        await app.AsActorAsync<int>(null, null, db => db.Set<Parcel>().ExecuteDeleteAsync(Ct));
+        await using var admin = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
+        await admin.SubscribeAsync("type:Parcel");
+        await WatchedAsync();
+
+        var id = await WriteAsync(new Parcel { Code = "First", CreatedUtc = DateTimeOffset.UtcNow });
+
+        (await admin.NextAsync(e => e.Topic == "type:Parcel")).Payload.GetProperty("entityId").GetString().ShouldBe(id.ToString());
     }
 
     [Fact]
@@ -57,6 +75,28 @@ public sealed class RealtimeWatchTests(RealtimeApp app) : IAsyncLifetime
 
         var envelope = await admin.NextAsync(e => e.Topic == $"entity:Parcel:{id}");
         envelope.Payload.GetProperty("action").GetString().ShouldBe(EntityChangedPayload.Updated);
+    }
+
+    [Fact]
+    public async Task Rows_sent_already_neither_come_again_nor_count_against_the_most_events_of_a_look()
+    {
+        // written before anyone follows, within the look back: not sent when someone starts following
+        await WriteAsync(new Parcel { Code = "Before", CreatedUtc = DateTimeOffset.UtcNow });
+        await using var admin = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
+        await admin.SubscribeAsync("type:Parcel");
+        await WatchedAsync();
+
+        // three rows (MaxEvents 3) one by one, then a fourth: the look back reads all four, three of them sent already
+        var ids = new List<string>();
+        for (var i = 0; i < 4; i++)
+        {
+            ids.Add((await WriteAsync(new Parcel { Code = $"P-{i}", CreatedUtc = DateTimeOffset.UtcNow })).ToString());
+            await WatchedAsync();
+        }
+
+        await WatchedAsync();
+        var sent = admin.Events.Where(e => e.Topic == "type:Parcel").Select(e => e.Payload.GetProperty("entityId").GetString()).ToList();
+        sent.ShouldBe(ids);
     }
 
     [Fact]

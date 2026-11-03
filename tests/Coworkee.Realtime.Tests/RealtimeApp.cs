@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 [assembly: AssemblyFixture(typeof(Coworkee.Realtime.Tests.RealtimeApp))]
 [assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]
@@ -30,6 +31,9 @@ namespace Coworkee.Realtime.Tests;
 public sealed class RealtimeApp : DatabaseFixture
 {
     public WebApplication App { get; private set; } = null!;
+
+    /// <summary>The app's log lines, with the SQL of every command.</summary>
+    public CapturedLogs Logs { get; } = new();
 
     public override async ValueTask InitializeAsync()
     {
@@ -42,6 +46,7 @@ public sealed class RealtimeApp : DatabaseFixture
     {
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
+        builder.Logging.AddProvider(Logs).AddFilter<CapturedLogs>("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Information);
         builder.Configuration.AddInMemoryCollection(settings ?? []);
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
@@ -213,7 +218,9 @@ public sealed class TestRealtimeModule : CoworkeeModule
         context.Services.AddRealtimeWatch<Parcel>(Ticket.ViewPermission, watch => watch
             .CreatedAt(p => p.CreatedUtc)
             .ChangedAt(p => p.UpdatedUtc)
-            .Every(TimeSpan.FromMilliseconds(200)));
+            .Every(TimeSpan.FromMilliseconds(200))
+            .LookBack(TimeSpan.FromMinutes(1))
+            .MaxEvents(3));
 
         // an app bridge to another hub: it decorates the publisher
         var publisher = context.Services.Single(d => d.ServiceType == typeof(IRealtimePublisher));

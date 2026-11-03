@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Linq.Expressions;
+using System.Reflection;
 using Coworkee.Contracts.Realtime;
 using Coworkee.Domain;
 using Coworkee.Infrastructure.Persistence;
@@ -19,12 +20,12 @@ internal sealed class RealtimeWatch<T> : IRealtimeWatch
     private readonly IReadOnlyList<LambdaExpression> _columns;
     private readonly int _max;
     private readonly Func<IQueryable<T>, IServiceProvider, IQueryable<T>>? _rows;
-    private readonly Func<T, DateTimeOffset?>? _createdOf;
-    private readonly IReadOnlyList<Func<T, DateTimeOffset?>> _datesOf;
     private readonly TimeSpan _lookBack;
 
     // the rows sent within the look back, with their date (one watcher reads each watch, so no lock)
     private readonly Dictionary<string, DateTimeOffset?> _sent = new(StringComparer.Ordinal);
+
+    private DateTimeOffset? _floor;
 
     public RealtimeWatch(RealtimeWatchBuilder<T> builder)
     {
@@ -39,8 +40,6 @@ internal sealed class RealtimeWatch<T> : IRealtimeWatch
         _max = builder.Max;
         _rows = builder.Rows;
         _lookBack = builder.LookBackTime;
-        _createdOf = _created is null ? null : Compile(_created);
-        _datesOf = [.. _columns.Select(Compile)];
     }
 
     public Type EntityType => typeof(T);
@@ -60,26 +59,23 @@ internal sealed class RealtimeWatch<T> : IRealtimeWatch
         rows = _rows?.Invoke(rows, services) ?? rows;
         if (since is not { } after)
         {
-            _sent.Clear();
-            return new RealtimeWatchRound(await NewestAsync(rows, cancellationToken), [], false);
+            return Restart(await NewestAsync(rows, cancellationToken), many: false);
         }
 
-        var from = after - _lookBack;
-        var changed = await rows.Where(NewerThan(from)).Take(_max + 1).ToListAsync(cancellationToken);
-        if (changed.Count > _max)
-        {
-            _sent.Clear();
-            return new RealtimeWatchRound(await NewestAsync(rows, cancellationToken) ?? after, [], true);
-        }
-
+        // the look back never reads below the first look or the last whole-set event: what was there then counts as sent
+        // an empty set's watermark is the smallest date: looking back from it would leave the range of dates
+        var from = after - DateTimeOffset.MinValue > _lookBack ? after - _lookBack : DateTimeOffset.MinValue;
+        from = _floor > from ? _floor.Value : from;
         var key = context.Model.FindEntityType(typeof(T))?.FindPrimaryKey()?.Properties
             ?? throw new InvalidOperationException($"{typeof(T).Name} has no key the watch could send.");
+        // the rows sent already come again within the look back: they do not count against the most events of a look
+        var changed = await rows.Where(NewerThan(from)).Take(_max + _sent.Count + 1).Select(Shape(key)).ToListAsync(cancellationToken);
         var changes = new List<RealtimeWatchChange>();
         DateTimeOffset? newest = null;
         foreach (var row in changed)
         {
-            var id = string.Join(",", key.Select(p => Convert.ToString(p.PropertyInfo?.GetValue(row) ?? p.FieldInfo?.GetValue(row), CultureInfo.InvariantCulture)));
-            var date = _datesOf.Select(of => of(row)).Max();
+            var id = string.Join(",", row.Key.Select(value => Convert.ToString(value, CultureInfo.InvariantCulture)));
+            var date = row.Dates.Max();
             newest = date > newest || newest is null ? date ?? newest : newest;
             // read again because of the look back: sent already with this date
             var known = _sent.TryGetValue(id, out var sent);
@@ -90,8 +86,13 @@ internal sealed class RealtimeWatch<T> : IRealtimeWatch
 
             _sent[id] = date;
             // new: created since the last look and not sent before (a row the look back finds again, or a later change of it, is an update)
-            var created = !known && _createdOf?.Invoke(row) > after;
-            changes.Add(new RealtimeWatchChange(id, (row as IMultiTenant)?.TenantId, created ? EntityChangedPayload.Created : EntityChangedPayload.Updated));
+            var created = !known && row.Created > after;
+            changes.Add(new RealtimeWatchChange(id, row.TenantId, created ? EntityChangedPayload.Created : EntityChangedPayload.Updated));
+        }
+
+        if (changes.Count > _max)
+        {
+            return Restart(await NewestAsync(rows, cancellationToken) ?? after, many: true);
         }
 
         var watermark = newest is { } seen && seen > after ? seen : after;
@@ -101,6 +102,14 @@ internal sealed class RealtimeWatch<T> : IRealtimeWatch
         }
 
         return new RealtimeWatchRound(watermark, changes, false);
+    }
+
+    // the first look, or one with more changes than events: everything up to the newest date counts as known
+    private RealtimeWatchRound Restart(DateTimeOffset? newest, bool many)
+    {
+        _sent.Clear();
+        _floor = newest;
+        return new RealtimeWatchRound(newest, [], many);
     }
 
     private async Task<DateTimeOffset?> NewestAsync(IQueryable<T> rows, CancellationToken cancellationToken)
@@ -120,34 +129,55 @@ internal sealed class RealtimeWatch<T> : IRealtimeWatch
         return newest;
     }
 
-    // any date newer than the watermark: (a > since) or (b > since)
+    // any date newer than the watermark: (a > since) or (b > since); the watermark is read from a closure, so EF sends it as a parameter (one plan for every look)
     private Expression<Func<T, bool>> NewerThan(DateTimeOffset since)
     {
         var row = Expression.Parameter(typeof(T), "row");
+        var watermark = new Watermark((DateTimeOffset?)since, (DateTime?)since.UtcDateTime);
         var newer = _columns
             .Select(column =>
             {
                 var date = new Rebind(column.Parameters[0], row).Visit(column.Body);
-                var value = column.ReturnType == typeof(DateTime?) ? Expression.Constant((DateTime?)since.UtcDateTime, typeof(DateTime?)) : Expression.Constant((DateTimeOffset?)since, typeof(DateTimeOffset?));
+                var value = Expression.Property(Expression.Constant(watermark), column.ReturnType == typeof(DateTime?) ? nameof(Watermark.Utc) : nameof(Watermark.Offset));
                 return (Expression)Expression.GreaterThan(date, value);
             })
             .Aggregate(Expression.OrElse);
         return Expression.Lambda<Func<T, bool>>(newer, row);
     }
 
-    private static Func<T, DateTimeOffset?> Compile(LambdaExpression column)
+    // row => new RealtimeWatchRow(new object?[] { key... }, tenant, new DateTimeOffset?[] { dates... }, created): only these columns are read
+    private Expression<Func<T, RealtimeWatchRow>> Shape(IReadOnlyList<Microsoft.EntityFrameworkCore.Metadata.IProperty> key)
     {
-        if (column.ReturnType == typeof(DateTime?))
-        {
-            var date = ((Expression<Func<T, DateTime?>>)column).Compile();
-            return row => Utc(date(row));
-        }
+        var row = Expression.Parameter(typeof(T), "row");
+        var keys = key.Select(p => (Expression)Expression.Convert(Column(row, p.ClrType, p.Name), typeof(object)));
+        var tenant = typeof(IMultiTenant).IsAssignableFrom(typeof(T))
+            ? (Expression)Expression.Convert(Column(row, typeof(Guid), nameof(IMultiTenant.TenantId)), typeof(Guid?))
+            : Expression.Constant(null, typeof(Guid?));
+        var dates = _columns.Select(column => Date(column, row));
+        var created = _created is null ? Expression.Constant(null, typeof(DateTimeOffset?)) : Date(_created, row);
+        return Expression.Lambda<Func<T, RealtimeWatchRow>>(
+            Expression.New(
+                typeof(RealtimeWatchRow).GetConstructors()[0],
+                Expression.NewArrayInit(typeof(object), keys),
+                tenant,
+                Expression.NewArrayInit(typeof(DateTimeOffset?), dates),
+                created),
+            row);
+    }
 
-        return ((Expression<Func<T, DateTimeOffset?>>)column).Compile();
+    private static Expression Column(ParameterExpression row, Type type, string name) =>
+        Expression.Call(typeof(EF), nameof(EF.Property), [type], row, Expression.Constant(name));
+
+    private static Expression Date(LambdaExpression column, ParameterExpression row)
+    {
+        var date = new Rebind(column.Parameters[0], row).Visit(column.Body);
+        return column.ReturnType == typeof(DateTime?) ? Expression.Call(typeof(RealtimeWatch<T>).GetMethod(nameof(Utc), BindingFlags.NonPublic | BindingFlags.Static)!, date) : date;
     }
 
     // dates without an offset are taken as UTC, as EF stores them
     private static DateTimeOffset? Utc(DateTime? date) => date is { } value ? new DateTimeOffset(DateTime.SpecifyKind(value, DateTimeKind.Utc)) : null;
+
+    private sealed record Watermark(DateTimeOffset? Offset, DateTime? Utc);
 
     private sealed class Rebind(ParameterExpression from, ParameterExpression to) : ExpressionVisitor
     {
