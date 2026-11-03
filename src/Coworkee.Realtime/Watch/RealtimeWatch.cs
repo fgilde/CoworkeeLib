@@ -92,7 +92,8 @@ internal sealed class RealtimeWatch<T> : IRealtimeWatch
 
         if (changes.Count > _max)
         {
-            return Restart(await NewestAsync(rows, cancellationToken) ?? after, many: true);
+            var why = $"{changes.Count} changed rows after {from:O} (last look {after:O}), at most {_max} are sent one by one";
+            return Restart(await NewestAsync(rows, cancellationToken) ?? after, many: true) with { Why = why };
         }
 
         var watermark = newest is { } seen && seen > after ? seen : after;

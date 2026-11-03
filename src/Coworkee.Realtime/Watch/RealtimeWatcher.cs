@@ -78,6 +78,7 @@ internal sealed partial class RealtimeWatcher(
         if (round.Many)
         {
             // too many to send one by one: the set as a whole changed
+            LogWholeSet(name, round.Why);
             foreach (var tenant in following.Where(f => f.Topic == type).Select(f => f.TenantId).Distinct())
             {
                 await publisher.PublishAsync(tenant, type, RealtimeEventTypes.EntityChanged, new EntityChangedPayload(name, string.Empty, EntityChangedPayload.Updated, []), cancellationToken);
@@ -96,6 +97,9 @@ internal sealed partial class RealtimeWatcher(
             }
         }
     }
+
+    [LoggerMessage(2, LogLevel.Information, "{EntityType} changed as a whole: {Why}")]
+    private partial void LogWholeSet(string entityType, string? why);
 
     [LoggerMessage(1, LogLevel.Warning, "Watching {EntityType} for changes failed")]
     private partial void LogFailed(Exception exception, string entityType);
