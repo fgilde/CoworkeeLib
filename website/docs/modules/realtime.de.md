@@ -62,14 +62,13 @@ Zeilen, die ein anderes System schreibt (eine externe Datenbank, ein Sync-Job), 
 
 ```csharp
 services.AddRealtimeWatch<CalculatedShipment>(HubPermissions.Shipment.View, watch => watch
-    .CreatedAt(s => s.DateCreatedUtc)
-    .ChangedAt(s => s.DateUpdatedUtc)
+    .ChangedAt(s => s.DateUpdatedUtc)       // indiziert; auch beim Anlegen gesetzt
     .Every(TimeSpan.FromSeconds(30))      // Standard
     .LookBack(TimeSpan.FromMinutes(5))    // Zeilen, die später als ihr Datum ankommen
     .Read((rows, _) => rows.IgnoreQueryFilters(["OrgScope"])));
 ```
 
-Der Beobachter liest als System (ohne Benutzer), mit einer Abfrage pro Intervall für alle Folgenden; solange niemand folgt, wird nichts gelesen. Zeilen eines `IMultiTenant`-Sets gehen an ihren eigenen Mandanten, andere an jeden Mandanten, der folgt. Mehr als `MaxEvents` (200) geänderte Zeilen in einem Blick senden ein Ereignis für das ganze Set. Jede Instanz beobachtet für ihre eigenen Verbindungen.
+Nenne nur indizierte Datumsspalten: Ein Blick liest `a > @since OR b > @since`, eine Spalte ohne Index scannt also bei jedem Blick die ganze Tabelle (bei einer Hub-Tabelle mit 2,3 Millionen Zeilen eine Minute statt Millisekunden). Setzt das System das Änderungsdatum auch beim Anlegen, findet `ChangedAt` allein neue Zeilen; sie kommen dann als `Updated`. Der Beobachter liest als System (ohne Benutzer), mit einer Abfrage pro Intervall für alle Folgenden; solange niemand folgt, wird nichts gelesen. Zeilen eines `IMultiTenant`-Sets gehen an ihren eigenen Mandanten, andere an jeden Mandanten, der folgt. Mehr als `MaxEvents` (200) geänderte Zeilen in einem Blick senden ein Ereignis für das ganze Set. Jede Instanz beobachtet für ihre eigenen Verbindungen.
 
 Private Daten brauchen mehr Sorgfalt: Entities, die nur manche Benutzer sehen dürfen, sollten das Typ-Thema nicht nutzen. Veröffentliche dann eigene Themen:
 

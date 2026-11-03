@@ -15,7 +15,7 @@ public static class RealtimeWatchServiceCollectionExtensions
     /// </summary>
     /// <example><code>
     /// services.AddRealtimeWatch&lt;CalculatedShipment&gt;(HubPermissions.Shipment.View, watch =&gt; watch
-    ///     .CreatedAt(s =&gt; s.DateCreatedUtc).ChangedAt(s =&gt; s.DateUpdatedUtc).Every(TimeSpan.FromSeconds(30)).LookBack(TimeSpan.FromMinutes(5)));
+    ///     .ChangedAt(s =&gt; s.DateUpdatedUtc).Every(TimeSpan.FromSeconds(30)).LookBack(TimeSpan.FromMinutes(5)));
     /// </code></example>
     public static IServiceCollection AddRealtimeWatch<T>(this IServiceCollection services, string viewPermission, Action<RealtimeWatchBuilder<T>> configure)
         where T : class
