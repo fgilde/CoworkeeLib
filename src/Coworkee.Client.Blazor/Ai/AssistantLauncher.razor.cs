@@ -24,9 +24,19 @@ public partial class AssistantLauncher : IAsyncDisposable
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
+    [Inject] private Theming.ThemeService Themes { get; set; } = null!;
+
     protected override async Task OnInitializedAsync()
     {
         State.Changed += Refresh;
+        // switched on or off by an administrator, or Ai.Chat granted or taken: the button follows at once (SettingsLiveUpdates, PermissionStore)
+        Themes.Changed += Recheck;
+        Permissions.Changed += Recheck;
+        await CheckAsync();
+    }
+
+    private async Task CheckAsync()
+    {
         try
         {
             _available = await Permissions.HasAsync(AiPermissions.Chat) && (await Api.GetStatusAsync()).Available;
@@ -36,6 +46,21 @@ public partial class AssistantLauncher : IAsyncDisposable
             _available = false;
         }
     }
+
+    private void Recheck() => InvokeAsync(async () =>
+    {
+        var was = _available;
+        await CheckAsync();
+        if (was != _available)
+        {
+            if (!_available)
+            {
+                State.Close();
+            }
+
+            StateHasChanged();
+        }
+    });
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -53,6 +78,8 @@ public partial class AssistantLauncher : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         State.Changed -= Refresh;
+        Themes.Changed -= Recheck;
+        Permissions.Changed -= Recheck;
         try
         {
             if (_hotkey is not null)

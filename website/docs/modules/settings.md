@@ -33,6 +33,8 @@ var allowed = await settings.GetAsync<bool>(AccountSettings.AllowRegistration, c
 
 Defaults can also come from configuration, `Coworkee:Settings:Defaults:<name>`: the app host sets `Coworkee:Settings:Defaults:Mail.Smtp.Host` and `Mail.Smtp.Port` for Mailpit.
 
+A saved setting reaches every open page at once: global settings on the realtime topic `global:settings` (`SettingTopics.Global`), settings of the organisation on `tenant:settings`, user settings on the user's topic; the events name the setting, never its value. The Blazor client (`SettingsLiveUpdates` in `CoworkeeLayout`) reloads its client settings, and everything that follows `ThemeService.Changed` changes without a reload: the assistant button, the page mode of tables, the theme. Own components do the same with `ThemeService.Changed`, or follow the topics with `<RealtimeSubscription>`.
+
 The section **Cloud file pickers** of the System tab holds the ids of Google Drive, OneDrive and Dropbox for every upload field, see [Files](files.md#cloud-file-pickers).
 
 ### Own settings in the admin page

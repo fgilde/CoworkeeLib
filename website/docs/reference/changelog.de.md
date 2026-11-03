@@ -2,6 +2,17 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- Gespeicherte Einstellungen erreichen jede offene Seite sofort: Eine Änderung an `SettingValue` geht auf `SettingTopics.Global` (`global:settings`), `SettingTopics.Tenant` (`tenant:settings`) oder das Topic des Benutzers, und `CoworkeeLayout` (`SettingsLiveUpdates`) lädt die Client-Einstellungen neu; `ThemeService.Changed` folgt. Der Assistant-Knopf und *Den Assistant fragen* der Palette erscheinen und verschwinden, wenn ein Administrator den Assistant ein- oder ausschaltet oder `Ai.Chat` vergeben oder entzogen wird, ohne Neuladen.
+- Gruppierte Tabellen: Eine Gruppe zeigt *wird geladen*, bis ihre ersten Zeilen da sind; ihre Zeilen bleiben erhalten, wenn sie zugeht, und wieder geöffnet (oder nach einem Neuladen der Tabelle) zeigt sie sie sofort und lädt sie im Hintergrund neu.
+
+### Behoben
+
+- Der Assistant scheiterte mit *The AI provider could not answer*, wenn ein Request eine Eigenschaft mit dem Namen eines JSON-Schema-Schlüsselworts hatte (`Properties`, `Items`): Ihr Eingabeschema bekam `"type": {}`, das Anthropic ablehnt (*input_schema: JSON schema is invalid*). Geöffnet werden jetzt nur Unterschemas.
+
 ## 0.0.1.59 (2026-11-03)
 
 ### Hinzugefügt

@@ -17,6 +17,12 @@ public sealed class DataTablePages<T>(int size)
 
     public int Size => size;
 
+    /// <summary>The query of the kept pages.</summary>
+    public string? Query => _key;
+
+    /// <summary>The pages that arrived, e.g. to load them again in the background while these stay on screen.</summary>
+    public IReadOnlyList<int> Loaded => [.. _pages.Where(p => p.Value.IsCompletedSuccessfully).Select(p => p.Key).Order()];
+
     /// <summary>The count of the current query; after <see cref="Clear"/> the previous one until the new one arrives (no "0 rows" while loading).</summary>
     public long Total { get; private set; }
 

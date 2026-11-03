@@ -54,7 +54,23 @@ public sealed class ToolDiscoveryTests
 
         schema["properties"]!["style"]!.ShouldBeOfType<System.Text.Json.Nodes.JsonObject>();
     }
+
+    // a property named like a schema keyword is a property, not the keyword: "type": "array" stays a type (Anthropic refused "type": {})
+    [Fact]
+    public void Properties_named_like_schema_keywords_keep_their_schema()
+    {
+        var schema = new AiToolSchemas().Get(new AiTool("tag_notes", "Tags notes.", typeof(TagNotesCommand), typeof(Result)), System.Text.Json.JsonSerializerOptions.Web);
+        var properties = schema["properties"]!;
+
+        properties["properties"]!["type"]!.GetValue<string>().ShouldBe("array");
+        properties["properties"]!["items"]!["type"]!.GetValue<string>().ShouldBe("string");
+        // web options read numbers from strings too: ["string", "integer"]
+        properties["items"]!["type"]!.ToJsonString().ShouldContain("integer");
+        properties["type"]!["type"]!.GetValue<string>().ShouldBe("string");
+    }
 }
+
+public sealed record TagNotesCommand(IReadOnlyList<string> Properties, int Items, string Type) : ICommand<Result>;
 
 [RequiresPermission("Notes.Archive")]
 [Description("Archives notes older than the given date.")]

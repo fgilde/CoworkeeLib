@@ -44,39 +44,69 @@ public sealed class AiToolSchemas
         }
     }
 
-    // "any value" is exported as the schema true; some providers (Ollama) accept only objects for properties and items
+    private static readonly string[] SchemaKeywords = ["additionalProperties", "not", "if", "then", "else", "contains", "propertyNames", "unevaluatedItems", "unevaluatedProperties"];
+
+    private static readonly string[] SchemaListKeywords = ["anyOf", "oneOf", "allOf", "prefixItems"];
+
+    private static readonly string[] SchemaMapKeywords = ["$defs", "definitions", "patternProperties", "dependentSchemas"];
+
+    // "any value" is exported as the schema true; some providers (Ollama) accept only objects for properties and items. Only subschemas are walked:
+    // the keys of "properties" are names (a property may be called "properties", "items" or "type"), and its values are schemas
     private static void OpenSchemas(JsonNode? node)
     {
-        if (node is JsonObject obj)
+        if (node is not JsonObject schema)
         {
-            foreach (var key in new[] { "properties", "items" })
-            {
-                if (obj[key] is JsonObject children && key == "properties")
-                {
-                    foreach (var (name, child) in children.ToList())
-                    {
-                        if (child is JsonValue)
-                        {
-                            children[name] = new JsonObject();
-                        }
-                    }
-                }
-                else if (obj[key] is JsonValue)
-                {
-                    obj[key] = new JsonObject();
-                }
-            }
+            return;
+        }
 
-            foreach (var (_, child) in obj.ToList())
+        if (schema["properties"] is JsonObject properties)
+        {
+            foreach (var (name, child) in properties.ToList())
             {
-                OpenSchemas(child);
+                if (child is JsonValue)
+                {
+                    properties[name] = new JsonObject();
+                }
+                else
+                {
+                    OpenSchemas(child);
+                }
             }
         }
-        else if (node is JsonArray array)
+
+        if (schema["items"] is JsonValue)
         {
-            foreach (var item in array)
+            schema["items"] = new JsonObject();
+        }
+        else
+        {
+            OpenSchemas(schema["items"]);
+        }
+
+        foreach (var keyword in SchemaKeywords)
+        {
+            OpenSchemas(schema[keyword]);
+        }
+
+        foreach (var keyword in SchemaListKeywords)
+        {
+            if (schema[keyword] is JsonArray list)
             {
-                OpenSchemas(item);
+                foreach (var child in list)
+                {
+                    OpenSchemas(child);
+                }
+            }
+        }
+
+        foreach (var keyword in SchemaMapKeywords)
+        {
+            if (schema[keyword] is JsonObject map)
+            {
+                foreach (var (_, child) in map)
+                {
+                    OpenSchemas(child);
+                }
             }
         }
     }

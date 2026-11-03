@@ -88,6 +88,43 @@ public sealed partial class DataTableGroupTests : ClientTestBase
     }
 
     [Fact]
+    public void An_opening_group_shows_that_it_loads_until_its_rows_arrive()
+    {
+        var table = Grouped(DataTablePageMode.Pager, nameof(Row.Kind));
+        table.WaitForAssertion(() => Heads(table).Count.ShouldBe(3));
+        var gate = _odata.Hold();
+
+        table.FindAll("[data-testid='group-head']")[1].Click();
+
+        table.WaitForAssertion(() => table.Find("[data-testid='group-rows-loading']"));
+        gate.SetResult();
+        table.WaitForAssertion(() => table.FindAll("[data-testid='group-rows'] tbody tr.mud-table-row").Count.ShouldBe(25));
+        table.FindAll("[data-testid='group-rows-loading']").ShouldBeEmpty();
+    }
+
+    [Theory]
+    [InlineData(DataTablePageMode.Pager)]
+    [InlineData(DataTablePageMode.EndlessScroll)]
+    public void A_group_opened_again_shows_the_rows_it_had_at_once_and_refreshes_them(DataTablePageMode mode)
+    {
+        var table = Grouped(mode, nameof(Row.Kind));
+        table.WaitForAssertion(() => Heads(table).Count.ShouldBe(3));
+        table.FindAll("[data-testid='group-head']")[2].Click();
+        table.WaitForAssertion(() => table.FindAll("[data-testid='group-rows'] tbody tr.mud-table-row").Count.ShouldBeGreaterThan(0));
+        table.FindAll("[data-testid='group-head']")[2].Click();
+        table.WaitForAssertion(() => table.FindAll("[data-testid='group-rows']").ShouldBeEmpty());
+        var gate = _odata.Hold();
+        var before = _odata.Queries.Count(q => q.Filter?.Contains("Gamma", StringComparison.Ordinal) == true);
+
+        table.FindAll("[data-testid='group-head']")[2].Click();
+
+        table.WaitForAssertion(() => table.FindAll("[data-testid='group-rows'] tbody tr.mud-table-row").Count.ShouldBeGreaterThan(0), TimeSpan.FromSeconds(2));
+        table.Find("[data-testid='group-rows']").TextContent.ShouldContain("Gamma");
+        gate.SetResult();
+        table.WaitForAssertion(() => _odata.Queries.Count(q => q.Filter?.Contains("Gamma", StringComparison.Ordinal) == true).ShouldBeGreaterThan(before));
+    }
+
+    [Fact]
     public void Open_groups_stay_open_when_the_table_reloads()
     {
         var table = Grouped(DataTablePageMode.Pager, nameof(Row.Kind));
@@ -146,12 +183,27 @@ public sealed partial class DataTableGroupTests : ClientTestBase
 
         public IReadOnlyList<FacetGroupDto> Facets { get; set; } = [];
 
-        public Task<ODataPage<T>> QueryAsync<T>(string entitySet, ODataQuery query, CancellationToken cancellationToken = default)
+        private Task _gate = Task.CompletedTask;
+
+        /// <summary>Holds the row queries back (not the counts) until the returned source completes.</summary>
+        public TaskCompletionSource Hold()
+        {
+            var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            _gate = gate.Task;
+            return gate;
+        }
+
+        public async Task<ODataPage<T>> QueryAsync<T>(string entitySet, ODataQuery query, CancellationToken cancellationToken = default)
         {
             Queries.Enqueue(query);
+            if (query.Top > 0)
+            {
+                await _gate;
+            }
+
             var rows = Matching(query.Filter).ToList();
             IReadOnlyList<T> items = (IReadOnlyList<T>)(object)rows.Skip(query.Skip ?? 0).Take(query.Top ?? 500).ToList();
-            return Task.FromResult(new ODataPage<T>(items, query.Count ? rows.Count : null, query.Facets ? Facets : []));
+            return new ODataPage<T>(items, query.Count ? rows.Count : null, query.Facets ? Facets : []);
         }
 
         public Task<IReadOnlyList<ODataGroup>> GroupAsync<T>(string entitySet, string? filter, IReadOnlyList<string> by, CancellationToken cancellationToken = default)

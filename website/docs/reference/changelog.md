@@ -2,6 +2,17 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- Saved settings reach every open page at once: a `SettingValue` change is sent on `SettingTopics.Global` (`global:settings`), `SettingTopics.Tenant` (`tenant:settings`) or the user's topic, and `CoworkeeLayout` (`SettingsLiveUpdates`) reloads the client settings; `ThemeService.Changed` follows. The assistant button and the palette's *Ask the assistant* appear and go as an administrator switches the assistant on or off, or `Ai.Chat` is granted or taken, without a reload.
+- Grouped data tables: a group shows *loading* until its first rows arrive; its rows stay kept when it closes, and opened again (or after a reload of the table) it shows them at once and loads them again in the background.
+
+### Fixed
+
+- The assistant failed with *The AI provider could not answer* when a request had a property named like a JSON schema keyword (`Properties`, `Items`): its input schema got `"type": {}`, which Anthropic refuses (*input_schema: JSON schema is invalid*). Only subschemas are opened now.
+
 ## 0.0.1.59 (2026-11-03)
 
 ### Added

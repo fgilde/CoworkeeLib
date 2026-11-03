@@ -33,6 +33,8 @@ var allowed = await settings.GetAsync<bool>(AccountSettings.AllowRegistration, c
 
 Standardwerte können auch aus der Konfiguration kommen, `Coworkee:Settings:Defaults:<Name>`: Der AppHost setzt `Coworkee:Settings:Defaults:Mail.Smtp.Host` und `Mail.Smtp.Port` für Mailpit.
 
+Eine gespeicherte Einstellung erreicht jede offene Seite sofort: globale Einstellungen auf dem Realtime-Topic `global:settings` (`SettingTopics.Global`), Einstellungen der Organisation auf `tenant:settings`, Benutzereinstellungen auf dem Topic des Benutzers; die Ereignisse nennen die Einstellung, nie ihren Wert. Der Blazor-Client (`SettingsLiveUpdates` in `CoworkeeLayout`) lädt seine Client-Einstellungen neu, und alles, was `ThemeService.Changed` folgt, ändert sich ohne Neuladen: der Assistant-Knopf, der Seitenmodus von Tabellen, das Theme. Eigene Komponenten tun dasselbe mit `ThemeService.Changed` oder folgen den Topics mit `<RealtimeSubscription>`.
+
 Der Abschnitt **Cloud-Dateiauswahl** im Reiter System enthält die IDs von Google Drive, OneDrive und Dropbox für jedes Upload-Feld, siehe [Dateien](files.md#cloud-dateiauswahl).
 
 ### Eigene Einstellungen auf der Admin-Seite

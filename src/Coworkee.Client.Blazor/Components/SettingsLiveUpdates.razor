@@ -1,0 +1,4 @@
+@using Coworkee.Contracts.Settings
+<RealtimeSubscription Topic="@SettingTopics.Global" OnEvent="_ => ReloadAsync()" />
+<RealtimeSubscription Topic="@SettingTopics.Tenant" OnEvent="_ => ReloadAsync()" />
+<RealtimeSubscription Topic="@_userTopic" OnEvent="UserChangedAsync" />

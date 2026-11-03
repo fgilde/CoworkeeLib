@@ -15,6 +15,7 @@ public partial class CoworkeeDataTable<T>
 {
     private readonly HashSet<string> _openGroups = new(StringComparer.Ordinal);
     private readonly Dictionary<string, HashSet<T>> _groupSelections = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, DataTablePages<T>> _groupPages = new(StringComparer.Ordinal);
     private bool _groupsUnsupported;
     private string? _groupedBy;
     private long _groupTotal;
@@ -80,19 +81,34 @@ public partial class CoworkeeDataTable<T>
         }
     }
 
+    /// <summary>The order of a group's rows: the table's sort without the grouping columns.</summary>
+    internal string? GroupRowsOrderBy
+    {
+        get
+        {
+            var groups = GroupLevels.Select(l => l.Path).ToHashSet(StringComparer.Ordinal);
+            var sorts = _grid is null ? [] : _grid.SortDefinitions.Values.Where(s => !groups.Contains(s.SortBy)).OrderBy(s => s.Index)
+                .Select(s => $"{s.SortBy.Replace('.', '/')} {(s.Descending ? "desc" : "asc")}").ToList();
+            return sorts.Count == 0 ? null : string.Join(",", sorts);
+        }
+    }
+
     /// <summary>The rows of an open group, sorted like the table apart from the grouping columns.</summary>
     internal async Task<ODataPage<T>> GroupRowsAsync(string? conditions, int skip, int top, bool count, CancellationToken cancellationToken)
     {
-        var groups = GroupLevels.Select(l => l.Path).ToHashSet(StringComparer.Ordinal);
-        var sorts = _grid is null ? [] : _grid.SortDefinitions.Values.Where(s => !groups.Contains(s.SortBy)).OrderBy(s => s.Index)
-            .Select(s => $"{s.SortBy.Replace('.', '/')} {(s.Descending ? "desc" : "asc")}").ToList();
         var page = await QueryAsync(new ODataQuery
         {
-            Filter = GroupFilter(conditions), OrderBy = sorts.Count == 0 ? null : string.Join(",", sorts), Expand = Expand, Top = top, Skip = skip, Count = count,
+            Filter = GroupFilter(conditions), OrderBy = GroupRowsOrderBy, Expand = Expand, Top = top, Skip = skip, Count = count,
         }, cancellationToken);
         await OnLoaded.InvokeAsync(page.Items);
         return page;
     }
+
+    /// <summary>The rows a group loaded, kept while it is closed: opened again, it shows them at once and loads them again in the background.</summary>
+    internal DataTablePages<T> GroupPages(string conditions, int size) =>
+        _groupPages.TryGetValue(conditions, out var pages) && pages.Size == size ? pages : _groupPages[conditions] = new DataTablePages<T>(size);
+
+    internal void KeepGroupPages(string conditions, DataTablePages<T> pages) => _groupPages[conditions] = pages;
 
     /// <summary>What a group's rows take over from the table: column order, hidden columns and widths.</summary>
     internal DataTableState GroupRowsLayout => CurrentState with { GroupBy = null, ColumnFilters = null, Sort = null };
@@ -116,6 +132,7 @@ public partial class CoworkeeDataTable<T>
             _groupedBy = groupedBy;
             _openGroups.Clear();
             _groupSelections.Clear();
+            _groupPages.Clear();
         }
 
         var page = await QueryAsync(new ODataQuery { Filter = filter, Expand = Expand, Top = 0, Count = true }, cancellationToken);

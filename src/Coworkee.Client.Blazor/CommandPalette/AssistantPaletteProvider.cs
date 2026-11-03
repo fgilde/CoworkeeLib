@@ -7,10 +7,25 @@ using Coworkee.Contracts.Ai;
 namespace Coworkee.Client.Blazor.CommandPalette;
 
 /// <summary>"Ask the assistant: ..." below everything else, while the assistant is set up and the user may chat.</summary>
-internal sealed class AssistantPaletteProvider(IAssistantApi api, AssistantState state, PermissionStore permissions, CoworkeeLocalizer l) : ICommandPaletteProvider
+internal sealed class AssistantPaletteProvider : ICommandPaletteProvider
 {
     public const string Group = "Assistant";
+    private readonly IAssistantApi api;
+    private readonly AssistantState state;
+    private readonly PermissionStore permissions;
+    private readonly CoworkeeLocalizer l;
     private bool? _available;
+
+    // known until the settings or the permissions change (switched on or off, Ai.Chat granted or taken)
+    public AssistantPaletteProvider(IAssistantApi api, AssistantState state, PermissionStore permissions, CoworkeeLocalizer l, Theming.ThemeService themes)
+    {
+        this.api = api;
+        this.state = state;
+        this.permissions = permissions;
+        this.l = l;
+        themes.Changed += () => _available = null;
+        permissions.Changed += () => _available = null;
+    }
 
     public async Task<IEnumerable<CommandPaletteItem>> GetItemsAsync(string query, CancellationToken cancellationToken)
     {

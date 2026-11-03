@@ -1,6 +1,10 @@
 @typeparam T
 
 <div class="cw-group-rows" style="@($"margin-left:{Depth * 24}px")" data-testid="group-rows">
+    @if (_loading)
+    {
+        <MudProgressLinear Indeterminate="true" Size="Size.Small" Color="Color.Primary" data-testid="group-rows-loading" />
+    }
     <MudDataGrid @ref="_grid" T="T" ServerData="PagedLoader" VirtualizeServerData="EndlessLoader" Virtualize="Table.GroupRowsEndless"
                  Height="@(Table.GroupRowsEndless ? Height : null)" FixedHeader="Table.GroupRowsEndless" ItemSize="Table.GroupRowHeight" OverscanCount="10"
                  RowsPerPage="Table.PageSize" MultiSelection="Table.MultiSelection" SelectedItemsChanged="SelectionChangedAsync" SortMode="SortMode.None"
