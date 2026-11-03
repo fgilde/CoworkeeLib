@@ -310,6 +310,27 @@ public sealed class BehaviorTests
     }
 
     [Fact]
+    public async Task A_refreshed_entry_reaches_another_instance_through_the_distributed_cache()
+    {
+        var counter = new Counter();
+        var tenant = Guid.CreateVersion7();
+        // a distributed cache like Redis: HybridCache skips a MemoryDistributedCache as its second level
+        var shared = new SharedCache();
+        void Configure(IServiceCollection services) => services.AddSingleton(counter).AddSingleton<Microsoft.Extensions.Caching.Distributed.IDistributedCache>(shared);
+        var a = Build(Configure, tenant);
+        var b = Build(Configure, tenant);
+
+        (await a.SendAsync(new FreshCount(), Ct)).Value.ShouldBe(1);
+        // the other instance reads the entry (value and load time) from the distributed cache instead of loading it
+        (await b.SendAsync(new FreshCount(), Ct)).Value.ShouldBe(1);
+        counter.Value.ShouldBe(1);
+
+        await Task.Delay(150, Ct);
+        (await b.SendAsync(new FreshCount(), Ct)).Value.ShouldBe(1);
+        (await EventuallyAsync(() => b.SendAsync(new FreshCount(), Ct), r => r.Value == 2)).Value.ShouldBe(2);
+    }
+
+    [Fact]
     public async Task The_cache_defaults_refresh_queries_that_name_no_refresh_time_and_can_turn_refreshing_off()
     {
         var counter = new Counter();
@@ -357,6 +378,29 @@ public sealed class BehaviorTests
         }
 
         return value;
+    }
+
+    private sealed class SharedCache : Microsoft.Extensions.Caching.Distributed.IDistributedCache
+    {
+        private readonly Microsoft.Extensions.Caching.Distributed.MemoryDistributedCache _inner =
+            new(Microsoft.Extensions.Options.Options.Create(new Microsoft.Extensions.Caching.Memory.MemoryDistributedCacheOptions()));
+
+        public byte[]? Get(string key) => _inner.Get(key);
+
+        public Task<byte[]?> GetAsync(string key, CancellationToken token = default) => _inner.GetAsync(key, token);
+
+        public void Set(string key, byte[] value, Microsoft.Extensions.Caching.Distributed.DistributedCacheEntryOptions options) => _inner.Set(key, value, options);
+
+        public Task SetAsync(string key, byte[] value, Microsoft.Extensions.Caching.Distributed.DistributedCacheEntryOptions options, CancellationToken token = default) =>
+            _inner.SetAsync(key, value, options, token);
+
+        public void Refresh(string key) => _inner.Refresh(key);
+
+        public Task RefreshAsync(string key, CancellationToken token = default) => _inner.RefreshAsync(key, token);
+
+        public void Remove(string key) => _inner.Remove(key);
+
+        public Task RemoveAsync(string key, CancellationToken token = default) => _inner.RemoveAsync(key, token);
     }
 
     private sealed class Defaults : ICacheDefaults
