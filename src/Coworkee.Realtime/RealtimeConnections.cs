@@ -53,6 +53,29 @@ public sealed class RealtimeConnections(IHubContext<RealtimeHub> hub, IServiceSc
         }
     }
 
+    /// <summary>The topics of an entity type ("type:X", "entity:X:id") the connections of this instance follow, with the organisation of each.</summary>
+    // shortcut: scans every connection of the instance on each watch round; an index per topic when an instance holds many thousands
+    internal IReadOnlyCollection<(Guid? TenantId, string Topic)> Following(string entityType)
+    {
+        var type = RealtimeTopics.Type(entityType);
+        var entity = $"entity:{entityType}:";
+        var following = new HashSet<(Guid?, string)>();
+        foreach (var (connectionId, topics) in _topics)
+        {
+            if (!_connections.TryGetValue(connectionId, out var context))
+            {
+                continue;
+            }
+
+            foreach (var topic in topics.Keys.Where(t => t == type || t.StartsWith(entity, StringComparison.Ordinal)))
+            {
+                following.Add((Identity(context.User).TenantId, topic));
+            }
+        }
+
+        return following;
+    }
+
     internal static (Guid? UserId, Guid? TenantId) Identity(ClaimsPrincipal? user) =>
         (Guid.TryParse(user?.FindFirstValue("sub"), out var id) ? id : null, Guid.TryParse(user?.FindFirstValue("tenant"), out var tenant) ? tenant : null);
 

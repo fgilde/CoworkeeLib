@@ -58,6 +58,19 @@ await publisher.PublishAsync(tenantId, RealtimeTopics.Type(nameof(Brand)), Realt
     new EntityChangedPayload(nameof(Brand), "*", EntityChangedPayload.Deleted, []), ct);
 ```
 
+Zeilen, die ein anderes System schreibt (eine externe Datenbank, ein Sync-Job), laufen nie durch `SaveChanges` der App. Beobachte sie stattdessen über ihre Datumsspalten: Solange jemand `type:X` oder `entity:X:{id}` folgt, wird das Set in jedem Intervall gelesen, und jede Zeile, die neuer als der letzte Blick ist, geht als `EntityChanged` (`Created` oder `Updated`) raus. So folgen ihr Tabellen, Detailseiten und Client-Entity-Kopien. Wer dem Set folgen will, braucht die angegebene Berechtigung:
+
+```csharp
+services.AddRealtimeWatch<CalculatedShipment>(HubPermissions.Shipment.View, watch => watch
+    .CreatedAt(s => s.DateCreatedUtc)
+    .ChangedAt(s => s.DateUpdatedUtc)
+    .Every(TimeSpan.FromSeconds(30))      // Standard
+    .LookBack(TimeSpan.FromMinutes(5))    // Zeilen, die später als ihr Datum ankommen
+    .Read((rows, _) => rows.IgnoreQueryFilters(["OrgScope"])));
+```
+
+Der Beobachter liest als System (ohne Benutzer), mit einer Abfrage pro Intervall für alle Folgenden; solange niemand folgt, wird nichts gelesen. Zeilen eines `IMultiTenant`-Sets gehen an ihren eigenen Mandanten, andere an jeden Mandanten, der folgt. Mehr als `MaxEvents` (200) geänderte Zeilen in einem Blick senden ein Ereignis für das ganze Set. Jede Instanz beobachtet für ihre eigenen Verbindungen.
+
 Private Daten brauchen mehr Sorgfalt: Entities, die nur manche Benutzer sehen dürfen, sollten das Typ-Thema nicht nutzen. Veröffentliche dann eigene Themen:
 
 ```csharp

@@ -4,7 +4,8 @@ using Coworkee.Infrastructure.Persistence;
 
 namespace Coworkee.Realtime;
 
-internal sealed class EntityTopicAuthorizer(CoworkeeDbContext db, IPermissionChecker permissions) : IRealtimeTopicAuthorizer
+internal sealed class EntityTopicAuthorizer(CoworkeeDbContext db, IPermissionChecker permissions, IEnumerable<RealtimeEntityRegistration> registrations)
+    : IRealtimeTopicAuthorizer
 {
     public bool Handles(string topic) => topic.StartsWith("type:", StringComparison.Ordinal) || topic.StartsWith("entity:", StringComparison.Ordinal);
 
@@ -12,9 +13,11 @@ internal sealed class EntityTopicAuthorizer(CoworkeeDbContext db, IPermissionChe
     {
         var parts = topic.Split(':');
         var valid = parts is ["type", _] || (parts is ["entity", _, _] && parts[2].Length > 0);
+        // a [Realtime] entity of the app's context, or a set registered without the attribute (a watched set of another context)
         var attribute = valid
             ? db.Model.GetEntityTypes().Where(t => t.BaseType is null).Select(t => t.ClrType).FirstOrDefault(t => t.Name == parts[1])?
                 .GetCustomAttributes(typeof(RealtimeAttribute), false).OfType<RealtimeAttribute>().FirstOrDefault()
+                ?? registrations.Where(r => r.EntityType.Name == parts[1]).Select(r => new RealtimeAttribute(r.Permission)).FirstOrDefault()
             : null;
         if (attribute is null)
         {

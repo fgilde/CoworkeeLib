@@ -46,7 +46,11 @@ internal static class ClientEntityEndpoints
         {
             if (options.Resolve(entity.EntityType) is { } settings && await ODataEntityAccess.IsGrantedAsync(services, entity.EntityType, http.RequestAborted))
             {
-                var realtime = entity.EntityType.GetCustomAttribute<RealtimeAttribute>(inherit: false) is null ? null : RealtimeTopics.Type(entity.EntityType.Name);
+                // a [Realtime] entity or a watched set (RealtimeEntityRegistration): the copy updates when the server reports a change
+                var realtime = entity.EntityType.GetCustomAttribute<RealtimeAttribute>(inherit: false) is not null
+                    || services.GetServices<Coworkee.Infrastructure.Persistence.RealtimeEntityRegistration>().Any(r => r.EntityType == entity.EntityType)
+                    ? RealtimeTopics.Type(entity.EntityType.Name)
+                    : null;
                 sets.Add(new ClientEntitySetInfo(entity.EntitySet, Math.Min(settings.BatchSize, maxTop), settings.MaxRows, settings.RefreshInterval, realtime,
                     string.IsNullOrWhiteSpace(settings.Expand) ? null : settings.Expand, Math.Max(1, settings.ParallelPages)));
             }

@@ -169,6 +169,16 @@ public sealed class Memo : AggregateRoot, IMultiTenant, ISoftDelete
     public Guid? DeletedBy { get; set; }
 }
 
+/// <summary>A row the app does not write (another system does, like the hub's shipments): no [Realtime], watched by its dates.</summary>
+public sealed class Parcel : AggregateRoot
+{
+    public required string Code { get; set; }
+
+    public DateTimeOffset CreatedUtc { get; set; }
+
+    public DateTimeOffset? UpdatedUtc { get; set; }
+}
+
 public sealed class UrgentTicket : Ticket
 {
     public int Priority { get; set; }
@@ -184,6 +194,7 @@ internal sealed class TicketModel : IModelContributor, IPermissionDefinitionCont
         modelBuilder.Entity<Ticket>().Property(t => t.Title).HasMaxLength(20);
         modelBuilder.Entity<UrgentTicket>();
         modelBuilder.Entity<Memo>();
+        modelBuilder.Entity<Parcel>();
     }
 
     public void Define(PermissionDefinitionContext context) => context.Group("Test", "Test").Add(Ticket.ViewPermission, "View tickets");
@@ -199,6 +210,10 @@ public sealed class TestRealtimeModule : CoworkeeModule
         context.Services.AddSingleton<IPermissionDefinitionContributor>(sp => sp.GetRequiredService<TicketModel>());
         context.Services.AddCoworkeeDbContext<RealtimeTestDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
+        context.Services.AddRealtimeWatch<Parcel>(Ticket.ViewPermission, watch => watch
+            .CreatedAt(p => p.CreatedUtc)
+            .ChangedAt(p => p.UpdatedUtc)
+            .Every(TimeSpan.FromMilliseconds(200)));
 
         // an app bridge to another hub: it decorates the publisher
         var publisher = context.Services.Single(d => d.ServiceType == typeof(IRealtimePublisher));

@@ -58,6 +58,19 @@ await publisher.PublishAsync(tenantId, RealtimeTopics.Type(nameof(Brand)), Realt
     new EntityChangedPayload(nameof(Brand), "*", EntityChangedPayload.Deleted, []), ct);
 ```
 
+Rows another system writes (an external database, a sync job) never pass the app's `SaveChanges`. Watch them by their dates instead: while someone follows `type:X` or `entity:X:{id}`, the set is read every interval and each row newer than the last look is sent as `EntityChanged` (`Created` or `Updated`), so tables, detail pages and client entity copies follow it. Following the set needs the given permission:
+
+```csharp
+services.AddRealtimeWatch<CalculatedShipment>(HubPermissions.Shipment.View, watch => watch
+    .CreatedAt(s => s.DateCreatedUtc)
+    .ChangedAt(s => s.DateUpdatedUtc)
+    .Every(TimeSpan.FromSeconds(30))      // default
+    .LookBack(TimeSpan.FromMinutes(5))    // rows that land later than their date
+    .Read((rows, _) => rows.IgnoreQueryFilters(["OrgScope"])));
+```
+
+The watch reads as the system (no user), with one query per interval for all followers; nothing is read while nobody follows. Rows of an `IMultiTenant` set go to their own tenant, others to every tenant that follows. More than `MaxEvents` (200) changed rows in one look send one event for the whole set. Every instance watches for its own connections.
+
 Private data needs more care: entities only some users may see should not use the type topic. Publish your own topics instead:
 
 ```csharp
