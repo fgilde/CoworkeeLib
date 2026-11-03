@@ -1,20 +1,9 @@
 using System.Xml.Linq;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.AspNetCore.DataProtection.Repositories;
-using Coworkee.Domain;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Infrastructure.DataProtection;
-
-[NotAudited]
-public sealed class DataProtectionKey
-{
-    public int Id { get; set; }
-
-    public string? FriendlyName { get; set; }
-
-    public required string Xml { get; set; }
-}
 
 internal sealed class DbXmlRepository(IServiceScopeFactory scopes) : IXmlRepository
 {

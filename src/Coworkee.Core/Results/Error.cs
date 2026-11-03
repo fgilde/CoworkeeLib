@@ -1,15 +1,5 @@
 namespace Coworkee.Core.Results;
 
-public enum ErrorKind
-{
-    Validation,
-    Unauthorized,
-    Forbidden,
-    NotFound,
-    Conflict,
-    Unexpected,
-}
-
 public sealed record Error(string Code, string Message, ErrorKind Kind, IReadOnlyDictionary<string, string[]>? Details = null)
 {
     public static Error Validation(IReadOnlyDictionary<string, string[]> details) =>

@@ -1,4 +1,3 @@
-using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Features;
 using Coworkee.Core.Results;
@@ -6,40 +5,6 @@ using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Features;
-
-public sealed record GetFeatures : IQuery<Result<IReadOnlyDictionary<string, string?>>>;
-
-public sealed record GetFeatureDefinitions : IQuery<Result<IReadOnlyList<FeatureGroupDto>>>;
-
-[RequiresPermission(FeaturePermissions.Editions)]
-public sealed record GetEditions : IQuery<Result<IReadOnlyList<EditionDto>>>;
-
-[RequiresPermission(FeaturePermissions.Editions)]
-public sealed record CreateEdition(EditionRequest Edition) : ICommand<Result<EditionDto>>;
-
-[RequiresPermission(FeaturePermissions.Editions)]
-public sealed record UpdateEdition(Guid Id, EditionRequest Edition) : ICommand<Result<EditionDto>>;
-
-[RequiresPermission(FeaturePermissions.Editions)]
-public sealed record DeleteEdition(Guid Id) : ICommand<Result>;
-
-internal sealed class FeatureHandlers(IFeatureChecker features, IFeatureDefinitionManager definitions)
-    : IHandler<GetFeatures, Result<IReadOnlyDictionary<string, string?>>>, IHandler<GetFeatureDefinitions, Result<IReadOnlyList<FeatureGroupDto>>>
-{
-    public async Task<Result<IReadOnlyDictionary<string, string?>>> HandleAsync(GetFeatures query, CancellationToken cancellationToken) =>
-        Result<IReadOnlyDictionary<string, string?>>.Success(await features.GetAllAsync(cancellationToken));
-
-    public Task<Result<IReadOnlyList<FeatureGroupDto>>> HandleAsync(GetFeatureDefinitions query, CancellationToken cancellationToken)
-    {
-        IReadOnlyList<FeatureGroupDto> groups = definitions.Groups
-            .Select(g => new FeatureGroupDto(g.Name, g.DisplayName, definitions.All
-                .Where(d => d.Group == g.Name)
-                .Select(d => new FeatureDefinitionDto(d.Name, d.DisplayName, d.Description, d.Type, d.DefaultValue))
-                .ToList()))
-            .ToList();
-        return Task.FromResult(Result<IReadOnlyList<FeatureGroupDto>>.Success(groups));
-    }
-}
 
 internal sealed class EditionHandlers(CoworkeeDbContext db, IFeatureDefinitionManager definitions, HostAccess host)
     : IHandler<GetEditions, Result<IReadOnlyList<EditionDto>>>,

@@ -21,5 +21,3 @@ public static class ApplicationServiceRegistry
         return Registrations.Values.Where(r => r.ImplementationType.Assembly == assembly).ToList();
     }
 }
-
-internal sealed record ApplicationServiceRegistration(Type ServiceType, Type ImplementationType, string Route, string Tag, Action<IEndpointRouteBuilder> Map);

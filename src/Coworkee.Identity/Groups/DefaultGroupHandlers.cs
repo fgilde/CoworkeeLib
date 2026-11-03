@@ -1,4 +1,3 @@
-using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Identity;
 using Coworkee.Core.Results;
@@ -7,13 +6,6 @@ using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Identity.Groups;
-
-/// <summary>The default group of the tenant; every signed-in user may ask, apps need it in their filters.</summary>
-public sealed record GetDefaultGroup : IQuery<Result<DefaultGroupDto>>;
-
-/// <summary>Makes the group the one new users join; null leaves the tenant without a default group.</summary>
-[RequiresPermission(IdentityPermissions.Groups.Manage)]
-public sealed record SetDefaultGroup(Guid? GroupId) : ICommand<Result>;
 
 internal sealed class DefaultGroupHandlers(CoworkeeDbContext db, Roles.RoleOffer offer, Users.AdminReach reach)
     : IHandler<GetDefaultGroup, Result<DefaultGroupDto>>, IHandler<SetDefaultGroup, Result>

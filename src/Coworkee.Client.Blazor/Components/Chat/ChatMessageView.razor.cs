@@ -1,5 +1,4 @@
 using System.Globalization;
-using Coworkee.Client.Blazor.Chat;
 using Coworkee.Client.Blazor.Components.Files;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Navigation;

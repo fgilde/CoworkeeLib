@@ -1,9 +1,9 @@
 using Coworkee.Application.Authorization;
-using Coworkee.BackgroundJobs;
 using Coworkee.Application.GlobalSearch;
 using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore;
 using Coworkee.AspNetCore.Http;
+using Coworkee.BackgroundJobs;
 using Coworkee.Contracts.Reporting;
 using Coworkee.Core.Modularity;
 using Coworkee.Identity;

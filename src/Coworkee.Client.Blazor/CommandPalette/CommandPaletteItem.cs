@@ -21,13 +21,3 @@ public sealed record CommandPaletteItem(string Group, string Title)
     /// <summary>Groups sort by the smallest order of their items: pages 0, records 10, actions 20, the assistant last.</summary>
     public int Order { get; init; }
 }
-
-/// <summary>Adds items to the command palette (Ctrl+K); register with AddCommandPaletteProvider.</summary>
-public interface ICommandPaletteProvider
-{
-    /// <summary>Items for the text typed so far, empty when the palette just opened. The palette filters items unless they are <see cref="CommandPaletteItem.Matched"/>.</summary>
-    Task<IEnumerable<CommandPaletteItem>> GetItemsAsync(string query, CancellationToken cancellationToken);
-}
-
-/// <summary>An action of the app in the palette, e.g. "New product"; <see cref="Href"/> or <see cref="Run"/> does it.</summary>
-public sealed record CommandPaletteCommand(string Title, string Icon, string? Permission = null, string? Href = null, Func<IServiceProvider, Task>? Run = null, string? Keywords = null);

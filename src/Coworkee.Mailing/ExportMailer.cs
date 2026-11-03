@@ -1,4 +1,3 @@
-using Coworkee.Application;
 using Coworkee.Application.Localization;
 using Coworkee.Core.Security;
 using Coworkee.Infrastructure.Persistence;

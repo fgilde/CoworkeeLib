@@ -1,5 +1,4 @@
 using Aspire.Hosting.ApplicationModel;
-using CommunityToolkit.Aspire.Hosting.MailPit;
 using Coworkee.Aspire.Settings;
 
 namespace Aspire.Hosting;

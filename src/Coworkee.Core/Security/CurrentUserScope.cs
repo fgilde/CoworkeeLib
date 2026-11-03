@@ -35,27 +35,3 @@ public static class CurrentUserScope
         public void Dispose() => Ambient.Value = previous;
     }
 }
-
-/// <summary>Acts as <paramref name="UserId"/>; <paramref name="ImpersonatorId"/> carries who signed in as him ("Log in as") into jobs, the outbox and integration events.</summary>
-public sealed record ImpersonatedUser(Guid? UserId, Guid? TenantId, Guid? ImpersonatorId = null) : ICurrentUser
-{
-    public bool IsAuthenticated => UserId is not null;
-
-    public IReadOnlyCollection<string> Roles => [];
-}
-
-/// <summary>The system acting on its own: signed in without a user, with exactly <see cref="Permissions"/> (as a service client named <see cref="Name"/>).</summary>
-public sealed record SystemActor(Guid? TenantId, IReadOnlyCollection<string> Permissions) : ICurrentUser
-{
-    public const string Name = "coworkee-system";
-
-    public Guid? UserId => null;
-
-    public bool IsAuthenticated => true;
-
-    public IReadOnlyCollection<string> Roles => [];
-
-    public string ClientId => Name;
-
-    public IReadOnlyCollection<string> ClientPermissions => Permissions;
-}

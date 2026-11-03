@@ -1,41 +1,12 @@
 using System.Collections.Concurrent;
-using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Coworkee.Core.Modularity;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Coworkee.Search.Elasticsearch;
-
-public sealed class ElasticsearchOptions
-{
-    public const string Section = "Coworkee:Search:Elasticsearch";
-    public const string ConnectionStringName = "elasticsearch";
-
-    /// <summary>Base address; user info in the url (http://user:password@host:9200) is used for basic auth.</summary>
-    public string? Url { get; set; }
-
-    public string? Username { get; set; }
-
-    public string? Password { get; set; }
-}
-
-/// <summary>Elasticsearch through its REST API; one alias per schema, physical indexes swapped on reindex.</summary>
-public sealed class CoworkeeElasticsearchModule : CoworkeeModule
-{
-    public override void ConfigureServices(ModuleServiceContext context)
-    {
-        var options = context.Configuration.GetSection(ElasticsearchOptions.Section).Get<ElasticsearchOptions>() ?? new ElasticsearchOptions();
-        options.Url ??= context.Configuration.GetConnectionString(ElasticsearchOptions.ConnectionStringName) ?? "http://localhost:9200";
-        context.Services.TryAddSingleton<ISearchIndex>(_ => new ElasticsearchIndex(options));
-    }
-}
 
 internal sealed class ElasticsearchIndex : ISearchIndex, IDisposable
 {
@@ -471,4 +442,3 @@ internal sealed class ElasticsearchIndex : ISearchIndex, IDisposable
         return text.Length == 0 ? null : JsonNode.Parse(text) as JsonObject;
     }
 }
-

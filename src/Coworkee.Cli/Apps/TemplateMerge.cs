@@ -4,32 +4,6 @@ using System.Text;
 
 namespace Coworkee.Cli.Apps;
 
-internal enum MergeAction
-{
-    /// <summary>A new file of the template.</summary>
-    Add,
-
-    /// <summary>The app's file was the template's: it becomes the new one.</summary>
-    Update,
-
-    /// <summary>The app changed the file and the template's change merged in cleanly.</summary>
-    Merge,
-
-    /// <summary>The template no longer has the file and the app left it as it was.</summary>
-    Delete,
-
-    /// <summary>The app's file stays; <see cref="MergeStep.Content"/> goes next to it as <c>.rej</c>.</summary>
-    Conflict,
-}
-
-/// <summary>One file of the plan, by its path relative to the solution with forward slashes.</summary>
-internal sealed record MergeStep(string Path, MergeAction Action, string Note, byte[]? Content = null)
-{
-    public const string RejectSuffix = ".rej";
-
-    public override string ToString() => $"{Action.ToString().ToLowerInvariant(),-8} {Path}{(Note.Length > 0 ? "  (" + Note + ")" : string.Empty)}";
-}
-
 /// <summary>
 /// A 3-way merge of two outputs of the template (before: the app's options, after: the new ones) onto the app:
 /// what the template changed is applied where the app left the file alone or the change merges cleanly (git merge-file);

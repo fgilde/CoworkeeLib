@@ -1,35 +1,10 @@
 using Coworkee.Contracts.Social;
 using Coworkee.Core.Results;
 using Coworkee.Domain;
-using Coworkee.Infrastructure.Persistence;
 using Coworkee.OData;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Social;
-
-public enum SocialFeature
-{
-    Comments,
-    Tags,
-    Ratings,
-    Reactions,
-}
-
-/// <summary>What is about to happen: <see cref="EntityId"/> is null for questions about the whole entity type, such as the tag cloud.</summary>
-public sealed record SocialAccess(SocialFeature Feature, string EntityType, Guid? EntityId, bool Write);
-
-/// <summary>What is about to happen to a comment; <see cref="CommentId"/> is null while it is added.</summary>
-public sealed record CommentValidation(
-    CommentAction Action, string EntityType, Guid EntityId, string Text, CommentStatus Status, IReadOnlyDictionary<string, string>? Properties, Guid? CommentId, Guid? ParentId);
-
-/// <param name="VisibleIdsAsync">The ids the current user sees; null when he may not see the type at all.</param>
-/// <param name="ClrType">The entity type of a typed registration; its client entity copies hear of the writes.</param>
-internal sealed record SocialTarget(
-    Func<IServiceProvider, CancellationToken, Task<IQueryable<Guid>?>>? VisibleIdsAsync,
-    Func<CoworkeeDbContext, Guid, CancellationToken, Task<Guid?>>? OwnerAsync,
-    Func<Guid, string>? Link,
-    Type? ClrType = null);
 
 /// <summary>Which entity types take comments, tags, ratings and reactions; entity types are opt-in.</summary>
 public sealed class SocialOptions
@@ -99,21 +74,5 @@ public sealed class SocialOptions
                 : null,
             link,
             typeof(TEntity));
-    }
-}
-
-public static class SocialServiceCollectionExtensions
-{
-    /// <summary>Opts entity types in, e.g. <c>services.AddCoworkeeSocial(s => s.Comments&lt;Product&gt;("Products").Tags&lt;Product&gt;("Products"))</c>; may be called by several modules.</summary>
-    public static IServiceCollection AddCoworkeeSocial(this IServiceCollection services, Action<SocialOptions> configure)
-    {
-        if (services.FirstOrDefault(d => d.ServiceType == typeof(SocialOptions))?.ImplementationInstance is not SocialOptions options)
-        {
-            options = new SocialOptions();
-            services.AddSingleton(options);
-        }
-
-        configure(options);
-        return services;
     }
 }

@@ -2,15 +2,6 @@ using System.Text.RegularExpressions;
 
 namespace Coworkee.Client.Blazor.History;
 
-public enum DiffKind
-{
-    Same,
-    Removed,
-    Added,
-}
-
-public sealed record DiffPart(DiffKind Kind, string Text);
-
 /// <summary>A word diff of two texts, for long values in the history.</summary>
 public static partial class TextDiff
 {

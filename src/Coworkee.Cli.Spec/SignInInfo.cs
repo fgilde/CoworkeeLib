@@ -2,11 +2,6 @@ using System.Text.RegularExpressions;
 
 namespace Coworkee.Cli.Spec;
 
-public sealed record SignInUser(string Email, string Password, bool IsAdmin, IReadOnlyList<string> Roles)
-{
-    public string RoleText => string.Join(", ", (IsAdmin ? ["Administrator"] : Array.Empty<string>()).Concat(Roles));
-}
-
 /// <summary>How to sign in to a generated app: its development users from src/*.Migrations/DemoUsers.cs and whether Keycloak takes them too.</summary>
 public sealed partial record SignInInfo(string Name, IReadOnlyList<SignInUser> Users, bool Keycloak)
 {

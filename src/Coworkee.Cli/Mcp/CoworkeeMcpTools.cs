@@ -6,15 +6,6 @@ using ModelContextProtocol.Server;
 
 namespace Coworkee.Cli.Mcp;
 
-/// <summary>Output and exit code of a coworkee command the MCP server ran.</summary>
-internal sealed record CliRun(int ExitCode, string Output)
-{
-    public override string ToString() => $"exit code {ExitCode}\n{Output}";
-}
-
-/// <summary>Runs this CLI with arguments in a folder; the MCP server never writes command output to its own stdout, which carries the protocol.</summary>
-internal delegate Task<CliRun> CliRunner(IReadOnlyList<string> args, string workingDirectory, CancellationToken cancellationToken);
-
 [McpServerToolType]
 internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
 {

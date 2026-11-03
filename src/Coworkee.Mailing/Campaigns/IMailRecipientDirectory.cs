@@ -3,8 +3,6 @@ using Coworkee.Core.Results;
 
 namespace Coworkee.Mailing;
 
-public sealed record RecipientPage(IReadOnlyList<MailRecipient> Recipients, Guid? Next);
-
 /// <summary>Resolves a recipient source to the eligible users of the current tenant; implemented where the users live.</summary>
 public interface IMailRecipientDirectory
 {

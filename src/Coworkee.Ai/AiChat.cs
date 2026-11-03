@@ -12,12 +12,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Coworkee.Ai;
 
-/// <summary>The answer of one turn: all text, the tool calls, and the round waiting for the user when a tool needs confirmation.</summary>
-internal sealed record AiTurn(string Text, string StopReason, IReadOnlyList<AiToolCallDto> Calls, IReadOnlyList<AiPendingCall>? Pending);
-
-/// <summary>The decided round as messages for the model, and the tool calls that ran for it.</summary>
-internal sealed record AiResume(IReadOnlyList<ChatMessage> Messages, IReadOnlyList<AiToolCallDto> Calls);
-
 /// <summary>
 /// The assistant: a manual tool loop against the configured <see cref="IChatClient"/> (<see cref="AiProviders"/>), streamed. Tools run as the
 /// current user through <see cref="AiToolRunner"/>, the same tools MCP clients get, so the assistant can do nothing the user could not do

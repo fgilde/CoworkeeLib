@@ -7,14 +7,6 @@ using Coworkee.Studio.Localization;
 
 namespace Coworkee.Studio.ViewModels;
 
-public enum AppRunState
-{
-    Stopped,
-    Starting,
-    Running,
-    Failed,
-}
-
 /// <summary>An app run from the Studio: dotnet run of its app host with the output, the dashboard login and the addresses of the app.</summary>
 public sealed partial class AppRunViewModel(MainViewModel main, Func<string?> output, Action<Action> dispatch) : ObservableObject
 {

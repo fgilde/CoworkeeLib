@@ -32,14 +32,3 @@ public sealed record ODataComputedProperty(Type EntityType, string Name, Type Ty
         return body;
     }
 }
-
-public sealed record ODataComputedFacet(string Label, IReadOnlyList<ODataComputedFacetOption> Options);
-
-/// <param name="Color">A CSS color for swatches and chips.</param>
-public sealed record ODataComputedFacetOption(string Value, string Label, string OData, string? Color = null);
-
-/// <summary>Adds computed properties to registered entity sets; registered as a singleton, asked once when the EDM model is built.</summary>
-public interface IODataComputedPropertySource
-{
-    IEnumerable<ODataComputedProperty> Properties(ODataEntityRegistry registry);
-}

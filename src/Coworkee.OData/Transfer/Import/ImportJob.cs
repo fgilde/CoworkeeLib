@@ -12,8 +12,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Coworkee.OData.Transfer.Import;
 
-public sealed record ImportJobArgs(Guid JobId, bool Undo);
-
 /// <summary>
 /// Sends one command per row as the user who started the import, each in its own scope, and saves the progress now and then
 /// (the owner sees it live). Never throws: a retry would import the rows twice.

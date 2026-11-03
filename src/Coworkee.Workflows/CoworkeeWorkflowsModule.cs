@@ -55,11 +55,3 @@ public sealed class CoworkeeWorkflowsModule : CoworkeeModule, IWebModule
             d.SendAsync(new RunTransitionCommand(entityType, entityId, transition, body?.Comment), ct).ToHttpResult());
     }
 }
-
-internal sealed class WorkflowPermissionDefinitions : IPermissionDefinitionContributor
-{
-    public void Define(PermissionDefinitionContext context) =>
-        context.Group(WorkflowPermissions.GroupName, "Workflows and approvals")
-            .Add(WorkflowPermissions.View, "View workflows and own approvals")
-            .Add(WorkflowPermissions.Transition, "Run workflow transitions", WorkflowPermissions.View);
-}

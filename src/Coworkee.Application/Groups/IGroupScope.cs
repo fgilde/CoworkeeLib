@@ -27,5 +27,3 @@ public interface IGroupScope
     /// <summary>The users who own a group of the tenant ("account owners"), e.g. as notification recipients; empty for unknown groups.</summary>
     Task<IReadOnlyList<Guid>> OwnersAsync(Guid groupId, CancellationToken ct);
 }
-
-public sealed record GroupNode(Guid Id, Guid? ParentId, string Code, string Name);

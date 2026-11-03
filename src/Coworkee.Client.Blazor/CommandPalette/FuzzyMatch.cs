@@ -1,7 +1,5 @@
 namespace Coworkee.Client.Blazor.CommandPalette;
 
-public sealed record FuzzyResult(int Score, IReadOnlyList<int> Positions);
-
 /// <summary>Matches typed letters in order ("nwprd" finds "New product"); a plain substring and word starts score higher.</summary>
 public static class FuzzyMatch
 {

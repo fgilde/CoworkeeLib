@@ -1,6 +1,5 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.AspNetCore.Http;
@@ -33,5 +32,3 @@ public static class CoworkeeApiVersions
             ? metadata.IsMappedTo(new ApiVersion(version))
             : version == 1;
 }
-
-internal sealed record CoworkeeApiVersion(int Version);

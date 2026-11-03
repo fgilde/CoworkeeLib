@@ -8,9 +8,6 @@ using Ganss.Xss;
 
 namespace Coworkee.Chat;
 
-/// <summary>The editor HTML of a message after the sanitizer, with its mentions in one canonical form.</summary>
-internal sealed record ChatContent(string Html, string Text, IReadOnlyList<ChatMentionItem> Mentions);
-
 /// <summary>
 /// Sanitizes what the editor sends (formatting, lists, quotes, code, links, mentions; nothing that runs), extracts its mentions and plain text,
 /// and renders stored HTML for a reader: mentions become links, records the reader may not see a restricted chip.

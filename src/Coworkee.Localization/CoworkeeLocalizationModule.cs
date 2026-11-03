@@ -1,7 +1,7 @@
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
-using Coworkee.Application.Status;
 using Coworkee.Application.Setup;
+using Coworkee.Application.Status;
 using Coworkee.AspNetCore;
 using Coworkee.Core.Modularity;
 using Coworkee.Infrastructure.Persistence;

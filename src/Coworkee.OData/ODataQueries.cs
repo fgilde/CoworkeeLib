@@ -3,11 +3,11 @@ using System.Reflection;
 using Coworkee.Contracts.Data;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
+using Coworkee.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData.Extensions;
 using Microsoft.AspNetCore.OData.Query.Container;
 using Microsoft.AspNetCore.OData.Query.Wrapper;
-using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Logging;
 using Microsoft.OData;
@@ -15,44 +15,6 @@ using Microsoft.OData.Edm;
 using Nextended.Web.OData;
 
 namespace Coworkee.OData;
-
-/// <summary>
-/// An OData list read in process, e.g. for REST endpoints that answer from an entity set: the same steps as <c>GET /{route}/{set}?{query}</c> for the
-/// current user (permission, hidden and protected properties, row filters, navigation scope, query checks, search, facets), without HTTP.
-/// </summary>
-public interface IODataQueries
-{
-    /// <param name="route">The route prefix whose names the query uses, e.g. <c>odata</c> or <c>rt/odata</c>.</param>
-    /// <param name="query">The query string, e.g. <c>$filter=Price gt 5&amp;$orderby=Name&amp;$top=20&amp;$count=true</c>.</param>
-    /// <param name="facets">Builds the facets of the page, as <c>Prefer: odata.include-annotations="cn.facets"</c> does.</param>
-    /// <returns>The page; Forbidden or Validation errors where the route answers 403 or 400.</returns>
-    Task<Result<ODataQueryResult<T>>> QueryAsync<T>(string route, string entitySet, string? query, bool facets = false, CancellationToken cancellationToken = default)
-        where T : class =>
-        QueryAsync<T>(route, entitySet, query, facets, null, cancellationToken);
-
-    /// <summary>
-    /// The list read with the facet choice apart from the filter (<see cref="FacetContextDto"/>, the <c>Coworkee-Facets</c> header of the route): each facet
-    /// group counts without its own choice, as the route counts it for a table. An endpoint that answers a table's query forwards the table's context.
-    /// </summary>
-    /// <param name="facetContext">The table's facet choice; null counts every group with the whole filter.</param>
-    Task<Result<ODataQueryResult<T>>> QueryAsync<T>(string route, string entitySet, string? query, bool facets, FacetContextDto? facetContext,
-        CancellationToken cancellationToken = default)
-        where T : class;
-}
-
-/// <param name="Rows">
-/// The entities, when the query does not shape them; what the route would not write (hidden or protected properties, members outside the model) is
-/// cleared to its default. Empty when the rows are <paramref name="Shaped"/>.
-/// </param>
-/// <param name="Shaped">
-/// The rows as the route writes them, by the route's property names, when <c>$select</c>, <c>$expand</c>, <c>$apply</c> or an [AutoExpand] navigation shapes them,
-/// or when a member the user may not read cannot be cleared on the entity (a getter without a field EF knows): expanded navigations are nested
-/// dictionaries or lists of them. Null otherwise.
-/// </param>
-/// <param name="Count">The number of matching rows with <c>$count=true</c>.</param>
-/// <param name="Facets">The facets in the route's names, when asked for.</param>
-public sealed record ODataQueryResult<T>(
-    IReadOnlyList<T> Rows, IReadOnlyList<IReadOnlyDictionary<string, object?>>? Shaped, long? Count, IReadOnlyList<FacetGroupDto>? Facets);
 
 internal sealed class ODataQueries(
     IServiceProvider services, ODataRoutes routes, ODataEntityRegistry registry, ICurrentUser user, ILogger<ODataQueries> logger,

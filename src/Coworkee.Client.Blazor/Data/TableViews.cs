@@ -5,23 +5,6 @@ using Microsoft.JSInterop;
 
 namespace Coworkee.Client.Blazor.Data;
 
-public sealed record SavedTableView(string Name, DataTableState State)
-{
-    /// <summary>Opens with the table when its address carries no state of its own.</summary>
-    public bool IsDefault { get; init; }
-}
-
-/// <summary>Named table states per table; replace it in DI to keep them somewhere else.</summary>
-public interface ITableViewStore
-{
-    Task<IReadOnlyList<SavedTableView>> GetAsync(string table);
-
-    /// <summary>Adds the view or replaces the one with its name; a default view takes the default from the others.</summary>
-    Task<IReadOnlyList<SavedTableView>> SaveAsync(string table, SavedTableView view);
-
-    Task<IReadOnlyList<SavedTableView>> DeleteAsync(string table, string name);
-}
-
 /// <summary>Keeps the views in the user setting <see cref="TableSettings.Views"/>, so they follow the user to every device.</summary>
 /// <remarks>Without a signed in user or without the settings module the views stay in the browser's local storage.</remarks>
 public sealed class TableViews(ICoworkeeApi api, IJSRuntime js) : ITableViewStore

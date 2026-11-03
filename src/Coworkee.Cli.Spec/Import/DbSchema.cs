@@ -6,26 +6,6 @@ using Npgsql;
 
 namespace Coworkee.Cli.Spec.Import;
 
-public sealed record ColumnInfo(string Name, string Type, bool Nullable, int? MaxLength, int? Precision, int? Scale);
-
-public sealed record ForeignKeyInfo(string Name, string Column, string TargetSchema, string TargetTable, string? DeleteRule);
-
-public sealed class TableInfo(string schema, string name)
-{
-    public string Schema => schema;
-
-    public string Name => name;
-
-    public List<ColumnInfo> Columns { get; } = [];
-
-    public List<string> PrimaryKey { get; } = [];
-
-    public List<ForeignKeyInfo> ForeignKeys { get; } = [];
-
-    /// <summary>Columns of each unique index, by index name.</summary>
-    public Dictionary<string, List<string>> Uniques { get; } = [];
-}
-
 /// <summary>Reads tables, columns, keys, unique indexes and (Postgres) enum types through ADO.NET schema queries.</summary>
 public static partial class DbSchema
 {

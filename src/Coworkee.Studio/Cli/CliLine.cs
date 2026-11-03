@@ -1,15 +1,5 @@
 namespace Coworkee.Studio.Cli;
 
-public enum CliLineKind
-{
-    Text,
-    Step,
-    Command,
-    Warning,
-    Error,
-    NextSteps,
-}
-
 /// <summary>One line the CLI printed: <c>==&gt; step</c>, <c>&gt; command</c>, <c>warn  text</c>, <c>Next steps:</c> or plain output.</summary>
 public sealed record CliLine(CliLineKind Kind, string Text)
 {

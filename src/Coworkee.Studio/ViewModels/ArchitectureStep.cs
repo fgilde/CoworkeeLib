@@ -6,20 +6,6 @@ using Coworkee.Studio.Model;
 
 namespace Coworkee.Studio.ViewModels;
 
-public sealed partial class PresetViewModel(Preset preset) : ObservableObject
-{
-    public Preset Preset => preset;
-
-    public string Name => L.Get(preset.Name);
-
-    public string Description => L.Get(preset.Description);
-
-    public string Icon => preset.Icon;
-
-    [ObservableProperty]
-    public partial bool IsActive { get; set; }
-}
-
 public sealed partial class ArchitectureStep : StepViewModel
 {
     private static readonly (string Group, string Description, string Icon)[] GroupInfo =

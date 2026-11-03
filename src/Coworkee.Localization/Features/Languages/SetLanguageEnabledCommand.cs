@@ -9,7 +9,3 @@ namespace Coworkee.Localization.Features.Languages;
 [AiTool(Exclude = true)]
 [RequiresPermission(LocalizationPermissions.Manage)]
 public sealed record SetLanguageEnabledCommand(string Culture, bool Enabled) : ICommand<Result<LanguageSwitchDto>>;
-
-[AiTool(Exclude = true)]
-[RequiresPermission(LocalizationPermissions.Manage)]
-public sealed record TranslateMissingCommand(string Culture) : ICommand<Result<TranslateMissingDto>>;

@@ -1,7 +1,7 @@
 using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore.Http;
-using Coworkee.Contracts.Identity;
 using Coworkee.Contracts;
+using Coworkee.Contracts.Identity;
 using Coworkee.Identity.Permissions;
 using Coworkee.Identity.Roles;
 using Coworkee.Identity.Users;

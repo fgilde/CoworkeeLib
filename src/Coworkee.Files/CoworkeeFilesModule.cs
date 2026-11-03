@@ -17,14 +17,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Coworkee.Files;
 
-public sealed class FilesOptions
-{
-    public const string Section = "Coworkee:Files";
-
-    /// <summary>Largest upload in bytes; also the request size limit of the upload endpoint.</summary>
-    public long MaxFileSize { get; set; } = 2L * 1024 * 1024 * 1024;
-}
-
 /// <summary>Folders and files in the blob storage, with per-folder grants, soft delete, audit and realtime changes.</summary>
 [DependsOn(typeof(CoworkeeApplicationModule), typeof(CoworkeeStorageModule))]
 public sealed class CoworkeeFilesModule : CoworkeeModule, IWebModule
@@ -52,14 +44,4 @@ public sealed class CoworkeeFilesModule : CoworkeeModule, IWebModule
     }
 
     public void ConfigureApplication(WebApplication app) => app.MapFileEndpoints(app.Configuration.GetSection(FilesOptions.Section).Get<FilesOptions>() ?? new FilesOptions());
-}
-
-internal sealed class FilePermissionDefinitions : IPermissionDefinitionContributor
-{
-    public void Define(PermissionDefinitionContext context) =>
-        context.Group(FilePermissions.GroupName, "Files")
-            .Add(FilePermissions.View, "View files")
-            .Add(FilePermissions.Upload, "Upload files", FilePermissions.View)
-            .Add(FilePermissions.Manage, "Manage files", FilePermissions.Upload, FilePermissions.View)
-            .Add(FilePermissions.ViewRegistrations, "View registration documents of all users", FilePermissions.View);
 }

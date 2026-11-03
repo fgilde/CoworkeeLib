@@ -1,10 +1,10 @@
+using Coworkee.Contracts;
 using Coworkee.Contracts.Auditing;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Mailing;
 using Coworkee.Contracts.Notifications;
 using Coworkee.Contracts.Settings;
 using Coworkee.Contracts.Theming;
-using Coworkee.Contracts;
 
 namespace Coworkee.Client.Blazor.Api;
 
@@ -301,14 +301,4 @@ public interface ICoworkeeApi
     Task<PushDeviceDto> SavePushSubscriptionAsync(PushSubscriptionRequest subscription, CancellationToken cancellationToken = default);
 
     Task DeletePushSubscriptionAsync(Guid id, CancellationToken cancellationToken = default);
-}
-
-public sealed class ApiException(int status, string? code, IReadOnlyDictionary<string, string[]>? errors)
-    : Exception(code ?? $"Request failed with status {status}.")
-{
-    public int Status { get; } = status;
-
-    public string? Code { get; } = code;
-
-    public IReadOnlyDictionary<string, string[]>? Errors { get; } = errors;
 }

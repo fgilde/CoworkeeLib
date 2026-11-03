@@ -74,12 +74,3 @@ public sealed record ImportField(string Name, string Label, Type Type, bool Requ
             ? new Lookup(target.EntitySet, target.EntityType, display)
             : null;
 }
-
-public sealed record Lookup(string EntitySet, Type EntityType, PropertyInfo Display)
-{
-    private static readonly string[] DisplayNames = ["Name", "Title", "DisplayName", "Code", "Key"];
-
-    public static PropertyInfo? DisplayOf(Type entity) =>
-        DisplayNames.Select(n => entity.GetProperty(n)).FirstOrDefault(p => p?.PropertyType == typeof(string))
-        ?? entity.GetProperties().FirstOrDefault(p => p.PropertyType == typeof(string));
-}

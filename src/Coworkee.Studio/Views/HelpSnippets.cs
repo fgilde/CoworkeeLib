@@ -1,16 +1,4 @@
-using Coworkee.Studio.Localization;
-
 namespace Coworkee.Studio.Views;
-
-public sealed record McpTool(string Name, string Description)
-{
-    public string Text => L.Get(Description);
-}
-
-public sealed record CliCommandHelp(string Command, string Description)
-{
-    public string Text => L.Get(Description);
-}
 
 /// <summary>Texts of the help drawer that are copied as they are.</summary>
 public static class HelpSnippets

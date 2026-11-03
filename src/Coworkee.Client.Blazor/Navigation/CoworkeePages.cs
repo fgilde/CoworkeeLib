@@ -1,8 +1,5 @@
 namespace Coworkee.Client.Blazor.Navigation;
 
-/// <summary>A page found for an address: render <see cref="Component"/> with <see cref="Values"/>, or go to <see cref="RedirectTo"/>.</summary>
-public sealed record PageMatch(CoworkeePage Page, Type Component, IReadOnlyDictionary<string, object?> Values, string? RedirectTo = null);
-
 /// <summary>
 /// The addresses of the library's pages: the prefix of admin pages, pages the app replaced or turned off. Links, the navigation and the
 /// command palette go through <see cref="Href"/>, which also turns old addresses (e.g. "/admin/users/…" in mails) into the current ones.

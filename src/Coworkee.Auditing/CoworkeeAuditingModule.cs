@@ -1,8 +1,8 @@
+using Coworkee.Application;
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
-using Coworkee.Application;
-using Coworkee.AspNetCore.Http;
 using Coworkee.AspNetCore;
+using Coworkee.AspNetCore.Http;
 using Coworkee.Contracts.Auditing;
 using Coworkee.Core.Modularity;
 using Coworkee.OData;
@@ -48,10 +48,4 @@ public sealed class CoworkeeAuditingModule : CoworkeeModule, IWebModule
         history.MapPost("/{entitySet}/{id:guid}/restore", (string entitySet, Guid id, EntityHistoryRestoreRequest request, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new History.RestoreEntity(entitySet, id, request), ct).ToHttpResult());
     }
-}
-
-internal sealed class AuditPermissionDefinitions : IPermissionDefinitionContributor
-{
-    public void Define(PermissionDefinitionContext context) =>
-        context.Group(AuditPermissions.GroupName, "Audit").Add(AuditPermissions.View, "View audit log");
 }

@@ -18,10 +18,6 @@ using Microsoft.Extensions.Options;
 
 namespace Coworkee.OData.Transfer;
 
-/// <param name="Groups">The groups selected when the export was requested; the job lists the rows of them, as the user's list did.</param>
-/// <param name="Mail">Mails the file to the owner and <paramref name="Recipients"/> when it is written.</param>
-public sealed record ExportJobArgs(Guid JobId, Guid[]? Groups = null, bool Mail = false, string[]? Recipients = null);
-
 /// <summary>Writes an export too large for the request; the owner gets the file through the job (the client shows a download link).</summary>
 public sealed partial class DataExports(
     IServiceProvider services, CoworkeeDbContext db, ODataEntityRegistry registry, ICurrentUser user, TimeProvider clock, IOptions<CoworkeeODataOptions> options, ILogger<DataExports> logger)

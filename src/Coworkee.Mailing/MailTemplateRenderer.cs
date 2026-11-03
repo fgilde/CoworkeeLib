@@ -10,32 +10,6 @@ using Scriban.Runtime;
 
 namespace Coworkee.Mailing;
 
-public sealed record RenderedMail(string Subject, string HtmlBody);
-
-public interface IMailTemplateRenderer
-{
-    Task<RenderedMail> RenderAsync(string name, object model, string? culture, CancellationToken cancellationToken);
-
-    Task<RenderedMail> RenderContentAsync(MailTemplateContent content, object model, string? culture, CancellationToken cancellationToken);
-
-    /// <summary>Renders with an already resolved layout, for senders that render many mails of one template.</summary>
-    Task<RenderedMail> RenderContentAsync(MailTemplateContent content, MailTemplateContent layout, object model, CancellationToken cancellationToken);
-
-    Task<MailTemplateContent> ResolveAsync(string name, string? culture, CancellationToken cancellationToken);
-}
-
-public static class MailTemplateValidation
-{
-    public static IReadOnlyList<string> Validate(string subject, string body) =>
-        Errors("subject", subject).Concat(Errors("body", body)).ToList();
-
-    private static IEnumerable<string> Errors(string part, string text)
-    {
-        var template = Template.Parse(text);
-        return template.HasErrors ? template.Messages.Select(m => $"{part}: {m}") : [];
-    }
-}
-
 internal sealed class MailTemplateRenderer(CoworkeeDbContext db, ICurrentUser currentUser, IMailTemplateCatalog catalog, IEnumerable<IDefaultLanguage> defaultLanguages) : IMailTemplateRenderer
 {
     public async Task<RenderedMail> RenderAsync(string name, object model, string? culture, CancellationToken cancellationToken) =>

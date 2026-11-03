@@ -1,8 +1,8 @@
-using MudBlazor.Extensions;
 using Coworkee.Client.Blazor.Layout;
 using Coworkee.Client.Blazor.Navigation;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using MudBlazor.Extensions;
 
 namespace Coworkee.Client.Blazor.Components;
 

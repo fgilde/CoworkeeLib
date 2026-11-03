@@ -68,10 +68,3 @@ internal sealed partial class AspireUIServiceSource(
 
     private sealed record RetrievedApp(string? Name, bool Healthy, List<string?>? Urls);
 }
-
-internal sealed record FetchedApps(ServiceDto[] Services, bool Unavailable)
-{
-    public static FetchedApps Failed { get; } = new([], true);
-}
-
-internal sealed class ServiceSourceUnavailableException(string source) : Exception($"The service source {source} could not be asked.");

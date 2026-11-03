@@ -3,7 +3,6 @@ using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore;
 using Coworkee.AspNetCore.Http;
 using Coworkee.Contracts.Configuration;
-using Coworkee.Contracts.Settings;
 using Coworkee.Contracts.Theming;
 using Coworkee.Core.Modularity;
 using Coworkee.Infrastructure.Persistence;
@@ -69,18 +68,4 @@ public sealed class CoworkeeThemingModule : CoworkeeModule, IWebModule
         managed.MapGet("/keycloak", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetKeycloakThemeStatus(), ct).ToHttpResult());
         managed.MapPost("/keycloak/apply", (IDispatcher d, CancellationToken ct) => d.SendAsync(new ApplyKeycloakTheme(), ct).ToHttpResult());
     }
-}
-
-internal sealed class ThemePermissionDefinitions : IPermissionDefinitionContributor
-{
-    public void Define(PermissionDefinitionContext context) =>
-        context.Group(ThemePermissions.GroupName, "Themes").Add(ThemePermissions.Manage, "Manage themes");
-}
-
-internal sealed class ThemeSettingDefinitions : ISettingDefinitionContributor
-{
-    public void Define(SettingDefinitionContext context) =>
-        context.Group("Appearance", "Appearance")
-            .Add(ThemeSettings.Mode, "Color mode", SettingType.Choice, [SettingScope.Global, SettingScope.Tenant, SettingScope.User], "system", visibleToClient: true, choices: ["system", "light", "dark"])
-            .Add(ThemeSettings.ThemeId, "Theme", SettingType.String, [SettingScope.User], visibleToClient: true);
 }

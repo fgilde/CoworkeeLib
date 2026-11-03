@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace Coworkee.Contracts.Reporting;
 
 /// <summary>How a widget shows its data; each widget type reads the options that concern it.</summary>
@@ -55,38 +53,4 @@ public sealed class WidgetOptions
 
     /// <summary>The number column of a table whose cells the thresholds colour.</summary>
     public string? ThresholdColumn { get; set; }
-}
-
-[JsonConverter(typeof(JsonStringEnumConverter<ChartKind>))]
-public enum ChartKind
-{
-    Bar,
-    HorizontalBar,
-    StackedBar,
-    Line,
-    Area,
-    Pie,
-    Donut,
-    Scatter,
-    Radar,
-    Treemap,
-    Heatmap,
-}
-
-[JsonConverter(typeof(JsonStringEnumConverter<NumberFormat>))]
-public enum NumberFormat
-{
-    Number,
-    Integer,
-    Compact,
-    Currency,
-    Percent,
-}
-
-[JsonConverter(typeof(JsonStringEnumConverter<TableView>))]
-public enum TableView
-{
-    Table,
-    Cards,
-    List,
 }

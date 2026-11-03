@@ -12,16 +12,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Auditing.History;
 
-public sealed record GetEntityHistory(string EntitySet, Guid Id) : IQuery<Result<EntityHistoryDto>>;
-
-public sealed record PreviewEntityRestore(string EntitySet, Guid Id, EntityHistoryRestoreRequest Request) : IQuery<Result<EntityHistoryPreviewDto>>;
-
-public sealed record RestoreEntity(string EntitySet, Guid Id, EntityHistoryRestoreRequest Request) : ICommand<Result>;
-
-public sealed record GetDeletedRecords(string EntitySet) : IQuery<Result<IReadOnlyList<DeletedRecordDto>>>;
-
-public sealed record GetEntityHistorySets : IQuery<Result<IReadOnlyList<EntityHistorySetDto>>>;
-
 internal sealed class EntityHistoryHandlers(
     CoworkeeDbContext db, IEnumerable<EntityHistoryRegistration> registrations, IPermissionChecker permissions, ICurrentUser currentUser,
     IDispatcher dispatcher, IServiceProvider services)
@@ -203,12 +193,4 @@ internal sealed class EntityHistoryHandlers(
         var system = tenantId is { } tenant && services.GetService<ITenantDirectory>() is { } tenants && await tenants.IsSystemTenantAsync(tenant, cancellationToken);
         return db.Set<AuditEntry>().AsNoTracking().Where(e => e.TenantId == tenantId || (system && e.TenantId == null));
     }
-}
-
-internal static class HistoryErrors
-{
-    public static readonly Error NotFound = Error.NotFound("history.not_found", "The record or the history entry does not exist.");
-    public static readonly Error UnknownSet = Error.NotFound("history.unknown_set", "The entity set has no history.");
-    public static readonly Error NotRestorable = Error.Validation("property", "This change cannot be undone.");
-    public static readonly Error Changed = Error.Conflict("history.changed", "The record changed since the preview. Check the preview again before you restore.");
 }

@@ -1,5 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Coworkee.Webhooks;
 
 /// <summary>Delivery settings from "Coworkee:Webhooks" and the events an app offers, added in code with AddCoworkeeWebhooks.</summary>
@@ -59,9 +57,4 @@ public sealed class WebhookOptions
         AppEvents[type] = description;
         return this;
     }
-}
-
-public static class WebhookServiceCollectionExtensions
-{
-    public static IServiceCollection AddCoworkeeWebhooks(this IServiceCollection services, Action<WebhookOptions> configure) => services.Configure(configure);
 }

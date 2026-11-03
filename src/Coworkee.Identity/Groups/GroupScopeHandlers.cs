@@ -14,17 +14,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Identity.Groups;
 
-/// <summary>The groups of the current user's picker: every accessible group; with ScopeAll only memberships, the selection and their ancestors (the rest loads lazily).</summary>
-public sealed record GetMyGroups : IQuery<Result<IReadOnlyList<MyGroupDto>>>;
-
-/// <summary>Replaces the current user's selection; empty selects nothing (all accessible groups apply).</summary>
-public sealed record SelectGroups(IReadOnlyList<Guid> GroupIds) : ICommand<Result>;
-
-internal sealed class SelectGroupsValidator : AbstractValidator<SelectGroups>
-{
-    public SelectGroupsValidator() => RuleFor(c => c.GroupIds).NotNull();
-}
-
 internal sealed class GroupScopeHandlers(CoworkeeDbContext db, ICurrentUser currentUser, IGroupScope scope, IPermissionChecker permissions, IServiceProvider services)
     : IHandler<GetMyGroups, Result<IReadOnlyList<MyGroupDto>>>, IHandler<SelectGroups, Result>
 {

@@ -6,8 +6,6 @@ using Coworkee.Studio.Model;
 
 namespace Coworkee.Studio.ViewModels;
 
-public sealed record ReviewItem(string Label, string Value);
-
 public sealed partial class ReviewStep(MainViewModel main) : StepViewModel(main)
 {
     protected override string TitleText => "Review";

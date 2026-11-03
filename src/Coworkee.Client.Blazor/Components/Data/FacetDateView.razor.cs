@@ -4,7 +4,6 @@ using Coworkee.Client.Blazor.Data;
 using Coworkee.Contracts.Data;
 using MudBlazor.Extensions.Helper;
 using Nextended.Core.Contracts;
-using Nextended.Core.Types;
 
 namespace Coworkee.Client.Blazor.Components.Data;
 

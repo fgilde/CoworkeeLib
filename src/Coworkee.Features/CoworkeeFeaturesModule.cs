@@ -55,17 +55,3 @@ public sealed class CoworkeeFeaturesModule : CoworkeeModule, IWebModule
             d.SendAsync(new SetTenantFeatures(id, body), ct).ToHttpResult());
     }
 }
-
-internal sealed class FeaturePermissionDefinitions : IPermissionDefinitionContributor
-{
-    public void Define(PermissionDefinitionContext context) =>
-        context.Group(FeaturePermissions.GroupName, "Tenants and editions")
-            .Add(FeaturePermissions.Tenants, "Manage tenants")
-            .Add(FeaturePermissions.Editions, "Manage editions");
-}
-
-internal sealed class TenantODataFilter(HostAccess host) : IODataEntityFilter<Tenant>
-{
-    public async Task<IQueryable<Tenant>> ApplyAsync(IQueryable<Tenant> query, CancellationToken cancellationToken) =>
-        await host.IsHostAsync(cancellationToken) ? query : query.Where(_ => false);
-}

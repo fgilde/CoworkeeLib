@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using Coworkee.Application.GlobalSearch;
 using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Search;
 using Coworkee.Core.Results;
@@ -15,9 +14,3 @@ public sealed record RunGlobalSearch(
     [property: Description("Text to find; quote it for exact values, prefix a type like users:max to search one type")] string Query,
     [property: Description("Provider names to search in, e.g. users, roles, products; empty searches all")] IReadOnlyList<string>? Types = null,
     [property: Description("Hits per provider, 1 to 50")] int? Limit = null) : IQuery<Result<GlobalSearchResult>>;
-
-internal sealed class RunGlobalSearchHandler(GlobalSearcher searcher) : IHandler<RunGlobalSearch, Result<GlobalSearchResult>>
-{
-    public async Task<Result<GlobalSearchResult>> HandleAsync(RunGlobalSearch query, CancellationToken cancellationToken) =>
-        await searcher.SearchAsync(query.Query, query.Types?.ToList(), query.Limit, cancellationToken);
-}

@@ -2,7 +2,6 @@ using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore.Http;
 using Coworkee.Contracts.Identity;
-using Coworkee.Core.Results;
 using Coworkee.Identity.Setup;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;

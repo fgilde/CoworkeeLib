@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OData;
 using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
-using Nextended.Core.Facets;
 using Nextended.Web.OData;
 
 namespace Coworkee.OData;

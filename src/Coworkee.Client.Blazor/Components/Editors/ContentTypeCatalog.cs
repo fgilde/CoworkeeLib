@@ -3,11 +3,6 @@ using Nextended.Core;
 
 namespace Coworkee.Client.Blazor.Components.Editors;
 
-/// <param name="Extensions">The file extensions of the type (".jpg, .jpeg"); searchable and shown next to the value.</param>
-public sealed record ContentTypeInfo(string Value, string Name, string Icon, string Group, string Extensions = "");
-
-public sealed record ContentTypeGroup(string Name, string Icon, IReadOnlyList<string> Values);
-
 /// <summary>
 /// Every MIME type Nextended's <see cref="MimeType"/> knows, grouped by kind with an icon; per group the wildcard ("image/*")
 /// and the common types come first with a readable name. <see cref="Groups"/> add several at once.

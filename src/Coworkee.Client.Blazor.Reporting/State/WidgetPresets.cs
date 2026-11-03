@@ -3,8 +3,6 @@ using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Reporting.State;
 
-public sealed record WidgetPreset(string Name, string Icon, WidgetType Type, ChartKind Chart, int W, int H);
-
 /// <summary>The widget palette, each entry with a size and a first query that already shows something.</summary>
 public static class WidgetPresets
 {

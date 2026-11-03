@@ -5,18 +5,6 @@ using System.Text.RegularExpressions;
 
 namespace Coworkee.Contracts.Theming;
 
-/// <summary>What the Keycloak login theme shows; <see cref="LogoUrl"/> and the design's media address must be absolute web addresses, others are left out.</summary>
-public sealed record KeycloakLoginThemeContent(string AppName, IReadOnlyDictionary<string, string> Light, IReadOnlyDictionary<string, string> Dark)
-{
-    /// <summary>The theme's logo (SVG markup or image data URL), a raster image is written as file next to the styles, SVG is embedded in them.</summary>
-    public string? Logo { get; init; }
-
-    /// <summary>The logo when <see cref="Logo"/> is empty.</summary>
-    public string? LogoUrl { get; init; }
-
-    public SignInDesign Design { get; init; } = new();
-}
-
 /// <summary>
 /// Writes a Keycloak login theme in the app's design: a child of keycloak.v2 with the palette colors (light and dark), the logo, the app name and the
 /// sign-in layout. Only styles, a script and messages, no template of its own, so it keeps working with newer Keycloak versions.

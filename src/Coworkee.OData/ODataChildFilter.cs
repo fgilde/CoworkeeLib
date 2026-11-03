@@ -1,7 +1,5 @@
 using System.Linq.Expressions;
 using Coworkee.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.OData;
 

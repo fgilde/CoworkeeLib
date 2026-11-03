@@ -17,8 +17,6 @@ using Nextended.Web.OData;
 
 namespace Coworkee.OData.Transfer;
 
-public sealed record ExportFile(byte[] Content, string ContentType, string Name);
-
 /// <summary>
 /// The rows of a set as its list shows them ($filter, $search, $orderby), with the chosen columns and their headers (<c>columns=Name:Product,Price</c>, see
 /// <see cref="ExportColumns"/>), as Excel, CSV or JSON; <see cref="ODataComputedProperty.Exported"/> computed properties follow the entity's own columns.

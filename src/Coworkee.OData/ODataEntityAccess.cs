@@ -2,7 +2,6 @@ using Coworkee.Application.Authorization;
 using Coworkee.Application.Groups;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.OData.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OData.Edm;

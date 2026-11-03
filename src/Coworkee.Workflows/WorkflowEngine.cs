@@ -7,22 +7,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Workflows;
 
-/// <summary>Who may load a workflow item.</summary>
-public enum WorkflowAccess
-{
-    /// <summary>Only users who see the entity through its OData set (permission, tenant, row filters).</summary>
-    See,
-
-    /// <summary>Those, and the approvers of the entity's open approval: they see what they decide.</summary>
-    SeeOrDecide,
-
-    /// <summary>No check: the system (deadline job).</summary>
-    System,
-}
-
-/// <summary>An entity with its workflow and state, loaded for one request.</summary>
-public sealed record WorkflowSubject(EntityWorkflow Workflow, object Entity, WorkflowItem Item);
-
 /// <summary>Runs transitions, decisions and deadlines; the caller saves (the dispatcher after a command, the job itself).</summary>
 public sealed class WorkflowEngine(
     CoworkeeDbContext db, WorkflowOptions options, IPermissionChecker permissions, ICurrentUser currentUser, ApproverDirectory directory, TimeProvider clock, IServiceProvider services)

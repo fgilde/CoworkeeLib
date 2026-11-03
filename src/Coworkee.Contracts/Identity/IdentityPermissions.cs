@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace Coworkee.Contracts.Identity;
 
 public static class IdentityPermissions
@@ -44,19 +42,4 @@ public static class IdentityPermissions
     {
         public const string Manage = "Identity.Clients.Manage";
     }
-}
-
-[JsonConverter(typeof(JsonStringEnumConverter<PermissionProviderType>))]
-public enum PermissionProviderType
-{
-    Role,
-    User,
-    Group,
-}
-
-[JsonConverter(typeof(JsonStringEnumConverter<PrincipalType>))]
-public enum PrincipalType
-{
-    User,
-    Group,
 }

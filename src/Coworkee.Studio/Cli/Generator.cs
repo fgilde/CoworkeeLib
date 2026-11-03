@@ -4,15 +4,6 @@ using Coworkee.Studio.Model;
 
 namespace Coworkee.Studio.Cli;
 
-public enum GenerationOutcome
-{
-    Succeeded,
-    Failed,
-    Invalid,
-    CliNotFound,
-    Canceled,
-}
-
 /// <summary>Creates the app through the CLI: writes the spec, coworkee spec validate, then coworkee new --spec.</summary>
 public sealed class Generator(ProcessRunner run)
 {

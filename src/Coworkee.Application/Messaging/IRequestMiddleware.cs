@@ -1,7 +1,5 @@
 namespace Coworkee.Application.Messaging;
 
-public delegate Task<TResult> RequestHandlerDelegate<TResult>();
-
 public interface IRequestMiddleware
 {
     int Order { get; }

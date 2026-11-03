@@ -1,30 +1,13 @@
 using System.Globalization;
-using System.Security.Cryptography;
 using Coworkee.Application.Caching;
 using Coworkee.Contracts.Settings;
 using Coworkee.Core.Security;
 using Coworkee.Infrastructure.Persistence;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace Coworkee.Settings;
-
-public interface ISettingProvider
-{
-    Task<string?> GetAsync(string name, CancellationToken cancellationToken = default);
-
-    Task<T> GetAsync<T>(string name, CancellationToken cancellationToken = default);
-
-    /// <summary>The value stored at exactly this scope (of the current tenant for <see cref="SettingScope.Tenant"/>), else the default (null with <paramref name="storedOnly"/> when nothing is stored); no fallback to other scopes.</summary>
-    Task<string?> GetForScopeAsync(string name, SettingScope scope, bool storedOnly = false, CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyDictionary<string, string?>> GetClientValuesAsync(CancellationToken cancellationToken = default);
-}
-
-internal sealed record StoredSetting(string Name, SettingScope Scope, string? Value);
 
 internal sealed class SettingProvider(
     ICurrentUser currentUser,
@@ -86,31 +69,5 @@ internal sealed class SettingProvider(
                 .ToListAsync(token),
             tags: [CacheTag],
             cancellationToken: cancellationToken);
-    }
-}
-
-public sealed class SettingProtector(IDataProtectionProvider provider, ILogger<SettingProtector> logger)
-{
-    private readonly IDataProtector _protector = provider.CreateProtector("Coworkee.Settings");
-
-    public string Protect(string value) => _protector.Protect(value);
-
-    // a secret stored under another key ring reads as unset instead of failing every read of the settings
-    public string? Unprotect(string? value)
-    {
-        if (value is null)
-        {
-            return null;
-        }
-
-        try
-        {
-            return _protector.Unprotect(value);
-        }
-        catch (CryptographicException exception)
-        {
-            logger.LogWarning(exception, "A stored secret setting cannot be decrypted with the current key ring; it reads as unset until it is saved again");
-            return null;
-        }
     }
 }

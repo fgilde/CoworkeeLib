@@ -1,6 +1,4 @@
 using Coworkee.Domain;
-using Coworkee.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.EventBus;
 
@@ -13,14 +11,4 @@ public sealed class InboxMessage
     public required string Handler { get; init; }
 
     public DateTimeOffset ProcessedAt { get; init; }
-}
-
-internal sealed class InboxModelContributor : IModelContributor
-{
-    public void Apply(ModelBuilder modelBuilder) => modelBuilder.Entity<InboxMessage>(entity =>
-    {
-        entity.ToTable("InboxMessages", "cw");
-        entity.HasKey(e => new { e.MessageId, e.Handler });
-        entity.Property(e => e.Handler).HasMaxLength(512);
-    });
 }

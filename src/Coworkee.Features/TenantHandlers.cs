@@ -1,4 +1,3 @@
-using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Features;
 using Coworkee.Core.Results;
@@ -9,19 +8,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Features;
-
-[Coworkee.Application.Messaging.AiTool(Exclude = true)]
-[RequiresPermission(FeaturePermissions.Tenants)]
-public sealed record CreateTenant(CreateTenantRequest Tenant) : ICommand<Result<Guid>>;
-
-[RequiresPermission(FeaturePermissions.Tenants)]
-public sealed record UpdateTenant(Guid Id, TenantRequest Tenant) : ICommand<Result>;
-
-[RequiresPermission(FeaturePermissions.Tenants)]
-public sealed record GetTenantDetails(IReadOnlyList<Guid> Ids) : IQuery<Result<IReadOnlyList<TenantDetailsDto>>>;
-
-[RequiresPermission(FeaturePermissions.Tenants)]
-public sealed record SetTenantFeatures(Guid Id, TenantFeaturesRequest Features) : ICommand<Result>;
 
 internal sealed class TenantHandlers(CoworkeeDbContext db, UserManager<User> users, IFeatureDefinitionManager definitions, HostAccess host)
     : IHandler<CreateTenant, Result<Guid>>,

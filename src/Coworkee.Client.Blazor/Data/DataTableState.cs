@@ -68,5 +68,3 @@ public sealed record DataTableState(string? Search, IReadOnlyList<SelectedFacet>
         }
     }
 }
-
-public sealed record DataTableSort(string Column, bool Descending);

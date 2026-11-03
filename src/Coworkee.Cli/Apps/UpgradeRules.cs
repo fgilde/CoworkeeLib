@@ -4,26 +4,6 @@ using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace Coworkee.Cli.Apps;
 
-/// <summary>A text or regex replacement in the files of the globs (relative to the solution), skipped in files that contain <see cref="Unless"/>.</summary>
-internal sealed record RenameRule(string Find, string Replace, string[] Files, string? Unless = null, string? Description = null);
-
-/// <summary>A line inserted after the first line matching <see cref="InsertAfter"/>, with that line's indentation; skipped in files that contain <see cref="Unless"/>.</summary>
-internal sealed record InsertRule(string InsertAfter, string Line, string[] Files, string? Unless = null, string? Description = null);
-
-/// <summary>A package or MSBuild SDK raised to <see cref="Version"/> where the app has an older one.</summary>
-internal sealed record PackageRule(string Id, string Version);
-
-/// <summary>A step the person takes; <see cref="Find"/> locates the code it concerns.</summary>
-internal sealed record ManualRule(string Text, string Find, string[] Files, string? Unless = null);
-
-internal sealed record VersionRules(string Version, string[]? Breaking, bool NeedsMigration, RenameRule[]? Renames, InsertRule[]? Insertions, PackageRule[]? Packages, ManualRule[]? Manual);
-
-/// <summary>A change coworkee update made (or would make), or a place a manual step concerns.</summary>
-internal sealed record UpgradeChange(string File, string Text, int Line = 0)
-{
-    public override string ToString() => Line > 0 ? $"{File}:{Line}: {Text}" : $"{File}: {Text}";
-}
-
 /// <summary>The rules of upgrade-rules.json (shipped inside the CLI): breaking changes, automatic renames and bumps, manual steps per version.</summary>
 internal static class UpgradeRules
 {

@@ -2,14 +2,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Coworkee.Studio.ViewModels;
 
-public sealed record RecentSpec(string Path)
-{
-    public string Name => System.IO.Path.GetFileNameWithoutExtension(Path);
-
-    /// <summary>The folder name and the day of the last change; the tooltip has the whole path.</summary>
-    public string Folder => $"{System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(Path))} · {File.GetLastWriteTime(Path).ToString("d", System.Globalization.CultureInfo.CurrentCulture)}";
-}
-
 public sealed partial class WelcomeStep(MainViewModel main) : StepViewModel(main)
 {
     protected override string TitleText => "Welcome";

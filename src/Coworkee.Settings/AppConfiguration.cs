@@ -1,6 +1,6 @@
 using System.Globalization;
-using System.Text.Json.Nodes;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
@@ -11,7 +11,6 @@ using Coworkee.Infrastructure.Auditing;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Settings;
 

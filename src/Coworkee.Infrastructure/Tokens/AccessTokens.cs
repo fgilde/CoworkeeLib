@@ -1,48 +1,10 @@
 using System.Security.Cryptography;
 using System.Text;
 using Coworkee.Core.Security;
-using Coworkee.Domain;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Infrastructure.Tokens;
-
-/// <summary>A short-lived token that opens one thing without sign-in; only the hash of the token is stored. Expired ones go with the retention target access-tokens, without the Retention module when another token is redeemed.</summary>
-[NotAudited]
-public sealed class AccessToken : Entity
-{
-    public required string Hash { get; set; }
-
-    public required string Purpose { get; set; }
-
-    public Guid TargetId { get; set; }
-
-    public Guid? TenantId { get; set; }
-
-    public Guid? UserId { get; set; }
-
-    public DateTimeOffset ExpiresAt { get; set; }
-
-    public bool SingleUse { get; set; }
-
-    public DateTimeOffset? UsedAt { get; set; }
-}
-
-/// <summary>What a redeemed token opens, with the organisation and user that issued it.</summary>
-public sealed record AccessTokenGrant(Guid TargetId, Guid? TenantId, Guid? UserId);
-
-/// <summary>Anonymous links that work for a short time, e.g. for a file viewer or a native download that sends no sign-in.</summary>
-public interface IAccessTokens
-{
-    /// <summary>A new token for <paramref name="targetId"/>; the row is added to the unit of work, the caller saves it.</summary>
-    string Issue(string purpose, Guid targetId, TimeSpan lifetime, bool singleUse);
-
-    /// <summary>The grant, or null when the token is unknown, of another purpose, expired or (single use) taken already.</summary>
-    Task<AccessTokenGrant?> RedeemAsync(string purpose, string token, CancellationToken cancellationToken);
-}
-
-/// <summary>Registered by the Retention module, whose target access-tokens deletes expired tokens; without it tokens clean up after themselves.</summary>
-public sealed class RetentionCleansAccessTokens;
 
 internal sealed class AccessTokens(CoworkeeDbContext db, ICurrentUser currentUser, TimeProvider clock, RetentionCleansAccessTokens? retention = null) : IAccessTokens
 {

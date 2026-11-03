@@ -50,5 +50,3 @@ public sealed class RegistrationInput
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
-
-public sealed record ExternalAccount(string Provider, string Key, string? DisplayName);

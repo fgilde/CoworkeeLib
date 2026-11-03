@@ -1,10 +1,10 @@
+using Coworkee.Contracts;
 using Coworkee.Contracts.Auditing;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Mailing;
 using Coworkee.Contracts.Notifications;
 using Coworkee.Contracts.Settings;
 using Coworkee.Contracts.Theming;
-using Coworkee.Contracts;
 
 namespace Coworkee.Client.Blazor.Api;
 

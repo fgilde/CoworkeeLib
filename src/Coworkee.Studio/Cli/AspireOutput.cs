@@ -3,8 +3,6 @@ using System.Text.RegularExpressions;
 
 namespace Coworkee.Studio.Cli;
 
-public sealed record AppEndpoint(string Name, string Url);
-
 /// <summary>What the console output of an Aspire app host tells: the dashboard login, that the app is up, and which line explains a failure.</summary>
 public static partial class AspireOutput
 {

@@ -40,13 +40,3 @@ public abstract class FacetViewBase : CoworkeeComponentBase
     /// <summary>Width of the bar under an option, its share of the largest count.</summary>
     protected string Share(FacetOptionDto option) => MaxCount == 0 ? "width:0" : FormattableString.Invariant($"width:{100.0 * option.Count / MaxCount:0.#}%");
 }
-
-/// <summary>How facet values read: translated for enums, flags, yes/no and presets, as they are for row names.</summary>
-public static class FacetLabels
-{
-    public static string Of(Localization.CoworkeeLocalizer l, FacetGroupDto group, FacetOptionDto option) =>
-        group.ValueKind is FacetValueKind.Enum or FacetValueKind.Flags or FacetValueKind.Boolean ? l[option.Label] : option.Label;
-
-    /// <summary>A chosen value as its chip shows it, translated when it is a known text (enum labels, presets).</summary>
-    public static string Of(Localization.CoworkeeLocalizer l, SelectedFacet facet) => l.Find(facet.Label) ?? facet.Label;
-}

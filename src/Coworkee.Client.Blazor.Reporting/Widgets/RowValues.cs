@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text.Json;
-using Coworkee.Client.Blazor.Reporting.State;
 using Coworkee.Contracts.Reporting;
 
 namespace Coworkee.Client.Blazor.Reporting.Widgets;

@@ -2,8 +2,6 @@ using Coworkee.Contracts.Search;
 
 namespace Coworkee.Application.GlobalSearch;
 
-public sealed record SearchMatchResult(double Score, IReadOnlyList<HighlightRange> Highlights);
-
 /// <summary>
 /// Scores one value against the search the same way for every provider, so hits of different providers rank together:
 /// equal 1, prefix 0.8 to 0.9, word start 0.6 to 0.7, part 0.4 to 0.5, all words somewhere 0.3; longer values lose a little.

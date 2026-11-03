@@ -8,53 +8,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Files.Attachments;
 
-/// <summary>A stored attachment opened for reading; the caller disposes <see cref="Content"/>.</summary>
-public sealed record RecordAttachmentFile(RecordAttachmentDto Attachment, Stream Content);
-
-/// <summary>A file about to be attached, for <see cref="IAttachmentScanner"/>.</summary>
-public sealed record AttachmentUpload(string EntityType, Guid EntityId, string Slot, string FileName, string ContentType, long Size);
-
-/// <summary>Names an upload to the files (the Files page, <c>POST /api/v1/files</c>) gets in <see cref="AttachmentUpload"/>.</summary>
-public static class FileUploads
-{
-    /// <summary><see cref="AttachmentUpload.EntityType"/> of a file upload; <see cref="AttachmentUpload.EntityId"/> is its folder (<see cref="Guid.Empty"/> for the root).</summary>
-    public const string EntityType = "StoredFile";
-
-    /// <summary><see cref="AttachmentUpload.Slot"/> of a file upload.</summary>
-    public const string Slot = "files";
-}
-
-/// <summary>
-/// A hook before an upload is stored, e.g. a virus scanner; returns why the file is refused, or null. Checks record attachments and uploads
-/// to the files (<see cref="FileUploads"/>).
-/// </summary>
-public interface IAttachmentScanner
-{
-    Task<string?> ScanAsync(AttachmentUpload upload, Stream content, CancellationToken cancellationToken);
-}
-
-/// <summary>
-/// Files of records in named slots: metadata in <c>cw.RecordAttachments</c>, content in the blob storage.
-/// Checks the slot's limits but not who may do it: app code calls it after its own checks, the endpoints after the record's visibility.
-/// Changes join the caller's unit of work (the pipeline saves after the command); a blob written for a row that is never committed is deleted when the scope ends.
-/// </summary>
-public interface IRecordAttachments
-{
-    /// <summary>Writes the file to the blob storage and adds its row; in a single-file slot it replaces the one there. Saved with the unit of work.</summary>
-    Task<Result<RecordAttachmentDto>> PutAsync(string entityType, Guid entityId, string slot, string fileName, string? contentType, Stream content, CancellationToken cancellationToken);
-
-    /// <summary>The attachment with its content, or null when it (or its blob) is gone.</summary>
-    Task<RecordAttachmentFile?> OpenAsync(Guid attachmentId, CancellationToken cancellationToken);
-
-    /// <summary>Removes the row; the blob goes after the commit.</summary>
-    Task<bool> DeleteAsync(Guid attachmentId, CancellationToken cancellationToken);
-
-    /// <summary>Every attachment of the record, e.g. when the app deletes it for good.</summary>
-    Task DeleteAllAsync(string entityType, Guid entityId, CancellationToken cancellationToken);
-
-    Task<IReadOnlyList<RecordAttachmentDto>> ListAsync(string entityType, Guid entityId, string? slot = null, CancellationToken cancellationToken = default);
-}
-
 internal sealed class RecordAttachments(
     CoworkeeDbContext db, RecordAttachmentOptions options, IBlobStorage storage, AttachmentBlobs blobs, ICurrentUser currentUser, TimeProvider clock,
     IEnumerable<IAttachmentScanner> scanners) : IRecordAttachments

@@ -1,12 +1,5 @@
 namespace Coworkee.Client.Blazor.Ai;
 
-public enum AssistantSize
-{
-    Small,
-    Large,
-    Full,
-}
-
 /// <summary>Whether the assistant window is open and how big, shared by the button, the shortcut and /assistant.</summary>
 public sealed class AssistantState
 {

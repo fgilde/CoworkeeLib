@@ -52,5 +52,3 @@ public sealed class ReportSubscription : Entity, IMultiTenant
         NextRunAt = ReportSchedules.Next(Schedule, now).ToUniversalTime();
     }
 }
-
-internal sealed record ReportSubscriptionFilter(ReportDateRange? DateRange, IReadOnlyList<ReportFilterValue>? Filters);

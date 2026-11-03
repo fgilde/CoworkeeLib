@@ -1,7 +1,6 @@
 using Coworkee.Contracts.Mailing;
 using Coworkee.Contracts.Settings;
 using Coworkee.Core.Results;
-using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Mailing;

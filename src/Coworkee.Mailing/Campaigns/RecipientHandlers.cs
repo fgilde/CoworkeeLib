@@ -1,5 +1,3 @@
-using System.Text.Json;
-using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Mailing;
 using Coworkee.Core.Results;
@@ -8,28 +6,6 @@ using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Mailing;
-
-[RequiresPermission(MailPermissions.Campaigns.Send)]
-public sealed record PreviewRecipients(RecipientSourceDto Source) : IQuery<Result<RecipientPreviewDto>>;
-
-[RequiresPermission(MailPermissions.Campaigns.Send)]
-public sealed record GetRecipientLists : IQuery<Result<IReadOnlyList<RecipientListDto>>>;
-
-[RequiresPermission(MailPermissions.Campaigns.Send)]
-public sealed record CreateRecipientList(SaveRecipientListRequest Request) : ICommand<Result<RecipientListDto>>;
-
-[RequiresPermission(MailPermissions.Campaigns.Send)]
-public sealed record UpdateRecipientList(Guid Id, SaveRecipientListRequest Request) : ICommand<Result>;
-
-[RequiresPermission(MailPermissions.Campaigns.Send)]
-public sealed record DeleteRecipientList(Guid Id) : ICommand<Result>;
-
-internal static class RecipientSourceJson
-{
-    public static string Write(RecipientSourceDto source) => JsonSerializer.Serialize(source, JsonSerializerOptions.Web);
-
-    public static RecipientSourceDto Read(string json) => JsonSerializer.Deserialize<RecipientSourceDto>(json, JsonSerializerOptions.Web)!;
-}
 
 internal sealed class RecipientHandlers(CoworkeeDbContext db, ICurrentUser currentUser, IMailRecipientDirectory directory, TimeProvider clock)
     : IHandler<PreviewRecipients, Result<RecipientPreviewDto>>,

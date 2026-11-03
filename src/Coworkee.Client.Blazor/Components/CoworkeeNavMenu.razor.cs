@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Coworkee.Client.Blazor.Layout;
 using Coworkee.Client.Blazor.Navigation;
 using Coworkee.Client.Blazor.Security;

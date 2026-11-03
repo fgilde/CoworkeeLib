@@ -1,4 +1,3 @@
-using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Identity;
 using Coworkee.Core.Results;
@@ -8,18 +7,6 @@ using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Identity.Users;
-
-/// <summary>Called after an administrator ended a user's sessions, e.g. to revoke the tokens the auth server issued.</summary>
-public interface IUserSessionListener
-{
-    Task SessionsEndedAsync(User user, CancellationToken cancellationToken);
-}
-
-[RequiresPermission(IdentityPermissions.Users.Manage)]
-public sealed record SignOutUser(Guid Id) : ICommand<Result>;
-
-[RequiresPermission(IdentityPermissions.Users.Manage)]
-public sealed record LockUser(Guid Id, DateTimeOffset? Until) : ICommand<Result>;
 
 /// <summary>
 /// Signing out everywhere and locking take effect at once: a new security stamp makes the API refuse the user's tokens and the auth

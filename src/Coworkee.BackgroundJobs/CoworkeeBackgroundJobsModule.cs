@@ -1,16 +1,12 @@
-using Coworkee.Application.Authorization;
 using Coworkee.Application;
+using Coworkee.Application.Authorization;
 using Coworkee.Application.Status;
 using Coworkee.AspNetCore;
 using Coworkee.Contracts.Configuration;
-using Coworkee.Contracts.Jobs;
 using Coworkee.Core.Modularity;
-using Hangfire.Dashboard;
-using Hangfire.InMemory;
+using Hangfire;
 using Hangfire.PostgreSql;
 using Hangfire.SqlServer;
-using Hangfire;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -78,27 +74,5 @@ public sealed class CoworkeeBackgroundJobsModule : CoworkeeModule, IWebModule
         app.UseHangfireDashboard(
             app.Services.GetRequiredService<IOptions<BackgroundJobOptions>>().Value.DashboardPath,
             new DashboardOptions { AsyncAuthorization = [new PermissionDashboardAuthorization()], DisplayStorageConnectionString = false });
-    }
-}
-
-internal sealed class JobsPermissionDefinitions : IPermissionDefinitionContributor
-{
-    public void Define(PermissionDefinitionContext context) =>
-        context.Group(JobsPermissions.GroupName, "Background jobs").Add(JobsPermissions.View, "View background jobs");
-}
-
-internal sealed class PermissionDashboardAuthorization : IDashboardAsyncAuthorizationFilter
-{
-    public async Task<bool> AuthorizeAsync(DashboardContext context)
-    {
-        var httpContext = context.GetHttpContext();
-        var result = await httpContext.AuthenticateAsync();
-        if (result.Succeeded)
-        {
-            httpContext.User = result.Principal;
-        }
-
-        return result.Succeeded
-            && await httpContext.RequestServices.GetRequiredService<IPermissionChecker>().IsGrantedAsync(JobsPermissions.View, httpContext.RequestAborted);
     }
 }

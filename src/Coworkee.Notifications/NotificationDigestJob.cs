@@ -1,0 +1,116 @@
+using System.Globalization;
+using Coworkee.Application;
+using Coworkee.Application.Localization;
+using Coworkee.BackgroundJobs;
+using Coworkee.Contracts.Configuration;
+using Coworkee.Contracts.Settings;
+using Coworkee.Core.Security;
+using Coworkee.Infrastructure.Persistence;
+using Coworkee.Mailing;
+using Coworkee.Settings;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+
+namespace Coworkee.Notifications;
+
+/// <summary>
+/// Once a day every user with unread notifications since the last digest (at most a day back) gets one mail listing them, unless they switched it off.
+/// Notifications that went out as a mail of their own are left out.
+/// </summary>
+public sealed class NotificationDigestJob(
+    CoworkeeDbContext db, IMailSender mails, IUserDirectory users, IDistributedLock locks, IOptions<NotificationOptions> options, TimeProvider clock,
+    IEnumerable<ITextTranslator> translators, ILogger<NotificationDigestJob> logger) : IRecurringJob
+{
+    public const string Id = "coworkee-notification-digest";
+    public const string Setting = "Notifications.Digest";
+    public const string Template = "Notifications.Digest";
+
+    private const int PageSize = 500;
+    private const int MaxItems = 50;
+
+    public async Task ExecuteAsync(CancellationToken cancellationToken)
+    {
+        // a run that is already going (manual trigger during the scheduled one) mails everything this one would
+        await using var held = await locks.AcquireAsync(Id, TimeSpan.Zero, cancellationToken);
+        if (held is null)
+        {
+            return;
+        }
+
+        var now = clock.GetUtcNow();
+        var since = now.AddDays(-1);
+
+        // bool settings may be stored in any casing
+        var globallyOff = await db.Set<SettingValue>().AnyAsync(v => v.Name == Setting && v.Scope == SettingScope.Global && v.Value!.ToLower() == "false", cancellationToken);
+        var optedIn = db.Set<SettingValue>().Where(v => v.Name == Setting && v.Scope == SettingScope.User && v.Value!.ToLower() == "true").Select(v => v.ScopeKey);
+        var optedOut = db.Set<SettingValue>().Where(v => v.Name == Setting && v.Scope == SettingScope.User && v.Value!.ToLower() == "false").Select(v => v.ScopeKey);
+
+        // notifications of the window up to now: those created while the job runs go into tomorrow's digest
+        var unread = db.Set<Notification>().AsNoTracking().Where(n => n.ReadAt == null && !n.Mailed && n.CreatedAt > since && n.CreatedAt <= now);
+        unread = globallyOff ? unread.Where(n => optedIn.Contains(n.UserId)) : unread.Where(n => !optedOut.Contains(n.UserId));
+
+        // every recipient in pages of users, so nobody is starved behind a cap
+        Guid? after = null;
+        while (await unread.Select(n => n.UserId).Distinct().Where(id => after == null || id.CompareTo(after.Value) > 0).OrderBy(id => id).Take(PageSize).ToListAsync(cancellationToken) is { Count: > 0 } page)
+        {
+            after = page[^1];
+            await SendPageAsync(page, unread, since, now, cancellationToken);
+        }
+    }
+
+    private async Task SendPageAsync(List<Guid> userIds, IQueryable<Notification> unread, DateTimeOffset since, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        var states = await db.Set<NotificationDigestState>().Where(s => userIds.Contains(s.UserId)).ToDictionaryAsync(s => s.UserId, cancellationToken);
+        var emails = await users.GetActiveEmailsAsync(userIds, cancellationToken);
+        var names = await users.GetDisplayNamesAsync(userIds, cancellationToken);
+        var pending = (await unread.Where(n => userIds.Contains(n.UserId)).OrderByDescending(n => n.CreatedAt).ToListAsync(cancellationToken)).ToLookup(n => n.UserId);
+        var cultures = await RecipientCultures.ForAsync(db, userIds.ToDictionary(id => id, id => pending[id].FirstOrDefault()?.TenantId), cancellationToken);
+        foreach (var userId in userIds)
+        {
+            var last = states.TryGetValue(userId, out var state) && state.LastSentAt > since ? state.LastSentAt : since;
+            var items = pending[userId].Where(n => n.CreatedAt > last).Take(MaxItems).ToList();
+            if (items.Count == 0 || !emails.TryGetValue(userId, out var email))
+            {
+                continue;
+            }
+
+            try
+            {
+                // ponytail: one mail per user through the global mail settings; tenant mail settings would need the tenant on the queued mail
+                var culture = cultures.GetValueOrDefault(userId);
+                await mails.QueueAsync(email, Template, new
+                {
+                    user = new { first_name = names.GetValueOrDefault(userId) ?? email, email },
+                    notifications = items.Select(n => new { title = Text(n.Title, n.Arguments, culture), body = Text(n.Body, n.Arguments, culture), link = Absolute(n.Link) }).ToList(),
+                }, culture?.Name, cancellationToken);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                // this user's mail is left out; the others of the page still go
+                logger.LogWarning(exception, "The notification digest for {UserId} could not be queued.", userId);
+                foreach (var entry in db.ChangeTracker.Entries().Where(e => e.State == EntityState.Added && e.Entity is not NotificationDigestState).ToList())
+                {
+                    entry.State = EntityState.Detached;
+                }
+
+                continue;
+            }
+
+            if (state is null)
+            {
+                state = new NotificationDigestState { UserId = userId };
+                db.Add(state);
+                states[userId] = state;
+            }
+
+            state.LastSentAt = now;
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private string? Text(string? text, IReadOnlyList<string>? arguments, CultureInfo? culture) => NotificationText.In(text, arguments, culture, translators);
+
+    private string? Absolute(string? link) => NotificationLinks.Absolute(link, options.Value.PublicAppUrl);
+}

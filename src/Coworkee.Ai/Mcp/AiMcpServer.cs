@@ -1,12 +1,11 @@
 using System.Text.Json;
-using Coworkee.Contracts.Identity;
 using Coworkee.AspNetCore.RateLimiting;
 using Coworkee.Contracts.Ai;
+using Coworkee.Contracts.Identity;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
-using ModelContextProtocol.Server;
 
 namespace Coworkee.Ai.Mcp;
 

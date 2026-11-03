@@ -11,11 +11,9 @@ using Coworkee.Infrastructure.Outbox;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 
 namespace Coworkee.Webhooks;
 
@@ -66,10 +64,4 @@ public sealed class CoworkeeWebhooksModule : CoworkeeModule, IWebModule
             d.SendAsync(new GetWebhookDeliveriesQuery(subscriptionId, take ?? 50), ct).ToHttpResult());
         api.MapPost("/deliveries/{id:guid}/redeliver", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new RedeliverWebhookCommand(id), ct).ToHttpResult());
     }
-}
-
-internal sealed class WebhookPermissionDefinitions : IPermissionDefinitionContributor
-{
-    public void Define(PermissionDefinitionContext context) =>
-        context.Group(WebhookPermissions.GroupName, "Webhooks").Add(WebhookPermissions.Manage, "Manage webhook endpoints and read their deliveries");
 }

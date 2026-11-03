@@ -19,10 +19,3 @@ internal sealed class ApiKeyModel : IModelContributor
             key.HasIndex(k => new { k.TenantId, k.UserId });
         });
 }
-
-internal static class ApiKeyLimits
-{
-    public const int Name = 100;
-
-    public const int Description = 500;
-}

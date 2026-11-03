@@ -1,8 +1,5 @@
 namespace Coworkee.Cli.Spec;
 
-/// <summary>An entity a reference can point to: one of the spec, or one the app has already (<see cref="Spec"/> is null then).</summary>
-public sealed record KnownEntity(string Module, string Name, string Plural, string? Display, EntitySpec? Spec = null);
-
 /// <summary>The entities and enums of a spec, plus those of the app it extends, for resolving references.</summary>
 public sealed class SpecIndex
 {

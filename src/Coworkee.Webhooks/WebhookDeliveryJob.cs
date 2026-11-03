@@ -1,24 +1,13 @@
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
-using Coworkee.Application.Messaging;
 using Coworkee.BackgroundJobs;
 using Coworkee.Contracts.Webhooks;
 using Coworkee.Infrastructure.Persistence;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace Coworkee.Webhooks;
-
-internal sealed class WebhookDeliveryQueuedHandler(IBackgroundJobs jobs) : IDomainEventHandler<WebhookDeliveryQueued>
-{
-    public Task HandleAsync(WebhookDeliveryQueued domainEvent, CancellationToken cancellationToken)
-    {
-        jobs.Enqueue<WebhookDeliveryJob, Guid>(domainEvent.DeliveryId);
-        return Task.CompletedTask;
-    }
-}
 
 /// <summary>One attempt of a delivery: sends, logs, schedules the next attempt with exponential backoff and switches failing endpoints off.</summary>
 internal sealed class WebhookDeliveryJob(
@@ -147,20 +136,4 @@ internal sealed class WebhookDeliveryJob(
     }
 
     private static string Truncate(string text, int limit) => text.Length <= limit ? text : text[..limit] + "…";
-}
-
-public static class WebhookBackoff
-{
-    /// <summary>The wait after failed attempt <paramref name="attempt"/> (1 based): the first delay, doubled per attempt, capped.</summary>
-    public static TimeSpan Delay(int attempt, WebhookOptions options) =>
-        TimeSpan.FromTicks((long)Math.Min(options.MaxRetryDelay.Ticks, options.FirstRetryDelay.Ticks * Math.Pow(2, attempt - 1)));
-}
-
-internal sealed class WebhookSecrets(IDataProtectionProvider provider)
-{
-    private readonly IDataProtector _protector = provider.CreateProtector("Coworkee.Webhooks");
-
-    public string Protect(string secret) => _protector.Protect(secret);
-
-    public string Unprotect(string protectedSecret) => _protector.Unprotect(protectedSecret);
 }

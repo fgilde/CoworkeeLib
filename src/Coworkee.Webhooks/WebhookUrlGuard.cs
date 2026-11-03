@@ -96,5 +96,3 @@ public sealed class WebhookUrlGuard(IOptions<WebhookOptions> options)
                  || address.IsIPv6Multicast || address.IsIPv6UniqueLocal);
     }
 }
-
-public sealed class WebhookBlockedException(string message) : Exception(message);

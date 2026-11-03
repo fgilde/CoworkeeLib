@@ -5,8 +5,8 @@ using Coworkee.Core.Results;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Localization.Domain;
 using Coworkee.Localization.Languages;
-using Coworkee.Localization.Texts;
 using Coworkee.Localization.MachineTranslation;
+using Coworkee.Localization.Texts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 

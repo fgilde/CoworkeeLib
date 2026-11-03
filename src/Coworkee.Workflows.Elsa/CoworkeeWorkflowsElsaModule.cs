@@ -7,12 +7,11 @@ using Coworkee.Core.Modularity;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Workflows.Elsa.Activities;
 using Elsa.Extensions;
-using FluentValidation;
 using Elsa.Persistence.EFCore;
 using Elsa.Persistence.EFCore.Extensions;
 using Elsa.Persistence.EFCore.Modules.Management;
 using Elsa.Persistence.EFCore.Modules.Runtime;
-using Microsoft.AspNetCore.Authentication;
+using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -104,42 +103,5 @@ public sealed class CoworkeeWorkflowsElsaModule : CoworkeeModule, IWebModule
 
         using var scope = services.CreateScope();
         return scope.ServiceProvider.GetRequiredService<CoworkeeDbContext>().Database.GetConnectionString()!;
-    }
-}
-
-public static class ElsaPermissions
-{
-    public const string GroupName = "Elsa";
-
-    /// <summary>Design, run and inspect Elsa workflows through /api/elsa (and Elsa Studio).</summary>
-    public const string Manage = Contracts.Workflows.WorkflowPermissions.Elsa;
-}
-
-internal sealed class ElsaPermissionDefinitions : IPermissionDefinitionContributor
-{
-    public void Define(PermissionDefinitionContext context) =>
-        context.Group(ElsaPermissions.GroupName, "Elsa workflows")
-            .Add(ElsaPermissions.Manage, "Design and run Elsa workflows");
-}
-
-/// <summary>Authenticates requests to the Elsa API itself (the app authenticates later in the pipeline) and lets only users with the permission through.</summary>
-internal static class ElsaGate
-{
-    public static async Task InvokeAsync(HttpContext context, Func<Task> next)
-    {
-        if (await context.AuthenticateAsync() is not { Succeeded: true } result)
-        {
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            return;
-        }
-
-        context.User = result.Principal;
-        if (!await context.RequestServices.GetRequiredService<IPermissionChecker>().IsGrantedAsync(ElsaPermissions.Manage, context.RequestAborted))
-        {
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            return;
-        }
-
-        await next();
     }
 }

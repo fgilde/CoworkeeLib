@@ -11,42 +11,6 @@ using Coworkee.Studio.Localization;
 
 namespace Coworkee.Studio.ViewModels;
 
-public enum RunState
-{
-    Ready,
-    Running,
-
-    /// <summary>The plan of the changes to an existing app is shown; Apply carries it out.</summary>
-    PlanReady,
-    Succeeded,
-    Failed,
-    Invalid,
-    CliMissing,
-    Canceled,
-}
-
-public enum ProgressState
-{
-    Running,
-    Done,
-    Failed,
-}
-
-public sealed partial class ProgressStepViewModel(string text) : ObservableObject
-{
-    public string Text => text;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsRunning), nameof(IsDone), nameof(IsFailed))]
-    public partial ProgressState State { get; set; }
-
-    public bool IsRunning => State == ProgressState.Running;
-
-    public bool IsDone => State == ProgressState.Done;
-
-    public bool IsFailed => State == ProgressState.Failed;
-}
-
 public sealed partial class GenerateStep : StepViewModel
 {
     private readonly Stopwatch _watch = new();

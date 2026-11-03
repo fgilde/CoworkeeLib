@@ -1,5 +1,4 @@
 using Aspire.Hosting.ApplicationModel;
-using CommunityToolkit.Aspire.Hosting.MailPit;
 
 namespace Aspire.Hosting;
 

@@ -10,12 +10,6 @@ using StackExchange.Redis;
 namespace Coworkee.Identity.Users;
 
 /// <summary>
-/// A user whose security stamp changed; <paramref name="Reason"/> is "locked", "password-changed" or "signed-out", <paramref name="KeptSessionId"/> the session
-/// that changed its own password and goes on.
-/// </summary>
-public sealed record SessionChange(Guid UserId, string Reason, string? KeptSessionId = null);
-
-/// <summary>
 /// Tells every instance that security stamps changed: each drops the cached stamps and ends the realtime connections of the sessions
 /// that no longer count. Through Redis pub/sub when a <c>redis</c> connection string is configured, otherwise this instance only.
 /// </summary>

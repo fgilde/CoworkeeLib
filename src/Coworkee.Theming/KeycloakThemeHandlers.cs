@@ -1,4 +1,3 @@
-using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Theming;
 using Coworkee.Core.Results;
@@ -6,13 +5,6 @@ using Coworkee.Core.Security;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Theming;
-
-[RequiresPermission(ThemePermissions.Manage)]
-public sealed record GetKeycloakThemeStatus : IQuery<Result<KeycloakThemeStatusDto>>;
-
-/// <summary>Writes the Keycloak login theme now, e.g. after Keycloak's theme folder was emptied.</summary>
-[RequiresPermission(ThemePermissions.Manage)]
-public sealed record ApplyKeycloakTheme : ICommand<Result<KeycloakThemeStatusDto>>;
 
 /// <summary>Keycloak and its theme folder belong to the installation, so only the system organisation sees and changes them.</summary>
 internal sealed class KeycloakThemeHandlers(KeycloakThemeSync sync, ICurrentUser currentUser, IServiceProvider services)

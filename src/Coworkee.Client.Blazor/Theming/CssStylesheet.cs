@@ -1,13 +1,5 @@
 namespace Coworkee.Client.Blazor.Theming;
 
-public abstract record CssBlock;
-
-/// <summary>A plain <c>selector { declarations }</c> rule; <paramref name="Declarations"/> is the trimmed text between the braces.</summary>
-public sealed record CssRule(string Selector, string Declarations) : CssBlock;
-
-/// <summary>Anything the rules editor does not edit (at-rules, comments, nested or unparseable CSS), kept verbatim.</summary>
-public sealed record CssRawBlock(string Text) : CssBlock;
-
 // shortcut: no real CSS grammar. Escaped braces outside strings, <!-- --> tokens and braces inside unquoted url() make the parser see unbalanced or odd rules; such CSS ends up as one raw block. Use a CSS parser when that matters.
 public static class CssStylesheet
 {

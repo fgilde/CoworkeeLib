@@ -5,9 +5,6 @@ using Microsoft.AspNetCore.DataProtection;
 
 namespace Coworkee.Ai.Sessions;
 
-/// <summary>What a waiting message shows (redacted inputs) and its calls with their full arguments, encrypted with Data Protection.</summary>
-internal sealed record AiPendingState(IReadOnlyList<AiPendingToolDto> Tools, string Calls);
-
 /// <summary>
 /// Keeps the arguments of tool calls that wait for the user out of the database in clear text.
 /// ponytail: the API's Data Protection keys must be shared between instances (and survive restarts) or waiting calls expire.

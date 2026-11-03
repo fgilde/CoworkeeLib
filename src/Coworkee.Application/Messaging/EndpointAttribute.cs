@@ -19,13 +19,3 @@ public class EndpointAttribute(string method, string route) : Attribute
     /// <summary>Endpoints require a signed-in user unless this is set; permissions are checked by the pipeline either way.</summary>
     public bool AllowAnonymous { get; init; }
 }
-
-public sealed class GetAttribute(string route) : EndpointAttribute("GET", route);
-
-public sealed class PostAttribute(string route) : EndpointAttribute("POST", route);
-
-public sealed class PutAttribute(string route) : EndpointAttribute("PUT", route);
-
-public sealed class PatchAttribute(string route) : EndpointAttribute("PATCH", route);
-
-public sealed class DeleteAttribute(string route) : EndpointAttribute("DELETE", route);

@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace Coworkee.Client.Blazor.Components.Query;
 
 /// <summary>
@@ -27,22 +25,4 @@ public sealed record QueryField(string Name, string Label, QueryFieldType Type)
     public IReadOnlyList<QueryOperator>? Operators { get; init; }
 
     public bool HasChoices => Options is { Count: > 0 } || Lookup is not null;
-}
-
-public sealed record QueryOption(string Value, string Label);
-
-[JsonConverter(typeof(JsonStringEnumConverter<QueryFieldType>))]
-public enum QueryFieldType
-{
-    Text,
-    Number,
-    Boolean,
-
-    /// <summary>A day without time (<c>DateOnly</c>).</summary>
-    Date,
-
-    /// <summary>A point in time, compared by whole days in the user's offset.</summary>
-    DateTime,
-    Enum,
-    Guid,
 }

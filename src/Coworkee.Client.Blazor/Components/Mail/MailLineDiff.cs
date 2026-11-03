@@ -2,15 +2,6 @@ using System.Text.RegularExpressions;
 
 namespace Coworkee.Client.Blazor.Components.Mail;
 
-public enum MailDiffKind
-{
-    Same,
-    Removed,
-    Added,
-}
-
-public sealed record MailDiffLine(MailDiffKind Kind, string Text);
-
 /// <summary>Line diff of two template bodies; HTML on one line is split between adjacent tags so a changed paragraph shows on its own.</summary>
 public static partial class MailLineDiff
 {

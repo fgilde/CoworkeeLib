@@ -8,10 +8,3 @@ public sealed class ServiceParameterAttribute(ParameterSource source) : Attribut
 
     public string? Name { get; set; }
 }
-
-public enum ParameterSource
-{
-    Route,
-    Query,
-    Body,
-}

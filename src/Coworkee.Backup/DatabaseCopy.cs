@@ -113,5 +113,3 @@ internal sealed class DatabaseCopy(CoworkeeDbContext db)
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 }
-
-internal sealed record BackupManifest(string? Migration, IReadOnlyList<string> Tables);

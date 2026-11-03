@@ -1,5 +1,5 @@
-using Coworkee.Application.Messaging;
 using Coworkee.Application;
+using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore;
 using Coworkee.Core.Modularity;
 using Coworkee.OData.ClientEntities;

@@ -5,9 +5,6 @@ using Microsoft.JSInterop;
 
 namespace Coworkee.Client.Blazor.Chat;
 
-/// <summary>An open mini chat: a window of the dock, or only its header bar while minimized.</summary>
-public sealed record ChatDockWindow(Guid ConversationId, bool Minimized = false);
-
 /// <summary>
 /// The mini chats at the bottom of the screen, kept per user across reloads. Without a dock on screen (no layout, no chat permission)
 /// opening a chat goes to the chat page instead.

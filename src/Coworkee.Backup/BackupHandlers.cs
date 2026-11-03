@@ -1,4 +1,3 @@
-using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Backup;
 using Coworkee.Core.Results;
@@ -9,33 +8,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 
 namespace Coworkee.Backup;
-
-[AiTool(Exclude = true)]
-[RequiresPermission(BackupPermissions.Manage)]
-public sealed record GetBackupsQuery : IQuery<Result<IReadOnlyList<BackupDto>>>;
-
-[AiTool(Exclude = true)]
-[RequiresPermission(BackupPermissions.Manage)]
-public sealed record CreateBackupCommand : ICommand<Result<BackupDto>>;
-
-/// <summary>A zip of a download, kept like a backup made here; the restore checks whether it fits.</summary>
-[AiTool(Exclude = true)]
-[RequiresPermission(BackupPermissions.Manage)]
-public sealed record UploadBackupCommand(string Name, Stream Content) : ICommand<Result<BackupDto>>;
-
-[AiTool(Exclude = true)]
-[RequiresPermission(BackupPermissions.Manage)]
-public sealed record RestoreBackupCommand(Guid Id) : ICommand<Result>;
-
-[AiTool(Exclude = true)]
-[RequiresPermission(BackupPermissions.Manage)]
-public sealed record DeleteBackupCommand(Guid Id) : ICommand<Result>;
-
-[AiTool(Exclude = true)]
-[RequiresPermission(BackupPermissions.Manage)]
-public sealed record OpenBackupQuery(Guid Id) : IQuery<Result<BackupFile>>;
-
-public sealed record BackupFile(string Name, Stream Content);
 
 internal sealed class BackupHandlers(
     CoworkeeDbContext db, DatabaseCopy copy, IBlobStorage blobs, ICurrentUser currentUser, ITenantDirectory tenants, HybridCache cache, TimeProvider clock)

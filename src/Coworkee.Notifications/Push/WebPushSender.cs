@@ -10,22 +10,6 @@ using Microsoft.Extensions.Options;
 
 namespace Coworkee.Notifications.Push;
 
-public enum PushResult
-{
-    Sent,
-
-    /// <summary>The push service no longer knows the subscription: the device unsubscribed or the browser data was cleared.</summary>
-    Gone,
-
-    Failed,
-}
-
-/// <summary>Delivers an encrypted payload to one push subscription; replace it to send through a service of your own.</summary>
-public interface IPushSender
-{
-    Task<PushResult> SendAsync(PushSubscription subscription, string payload, CancellationToken cancellationToken);
-}
-
 /// <summary>Web Push with the standard library only: payload encryption by RFC 8291 (aes128gcm) and VAPID by RFC 8292 (ES256).</summary>
 public sealed class WebPushSender(HttpClient http, IOptions<NotificationOptions> options) : IPushSender
 {

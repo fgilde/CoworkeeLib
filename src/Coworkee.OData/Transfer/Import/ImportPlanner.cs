@@ -13,15 +13,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.OData.Transfer.Import;
 
-public sealed record ImportRowPlan(int Row, string Action, object? Command, IReadOnlyDictionary<string, string?> Values, List<string> Errors)
-{
-    public const string Create = "Create";
-    public const string Update = "Update";
-    public const string Skip = "Skip";
-
-    public bool IsValid => Errors.Count == 0;
-}
-
 /// <summary>
 /// Turns rows of a file into the import's commands without running them: converts the cells, resolves lookups and the key of
 /// rows to update, starts updates from the stored row and validates every command with its FluentValidation validators.

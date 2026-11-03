@@ -1,5 +1,4 @@
 using Coworkee.Application.Messaging;
-using Coworkee.AspNetCore;
 using Coworkee.AspNetCore.Http;
 using Coworkee.Contracts.Identity;
 using Microsoft.AspNetCore.Builder;

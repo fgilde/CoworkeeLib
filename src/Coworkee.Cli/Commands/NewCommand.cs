@@ -240,5 +240,3 @@ internal static class NewCommand
         return 0;
     }
 }
-
-internal sealed record NewSettings(AppSpec Spec, string BaseDirectory, string Output, string? TemplateSource, IReadOnlyCollection<string>? TrustedFiles = null);

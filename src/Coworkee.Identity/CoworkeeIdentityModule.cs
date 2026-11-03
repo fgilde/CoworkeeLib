@@ -1,7 +1,7 @@
+using Coworkee.Application;
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
 using Coworkee.Application.Setup;
-using Coworkee.Application;
 using Coworkee.AspNetCore;
 using Coworkee.Core.Modularity;
 using Coworkee.Core.Security;
@@ -12,14 +12,13 @@ using Coworkee.Identity.Persistence;
 using Coworkee.Identity.Setup;
 using Coworkee.Identity.Users;
 using Coworkee.Infrastructure.Persistence;
+using Coworkee.Realtime;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Coworkee.Realtime;
 using Microsoft.Extensions.Options;
 
 namespace Coworkee.Identity;

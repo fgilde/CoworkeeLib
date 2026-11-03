@@ -4,12 +4,6 @@ using Coworkee.Cli.Spec;
 
 namespace Coworkee.Cli.Apps;
 
-/// <summary>How <c>coworkee add</c>/<c>remove</c> runs: the template from <see cref="TemplateSource"/> or nuget.org, or one already installed in <see cref="Hive"/>.</summary>
-internal sealed record ApplyOptions(bool DryRun, bool RequireClean, string? TemplateSource = null, string? Hive = null, bool Migration = true);
-
-/// <summary>The result: the plan, the .rej files written and whether it was applied.</summary>
-internal sealed record ApplyResult(IReadOnlyList<MergeStep> Plan, IReadOnlyList<string> Rejects, bool Applied);
-
 /// <summary>
 /// Turns options of an existing app on or off: the template is generated with the app's options and with the new ones,
 /// the difference is merged into the app (<see cref="TemplateMerge"/>), then restore and a migration when the model changed.

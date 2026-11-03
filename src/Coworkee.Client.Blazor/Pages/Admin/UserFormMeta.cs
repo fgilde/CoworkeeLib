@@ -1,5 +1,4 @@
 using Coworkee.Client.Blazor.Localization;
-using MudBlazor;
 using MudBlazor.Extensions.Components;
 using MudBlazor.Extensions.Components.ObjectEdit;
 using MudBlazor.Extensions.Components.ObjectEdit.Options;

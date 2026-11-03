@@ -3,13 +3,6 @@ using Coworkee.Studio.Localization;
 
 namespace Coworkee.Studio.ViewModels;
 
-public enum StepState
-{
-    Upcoming,
-    Current,
-    Done,
-}
-
 /// <summary>A page of the wizard; titles are English keys of <see cref="L"/>.</summary>
 public abstract partial class StepViewModel(MainViewModel main) : ObservableObject
 {

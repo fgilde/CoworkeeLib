@@ -9,7 +9,6 @@ using Coworkee.Infrastructure.Persistence;
 using Coworkee.OData;
 using Coworkee.ResponseFilters;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Webhooks;
 

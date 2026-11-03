@@ -25,22 +25,3 @@ public sealed class Report : AuditedEntity, IMultiTenant
     /// <summary>The <see cref="ReportDefinition"/> as JSON.</summary>
     public required string Definition { get; set; }
 }
-
-public sealed class ReportFavorite
-{
-    public Guid ReportId { get; set; }
-
-    public Guid UserId { get; set; }
-}
-
-/// <summary>The report a user sees as dashboard; without <see cref="UserId"/> the default of the organisation.</summary>
-[Realtime(ReportPermissions.View)]
-[NotAudited]
-public sealed class DashboardReport : Entity, IMultiTenant
-{
-    public Guid TenantId { get; set; }
-
-    public Guid? UserId { get; set; }
-
-    public Guid ReportId { get; set; }
-}

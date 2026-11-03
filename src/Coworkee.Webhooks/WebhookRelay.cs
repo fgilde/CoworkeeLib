@@ -64,9 +64,3 @@ internal sealed class WebhookRelay(CoworkeeDbContext db, IServiceScopeFactory sc
         return set is null || entityId is null || await WebhookEntityData.ReadAsync(services, set, entityId, WebhookNames.Updated, cancellationToken) is not null ? data : null;
     }
 }
-
-internal static class WebhookBody
-{
-    public static string Create(Guid id, string type, DateTimeOffset time, Guid tenantId, JsonNode? data) =>
-        new JsonObject { ["id"] = id, ["type"] = type, ["time"] = time, ["tenant"] = tenantId, ["data"] = data }.ToJsonString(JsonSerializerOptions.Web);
-}

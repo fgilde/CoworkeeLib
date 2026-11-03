@@ -1,5 +1,4 @@
 using Coworkee.Contracts.Search;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Application.GlobalSearch;
 
@@ -25,18 +24,4 @@ public interface IGlobalSearchProvider
 
     /// <summary>Hits as they are found, best first per batch; scores from 0 to 1 (<see cref="SearchMatch"/>). The searcher stops at the limit.</summary>
     IAsyncEnumerable<GlobalSearchHit> SearchAsync(GlobalSearchQuery query, GlobalSearchContext context, CancellationToken cancellationToken);
-}
-
-/// <param name="Services">A scope of its own for this provider and search, signed in as the current user.</param>
-/// <param name="Limit">Hits wanted from this provider.</param>
-public sealed record GlobalSearchContext(IServiceProvider Services, int Limit);
-
-public static class GlobalSearchServiceCollectionExtensions
-{
-    public static IServiceCollection AddGlobalSearchProvider<TProvider>(this IServiceCollection services)
-        where TProvider : class, IGlobalSearchProvider =>
-        services.AddSingleton<IGlobalSearchProvider, TProvider>();
-
-    public static IServiceCollection AddGlobalSearchProvider(this IServiceCollection services, IGlobalSearchProvider provider) =>
-        services.AddSingleton(provider);
 }

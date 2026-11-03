@@ -1,10 +1,7 @@
 using System.Linq.Expressions;
 using Coworkee.Contracts.Workflows;
-using Coworkee.Core.Security;
 using Coworkee.OData;
 using Coworkee.OData.Computed;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Workflows;
 
@@ -64,10 +61,4 @@ internal sealed class WorkflowODataProperties(WorkflowOptions options, WorkflowU
             approvals.Any(a => a.EntityType == type && a.EntityId == id && a.Status == ApprovalStatus.Pending && a.Approvers.Any(x => x.UserId == me && x.Approved == null));
         return ODataComputedProperty.Inline(awaits, ComputedQueryRoot.Of<WorkflowApproval>(), Expression.Property(row, "Id"), Expression.Property(Expression.Constant(user), nameof(WorkflowUser.Id)));
     }
-}
-
-/// <summary>The user a query runs for, read by EF when it executes the query (not when it is bound).</summary>
-internal sealed class WorkflowUser(IHttpContextAccessor http)
-{
-    public Guid? Id => CurrentUserScope.Current is { } ambient ? ambient.UserId : http.HttpContext?.RequestServices.GetService<ICurrentUser>()?.UserId;
 }

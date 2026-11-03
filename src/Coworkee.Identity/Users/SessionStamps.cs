@@ -8,8 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Identity.Users;
 
-public sealed record UserStamp(string? SecurityStamp, string? KeptSession);
-
 /// <summary>
 /// The security stamps the token check compares, in HybridCache (with Redis as second level when configured). A stamp change drops
 /// the entry on every instance through <see cref="SessionSignal"/>; the short lifetime covers instances that cannot hear it.

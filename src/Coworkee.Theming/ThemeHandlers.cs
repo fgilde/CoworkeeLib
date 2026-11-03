@@ -11,28 +11,6 @@ using Microsoft.Extensions.Options;
 
 namespace Coworkee.Theming;
 
-public sealed record GetThemes : IQuery<Result<IReadOnlyList<ThemeDto>>>;
-
-public sealed record GetCurrentTheme : IQuery<Result<ThemeDto>>;
-
-/// <summary>A theme every member of the signed-in user's organisation may choose (built-in or published), whoever asks; not found otherwise.</summary>
-public sealed record GetChoosableTheme(Guid Id) : IQuery<Result<ThemeDto>>;
-
-/// <summary>The themes that ship with the app, for anyone (setup offers them before there is an organisation).</summary>
-public sealed record GetBuiltInThemes : IQuery<Result<IReadOnlyList<ThemeDto>>>;
-
-[RequiresPermission(ThemePermissions.Manage)]
-public sealed record CreateTheme(ThemeRequest Theme) : ICommand<Result<ThemeDto>>;
-
-[RequiresPermission(ThemePermissions.Manage)]
-public sealed record UpdateTheme(Guid Id, ThemeRequest Theme) : ICommand<Result<ThemeDto>>;
-
-[RequiresPermission(ThemePermissions.Manage)]
-public sealed record DeleteTheme(Guid Id) : ICommand<Result>;
-
-[RequiresPermission(ThemePermissions.Manage)]
-public sealed record SetDefaultTheme(Guid Id) : ICommand<Result>;
-
 internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionChecker permissions, IServiceProvider services, IOptions<ThemingOptions> options)
     : IHandler<GetThemes, Result<IReadOnlyList<ThemeDto>>>,
       IHandler<GetCurrentTheme, Result<ThemeDto>>,
@@ -225,25 +203,4 @@ internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUs
         theme.TenantId is null || theme.IsPublished);
 
     private static JsonElement? Parse(string? json) => json is null ? null : JsonDocument.Parse(json).RootElement.Clone();
-}
-
-/// <summary>Makes the theme chosen in setup the organisation's default; only a built-in one, there is nothing else yet.</summary>
-internal sealed class ThemeSetupStep(CoworkeeDbContext db, IOptions<ThemingOptions> options) : Coworkee.Application.Setup.ISetupStep
-{
-    public async Task<Error?> ApplyAsync(Coworkee.Contracts.Identity.CompleteSetupRequest request, Guid tenantId, CancellationToken cancellationToken)
-    {
-        if (request.ThemeId is not { } themeId)
-        {
-            return null;
-        }
-
-        await ThemeSeeds.EnsureAsync(db, options.Value, cancellationToken);
-        if (!await db.Set<ThemeDefinition>().AnyAsync(t => t.Id == themeId && t.TenantId == null, cancellationToken))
-        {
-            return Error.Validation("ThemeId", "Choose one of the offered themes.");
-        }
-
-        db.Add(new TenantTheme { TenantId = tenantId, ThemeId = themeId });
-        return null;
-    }
 }

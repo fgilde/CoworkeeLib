@@ -9,7 +9,6 @@ using Coworkee.Contracts.Mailing;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using MudBlazor.Extensions.Components.ObjectEdit;
-using MudBlazor.Extensions.Components.ObjectEdit.Options;
 
 namespace Coworkee.Client.Blazor.Components.Mail;
 

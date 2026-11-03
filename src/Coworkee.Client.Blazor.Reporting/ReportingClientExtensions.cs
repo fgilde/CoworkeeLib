@@ -1,6 +1,5 @@
 using Coworkee.Client.Blazor.Reporting.Api;
 using Coworkee.Client.Blazor.Reporting.State;
-using Coworkee.Contracts.Reporting;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Client.Blazor.Reporting;
@@ -25,9 +24,4 @@ public static class ReportingClientExtensions
         services.AddSingleton(new Navigation.CoworkeePage("report-data", typeof(Pages.ReportData), "reports/data/{EntitySet}"));
         return services;
     }
-}
-
-internal sealed class ReportingNavigation : INavigationContributor
-{
-    public IEnumerable<CoworkeeNavItem> Items => [new("Reports", "/reports", MudBlazor.Icons.Material.Outlined.SpaceDashboard, ReportPermissions.View, Order: -7)];
 }

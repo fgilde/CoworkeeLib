@@ -1,50 +1,6 @@
 using Coworkee.Contracts.Realtime;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Coworkee.Client.Blazor.Realtime;
-
-public interface IRealtimeConnection : IAsyncDisposable
-{
-    event Func<Task>? Reconnected;
-
-    Task StartAsync();
-
-    Task InvokeAsync(string method, string topic);
-
-    void OnEvent(Action<RealtimeEnvelope> handler);
-}
-
-internal sealed class SignalRRealtimeConnection : IRealtimeConnection
-{
-    private readonly HubConnection _connection;
-
-    public SignalRRealtimeConnection(NavigationManager navigation)
-    {
-        _connection = new HubConnectionBuilder()
-            .WithUrl(navigation.ToAbsoluteUri(RealtimeHubMethods.Path))
-            .WithAutomaticReconnect(new ForeverRetryPolicy())
-            .Build();
-        _connection.Reconnected += _ => Reconnected?.Invoke() ?? Task.CompletedTask;
-    }
-
-    public event Func<Task>? Reconnected;
-
-    public Task StartAsync() => _connection.StartAsync();
-
-    public Task InvokeAsync(string method, string topic) => _connection.InvokeAsync(method, topic);
-
-    public void OnEvent(Action<RealtimeEnvelope> handler) => _connection.On(RealtimeHubMethods.OnEvent, handler);
-
-    public ValueTask DisposeAsync() => _connection.DisposeAsync();
-}
-
-public sealed class ForeverRetryPolicy : IRetryPolicy
-{
-    private static readonly TimeSpan[] Delays = [TimeSpan.Zero, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(30)];
-
-    public TimeSpan? NextRetryDelay(RetryContext retryContext) => Delays[Math.Min(retryContext.PreviousRetryCount, Delays.Length - 1)];
-}
 
 public sealed class RealtimeClient(IRealtimeConnection connection)
 {

@@ -13,10 +13,3 @@ public sealed record QueryDataQuery(
     [property: Description("Rows to return, 1 to 50.")] int Top = 20,
     [property: Description("Rows to skip for paging.")] int Skip = 0,
     [property: Description("Comma separated fields to return, e.g. Id,Name; empty: all.")] string? Select = null) : IQuery<Result<DataPage>>;
-
-[AiTool("Lists the data sets you may read with query_data, with the name and type of each field.")]
-public sealed record ListDataSetsQuery : IQuery<Result<IReadOnlyList<DataSetInfo>>>;
-
-public sealed record DataSetInfo(string Name, IReadOnlyDictionary<string, string> Fields);
-
-public sealed record DataPage(IReadOnlyList<IReadOnlyDictionary<string, object?>> Rows, long Total);

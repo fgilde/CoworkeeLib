@@ -1,7 +1,5 @@
 namespace Coworkee.Client.Blazor.Navigation;
 
-public sealed record NavigationGroup(string Title, IReadOnlyList<CoworkeeNavItem> Items);
-
 public static class NavigationTree
 {
     public static IReadOnlyList<CoworkeeNavItem> Ungrouped(IEnumerable<CoworkeeNavItem> items, NavigationMenuOptions options, string? filter = null) =>

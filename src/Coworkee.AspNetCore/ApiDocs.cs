@@ -95,9 +95,3 @@ internal static class ApiDocs
         await next(context);
     }
 }
-
-internal sealed class ApiDocsPermissionDefinitions : IPermissionDefinitionContributor
-{
-    public void Define(PermissionDefinitionContext context) =>
-        context.Group(ApiDocsPermissions.GroupName, "API documentation").Add(ApiDocsPermissions.View, "View API documentation");
-}

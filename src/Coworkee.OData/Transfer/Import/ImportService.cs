@@ -271,5 +271,3 @@ public sealed class ImportService(
 
     private string Translate(string text, params object?[] arguments) => string.Format(CultureInfo.CurrentCulture, Translate(text), arguments);
 }
-
-public sealed record StoredImport(ImportSettings Settings, string UiCulture);
