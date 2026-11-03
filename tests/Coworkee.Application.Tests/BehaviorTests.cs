@@ -302,7 +302,7 @@ public sealed class BehaviorTests
 
         (await dispatcher.SendAsync(new FreshCount(), Ct)).Value.ShouldBe(1);
         (await dispatcher.SendAsync(new FreshCount(), Ct)).Value.ShouldBe(1);
-        await Task.Delay(150, Ct);
+        await Task.Delay(FreshAfter + TimeSpan.FromMilliseconds(200), Ct);
 
         (await dispatcher.SendAsync(new FreshCount(), Ct)).Value.ShouldBe(1);
         (await EventuallyAsync(() => dispatcher.SendAsync(new FreshCount(), Ct), r => r.Value == 2)).Value.ShouldBe(2);
@@ -321,11 +321,13 @@ public sealed class BehaviorTests
         var b = Build(Configure, tenant);
 
         (await a.SendAsync(new FreshCount(), Ct)).Value.ShouldBe(1);
+        // HybridCache writes the second level after it answered
+        await EventuallyAsync(() => Task.FromResult(shared.Writes), writes => writes > 0);
         // the other instance reads the entry (value and load time) from the distributed cache instead of loading it
         (await b.SendAsync(new FreshCount(), Ct)).Value.ShouldBe(1);
         counter.Value.ShouldBe(1);
 
-        await Task.Delay(150, Ct);
+        await Task.Delay(FreshAfter + TimeSpan.FromMilliseconds(200), Ct);
         (await b.SendAsync(new FreshCount(), Ct)).Value.ShouldBe(1);
         (await EventuallyAsync(() => b.SendAsync(new FreshCount(), Ct), r => r.Value == 2)).Value.ShouldBe(2);
     }
@@ -345,7 +347,7 @@ public sealed class BehaviorTests
         defaults.Value = defaults.Value with { RefreshInBackground = false };
         await Task.Delay(150, Ct);
         (await dispatcher.SendAsync(new FreshCount(), Ct)).Value.ShouldBe(3);
-        await Task.Delay(150, Ct);
+        await Task.Delay(FreshAfter + TimeSpan.FromMilliseconds(200), Ct);
         await dispatcher.SendAsync(new FreshCount(), Ct);
         await Task.Delay(150, Ct);
         counter.Value.ShouldBe(3);
@@ -391,8 +393,13 @@ public sealed class BehaviorTests
 
         public void Set(string key, byte[] value, Microsoft.Extensions.Caching.Distributed.DistributedCacheEntryOptions options) => _inner.Set(key, value, options);
 
-        public Task SetAsync(string key, byte[] value, Microsoft.Extensions.Caching.Distributed.DistributedCacheEntryOptions options, CancellationToken token = default) =>
-            _inner.SetAsync(key, value, options, token);
+        public int Writes;
+
+        public Task SetAsync(string key, byte[] value, Microsoft.Extensions.Caching.Distributed.DistributedCacheEntryOptions options, CancellationToken token = default)
+        {
+            Interlocked.Increment(ref Writes);
+            return _inner.SetAsync(key, value, options, token);
+        }
 
         public void Refresh(string key) => _inner.Refresh(key);
 
@@ -410,11 +417,14 @@ public sealed class BehaviorTests
         public Task<CacheDefaults> GetAsync(CancellationToken cancellationToken) => Task.FromResult(Value);
     }
 
+    // long enough that two calls in a row on a slow runner both find the entry fresh
+    private static readonly TimeSpan FreshAfter = TimeSpan.FromSeconds(1);
+
     public sealed record FreshCount : IQuery<Result<int>>, ICachedQuery
     {
         public string CacheKey => "fresh-count";
 
-        public TimeSpan? CacheRefreshAfter => TimeSpan.FromMilliseconds(100);
+        public TimeSpan? CacheRefreshAfter => FreshAfter;
     }
 
     public sealed record GroupCount : IQuery<Result<int>>, ICachedQuery
