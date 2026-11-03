@@ -1,10 +1,12 @@
 using System.Globalization;
 using System.Reflection;
+using Coworkee.Application.Groups;
 using Coworkee.Application.Messaging;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Coworkee.Application.Caching;
 
@@ -80,14 +82,68 @@ internal sealed class CachingMiddleware(HybridCache cache, ICurrentUser currentU
 
     private async Task<TValue> ReadAsync<TValue>(ICachedQuery query, Type requestType, Func<CancellationToken, Task<TValue>> load, CancellationToken cancellationToken)
     {
-        var options = query.CacheDuration is { } duration ? new HybridCacheEntryOptions { Expiration = duration, LocalCacheExpiration = duration } : null;
+        var defaults = services.GetService<ICacheDefaults>() is { } source ? await source.GetAsync(cancellationToken) : null;
+        var options = (query.CacheDuration ?? defaults?.Duration) is { } duration ? new HybridCacheEntryOptions { Expiration = duration, LocalCacheExpiration = duration } : null;
+        var key = Key(query, requestType) + (query.CacheByGroups ? $":groups:{await GroupsAsync(cancellationToken)}" : string.Empty);
+        var tags = query.CacheTags.Select(tag => query.CacheScope == CacheScope.Global ? GlobalTag(tag) : Tag(tag)).ToList();
         var caller = ExecutionContext.Capture();
-        return await cache.GetOrCreateAsync(
-            Key(query, requestType),
-            async ct => await InCallerContext(caller, () => load(ct)),
-            options,
-            query.CacheTags.Select(tag => query.CacheScope == CacheScope.Global ? GlobalTag(tag) : Tag(tag)).ToList(),
-            cancellationToken);
+        var refreshAfter = defaults is { RefreshInBackground: false } ? null : query.CacheRefreshAfter ?? defaults?.RefreshAfter;
+        if (refreshAfter is not { } after)
+        {
+            return await cache.GetOrCreateAsync(key, async ct => await InCallerContext(caller, () => load(ct)), options, tags, cancellationToken);
+        }
+
+        // stale while revalidate: the entry carries its age, under a key of its own (an entry of the plain value may be in the distributed cache)
+        key += ":refreshed";
+        var entry = await cache.GetOrCreateAsync(
+            key, async ct => new CacheEntry<TValue>(await InCallerContext(caller, () => load(ct)), DateTimeOffset.UtcNow), options, tags, cancellationToken);
+        if (DateTimeOffset.UtcNow - entry.LoadedUtc >= after)
+        {
+            Refresh(key, load, options, tags);
+        }
+
+        return entry.Value;
+    }
+
+    // one refresh per entry on this instance, and with a distributed lock one across the instances; a failed load keeps the old entry
+    private void Refresh<TValue>(string key, Func<CancellationToken, Task<TValue>> load, HybridCacheEntryOptions? options, IReadOnlyList<string> tags)
+    {
+        if (!Refreshing.TryAdd(key, 0))
+        {
+            return;
+        }
+
+        var locks = services.GetService<IDistributedLock>();
+        var logger = services.GetService<ILogger<CachingMiddleware>>();
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await using var held = locks is null ? null : await locks.AcquireAsync($"{key}:refresh", TimeSpan.Zero);
+                if (locks is null || held is not null)
+                {
+                    var value = await load(CancellationToken.None);
+                    await cache.SetAsync(key, new CacheEntry<TValue>(value, DateTimeOffset.UtcNow), options, tags);
+                }
+            }
+            catch (Exception exception) when (exception is not OutOfMemoryException)
+            {
+                logger?.LogDebug(exception, "Refreshing the cache entry {Key} failed; the old entry stays", key);
+            }
+            finally
+            {
+                Refreshing.TryRemove(key, out _);
+            }
+        });
+    }
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, byte> Refreshing = new(StringComparer.Ordinal);
+
+    // the active groups as one short part of the key (a selection may hold many groups)
+    private async Task<string> GroupsAsync(CancellationToken cancellationToken)
+    {
+        var groups = services.GetService<IGroupScope>() is { } scope ? await scope.ActiveAsync(cancellationToken) : [];
+        return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(string.Join(",", groups.Order()))))[..32];
     }
 
     // HybridCache may run the factory on a pool thread without the caller's ExecutionContext, which would lose the culture and the ambient values.

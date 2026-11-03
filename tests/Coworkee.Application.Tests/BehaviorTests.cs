@@ -294,6 +294,102 @@ public sealed class BehaviorTests
         logger.Entries.ShouldContain(e => e.Level == LogLevel.Warning && e.Message.Contains("Slow") && e.Message.Contains("ms"));
     }
 
+    [Fact]
+    public async Task An_entry_older_than_its_refresh_time_answers_at_once_and_is_loaded_again_in_the_background()
+    {
+        var counter = new Counter();
+        var dispatcher = Build(services => services.AddSingleton(counter));
+
+        (await dispatcher.SendAsync(new FreshCount(), Ct)).Value.ShouldBe(1);
+        (await dispatcher.SendAsync(new FreshCount(), Ct)).Value.ShouldBe(1);
+        await Task.Delay(150, Ct);
+
+        (await dispatcher.SendAsync(new FreshCount(), Ct)).Value.ShouldBe(1);
+        (await EventuallyAsync(() => dispatcher.SendAsync(new FreshCount(), Ct), r => r.Value == 2)).Value.ShouldBe(2);
+        counter.Value.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task The_cache_defaults_refresh_queries_that_name_no_refresh_time_and_can_turn_refreshing_off()
+    {
+        var counter = new Counter();
+        var defaults = new Defaults { Value = new CacheDefaults(null, TimeSpan.FromMilliseconds(100), RefreshInBackground: true) };
+        var dispatcher = Build(services => services.AddSingleton(counter).AddSingleton<ICacheDefaults>(defaults));
+
+        (await dispatcher.SendAsync(new Count(), Ct)).Value.ShouldBe(1);
+        await Task.Delay(150, Ct);
+        (await dispatcher.SendAsync(new Count(), Ct)).Value.ShouldBe(1);
+        (await EventuallyAsync(() => dispatcher.SendAsync(new Count(), Ct), r => r.Value == 2)).Value.ShouldBe(2);
+
+        defaults.Value = defaults.Value with { RefreshInBackground = false };
+        await Task.Delay(150, Ct);
+        (await dispatcher.SendAsync(new FreshCount(), Ct)).Value.ShouldBe(3);
+        await Task.Delay(150, Ct);
+        await dispatcher.SendAsync(new FreshCount(), Ct);
+        await Task.Delay(150, Ct);
+        counter.Value.ShouldBe(3);
+    }
+
+    [Fact]
+    public async Task A_query_cached_by_groups_has_an_entry_per_group_selection()
+    {
+        var counter = new Counter();
+        var groups = Substitute.For<Groups.IGroupScope>();
+        IReadOnlyList<Guid> a = [Guid.CreateVersion7()], b = [Guid.CreateVersion7()];
+        groups.ActiveAsync(Arg.Any<CancellationToken>()).Returns(a);
+        var dispatcher = Build(services => services.AddSingleton(counter).AddSingleton(groups));
+
+        (await dispatcher.SendAsync(new GroupCount(), Ct)).Value.ShouldBe(1);
+        (await dispatcher.SendAsync(new GroupCount(), Ct)).Value.ShouldBe(1);
+        groups.ActiveAsync(Arg.Any<CancellationToken>()).Returns(b);
+        (await dispatcher.SendAsync(new GroupCount(), Ct)).Value.ShouldBe(2);
+        groups.ActiveAsync(Arg.Any<CancellationToken>()).Returns(a);
+        (await dispatcher.SendAsync(new GroupCount(), Ct)).Value.ShouldBe(1);
+    }
+
+    private static async Task<T> EventuallyAsync<T>(Func<Task<T>> read, Func<T, bool> done)
+    {
+        var value = await read();
+        for (var i = 0; i < 50 && !done(value); i++)
+        {
+            await Task.Delay(50, Ct);
+            value = await read();
+        }
+
+        return value;
+    }
+
+    private sealed class Defaults : ICacheDefaults
+    {
+        public CacheDefaults Value { get; set; } = new(null, null, true);
+
+        public Task<CacheDefaults> GetAsync(CancellationToken cancellationToken) => Task.FromResult(Value);
+    }
+
+    public sealed record FreshCount : IQuery<Result<int>>, ICachedQuery
+    {
+        public string CacheKey => "fresh-count";
+
+        public TimeSpan? CacheRefreshAfter => TimeSpan.FromMilliseconds(100);
+    }
+
+    public sealed record GroupCount : IQuery<Result<int>>, ICachedQuery
+    {
+        public string CacheKey => "group-count";
+
+        public bool CacheByGroups => true;
+    }
+
+    internal sealed class FreshCountHandler(Counter counter) : IHandler<FreshCount, Result<int>>
+    {
+        public Task<Result<int>> HandleAsync(FreshCount request, CancellationToken cancellationToken) => Task.FromResult(Result<int>.Success(++counter.Value));
+    }
+
+    internal sealed class GroupCountHandler(Counter counter) : IHandler<GroupCount, Result<int>>
+    {
+        public Task<Result<int>> HandleAsync(GroupCount request, CancellationToken cancellationToken) => Task.FromResult(Result<int>.Success(++counter.Value));
+    }
+
     private static TestDispatcher Build(Action<IServiceCollection> configure, Guid? tenant = null, HybridCache? cache = null)
     {
         var services = new ServiceCollection();
