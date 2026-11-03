@@ -2,7 +2,7 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
-## Unveröffentlicht
+## 0.0.1.61 (2026-11-03)
 
 ### Hinzugefügt
 
