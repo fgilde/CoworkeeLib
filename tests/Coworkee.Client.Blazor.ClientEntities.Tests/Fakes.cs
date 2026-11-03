@@ -72,6 +72,18 @@ internal sealed class FakeServer : HttpMessageHandler, IODataClient
         return (ODataPage<T>)(object)new ODataPage<Gadget>(page, rows.Count, query.Facets ? Facets : []);
     }
 
+    /// <summary>The filters of the group counts the server answered.</summary>
+    public List<string?> Groupings { get; } = [];
+
+    public Task<IReadOnlyList<ODataGroup>> GroupAsync<T>(string entitySet, string? filter, IReadOnlyList<string> by, CancellationToken cancellationToken = default)
+    {
+        Groupings.Add(filter);
+        var getters = by.Select(PropertyPath.Getter<Gadget>).ToList();
+        IReadOnlyList<ODataGroup> groups = [.. Rows.GroupBy(r => string.Join("|", getters.Select(g => g(r))))
+            .Select(g => new ODataGroup([.. getters.Select(get => get(g.First()))], g.Count()))];
+        return Task.FromResult(groups);
+    }
+
     /// <summary>Holds the row queries back.</summary>
     public Task RowsGate { get; set; } = Task.CompletedTask;
 

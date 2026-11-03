@@ -278,7 +278,9 @@ Everything the user arranges is part of the table's state and can be saved, shar
 
 Columns are named by their property (`Brand.Name`), template columns by their `Title`; columns without either (select, actions) stay where they are. Template columns only group with `Groupable="true"` and a `GroupBy`.
 
-**Grouping and paging**: the server pages, so a page groups the rows it holds. The table sorts by the grouping columns first, so a group continues on the next page instead of being scattered; group counts and aggregates cover the loaded page.
+**Groups of the whole result**: grouped, the table lists every group of the filtered result with its row count, closed, in value order (descending when the grouping column is sorted descending); values read as their facet reads them (an enum's translated text). One request counts them (`$apply=groupby`, or the browser's copy of a [client entity](client-entities.md)), no rows load until a group opens. An open group shows the groups of the next grouping column, the last level its rows: filtered to the group, sorted like the table without the grouping columns, with a pager per group or scrolling inside the group in endless mode (as high as its rows, at most `EndlessHeight`). The rows keep the table's columns, row actions, row links, child rows, selection, order, hidden columns and widths; open groups stay open while filters, search or live updates reload the counts, and close when the grouping columns change. The total below the groups counts the whole result.
+
+A table over a `DataSource`, or an `IODataClient` that does not implement `GroupAsync`, groups the loaded page instead: the table sorts by the grouping columns first, so a group continues on the next page; group counts and aggregates cover the loaded page. Decorators of `IODataClient` forward `GroupAsync` to the client they wrap.
 
 **Where views are kept**: in the user setting `Table.Views` of the [settings module](../modules/settings.md), so they follow the user to every device. Without a signed-in user or without the settings module they stay in the browser's local storage. Replace `ITableViewStore` in DI to keep them somewhere else:
 
@@ -294,7 +296,7 @@ With `PageMode="FromSettings"` (the default) a table follows the setting **Table
 
 Endless scrolling shows one list with a fixed header (`EndlessHeight`) and the total below it. Only the visible rows are rendered; the rows come in chunks of `PageSize` (at least 50) while scrolling and stay until the query changes, so scrolling back needs no request. Only the first chunk of a query asks for the count; the facets come in their own request, as with pages. Sorting, search, facets, column filters, selection, realtime reloads, export (always the whole filtered result) and client entities work as with pages.
 
-MudBlazor cannot virtualize grouped rows: while the table is grouped it shows pages with the hint *Grouped rows are shown in pages.* and goes back to scrolling when the grouping is removed.
+Grouped, each open group scrolls on its own (see [groups of the whole result](#columns-grouping-and-views)). Only where the table groups the loaded page (a `DataSource`) it shows pages with the hint *Grouped rows are shown in pages.* and goes back to scrolling when the grouping is removed. A chunk that starts loading finishes even when the table scrolls on, so scrolling back and forth requests each chunk once.
 
 ```razor
 <CoworkeeDataTable T="SalesOrderDto" EntitySet="SalesOrders" PageMode="DataTablePageMode.EndlessScroll" EndlessHeight="70vh" ...>

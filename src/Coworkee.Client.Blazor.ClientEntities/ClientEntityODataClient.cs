@@ -13,4 +13,10 @@ internal sealed class ClientEntityODataClient(IODataClient server, ClientEntitie
             : await entities.SetAsync<T>(entitySet, query.Expand, cancellationToken)) is { } set
             ? await set.QueryAsync(query, cancellationToken)
             : await server.QueryAsync<T>(entitySet, query, cancellationToken);
+
+    // groups start no copy: its expand is decided by the rows' queries
+    public Task<IReadOnlyList<ODataGroup>> GroupAsync<T>(string entitySet, string? filter, IReadOnlyList<string> by, CancellationToken cancellationToken = default) =>
+        entities.Find(entitySet) is ClientEntitySet<T> set
+            ? set.GroupAsync(filter, by, cancellationToken)
+            : server.GroupAsync<T>(entitySet, filter, by, cancellationToken);
 }

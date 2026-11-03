@@ -2,6 +2,25 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- `IODataClient.GroupAsync<T>(entitySet, filter, by)`: die Gruppen einer gefilterten Menge mit ihren Zahlen (`$apply=groupby` auf dem Server, bei Client-Entities im Browser gezählt). Die Standard-Implementierung wirft `NotSupportedException`.
+- `LocalQueryNotSupportedException`: Die Kopie einer Client-Entity kann eine Abfrage nicht beantworten; `ClientEntitySet<T>.MeasureAsync` wirft sie für die Browser-Seite.
+
+### Breaking Changes
+
+- Gruppierte Tabellen listen jede Gruppe des ganzen Ergebnisses mit ihrer Zahl auf, zugeklappt, und laden die Zeilen einer Gruppe, wenn sie aufgeht (Pager je Gruppe oder im Endlos-Modus scrollend in ihr), statt die geladene Seite zu gruppieren. Eigene Decorators von `IODataClient` reichen `GroupAsync` an den umhüllten Client weiter, sonst gruppieren ihre Tabellen wie bisher die geladene Seite. Siehe [Gruppen des ganzen Ergebnisses](../ui/data-table.md#spalten-gruppierung-und-ansichten).
+- `DataTablePages<T>.GetAsync` nimmt das Laden mit einem Abbruch-Token und hat ein eigenes Token: Ein Block lädt weiter, wenn sein Aufrufer nicht mehr wartet, nur eine neue Abfrage beendet ihn.
+
+### Behoben
+
+- Endlos-Tabellen fragten beim Scrollen denselben Block immer wieder an (jeder Scrollschritt brach den Block davor ab, und nichts blieb erhalten): über 1.000 Anfragen für einige Sekunden Scrollen und flackerndes *Wird geladen*. Ein Block lädt jetzt einmal.
+- Eine gruppiert wiederhergestellte Endlos-Tabelle (gespeicherte Ansicht, Link) begann zu scrollen, lud Zeilen und wechselte nie in die gruppierte Darstellung.
+- *Vergleichen und das Schnellere wählen* einer Client-Entity scheiterte mit *Vergleich fehlgeschlagen: … has no property …* bei einer Abfrage, die die Kopie nicht beantworten kann; jetzt sagt es das und sucht auf dem Server.
+- Apps, die Coworkee als Projekte referenzieren (`CoworkeeReferenceMode=Project`), importieren die Build-Targets der Pakete (`Coworkee.Client.Blazor`: alle ICU-Daten, ohne die der Blazor-Client in einem nicht englischen Browser beim Start stehen blieb; `Coworkee.CodeGen`). Template: `Directory.Build.targets`; bestehende Apps ergänzen die beiden `Import`-Zeilen.
+
 ## 0.0.1.58 (2026-11-02)
 
 ### Hinzugefügt

@@ -1,0 +1,32 @@
+@typeparam T
+
+@if (_groups is null)
+{
+    <MudProgressLinear Indeterminate="true" Size="Size.Small" Color="Color.Primary" />
+}
+else
+{
+    @foreach (var group in _groups)
+    {
+        var conditions = CoworkeeDataTable<T>.GroupCondition(Conditions, Level.Path, group.Values[0]);
+        var open = Table.IsGroupOpen(conditions);
+        <div class="cw-group-head" style="@($"padding-left:{8 + Depth * 24}px")" role="button" tabindex="0" aria-expanded="@(open ? "true" : "false")"
+             @onclick="() => Table.ToggleGroup(conditions)" @onkeydown="e => OnKey(e, conditions)" data-testid="group-head">
+            <MudIcon Icon="@(open ? Icons.Material.Filled.ExpandMore : Icons.Material.Filled.ChevronRight)" Size="Size.Small" />
+            <span class="cw-group-title">@Level.Title:</span>
+            <strong class="mx-1" data-group-key="@group.Values[0]">@Label(group.Values[0])</strong>
+            <MudChip T="long" Size="Size.Small" Variant="Variant.Text">@group.Count.ToString("N0", System.Globalization.CultureInfo.CurrentCulture)</MudChip>
+        </div>
+        @if (open)
+        {
+            @if (Depth + 1 < Table.GroupLevels.Count)
+            {
+                <DataTableGroupList T="T" Table="Table" Conditions="@conditions" Depth="Depth + 1" Version="Version" />
+            }
+            else
+            {
+                <DataTableGroupRows T="T" Table="Table" Conditions="@conditions" Depth="Depth + 1" Count="group.Count" Version="Version" />
+            }
+        }
+    }
+}

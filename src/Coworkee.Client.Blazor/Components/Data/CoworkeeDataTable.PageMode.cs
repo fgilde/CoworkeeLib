@@ -9,6 +9,7 @@ public partial class CoworkeeDataTable<T>
 {
     private DataTablePages<T>? _pages;
     private bool? _wasEndless;
+    private bool _modeSwitched;
 
     /// <summary>Pager or endless scrolling; by default the setting <c>DataTable.DefaultPageMode</c>.</summary>
     [Parameter] public DataTablePageMode PageMode { get; set; }
@@ -24,10 +25,12 @@ public partial class CoworkeeDataTable<T>
 
     private bool IsGrouped => _grid is not null && DataGridLayout<T>.Grouped(_grid).Any();
 
-    // MudDataGrid cannot virtualize groups: grouped rows go back to pages
-    private bool Endless => ResolvedPageMode == DataTablePageMode.EndlessScroll && !IsGrouped;
+    // MudDataGrid cannot virtualize groups: grouped, the grid has pages (the groups of the whole result scroll inside each group); a grouping still to be
+    // restored counts already, so the grid does not start scrolling and load rows the groups hide
+    private bool Endless => ResolvedPageMode == DataTablePageMode.EndlessScroll && !IsGrouped && _pendingLayout?.GroupBy is not { Count: > 0 };
 
-    private bool GroupedInPages => ResolvedPageMode == DataTablePageMode.EndlessScroll && IsGrouped;
+    // only where the grid groups the loaded page (a data source, a client that cannot group): groups of the whole result scroll inside each group
+    private bool GroupedInPages => ResolvedPageMode == DataTablePageMode.EndlessScroll && IsGrouped && !GroupsTheResult;
 
     // a changed PageSize starts over with pages of the new size
     private DataTablePages<T> Pages => _pages is { } pages && pages.Size == Math.Max(PageSize, 50) ? pages : _pages = new DataTablePages<T>(Math.Max(PageSize, 50));
@@ -40,10 +43,22 @@ public partial class CoworkeeDataTable<T>
 
     private void FollowSettings() => InvokeAsync(StateHasChanged);
 
-    // switching between pages and scrolling (setting, grouping) loads the rows the new way
+    // switching between pages and scrolling (setting, grouping) loads the rows the new way, after the render that gave the grid its new loaders
     private async Task FollowPageModeAsync()
     {
-        if (_grid is null || _wasEndless == Endless)
+        if (_grid is null)
+        {
+            return;
+        }
+
+        if (_modeSwitched)
+        {
+            _modeSwitched = false;
+            await ReloadAsync();
+            return;
+        }
+
+        if (_wasEndless == Endless)
         {
             return;
         }
@@ -52,7 +67,8 @@ public partial class CoworkeeDataTable<T>
         _wasEndless = Endless;
         if (switched)
         {
-            await ReloadAsync();
+            _modeSwitched = true;
+            StateHasChanged();
         }
     }
 
@@ -65,13 +81,15 @@ public partial class CoworkeeDataTable<T>
         var fresh = false;
         var pages = Pages;
         LoadFacets(filter, context);
-        var items = await pages.GetAsync(key, state.StartIndex, state.Count, async (skip, top, first) =>
+        // the grid cancels this call when it scrolls on; the page goes on loading (DataTablePages) and only a new query ends it
+        var orderBy = _orderBy;
+        var items = await pages.GetAsync(key, state.StartIndex, state.Count, async (skip, top, first, loadCancellation) =>
         {
             fresh |= first;
-            var page = await QueryAsync(new ODataQuery { Filter = filter, OrderBy = _orderBy, Expand = Expand, Top = top, Skip = skip, Count = first }, cancellationToken);
+            var page = await QueryAsync(new ODataQuery { Filter = filter, OrderBy = orderBy, Expand = Expand, Top = top, Skip = skip, Count = first }, loadCancellation);
             await OnLoaded.InvokeAsync(page.Items);
             return page;
-        });
+        }, cancellationToken);
         if (fresh)
         {
             // the total below the rows

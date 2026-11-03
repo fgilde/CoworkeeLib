@@ -1291,6 +1291,7 @@
   "Searching in the browser from now on.": "Mulai sekarang pencarian dijalankan di peramban.",
   "Searching on the server from now on.": "Mulai sekarang pencarian dijalankan di server.",
   "Comparing failed: {0}": "Perbandingan gagal: {0}",
+  "The browser cannot answer this query ({0}), it is searched on the server.": "Peramban tidak dapat menjawab kueri ini ({0}), pencarian dilakukan di server.",
   "Searching on the server by choice, local copy updated {0:t}": "Pencarian di server (dipilih), salinan lokal diperbarui {0:t}",
   "Expand/Collapse": "Bentangkan/ciutkan",
   "Reset all properties?": "Atur ulang semua properti?",

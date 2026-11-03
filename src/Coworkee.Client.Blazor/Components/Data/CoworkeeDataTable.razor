@@ -28,6 +28,11 @@
     .cw-group-zone.drop-allowed { border-color: var(--mud-palette-primary); background: color-mix(in srgb, var(--mud-palette-primary) 10%, transparent); }
     .cw-group-hint { font-weight: 400; font-size: .85rem; color: var(--mud-palette-text-secondary); }
     .cw-group-title { color: var(--mud-palette-text-secondary); }
+    .cw-group-head { display: flex; align-items: center; gap: 4px; min-height: 40px; padding: 2px 8px; cursor: pointer; text-align: left; font-weight: 400;
+        border-bottom: 1px solid var(--mud-palette-lines-default); }
+    .cw-group-head:hover, .cw-group-head:focus-visible { background: var(--mud-palette-action-default-hover); outline: none; }
+    .cw-group-rows { border-left: 3px solid color-mix(in srgb, var(--mud-palette-primary) 35%, transparent); margin-bottom: 4px; }
+    .cw-grouped-result > .mud-table-container > table > tbody > tr > td { padding: 0 !important; }
     .cw-table-paneled { display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 16px; align-items: start; }
     .cw-table-facets { position: sticky; top: 72px; max-height: calc(100vh - 96px); overflow-y: auto; padding-right: 2px; }
     @@media (max-width: 960px) { .cw-table-paneled { grid-template-columns: 1fr; } .cw-table-facets { position: static; max-height: none; } }
@@ -178,7 +183,7 @@
              SortMode="SortMode.Multiple" Dense="Dense" Hover="true" Striped="@Theme.StripedTables" Elevation="0" Outlined="true" ChildRowContent="ChildRowContent"
              Groupable="Groupable" GroupExpanded="true" Hideable="ColumnChooser" DragDropColumnReordering="ReorderableColumns" ColumnReorderMode="DataGridDragAndDropColumnReorderMode.Insert"
              ColumnResizeMode="@(ResizableColumns ? ResizeMode.Column : ResizeMode.None)" Filterable="Filterable" FilterMode="DataGridFilterMode.ColumnFilterMenu"
-             FilterChanged="ColumnFiltersChanged" RowClick="RowClickedAsync" RowClassFunc="RowClass" data-testid="data-table">
+             FilterChanged="ColumnFiltersChanged" RowClick="RowClickedAsync" RowClassFunc="RowClass" Class="@(GroupsTheResult ? "cw-grouped-result" : null)" data-testid="data-table">
     <Header>
         @if (Groupable && _grid is not null)
         {
@@ -186,54 +191,7 @@
         }
     </Header>
     <Columns>
-        @if (ChildRowContent is not null)
-        {
-            <HierarchyColumn T="T" />
-        }
-        @if (MultiSelection)
-        {
-            <SelectColumn T="T" />
-        }
-        @Columns
-        @if (HasRowActions)
-        {
-            <TemplateColumn T="T" Sortable="false" Groupable="false" Filterable="false" Hideable="false" Resizable="false" DragAndDropEnabled="false" ShowColumnOptions="false"
-                            CellClass="cw-row-actions" HeaderClass="cw-row-actions" CellStyle="text-align:right;white-space:nowrap">
-                <CellTemplate Context="cell">
-                    <span @onclick:stopPropagation="true">
-                    @if (RowOpens)
-                    {
-                        @if (RowHref?.Invoke(cell.Item) is { } href)
-                        {
-                            <MudIconButton Icon="@Icons.Material.Outlined.OpenInNew" Size="Size.Small" Href="@href" aria-label="@L["Open"]" data-testid="open-row" />
-                        }
-                        else
-                        {
-                            <MudIconButton Icon="@Icons.Material.Outlined.OpenInNew" Size="Size.Small" aria-label="@L["Open"]" OnClick="() => OpenRowAsync(cell.Item)" data-testid="open-row" />
-                        }
-                    }
-                    @if (History)
-                    {
-                        <PermissionGate Permission="@AuditPermissions.View">
-                            <MudIconButton Icon="@Icons.Material.Outlined.History" Size="Size.Small" aria-label="@L["History"]" OnClick="() => ShowHistoryAsync(cell.Item)" data-testid="history-row" />
-                        </PermissionGate>
-                    }
-                    @if (OnEdit.HasDelegate)
-                    {
-                        <PermissionGate Permission="@EditPermission">
-                            <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" aria-label="@L["Edit"]" OnClick="() => EditAsync(cell.Item)" data-testid="edit-row" />
-                        </PermissionGate>
-                    }
-                    @if (OnDelete is not null)
-                    {
-                        <PermissionGate Permission="@DeletePermission">
-                            <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" aria-label="@L["Delete"]" OnClick="() => DeleteAsync([cell.Item])" data-testid="delete-row" />
-                        </PermissionGate>
-                    }
-                    </span>
-                </CellTemplate>
-            </TemplateColumn>
-        }
+        @GridColumns
     </Columns>
     <GroupTemplate Context="group">
         <span class="cw-group-title">@group.Title:</span>
@@ -241,12 +199,19 @@
         <MudChip T="int" Size="Size.Small" Variant="Variant.Text">@group.Grouping.Count()</MudChip>
     </GroupTemplate>
     <NoRecordsContent>
-        <MudText Class="mud-text-secondary pa-4">@L[NoRecordsText]</MudText>
+        @if (GroupsTheResult)
+        {
+            <DataTableGroupList T="T" Table="this" Version="_groupVersion" />
+        }
+        else
+        {
+            <MudText Class="mud-text-secondary pa-4">@L[NoRecordsText]</MudText>
+        }
     </NoRecordsContent>
     <PagerContent>
-        @if (Endless)
+        @if (Endless || GroupsTheResult)
         {
-            <div class="cw-table-total" data-testid="table-total">@L["{0} rows", Pages.Total.ToString("N0", System.Globalization.CultureInfo.CurrentCulture)]</div>
+            <div class="cw-table-total" data-testid="table-total">@L["{0} rows", (GroupsTheResult ? _groupTotal : Pages.Total).ToString("N0", System.Globalization.CultureInfo.CurrentCulture)]</div>
         }
         else
         {
@@ -260,3 +225,57 @@
 </MudDataGrid>
 </div>
 </div>
+
+@code {
+    /// <summary>The columns of the rows, also of the rows of open groups (DataTableGroupRows).</summary>
+    internal RenderFragment GridColumns => @<text>
+    @if (ChildRowContent is not null)
+    {
+        <HierarchyColumn T="T" />
+    }
+    @if (MultiSelection)
+    {
+        <SelectColumn T="T" />
+    }
+    @Columns
+    @if (HasRowActions)
+    {
+        <TemplateColumn T="T" Sortable="false" Groupable="false" Filterable="false" Hideable="false" Resizable="false" DragAndDropEnabled="false" ShowColumnOptions="false"
+                        CellClass="cw-row-actions" HeaderClass="cw-row-actions" CellStyle="text-align:right;white-space:nowrap">
+            <CellTemplate Context="cell">
+                <span @onclick:stopPropagation="true">
+                @if (RowOpens)
+                {
+                    @if (RowHref?.Invoke(cell.Item) is { } href)
+                    {
+                        <MudIconButton Icon="@Icons.Material.Outlined.OpenInNew" Size="Size.Small" Href="@href" aria-label="@L["Open"]" data-testid="open-row" />
+                    }
+                    else
+                    {
+                        <MudIconButton Icon="@Icons.Material.Outlined.OpenInNew" Size="Size.Small" aria-label="@L["Open"]" OnClick="() => OpenRowAsync(cell.Item)" data-testid="open-row" />
+                    }
+                }
+                @if (History)
+                {
+                    <PermissionGate Permission="@AuditPermissions.View">
+                        <MudIconButton Icon="@Icons.Material.Outlined.History" Size="Size.Small" aria-label="@L["History"]" OnClick="() => ShowHistoryAsync(cell.Item)" data-testid="history-row" />
+                    </PermissionGate>
+                }
+                @if (OnEdit.HasDelegate)
+                {
+                    <PermissionGate Permission="@EditPermission">
+                        <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" aria-label="@L["Edit"]" OnClick="() => EditAsync(cell.Item)" data-testid="edit-row" />
+                    </PermissionGate>
+                }
+                @if (OnDelete is not null)
+                {
+                    <PermissionGate Permission="@DeletePermission">
+                        <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" aria-label="@L["Delete"]" OnClick="() => DeleteAsync([cell.Item])" data-testid="delete-row" />
+                    </PermissionGate>
+                }
+                </span>
+            </CellTemplate>
+        </TemplateColumn>
+    }
+    </text>;
+}

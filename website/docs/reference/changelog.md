@@ -2,6 +2,25 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- `IODataClient.GroupAsync<T>(entitySet, filter, by)`: the groups of a filtered set with their counts (`$apply=groupby` on the server, counted in the browser for client entities). The default implementation throws `NotSupportedException`.
+- `LocalQueryNotSupportedException`: a client entity copy cannot answer a query; `ClientEntitySet<T>.MeasureAsync` throws it for the browser side.
+
+### Breaking changes
+
+- Grouped data tables list every group of the whole result with its count, closed, and load a group's rows when it opens (pager per group, or scrolling inside it in endless mode), instead of grouping the loaded page. Own decorators of `IODataClient` forward `GroupAsync` to the client they wrap, otherwise their tables group the loaded page as before. See [groups of the whole result](../ui/data-table.md#columns-grouping-and-views).
+- `DataTablePages<T>.GetAsync` takes the load with a cancellation token and a token of its own: a chunk goes on loading when its caller stops waiting, and only a new query ends it.
+
+### Fixed
+
+- Endless tables requested the same chunk again and again while scrolling (each scroll step cancelled the chunk before and nothing was kept): over 1,000 requests for a few seconds of scrolling, and rows flickering *Loading*. A chunk now loads once.
+- An endless table restored grouped (saved view, link) started scrolling, loaded rows and never switched to the grouped layout.
+- *Compare and choose the faster* of a client entity failed with *Comparing failed: … has no property …* for a query the copy cannot answer; it now says so and searches on the server.
+- Apps referencing Coworkee as projects (`CoworkeeReferenceMode=Project`) import the build targets of the packages (`Coworkee.Client.Blazor`: all ICU data, without which the Blazor client stopped at start in a non-English browser; `Coworkee.CodeGen`). Template: `Directory.Build.targets`; existing apps add the two `Import` lines.
+
 ## 0.0.1.58 (2026-11-02)
 
 ### Added

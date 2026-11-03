@@ -92,6 +92,22 @@ public sealed class ClientEntitySwitchTests : BunitContext
     }
 
     [Fact]
+    public async Task Compare_of_a_query_the_browser_cannot_answer_says_so_and_searches_on_the_server()
+    {
+        var (control, popovers, set) = await LocalAsync();
+        _table.Filter = "Unknown eq 1";
+        var snackbar = Services.GetRequiredService<ISnackbar>();
+
+        await control.Find("[data-testid='client-entity-state']").ClickAsync(new());
+        await popovers.WaitForElement("[data-testid='client-entity-compare']").ClickAsync(new());
+
+        control.WaitForAssertion(() => snackbar.ShownSnackbars.ShouldHaveSingleItem().Message.ShouldStartWith("The browser cannot answer this query"));
+        snackbar.ShownSnackbars.Single().Message.ShouldContain("Unknown");
+        snackbar.ShownSnackbars.Single().Severity.ShouldBe(Severity.Warning);
+        control.WaitForAssertion(() => set.Mode.ShouldBe(ClientEntityMode.Server));
+    }
+
+    [Fact]
     public async Task A_remembered_server_choice_applies_to_the_new_copy()
     {
         _api.GetSettingsAsync(SettingScope.User, default).ReturnsForAnyArgs([new SettingValueDto(TableSettings.ClientEntityModes, "{\"gadgets\":\"Server\"}", true)]);
@@ -136,7 +152,9 @@ public sealed class ClientEntitySwitchTests : BunitContext
 
         public string? Expand => null;
 
-        public ODataQuery CurrentQuery => new() { Filter = "Category eq 'Tools'", Top = 25, Skip = 0 };
+        public string Filter { get; set; } = "Category eq 'Tools'";
+
+        public ODataQuery CurrentQuery => new() { Filter = Filter, Top = 25, Skip = 0 };
 
         public Task ReloadAsync()
         {

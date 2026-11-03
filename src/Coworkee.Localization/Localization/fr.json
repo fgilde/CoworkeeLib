@@ -1291,6 +1291,7 @@
   "Searching in the browser from now on.": "La recherche se fait désormais dans le navigateur.",
   "Searching on the server from now on.": "La recherche se fait désormais sur le serveur.",
   "Comparing failed: {0}": "La comparaison a échoué : {0}",
+  "The browser cannot answer this query ({0}), it is searched on the server.": "Le navigateur ne peut pas répondre à cette requête ({0}), la recherche se fait sur le serveur.",
   "Searching on the server by choice, local copy updated {0:t}": "Recherche sur le serveur (choisie), copie locale mise à jour {0:t}",
   "Expand/Collapse": "Développer/Réduire",
   "Reset all properties?": "Réinitialiser toutes les propriétés ?",

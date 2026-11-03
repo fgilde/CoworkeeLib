@@ -94,7 +94,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
             {
                 return await LocalAsync(table, query, cancellationToken);
             }
-            catch (Exception exception) when (exception is NotSupportedException or InvalidOperationException or ArgumentException or FormatException or InvalidCastException)
+            catch (Exception exception) when (LocalQueryNotSupportedException.IsUnanswerable(exception))
             {
                 _logger.LogDebug(exception, "{EntitySet} answers {Filter} on the server", EntitySet, query.Filter);
             }
@@ -102,6 +102,41 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
 
         return await _server.QueryAsync<T>(EntitySet, query, cancellationToken);
     }
+
+    /// <summary>The groups of the rows matching <paramref name="filter"/>, counted locally once the rows are here and by the server until then.</summary>
+    public async Task<IReadOnlyList<ODataGroup>> GroupAsync(string? filter, IReadOnlyList<string> by, CancellationToken cancellationToken = default)
+    {
+        Start();
+        if (Mode == ClientEntityMode.Client && _table is { } table)
+        {
+            try
+            {
+                return Group(table, filter, by);
+            }
+            catch (Exception exception) when (LocalQueryNotSupportedException.IsUnanswerable(exception))
+            {
+                _logger.LogDebug(exception, "{EntitySet} groups {Filter} on the server", EntitySet, filter);
+            }
+        }
+
+        return await _server.GroupAsync<T>(EntitySet, filter, by, cancellationToken);
+    }
+
+    private IReadOnlyList<ODataGroup> Group(LocalTable<T> table, string? filter, IReadOnlyList<string> by)
+    {
+        var getters = by.Select(path => Getters.GetOrAdd(path, PropertyPath.Getter<T>)).ToList();
+        var counts = new Dictionary<GroupKey, long>();
+        foreach (var index in View(table, filter, null).Rows)
+        {
+            var row = table.Row(index);
+            var key = new GroupKey([.. getters.Select(get => get(row))]);
+            counts[key] = counts.GetValueOrDefault(key) + 1;
+        }
+
+        return [.. counts.Select(c => new ODataGroup(c.Key.Values, c.Value))];
+    }
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Func<T, object?>> Getters = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>A LINQ query over the local rows; waits until they are here.</summary>
     public async Task<IReadOnlyList<TResult>> QueryAsync<TResult>(Func<IQueryable<T>, IQueryable<TResult>> query, CancellationToken cancellationToken = default)
@@ -113,11 +148,24 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
 
     public override async Task<(TimeSpan Elapsed, long? Count)> MeasureAsync(ODataQuery query, ClientEntityMode side, CancellationToken cancellationToken = default)
     {
-        var watch = System.Diagnostics.Stopwatch.StartNew();
-        var page = side == ClientEntityMode.Client
-            ? await LocalAsync(_table ?? throw new InvalidOperationException($"{EntitySet} is not local yet."), query, cancellationToken)
-            : await _server.QueryAsync<T>(EntitySet, query, cancellationToken);
-        return (watch.Elapsed, page.Count);
+        if (side == ClientEntityMode.Server)
+        {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            var remote = await _server.QueryAsync<T>(EntitySet, query, cancellationToken);
+            return (watch.Elapsed, remote.Count);
+        }
+
+        var table = _table ?? throw new InvalidOperationException($"{EntitySet} is not local yet.");
+        try
+        {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            var local = await LocalAsync(table, query, cancellationToken);
+            return (watch.Elapsed, local.Count);
+        }
+        catch (Exception exception) when (LocalQueryNotSupportedException.IsUnanswerable(exception))
+        {
+            throw new LocalQueryNotSupportedException(exception.Message, exception);
+        }
     }
 
     public override Task RefreshAsync(CancellationToken cancellationToken = default)
@@ -692,6 +740,26 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     private sealed record LocalView(LocalTable<T> Table, int[] Rows)
     {
         public IReadOnlyList<FacetGroupDto>? Facets { get; set; }
+    }
+
+    private sealed class GroupKey(object?[] values) : IEquatable<GroupKey>
+    {
+        public object?[] Values => values;
+
+        public bool Equals(GroupKey? other) => other is not null && values.SequenceEqual(other.Values);
+
+        public override bool Equals(object? obj) => Equals(obj as GroupKey);
+
+        public override int GetHashCode()
+        {
+            var hash = new HashCode();
+            foreach (var value in values)
+            {
+                hash.Add(value);
+            }
+
+            return hash.ToHashCode();
+        }
     }
 
     private sealed record Snapshot(DateTimeOffset Version, string Schema, T[] Items);

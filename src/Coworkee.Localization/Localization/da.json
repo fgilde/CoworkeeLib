@@ -1291,6 +1291,7 @@
   "Searching in the browser from now on.": "Fra nu af søges der i browseren.",
   "Searching on the server from now on.": "Fra nu af søges der på serveren.",
   "Comparing failed: {0}": "Sammenligningen mislykkedes: {0}",
+  "The browser cannot answer this query ({0}), it is searched on the server.": "Browseren kan ikke besvare denne forespørgsel ({0}), der søges på serveren.",
   "Searching on the server by choice, local copy updated {0:t}": "Søgning på serveren (valgt), lokal kopi opdateret {0:t}",
   "Expand/Collapse": "Udvid/skjul",
   "Reset all properties?": "Nulstil alle egenskaber?",

@@ -638,6 +638,30 @@
           ]
         }
       ]
+    },
+    {
+      "version": "0.0.1.59",
+      "breaking": [
+        "Blazor: grouped CoworkeeDataTables list every group of the whole result with its count (IODataClient.GroupAsync, $apply=groupby) and load a group's rows when it opens, instead of grouping the loaded page.",
+        "Blazor: DataTablePages<T>.GetAsync takes the load with a cancellation token and a token of its own; a chunk goes on loading when its caller stops waiting."
+      ],
+      "needsMigration": false,
+      "manual": [
+        {
+          "text": "An own decorator of IODataClient forwards GroupAsync to the client it wraps (public Task<IReadOnlyList<ODataGroup>> GroupAsync<T>(...) => inner.GroupAsync<T>(...)); without it, grouped tables behind it group the loaded page as before.",
+          "find": ":\\s*IODataClient\\b",
+          "files": [
+            "src/**/*.cs"
+          ]
+        },
+        {
+          "text": "With CoworkeeReferenceMode=Project, Directory.Build.targets imports the build targets of the packages (as in the template): <Import Project=\"$(CoworkeeRoot)src\\Coworkee.Client.Blazor\\build\\Coworkee.Client.Blazor.targets\" Condition=\"'$(CoworkeeReferenceMode)' == 'Project' And Exists('...')\" /> and the same for Coworkee.CodeGen; without it the Blazor client stops at start in a non-English browser.",
+          "find": "CoworkeeReferenceMode",
+          "files": [
+            "Directory.Build.targets"
+          ]
+        }
+      ]
     }
   ]
 }

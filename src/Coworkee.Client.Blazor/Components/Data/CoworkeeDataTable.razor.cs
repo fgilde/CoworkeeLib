@@ -55,7 +55,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     [Parameter] public bool ColumnChooser { get; set; } = true;
 
-    /// <summary>Rows group by columns chosen in the group menu or dragged onto the zone above the headers; groups cover the loaded page.</summary>
+    /// <summary>Rows group by columns chosen in the group menu or dragged onto the zone above the headers; the groups cover the whole result.</summary>
     [Parameter] public bool Groupable { get; set; } = true;
 
     /// <summary>Column headers can be dragged to reorder the columns.</summary>
@@ -408,6 +408,11 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     private async Task<GridData<T>> LoadAsync(GridState<T> state, CancellationToken cancellationToken)
     {
+        if (GroupsTheResult)
+        {
+            return await LoadGroupsAsync(state, cancellationToken);
+        }
+
         _orderBy = OrderBy(state.SortDefinitions);
         var filter = CurrentFilter;
         LoadFacets(filter, Facets ? _selection.Context(BaseFilter, _facets) : null);

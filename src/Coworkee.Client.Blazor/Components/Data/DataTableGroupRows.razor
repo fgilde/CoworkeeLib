@@ -1,0 +1,20 @@
+@typeparam T
+
+<div class="cw-group-rows" style="@($"margin-left:{Depth * 24}px")" data-testid="group-rows">
+    <MudDataGrid @ref="_grid" T="T" ServerData="PagedLoader" VirtualizeServerData="EndlessLoader" Virtualize="Table.GroupRowsEndless"
+                 Height="@(Table.GroupRowsEndless ? Height : null)" FixedHeader="Table.GroupRowsEndless" ItemSize="Table.GroupRowHeight" OverscanCount="10"
+                 RowsPerPage="Table.PageSize" MultiSelection="Table.MultiSelection" SelectedItemsChanged="SelectionChangedAsync" SortMode="SortMode.None"
+                 Dense="Table.GroupRowsDense" Hover="true" Striped="Table.GroupRowsStriped" Elevation="0" ChildRowContent="Table.ChildRowContent"
+                 Groupable="false" Filterable="false" ShowColumnOptions="false" Hideable="false" ColumnResizeMode="ResizeMode.None"
+                 RowClick="Table.GroupRowClickedAsync" RowClassFunc="Table.GroupRowClass">
+        <Columns>
+            @Table.GridColumns
+        </Columns>
+        <PagerContent>
+            @if (!Table.GroupRowsEndless && Count > Table.PageSize)
+            {
+                <MudDataGridPager T="T" PageSizeSelector="false" />
+            }
+        </PagerContent>
+    </MudDataGrid>
+</div>

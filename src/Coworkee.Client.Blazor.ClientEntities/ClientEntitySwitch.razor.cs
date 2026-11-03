@@ -112,6 +112,12 @@ public partial class ClientEntitySwitch : IDisposable
                 same ? Severity.Success : Severity.Warning);
             await ChooseAsync(faster);
         }
+        catch (LocalQueryNotSupportedException exception)
+        {
+            // the table's queries go to the server anyway (QueryAsync falls back): searching there is what the user gets
+            Snackbar.Add(L["The browser cannot answer this query ({0}), it is searched on the server.", exception.Message], Severity.Warning);
+            await ChooseAsync(ClientEntityMode.Server);
+        }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             Snackbar.Add(L["Comparing failed: {0}", exception.Message], Severity.Error);

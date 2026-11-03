@@ -1291,6 +1291,7 @@
   "Searching in the browser from now on.": "Od nynějška se vyhledává v prohlížeči.",
   "Searching on the server from now on.": "Od nynějška se vyhledává na serveru.",
   "Comparing failed: {0}": "Porovnání se nezdařilo: {0}",
+  "The browser cannot answer this query ({0}), it is searched on the server.": "Prohlížeč nemůže tento dotaz zodpovědět ({0}), hledá se na serveru.",
   "Searching on the server by choice, local copy updated {0:t}": "Vyhledávání na serveru (zvoleno), místní kopie aktualizována {0:t}",
   "Expand/Collapse": "Rozbalit/sbalit",
   "Reset all properties?": "Obnovit všechny vlastnosti?",

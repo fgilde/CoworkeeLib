@@ -36,6 +36,48 @@ public sealed class ClientEntitySetTests
     }
 
     [Fact]
+    public async Task Groups_are_counted_from_the_local_rows_once_they_are_here()
+    {
+        _server.Rows.Add(new(Guid.CreateVersion7(), "Saw", "Tools", 45, new Brand(Guid.NewGuid(), "Bosch")));
+        await using var set = _server.Set();
+        await set.RefreshAsync(Ct);
+
+        var groups = await set.GroupAsync("Price gt 20", ["Category", "Brand.Name"], Ct);
+
+        groups.Select(g => (g.Values[0], g.Values[1], g.Count)).ShouldBe([("Tools", null, 1L), ("Light", null, 1L), ("Tools", "Bosch", 1L)], ignoreOrder: true);
+        _server.Groupings.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Groups_go_to_the_server_until_the_rows_are_local_and_for_filters_the_copy_cannot_answer()
+    {
+        var feed = new TaskCompletionSource();
+        _server.Feed = feed.Task;
+        await using var set = _server.Set();
+
+        await set.GroupAsync(null, ["Category"], Ct);
+        feed.SetResult();
+        await set.WhenLocalAsync(Ct);
+        await set.GroupAsync("Tags/any(t: t eq 'x')", ["Category"], Ct);
+        await set.GroupAsync("Price gt 1", ["Category"], Ct);
+
+        _server.Groupings.ShouldBe([null, "Tags/any(t: t eq 'x')"]);
+    }
+
+    [Fact]
+    public async Task The_odata_client_of_the_copies_counts_groups_of_a_mirrored_set_locally()
+    {
+        await using var entities = _server.Entities();
+        var client = new ClientEntityODataClient(_server, entities);
+        await (await entities.SetAsync<Gadget>("Gadgets", cancellationToken: Ct))!.WhenLocalAsync(Ct);
+
+        (await client.GroupAsync<Gadget>("Gadgets", null, ["Category"], Ct)).Sum(g => g.Count).ShouldBe(3);
+        await client.GroupAsync<Gadget>("Others", null, ["Category"], Ct);
+
+        _server.Groupings.ShouldBe([null], "only the set without a copy asks the server");
+    }
+
+    [Fact]
     public async Task Queries_go_to_the_server_until_the_rows_are_local_and_when_they_cannot_be_answered_locally()
     {
         var feed = new TaskCompletionSource();
