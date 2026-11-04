@@ -86,6 +86,24 @@ public sealed class AuthorizationTests
     public void Unknown_implications_are_rejected() =>
         Should.Throw<InvalidOperationException>(() => Manager(ctx => ctx.Group("A", "A").Add("X", "X", "Missing")).All);
 
+    [Fact]
+    public void Stored_definitions_join_the_code_ones_and_follow_their_store_while_code_keeps_its_names()
+    {
+        var store = new ListStore([new PermissionDefinition("Custom.Export", "Custom", "Export", [])]);
+        var manager = Manager(ctx => ctx.Group("Demo", "Demo").Add("Demo.Read", "Read").Add("Custom.Coded", "Coded"), store);
+
+        manager.Exists("Custom.Export").ShouldBeTrue();
+        manager.Groups.ShouldBe([("Demo", "Demo"), ("Custom", "Custom")]);
+        manager.Expand(["Custom.Export", "Demo.Read"]).ShouldBe(["Custom.Export", "Demo.Read"], ignoreOrder: true);
+
+        store.Current = [new PermissionDefinition("Custom.Coded", "Custom", "Taken", []), new PermissionDefinition("Custom.Other", "Demo", "Other", [])];
+
+        manager.Exists("Custom.Export").ShouldBeFalse();
+        manager.All.Single(d => d.Name == "Custom.Coded").DisplayName.ShouldBe("Coded");
+        manager.All.Single(d => d.Name == "Custom.Other").Group.ShouldBe("Demo");
+        manager.Groups.ShouldBe([("Demo", "Demo")]);
+    }
+
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private IDispatcher Dispatcher()
@@ -98,10 +116,15 @@ public sealed class AuthorizationTests
         return services.BuildServiceProvider().CreateScope().ServiceProvider.GetRequiredService<IDispatcher>();
     }
 
-    private static IPermissionDefinitionManager Manager(Action<PermissionDefinitionContext> define)
+    private static IPermissionDefinitionManager Manager(Action<PermissionDefinitionContext> define, IStoredPermissionDefinitions? stored = null)
     {
         var services = new ServiceCollection();
         services.AddSingleton<IPermissionDefinitionContributor>(new InlineContributor(define));
+        if (stored is not null)
+        {
+            services.AddSingleton(stored);
+        }
+
         services.AddCoworkeeModules<CoworkeeApplicationModule>(new ConfigurationBuilder().Build());
         return services.BuildServiceProvider().GetRequiredService<IPermissionDefinitionManager>();
     }
@@ -109,6 +132,11 @@ public sealed class AuthorizationTests
     private sealed class InlineContributor(Action<PermissionDefinitionContext> define) : IPermissionDefinitionContributor
     {
         public void Define(PermissionDefinitionContext context) => define(context);
+    }
+
+    private sealed class ListStore(IReadOnlyList<PermissionDefinition> current) : IStoredPermissionDefinitions
+    {
+        public IReadOnlyList<PermissionDefinition> Current { get; set; } = current;
     }
 
     private sealed class FakeUser : ICurrentUser

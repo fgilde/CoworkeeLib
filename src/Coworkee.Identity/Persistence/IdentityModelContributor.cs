@@ -147,6 +147,16 @@ internal sealed class IdentityModelContributor : IModelContributor
             grant.HasIndex(g => new { g.ProviderType, g.ProviderKey });
         });
 
+        modelBuilder.Entity<CustomPermission>(permission =>
+        {
+            permission.ToTable("CustomPermissions", Schema);
+            permission.Property(p => p.Name).HasMaxLength(200);
+            permission.Property(p => p.DisplayName).HasMaxLength(200);
+            permission.Property(p => p.Description).HasMaxLength(1000);
+            permission.Property(p => p.Group).HasMaxLength(100);
+            permission.HasIndex(p => p.Name).IsUnique();
+        });
+
         modelBuilder.Entity<ResourcePermission>(permission =>
         {
             permission.ToTable("ResourcePermissions", Schema);

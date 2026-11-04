@@ -1,0 +1,27 @@
+<MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial" data-testid="custom-permission-delete">
+    <DialogContent>
+        @if (Usage.Roles.Count + Usage.Groups.Count + Usage.Users.Count == 0)
+        {
+            <MudText>@L["No role, group or user holds it."]</MudText>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3">@L["These roles, groups and users lose this permission, in every organisation:"]</MudAlert>
+            @foreach (var (title, names) in Holders)
+            {
+                <MudText Typo="Typo.subtitle2">@title</MudText>
+                <MudList T="string" Dense="true" Class="mb-2">
+                    @foreach (var name in names)
+                    {
+                        <MudListItem T="string" Text="@name" />
+                    }
+                </MudList>
+            }
+        }
+        <MudText Typo="Typo.body2" Color="Color.Secondary">@L["Delete {0}? This cannot be undone.", Permission.DisplayName]</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()" data-testid="custom-permission-delete-cancel">@L["Cancel"]</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => Dialog.Close(DialogResult.Ok(true))" data-testid="custom-permission-delete-confirm">@L["Delete"]</MudButton>
+    </DialogActions>
+</MudDialog>

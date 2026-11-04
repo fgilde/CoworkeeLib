@@ -80,6 +80,13 @@ internal static partial class IdentityEndpoints
     private static void MapGrants(RouteGroupBuilder api)
     {
         api.MapGet("/permissions/definitions", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetPermissionDefinitions(), ct).ToHttpResult());
+        api.MapGet("/permissions/custom", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetCustomPermissions(), ct).ToHttpResult());
+        api.MapPost("/permissions/custom", (CreateCustomPermissionRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new CreateCustomPermission(body), ct).ToHttpResult());
+        api.MapPut("/permissions/custom/{name}", (string name, UpdateCustomPermissionRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new UpdateCustomPermission(name, body), ct).ToHttpResult());
+        api.MapGet("/permissions/custom/{name}/usage", (string name, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetCustomPermissionUsage(name), ct).ToHttpResult());
+        api.MapDelete("/permissions/custom/{name}", (string name, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteCustomPermission(name), ct).ToHttpResult());
         api.MapGet("/permissions/grants/{providerType}/{providerKey:guid}", (PermissionProviderType providerType, Guid providerKey, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new GetGrants(providerType, providerKey), ct).ToHttpResult());
         api.MapPut("/permissions/grants/{providerType}/{providerKey:guid}", (PermissionProviderType providerType, Guid providerKey, NameListRequest body, IDispatcher d, CancellationToken ct) =>

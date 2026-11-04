@@ -109,6 +109,18 @@ public interface ICoworkeeApi
 
     Task<IReadOnlyList<PermissionGroupDto>> GetPermissionDefinitionsAsync(CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<CustomPermissionDto>> GetCustomPermissionsAsync(CancellationToken cancellationToken = default);
+
+    Task CreateCustomPermissionAsync(CreateCustomPermissionRequest request, CancellationToken cancellationToken = default);
+
+    Task UpdateCustomPermissionAsync(string name, UpdateCustomPermissionRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>The roles, groups and users that lose the custom permission when it is deleted.</summary>
+    Task<CustomPermissionUsageDto> GetCustomPermissionUsageAsync(string name, CancellationToken cancellationToken = default);
+
+    /// <summary>Deletes the custom permission with all its grants.</summary>
+    Task DeleteCustomPermissionAsync(string name, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<string>> GetGrantsAsync(PermissionProviderType providerType, Guid providerKey, CancellationToken cancellationToken = default);
 
     Task SetGrantsAsync(PermissionProviderType providerType, Guid providerKey, IReadOnlyList<string> names, CancellationToken cancellationToken = default);

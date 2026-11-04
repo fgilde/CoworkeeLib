@@ -11,7 +11,7 @@ internal sealed class PermissionCacheInterceptor(PermissionCache cache) : SaveCh
     private static readonly HashSet<Type> RelevantTypes =
     [
         typeof(PermissionGrant), typeof(IdentityUserRole<Guid>), typeof(UserGroupRole), typeof(UserGroupMember), typeof(Role), typeof(UserGroup), typeof(User),
-        typeof(IdentityUserClaim<Guid>),
+        typeof(IdentityUserClaim<Guid>), typeof(CustomPermission),
     ];
 
     private bool _pending;

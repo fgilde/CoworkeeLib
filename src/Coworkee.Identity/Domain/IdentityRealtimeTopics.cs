@@ -15,6 +15,7 @@ internal sealed class IdentityRealtimeTopics : IRealtimeTopicMapper
         UserGroupRole groupRole => [RealtimeTopics.Type(nameof(UserGroup)), RealtimeTopics.Entity(nameof(UserGroup), groupRole.GroupId), RealtimeTopics.TenantPermissions],
         PermissionGrant or Role or UserGroup => [RealtimeTopics.TenantPermissions],
         IdentityUserClaim<Guid> { ClaimType: ActiveRole.ClaimType } => [RealtimeTopics.TenantPermissions],
+        CustomPermission => [RealtimeTopics.GlobalPermissions],
         _ => [],
     };
 }

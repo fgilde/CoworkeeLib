@@ -33,6 +33,25 @@ seed.Roles.Add(new SeedRole("Product Manager", "Maintains products",
 
 `SeedRole(..., SelectableForRegistration: true)` bietet die Rolle in der [Registrierung](registration.md#rollen-in-der-registrierung) an, `{ IsDefault = true }` gibt sie jedem neuen Benutzer ([Standardrollen](../features/identity.md#besitzer-standardgruppe-und-standardrolle)). Siehe [Persistenz](../fundamentals/persistence.md#migrationen-und-seed).
 
+## Eigene Berechtigungen
+
+Administratoren legen zur Laufzeit eigene Berechtigungen an, z. B. um eine Schaltfläche der Kopfzeile oder eine Funktion der App nur einem Teil der Leute zu zeigen: *Administration → Identität → Eigene Berechtigungen* (`/admin/permissions`, Seitenschlüssel `custom-permissions`, auch von der Rollenseite verlinkt). Eine eigene Berechtigung hat einen Namen, einen Anzeigenamen, optional eine Beschreibung und eine Gruppe (Standard *Custom*); sie erscheint sofort und auf jeder Instanz in der Berechtigungsmatrix des Rolleneditors und in `GET /api/v1/identity/permissions/definitions`, Rollen, Gruppen und Benutzer erhalten sie wie jede andere Berechtigung. Geprüft wird sie ebenso: `<PermissionGate Permission="Custom.Reports.Export">`, `IsGrantedAsync("Custom.Reports.Export", ct)`.
+
+- **Namen** beginnen mit `Custom.`, gefolgt von Buchstaben, Ziffern, `-` oder `_`, Teile durch Punkte getrennt (`Custom.Reports.Export`). Das Präfix trennt sie von den Berechtigungen der Bibliothek und der App; ein Name, den eine Berechtigung im Code oder eine andere eigene Berechtigung trägt, antwortet `409 identity.permission_taken`. Der Name bleibt fest, da Zuweisungen und Code auf ihn verweisen; Anzeigename, Beschreibung und Gruppe lassen sich ändern.
+- **Geltung:** Die Definitionen gelten wie die im Code für die ganze Installation, die Zuweisungen bleiben je Organisation. Darum verwalten sie nur Berechtigungsverwalter (`Identity.Permissions.Manage`) der Systemorganisation (sonst `403 identity.permission_host_only`).
+- **Löschen** zeigt zuerst, wer die Berechtigung verliert: die Rollen (anderer Organisationen mit deren Namen), Gruppen und Benutzer, denen sie zugewiesen ist. Nach der Bestätigung gehen die Definition und jede Zuweisung in jeder Organisation; offene Clients laden ihre Berechtigungen neu. Berechtigungen aus dem Code lassen sich weder ändern noch löschen (`409 identity.permission_code_defined`).
+- **Speicher:** Tabelle `cw.CustomPermissions`; Apps legen eine Migration an. Bis dahin funktionieren die Berechtigungen aus dem Code weiter, und eine Warnung wird protokolliert.
+
+```http
+GET    /api/v1/identity/permissions/custom                 → [CustomPermissionDto]
+POST   /api/v1/identity/permissions/custom                 { name, displayName, description, group }
+PUT    /api/v1/identity/permissions/custom/{name}          { displayName, description, group }
+GET    /api/v1/identity/permissions/custom/{name}/usage    → { roles, groups, users }
+DELETE /api/v1/identity/permissions/custom/{name}
+```
+
+Im Blazor-Client: `ICoworkeeApi.GetCustomPermissionsAsync`, `CreateCustomPermissionAsync`, `UpdateCustomPermissionAsync`, `GetCustomPermissionUsageAsync`, `DeleteCustomPermissionAsync`. Weitere Laufzeitquellen für Definitionen implementieren `IStoredPermissionDefinitions` (Coworkee.Application): Der Definitionsmanager liest bei jeder Verwendung deren Liste `Current` und baut neu auf, sobald er eine andere Instanz erhält; ein Name aus dem Code gewinnt.
+
 ## Prüfen auf dem Server
 
 | Wo | Wie |
