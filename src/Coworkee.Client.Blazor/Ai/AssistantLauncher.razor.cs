@@ -7,12 +7,34 @@ using Microsoft.JSInterop;
 
 namespace Coworkee.Client.Blazor.Ai;
 
-/// <summary>The assistant button at the bottom right and its window; there for users with Ai.Chat while the assistant is configured. Ctrl+I opens it.</summary>
+/// <summary>
+/// The assistant's window and its button where <see cref="AiSettingNames.Display"/> puts it: floating at a bottom corner, in the app bar (the instance with
+/// <see cref="InAppBar"/>), in the navigation or nowhere. There for users with Ai.Chat while the assistant is configured; Ctrl+I opens it in every mode.
+/// </summary>
 public partial class AssistantLauncher : IAsyncDisposable
 {
     private bool _available;
     private IJSObjectReference? _hotkey;
     private DotNetObjectReference<AssistantLauncher>? _self;
+
+    /// <summary>Only the app bar button (while the display is the app bar); the window, the floating button and Ctrl+I stay with the layout's launcher.</summary>
+    [Parameter] public bool InAppBar { get; set; }
+
+    /// <summary>With <see cref="InAppBar"/>: a menu item for the app bar's overflow menu.</summary>
+    [Parameter] public bool Nested { get; set; }
+
+    private string Display => Themes.ClientSettings.GetValueOrDefault(AiSettingNames.Display) is { } display && AssistantDisplay.All.Contains(display)
+        ? display
+        : AssistantDisplay.BottomRight;
+
+    private bool Floating => Display is AssistantDisplay.BottomRight or AssistantDisplay.BottomLeft;
+
+    private string Corner => Display switch
+    {
+        AssistantDisplay.BottomRight => "right",
+        AssistantDisplay.BottomLeft => "left",
+        _ => "docked",
+    };
 
     [Inject] private IAssistantApi Api { get; set; } = null!;
 
@@ -51,20 +73,18 @@ public partial class AssistantLauncher : IAsyncDisposable
     {
         var was = _available;
         await CheckAsync();
-        if (was != _available)
+        if (was && !_available && !InAppBar)
         {
-            if (!_available)
-            {
-                State.Close();
-            }
-
-            StateHasChanged();
+            State.Close();
         }
+
+        // the display may have changed with the settings
+        StateHasChanged();
     });
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_available && _self is null)
+        if (_available && !InAppBar && _self is null)
         {
             _self = DotNetObjectReference.Create(this);
             var module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");

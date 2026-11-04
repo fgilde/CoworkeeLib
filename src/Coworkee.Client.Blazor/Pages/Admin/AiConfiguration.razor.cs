@@ -25,6 +25,8 @@ public partial class AiConfiguration
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
+    [Inject] private Navigation.CoworkeePages Links { get; set; } = null!;
+
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
     private string Status => _status switch

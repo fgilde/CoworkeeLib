@@ -34,7 +34,7 @@ Further requests of the modules (users, roles, reports, ...) are tools by the ru
 
 ## The assistant window
 
-- **Assistant window** for users with `Ai.Chat`: a button at the bottom right (or `Ctrl+I`) opens a chat with the tools of all modules, as the signed-in user. It comes small, large or full screen, and full screen on phones; it is not there while the assistant is not active or the user lacks `Ai.Chat`. The old `/assistant` route opens the window.
+- **Assistant window** for users with `Ai.Chat`: a button at the bottom right (or wherever the [display](#where-the-assistant-shows) puts it, and always `Ctrl+I`) opens a chat with the tools of all modules, as the signed-in user. It comes small, large or full screen, and full screen on phones; it is not there while the assistant is not active or the user lacks `Ai.Chat`. The old `/assistant` route opens the window.
 - **Conversations** stay on the server per user: titled after the first message, renamed, deleted and searched in the side bar, live in every open tab, and part of the personal data export and erasure.
 - **Streamed answers** appear as they are written, as Markdown that cannot carry markup or data: raw HTML shows as text and images become links. Links to other sites lose query and fragment and show their host, app links stay as they are, mail links keep only the address, and other schemes go nowhere, so a planted link cannot carry data away.
 - **Tool chips** under each answer show what the assistant did; with `AssistantLinks` they link to what it created or changed:
@@ -58,6 +58,20 @@ Messages, confirmations, model lists and connection tests go through the rate li
 ![A destructive tool waits for confirmation](../assets/screenshots/mcp-ai-confirm-light.png){ .shot }
 
 ![The assistant on a phone](../assets/screenshots/mcp-ai-mobile-light.png){ .shot }
+
+## Where the assistant shows
+
+The global setting `Ai.Display` decides where users find the assistant; administrators set it under **Administration > User interface > Header** (`/cw/admin/header`), the AI page links there. `Ai.Enabled` still decides whether the assistant is there at all, and `Ctrl+I` opens it in every mode.
+
+| `Ai.Display` | |
+|---|---|
+| `BottomRight` | floating button at the bottom right (default) |
+| `BottomLeft` | floating button at the bottom left; the window opens on the left |
+| `AppBar` | a button in the app bar, item `assistant` of the [managed header](../ui/client.md#managed-header), by default before the about button |
+| `Navigation` | an *Assistant* entry in the navigation (`/assistant`) |
+| `Off` | no button, only `Ctrl+I` and the command palette |
+
+Without a floating button the window opens at the top right under the app bar.
 
 ## Providers
 
@@ -102,6 +116,7 @@ The page writes the AI settings. They are global only, so no organisation switch
 | Setting | |
 |---|---|
 | `Ai.Enabled` | on or off, `false` by default |
+| `Ai.Display` | where the assistant shows, see [above](#where-the-assistant-shows); `BottomRight` by default |
 | `Ai.Provider` | a provider id of the table above, `anthropic` by default |
 | `Ai.Model` | empty: the provider's default; Azure OpenAI: the deployment name |
 | `Ai.Endpoint` | empty: the provider's address; Azure OpenAI resource (`https://acme.openai.azure.com`), Ollama or LM Studio address, or the base address of a custom server |

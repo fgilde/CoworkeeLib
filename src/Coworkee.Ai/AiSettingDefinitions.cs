@@ -1,3 +1,4 @@
+using Coworkee.Contracts.Ai;
 using Coworkee.Contracts.Settings;
 using Coworkee.Settings;
 
@@ -11,6 +12,8 @@ internal sealed class AiSettingDefinitions : ISettingDefinitionContributor
     public void Define(SettingDefinitionContext context) =>
         context.Group("Ai", "AI assistant", page: "/admin/ai-settings")
             .Add(AiSettings.Enabled, "Assistant enabled", SettingType.Bool, Scopes, "false")
+            .Add(AiSettings.Display, "Assistant display", SettingType.Choice, Scopes, AssistantDisplay.BottomRight, visibleToClient: true, choices: AssistantDisplay.All,
+                description: "Where users find the assistant: a floating button, the app bar, the navigation, or only Ctrl+I.")
             .Add(AiSettings.Provider, "Provider", SettingType.Choice, Scopes, AiProviders.Anthropic, choices: [.. AiProviders.All])
             .Add(AiSettings.Model, "Model", SettingType.String, Scopes, description: "Empty: the provider's default. Azure OpenAI: the deployment name.")
             .Add(AiSettings.Endpoint, "Endpoint", SettingType.String, Scopes,

@@ -2,34 +2,89 @@
     <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" aria-label="@L["Navigation"]" />
     <CoworkeeBrand />
     <MudSpacer />
-    <CoworkeeCommandPalette />
-    @foreach (var item in Items)
+    @if (!Bar.Any(i => i.Id == HeaderItems.Search))
     {
-        <DynamicComponent Type="item.Component" Parameters="item.Parameters" />
+        @* in the overflow menu or hidden: Ctrl+K still opens the palette *@
+        <CoworkeeCommandPalette @ref="_palette" ShowButton="false" />
     }
-    @if (Compact)
+    @foreach (var item in Bar)
     {
-        <CoworkeeUserMenu />
-        @* phones: language, theme, direction, colour mode and about move into one menu so the bar keeps its width *@
+        switch (item.Id)
+        {
+            case HeaderItems.Search:
+                <CoworkeeCommandPalette @ref="_palette" />
+                break;
+            case HeaderItems.Language:
+                <LanguageMenu />
+                break;
+            case HeaderItems.Theme:
+                <ThemeMenu />
+                break;
+            case HeaderItems.RightToLeft:
+                <MudTooltip Text="@L["Right to left"]">
+                    <MudIconButton Icon="@Icons.Material.Outlined.FormatTextdirectionRToL" Color="@(Preferences.RightToLeft ? Color.Warning : Color.Inherit)"
+                                   OnClick="ToggleRightToLeftAsync" aria-label="@L["Right to left"]" data-testid="rtl-toggle" />
+                </MudTooltip>
+                break;
+            case HeaderItems.DarkMode:
+                <MudIconButton Icon="@(Dark ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" Color="Color.Inherit" OnClick="ToggleDark" aria-label="@L["Dark mode"]" />
+                break;
+            case HeaderItems.Notifications:
+                <AuthorizeView><Authorized><NotificationBell /></Authorized></AuthorizeView>
+                break;
+            case HeaderItems.User:
+                <CoworkeeUserMenu />
+                break;
+            case HeaderItems.Assistant:
+                <AuthorizeView><Authorized><AssistantLauncher InAppBar="true" /></Authorized></AuthorizeView>
+                break;
+            case HeaderItems.About:
+                <MudIconButton Icon="@Icons.Material.Outlined.Info" Color="Color.Inherit" Size="Size.Small" OnClick="ShowAboutAsync" aria-label="@L["About"]" data-testid="about-button" />
+                break;
+            default:
+                <DynamicComponent Type="item.App!.Component" Parameters="item.App.Parameters" />
+                break;
+        }
+    }
+    @if (Overflow.Count > 0)
+    {
         <MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense"
                  aria-label="@L["More"]" data-testid="app-bar-more">
-            <LanguageMenu Nested="true" />
-            <ThemeMenu Nested="true" />
-            <MudMenuItem Icon="@Icons.Material.Outlined.FormatTextdirectionRToL" OnClick="ToggleRightToLeftAsync" data-testid="rtl-toggle">@L["Right to left"]</MudMenuItem>
-            <MudMenuItem Icon="@(Dark ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" OnClick="ToggleDark">@L["Dark mode"]</MudMenuItem>
-            <MudMenuItem Icon="@Icons.Material.Outlined.Info" OnClick="ShowAboutAsync" data-testid="about-button">@L["About"]</MudMenuItem>
+            @foreach (var item in Overflow)
+            {
+                switch (item.Id)
+                {
+                    case HeaderItems.Search:
+                        <MudMenuItem Icon="@Icons.Material.Outlined.Search" OnClick="OpenSearchAsync" data-testid="header-search">@L["Search"]</MudMenuItem>
+                        break;
+                    case HeaderItems.Language:
+                        <LanguageMenu Nested="true" />
+                        break;
+                    case HeaderItems.Theme:
+                        <ThemeMenu Nested="true" />
+                        break;
+                    case HeaderItems.RightToLeft:
+                        <MudMenuItem Icon="@Icons.Material.Outlined.FormatTextdirectionRToL" OnClick="ToggleRightToLeftAsync" data-testid="rtl-toggle">@L["Right to left"]</MudMenuItem>
+                        break;
+                    case HeaderItems.DarkMode:
+                        <MudMenuItem Icon="@(Dark ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" OnClick="ToggleDark">@L["Dark mode"]</MudMenuItem>
+                        break;
+                    case HeaderItems.Notifications:
+                        <AuthorizeView><Authorized>
+                            <MudMenuItem Icon="@Icons.Material.Outlined.Notifications" Href="@Links.Href("/notifications")">@L["Notifications"]</MudMenuItem>
+                        </Authorized></AuthorizeView>
+                        break;
+                    case HeaderItems.Assistant:
+                        <AuthorizeView><Authorized><AssistantLauncher InAppBar="true" Nested="true" /></Authorized></AuthorizeView>
+                        break;
+                    case HeaderItems.About:
+                        <MudMenuItem Icon="@Icons.Material.Outlined.Info" OnClick="ShowAboutAsync" data-testid="about-button">@L["About"]</MudMenuItem>
+                        break;
+                    default:
+                        <DynamicComponent Type="item.App!.Component" Parameters="item.App.Parameters" />
+                        break;
+                }
+            }
         </MudMenu>
-    }
-    else
-    {
-        <LanguageMenu />
-        <ThemeMenu />
-        <MudTooltip Text="@L["Right to left"]">
-            <MudIconButton Icon="@Icons.Material.Outlined.FormatTextdirectionRToL" Color="@(Preferences.RightToLeft ? Color.Warning : Color.Inherit)"
-                           OnClick="ToggleRightToLeftAsync" aria-label="@L["Right to left"]" data-testid="rtl-toggle" />
-        </MudTooltip>
-        <MudIconButton Icon="@(Dark ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" Color="Color.Inherit" OnClick="ToggleDark" aria-label="@L["Dark mode"]" />
-        <CoworkeeUserMenu />
-        <MudIconButton Icon="@Icons.Material.Outlined.Info" Color="Color.Inherit" Size="Size.Small" OnClick="ShowAboutAsync" aria-label="@L["About"]" data-testid="about-button" />
     }
 </MudAppBar>

@@ -23,13 +23,16 @@
     @@media (max-width: 600px) { .cw-palette-foot { display: none; } }
 </style>
 
-<MudTooltip Text="@L["Search (Ctrl+K)"]">
-    <button type="button" class="cw-palette-trigger" @onclick="OpenAsync" aria-label="@L["Search"]" aria-haspopup="dialog" data-testid="palette-button">
-        <MudIcon Icon="@Icons.Material.Outlined.Search" Size="Size.Small" />
-        <span class="cw-palette-trigger-text">@L["Search"]</span>
-        <kbd class="cw-palette-kbd">Ctrl K</kbd>
-    </button>
-</MudTooltip>
+@if (ShowButton)
+{
+    <MudTooltip Text="@L["Search (Ctrl+K)"]">
+        <button type="button" class="cw-palette-trigger" @onclick="OpenAsync" aria-label="@L["Search"]" aria-haspopup="dialog" data-testid="palette-button">
+            <MudIcon Icon="@Icons.Material.Outlined.Search" Size="Size.Small" />
+            <span class="cw-palette-trigger-text">@L["Search"]</span>
+            <kbd class="cw-palette-kbd">Ctrl K</kbd>
+        </button>
+    </MudTooltip>
+}
 
 @if (_open)
 {

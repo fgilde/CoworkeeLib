@@ -64,7 +64,7 @@ internal sealed class MyAppNavigation : INavigationContributor
 | `IconForGroup(name, icon)` | the icon of a group node |
 | `Place(href, group, title?, order?)` | moves a link of the library into another group; a group path like `Administration/Localization` nests |
 
-The admin pages of the library sit in groups below **Administration**: `NavigationGroups.Identity` (users, groups, roles, applications, scopes), `NavigationGroups.System` (settings, mail settings, services, tenants, editions, themes, backups), `NavigationGroups.Communication` (mail templates, mail log), `NavigationGroups.Localization` (languages, translations) and `NavigationGroups.Monitoring` (audit log, AI tool calls). Nested groups sort within their top level group, which keeps the place `OrderGroup` gives it.
+The admin pages of the library sit in groups below **Administration**: `NavigationGroups.Identity` (users, groups, roles, applications, scopes), `NavigationGroups.System` (settings, mail settings, services, tenants, editions, backups), `NavigationGroups.Communication` (mail templates, mail log), `NavigationGroups.Localization` (languages, translations) `NavigationGroups.Monitoring` (audit log, AI tool calls) and `NavigationGroups.UserInterface` (themes, header). Nested groups sort within their top level group, which keeps the place `OrderGroup` gives it.
 
 The menu is a `MudExTreeView`: groups are nodes, the filter box highlights matches and opens their groups, and the view can switch between tree, list and flat list. Pinned, the drawer stays as an icon strip under the app bar and the menu button widens it; unpinned, it opens as an overlay and hides again. Whether one group or several stay open is a second toggle. Both choices are stored in the browser.
 
@@ -81,9 +81,23 @@ The app bar shows the search button of the [command palette](command-palette.md)
 ```csharp
 internal sealed class LanguageBar : IAppBarContributor
 {
-    public IEnumerable<AppBarItem> Items => [new AppBarItem(typeof(LanguageSwitch), Order: 10)];
+    public IEnumerable<AppBarItem> Items => [new AppBarItem(typeof(LanguageSwitch), Order: 10, Id: "language-switch", Title: "Language switch")];
 }
 ```
+
+App items sit between the search and the language menu, ordered by `Order`. `Id` is the item's key in the header configuration (the component's type name when left out; keep it stable), `Title` its name on the admin page.
+
+### Managed header
+
+Under *Administration → User interface → Header* (`/admin/header`, `Settings.Manage`, system organisation only) an administrator reorders every item of the bar, the library's and the apps', and puts each one in the bar, in the overflow menu (⋮) or nowhere. The account menu always stays in the bar. *Reset to defaults* goes back to the built-in order. The choice is the global setting `Header.Items`, a JSON list in bar order:
+
+```json
+[{"id":"search","placement":"Bar"},{"id":"about","placement":"Overflow"},{"id":"rtl","placement":"Hidden"}]
+```
+
+The library's ids are `search`, `language`, `theme`, `rtl`, `dark-mode`, `notifications`, `user`, `assistant` and `about`. Items the list does not name (an app added later) appear after the item before them in the default order; names of items that are gone are ignored; an invalid value falls back to the default header. Saved values reach open pages at once. Hidden or in the overflow menu, the search keeps Ctrl+K. On phones language, theme, direction, colour mode and about still fold into the overflow menu.
+
+The same page sets where the [assistant](../modules/ai.md#where-the-assistant-shows) shows.
 
 The user menu holds *My profile*, *My settings*, *Password and security* (the account pages of the auth server), *Install app* while the browser offers it, and *Sign out*. While someone is [signed in as another user](../features/identity.md#log-in-as-another-user), the app bar shows *Impersonated by …* and the menu *Back to my account*.
 

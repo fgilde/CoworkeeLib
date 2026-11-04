@@ -34,7 +34,7 @@ Weitere Requests der Module (Benutzer, Rollen, Berichte, ...) sind nach der Rege
 
 ## Das Assistenten-Fenster
 
-- **Assistenten-Fenster** für Benutzer mit `Ai.Chat`: ein Knopf unten rechts (oder `Strg+I`) öffnet einen Chat mit den Werkzeugen aller Module, als angemeldeter Benutzer. Es gibt ihn klein, groß oder als Vollbild, auf Telefonen immer als Vollbild; er fehlt, solange der Assistent nicht aktiv ist oder dem Benutzer `Ai.Chat` fehlt. Die alte Route `/assistant` öffnet das Fenster.
+- **Assistenten-Fenster** für Benutzer mit `Ai.Chat`: ein Knopf unten rechts (oder wo die [Anzeige](#wo-der-assistent-erscheint) ihn hinlegt, und immer `Strg+I`) öffnet einen Chat mit den Werkzeugen aller Module, als angemeldeter Benutzer. Es gibt ihn klein, groß oder als Vollbild, auf Telefonen immer als Vollbild; er fehlt, solange der Assistent nicht aktiv ist oder dem Benutzer `Ai.Chat` fehlt. Die alte Route `/assistant` öffnet das Fenster.
 - **Unterhaltungen** bleiben pro Benutzer auf dem Server: benannt nach der ersten Nachricht, in der Seitenleiste umbenannt, gelöscht und durchsucht, live in jedem offenen Tab und Teil von Export und Löschung der personenbezogenen Daten.
 - **Gestreamte Antworten** erscheinen, während sie entstehen, als Markdown, das weder Markup noch Daten trägt: rohes HTML erscheint als Text, Bilder werden zu Links. Links zu anderen Sites verlieren Query und Fragment und zeigen ihren Host, App-Links bleiben, wie sie sind, Mail-Links behalten nur die Adresse, andere Schemata führen nirgendwohin; ein untergeschobener Link trägt so keine Daten hinaus.
 - **Werkzeug-Chips** unter jeder Antwort zeigen, was der Assistent getan hat; mit `AssistantLinks` verlinken sie auf das, was er angelegt oder geändert hat:
@@ -58,6 +58,20 @@ Nachrichten, Bestätigungen, Modelllisten und Verbindungstests laufen über die 
 ![Ein löschendes Werkzeug wartet auf die Bestätigung](../assets/screenshots/mcp-ai-confirm-light.png){ .shot }
 
 ![Der Assistent auf dem Telefon](../assets/screenshots/mcp-ai-mobile-light.png){ .shot }
+
+## Wo der Assistent erscheint
+
+Die globale Einstellung `Ai.Display` legt fest, wo Benutzer den Assistenten finden; Administratoren setzen sie unter **Administration > Benutzeroberfläche > Kopfzeile** (`/cw/admin/header`), die KI-Seite verlinkt dorthin. `Ai.Enabled` entscheidet weiterhin, ob der Assistent überhaupt da ist, und `Strg+I` öffnet ihn in jedem Modus.
+
+| `Ai.Display` | |
+|---|---|
+| `BottomRight` | schwebender Knopf unten rechts (Standard) |
+| `BottomLeft` | schwebender Knopf unten links; das Fenster öffnet links |
+| `AppBar` | ein Knopf in der App-Leiste, Element `assistant` der [verwalteten Kopfzeile](../ui/client.md#verwaltete-kopfzeile), standardmäßig vor dem Info-Knopf |
+| `Navigation` | ein Eintrag *Assistent* in der Navigation (`/assistant`) |
+| `Off` | kein Knopf, nur `Strg+I` und die Befehlspalette |
+
+Ohne schwebenden Knopf öffnet das Fenster oben rechts unter der App-Leiste.
 
 ## Anbieter
 
@@ -102,6 +116,7 @@ Die Seite schreibt die KI-Einstellungen. Es gibt sie nur global, damit keine Org
 | Einstellung | |
 |---|---|
 | `Ai.Enabled` | an oder aus, standardmäßig `false` |
+| `Ai.Display` | wo der Assistent erscheint, siehe [oben](#wo-der-assistent-erscheint); standardmäßig `BottomRight` |
 | `Ai.Provider` | eine Anbieter-Id der Tabelle oben, standardmäßig `anthropic` |
 | `Ai.Model` | leer: der Standard des Anbieters; Azure OpenAI: der Deployment-Name |
 | `Ai.Endpoint` | leer: die Adresse des Anbieters; Azure-OpenAI-Ressource (`https://acme.openai.azure.com`), Ollama- oder LM-Studio-Adresse oder die Basisadresse eines eigenen Servers |
