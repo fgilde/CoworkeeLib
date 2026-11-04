@@ -104,7 +104,7 @@ public sealed class ProviderTests(AiApp app) : IAsyncLifetime
         await using var scope = app.App.Services.CreateAsyncScope();
         var chat = ActivatorUtilities.CreateInstance<AiChat>(scope.ServiceProvider, (IAiChatClientFactory)fake);
         var connection = await chat.ConnectAsync(Ct);
-        return await chat.RunAsync(connection.Value, [new ChatMessage(ChatRole.User, text)], null, _ => Task.CompletedTask, Ct);
+        return await chat.RunAsync(connection.Value, [new ChatMessage(ChatRole.User, text)], null, _ => Task.CompletedTask, null, Ct);
     }
 }
 

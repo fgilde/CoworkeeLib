@@ -49,7 +49,7 @@ Further requests of the modules (users, roles, reports, ...) are tools by the ru
 - Queries run at once. Every command, which changes data, waits: the window shows exactly what the assistant wants to run (inputs that look like secrets masked) with *Run* and *Cancel*, destructive ones highlighted, and only the user's click runs it. Creating a product by chat takes one click. Text planted in data or in the conversation can therefore never change anything on its own. A new message cancels a waiting call.
 - A waiting call is stored encrypted with ASP.NET Data Protection (share the key ring between API instances), decided once even when two tabs click at the same time, and never runs twice.
 
-The window talks to `/api/v1/ai`: `GET status`, `GET tools` (the user's tools), `GET|POST sessions` (`?search=`), `GET|PUT|DELETE sessions/{id}`, and `POST sessions/{id}/messages` and `POST sessions/{id}/confirm`, which answer with `application/x-ndjson`: one `AiStreamEvent` per line, `delta` (text), `tool` (a tool call), then `done` (the saved message) or `error`. The answer runs to its end and is saved even when the browser goes away. The AI page uses `GET connection`, `POST connection/models` and `POST connection/test`; the audit `GET tool-calls?channel=` (`Ai.Audit`).
+The window talks to `/api/v1/ai`: `GET status`, `GET tools` (the user's tools), `GET|POST sessions` (`?search=`), `GET|PUT|DELETE sessions/{id}`, and `POST sessions/{id}/messages` and `POST sessions/{id}/confirm`, which answer with `application/x-ndjson`: one `AiStreamEvent` per line, `delta` (text), `tool` (a tool call), `client_action` (`Action`: call id, name and JSON arguments for the client), then `done` (the saved message) or `error`. The answer runs to its end and is saved even when the browser goes away. The AI page uses `GET connection`, `POST connection/models` and `POST connection/test`; the audit `GET tool-calls?channel=` (`Ai.Audit`).
 
 Messages, confirmations, model lists and connection tests go through the rate limit policy `ai` (30 requests a minute per user by default, `Coworkee:RateLimiting:Policies:ai`), like the MCP server.
 
@@ -72,6 +72,38 @@ The global setting `Ai.Display` decides where users find the assistant; administ
 | `Off` | no button, only `Ctrl+I` and the command palette |
 
 Without a floating button the window opens at the top right under the app bar.
+
+### The assistant knows the UI
+
+With every message the window sends an `AiUiContext` (`Ui` of `AiSendRequest` and `AiConfirmRequest`): the pages of the navigation the user can see (menu path, title, address, description; placed, hidden and translated like the menu), the current page, the themes, the color mode, the languages, right to left, and the client actions. The server puts it into the system prompt, cut to about 4,000 characters, so "how do I change the colors?" gets a click path such as *Administration > System > Themes* with the titles the user sees, never a page the user cannot open, and an offer to go there.
+
+Tell the assistant what a page is for with `Description` on the navigation item (a sentence, keywords welcome; a translation key works too). The library's admin pages have one.
+
+```csharp
+new CoworkeeNavItem("Products", "/catalog/products", Icons.Material.Outlined.Inventory, CatalogPermissions.View,
+    Description: "Products, prices and stock; import from Excel.");
+```
+
+**Client actions** are tools the browser runs, not the server: `navigate` (an address within the app), `set_theme`, `set_color_mode` (`light`, `dark`, `system`), `set_right_to_left` and `set_language` (an enabled culture). The model only gets those the client declared, the server streams a `client_action` event and tells the model the client was asked, and no request runs on the server and nothing goes into the audit. The window runs the action at once, without a confirmation (they only change UI preferences, which the user can switch back), checks its arguments, and notes the outcome under the answer ("Switched to dark mode", or "Unknown theme: Neon"). Theme, mode and language are kept as user settings like in the menus. Add your own with an `IAssistantClientAction`:
+
+```csharp
+builder.Services.AddScoped<IAssistantClientAction, OpenCartAction>();
+
+sealed class OpenCartAction(NavigationManager nav) : IAssistantClientAction
+{
+    public string Name => "open_cart";
+    public string Description => "Opens the shopping cart.";
+    public JsonElement Parameters { get; } = JsonDocument.Parse("""{"type":"object","properties":{}}""").RootElement;
+
+    public Task<AssistantActionResult> RunAsync(JsonElement arguments, CancellationToken cancellationToken)
+    {
+        nav.NavigateTo("/cart");
+        return Task.FromResult(new AssistantActionResult(true, "Opened the cart"));
+    }
+}
+```
+
+Names take letters, digits, `_` and `-`; a name of a server tool always means the server tool. Keep client actions to reversible UI changes: they run without asking.
 
 ## Providers
 

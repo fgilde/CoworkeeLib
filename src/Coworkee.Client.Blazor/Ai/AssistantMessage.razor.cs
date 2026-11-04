@@ -12,6 +12,9 @@ public partial class AssistantMessage
 
     [Parameter] public bool Streaming { get; set; }
 
+    /// <summary>What the client actions of this answer did in the browser.</summary>
+    [Parameter] public IReadOnlyList<AssistantActionResult> Notes { get; set; } = [];
+
     /// <summary>The newest message while nothing runs: only then its tools can be confirmed.</summary>
     [Parameter] public bool Waiting { get; set; }
 

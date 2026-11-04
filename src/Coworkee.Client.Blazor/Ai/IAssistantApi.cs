@@ -16,8 +16,8 @@ public interface IAssistantApi
 
     Task DeleteSessionAsync(Guid id, CancellationToken cancellationToken = default);
 
-    /// <summary>The answer as it arrives; the last event carries the saved message or the error.</summary>
-    IAsyncEnumerable<AiStreamEvent> SendAsync(Guid id, string text, CancellationToken cancellationToken = default);
+    /// <summary>The answer as it arrives; the last event carries the saved message or the error. <paramref name="ui"/> is what the user sees.</summary>
+    IAsyncEnumerable<AiStreamEvent> SendAsync(Guid id, string text, AiUiContext? ui, CancellationToken cancellationToken = default);
 
-    IAsyncEnumerable<AiStreamEvent> ConfirmAsync(Guid id, bool approve, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<AiStreamEvent> ConfirmAsync(Guid id, bool approve, AiUiContext? ui, CancellationToken cancellationToken = default);
 }

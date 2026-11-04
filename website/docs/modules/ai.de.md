@@ -49,7 +49,7 @@ Weitere Requests der Module (Benutzer, Rollen, Berichte, ...) sind nach der Rege
 - Queries laufen sofort. Jedes Command, das Daten ändert, wartet: das Fenster zeigt genau, was der Assistent ausführen will (Eingaben, die nach Geheimnissen aussehen, maskiert), mit *Ausführen* und *Abbrechen*, destruktive hervorgehoben, und erst der Klick des Benutzers führt es aus. Ein Produkt per Chat anlegen kostet einen Klick. Text, der in Daten oder in der Unterhaltung untergeschoben wurde, kann so nie eigenmächtig etwas ändern. Eine neue Nachricht verwirft einen wartenden Aufruf.
 - Ein wartender Aufruf wird mit ASP.NET Data Protection verschlüsselt gespeichert (den Schlüsselbund zwischen API-Instanzen teilen), nur einmal entschieden, auch wenn zwei Tabs gleichzeitig klicken, und läuft nie zweimal.
 
-Das Fenster spricht mit `/api/v1/ai`: `GET status`, `GET tools` (die Werkzeuge des Benutzers), `GET|POST sessions` (`?search=`), `GET|PUT|DELETE sessions/{id}` sowie `POST sessions/{id}/messages` und `POST sessions/{id}/confirm`, die mit `application/x-ndjson` antworten: ein `AiStreamEvent` pro Zeile, `delta` (Text), `tool` (ein Werkzeugaufruf), dann `done` (die gespeicherte Nachricht) oder `error`. Die Antwort läuft zu Ende und wird gespeichert, auch wenn der Browser geht. Die KI-Seite nutzt `GET connection`, `POST connection/models` und `POST connection/test`, das Audit `GET tool-calls?channel=` (`Ai.Audit`).
+Das Fenster spricht mit `/api/v1/ai`: `GET status`, `GET tools` (die Werkzeuge des Benutzers), `GET|POST sessions` (`?search=`), `GET|PUT|DELETE sessions/{id}` sowie `POST sessions/{id}/messages` und `POST sessions/{id}/confirm`, die mit `application/x-ndjson` antworten: ein `AiStreamEvent` pro Zeile, `delta` (Text), `tool` (ein Werkzeugaufruf), `client_action` (`Action`: Aufruf-ID, Name und JSON-Argumente für den Client), dann `done` (die gespeicherte Nachricht) oder `error`. Die Antwort läuft zu Ende und wird gespeichert, auch wenn der Browser geht. Die KI-Seite nutzt `GET connection`, `POST connection/models` und `POST connection/test`, das Audit `GET tool-calls?channel=` (`Ai.Audit`).
 
 Nachrichten, Bestätigungen, Modelllisten und Verbindungstests laufen über die Rate-Limit-Policy `ai` (standardmäßig 30 Anfragen pro Minute und Benutzer, `Coworkee:RateLimiting:Policies:ai`), wie der MCP-Server.
 
@@ -72,6 +72,38 @@ Die globale Einstellung `Ai.Display` legt fest, wo Benutzer den Assistenten find
 | `Off` | kein Knopf, nur `Strg+I` und die Befehlspalette |
 
 Ohne schwebenden Knopf öffnet das Fenster oben rechts unter der App-Leiste.
+
+### Der Assistent kennt die Oberfläche
+
+Mit jeder Nachricht schickt das Fenster einen `AiUiContext` (`Ui` von `AiSendRequest` und `AiConfirmRequest`): die Seiten der Navigation, die der Benutzer sieht (Menüpfad, Titel, Adresse, Beschreibung; platziert, ausgeblendet und übersetzt wie im Menü), die aktuelle Seite, die Themes, den Farbmodus, die Sprachen, Rechts-nach-links und die Client-Aktionen. Der Server setzt das, gekürzt auf etwa 4.000 Zeichen, in den Systemprompt; „Wie ändere ich die Farben?“ bekommt so einen Klickpfad wie *Administration > System > Themes* mit den Titeln, die der Benutzer sieht, nie eine Seite, die er nicht öffnen kann, und das Angebot, dorthin zu gehen.
+
+Wofür eine Seite da ist, sagt `Description` am Navigationseintrag (ein Satz, gern mit Stichwörtern; ein Übersetzungsschlüssel geht auch). Die Admin-Seiten der Bibliothek haben eine.
+
+```csharp
+new CoworkeeNavItem("Products", "/catalog/products", Icons.Material.Outlined.Inventory, CatalogPermissions.View,
+    Description: "Products, prices and stock; import from Excel.");
+```
+
+**Client-Aktionen** sind Werkzeuge, die der Browser ausführt, nicht der Server: `navigate` (eine Adresse in der App), `set_theme`, `set_color_mode` (`light`, `dark`, `system`), `set_right_to_left` und `set_language` (eine aktivierte Kultur). Das Modell bekommt nur die, die der Client angemeldet hat; der Server streamt ein `client_action`-Ereignis und meldet dem Modell, dass der Client gebeten wurde; auf dem Server läuft kein Request und nichts landet im Audit. Das Fenster führt die Aktion sofort aus, ohne Bestätigung (sie ändern nur Oberflächen-Einstellungen, die der Benutzer zurückstellen kann), prüft ihre Argumente und vermerkt das Ergebnis unter der Antwort („Switched to dark mode“ oder „Unknown theme: Neon“, übersetzt). Theme, Modus und Sprache werden wie in den Menüs als Benutzereinstellung gespeichert. Eigene kommen als `IAssistantClientAction` dazu:
+
+```csharp
+builder.Services.AddScoped<IAssistantClientAction, OpenCartAction>();
+
+sealed class OpenCartAction(NavigationManager nav) : IAssistantClientAction
+{
+    public string Name => "open_cart";
+    public string Description => "Opens the shopping cart.";
+    public JsonElement Parameters { get; } = JsonDocument.Parse("""{"type":"object","properties":{}}""").RootElement;
+
+    public Task<AssistantActionResult> RunAsync(JsonElement arguments, CancellationToken cancellationToken)
+    {
+        nav.NavigateTo("/cart");
+        return Task.FromResult(new AssistantActionResult(true, "Opened the cart"));
+    }
+}
+```
+
+Namen bestehen aus Buchstaben, Ziffern, `_` und `-`; der Name eines Server-Werkzeugs meint immer das Server-Werkzeug. Client-Aktionen nur für umkehrbare Änderungen an der Oberfläche verwenden: sie laufen ohne Rückfrage.
 
 ## Anbieter
 

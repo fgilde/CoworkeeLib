@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Localization;
@@ -30,6 +31,9 @@ public partial class AssistantWindow : IAsyncDisposable
     private readonly CancellationTokenSource _closed = new();
     private readonly List<AiMessageDto> _messages = [];
     private readonly List<AiToolCallDto> _streamCalls = [];
+    private readonly List<AssistantActionResult> _streamNotes = [];
+    // the client actions ran here only, so their notes live in this window, by the id of the answer they belong to
+    private readonly Dictionary<Guid, IReadOnlyList<AssistantActionResult>> _notes = [];
     private IReadOnlyList<AiSessionDto> _sessions = [];
     private AiSessionDto? _session;
     private StringBuilder? _streaming;
@@ -50,6 +54,10 @@ public partial class AssistantWindow : IAsyncDisposable
     [Inject] private AssistantState State { get; set; } = null!;
 
     [Inject] private RealtimeClient Realtime { get; set; } = null!;
+
+    [Inject] private AssistantUiContext Ui { get; set; } = null!;
+
+    [Inject] private IEnumerable<IAssistantClientAction> Actions { get; set; } = null!;
 
     [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
 
@@ -241,20 +249,44 @@ public partial class AssistantWindow : IAsyncDisposable
         var question = new AiMessageDto(Guid.NewGuid(), "user", text, [], [], null, DateTimeOffset.Now);
         await StreamAsync(
             async () => (_session ??= await Api.CreateSessionAsync(_closed.Token)).Id,
-            id => Api.SendAsync(id, text, _closed.Token),
+            (id, ui) => Api.SendAsync(id, text, ui, _closed.Token),
             question,
             () => _input = text);
     }
 
     private Task DecideAsync(bool approve) =>
-        _session is { } session ? StreamAsync(() => Task.FromResult(session.Id), id => Api.ConfirmAsync(id, approve, _closed.Token), null, () => { }) : Task.CompletedTask;
+        _session is { } session
+            ? StreamAsync(() => Task.FromResult(session.Id), (id, ui) => Api.ConfirmAsync(id, approve, ui, _closed.Token), null, () => { })
+            : Task.CompletedTask;
 
-    /// <summary>Shows the answer as it streams in; on failure the question goes back into the input.</summary>
-    private async Task StreamAsync(Func<Task<Guid>> session, Func<Guid, IAsyncEnumerable<AiStreamEvent>> stream, AiMessageDto? question, Action restore)
+    private IReadOnlyList<AssistantActionResult> NotesOf(Guid messageId) => _notes.TryGetValue(messageId, out var notes) ? notes : [];
+
+    // an action of the app may fail in any way; the answer goes on and shows it
+    private async Task<AssistantActionResult> RunActionAsync(AiClientActionCall call)
+    {
+        if (Actions.FirstOrDefault(a => a.Name == call.Name) is not { } action)
+        {
+            return new AssistantActionResult(false, L["Unknown action: {0}", call.Name]);
+        }
+
+        try
+        {
+            using var arguments = JsonDocument.Parse(call.Arguments);
+            return await action.RunAsync(arguments.RootElement, _closed.Token);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            return new AssistantActionResult(false, L["The action {0} failed.", call.Name]);
+        }
+    }
+
+    /// <summary>Shows the answer as it streams in and runs the client actions it asks for; on failure the question goes back into the input.</summary>
+    private async Task StreamAsync(Func<Task<Guid>> session, Func<Guid, AiUiContext, IAsyncEnumerable<AiStreamEvent>> stream, AiMessageDto? question, Action restore)
     {
         _busy = true;
         _streaming = new StringBuilder();
         _streamCalls.Clear();
+        _streamNotes.Clear();
         if (question is not null)
         {
             _messages.Add(question);
@@ -265,7 +297,7 @@ public partial class AssistantWindow : IAsyncDisposable
         string? failure = null;
         try
         {
-            await foreach (var item in stream(await session()))
+            await foreach (var item in stream(await session(), await Ui.BuildAsync(_closed.Token)))
             {
                 switch (item.Type)
                 {
@@ -275,8 +307,16 @@ public partial class AssistantWindow : IAsyncDisposable
                     case AiStreamEvent.Tool when item.ToolCall is not null:
                         _streamCalls.Add(item.ToolCall);
                         break;
+                    case AiStreamEvent.ClientAction when item.Action is not null:
+                        _streamNotes.Add(await RunActionAsync(item.Action));
+                        break;
                     case AiStreamEvent.Done when item.Message is not null:
                         _messages.Add(item.Message);
+                        if (_streamNotes.Count > 0)
+                        {
+                            _notes[item.Message.Id] = [.. _streamNotes];
+                        }
+
                         break;
                     case AiStreamEvent.Error:
                         failure = item.Text;
