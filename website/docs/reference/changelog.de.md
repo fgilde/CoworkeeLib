@@ -9,10 +9,22 @@
 - Live-Beobachter lassen sich zur Laufzeit aus- und einschalten: `GET /api/v1/realtime/watches`, `PUT /api/v1/realtime/watches/{entityType}` (Berechtigung `Realtime.Watches.Manage`) und die Komponente `RealtimeWatchSwitch EntityType="…"` für eine Seite über einer beobachteten Liste.
 - Client-Entities: Die Synchronisierung lässt sich im Status-Menü der Tabelle pausieren und fortsetzen (`ClientEntitySet.PauseSync`/`ResumeSync`); ein pausierter Download macht dort weiter, wo er stand.
 - Facetten-Grenze pro Set: `AddODataEntity<T>(…, o => o.MaxFacetRows(20_000))`. Darüber werden die Facetten über die ersten Zeilen nach Schlüssel gezählt statt weggelassen, markiert mit `FacetGroupDto.SampleRows`/`TotalRows`, und die Tabelle sagt es. Eine lokale Kopie fordert die Facetten aller ihrer Zeilen an (`X-Coworkee-Facets-All-Rows`, gilt innerhalb von `FacetRowLimit`). Das globale `Coworkee:OData:MaxFacetRows` lässt sie weiter weg.
+- Der Mailvorlagen-Editor öffnet jede Vorlage visuell: Scriban-Anweisungen, gestaltete Schaltflächen, Tabellen und anderes Markup, das der Editor umschreiben würde, werden zu geschützten Chips, die Byte für Byte gespeichert werden; der Text um sie herum bleibt bearbeitbar. Nur ein ganzes Dokument wie das Layout öffnet sich weiterhin im Quelltext.
+- Verwaltete Kopfzeile: Administratoren ordnen jedes Element der App-Leiste (Bibliothek und Apps), legen es in die Leiste oder ins Überlaufmenü oder blenden es aus, unter *Administration > Benutzeroberfläche > Kopfzeile* (Einstellung `Header.Items`, live). `AppBarItem` bekommt `Id` und `Title`.
+- Anzeige des Assistenten (`Ai.Display`): schwebender Knopf unten rechts oder links, Knopf in der App-Leiste, Eintrag in der Navigation oder aus; `Strg+I` geht in jedem Modus, `Ai.Enabled` schaltet den Assistenten weiterhin ein. Der Navigationseintrag öffnet das Fenster über der aktuellen Seite.
+- Neue Navigationsgruppe *Administration > Benutzeroberfläche* mit Themes und Kopfzeile.
+- Der Assistent kennt die Oberfläche: Das Fenster schickt mit jeder Nachricht die sichtbaren Seiten (mit neuem `CoworkeeNavItem.Description`), die aktuelle Seite, Themes, Farbmodus, Sprachen und Rechts-nach-links, sodass „Wie mache ich…“ echte Klickpfade bekommt.
+- Client-Aktionen: Der Assistent öffnet Seiten und schaltet Theme, Farbmodus, Rechts-nach-links und Sprache im Browser um (Stream-Ereignis `client_action`); Apps ergänzen eigene mit `IAssistantClientAction`.
+- Länderflaggen kommen mit dem Client (flag-icons, MIT, ohne CDN): `<CountryFlag Code="DE" />`, `<LanguageFlag Culture="de-AT" />`, `CountryCodes.Resolve`, `LanguageFlags.Region` und `CoworkeeClientOptions.LanguageRegions`.
+- `[CountryCode]` und `[FacetDisplay("…")]` legen fest, wie die Werte einer Eigenschaft erscheinen. Facetten liefern das als `display`; Facetten-Optionen, Chips gewählter Facetten und Tabellenzellen rendern über `CoworkeeClientOptions.ValueRenderers`. „country“ (Flagge und Text) ist eingebaut, Apps ergänzen eigene, etwa „port“.
+- Das Sprachmenü zeigt Flaggen mit dem Namen in der Landessprache und auf Englisch; die Seite Sprachen und die Sprach-Chips der Mailvorlagen zeigen Flaggen. Das Theme-Menü zeigt Farbmuster und einen Umschalter Hell/System/Dunkel; die Theme-Karten zeigen App-Bar, Fläche und Text jedes Themes als Vorschau.
 
 ### Geändert
 
 - Tabellen fragen die Zeilen vor den Facetten ab: Eine sofort antwortende lokale Kopie hält beim Zählen nicht mehr die letzte Seite auf dem Bildschirm.
+- `CoworkeeDataTable`: Mit Seiten und gruppiert scrollen die Zeilen innerhalb der Tabelle (`FillHeight`, standardmäßig an, höchstens `Height`, Standard `EndlessHeight`): Spaltenköpfe und Gruppierzone bleiben oben, waagrechte Scrollleiste sowie Pager oder Gesamtzahl bleiben sichtbar, eine andere Seite beginnt bei ihrer ersten Zeile; unter 960 px scrollt die Seite wie bisher.
+- `CoworkeeDataTable` rendert seine Zeilen seltener: Facetten, die nach den Zeilen eintreffen, der Wechsel der Ansicht einer Facette und die Gesamtzahl einer neuen Endlos-Abfrage rendern die Zeilen nicht mehr neu.
+- `IAssistantApi.SendAsync`/`ConfirmAsync` haben den Parameter `AiUiContext? ui`: Apps, die die Schnittstelle selbst implementieren, ergänzen ihn.
 - ASP.NET Core, EF Core und Microsoft.Extensions-Pakete 10.0.14 (Sicherheitsupdate für `Microsoft.AspNetCore.Components.WebAssembly.Server` 10.0.13). Apps: ihre 10.0.13-Referenzen ebenfalls anheben.
 
 ### Behoben

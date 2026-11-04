@@ -9,10 +9,22 @@ Changes that need action in apps built on Coworkee. Newest first.
 - Live watches can be switched off and on at runtime: `GET /api/v1/realtime/watches`, `PUT /api/v1/realtime/watches/{entityType}` (permission `Realtime.Watches.Manage`) and the component `RealtimeWatchSwitch EntityType="…"` for a page above a watched list.
 - Client entities: the sync can be paused and resumed from the table's status menu (`ClientEntitySet.PauseSync`/`ResumeSync`); a paused download goes on where it stopped.
 - Facet cap per set: `AddODataEntity<T>(…, o => o.MaxFacetRows(20_000))`. Above it the facets are counted on the first rows by key instead of left out, marked `FacetGroupDto.SampleRows`/`TotalRows`, and the table says so. A local copy asks for the facets of all its rows (`X-Coworkee-Facets-All-Rows`, honoured within `FacetRowLimit`). The global `Coworkee:OData:MaxFacetRows` keeps leaving them out.
+- The mail template editor opens every template visually: Scriban statements, styled buttons, tables and other markup the editor would rewrite become protected chips that are saved byte for byte, so the text around them stays editable. Only a whole document such as the layout still opens in Source.
+- Managed header: administrators order every app bar item (library and apps), put each in the bar or the overflow menu, or hide it, under *Administration > User interface > Header* (setting `Header.Items`, live). `AppBarItem` gets `Id` and `Title`.
+- Assistant display (`Ai.Display`): floating button bottom right or left, app bar button, navigation entry or off; `Ctrl+I` works in every mode, `Ai.Enabled` still switches the assistant on. The navigation entry opens the window over the current page.
+- New navigation group *Administration > User interface* with Themes and Header.
+- The assistant knows the UI: the window sends the pages the user can see (with the new `CoworkeeNavItem.Description`), the current page, themes, color mode, languages and right-to-left with every message, so "how do I…" gets real click paths.
+- Client actions: the assistant opens pages and switches theme, color mode, right-to-left and language in the browser (`client_action` stream event); apps add their own with `IAssistantClientAction`.
+- Country flags ship with the client (flag-icons, MIT, no CDN): `<CountryFlag Code="DE" />`, `<LanguageFlag Culture="de-AT" />`, `CountryCodes.Resolve`, `LanguageFlags.Region` and `CoworkeeClientOptions.LanguageRegions`.
+- `[CountryCode]` and `[FacetDisplay("…")]` mark how a property's values show. Facets carry it as `display`, and facet options, chosen-facet chips and table cells render through `CoworkeeClientOptions.ValueRenderers`. "country" (flag and text) is built in; apps add their own, e.g. "port".
+- The language menu shows flags with native and English names; the Languages page and the mail template language chips show flags. The theme menu shows color swatches and a light/system/dark switch; theme cards preview the app bar, surface and text of each theme.
 
 ### Changed
 
 - Tables query the rows before the facets: a local copy that answers at once no longer keeps the last page on the screen while it counts.
+- `CoworkeeDataTable`: with pages and grouped, the rows scroll inside the table (`FillHeight`, default on, at most `Height`, default `EndlessHeight`): column headers and the group zone stay on top, the horizontal scrollbar and the pager or total stay in view, another page starts at its first row; below 960 px the page scrolls as before.
+- `CoworkeeDataTable` renders its rows less often: facets arriving after the rows, switching a facet's view and the total of a new endless query no longer render the rows again.
+- `IAssistantApi.SendAsync`/`ConfirmAsync` take an `AiUiContext? ui` parameter: apps that implement the interface themselves add it.
 - ASP.NET Core, EF Core and Microsoft.Extensions packages 10.0.14 (security fix of `Microsoft.AspNetCore.Components.WebAssembly.Server` 10.0.13). Apps: raise their 10.0.13 references too.
 
 ### Fixed
