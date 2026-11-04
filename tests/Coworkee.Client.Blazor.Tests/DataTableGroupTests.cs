@@ -55,7 +55,7 @@ public sealed partial class DataTableGroupTests : ClientTestBase
         var table = Grouped(DataTablePageMode.Pager, nameof(Row.Kind));
         table.WaitForAssertion(() => Heads(table).Count.ShouldBe(3));
 
-        table.FindAll("[data-testid='group-head']")[1].Click();
+        ClickHead(table, 1);
 
         table.WaitForAssertion(() => table.FindAll("[data-testid='group-rows'] tbody tr.mud-table-row").Count.ShouldBe(25));
         _odata.Queries.ShouldContain(q => q.Filter == "(Name ne 'none') and (Kind eq 'Beta')" && q.Top == 25 && q.Skip == 0);
@@ -68,7 +68,7 @@ public sealed partial class DataTableGroupTests : ClientTestBase
         var table = Grouped(DataTablePageMode.EndlessScroll, nameof(Row.Kind));
         table.WaitForAssertion(() => Heads(table).Count.ShouldBe(3));
 
-        table.FindAll("[data-testid='group-head']")[2].Click();
+        ClickHead(table, 2);
 
         table.WaitForAssertion(() => table.Find("[data-testid='group-rows'] .mud-table-body-virtualized"));
         table.WaitForAssertion(() => _odata.Queries.ShouldContain(q => q.Filter == "(Name ne 'none') and (Kind eq 'Gamma')" && q.Top == 50));
@@ -80,7 +80,7 @@ public sealed partial class DataTableGroupTests : ClientTestBase
         var table = Grouped(DataTablePageMode.Pager, nameof(Row.Kind), nameof(Row.Even));
         table.WaitForAssertion(() => Heads(table).Count.ShouldBe(3));
 
-        table.FindAll("[data-testid='group-head']")[0].Click();
+        ClickHead(table, 0);
 
         table.WaitForAssertion(() => Heads(table).ShouldBe(["Kind: Alpha 300", "Even: False 150", "Even: True 150", "Kind: Beta 150", "Kind: Gamma 50"]));
         _odata.Groupings.ShouldContain(("(Name ne 'none') and (Kind eq 'Alpha')", "Even"));
@@ -94,7 +94,7 @@ public sealed partial class DataTableGroupTests : ClientTestBase
         table.WaitForAssertion(() => Heads(table).Count.ShouldBe(3));
         var gate = _odata.Hold();
 
-        table.FindAll("[data-testid='group-head']")[1].Click();
+        ClickHead(table, 1);
 
         table.WaitForAssertion(() => table.Find("[data-testid='group-rows-loading']"));
         gate.SetResult();
@@ -109,14 +109,14 @@ public sealed partial class DataTableGroupTests : ClientTestBase
     {
         var table = Grouped(mode, nameof(Row.Kind));
         table.WaitForAssertion(() => Heads(table).Count.ShouldBe(3));
-        table.FindAll("[data-testid='group-head']")[2].Click();
+        ClickHead(table, 2);
         table.WaitForAssertion(() => table.FindAll("[data-testid='group-rows'] tbody tr.mud-table-row").Count.ShouldBeGreaterThan(0));
-        table.FindAll("[data-testid='group-head']")[2].Click();
+        ClickHead(table, 2);
         table.WaitForAssertion(() => table.FindAll("[data-testid='group-rows']").ShouldBeEmpty());
         var gate = _odata.Hold();
         var before = _odata.Queries.Count(q => q.Filter?.Contains("Gamma", StringComparison.Ordinal) == true);
 
-        table.FindAll("[data-testid='group-head']")[2].Click();
+        ClickHead(table, 2);
 
         table.WaitForAssertion(() => table.FindAll("[data-testid='group-rows'] tbody tr.mud-table-row").Count.ShouldBeGreaterThan(0), TimeSpan.FromSeconds(2));
         table.Find("[data-testid='group-rows']").TextContent.ShouldContain("Gamma");
@@ -129,9 +129,9 @@ public sealed partial class DataTableGroupTests : ClientTestBase
     {
         var table = Grouped(DataTablePageMode.Pager, nameof(Row.Kind));
         table.WaitForAssertion(() => Heads(table).Count.ShouldBe(3));
-        table.FindAll("[data-testid='group-head']")[2].Click();
+        ClickHead(table, 2);
         table.WaitForAssertion(() => table.Find("[data-testid='group-rows']").TextContent.ShouldContain("Row 451"));
-        table.FindAll("[data-testid='group-head']")[2].Click();
+        ClickHead(table, 2);
         table.WaitForAssertion(() => table.FindAll("[data-testid='group-rows']").ShouldBeEmpty());
 
         table.Render(p => p.Add(t => t.Filter, "Name ne 'none' and Even eq true"));
@@ -153,7 +153,7 @@ public sealed partial class DataTableGroupTests : ClientTestBase
     {
         var table = Grouped(DataTablePageMode.Pager, nameof(Row.Kind));
         table.WaitForAssertion(() => Heads(table).Count.ShouldBe(3));
-        table.FindAll("[data-testid='group-head']")[1].Click();
+        ClickHead(table, 1);
         table.WaitForAssertion(() => table.Find("[data-testid='group-rows']"));
         var groupings = _odata.Groupings.Count;
 
@@ -170,6 +170,10 @@ public sealed partial class DataTableGroupTests : ClientTestBase
         return Render<CoworkeeDataTable<Row>>(p => p.Add(t => t.EntitySet, "Rows").Add(t => t.PageMode, mode).Add(t => t.Filter, "Name ne 'none'")
             .Add(t => t.Columns, Columns()));
     }
+
+    // the facets arrive after the rows and render the heads again: a click on the head found before would miss its handler
+    private static void ClickHead(IRenderedComponent<CoworkeeDataTable<Row>> table, int index) =>
+        table.WaitForAssertion(() => table.FindAll("[data-testid='group-head']")[index].Click());
 
     private static List<string> Heads(IRenderedComponent<CoworkeeDataTable<Row>> table) =>
         [.. table.FindAll("[data-testid='group-head']").Select(h => Regex.Replace(h.TextContent, @"\s+", " ").Trim())];
