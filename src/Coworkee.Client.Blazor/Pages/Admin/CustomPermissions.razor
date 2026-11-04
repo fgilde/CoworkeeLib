@@ -1,0 +1,33 @@
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + IdentityPermissions.Permissions.Manage)]
+
+<PageHeader Title="Custom permissions" Description="Permissions of your own, e.g. for a header button or a feature of the app; roles grant them like any other permission.">
+    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.Shield" Size="Size.Small" Href="@Links.Href("/admin/roles")">@L["Roles"]</MudButton>
+</PageHeader>
+<MudStack Row="true" Class="mb-2">
+    <MudSpacer />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" Size="Size.Small" Disabled="_busy"
+               OnClick="CreateAsync" data-testid="create-custom-permission">@L["New permission"]</MudButton>
+</MudStack>
+<MudDataGrid T="CustomPermissionDto" Items="_permissions" Loading="_busy" Dense="Density.Dense" Hover="true" Striped="true" Elevation="0" Outlined="true"
+             data-testid="custom-permissions">
+    <Columns>
+        <PropertyColumn Property="p => p.Name" Title="@L["Name"]">
+            <CellTemplate><code>@context.Item.Name</code></CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="p => p.DisplayName" Title="@L["Display name"]">
+            <CellTemplate>@context.Item.DisplayName<br /><MudText Typo="Typo.caption" Color="Color.Secondary">@context.Item.Description</MudText></CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="p => p.Group" Title="@L["Group"]" />
+        <TemplateColumn T="CustomPermissionDto" Sortable="false" CellStyle="text-align:right;white-space:nowrap">
+            <CellTemplate>
+                <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" aria-label="@L["Edit"]" Disabled="_busy" OnClick="() => EditAsync(context.Item)"
+                               data-testid="@($"edit-{context.Item.Name}")" />
+                <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" aria-label="@L["Delete"]" Disabled="_busy"
+                               OnClick="() => DeleteAsync(context.Item)" data-testid="@($"delete-{context.Item.Name}")" />
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <NoRecordsContent>
+        <MudText Class="mud-text-secondary pa-4">@L["No custom permissions yet."]</MudText>
+    </NoRecordsContent>
+</MudDataGrid>

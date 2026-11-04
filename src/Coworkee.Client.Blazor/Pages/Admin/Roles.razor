@@ -1,6 +1,14 @@
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + IdentityPermissions.Roles.View)]
 
-<PageHeader Title="Roles" Description="Roles bundle permissions; users and groups get roles." />
+<PageHeader Title="Roles" Description="Roles bundle permissions; users and groups get roles.">
+    <AuthorizeView Policy="@(PermissionPolicy.Prefix + IdentityPermissions.Permissions.Manage)" Context="auth">
+        @if (!SystemTenant.IsOutside(auth.User))
+        {
+            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.AddModerator" Size="Size.Small" Href="@Links.Href("/admin/permissions")"
+                       data-testid="custom-permissions-link">@L["Custom permissions"]</MudButton>
+        }
+    </AuthorizeView>
+</PageHeader>
 <CoworkeeDataTable @ref="_table" T="RoleDto" EntitySet="Roles" SearchFields="SearchFields" ExportFileName="roles" DescribeItem="r => r.Name"
                    CreateText="New role" CreatePermission="@IdentityPermissions.Roles.Manage" DeletePermission="@IdentityPermissions.Roles.Manage"
                    OnCreate="CreateAsync" OnDelete="DeleteAsync">

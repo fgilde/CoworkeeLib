@@ -33,6 +33,25 @@ seed.Roles.Add(new SeedRole("Product Manager", "Maintains products",
 
 `SeedRole(..., SelectableForRegistration: true)` offers the role in the [registration](registration.md#roles-offered-in-the-registration), `{ IsDefault = true }` gives it to every new user ([default roles](../features/identity.md#owners-default-group-and-default-role)). See [Persistence](../fundamentals/persistence.md#migrations-and-seeding).
 
+## Custom permissions
+
+Administrators create permissions of their own at runtime, e.g. to show a header button or an app feature only to some people: *Administration → Identity → Custom permissions* (`/admin/permissions`, page key `custom-permissions`, also linked from the roles page). A custom permission has a name, a display name, an optional description and a group (default *Custom*); it shows in the role editor's permission matrix and in `GET /api/v1/identity/permissions/definitions` at once, on every instance, and roles, groups and users get it like any other permission. Check it like one, too: `<PermissionGate Permission="Custom.Reports.Export">`, `IsGrantedAsync("Custom.Reports.Export", ct)`.
+
+- **Names** start with `Custom.`, followed by letters, digits, `-` or `_`, parts separated by dots (`Custom.Reports.Export`). The prefix keeps them apart from the library's and the app's permissions; a name taken by a permission in code or another custom permission answers `409 identity.permission_taken`. The name cannot change later, as grants and code refer to it; display name, description and group can.
+- **Scope:** the definitions belong to the whole installation like the ones in code, the grants stay per organisation. So only permission managers (`Identity.Permissions.Manage`) of the system organisation handle them (`403 identity.permission_host_only` elsewhere).
+- **Deleting** shows first who loses the permission: the roles (of other organisations with their name), groups and users it is granted to. Confirming deletes the definition and every grant of it in every organisation; open clients reload their permissions. Permissions in code can be neither edited nor deleted (`409 identity.permission_code_defined`).
+- **Storage:** table `cw.CustomPermissions`; apps add a migration. Until they do, the permissions in code keep working and a warning is logged.
+
+```http
+GET    /api/v1/identity/permissions/custom                 → [CustomPermissionDto]
+POST   /api/v1/identity/permissions/custom                 { name, displayName, description, group }
+PUT    /api/v1/identity/permissions/custom/{name}          { displayName, description, group }
+GET    /api/v1/identity/permissions/custom/{name}/usage    → { roles, groups, users }
+DELETE /api/v1/identity/permissions/custom/{name}
+```
+
+In the Blazor client: `ICoworkeeApi.GetCustomPermissionsAsync`, `CreateCustomPermissionAsync`, `UpdateCustomPermissionAsync`, `GetCustomPermissionUsageAsync`, `DeleteCustomPermissionAsync`. Other runtime sources of definitions implement `IStoredPermissionDefinitions` (Coworkee.Application): the definition manager reads its `Current` list on every use and rebuilds when it gets another instance; a name defined in code wins.
+
 ## Checking on the server
 
 | Where | How |

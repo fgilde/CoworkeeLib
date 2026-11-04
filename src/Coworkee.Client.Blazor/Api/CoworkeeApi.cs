@@ -150,6 +150,21 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public async Task<IReadOnlyList<PermissionGroupDto>> GetPermissionDefinitionsAsync(CancellationToken cancellationToken = default) =>
         await GetAsync<PermissionGroupDto[]>($"{Identity}/permissions/definitions", cancellationToken);
 
+    public async Task<IReadOnlyList<CustomPermissionDto>> GetCustomPermissionsAsync(CancellationToken cancellationToken = default) =>
+        await GetAsync<CustomPermissionDto[]>($"{Identity}/permissions/custom", cancellationToken);
+
+    public Task CreateCustomPermissionAsync(CreateCustomPermissionRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, $"{Identity}/permissions/custom", request, cancellationToken);
+
+    public Task UpdateCustomPermissionAsync(string name, UpdateCustomPermissionRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Put, $"{Identity}/permissions/custom/{Uri.EscapeDataString(name)}", request, cancellationToken);
+
+    public Task<CustomPermissionUsageDto> GetCustomPermissionUsageAsync(string name, CancellationToken cancellationToken = default) =>
+        GetAsync<CustomPermissionUsageDto>($"{Identity}/permissions/custom/{Uri.EscapeDataString(name)}/usage", cancellationToken);
+
+    public Task DeleteCustomPermissionAsync(string name, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Delete, $"{Identity}/permissions/custom/{Uri.EscapeDataString(name)}", null, cancellationToken);
+
     public async Task<IReadOnlyList<string>> GetGrantsAsync(PermissionProviderType providerType, Guid providerKey, CancellationToken cancellationToken = default) =>
         await GetAsync<string[]>($"{Identity}/permissions/grants/{providerType}/{providerKey}", cancellationToken);
 

@@ -13,6 +13,7 @@ internal static class LibraryPages
         new("groups", typeof(Groups), "admin/groups"),
         new("roles", typeof(Roles), "admin/roles"),
         new("role", typeof(RoleDetail), "admin/roles/{Id:guid}"),
+        new("custom-permissions", typeof(CustomPermissions), "admin/permissions"),
         new("clients", typeof(Clients), "admin/clients"),
         new("scopes", typeof(Scopes), "admin/scopes"),
         new("api-keys", typeof(ApiKeys), "admin/api-keys"),

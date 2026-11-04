@@ -74,6 +74,8 @@ public sealed class IdentityApp : DatabaseFixture
     {
         await ResetAsync();
         App.Services.GetRequiredService<SystemStateCache>().Reset();
+        // the reset deletes past the interceptors: custom permissions of an earlier test stay cached otherwise
+        await App.Services.GetRequiredService<Coworkee.Identity.Permissions.PermissionCache>().InvalidateAsync(CancellationToken.None);
     }
 
     public HttpClient Anonymous() => App.GetTestClient();
@@ -113,6 +115,7 @@ public sealed class TestAppModule : CoworkeeModule
         context.Services.AddMessagingFromAssembly(typeof(IdentityApp).Assembly);
         context.Services.AddSingleton<Coworkee.Application.Authorization.IResourceHierarchy>(TestFolderHierarchy.Instance);
         context.Services.AddSingleton<Coworkee.Application.Authorization.IResourceRestriction>(TestFolderRestriction.Instance);
+        context.Services.AddSingleton<IPermissionDefinitionContributor, CodedCustomPermission>();
         context.Services.AddCoworkeeDbContext<IdentityTestDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
     }
