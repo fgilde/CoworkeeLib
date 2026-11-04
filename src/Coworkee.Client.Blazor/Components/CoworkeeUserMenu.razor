@@ -2,7 +2,6 @@
     <Authorized>
         <ActiveRoleMenu />
         <ChatNotifier />
-        <NotificationBell />
         @if (context.User.FindFirst(ImpersonationClaims.ImpersonatorName)?.Value is { } impersonator)
         {
             <MudChip T="string" Size="Size.Small" Color="Color.Warning" Icon="@Icons.Material.Outlined.SupervisorAccount" OnClick="StopImpersonation"

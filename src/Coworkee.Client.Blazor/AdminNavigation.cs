@@ -9,6 +9,7 @@ internal sealed class AdminNavigation : INavigationContributor
     private const string Communication = Navigation.NavigationGroups.Communication;
     private const string Monitoring = Navigation.NavigationGroups.Monitoring;
     private const string Localization = Navigation.NavigationGroups.Localization;
+    private const string UserInterface = Navigation.NavigationGroups.UserInterface;
 
     public IEnumerable<CoworkeeNavItem> Items =>
     [
@@ -24,7 +25,9 @@ internal sealed class AdminNavigation : INavigationContributor
         new("Services", "/admin/services", MudBlazor.Icons.Material.Outlined.Hub, Coworkee.Contracts.Settings.SettingsPermissions.Manage, Group: System, Order: 1, HostOnly: true),
         new("Tenants", "/admin/tenants", MudBlazor.Icons.Material.Outlined.Domain, Coworkee.Contracts.Features.FeaturePermissions.Tenants, Group: System, Order: 2, HostOnly: true),
         new("Editions", "/admin/editions", MudBlazor.Icons.Material.Outlined.WorkspacePremium, Coworkee.Contracts.Features.FeaturePermissions.Editions, Group: System, Order: 3, HostOnly: true),
-        new("Themes", "/admin/themes", MudBlazor.Icons.Material.Outlined.Palette, Coworkee.Contracts.Theming.ThemePermissions.Manage, Group: System, Order: 4),
+        new("Themes", "/admin/themes", MudBlazor.Icons.Material.Outlined.Palette, Coworkee.Contracts.Theming.ThemePermissions.Manage, Group: UserInterface),
+        new("Header", "/admin/header", MudBlazor.Icons.Material.Outlined.WebAsset, Coworkee.Contracts.Settings.SettingsPermissions.Manage, Group: UserInterface, Order: 1, HostOnly: true),
+        new("Assistant", "/assistant", MudBlazor.Icons.Material.Outlined.AutoAwesome, Coworkee.Contracts.Ai.AiPermissions.Chat, Order: -6, Visible: Ai.AssistantNavigation.VisibleAsync),
         new("Import and export", "/admin/data-transfer", MudBlazor.Icons.Material.Outlined.ImportExport, Coworkee.Contracts.Data.DataTransferPermissions.Use, Group: System, Order: 7),
         new("Scheduled exports", "/data/export-schedules", MudBlazor.Icons.Material.Outlined.ScheduleSend, Coworkee.Contracts.Data.DataTransferPermissions.ExportSchedules, Group: System, Order: 8),
         new("Backups", "/admin/backups", MudBlazor.Icons.Material.Outlined.Backup, Coworkee.Contracts.Backup.BackupPermissions.Manage, Group: System, Order: 5, HostOnly: true),

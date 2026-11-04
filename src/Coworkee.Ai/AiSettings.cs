@@ -14,6 +14,7 @@ public static class AiSettings
     public const string Temperature = AiSettingNames.Temperature;
     public const string MaxOutputTokens = AiSettingNames.MaxOutputTokens;
     public const string MaxToolRounds = AiSettingNames.MaxToolRounds;
+    public const string Display = AiSettingNames.Display;
     public const string DefaultModel = "claude-opus-5-5";
 
     /// <summary>The kill switch of the MCP server at runtime; Coworkee:Mcp:Enabled decides whether it is mapped at all.</summary>

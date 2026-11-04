@@ -1,0 +1,70 @@
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + SettingsPermissions.Manage)]
+
+<PageHeader Title="Header" Description="The order of the app bar items, whether each shows in the bar, in the overflow menu or not at all, and where the assistant shows." />
+
+@if (_items is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <MudStack Spacing="4" data-testid="header-configuration">
+        <MudPaper Outlined="true" Class="pa-4" data-testid="header-items">
+            <MudText Typo="Typo.h6">@L["App bar"]</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">@L["From left to right. On phones language, theme, direction, colour mode and about move into the overflow menu."]</MudText>
+            @for (var i = 0; i < _items.Count; i++)
+            {
+                var index = i;
+                var (item, placement) = _items[i];
+                <div class="d-flex align-center gap-2 py-1" data-header-item="@item.Id" data-placement="@placement">
+                    <MudIcon Icon="@item.Icon" Color="@(placement == HeaderPlacement.Hidden ? Color.Default : Color.Primary)" />
+                    <div class="flex-grow-1">
+                        <MudText Typo="Typo.body1" Class="@(placement == HeaderPlacement.Hidden ? "mud-text-disabled" : null)">@L[item.Title]</MudText>
+                        @if (item.Id == HeaderItems.Assistant)
+                        {
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["Shows only with the assistant display App bar button."]</MudText>
+                        }
+                    </div>
+                    <MudIconButton Icon="@Icons.Material.Outlined.ArrowUpward" Size="Size.Small" Disabled="@(index == 0)" OnClick="() => Move(index, -1)" aria-label="@L["Move up"]" data-testid="header-up" />
+                    <MudIconButton Icon="@Icons.Material.Outlined.ArrowDownward" Size="Size.Small" Disabled="@(index == _items.Count - 1)" OnClick="() => Move(index, 1)" aria-label="@L["Move down"]" data-testid="header-down" />
+                    <MudTooltip Text="@L["In the bar"]">
+                        <MudIconButton Icon="@Icons.Material.Outlined.WebAsset" Size="Size.Small" Color="@Selected(placement, HeaderPlacement.Bar)" OnClick="() => Place(index, HeaderPlacement.Bar)"
+                                       aria-label="@L["In the bar"]" aria-pressed="@Pressed(placement, HeaderPlacement.Bar)" data-testid="header-bar" />
+                    </MudTooltip>
+                    @if (item.Id != HeaderItems.User)
+                    {
+                        <MudTooltip Text="@L["In the overflow menu"]">
+                            <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Color="@Selected(placement, HeaderPlacement.Overflow)" OnClick="() => Place(index, HeaderPlacement.Overflow)"
+                                           aria-label="@L["In the overflow menu"]" aria-pressed="@Pressed(placement, HeaderPlacement.Overflow)" data-testid="header-overflow" />
+                        </MudTooltip>
+                        <MudTooltip Text="@L["Hidden"]">
+                            <MudIconButton Icon="@Icons.Material.Outlined.VisibilityOff" Size="Size.Small" Color="@Selected(placement, HeaderPlacement.Hidden)" OnClick="() => Place(index, HeaderPlacement.Hidden)"
+                                           aria-label="@L["Hidden"]" aria-pressed="@Pressed(placement, HeaderPlacement.Hidden)" data-testid="header-hide" />
+                        </MudTooltip>
+                    }
+                </div>
+            }
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4" data-testid="assistant-display">
+            <MudText Typo="Typo.h6">@L["Assistant display"]</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-3">
+                @L["Where users find the assistant. Ctrl+I opens it in every mode; whether it is available at all is set in the AI settings."]
+                <MudLink Href="@Links.Href("/admin/ai-settings")" Typo="Typo.body2">@L["AI settings"]</MudLink>
+            </MudText>
+            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                @foreach (var (display, label, icon) in Displays)
+                {
+                    <MudButton Variant="@(_display == display ? Variant.Filled : Variant.Outlined)" Color="Color.Primary" StartIcon="@icon" OnClick="() => _display = display"
+                               aria-pressed="@(_display == display ? "true" : "false")" data-display="@display">@L[label]</MudButton>
+                }
+            </MudStack>
+        </MudPaper>
+
+        <MudStack Row="true" Spacing="2" Justify="Justify.FlexEnd">
+            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.RestartAlt" OnClick="Reset" Disabled="_busy" data-testid="header-reset">@L["Reset to defaults"]</MudButton>
+            <MudButton Variant="Variant.Text" OnClick="LoadAsync" Disabled="_busy" data-testid="header-discard">@L["Discard changes"]</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Save" OnClick="SaveAsync" Disabled="_busy" data-testid="header-save">@L["Save"]</MudButton>
+        </MudStack>
+    </MudStack>
+}

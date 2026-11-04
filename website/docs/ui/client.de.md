@@ -64,7 +64,7 @@ internal sealed class MyAppNavigation : INavigationContributor
 | `IconForGroup(name, icon)` | das Symbol eines Gruppenknotens |
 | `Place(href, group, title?, order?)` | verschiebt einen Link der Bibliothek in eine andere Gruppe; ein Gruppenpfad wie `Administration/Localization` verschachtelt |
 
-Die Admin-Seiten der Bibliothek liegen in Gruppen unter **Administration**: `NavigationGroups.Identity` (Benutzer, Gruppen, Rollen, Anwendungen, Scopes), `NavigationGroups.System` (Einstellungen, Mail-Einstellungen, Dienste, Mandanten, Editionen, Themes, Sicherungen), `NavigationGroups.Communication` (Mail-Vorlagen, Mail-Log), `NavigationGroups.Localization` (Sprachen, Übersetzungen) und `NavigationGroups.Monitoring` (Audit-Log, KI-Werkzeugaufrufe). Verschachtelte Gruppen sortieren sich innerhalb ihrer obersten Gruppe, die ihren Platz aus `OrderGroup` behält.
+Die Admin-Seiten der Bibliothek liegen in Gruppen unter **Administration**: `NavigationGroups.Identity` (Benutzer, Gruppen, Rollen, Anwendungen, Scopes), `NavigationGroups.System` (Einstellungen, Mail-Einstellungen, Dienste, Mandanten, Editionen, Sicherungen), `NavigationGroups.Communication` (Mail-Vorlagen, Mail-Log), `NavigationGroups.Localization` (Sprachen, Übersetzungen) `NavigationGroups.Monitoring` (Audit-Log, KI-Werkzeugaufrufe) und `NavigationGroups.UserInterface` (Themes, Kopfzeile). Verschachtelte Gruppen sortieren sich innerhalb ihrer obersten Gruppe, die ihren Platz aus `OrderGroup` behält.
 
 Das Menü ist ein `MudExTreeView`: Gruppen sind Knoten, das Filterfeld hebt Treffer hervor und öffnet ihre Gruppen, und die Ansicht wechselt zwischen Baum, Liste und flacher Liste. Angeheftet bleibt die Leiste als Symbolstreifen unter der App-Leiste, der Menüknopf verbreitert sie; nicht angeheftet öffnet sie sich als Überlagerung und verschwindet wieder. Ob eine oder mehrere Gruppen offen bleiben, ist ein zweiter Schalter. Beides speichert der Browser.
 
@@ -81,9 +81,23 @@ Die App-Leiste zeigt den Suchknopf der [Befehlspalette](command-palette.md) (Str
 ```csharp
 internal sealed class LanguageBar : IAppBarContributor
 {
-    public IEnumerable<AppBarItem> Items => [new AppBarItem(typeof(LanguageSwitch), Order: 10)];
+    public IEnumerable<AppBarItem> Items => [new AppBarItem(typeof(LanguageSwitch), Order: 10, Id: "language-switch", Title: "Language switch")];
 }
 ```
+
+App-Elemente stehen zwischen Suche und Sprachmenü, sortiert nach `Order`. `Id` ist der Schlüssel des Elements in der Kopfzeilen-Konfiguration (ohne Angabe der Typname der Komponente; stabil halten), `Title` sein Name auf der Admin-Seite.
+
+### Verwaltete Kopfzeile
+
+Unter *Administration → Benutzeroberfläche → Kopfzeile* (`/admin/header`, `Settings.Manage`, nur Systemorganisation) ordnet ein Administrator jedes Element der Leiste um, die der Bibliothek wie die der Apps, und legt jedes in die Leiste, ins Überlaufmenü (⋮) oder blendet es aus. Das Benutzermenü bleibt immer in der Leiste. *Auf Standard zurücksetzen* stellt die eingebaute Reihenfolge wieder her. Die Wahl ist die globale Einstellung `Header.Items`, eine JSON-Liste in Leistenreihenfolge:
+
+```json
+[{"id":"search","placement":"Bar"},{"id":"about","placement":"Overflow"},{"id":"rtl","placement":"Hidden"}]
+```
+
+Die Ids der Bibliothek sind `search`, `language`, `theme`, `rtl`, `dark-mode`, `notifications`, `user`, `assistant` und `about`. Elemente, die die Liste nicht nennt (etwa eine später hinzugefügte App), erscheinen hinter dem Element, das in der Standardreihenfolge vor ihnen steht; Namen verschwundener Elemente werden ignoriert; ein ungültiger Wert ergibt die Standard-Kopfzeile. Gespeicherte Werte erreichen offene Seiten sofort. Ausgeblendet oder im Überlaufmenü behält die Suche Strg+K. Auf Smartphones wandern Sprache, Design, Schreibrichtung, Farbmodus und Info weiterhin ins Überlaufmenü.
+
+Dieselbe Seite legt fest, wo der [Assistent](../modules/ai.md#wo-der-assistent-erscheint) erscheint.
 
 Das Benutzermenü enthält *Mein Profil*, *Meine Einstellungen*, *Passwort und Sicherheit* (die Kontoseiten des Auth-Servers), *App installieren*, solange der Browser es anbietet, und *Abmelden*. Solange jemand [als anderer Benutzer angemeldet](../features/identity.md#als-anderer-benutzer-anmelden) ist, zeigt die App-Leiste *Angemeldet durch …* und das Menü *Zurück zu meinem Konto*.
 

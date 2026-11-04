@@ -55,6 +55,9 @@ public partial class CoworkeeCommandPalette : IAsyncDisposable
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
+    /// <summary>Off: no search button, Ctrl+K and <see cref="OpenAsync"/> open the palette.</summary>
+    [Parameter] public bool ShowButton { get; set; } = true;
+
     private RecentPaletteItems Recent => _recent ??= new RecentPaletteItems(JS);
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

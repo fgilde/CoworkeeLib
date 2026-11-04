@@ -11,6 +11,7 @@ public sealed class NavigationMenuOptions
         [NavigationGroups.Communication] = 2,
         [NavigationGroups.Localization] = 3,
         [NavigationGroups.Monitoring] = 4,
+        [NavigationGroups.UserInterface] = 5,
     };
     private readonly Dictionary<string, string> _groupIcons = new(StringComparer.Ordinal) 
     {
@@ -20,6 +21,7 @@ public sealed class NavigationMenuOptions
         [NavigationGroups.Communication] = MudBlazor.Icons.Material.Outlined.Forum,
         [NavigationGroups.Localization] = MudBlazor.Icons.Material.Outlined.Translate,
         [NavigationGroups.Monitoring] = MudBlazor.Icons.Material.Outlined.MonitorHeart,
+        [NavigationGroups.UserInterface] = MudBlazor.Icons.Material.Outlined.DesignServices,
     };
 
     public bool ShowHome { get; set; } = true;

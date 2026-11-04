@@ -15,6 +15,7 @@ public partial class CoworkeeNavMenu : IDisposable
     private HashSet<NavigationEntry>? _entries;
     private NavigationEntry? _selected;
     private TreeViewMode _viewMode = TreeViewMode.Default;
+    private IReadOnlyDictionary<string, string?>? _settings;
 
     [Inject] private IEnumerable<INavigationContributor> Contributors { get; set; } = null!;
 
@@ -61,7 +62,7 @@ public partial class CoworkeeNavMenu : IDisposable
     protected override async Task OnInitializedAsync()
     {
         Preferences.Changed += Refresh;
-        ThemeService.Changed += Refresh;
+        ThemeService.Changed += SettingsChanged;
         Permissions.Changed += Reload;
         Features.Changed += Reload;
         Nav.LocationChanged += LocationChanged;
@@ -74,7 +75,7 @@ public partial class CoworkeeNavMenu : IDisposable
     public void Dispose()
     {
         Preferences.Changed -= Refresh;
-        ThemeService.Changed -= Refresh;
+        ThemeService.Changed -= SettingsChanged;
         Permissions.Changed -= Reload;
         Features.Changed -= Reload;
         Nav.LocationChanged -= LocationChanged;
@@ -84,6 +85,7 @@ public partial class CoworkeeNavMenu : IDisposable
     private async Task BuildAsync()
     {
         var options = MenuOptions.Value;
+        _settings = ThemeService.ClientSettings;
         var user = AuthenticationState is null ? new System.Security.Claims.ClaimsPrincipal() : (await AuthenticationState).User;
         var allowed = NavigationAccess.Linked(await NavigationAccess.AllowedAsync(Contributors.SelectMany(c => c.Items), user, Authorization, Features, Services), Pages, options);
 
@@ -129,6 +131,19 @@ public partial class CoworkeeNavMenu : IDisposable
     }
 
     private void Refresh() => InvokeAsync(StateHasChanged);
+
+    // reloaded client settings can switch links on and off (Visible, e.g. the assistant's); a theme preview only repaints
+    private void SettingsChanged()
+    {
+        if (ReferenceEquals(_settings, ThemeService.ClientSettings))
+        {
+            Refresh();
+        }
+        else
+        {
+            Reload();
+        }
+    }
 
     private void Reload() => InvokeAsync(async () =>
     {

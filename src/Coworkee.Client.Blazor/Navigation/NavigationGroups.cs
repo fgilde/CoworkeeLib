@@ -8,6 +8,8 @@ public static class NavigationGroups
 
     public const string System = Administration + "/System";
 
+    public const string UserInterface = Administration + "/User interface";
+
     public const string Communication = Administration + "/Communication";
 
     public const string Localization = Administration + "/Localization";

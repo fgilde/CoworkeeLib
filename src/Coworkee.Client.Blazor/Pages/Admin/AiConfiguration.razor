@@ -25,6 +25,15 @@ else
         </MudPaper>
 
         <MudPaper Outlined="true" Class="pa-4 d-flex align-center gap-3">
+            <MudIcon Icon="@Icons.Material.Outlined.WebAsset" Color="Color.Primary" />
+            <div class="flex-grow-1">
+                <MudText Typo="Typo.subtitle1">@L["Assistant display"]</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["Where users find the assistant: a floating button, the app bar, the navigation, or only Ctrl+I."]</MudText>
+            </div>
+            <MudButton Href="@Links.Href("/admin/header")" Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Outlined.ArrowForward" data-testid="ai-display-link">@L["Header"]</MudButton>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4 d-flex align-center gap-3">
             <MudIcon Icon="@Icons.Material.Outlined.Hub" Color="Color.Primary" />
             <div class="flex-grow-1">
                 <MudText Typo="Typo.subtitle1">@L["MCP server enabled"]</MudText>

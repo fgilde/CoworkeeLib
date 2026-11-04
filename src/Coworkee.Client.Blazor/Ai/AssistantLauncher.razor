@@ -1,15 +1,37 @@
-@if (_available)
+@if (!_available)
 {
-    <style>@AssistantStyles.Css</style>
+    return;
+}
+@if (InAppBar)
+{
+    if (Display == AssistantDisplay.AppBar)
+    {
+        if (Nested)
+        {
+            <MudMenuItem Icon="@Icons.Material.Outlined.AutoAwesome" OnClick="State.Toggle" data-testid="assistant-app-bar">@L["Assistant"]</MudMenuItem>
+        }
+        else
+        {
+            <MudTooltip Text="@L["Assistant (Ctrl+I)"]">
+                <MudIconButton Icon="@Icons.Material.Outlined.AutoAwesome" Color="@(State.IsOpen ? Color.Warning : Color.Inherit)" OnClick="State.Toggle" aria-label="@L["Assistant"]"
+                               aria-expanded="@(State.IsOpen ? "true" : "false")" data-testid="assistant-app-bar" />
+            </MudTooltip>
+        }
+    }
+    return;
+}
+<style>@AssistantStyles.Css</style>
+<style>@AssistantPlacementStyles.Css</style>
+<div class="@($"cw-ai-launcher {Corner}")" data-testid="assistant-launcher">
     @if (State.IsOpen)
     {
         <AssistantWindow />
     }
-    @if (!State.IsOpen || State.Size != AssistantSize.Full)
+    @if (Floating && (!State.IsOpen || State.Size != AssistantSize.Full))
     {
         <button type="button" class="@(State.IsOpen ? "cw-ai-fab open" : "cw-ai-fab")" title="@L["Assistant (Ctrl+I)"]" aria-label="@L["Assistant"]"
                 aria-expanded="@(State.IsOpen ? "true" : "false")" @onclick="State.Toggle" data-testid="assistant-fab">
             <MudIcon Icon="@(State.IsOpen ? Icons.Material.Outlined.Close : Icons.Material.Outlined.AutoAwesome)" />
         </button>
     }
-}
+</div>

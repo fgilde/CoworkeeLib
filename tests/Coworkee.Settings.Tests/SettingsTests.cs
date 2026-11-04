@@ -224,6 +224,19 @@ public sealed class SettingsTests(SettingsApp app) : IAsyncLifetime
         await PutAsync(Admin, "global", TableSettings.DefaultPageMode, null);
     }
 
+    [Fact]
+    public async Task The_header_reaches_the_client_and_only_the_system_sets_it()
+    {
+        const string header = """[{"id":"rtl","placement":"Hidden"}]""";
+        await PutAsync(Admin, "global", HeaderSettings.Items, header);
+
+        (await ClientValuesAsync(Admin))[HeaderSettings.Items].ShouldBe(header);
+        var groups = (await Admin.GetFromJsonAsync<List<SettingGroupDto>>("/api/v1/settings/definitions", Ct))!;
+        groups.Single(g => g.Settings.Any(s => s.Name == HeaderSettings.Items)).Page.ShouldBe("/admin/header");
+        (await SendAsync(Admin, "tenant", HeaderSettings.Items, header)).IsSuccessStatusCode.ShouldBeFalse();
+        await PutAsync(Admin, "global", HeaderSettings.Items, null);
+    }
+
     private static async Task<Dictionary<string, string?>> ClientValuesAsync(HttpClient client) =>
         (await client.GetFromJsonAsync<Dictionary<string, string?>>("/api/v1/settings/client", Ct))!;
 
