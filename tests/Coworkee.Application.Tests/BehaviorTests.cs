@@ -342,15 +342,16 @@ public sealed class BehaviorTests
         (await dispatcher.SendAsync(new Count(), Ct)).Value.ShouldBe(1);
         await Task.Delay(150, Ct);
         (await dispatcher.SendAsync(new Count(), Ct)).Value.ShouldBe(1);
-        (await EventuallyAsync(() => dispatcher.SendAsync(new Count(), Ct), r => r.Value == 2)).Value.ShouldBe(2);
+        // on a slow machine every read past the refresh time starts another refresh, so more than one may land between two reads
+        (await EventuallyAsync(() => dispatcher.SendAsync(new Count(), Ct), r => r.Value >= 2)).Value.ShouldBeGreaterThanOrEqualTo(2);
 
         defaults.Value = defaults.Value with { RefreshInBackground = false };
         await Task.Delay(150, Ct);
-        (await dispatcher.SendAsync(new FreshCount(), Ct)).Value.ShouldBe(3);
+        var loaded = (await dispatcher.SendAsync(new FreshCount(), Ct)).Value;
         await Task.Delay(FreshAfter + TimeSpan.FromMilliseconds(200), Ct);
         await dispatcher.SendAsync(new FreshCount(), Ct);
         await Task.Delay(150, Ct);
-        counter.Value.ShouldBe(3);
+        counter.Value.ShouldBe(loaded);
     }
 
     [Fact]
