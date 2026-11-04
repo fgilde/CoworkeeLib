@@ -2,12 +2,46 @@
     <Authorized>
         @if (_themes.Count > 1)
         {
+            <style>
+                .cw-theme-modes { display: flex; align-items: center; gap: 2px; padding: 4px 12px 6px; }
+                .cw-theme-modes .label { flex: 1; font-size: .75rem; opacity: .7; margin-inline-end: 8px; }
+                .cw-theme-item { display: flex; align-items: center; gap: 12px; min-width: 200px; }
+                .cw-theme-dots { display: inline-flex; }
+                .cw-theme-dot { width: 14px; height: 14px; border-radius: 50%; display: block; box-shadow: 0 0 0 2px var(--mud-palette-surface), inset 0 0 0 1px rgba(0,0,0,.15); }
+                .cw-theme-dot + .cw-theme-dot { margin-inline-start: -4px; }
+                .cw-theme-item-name { flex: 1; }
+            </style>
             <MudMenu Icon="@(Nested ? null : Icons.Material.Outlined.Palette)" StartIcon="@(Nested ? Icons.Material.Outlined.Palette : null)" Label="@(Nested ? L["Theme"] : null)" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense"
                      aria-label="@L["Theme"]" data-testid="theme-menu">
+                <div class="cw-theme-modes" data-testid="theme-modes" role="group" aria-label="@L["Color mode"]">
+                    <span class="label">@L["Color mode"]</span>
+                    @foreach (var (mode, label, icon) in ThemePicker.Modes)
+                    {
+                        var active = ThemeService.Mode == mode;
+                        <MudTooltip Text="@L[label]">
+                            <MudIconButton Icon="@icon" Size="Size.Small" Color="@(active ? Color.Primary : Color.Default)" Variant="@(active ? Variant.Filled : Variant.Text)"
+                                           aria-label="@L[label]" aria-pressed="@(active ? "true" : "false")" data-mode="@mode" OnClick="() => ModeAsync(mode)" />
+                        </MudTooltip>
+                    }
+                </div>
+                <MudDivider Class="mb-1" />
                 @foreach (var theme in _themes)
                 {
-                    <MudMenuItem OnClick="() => ChooseAsync(theme)" Icon="@(theme.Id == ThemeService.Current?.Id ? Icons.Material.Filled.Check : Icons.Material.Outlined.Circle)"
-                                 data-theme="@theme.Name">@theme.Name</MudMenuItem>
+                    <MudMenuItem OnClick="() => ChooseAsync(theme)" data-theme="@theme.Name">
+                        <div class="cw-theme-item">
+                            <span class="cw-theme-dots" aria-hidden="true">
+                                @foreach (var color in ThemeColors.All(theme, ThemeService.Mode == "dark", "Primary", "Secondary", "Background"))
+                                {
+                                    <span class="cw-theme-dot" style="background:@color"></span>
+                                }
+                            </span>
+                            <span class="cw-theme-item-name">@theme.Name</span>
+                            @if (theme.Id == ThemeService.Current?.Id)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.Check" Color="Color.Primary" Size="Size.Small" />
+                            }
+                        </div>
+                    </MudMenuItem>
                 }
             </MudMenu>
         }

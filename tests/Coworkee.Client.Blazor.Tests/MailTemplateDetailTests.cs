@@ -29,6 +29,8 @@ public sealed class MailTemplateDetailTests : ClientTestBase
 
         page.WaitForAssertion(() => page.Find("[data-testid='language-chip-en']").ClassList.ShouldContain("mud-chip-filled"));
         page.Find("[data-testid='language-chip-de']").ClassList.ShouldContain("mud-chip-outlined");
+        page.Find("[data-testid='language-chip-de'] img.cw-flag").GetAttribute("src").ShouldEndWith("/de.svg");
+        page.Find("[data-testid='language-chip-en'] img.cw-flag").GetAttribute("src").ShouldEndWith("/gb.svg");
         page.Find("[data-testid='add-language']").HasAttribute("disabled").ShouldBeFalse();
         page.Markup.ShouldContain("Welcome");
 

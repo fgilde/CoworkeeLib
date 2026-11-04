@@ -21,6 +21,12 @@ coworkee new Shop --languages en,de,fr --default-language de
 
 The same values end up in `Coworkee:Localization` in `appsettings.json`. Any culture works there, not only the 23. One without shipped texts gets machine translated on the first start.
 
+The language menu of the app bar, the *Languages* page and the language chips of the mail templates show each language with a flag: a culture's own region (`de-AT` → Austria), else the usual country of the language (`en` → United Kingdom, `pt` → Brazil, as the shipped Portuguese texts are Brazilian). Pick another one per language on the client:
+
+```csharp
+builder.Services.AddCoworkeeClient(baseAddress, o => o.LanguageRegions["en"] = "US");
+```
+
 ## Changing texts at runtime
 
 ![The Languages page with cultures grouped by language, each with a switch and the default marked with a star](../assets/screenshots/languages-light.webp){ .shot loading=lazy }

@@ -41,6 +41,10 @@ public sealed record FacetGroupDto(
     [JsonPropertyName("tree-separator")]
     public string? TreeSeparator { get; init; }
 
+    /// <summary>How the values show, e.g. "country" with flags; from the property's [FacetDisplay] (<see cref="FacetDisplayAttribute"/>).</summary>
+    [JsonPropertyName("display")]
+    public string? Display { get; init; }
+
     /// <summary>The smallest value of a range, invariant text (numbers with a dot, dates as ISO 8601).</summary>
     [JsonPropertyName("min")]
     public string? Min { get; init; }

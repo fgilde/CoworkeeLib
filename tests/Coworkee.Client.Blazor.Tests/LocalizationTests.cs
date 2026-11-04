@@ -95,6 +95,26 @@ public sealed class LocalizationTests : ClientTestBase
         await page.Find("[data-culture='fr-CH'] input[type='checkbox']").ChangeAsync(new ChangeEventArgs { Value = true });
 
         await Localization.Received(1).SetLanguageEnabledAsync("fr-CH", true, Arg.Any<CancellationToken>());
+        page.Find("[data-culture='fr-CH'] img.cw-flag").GetAttribute("src").ShouldEndWith("/ch.svg");
+        page.Find("[data-language='fr'] img.cw-flag").GetAttribute("src").ShouldEndWith("/fr.svg");
+    }
+
+    [Fact]
+    public async Task The_language_menu_shows_flags_with_native_and_english_names()
+    {
+        await Services.GetRequiredService<Localization.CoworkeeLocalizer>().InitializeAsync(null);
+        var popovers = Render<MudPopoverProvider>();
+        var menu = Render<LanguageMenu>();
+
+        menu.Find("[data-testid='language-menu'] img.cw-flag").GetAttribute("src").ShouldEndWith("/gb.svg");
+        await menu.Find("[data-testid='language-menu'] button").ClickAsync(new());
+
+        var german = popovers.WaitForElement("[data-culture='de']");
+        german.QuerySelector("img.cw-flag")!.GetAttribute("src").ShouldEndWith("/de.svg");
+        german.TextContent.ShouldContain("Deutsch");
+        german.TextContent.ShouldContain("German");
+        popovers.Find("[data-culture='en'] [data-testid='language-current']").ShouldNotBeNull();
+        german.QuerySelector("[data-testid='language-current']").ShouldBeNull();
     }
 
     [Fact]

@@ -30,6 +30,7 @@ public sealed class Widget : AuditedEntity, IMultiTenant
     public DateTimeOffset MadeAt { get; set; }
 
     [ProvideFacet(Label = "Color", MultiSelect = false, Order = 5)]
+    [FacetDisplay("color")]
     public required string Color { get; set; }
 
     public Guid TenantId { get; set; }

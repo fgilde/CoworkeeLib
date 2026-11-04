@@ -37,6 +37,7 @@ internal static class FacetDtos
             AllowExclude = behavior?.AllowExclude ?? false,
             Switchable = behavior?.Switchable ?? false,
             TreeSeparator = behavior?.TreeSeparator,
+            Display = property?.GetCustomAttribute<FacetDisplayAttribute>(inherit: true)?.Display,
         };
     }
 

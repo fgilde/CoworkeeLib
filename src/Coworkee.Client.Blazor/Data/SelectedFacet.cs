@@ -14,6 +14,10 @@ public sealed record SelectedFacet(string GroupKey, string GroupLabel, FacetOper
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Preset { get; init; }
 
+    /// <summary>The display of the facet (<see cref="FacetGroupDto.Display"/>), so the chip renders the value like the facet does.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Display { get; init; }
+
     /// <summary>The OData path of a custom value (a range or a preset); <c>null</c> for an option of the facet.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Path { get; init; }

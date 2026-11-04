@@ -49,7 +49,7 @@ public sealed class FacetSelection
             }
 
             options.Remove(Custom);
-            options[option.OData] = new SelectedFacet(group.Key, group.Label, Operator(CombineOf(group)), option.Label, option.OData) { Exclude = exclude };
+            options[option.OData] = Chosen(group, option) with { Exclude = exclude };
         }
 
         Tidy(group.Key);
@@ -64,7 +64,7 @@ public sealed class FacetSelection
         {
             if (chosen)
             {
-                selected[option.OData] = new SelectedFacet(group.Key, group.Label, Operator(CombineOf(group)), option.Label, option.OData);
+                selected[option.OData] = Chosen(group, option);
             }
             else
             {
@@ -83,7 +83,7 @@ public sealed class FacetSelection
         _selected.Remove(group.Key);
         if (option is not null)
         {
-            Group(group.Key)[option.OData] = new SelectedFacet(group.Key, group.Label, Operator(CombineOf(group)), option.Label, option.OData);
+            Group(group.Key)[option.OData] = Chosen(group, option);
         }
 
         Changed?.Invoke();
@@ -223,6 +223,9 @@ public sealed class FacetSelection
             _selected.Remove(key);
         }
     }
+
+    private SelectedFacet Chosen(FacetGroupDto group, FacetOptionDto option) =>
+        new(group.Key, group.Label, Operator(CombineOf(group)), option.Label, option.OData) { Display = group.Display };
 
     private static FacetOperator Operator(FacetCombine combine) => combine == FacetCombine.All ? FacetOperator.And : FacetOperator.Or;
 }

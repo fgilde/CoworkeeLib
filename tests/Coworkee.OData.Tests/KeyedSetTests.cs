@@ -64,7 +64,9 @@ public class KeyedSetTests(ODataApp app) : IAsyncLifetime
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, "/odata/Countries");
         request.Headers.Add("Prefer", "odata.include-annotations=\"*\"");
-        (await (await Admin.SendAsync(request, Ct)).Content.ReadAsStringAsync(Ct)).ShouldContain("Asia");
+        var body = await (await Admin.SendAsync(request, Ct)).Content.ReadAsStringAsync(Ct);
+        body.ShouldContain("Asia");
+        body.ShouldContain("\"display\":\"country\"", Case.Sensitive, "[CountryCode] marks the facet for flags");
 
         var hits = await Admin.GetFromJsonAsync<GlobalSearchResult>("/api/v1/search?types=countries&q=germ", Ct);
         hits!.Hits.Single().Id.ShouldBe("DE");

@@ -29,7 +29,8 @@ The layout is split so you can replace a part instead of the whole:
 | `CoworkeeNavLink` | a single menu entry |
 | `CoworkeeUserMenu` | user menu |
 | `NotificationBell` | notifications |
-| `ThemeMenu` | theme quick switch |
+| `ThemeMenu` | theme quick switch with color swatches and the color mode |
+| `LanguageMenu` | language switch with flags |
 | `AboutDialog` | about dialog |
 
 Pages work the same way: replace `Profile` with your own profile page and every link to it opens yours.

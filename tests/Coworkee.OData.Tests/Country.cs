@@ -5,6 +5,8 @@ namespace Coworkee.OData.Tests;
 /// <summary>A set keyed by a text, not by a Guid Id.</summary>
 public sealed class Country
 {
+    [ProvideFacet(Label = "Country")]
+    [Coworkee.Contracts.Data.CountryCode]
     public required string IsoCode { get; set; }
 
     public required string Name { get; set; }

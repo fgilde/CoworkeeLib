@@ -132,6 +132,42 @@ Keys are the facet keys: the property name in camel case (`orderDate`).
 
 **Ranges**: number facets with `FacetType.Range` and date facets get their smallest and largest value and a histogram whose buckets are options with their own filter, so client entities recount them locally. The chosen range is one value, `(Total ge 40 and Total le 100)`. Date presets stay relative: a saved view with *last 7 days* means the last 7 days whenever it opens.
 
+### Flags and other value displays
+
+`[CountryCode]` marks a property that holds a country (`"DE"`, `"DEU"`, `"Germany"`, `"Deutschland"`): its facet options, chosen-facet chips and table cells show the country's flag before the text. The flags ship with the library (flag-icons, MIT), no CDN involved.
+
+```csharp
+[ProvideFacet(Label = "Country")]
+[CountryCode]                         // = [FacetDisplay("country")]
+public string CountryIsoAlpha2Code { get; set; } = "";
+```
+
+The attribute also works on client DTOs: a `PropertyColumn` of a marked property renders through the display's renderer unless the page gives it a `CellTemplate`.
+
+Any other display is a name your app gives: mark the property with `[FacetDisplay("port")]` (the facet sends it to the client as `display`) and register a renderer for that name on the client:
+
+```csharp
+builder.Services.AddCoworkeeClient(baseAddress, o => o.ValueRenderers.Add(new PortRenderer()));
+
+public sealed class PortRenderer : IFacetValueRenderer
+{
+    public string Display => "port";
+
+    // Value: the option's value (or the cell's value), Label: what it reads as; chosen-facet chips pass only the label
+    public RenderFragment Render(FacetValueContext context) => builder =>
+    {
+        // a UN/LOCODE label such as "DEHAM Hamburg" starts with the country
+        if (CountryCodes.Resolve(context.Label.Length >= 2 ? context.Label[..2] : null) is { } code)
+        {
+            builder.AddContent(0, FlagImages.Image(code, 14, "", "margin-inline-end:6px"));
+        }
+        builder.AddContent(1, context.Label);
+    };
+}
+```
+
+`ValueRenderers.Add("country", ...)` replaces the built-in flag renderer. On pages, `<CountryFlag Code="DE" Size="16" />` and `<LanguageFlag Culture="de-AT" />` show a single flag.
+
 ### Facets elsewhere
 
 The facet components work without the table, e.g. beside a chart or in a report:

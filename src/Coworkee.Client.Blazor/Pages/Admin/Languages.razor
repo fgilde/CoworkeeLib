@@ -24,6 +24,7 @@
         <MudExpansionPanel Expanded="open" ExpandedChanged="expanded => Toggle(group, expanded)" data-language="@group.Neutral.Name">
             <TitleContent>
                 <div class="d-flex align-center gap-3">
+                    <LanguageFlag Culture="@group.Neutral.Name" Size="18" Alt="" />
                     <MudText Typo="Typo.subtitle1">@Title(group.Neutral)</MudText>
                     <MudText Typo="Typo.caption" Class="mud-text-secondary">@group.Neutral.EnglishName</MudText>
                     @if (EnabledIn(group) is > 0 and var count)
@@ -40,9 +41,11 @@
                         {
                             var language = Find(culture);
                             <MudItem xs="12" md="6" lg="4">
-                                <MudPaper Outlined="true" Class="d-flex align-center pa-2 gap-1" data-culture="@culture.Name">
+                                <MudPaper Outlined="true" Class="d-flex align-center pa-2 gap-1" data-culture="@culture.Name"
+                                          Style="@(language?.IsEnabled == true ? "border-color:var(--mud-palette-primary)" : null)">
                                     <MudSwitch T="bool" Value="language?.IsEnabled == true" ValueChanged="on => SwitchAsync(culture, on)" Color="Color.Primary"
                                                Disabled="_busy is not null || language?.IsDefault == true" />
+                                    <LanguageFlag Culture="@culture.Name" Size="20" Alt="" Style="margin-inline-end:8px" />
                                     <div style="flex:1;min-width:0">
                                         <MudText Typo="Typo.body2" Style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">@Title(culture)</MudText>
                                         <MudText Typo="Typo.caption" Class="mud-text-secondary">@culture.Name</MudText>

@@ -56,6 +56,39 @@ public sealed class UserAppearanceTests : ClientTestBase
     }
 
     [Fact]
+    public async Task Theme_cards_preview_the_app_bar_surface_and_text_of_the_theme()
+    {
+        AddAuthorization().SetAuthorized("Ada");
+        var page = Render<UserSettings>();
+
+        var ocean = page.WaitForElement("[data-theme='Ocean']");
+
+        ocean.QuerySelector(".cw-theme-preview-bar")!.GetAttribute("style")!.ShouldContain("#123456");
+        ocean.QuerySelector(".cw-theme-preview-surface").ShouldNotBeNull();
+        ocean.QuerySelector(".cw-theme-preview-text").ShouldNotBeNull();
+        await page.Find("[data-mode='dark']").ClickAsync(new());
+        page.Find("[data-theme='Ocean'] .cw-theme-preview-bar").GetAttribute("style")!.ShouldContain("#654321", Case.Insensitive, "dark mode previews the dark palette");
+    }
+
+    [Fact]
+    public async Task The_theme_menu_shows_swatches_and_switches_the_mode_in_place()
+    {
+        AddAuthorization().SetAuthorized("Ada");
+        var popovers = Render<MudBlazor.MudPopoverProvider>();
+        var menu = Render<ThemeMenu>();
+
+        await menu.WaitForElement("[data-testid='theme-menu'] button").ClickAsync(new());
+        var ocean = popovers.WaitForElement("[data-theme='Ocean']");
+        ocean.QuerySelectorAll(".cw-theme-dot").Select(d => d.GetAttribute("style")).ShouldContain(s => s!.Contains("#123456"));
+        await popovers.Find("[data-testid='theme-modes'] [data-mode='dark']").ClickAsync(new());
+
+        Services.GetRequiredService<ThemeService>().Mode.ShouldBe("dark");
+        await Api.Received(1).SetSettingsAsync(SettingScope.User,
+            Arg.Is<IReadOnlyDictionary<string, string?>>(v => v[ThemeSettings.Mode] == "dark"), Arg.Any<CancellationToken>());
+        popovers.Find("[data-testid='theme-modes'] [data-mode='dark']").GetAttribute("aria-pressed").ShouldBe("true");
+    }
+
+    [Fact]
     public async Task The_organisation_default_clears_the_users_choice()
     {
         AddAuthorization().SetAuthorized("Ada");
