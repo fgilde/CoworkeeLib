@@ -100,7 +100,7 @@ public partial class MailBodyEditor : IAsyncDisposable
         {
             _seen = Value;
             _touched = false;
-            _html = MailMentionHtml.ToMentions(Value, _known);
+            _html = MailMentionHtml.ToMentions(Value, _known, Localize);
             if (_mode == EditorMode.Visual && !VisualAllowed)
             {
                 _mode = EditorMode.Source;
@@ -124,7 +124,7 @@ public partial class MailBodyEditor : IAsyncDisposable
         }
         else
         {
-            await _visual.InsertHtmlAsync(MailMentionHtml.ToMentions(snippet, _known));
+            await _visual.InsertHtmlAsync(MailMentionHtml.ToMentions(snippet, _known, Localize));
         }
     }
 
@@ -152,7 +152,7 @@ public partial class MailBodyEditor : IAsyncDisposable
                 return Task.CompletedTask;
             }
 
-            _html = MailMentionHtml.ToMentions(Value, _known);
+            _html = MailMentionHtml.ToMentions(Value, _known, Localize);
             _touched = false;
         }
 
@@ -173,6 +173,8 @@ public partial class MailBodyEditor : IAsyncDisposable
     }
 
     private void Touch() => _touched = true;
+
+    private string Localize(string key) => L[key];
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
