@@ -196,6 +196,8 @@ public sealed class FileTokenTests(FilesApp app) : IAsyncLifetime
         // Microsoft.AspNetCore.Hosting.Diagnostics: "Request starting ... /hubs/realtime?access_token=..."
         app.Logs.Lines.ShouldContain(line => line.Contains("/hubs/realtime?access_token=***&id_token_hint=***&page=2&code=***&refresh_token=***"));
         app.Logs.Lines.ShouldNotContain(line => line.Contains("s3cr3t"));
+        // the server's request activity may stop just after the client got the response
+        SpinWait.SpinUntil(() => !tags.IsEmpty, TimeSpan.FromSeconds(5));
         tags.ShouldContain(t => t.Contains("access_token=***&id_token_hint=***&page=2"));
         tags.ShouldNotContain(t => t.Contains("s3cr3t"));
         SecretPaths.Redact("https://auth/connect/logout?id_token_hint=eyJ.x.y&post_logout_redirect_uri=https://app").ShouldBe("https://auth/connect/logout?id_token_hint=***&post_logout_redirect_uri=https://app");
