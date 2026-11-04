@@ -63,6 +63,19 @@ public sealed partial class DataTableGroupTests : ClientTestBase
     }
 
     [Fact]
+    public void The_pager_of_a_group_sits_left()
+    {
+        var table = Grouped(DataTablePageMode.Pager, nameof(Row.Kind));
+        table.WaitForAssertion(() => Heads(table).Count.ShouldBe(3));
+
+        ClickHead(table, 1);
+
+        // the stylesheet hides the spacer that pushes MudBlazor's pager to the right
+        table.WaitForAssertion(() => table.Find("[data-testid='group-rows'] .cw-group-pager .mud-table-pagination-spacer"));
+        table.Markup.ShouldContain(".cw-group-pager .mud-table-pagination-spacer { display: none; }");
+    }
+
+    [Fact]
     public void Opening_a_group_of_an_endless_table_scrolls_its_rows()
     {
         var table = Grouped(DataTablePageMode.EndlessScroll, nameof(Row.Kind));
