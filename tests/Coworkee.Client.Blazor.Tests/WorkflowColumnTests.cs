@@ -30,7 +30,8 @@ public sealed class WorkflowColumnTests : ClientTestBase
     public WorkflowColumnTests()
     {
         _odata.With("Tickets", First, Second).WithFacets(States);
-        _odata.Queried += (_, query) => _queries.Add(query);
+        // the rows' queries; the facets come in requests of their own, after the rows
+        _odata.Queried += (_, query) => { if (!query.Facets) { _queries.Add(query); } };
         var api = Substitute.For<IWorkflowApi>();
         api.GetStatesAsync("Tickets", Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>()).Returns(
             [new WorkflowStatusDto("Tickets", First.Id, "Review", [], null, []), new WorkflowStatusDto("Tickets", Second.Id, "Open", [], null, [])]);

@@ -21,6 +21,11 @@ internal sealed class ODataClient(HttpClient http) : IODataClient
             {
                 request.Headers.Add(FacetContextDto.Header, context.Encode());
             }
+
+            if (query.FacetsOfAllRows)
+            {
+                request.Headers.Add(FacetGroupDto.AllRowsHeader, "true");
+            }
         }
 
         using var response = await http.SendAsync(request, cancellationToken);

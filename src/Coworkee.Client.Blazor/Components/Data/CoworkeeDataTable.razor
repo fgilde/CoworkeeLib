@@ -58,6 +58,13 @@
     {
         <FacetBar Groups="_facets" Selection="_selection" Views="_facetViews" ViewsChanged="FacetViewsChanged" />
     }
+    @if (Facets && _facets.FirstOrDefault(g => g.SampleRows is not null) is { SampleRows: { } sampleRows, TotalRows: var totalRows })
+    {
+        @* the server counted the filters on the first rows of a large set (ODataEntityOptions.MaxFacetRows) *@
+        <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mb-2 w-100" data-testid="facets-sampled">
+            @L["Filter counts from the first {0:N0} of {1:N0} rows; filter further for exact counts.", sampleRows, totalRows ?? 0]
+        </MudText>
+    }
     @if (ShowAdvanced)
     {
         <button type="button" class="@($"cw-facet-pill cw-advanced-pill mb-2 {(HasAdvanced ? "active" : string.Empty)}")" aria-expanded="@_advancedOpen"

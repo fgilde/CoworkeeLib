@@ -110,6 +110,8 @@ A list that may reach the whole database can skip its facets above a size: with 
 { "Coworkee": { "OData": { "MaxFacetRows": 20000 } } }
 ```
 
+A set can have its own cap, and keeps its filters above it: `AddODataEntity<Shipment>("Shipments", permission, o => o.MaxFacetRows(20_000))` counts the facets of a larger filtered set on its first 20,000 rows (by key), marks every group with `SampleRows` and `TotalRows`, and `CoworkeeDataTable` shows "Filter counts from the first 20,000 of 210,000 rows". A local copy of the set (client entities) asks for the facets of all its rows instead, as it counts on all of them; the server grants that within `FacetRowLimit`.
+
 ![Brand facet with counts](../assets/screenshots/products.png){ .shot }
 
 ## Row level rules

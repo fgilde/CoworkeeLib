@@ -21,7 +21,7 @@ public static class ODataServiceCollectionExtensions
     {
         var options = new ODataEntityOptions<TEntity>();
         configure(options);
-        services.Registry().Add(new ODataEntityRegistration(typeof(TEntity), entitySet, permission, options.Hidden) { ProtectedProperties = options.Protected, Key = options.KeyName ?? "Id", MaxNodeCount = options.NodeLimit });
+        services.Registry().Add(new ODataEntityRegistration(typeof(TEntity), entitySet, permission, options.Hidden) { ProtectedProperties = options.Protected, Key = options.KeyName ?? "Id", MaxNodeCount = options.NodeLimit, MaxFacetRows = options.FacetRows });
         return services;
     }
 

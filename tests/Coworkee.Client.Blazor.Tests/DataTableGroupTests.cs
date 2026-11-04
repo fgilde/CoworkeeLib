@@ -125,6 +125,30 @@ public sealed partial class DataTableGroupTests : ClientTestBase
     }
 
     [Fact]
+    public void A_group_opened_again_after_another_filter_shows_no_rows_of_the_filter_before()
+    {
+        var table = Grouped(DataTablePageMode.Pager, nameof(Row.Kind));
+        table.WaitForAssertion(() => Heads(table).Count.ShouldBe(3));
+        table.FindAll("[data-testid='group-head']")[2].Click();
+        table.WaitForAssertion(() => table.Find("[data-testid='group-rows']").TextContent.ShouldContain("Row 451"));
+        table.FindAll("[data-testid='group-head']")[2].Click();
+        table.WaitForAssertion(() => table.FindAll("[data-testid='group-rows']").ShouldBeEmpty());
+
+        table.Render(p => p.Add(t => t.Filter, "Name ne 'none' and Even eq true"));
+        table.WaitForAssertion(() => Heads(table).ShouldContain("Kind: Gamma 25"));
+        var gate = _odata.Hold();
+        // the heads render again while the groups reload
+        table.WaitForAssertion(() => table.FindAll("[data-testid='group-head']").Single(h => h.TextContent.Contains("Gamma")).Click());
+
+        // the rows of the filter before (odd ones) do not show while the group loads
+        table.WaitForAssertion(() => table.Find("[data-testid='group-rows-loading']"));
+        table.Markup.ShouldNotContain("Row 451");
+        gate.SetResult();
+        table.WaitForAssertion(() => table.Find("[data-testid='group-rows']").TextContent.ShouldContain("Row 450"));
+        table.Markup.ShouldNotContain("Row 451");
+    }
+
+    [Fact]
     public void Open_groups_stay_open_when_the_table_reloads()
     {
         var table = Grouped(DataTablePageMode.Pager, nameof(Row.Kind));

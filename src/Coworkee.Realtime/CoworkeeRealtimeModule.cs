@@ -31,6 +31,7 @@ public sealed class CoworkeeRealtimeModule : CoworkeeModule, IWebModule
             }
         }
 
+        services.AddSingleton<Application.Authorization.IPermissionDefinitionContributor, RealtimePermissionDefinitions>();
         services.AddSingleton<IRealtimePublisher, RealtimePublisher>();
         services.AddSingleton<RealtimeConnections>();
         services.AddSystemStatus<RealtimeStatus>().AddSystemStatus<CacheStatus>();
@@ -49,7 +50,8 @@ public sealed class CoworkeeRealtimeModule : CoworkeeModule, IWebModule
     {
         // SignalR's browser client negotiates with credentials
         app.MapHub<RealtimeHub>(RealtimeHubMethods.Path).RequireCors(CoworkeeCors.WithCredentials);
-        app.MapCoworkeeApi("/api/v1/realtime").WithTags("Realtime").RequireAuthorization()
-            .MapGet("/presence", async (RealtimePresence presence, ICurrentUser user) => TypedResults.Ok(await presence.OnlineAsync(user.TenantId)));
+        var api = app.MapCoworkeeApi("/api/v1/realtime").WithTags("Realtime").RequireAuthorization();
+        api.MapGet("/presence", async (RealtimePresence presence, ICurrentUser user) => TypedResults.Ok(await presence.OnlineAsync(user.TenantId)));
+        Watch.RealtimeWatchEndpoints.Map(api);
     }
 }

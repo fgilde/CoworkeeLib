@@ -73,6 +73,8 @@ public partial class CoworkeeDataTable<T>
         {
             try
             {
+                // the rows render first (a local copy counts synchronously on the UI thread)
+                await Task.Delay(1, cancel.Token);
                 var page = await QueryAsync(new ODataQuery { Filter = filter, Top = 0, Count = false, Facets = true, FacetContext = context }, cancel.Token);
                 if (!cancel.IsCancellationRequested)
                 {

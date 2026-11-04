@@ -123,6 +123,25 @@ public sealed class ClientEntitySetTests
     }
 
     [Fact]
+    public async Task The_copy_asks_for_the_facets_of_all_its_rows_and_its_counts_are_no_sample()
+    {
+        _server.Facets =
+        [
+            new FacetGroupDto("category", "Category", "Category", FacetKind.CheckboxList, FacetOperator.Or,
+                [new FacetOptionDto(JsonSerializer.SerializeToElement("Tools"), "Tools", true, 2, "Category eq 'Tools'")], true, 0)
+            { SampleRows = 2, TotalRows = 5 },
+        ];
+        await using var set = _server.Set();
+        await set.RefreshAsync(Ct);
+
+        var page = await set.QueryAsync(new ODataQuery { Facets = true }, Ct);
+
+        _server.Queries.Where(q => q.Facets).ShouldAllBe(q => q.FacetsOfAllRows);
+        page.Facets.ShouldAllBe(g => g.SampleRows == null && g.TotalRows == null);
+        page.Facets[0].Options.Single().Count.ShouldBe(_server.Rows.Count(r => r.Category == "Tools"), "every local row is counted");
+    }
+
+    [Fact]
     public async Task Updates_apply_changed_and_deleted_rows_since_the_version()
     {
         await using var set = _server.Set();

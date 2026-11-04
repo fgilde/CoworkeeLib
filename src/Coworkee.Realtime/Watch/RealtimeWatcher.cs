@@ -42,10 +42,10 @@ internal sealed partial class RealtimeWatcher(
     internal async Task LookAsync(RealtimeWatches.State state, CancellationToken cancellationToken)
     {
         var name = state.Watch.EntityType.Name;
-        var following = connections.Following(name);
+        var following = state.Enabled ? connections.Following(name) : [];
         if (following.Count == 0)
         {
-            // nobody looks: nothing is read, and the next follower starts from the newest rows then (within a second, not an interval)
+            // nobody looks (or the watch is switched off): nothing is read, and the next look starts from the newest rows then (within a second, not an interval)
             state.Watermark = null;
             state.Due = _clock.GetUtcNow() + (state.Watch.Interval < Idle ? state.Watch.Interval : Idle);
             return;

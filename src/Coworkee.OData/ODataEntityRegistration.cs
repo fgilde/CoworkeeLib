@@ -11,6 +11,9 @@ public sealed record ODataEntityRegistration(Type EntityType, string EntitySet, 
     /// <summary>The node limit of the set's queries (<see cref="ODataEntityOptions{TEntity}.MaxNodeCount"/>); null: <c>Coworkee:OData:MaxNodeCount</c>.</summary>
     public int? MaxNodeCount { get; init; }
 
+    /// <summary>The facet cap of the set (<see cref="ODataEntityOptions{TEntity}.MaxFacetRows"/>), above which its facets count a sample; null: <c>Coworkee:OData:MaxFacetRows</c>.</summary>
+    public int? MaxFacetRows { get; init; }
+
     internal bool HasGuidId => Key == "Id" && EntityType.GetProperty("Id")?.PropertyType == typeof(Guid);
 
     internal Type KeyType => EntityType.GetProperty(Key)?.PropertyType ?? throw new InvalidOperationException($"{EntityType.Name} needs a {Key} property as the key of its OData set.");

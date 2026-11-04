@@ -100,6 +100,56 @@ public sealed class RealtimeWatchTests(RealtimeApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_watch_switched_off_reads_nothing_until_it_is_switched_on_again()
+    {
+        var admin = app.App.GetTestClient().AsUser(_setup.AdminUserId, _setup.TenantId);
+        await using var listener = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
+        await listener.SubscribeAsync("type:Parcel");
+        await WatchedAsync();
+        try
+        {
+            (await admin.PutAsJsonAsync("/api/v1/realtime/watches/Parcel", new SetRealtimeWatchRequest(false), Ct)).StatusCode.ShouldBe(System.Net.HttpStatusCode.NoContent);
+            (await admin.GetFromJsonAsync<RealtimeWatchDto[]>("/api/v1/realtime/watches", Ct))!.ShouldContain(w => w.EntityType == nameof(Parcel) && !w.Enabled);
+            var polls = Watches.Polls(typeof(Parcel));
+
+            var off = await WriteAsync(new Parcel { Code = "Off", CreatedUtc = DateTimeOffset.UtcNow });
+            await Task.Delay(1000, Ct);
+
+            Watches.Polls(typeof(Parcel)).ShouldBe(polls);
+            listener.Events.ShouldNotContain(e => e.Topic == "type:Parcel");
+
+            (await admin.PutAsJsonAsync("/api/v1/realtime/watches/Parcel", new SetRealtimeWatchRequest(true), Ct)).EnsureSuccessStatusCode();
+            await WatchedAsync();
+            var on = await WriteAsync(new Parcel { Code = "On", CreatedUtc = DateTimeOffset.UtcNow });
+
+            // switched on again it starts from the newest rows, like a first follower: what was written while it was off is not sent
+            (await listener.NextAsync(e => e.Topic == "type:Parcel")).Payload.GetProperty("entityId").GetString().ShouldBe(on.ToString());
+            listener.Events.ShouldNotContain(e => e.Topic == "type:Parcel" && e.Payload.GetProperty("entityId").GetString() == off.ToString());
+        }
+        finally
+        {
+            await admin.PutAsJsonAsync("/api/v1/realtime/watches/Parcel", new SetRealtimeWatchRequest(true), Ct);
+        }
+    }
+
+    [Fact]
+    public async Task Switching_a_watch_needs_the_permission_to_manage_watches()
+    {
+        var admin = app.App.GetTestClient().AsUser(_setup.AdminUserId, _setup.TenantId);
+        var bob = (await (await admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest("carol@acme.test", "Passw0rd!x", null, null), Ct))
+            .Content.ReadFromJsonAsync<UserDto>(Ct))!;
+        var readers = (await (await admin.PostAsJsonAsync("/api/v1/identity/roles", new RoleRequest("Parcel readers", null), Ct)).Content.ReadFromJsonAsync<Guid>(Ct))!;
+        (await admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{readers}", new NameListRequest([Ticket.ViewPermission]), Ct)).EnsureSuccessStatusCode();
+        (await admin.PutAsJsonAsync($"/api/v1/identity/users/{bob.Id}/roles", new IdListRequest([readers]), Ct)).EnsureSuccessStatusCode();
+        var asBob = app.App.GetTestClient().AsUser(bob.Id, _setup.TenantId);
+
+        // who may follow the set sees whether it is watched, but may not switch it
+        (await asBob.GetFromJsonAsync<RealtimeWatchDto[]>("/api/v1/realtime/watches", Ct))!.ShouldContain(w => w.EntityType == nameof(Parcel) && !w.CanManage);
+        (await asBob.PutAsJsonAsync("/api/v1/realtime/watches/Parcel", new SetRealtimeWatchRequest(false), Ct)).StatusCode.ShouldBe(System.Net.HttpStatusCode.Forbidden);
+        (await admin.GetFromJsonAsync<RealtimeWatchDto[]>("/api/v1/realtime/watches", Ct))!.ShouldContain(w => w.EntityType == nameof(Parcel) && w.Enabled && w.CanManage);
+    }
+
+    [Fact]
     public async Task Following_a_watched_set_needs_its_view_permission()
     {
         var admin = app.App.GetTestClient().AsUser(_setup.AdminUserId, _setup.TenantId);

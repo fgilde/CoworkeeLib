@@ -110,6 +110,8 @@ Eine Liste, die die ganze Datenbank erreichen kann, kann ihre Facetten ab einer 
 { "Coworkee": { "OData": { "MaxFacetRows": 20000 } } }
 ```
 
+Ein Set kann eine eigene Grenze haben und behält darüber seine Filter: `AddODataEntity<Shipment>("Shipments", permission, o => o.MaxFacetRows(20_000))` zählt die Facetten eines größeren gefilterten Sets über seine ersten 20.000 Zeilen (nach Schlüssel), markiert jede Gruppe mit `SampleRows` und `TotalRows`, und `CoworkeeDataTable` zeigt „Filterzahlen aus den ersten 20.000 von 210.000 Zeilen“. Eine lokale Kopie des Sets (Client-Entities) fordert stattdessen die Facetten aller ihrer Zeilen an, weil sie über alle zählt; der Server gewährt das innerhalb von `FacetRowLimit`.
+
 ![Marken-Facette mit Anzahlen](../assets/screenshots/products.png){ .shot }
 
 ## Regeln pro Zeile

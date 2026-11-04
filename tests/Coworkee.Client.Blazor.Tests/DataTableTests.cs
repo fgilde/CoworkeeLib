@@ -281,6 +281,42 @@ public sealed class DataTableTests : ClientTestBase
         odata.Queries.Last(q => q.Facets).Filter.ShouldBe("contains(tolower(Name),'dri')");
     }
 
+    [Fact]
+    public void Facets_counted_on_a_sample_say_how_many_rows_they_counted()
+    {
+        var odata = new FakeODataClient().With("Gadgets", new Gadget(Guid.CreateVersion7(), "Drill", "Tools"))
+            .WithFacets(Category with { SampleRows = 20_000, TotalRows = 210_000 });
+        Services.AddSingleton<IODataClient>(odata);
+        var table = Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.Columns, Columns()));
+
+        table.WaitForAssertion(() => table.Find("[data-testid='facets-sampled']").TextContent.ShouldContain("20,000"));
+        table.Find("[data-testid='facets-sampled']").TextContent.ShouldContain("210,000");
+    }
+
+    [Fact]
+    public void Facets_of_every_row_show_no_sample_hint()
+    {
+        Services.AddSingleton<IODataClient>(new FakeODataClient().With("Gadgets", new Gadget(Guid.CreateVersion7(), "Drill", "Tools")).WithFacets(Category));
+        var table = Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.Columns, Columns()));
+
+        table.WaitForAssertion(() => table.Find("[data-facet='category']"));
+        table.FindAll("[data-testid='facets-sampled']").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void A_source_that_answers_at_once_counts_the_facets_after_the_rows()
+    {
+        // a local copy answers synchronously: counting its facets first would keep the last page on the screen until done
+        var odata = new GatedOData();
+        odata.Facets.SetResult();
+        Services.AddSingleton<IODataClient>(odata);
+        var table = Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.Columns, Columns()));
+
+        table.WaitForAssertion(() => table.Find("[data-facet='category']"));
+        var queries = odata.Queries.ToList();
+        queries.FindIndex(q => !q.Facets).ShouldBeLessThan(queries.FindIndex(q => q.Facets));
+    }
+
     private sealed class FakeOData : IODataClient
     {
         public string? LastSet { get; private set; }

@@ -29,6 +29,32 @@ public abstract class ClientEntitySet : IAsyncDisposable
     /// <summary>Asks the server for changes now instead of at the next interval.</summary>
     public abstract Task RefreshAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// The copy asks the server nothing (no download, no changes) and answers from what it has; a download stops after its round. Until
+    /// <see cref="ResumeSync"/> or the page is loaded again.
+    /// </summary>
+    public bool SyncPaused { get; private set; }
+
+    public void PauseSync()
+    {
+        if (!SyncPaused)
+        {
+            SyncPaused = true;
+            Changed?.Invoke(this);
+        }
+    }
+
+    /// <summary>Syncs again: catches up at once (a download goes on where it stopped), then at the intervals and on changes.</summary>
+    public void ResumeSync()
+    {
+        if (SyncPaused)
+        {
+            SyncPaused = false;
+            Changed?.Invoke(this);
+            _ = RefreshAsync();
+        }
+    }
+
     /// <summary>Runs <paramref name="query"/> on one side, whatever the mode, and tells how long it took and how many rows matched; the local side needs the complete copy.</summary>
     public abstract Task<(TimeSpan Elapsed, long? Count)> MeasureAsync(ODataQuery query, ClientEntityMode side, CancellationToken cancellationToken = default);
 

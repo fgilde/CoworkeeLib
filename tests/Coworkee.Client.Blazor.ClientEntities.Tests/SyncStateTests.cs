@@ -64,6 +64,61 @@ public sealed class SyncStateTests
     }
 
     [Fact]
+    public async Task A_paused_copy_asks_the_server_nothing_answers_from_what_it_has_and_catches_up_when_resumed()
+    {
+        await using var set = _server.Set();
+        await set.RefreshAsync(Ct);
+        set.PauseSync();
+        _server.Rows.Add(new Gadget(Guid.NewGuid(), "New", "Tools", 9));
+        _server.Queries.Clear();
+        _server.ChangeRequests.Clear();
+
+        await set.RefreshAsync(Ct);
+
+        set.SyncPaused.ShouldBeTrue();
+        _server.Queries.ShouldBeEmpty();
+        _server.ChangeRequests.ShouldBeEmpty();
+        (await set.QueryAsync(new ODataQuery { Top = 10 }, Ct)).Items.Count.ShouldBe(5);
+
+        set.ResumeSync();
+
+        await WaitAsync(() => set.Items.Count == 6);
+        set.SyncPaused.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task A_download_paused_stops_after_its_round_and_goes_on_from_there_when_resumed()
+    {
+        var gate = new TaskCompletionSource();
+        _server.RowsGate = gate.Task;
+        await using var set = _server.Set();
+        var refresh = set.RefreshAsync(Ct);
+
+        set.PauseSync();
+        gate.SetResult();
+        await refresh;
+
+        Downloads.Select(q => q.Filter).ShouldBe([null]);
+        set.Status.ShouldSatisfyAllConditions(s => s.Loaded.ShouldBe(2), s => s.IsLocal.ShouldBeFalse());
+
+        set.ResumeSync();
+
+        await set.WhenLocalAsync(Ct);
+        Downloads.Select(q => q.Filter).ShouldBe([null, $"Id gt {Ids[1]}", $"Id gt {Ids[3]}"]);
+        set.Items.Count.ShouldBe(5);
+    }
+
+    private static async Task WaitAsync(Func<bool> done)
+    {
+        for (var i = 0; i < 100 && !done(); i++)
+        {
+            await Task.Delay(50, Ct);
+        }
+
+        done().ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task A_failed_download_goes_on_in_the_same_visit()
     {
         _server.ParallelPages = 1;

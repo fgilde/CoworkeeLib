@@ -415,8 +415,12 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
         _orderBy = OrderBy(state.SortDefinitions);
         var filter = CurrentFilter;
-        LoadFacets(filter, Facets ? _selection.Context(BaseFilter, _facets) : null);
+        var context = Facets ? _selection.Context(BaseFilter, _facets) : null;
         var page = await QueryAsync(new ODataQuery { Filter = filter, OrderBy = _orderBy, Expand = Expand, Top = state.PageSize, Skip = state.Page * state.PageSize }, cancellationToken);
+        // a newer load (another page, filter or reload) took over: its rows are the ones to show
+        cancellationToken.ThrowIfCancellationRequested();
+        // after the rows: a local copy answers synchronously, counting first would keep the last page on the screen
+        LoadFacets(filter, context);
         await OnLoaded.InvokeAsync(page.Items);
         return new GridData<T> { Items = page.Items, TotalItems = (int)(page.Count ?? page.Items.Count) };
     }

@@ -76,6 +76,12 @@ public sealed class ODataApp : DatabaseFixture
         builder.Configuration["Coworkee:Jobs:RunServer"] = "false";
         builder.Configuration["Coworkee:OData:BackgroundExportRows"] = "5";
         builder.Configuration["Coworkee:Database:Provider"] = Provider;
+        // before the modules: they read some settings while they register (Test:PumpFacetRows)
+        foreach (var (key, value) in settings ?? new Dictionary<string, string>())
+        {
+            builder.Configuration[key] = value;
+        }
+
         builder.AddCoworkee<GadgetModule>();
         builder.Services.AddTestAuthentication();
         builder.Logging.AddProvider(Logs);
@@ -86,11 +92,6 @@ public sealed class ODataApp : DatabaseFixture
         builder.Services.AddScoped<Transfer.IExportMailer>(provider => new QueueingExportMailer(Mails, provider));
         builder.Services.AddSingleton<FakeGroupScope>();
         builder.Services.AddSingleton<Coworkee.Application.Groups.IGroupScope>(provider => provider.GetRequiredService<FakeGroupScope>());
-        foreach (var (key, value) in settings ?? new Dictionary<string, string>())
-        {
-            builder.Configuration[key] = value;
-        }
-
         return builder.Build();
     }
 
@@ -265,7 +266,14 @@ public sealed class GadgetModule : CoworkeeModule
         // a set whose clients send long filters: its own node limit (QueryLimitTests)
         context.Services.AddODataEntity<Widget>("Widgets", ODataApp.ViewGadgets, o => o.MaxNodeCount(1000));
         context.Services.ConfigureFacet<Widget>(w => w.Color, f => f.View = Contracts.Data.FacetView.Buttons);
-        context.Services.AddODataEntity<Pump>("Pumps", ODataApp.ViewGadgets);
+        // a test sets the facet cap of the set itself (ODataEntityOptions.MaxFacetRows)
+        context.Services.AddODataEntity<Pump>("Pumps", ODataApp.ViewGadgets, o =>
+        {
+            if (context.Configuration["Test:PumpFacetRows"] is { } rows)
+            {
+                o.MaxFacetRows(int.Parse(rows, System.Globalization.CultureInfo.InvariantCulture));
+            }
+        });
         context.Services.AddSingleton<Coworkee.OData.Computed.IODataComputedPropertySource, PumpSize>();
         context.Services.AddMessagingFromAssembly(typeof(GadgetModule).Assembly);
         context.Services.AddODataImport<AddGadgetCommand>("Gadgets");

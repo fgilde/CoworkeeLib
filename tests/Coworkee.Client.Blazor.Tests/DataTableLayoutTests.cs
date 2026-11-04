@@ -22,7 +22,8 @@ public sealed class DataTableLayoutTests : ClientTestBase
     {
         _odata.With("Gadgets", new Gadget(Guid.CreateVersion7(), "Drill", "Tools", 3), new Gadget(Guid.CreateVersion7(), "Lamp", "Light", 1),
             new Gadget(Guid.CreateVersion7(), "Saw", "Tools", 2));
-        _odata.Queried += (_, query) => _queries.Add(query);
+        // the rows' queries; the facets come in requests of their own, after the rows
+        _odata.Queried += (_, query) => { if (!query.Facets) { _queries.Add(query); } };
         Services.AddSingleton<IODataClient>(_odata);
         AddAuthorization().SetAuthorized("Ada");
         _popovers = Render<MudPopoverProvider>();

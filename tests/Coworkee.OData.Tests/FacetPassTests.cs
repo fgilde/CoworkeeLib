@@ -106,6 +106,35 @@ public sealed class FacetPassTests(ODataApp app) : IAsyncLifetime
         Shape(await FacetsAsync(capped, "Pumps", "Active eq true")).ShouldBe(Shape(await FacetsAsync(app.App, "Pumps", "Active eq true")), "four rows are not");
     }
 
+    [Fact]
+    public async Task A_set_above_its_own_facet_cap_counts_its_facets_on_its_first_rows_and_says_so()
+    {
+        // the set's cap goes before the global one (which would leave out the facets)
+        await using var capped = await app.StartAnotherAsync(new Dictionary<string, string> { ["Coworkee:OData:MaxFacetRows"] = "2", ["Test:PumpFacetRows"] = "4" });
+
+        var sampled = await FacetsAsync(capped, "Pumps", null);
+
+        sampled.ShouldNotBeEmpty("five rows are more than four: the facets count four of them");
+        sampled.ShouldAllBe(g => g.SampleRows == 4 && g.TotalRows == 5);
+        sampled.Single(g => g.Key == "kind").Options.Sum(o => o.Count).ShouldBeLessThanOrEqualTo(4);
+        var all = await FacetsAsync(capped, "Pumps", "Active eq true");
+        all.ShouldAllBe(g => g.SampleRows == null && g.TotalRows == null, "four rows are not above the cap");
+        Shape(all).ShouldBe(Shape(await FacetsAsync(app.App, "Pumps", "Active eq true")));
+    }
+
+    [Fact]
+    public async Task A_local_copy_gets_the_facets_of_all_rows_of_a_capped_set_within_the_facet_row_limit()
+    {
+        await using var capped = await app.StartAnotherAsync(new Dictionary<string, string> { ["Test:PumpFacetRows"] = "4" });
+        await using var bounded = await app.StartAnotherAsync(new Dictionary<string, string> { ["Test:PumpFacetRows"] = "4", ["Coworkee:OData:FacetRowLimit"] = "4" });
+
+        // the copy counts on all its rows: it needs every value, not those of a sample
+        (await FacetsAsync(capped, "Pumps", null, allRows: true)).ShouldAllBe(g => g.SampleRows == null);
+        Shape(await FacetsAsync(capped, "Pumps", null, allRows: true)).ShouldBe(Shape(await FacetsAsync(app.App, "Pumps", null)));
+        // beyond the rows read in memory the cap holds, whoever asks
+        (await FacetsAsync(bounded, "Pumps", null, allRows: true)).ShouldAllBe(g => g.SampleRows == 4);
+    }
+
     // the statements a facet request runs on top of the same request without facets
     private async Task<int> FacetStatementsAsync(string set, WebApplication? on = null, string? filter = null)
     {
@@ -129,10 +158,14 @@ public sealed class FacetPassTests(ODataApp app) : IAsyncLifetime
         return await CountAsync(true) - rows;
     }
 
-    private async Task<List<FacetGroupDto>> FacetsAsync(WebApplication on, string set, string? filter, FacetContextDto? context = null)
+    private async Task<List<FacetGroupDto>> FacetsAsync(WebApplication on, string set, string? filter, FacetContextDto? context = null, bool allRows = false)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, $"/odata/{set}?$top=0" + (filter is null ? "" : "&$filter=" + Uri.EscapeDataString(filter)));
         request.Headers.Add("Prefer", "odata.include-annotations=\"cn.facets\"");
+        if (allRows)
+        {
+            request.Headers.Add(FacetGroupDto.AllRowsHeader, "true");
+        }
         if (context is not null)
         {
             request.Headers.Add(FacetContextDto.Header, context.Encode());

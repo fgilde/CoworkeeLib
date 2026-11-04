@@ -1,0 +1,8 @@
+@namespace Coworkee.Client.Blazor.Realtime
+
+@if (_watch is { CanManage: true } watch)
+{
+    <MudTooltip Text="@L["Changes another system makes show up here within {0} seconds.", (int)watch.Interval.TotalSeconds]">
+        <MudSwitch T="bool" Value="watch.Enabled" ValueChanged="SetAsync" Color="Color.Primary" Disabled="_saving" Label="@L["Live updates"]" data-testid="realtime-watch" />
+    </MudTooltip>
+}

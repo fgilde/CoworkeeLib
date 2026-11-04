@@ -17,7 +17,7 @@
             @* the open menu repeats the status in its header, so the tooltip would only cover the first item *@
             <MudTooltip Text="@Describe(set)" Disabled="@_menuOpen">
                 <button type="button" class="@($"cw-ce-switch {(SearchesLocally(set) ? "local" : "server")}")" aria-label="@L["Where searching runs: {0}", Describe(set)]"
-                        data-mode="@set.Mode" data-state="@State(set.Status)" data-testid="client-entity-state" @onclick="() => menu.ToggleAsync()">
+                        data-mode="@set.Mode" data-state="@State(set)" data-testid="client-entity-state" @onclick="() => menu.ToggleAsync()">
                     <MudProgressCircular Class="cw-ce-ring" Size="Size.Small" StrokeWidth="3" Color="@RingColor(set.Status)" Value="@RingValue(set.Status)"
                                          Indeterminate="@(set.Status.State == ClientEntitySyncState.Updating)" />
                     <MudIcon Class="cw-ce-icon" Icon="@(SearchesLocally(set) ? Icons.Material.Outlined.Computer : Icons.Material.Outlined.Cloud)" Size="Size.Small" />
@@ -47,6 +47,11 @@
             <MudDivider Class="my-1" />
             <MudMenuItem OnClick="CompareAsync" Disabled="@(!set.Status.IsLocal || _comparing)" data-testid="client-entity-compare">
                 <span class="cw-ce-item"><MudIcon Icon="@Icons.Material.Outlined.Speed" Size="Size.Small" />@L["Compare and choose the faster"]</span>
+            </MudMenuItem>
+            <MudMenuItem OnClick="TogglePause" data-testid="client-entity-pause">
+                <span class="cw-ce-item">
+                    <MudIcon Icon="@(set.SyncPaused ? Icons.Material.Outlined.PlayArrow : Icons.Material.Outlined.Pause)" Size="Size.Small" />@L[set.SyncPaused ? "Resume syncing" : "Pause syncing"]
+                </span>
             </MudMenuItem>
         </ChildContent>
     </MudMenu>

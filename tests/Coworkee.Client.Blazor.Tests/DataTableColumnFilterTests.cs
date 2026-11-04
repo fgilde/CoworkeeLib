@@ -24,7 +24,8 @@ public sealed class DataTableColumnFilterTests : ClientTestBase
     {
         _odata.With("Devices", new Device("Drill", "Tools", 30m, Kind.Power, new DateTime(2026, 3, 1)), new Device("Lamp", "Light", 12.5m, Kind.Hand, new DateTime(2026, 1, 5)))
             .WithFacets(Category);
-        _odata.Queried += (_, query) => _queries.Add(query);
+        // the rows' queries; the facets come in requests of their own, after the rows
+        _odata.Queried += (_, query) => { if (!query.Facets) { _queries.Add(query); } };
         Services.AddSingleton<IODataClient>(_odata);
         AddAuthorization().SetAuthorized("Ada");
         _popovers = Render<MudPopoverProvider>();

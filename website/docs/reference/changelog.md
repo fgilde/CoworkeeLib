@@ -2,6 +2,23 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- Live watches can be switched off and on at runtime: `GET /api/v1/realtime/watches`, `PUT /api/v1/realtime/watches/{entityType}` (permission `Realtime.Watches.Manage`) and the component `RealtimeWatchSwitch EntityType="…"` for a page above a watched list.
+- Client entities: the sync can be paused and resumed from the table's status menu (`ClientEntitySet.PauseSync`/`ResumeSync`); a paused download goes on where it stopped.
+- Facet cap per set: `AddODataEntity<T>(…, o => o.MaxFacetRows(20_000))`. Above it the facets are counted on the first rows by key instead of left out, marked `FacetGroupDto.SampleRows`/`TotalRows`, and the table says so. A local copy asks for the facets of all its rows (`X-Coworkee-Facets-All-Rows`, honoured within `FacetRowLimit`). The global `Coworkee:OData:MaxFacetRows` keeps leaving them out.
+
+### Changed
+
+- Tables query the rows before the facets: a local copy that answers at once no longer keeps the last page on the screen while it counts.
+- ASP.NET Core, EF Core and Microsoft.Extensions packages 10.0.14 (security fix of `Microsoft.AspNetCore.Components.WebAssembly.Server` 10.0.13). Apps: raise their 10.0.13 references too.
+
+### Fixed
+
+- A group opened again after the filter changed showed rows of the filter before.
+
 ## 0.0.1.61 (2026-11-03)
 
 ### Added

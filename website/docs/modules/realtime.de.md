@@ -70,6 +70,8 @@ services.AddRealtimeWatch<CalculatedShipment>(HubPermissions.Shipment.View, watc
 
 Nenne nur indizierte Datumsspalten: Ein Blick liest `a > @since OR b > @since`, eine Spalte ohne Index scannt also bei jedem Blick die ganze Tabelle (bei einer Hub-Tabelle mit 2,3 Millionen Zeilen eine Minute statt Millisekunden). Setzt das System das Änderungsdatum auch beim Anlegen, findet `ChangedAt` allein neue Zeilen; sie kommen dann als `Updated`. Der Beobachter liest als System (ohne Benutzer), mit einer Abfrage pro Intervall für alle Folgenden; solange niemand folgt, wird nichts gelesen. Zeilen eines `IMultiTenant`-Sets gehen an ihren eigenen Mandanten, andere an jeden Mandanten, der folgt. Mehr als `MaxEvents` (200) geänderte Zeilen in einem Blick senden ein Ereignis für das ganze Set. Jede Instanz beobachtet für ihre eigenen Verbindungen.
 
+Ein Beobachter lässt sich im laufenden Betrieb aus- und einschalten, etwa um zu sehen, was Live-Aktualisierung kostet: Benutzer mit `Realtime.Watches.Manage` bekommen über `<RealtimeWatchSwitch EntityType="CalculatedShipment" />` (über der Liste) einen Schalter, dahinter `GET /api/v1/realtime/watches` und `PUT /api/v1/realtime/watches/{entityType}`. Ausgeschaltet liest er nichts; eingeschaltet beginnt er bei den neuesten Zeilen. Der Schalter gilt pro Instanz bis zum Neustart.
+
 Private Daten brauchen mehr Sorgfalt: Entities, die nur manche Benutzer sehen dürfen, sollten das Typ-Thema nicht nutzen. Veröffentliche dann eigene Themen:
 
 ```csharp

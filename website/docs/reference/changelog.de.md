@@ -2,6 +2,23 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- Live-Beobachter lassen sich zur Laufzeit aus- und einschalten: `GET /api/v1/realtime/watches`, `PUT /api/v1/realtime/watches/{entityType}` (Berechtigung `Realtime.Watches.Manage`) und die Komponente `RealtimeWatchSwitch EntityType="…"` für eine Seite über einer beobachteten Liste.
+- Client-Entities: Die Synchronisierung lässt sich im Status-Menü der Tabelle pausieren und fortsetzen (`ClientEntitySet.PauseSync`/`ResumeSync`); ein pausierter Download macht dort weiter, wo er stand.
+- Facetten-Grenze pro Set: `AddODataEntity<T>(…, o => o.MaxFacetRows(20_000))`. Darüber werden die Facetten über die ersten Zeilen nach Schlüssel gezählt statt weggelassen, markiert mit `FacetGroupDto.SampleRows`/`TotalRows`, und die Tabelle sagt es. Eine lokale Kopie fordert die Facetten aller ihrer Zeilen an (`X-Coworkee-Facets-All-Rows`, gilt innerhalb von `FacetRowLimit`). Das globale `Coworkee:OData:MaxFacetRows` lässt sie weiter weg.
+
+### Geändert
+
+- Tabellen fragen die Zeilen vor den Facetten ab: Eine sofort antwortende lokale Kopie hält beim Zählen nicht mehr die letzte Seite auf dem Bildschirm.
+- ASP.NET Core, EF Core und Microsoft.Extensions-Pakete 10.0.14 (Sicherheitsupdate für `Microsoft.AspNetCore.Components.WebAssembly.Server` 10.0.13). Apps: ihre 10.0.13-Referenzen ebenfalls anheben.
+
+### Behoben
+
+- Eine nach einem Filterwechsel wieder geöffnete Gruppe zeigte Zeilen des alten Filters.
+
 ## 0.0.1.61 (2026-11-03)
 
 ### Hinzugefügt

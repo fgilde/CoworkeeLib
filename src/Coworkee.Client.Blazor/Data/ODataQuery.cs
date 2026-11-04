@@ -23,6 +23,9 @@ public sealed record ODataQuery
 
     public bool Facets { get; init; }
 
+    /// <summary>The facets of every row, also of a set above its facet cap (a local copy counts on all its rows); the server takes it within its facet row limit.</summary>
+    public bool FacetsOfAllRows { get; init; }
+
     /// <summary>The facet choice apart from the rest of the filter, so facet counts leave each group's own choice out.</summary>
     public Contracts.Data.FacetContextDto? FacetContext { get; init; }
 

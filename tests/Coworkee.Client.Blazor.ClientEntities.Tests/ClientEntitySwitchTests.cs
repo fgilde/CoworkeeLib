@@ -61,6 +61,24 @@ public sealed class ClientEntitySwitchTests : BunitContext
     }
 
     [Fact]
+    public async Task The_menu_pauses_and_resumes_the_sync()
+    {
+        var (control, popovers, set) = await LocalAsync();
+
+        await control.Find("[data-testid='client-entity-state']").ClickAsync(new());
+        await popovers.WaitForElement("[data-testid='client-entity-pause']").ClickAsync(new());
+
+        control.WaitForAssertion(() => set.SyncPaused.ShouldBeTrue());
+        control.WaitForAssertion(() => control.Find("[data-testid='client-entity-state']").GetAttribute("data-state").ShouldBe("paused"));
+
+        await control.Find("[data-testid='client-entity-state']").ClickAsync(new());
+        await popovers.WaitForElement("[data-testid='client-entity-pause']").ClickAsync(new());
+
+        control.WaitForAssertion(() => set.SyncPaused.ShouldBeFalse());
+        control.WaitForAssertion(() => control.Find("[data-testid='client-entity-state']").GetAttribute("data-state").ShouldBe("synced"));
+    }
+
+    [Fact]
     public async Task Choosing_the_server_sends_queries_there_and_is_remembered_for_the_user()
     {
         var (control, popovers, set) = await LocalAsync();

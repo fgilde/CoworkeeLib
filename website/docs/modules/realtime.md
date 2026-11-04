@@ -70,6 +70,8 @@ services.AddRealtimeWatch<CalculatedShipment>(HubPermissions.Shipment.View, watc
 
 Name only indexed date columns: a look reads `a > @since OR b > @since`, so one column without an index scans the whole table on every look (on a hub table of 2.3 million rows a minute instead of milliseconds). If the system sets the changed date on insert too, `ChangedAt` alone finds new rows; they then come as `Updated`. The watch reads as the system (no user), with one query per interval for all followers; nothing is read while nobody follows. Rows of an `IMultiTenant` set go to their own tenant, others to every tenant that follows. More than `MaxEvents` (200) changed rows in one look send one event for the whole set. Every instance watches for its own connections.
 
+A watch can be switched off and on while the app runs, e.g. to see what live updates cost: users with `Realtime.Watches.Manage` get a switch from `<RealtimeWatchSwitch EntityType="CalculatedShipment" />` (above the list), backed by `GET /api/v1/realtime/watches` and `PUT /api/v1/realtime/watches/{entityType}`. Switched off, it reads nothing; switched on, it starts from the newest rows. The switch holds per instance until a restart.
+
 Private data needs more care: entities only some users may see should not use the type topic. Publish your own topics instead:
 
 ```csharp

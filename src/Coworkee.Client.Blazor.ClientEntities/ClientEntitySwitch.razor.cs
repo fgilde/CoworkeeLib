@@ -77,6 +77,23 @@ public partial class ClientEntitySwitch : IDisposable
 
     private Task ChooseAsync(ClientEntityMode mode) => Entities!.SetModeAsync(Table.EntitySet, mode);
 
+    private void TogglePause()
+    {
+        if (_set is not { } set)
+        {
+            return;
+        }
+
+        if (set.SyncPaused)
+        {
+            set.ResumeSync();
+        }
+        else
+        {
+            set.PauseSync();
+        }
+    }
+
     // the same query on both sides, each round with a condition every row meets, so neither answers from a result it kept;
     // only sets keyed by a Guid Id are mirrored (ClientEntities.SetAsync, the sync's "Id in (...)"), so the condition fits every set that shows the switch
     private async Task CompareAsync()
@@ -132,13 +149,13 @@ public partial class ClientEntitySwitch : IDisposable
 
     private static bool SearchesLocally(ClientEntitySet set) => set.Mode == ClientEntityMode.Client && set.Status.IsLocal;
 
-    private static string State(ClientEntityStatus status) => status.State switch
+    private static string State(ClientEntitySet set) => set.SyncPaused ? "paused" : set.Status.State switch
     {
         ClientEntitySyncState.Downloading => "downloading",
         ClientEntitySyncState.Updating => "updating",
         ClientEntitySyncState.Failed => "failed",
         ClientEntitySyncState.TooLarge => "too-large",
-        _ => status.IsLocal ? "synced" : "idle",
+        _ => set.Status.IsLocal ? "synced" : "idle",
     };
 
     private static Color RingColor(ClientEntityStatus status) => status switch
@@ -158,6 +175,8 @@ public partial class ClientEntitySwitch : IDisposable
 
     private string Describe(ClientEntitySet set) => set.Status switch
     {
+        { IsLocal: true } status when set.SyncPaused => L["Syncing paused, searching locally in the copy of {0:t}", status.Version?.ToLocalTime()],
+        _ when set.SyncPaused => L["Syncing paused, searching on the server"],
         { State: ClientEntitySyncState.Downloading } status => L["Loading {0} of {1} rows for fast local search", status.Loaded, status.Total],
         { State: ClientEntitySyncState.TooLarge } => L["Too many rows to keep locally, searching on the server"],
         { State: ClientEntitySyncState.Failed, IsLocal: false } status => L["Searching on the server, loading failed: {0}", status.Error],

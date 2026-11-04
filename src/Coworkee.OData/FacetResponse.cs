@@ -24,15 +24,26 @@ internal static class FacetResponse
         var limits = services.GetRequiredService<IOptions<CoworkeeODataOptions>>().Value;
         // one exact count decides both limits: a TOP n read or count of a set with fewer rows plans for n rows found early (a row goal) and may scan
         // every row of the table to find them (28 s instead of 4 s for 12,000 of 1.2 million rows on SQL Server)
-        long? size = limits.MaxFacetRows > 0 || limits.FacetRowLimit > 0
+        var registry = services.GetRequiredService<ODataEntityRegistry>();
+        var set = registry.Find(typeof(T));
+        var max = set?.MaxFacetRows ?? limits.MaxFacetRows;
+        long? size = max > 0 || limits.FacetRowLimit > 0
             ? await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.LongCountAsync(filtered, cancellationToken)
             : null;
-        if (limits.MaxFacetRows > 0 && size > limits.MaxFacetRows)
+        int? sample = null;
+        // a local copy asks for every row's facets; read in memory (FacetRowLimit) they stay affordable, beyond that the cap holds for everyone
+        var allRows = http.Request.Headers[FacetGroupDto.AllRowsHeader] == "true" && limits.FacetRowLimit > 0 && size <= limits.FacetRowLimit;
+        if (max > 0 && size > max && !allRows)
         {
-            return [];
-        }
+            // the global cap leaves the facets out; a set's own cap counts them on its first rows by key (a TOP n of the key index, not a sort of all)
+            if (set?.MaxFacetRows is null)
+            {
+                return [];
+            }
 
-        var registry = services.GetRequiredService<ODataEntityRegistry>();
+            sample = max;
+            filtered = First(filtered, set.Key, max);
+        }
         var context = FacetContextDto.Decode(http.Request.Headers[FacetContextDto.Header]);
         var denied = http.Items[ODataEntityAccess.DeniedItem] is Dictionary<string, IReadOnlySet<string>> byType
             ? byType.GetValueOrDefault(typeof(T).FullName!) ?? new HashSet<string>()
@@ -56,7 +67,7 @@ internal static class FacetResponse
             .Select(p => (Property: p, Own: context is not null && context.Groups.ContainsKey(p.Name))).ToList();
 
         // a bounded set counts the groups of the row's own members in memory; the others, and all of a larger set, count in the database
-        var read = size > limits.FacetRowLimit ? null : await FacetCounts.ReadAsync(http, filtered, [.. groups.Where(g => !g.Own).Select(g => g.Group)], [.. computed.Where(c => !c.Own).Select(c => c.Property)],
+        var read = (sample ?? size) > limits.FacetRowLimit ? null : await FacetCounts.ReadAsync(http, filtered, [.. groups.Where(g => !g.Own).Select(g => g.Group)], [.. computed.Where(c => !c.Own).Select(c => c.Property)],
             cancellationToken);
         await FacetCounts.FromDatabaseAsync(scoped, [.. groups.Where(g => !g.Own && FacetCounts.IsList(g.Group) && read?.Lists.Contains(g.Group) != true).Select(g => g.Group)],
             cancellationToken);
@@ -64,7 +75,7 @@ internal static class FacetResponse
         var result = new List<FacetGroupDto>(groups.Count + computed.Count);
         foreach (var (facet, own) in groups)
         {
-            var rows = own ? ScopedQueryProvider.Wrap(await FilterAsync(visible, context!.Without(facet.Key), http, cancellationToken), ScopeOf<T>(http)) : scoped;
+            var rows = own ? ScopedQueryProvider.Wrap(Sampled(await FilterAsync(visible, context!.Without(facet.Key), http, cancellationToken), set, sample), ScopeOf<T>(http)) : scoped;
             if (own && FacetCounts.IsList(facet))
             {
                 await FacetCounts.FromDatabaseAsync(rows, [facet], cancellationToken);
@@ -85,7 +96,12 @@ internal static class FacetResponse
         {
             result.Add(!own && read?.Computed.GetValueOrDefault(property.Name) is { } counts
                 ? ComputedGroup(property, counts)
-                : await ComputedAsync(property, own ? await FilterAsync(visible, context!.Without(property.Name), http, cancellationToken) : filtered, http, cancellationToken));
+                : await ComputedAsync(property, own ? Sampled(await FilterAsync(visible, context!.Without(property.Name), http, cancellationToken), set, sample) : filtered, http, cancellationToken));
+        }
+
+        if (sample is { } counted)
+        {
+            result = [.. result.Select(g => g with { SampleRows = counted, TotalRows = size })];
         }
 
         // the facets are built in CLR names; a route that renames properties gets its own names, which its filters understand
@@ -93,6 +109,12 @@ internal static class FacetResponse
             ? ODataNames.ToRoute(result, services.GetRequiredService<ODataModels>().Of(route), typeof(T))
             : result;
     }
+
+    private static IQueryable<T> First<T>(IQueryable<T> rows, string key, int count) => rows.OrderBy(key).Take(count);
+
+    // the rows of a chosen group's counts come from the same sample as the others
+    private static IQueryable<T> Sampled<T>(IQueryable<T> rows, ODataEntityRegistration? set, int? sample) =>
+        sample is { } count && set is not null ? First(rows, set.Key, count) : rows;
 
     // ponytail: one count per option for a chosen group or a set above the facet row limit; fine for the handful of workflow states
     private static async Task<FacetGroupDto> ComputedAsync<T>(Computed.ODataComputedProperty property, IQueryable<T> rows, HttpContext http, CancellationToken cancellationToken)

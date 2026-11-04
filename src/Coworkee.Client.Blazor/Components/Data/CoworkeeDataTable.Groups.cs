@@ -18,6 +18,9 @@ public partial class CoworkeeDataTable<T>
     private readonly Dictionary<string, DataTablePages<T>> _groupPages = new(StringComparer.Ordinal);
     private bool _groupsUnsupported;
     private string? _groupedBy;
+
+    // filter and expand the kept group rows were read with
+    private string? _groupRows;
     private long _groupTotal;
     private int _groupVersion;
 
@@ -132,6 +135,14 @@ public partial class CoworkeeDataTable<T>
             _groupedBy = groupedBy;
             _openGroups.Clear();
             _groupSelections.Clear();
+            _groupPages.Clear();
+        }
+
+        // the kept rows of the groups belong to the filter they were read with; a reload of the same filter shows them at once and refreshes them
+        var rows = $"{filter}\n{Expand}";
+        if (rows != _groupRows)
+        {
+            _groupRows = rows;
             _groupPages.Clear();
         }
 

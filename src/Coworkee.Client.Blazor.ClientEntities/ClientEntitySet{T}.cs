@@ -297,7 +297,8 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     {
         try
         {
-            return _facets = (await _server.QueryAsync<T>(EntitySet, new ODataQuery { Top = 0, Count = false, Facets = true, Expand = Expand }, _stop.Token)).Facets;
+            // every value of the set: the copy counts on all its rows, a sample's options would miss some
+            return _facets = (await _server.QueryAsync<T>(EntitySet, new ODataQuery { Top = 0, Count = false, Facets = true, FacetsOfAllRows = true, Expand = Expand }, _stop.Token)).Facets;
         }
         finally
         {
@@ -314,6 +315,11 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
             {
                 _restored = true;
                 await RestoreAsync();
+            }
+
+            if (SyncPaused)
+            {
+                return;
             }
 
             if (_version is null)
@@ -406,6 +412,13 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
             if (pages[^1].Items.Count < batch)
             {
                 break;
+            }
+
+            if (SyncPaused)
+            {
+                // the download keeps its place (_download): resumed, it goes on from the last round
+                Publish(Status with { State = ClientEntitySyncState.Idle });
+                return;
             }
 
             await Pause();

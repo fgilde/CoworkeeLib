@@ -10,7 +10,13 @@ namespace Coworkee.Client.Blazor.ClientEntities;
 internal static class LocalFacets
 {
     public static IReadOnlyList<FacetGroupDto> Count<T>(IReadOnlyList<FacetGroupDto> groups, LocalTable<T> table, int[] rows, FacetContextDto? context = null) =>
-        [.. groups.Select(group => group with { Options = Options(group, table, Own(context, group.Key) ? table.Find(context!.Without(group.Key), null) : rows) })];
+        // counted on every local row: no sample, whatever the server's definitions said
+        [.. groups.Select(group => group with
+        {
+            Options = Options(group, table, Own(context, group.Key) ? table.Find(context!.Without(group.Key), null) : rows),
+            SampleRows = null,
+            TotalRows = null,
+        })];
 
     private static bool Own(FacetContextDto? context, string group) =>
         context is not null && context.Groups.ContainsKey(group) && context.Combines?.GetValueOrDefault(group) != FacetCombine.All;

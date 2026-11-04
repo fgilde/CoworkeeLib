@@ -14,6 +14,19 @@ public sealed class ODataEntityOptions<TEntity>
 
     internal int? NodeLimit { get; private set; }
 
+    internal int? FacetRows { get; private set; }
+
+    /// <summary>
+    /// The facet cap of this set instead of <c>Coworkee:OData:MaxFacetRows</c>: a filtered set of more rows counts its facets on its first
+    /// <paramref name="rows"/> rows (by key) instead of all, and says so (<c>FacetGroupDto.SampleRows</c>), so a large list still shows its filters.
+    /// </summary>
+    public ODataEntityOptions<TEntity> MaxFacetRows(int rows)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(rows, 1);
+        FacetRows = rows;
+        return this;
+    }
+
     /// <summary>
     /// Nodes a <c>$filter</c> or <c>$orderby</c> of this set may have, instead of <c>Coworkee:OData:MaxNodeCount</c>: for a set whose clients send long
     /// filters (a dashboard ORing many chosen values). It applies wherever the set's queries are checked: the routes, <see cref="IODataQueries"/>, exports,

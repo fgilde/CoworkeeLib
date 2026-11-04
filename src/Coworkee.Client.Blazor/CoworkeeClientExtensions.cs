@@ -23,6 +23,7 @@ public static class CoworkeeClientExtensions
         services.AddHttpClient<Data.IODataClient, Data.ODataClient>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Data.IDataTransferApi, Data.DataTransferApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Localization.ILocalizationApi, Localization.LocalizationApi>(client => client.BaseAddress = baseAddress);
+        services.AddHttpClient<Realtime.IRealtimeWatchApi, Realtime.RealtimeWatchApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<ExtendedAttributes.IExtendedAttributesApi, ExtendedAttributes.ExtendedAttributesApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Chat.IChatApi, Chat.ChatApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Search.IGlobalSearchApi, Search.GlobalSearchApi>(client => client.BaseAddress = baseAddress);
