@@ -32,11 +32,11 @@
                 }
                 @foreach (var message in _messages)
                 {
-                    <AssistantMessage @key="message.Id" Message="message" Waiting="@(!_busy && ReferenceEquals(message, _messages[^1]))" OnDecide="DecideAsync" />
+                    <AssistantMessage @key="message.Id" Message="message" Notes="NotesOf(message.Id)" Waiting="@(!_busy && ReferenceEquals(message, _messages[^1]))" OnDecide="DecideAsync" />
                 }
                 @if (_streaming is not null)
                 {
-                    <AssistantMessage Message="Streamed" Streaming="true" />
+                    <AssistantMessage Message="Streamed" Notes="_streamNotes" Streaming="true" />
                 }
             </div>
             <div class="cw-ai-composer">

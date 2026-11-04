@@ -37,6 +37,12 @@ public abstract class ClientTestBase : BunitContext
         Services.AddSingleton(ChatApi);
         Services.AddSingleton(Substitute.For<Ai.IAssistantApi>());
         Services.AddScoped<Ai.AssistantState>();
+        Services.AddScoped<Ai.AssistantUiContext>();
+        Services.AddScoped<Ai.IAssistantClientAction, Ai.AssistantNavigateAction>();
+        Services.AddScoped<Ai.IAssistantClientAction, Ai.AssistantThemeAction>();
+        Services.AddScoped<Ai.IAssistantClientAction, Ai.AssistantColorModeAction>();
+        Services.AddScoped<Ai.IAssistantClientAction, Ai.AssistantRightToLeftAction>();
+        Services.AddScoped<Ai.IAssistantClientAction, Ai.AssistantLanguageAction>();
         Services.AddScoped<Chat.ChatDock>();
         Api.GetOnlineUsersAsync(default).ReturnsForAnyArgs([]);
         Services.AddSingleton(Api);

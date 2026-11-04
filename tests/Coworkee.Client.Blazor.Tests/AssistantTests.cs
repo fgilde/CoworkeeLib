@@ -59,7 +59,7 @@ public sealed class AssistantTests : ClientTestBase
         var gate = new TaskCompletionSource();
         var call = new AiToolCallDto(Guid.NewGuid(), "add_edit_product", AiChannels.Chat, "{}", true, null, 5, DateTimeOffset.Now, Me, "\"42\"");
         var answer = new AiMessageDto(Guid.NewGuid(), "assistant", "**Created** <img src=x onerror=alert(1)> [x](javascript:alert(1))", [call], [], null, DateTimeOffset.Now);
-        _api.SendAsync(session.Id, "Add a drill", Arg.Any<CancellationToken>())
+        _api.SendAsync(session.Id, "Add a drill", Arg.Any<AiUiContext?>(), Arg.Any<CancellationToken>())
             .Returns(Stream(gate.Task, new AiStreamEvent(AiStreamEvent.Delta, Text: "**Created**"), new AiStreamEvent(AiStreamEvent.Tool, ToolCall: call),
                 new AiStreamEvent(AiStreamEvent.Done, Message: answer)));
         _api.GetSessionAsync(session.Id, default).ReturnsForAnyArgs(new AiSessionDetailDto(session.Id, "Add a drill", DateTimeOffset.Now,
@@ -92,7 +92,7 @@ public sealed class AssistantTests : ClientTestBase
         var module = JSInterop.SetupModule("./_content/Coworkee.Client.Blazor/coworkee.js");
         var session = new AiSessionDto(Guid.NewGuid(), "Hi", DateTimeOffset.Now);
         _api.CreateSessionAsync(default).ReturnsForAnyArgs(session);
-        _api.SendAsync(default, default!, default).ReturnsForAnyArgs(Stream(Task.CompletedTask, new AiStreamEvent(AiStreamEvent.Delta, Text: "Hello")));
+        _api.SendAsync(default, default!, default, default).ReturnsForAnyArgs(Stream(Task.CompletedTask, new AiStreamEvent(AiStreamEvent.Delta, Text: "Hello")));
         _api.GetSessionAsync(session.Id, default).ReturnsForAnyArgs(new AiSessionDetailDto(session.Id, "Hi", DateTimeOffset.Now, []));
         var window = Render<AssistantWindow>();
         window.WaitForAssertion(() => module.Invocations["focus"].Count.ShouldBe(1));
@@ -108,7 +108,7 @@ public sealed class AssistantTests : ClientTestBase
     {
         var session = new AiSessionDto(Guid.NewGuid(), "Plans", DateTimeOffset.Now);
         _api.CreateSessionAsync(default).ReturnsForAnyArgs(session);
-        _api.SendAsync(default, default!, default).ReturnsForAnyArgs(Stream(Task.CompletedTask, new AiStreamEvent(AiStreamEvent.Error, Text: "The provider is down.")));
+        _api.SendAsync(default, default!, default, default).ReturnsForAnyArgs(Stream(Task.CompletedTask, new AiStreamEvent(AiStreamEvent.Error, Text: "The provider is down.")));
         Render<MudSnackbarProvider>();
         var window = Render<AssistantWindow>();
 
@@ -127,7 +127,7 @@ public sealed class AssistantTests : ClientTestBase
         _api.GetSessionsAsync(default, default).ReturnsForAnyArgs([session]);
         _api.GetSessionAsync(session.Id, default).ReturnsForAnyArgs(new AiSessionDetailDto(session.Id, session.Title, session.UpdatedAt,
             [new AiMessageDto(Guid.NewGuid(), "user", "delete old", [], [], null, DateTimeOffset.Now), waiting]));
-        _api.ConfirmAsync(session.Id, true, Arg.Any<CancellationToken>())
+        _api.ConfirmAsync(session.Id, true, Arg.Any<AiUiContext?>(), Arg.Any<CancellationToken>())
             .Returns(Stream(Task.CompletedTask, new AiStreamEvent(AiStreamEvent.Done, Message: new AiMessageDto(Guid.NewGuid(), "assistant", "Deleted.", [], [], null, DateTimeOffset.Now))));
         var window = Render<AssistantWindow>();
         window.WaitForAssertion(() => window.Find("[data-testid='assistant-confirm']").TextContent.ShouldContain("delete_note"));
@@ -139,7 +139,7 @@ public sealed class AssistantTests : ClientTestBase
 
         window.WaitForAssertion(() => window.Markup.ShouldContain("Deleted."));
         window.FindAll("[data-testid='assistant-approve']").ShouldBeEmpty();
-        _api.Received(1).ConfirmAsync(session.Id, true, Arg.Any<CancellationToken>());
+        _api.Received(1).ConfirmAsync(session.Id, true, Arg.Any<AiUiContext?>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]

@@ -28,6 +28,17 @@
             }
         </MudStack>
     }
+    @if (Notes.Count > 0)
+    {
+        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+            @foreach (var note in Notes)
+            {
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="@(note.Succeeded ? Color.Info : Color.Error)"
+                         Icon="@(note.Succeeded ? Icons.Material.Outlined.TouchApp : Icons.Material.Outlined.ErrorOutline)"
+                         data-testid="assistant-action" data-succeeded="@(note.Succeeded ? "true" : "false")">@note.Note</MudChip>
+            }
+        </MudStack>
+    }
     @if (Message.Pending.Count > 0)
     {
         <div class="cw-ai-confirm" data-testid="assistant-confirm">

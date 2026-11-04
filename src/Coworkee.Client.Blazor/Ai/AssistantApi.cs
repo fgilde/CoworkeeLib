@@ -22,9 +22,9 @@ internal sealed class AssistantApi(HttpClient http) : ApiClientBase(http), IAssi
 
     public Task DeleteSessionAsync(Guid id, CancellationToken cancellationToken = default) => SendAsync(HttpMethod.Delete, $"{Sessions}/{id}", null, cancellationToken);
 
-    public IAsyncEnumerable<AiStreamEvent> SendAsync(Guid id, string text, CancellationToken cancellationToken = default) =>
-        StreamAsync<AiStreamEvent>($"{Sessions}/{id}/messages", new AiSendRequest(text), cancellationToken);
+    public IAsyncEnumerable<AiStreamEvent> SendAsync(Guid id, string text, AiUiContext? ui, CancellationToken cancellationToken = default) =>
+        StreamAsync<AiStreamEvent>($"{Sessions}/{id}/messages", new AiSendRequest(text, ui), cancellationToken);
 
-    public IAsyncEnumerable<AiStreamEvent> ConfirmAsync(Guid id, bool approve, CancellationToken cancellationToken = default) =>
-        StreamAsync<AiStreamEvent>($"{Sessions}/{id}/confirm", new AiConfirmRequest(approve), cancellationToken);
+    public IAsyncEnumerable<AiStreamEvent> ConfirmAsync(Guid id, bool approve, AiUiContext? ui, CancellationToken cancellationToken = default) =>
+        StreamAsync<AiStreamEvent>($"{Sessions}/{id}/confirm", new AiConfirmRequest(approve, ui), cancellationToken);
 }

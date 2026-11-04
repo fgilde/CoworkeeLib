@@ -67,11 +67,12 @@ public sealed class AiChat(
 
     /// <summary>
     /// Answers <paramref name="history"/> (user and assistant turns, ending with the user's), or continues a round the user just decided
-    /// on (<paramref name="resume"/>). <paramref name="emit"/> gets the text as it arrives and every tool call.
+    /// on (<paramref name="resume"/>). <paramref name="emit"/> gets the text as it arrives, every tool call and every client action; <paramref name="ui"/>
+    /// is what the client says the user sees.
     /// </summary>
     internal async Task<Result<AiTurn>> RunAsync(
         AiConnection connection, IReadOnlyList<ChatMessage> history, Func<CancellationToken, Task<AiResume?>>? resume, Func<AiStreamEvent, Task> emit,
-        CancellationToken cancellationToken)
+        AiUiContext? ui, CancellationToken cancellationToken)
     {
         var userId = currentUser.UserId!.Value;
         if (!Running.TryAdd(userId, 0))
@@ -87,7 +88,7 @@ public sealed class AiChat(
             var resumed = resume is null ? null : await resume(deadline.Token);
             return resume is not null && resumed is null
                 ? Error.Conflict("ai.nothing_to_confirm", "Nothing waits for a confirmation.")
-                : await LoopAsync(connection, history, resumed, emit, deadline.Token);
+                : await LoopAsync(connection, history, resumed, emit, ui, deadline.Token);
         }
         finally
         {
@@ -96,12 +97,16 @@ public sealed class AiChat(
     }
 
     private async Task<Result<AiTurn>> LoopAsync(
-        AiConnection connection, IReadOnlyList<ChatMessage> history, AiResume? resume, Func<AiStreamEvent, Task> emit, CancellationToken cancellationToken)
+        AiConnection connection, IReadOnlyList<ChatMessage> history, AiResume? resume, Func<AiStreamEvent, Task> emit, AiUiContext? ui, CancellationToken cancellationToken)
     {
         var rounds = Math.Clamp(await settings.GetAsync<int>(AiSettings.MaxToolRounds, cancellationToken), 1, 20);
         var tools = await runner.AvailableAsync(cancellationToken);
-        var options = new ChatOptions { Tools = [.. tools.Select(ToTool)] };
-        List<ChatMessage> messages = [new(ChatRole.System, SystemPrompt), .. history, .. resume?.Messages ?? []];
+        var clientActions = AiUiPrompt.Actions(ui, tools);
+        var options = new ChatOptions
+        {
+            Tools = [.. tools.Select(ToTool), .. clientActions.Select(a => AIFunctionFactory.CreateDeclaration(a.Name, a.Description, a.Parameters!.Value))],
+        };
+        List<ChatMessage> messages = [new(ChatRole.System, SystemPrompt + AiUiPrompt.Build(ui)), .. history, .. resume?.Messages ?? []];
         var calls = new List<AiToolCallDto>(resume?.Calls ?? []);
         var text = new StringBuilder();
         using var client = clients.Create(connection);
@@ -150,6 +155,15 @@ public sealed class AiChat(
                 {
                     results.Add(Failed(use.CallId, "Too many tool calls; not run. Use fewer calls."));
                     roundCalls.Add(new AiPendingCall(use.CallId, use.Name, input.GetRawText(), string.Empty, "Too many tool calls; not run.", false, false));
+                    continue;
+                }
+
+                // the client runs it; the server records that it asked and never dispatches anything for it
+                if (clientActions.Any(a => a.Name == use.Name))
+                {
+                    await emit(new AiStreamEvent(AiStreamEvent.ClientAction, Action: new AiClientActionCall(use.CallId, use.Name, input.GetRawText())));
+                    results.Add(new FunctionResultContent(use.CallId, AiUiPrompt.Requested));
+                    roundCalls.Add(new AiPendingCall(use.CallId, use.Name, input.GetRawText(), string.Empty, AiUiPrompt.Requested, true, false));
                     continue;
                 }
 

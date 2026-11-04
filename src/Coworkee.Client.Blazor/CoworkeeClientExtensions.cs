@@ -61,6 +61,12 @@ public static class CoworkeeClientExtensions
             client.Timeout = TimeSpan.FromMinutes(11);
         });
         services.AddScoped<Ai.AssistantState>();
+        services.AddScoped<Ai.AssistantUiContext>();
+        services.AddScoped<Ai.IAssistantClientAction, Ai.AssistantNavigateAction>();
+        services.AddScoped<Ai.IAssistantClientAction, Ai.AssistantThemeAction>();
+        services.AddScoped<Ai.IAssistantClientAction, Ai.AssistantColorModeAction>();
+        services.AddScoped<Ai.IAssistantClientAction, Ai.AssistantRightToLeftAction>();
+        services.AddScoped<Ai.IAssistantClientAction, Ai.AssistantLanguageAction>();
         services.AddScoped<Chat.ChatDock>();
         services.AddHttpClient<Ai.IAiConnectionApi, Ai.AiConnectionApi>(client =>
         {
