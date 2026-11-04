@@ -11,7 +11,7 @@
         <div class="@($"cw-facet-option {State(option)} {(IsDisabled(option) ? "disabled" : string.Empty)}")" role="option" aria-selected="@IsSelected(option)"
              data-option="@option.OData" @onclick="() => Toggle(option)">
             <MudIcon Icon="@Icon(option)" Size="Size.Small" Class="cw-facet-check" />
-            <span class="cw-facet-label">@Label(option)</span>
+            <span class="cw-facet-label">@Value(option)</span>
             <span class="cw-facet-count">@Count(option.Count)</span>
             @if (Group.AllowExclude)
             {

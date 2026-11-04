@@ -1,3 +1,4 @@
+using Coworkee.Client.Blazor.Theming;
 using Coworkee.Contracts.Theming;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
@@ -7,7 +8,7 @@ namespace Coworkee.Client.Blazor.Components;
 
 public partial class ThemePicker
 {
-    private static readonly (string Mode, string Label, string Icon)[] Modes =
+    internal static readonly (string Mode, string Label, string Icon)[] Modes =
     [
         ("light", "Light", Icons.Material.Outlined.LightMode),
         ("system", "System", Icons.Material.Outlined.Contrast),
@@ -31,17 +32,21 @@ public partial class ThemePicker
 
     private Task KeyAsync(KeyboardEventArgs e, ThemeDto theme) => e.Key is "Enter" or " " ? SelectedIdChanged.InvokeAsync(theme.Id) : Task.CompletedTask;
 
-    // only plain color values go into the style attribute
-    private static IEnumerable<string> Swatch(ThemeDto theme)
+    // what the palette leaves unset falls back to MudBlazor's defaults; "system" previews the light palette
+    private PreviewColors Preview(ThemeDto theme)
     {
-        foreach (var key in new[] { "Primary", "Secondary", "Background", "Surface" })
-        {
-            if (theme.PaletteLight.ValueKind == System.Text.Json.JsonValueKind.Object && theme.PaletteLight.TryGetProperty(key, out var value)
-                && value.ValueKind == System.Text.Json.JsonValueKind.String && value.GetString() is { Length: > 0 and <= 40 } color
-                && color.All(c => char.IsAsciiLetterOrDigit(c) || c is '#' or '(' or ')' or ',' or '.' or ' ' or '%'))
-            {
-                yield return color;
-            }
-        }
+        var dark = Mode == "dark";
+        string Of(string key, string fallback) => ThemeColors.Of(theme, key, dark) ?? fallback;
+        var primary = Of("Primary", "#594ae2");
+        return new PreviewColors(
+            Of("AppbarBackground", primary),
+            Of("AppbarText", "#ffffff"),
+            Of("Background", dark ? "#32333d" : "#ffffff"),
+            Of("DrawerBackground", dark ? "#27272f" : "#f5f5f5"),
+            Of("Surface", dark ? "#373740" : "#ffffff"),
+            Of("TextPrimary", dark ? "rgba(255,255,255,0.70)" : "rgba(66,66,66,1)"),
+            Of("TextSecondary", dark ? "rgba(255,255,255,0.50)" : "rgba(0,0,0,0.54)"),
+            primary,
+            Of("Secondary", "#ff4081"));
     }
 }

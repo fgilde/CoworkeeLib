@@ -10,6 +10,8 @@ public abstract class FacetViewBase : CoworkeeComponentBase
 {
     [Inject] protected Localization.CoworkeeLocalizer L { get; set; } = null!;
 
+    [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
+
     [Parameter, EditorRequired] public FacetGroupDto Group { get; set; } = null!;
 
     [Parameter, EditorRequired] public FacetSelection Selection { get; set; } = null!;
@@ -32,6 +34,10 @@ public abstract class FacetViewBase : CoworkeeComponentBase
 
     /// <summary>Enum, flag and yes/no labels are translated; names of rows (brands, customers) stay as they are.</summary>
     protected string Label(FacetOptionDto option) => FacetLabels.Of(L, Group, option);
+
+    /// <summary>The label as the group's display renders it (a flag before a country), else as text.</summary>
+    protected RenderFragment Value(FacetOptionDto option) =>
+        FacetLabels.Render(Options.ValueRenderers, Group, option, Label(option));
 
     protected static string Count(int count) => count.ToString("N0", CultureInfo.CurrentCulture);
 

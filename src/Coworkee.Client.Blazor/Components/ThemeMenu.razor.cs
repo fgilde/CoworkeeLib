@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace Coworkee.Client.Blazor.Components;
 
-public partial class ThemeMenu
+public partial class ThemeMenu : IDisposable
 {
     /// <summary>Shown as submenu of the app bar's overflow menu on phones.</summary>
     [Parameter] public bool Nested { get; set; }
@@ -18,6 +18,7 @@ public partial class ThemeMenu
     [Inject] private ThemeService ThemeService { get; set; } = null!;
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
 
+    protected override void OnInitialized() => ThemeService.Changed += Refresh;
 
     protected override async Task OnInitializedAsync()
     {
@@ -30,12 +31,27 @@ public partial class ThemeMenu
         }
     }
 
-    private async Task ChooseAsync(ThemeDto theme)
+    public void Dispose() => ThemeService.Changed -= Refresh;
+
+    private void Refresh() => InvokeAsync(StateHasChanged);
+
+    private Task ChooseAsync(ThemeDto theme)
     {
         ThemeService.Apply(theme);
+        return SaveAsync(ThemeSettings.ThemeId, theme.Id.ToString());
+    }
+
+    private Task ModeAsync(string mode)
+    {
+        ThemeService.SetMode(mode);
+        return SaveAsync(ThemeSettings.Mode, mode);
+    }
+
+    private async Task SaveAsync(string name, string value)
+    {
         try
         {
-            await Api.SetSettingsAsync(SettingScope.User, new Dictionary<string, string?>(StringComparer.Ordinal) { [ThemeSettings.ThemeId] = theme.Id.ToString() });
+            await Api.SetSettingsAsync(SettingScope.User, new Dictionary<string, string?>(StringComparer.Ordinal) { [name] = value });
         }
         catch (ApiException)
         {

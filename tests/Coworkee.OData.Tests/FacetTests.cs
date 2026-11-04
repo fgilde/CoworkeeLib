@@ -96,6 +96,8 @@ public sealed class FacetTests(ODataApp app) : IAsyncLifetime
 
         color.Combine.ShouldBe(FacetCombine.Single);
         color.View.ShouldBe(FacetView.Buttons, "ConfigureFacet sets the view");
+        color.Display.ShouldBe("color", "[FacetDisplay] names the client's renderer");
+        kind.Display.ShouldBeNull();
         selection.Toggle(color, color.Options.Single(o => o.Label == "Red"));
         selection.Toggle(color, color.Options.Single(o => o.Label == "Blue"));
         selection.ToFilter().ShouldBe("Color eq 'Blue'");

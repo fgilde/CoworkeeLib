@@ -29,7 +29,7 @@
                     {
                         <MudChip T="string" Size="Size.Small" OnClick="() => Open(template, culture)" title="@LanguageName(culture)"
                                  Color="@(template.OverriddenCultures.Contains(culture) ? Color.Secondary : Color.Default)" data-testid="@($"language-{template.Name}-{culture}")"
-                                 OnClose="RemoveHandler(template, culture)">@LanguageFlags.For(culture) @culture</MudChip>
+                                 OnClose="RemoveHandler(template, culture)"><LanguageFlag Culture="@culture" Size="12" Alt="" Style="margin-inline-end:6px" />@culture</MudChip>
                     }
                     @if (template.Cultures.Count == 0)
                     {

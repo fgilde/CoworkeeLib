@@ -1,3 +1,4 @@
+using System.Globalization;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Localization;
@@ -18,7 +19,25 @@ public partial class LanguageMenu : IDisposable
 
     [Inject] private MudBlazor.ISnackbar Snackbar { get; set; } = null!;
 
+    [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
+
     [CascadingParameter] private Task<AuthenticationState>? Authentication { get; set; }
+
+    private string? CurrentRegion => LanguageFlags.Region(L.Culture, Options.LanguageRegions);
+
+    // the second line of an item, for those who do not read the native name
+    private static string? EnglishName(LanguageDto language)
+    {
+        try
+        {
+            var english = CultureInfo.GetCultureInfo(language.Culture).EnglishName;
+            return string.Equals(english, language.Name, StringComparison.OrdinalIgnoreCase) ? null : english;
+        }
+        catch (CultureNotFoundException)
+        {
+            return null;
+        }
+    }
 
     private async Task RefreshAsync(Contracts.Realtime.RealtimeEnvelope _)
     {

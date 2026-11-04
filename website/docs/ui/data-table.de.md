@@ -133,6 +133,42 @@ Schlüssel sind die Facetten-Schlüssel: der Eigenschaftsname in camelCase (`ord
 
 **Bereiche**: Zahlen-Facetten mit `FacetType.Range` und Datums-Facetten bekommen ihren kleinsten und größten Wert und ein Histogramm, dessen Balken Optionen mit eigenem Filter sind; Client-Entities zählen sie so lokal nach. Der gewählte Bereich ist ein Wert, `(Total ge 40 and Total le 100)`. Datumsvorgaben bleiben relativ: eine gespeicherte Ansicht mit *letzte 7 Tage* meint die letzten 7 Tage, wann immer sie öffnet.
 
+### Flaggen und andere Wertdarstellungen
+
+`[CountryCode]` markiert eine Eigenschaft, die ein Land enthält (`"DE"`, `"DEU"`, `"Germany"`, `"Deutschland"`): ihre Facetten-Optionen, die Chips gewählter Facetten und die Tabellenzellen zeigen die Flagge des Landes vor dem Text. Die Flaggen liefert die Bibliothek mit (flag-icons, MIT), ohne CDN.
+
+```csharp
+[ProvideFacet(Label = "Country")]
+[CountryCode]                         // = [FacetDisplay("country")]
+public string CountryIsoAlpha2Code { get; set; } = "";
+```
+
+Das Attribut wirkt auch auf Client-DTOs: eine `PropertyColumn` einer markierten Eigenschaft rendert über den Renderer der Darstellung, sofern die Seite kein eigenes `CellTemplate` mitgibt.
+
+Jede andere Darstellung ist ein Name, den die App vergibt: Eigenschaft mit `[FacetDisplay("port")]` markieren (die Facette schickt ihn als `display` an den Client) und auf dem Client einen Renderer für diesen Namen registrieren:
+
+```csharp
+builder.Services.AddCoworkeeClient(baseAddress, o => o.ValueRenderers.Add(new PortRenderer()));
+
+public sealed class PortRenderer : IFacetValueRenderer
+{
+    public string Display => "port";
+
+    // Value: der Wert der Option (oder der Zelle), Label: wie er sich liest; Chips gewählter Facetten geben nur das Label mit
+    public RenderFragment Render(FacetValueContext context) => builder =>
+    {
+        // a UN/LOCODE label such as "DEHAM Hamburg" starts with the country
+        if (CountryCodes.Resolve(context.Label.Length >= 2 ? context.Label[..2] : null) is { } code)
+        {
+            builder.AddContent(0, FlagImages.Image(code, 14, "", "margin-inline-end:6px"));
+        }
+        builder.AddContent(1, context.Label);
+    };
+}
+```
+
+`ValueRenderers.Add("country", ...)` ersetzt den eingebauten Flaggen-Renderer. Auf Seiten zeigen `<CountryFlag Code="DE" Size="16" />` und `<LanguageFlag Culture="de-AT" />` eine einzelne Flagge.
+
 ### Facetten anderswo
 
 Die Facetten-Komponenten funktionieren auch ohne Tabelle, etwa neben einem Diagramm oder in einem Bericht:

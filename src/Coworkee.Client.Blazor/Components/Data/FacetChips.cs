@@ -8,6 +8,8 @@ public partial class FacetChips
 {
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
 
+    [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
+
     [Parameter, EditorRequired] public FacetSelection Selection { get; set; } = null!;
 
     /// <summary>Column filters, one chip per column.</summary>

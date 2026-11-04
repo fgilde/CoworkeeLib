@@ -20,6 +20,18 @@ public sealed class CoworkeeClientOptions
     /// <summary>Defaults of the data tables, e.g. which column filters each type offers.</summary>
     public Components.Data.DataTableOptions DataTable { get; } = new();
 
+    /// <summary>
+    /// How facet options and table cells of a display (<c>[FacetDisplay("port")]</c>, <c>[CountryCode]</c>) render: "country" shows flags,
+    /// apps add their own or replace it, e.g. ValueRenderers.Add(new PortRenderer()).
+    /// </summary>
+    public Components.Data.FacetValueRenderers ValueRenderers { get; } = new();
+
+    /// <summary>
+    /// The country whose flag stands for a language, by culture name, e.g. ["en"] = "US" (the default shows GB for English). A culture
+    /// with a region of its own ("en-AU") keeps that region's flag.
+    /// </summary>
+    public Dictionary<string, string> LanguageRegions { get; } = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>The generated proxies of application services: defaults for all and settings per service.</summary>
     public Coworkee.Client.Blazor.ServiceProxies.ServiceProxyOptions ServiceProxies { get; } = new();
 

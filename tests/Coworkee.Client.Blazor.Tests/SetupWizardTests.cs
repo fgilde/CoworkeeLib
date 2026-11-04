@@ -59,7 +59,8 @@ public sealed class SetupWizardTests : ClientTestBase
         await FillAsync(wizard, "token-123", look: async w =>
         {
             w.WaitForElement("[data-theme='Ocean']");
-            w.FindAll("[data-theme='Ocean'] .cw-swatch span").Select(e => e.GetAttribute("style")).ShouldBe(["background:#1565c0", "background:#ffffff"]);
+            w.Find("[data-theme='Ocean'] .cw-theme-preview-bar").GetAttribute("style").ShouldBe("background:#1565c0");
+            w.Find("[data-theme='Ocean'] .cw-theme-preview").GetAttribute("style").ShouldBe("background:#ffffff");
             await w.Find("[data-theme='Ocean']").ClickAsync(new());
             await w.Find("[data-mode='dark']").ClickAsync(new());
             var themes = Services.GetRequiredService<ThemeService>();

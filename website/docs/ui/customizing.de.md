@@ -29,7 +29,8 @@ Das Layout ist aufgeteilt, damit du einen Teil statt des Ganzen ersetzt:
 | `CoworkeeNavLink` | ein einzelner Menüeintrag |
 | `CoworkeeUserMenu` | Benutzermenü |
 | `NotificationBell` | Benachrichtigungen |
-| `ThemeMenu` | Schnellwahl für Themes |
+| `ThemeMenu` | Schnellwahl für Themes mit Farbmustern und Farbmodus |
+| `LanguageMenu` | Sprachwahl mit Flaggen |
 | `AboutDialog` | Info-Dialog |
 
 Seiten funktionieren genauso: Ersetze `Profile` durch eine eigene Profilseite, und jeder Link dorthin öffnet deine.

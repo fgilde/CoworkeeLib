@@ -5,12 +5,61 @@
 </AuthorizeView>
 @if (L.Languages.Count > 1)
 {
-    <MudMenu Icon="@(Nested ? null : Icons.Material.Outlined.Translate)" StartIcon="@(Nested ? Icons.Material.Outlined.Translate : null)" Label="@(Nested ? L["Language"] : null)" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense"
-             aria-label="@L["Language"]" data-testid="language-menu">
+    <style>
+        .cw-language { display: flex; align-items: center; gap: 12px; min-width: 200px; }
+        .cw-language-names { display: flex; flex-direction: column; flex: 1; min-width: 0; line-height: 1.25; }
+        .cw-language-native { font-weight: 500; }
+        .cw-language-english { font-size: .75rem; opacity: .7; }
+        .cw-language-flag { display: inline-flex; width: 21px; justify-content: center; }
+    </style>
+    @if (Nested)
+    {
+        <MudMenu StartIcon="@Icons.Material.Outlined.Translate" Label="@L["Language"]" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense"
+                 aria-label="@L["Language"]" data-testid="language-menu">
+            @Items
+        </MudMenu>
+    }
+    else
+    {
+        <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense" aria-label="@L["Language"]" data-testid="language-menu">
+            <ActivatorContent Context="menu">
+                <MudTooltip Text="@L["Language"]">
+                    <MudIconButton Icon="@(CurrentRegion is null ? Icons.Material.Outlined.Translate : null)" Color="Color.Inherit" aria-label="@L["Language"]" OnClick="menu.ToggleAsync">
+                        @if (CurrentRegion is not null)
+                        {
+                            <LanguageFlag Culture="@L.Culture" Size="18" Alt="" />
+                        }
+                    </MudIconButton>
+                </MudTooltip>
+            </ActivatorContent>
+            <ChildContent>
+                @Items
+            </ChildContent>
+        </MudMenu>
+    }
+}
+
+@code {
+    private RenderFragment Items => @<text>
         @foreach (var language in L.Languages)
         {
-            <MudMenuItem OnClick="() => ChooseAsync(language.Culture)" data-culture="@language.Culture"
-                         Icon="@(string.Equals(language.Culture, L.Culture, StringComparison.OrdinalIgnoreCase) ? Icons.Material.Filled.Check : Icons.Material.Outlined.Circle)">@language.Name</MudMenuItem>
+            var current = string.Equals(language.Culture, L.Culture, StringComparison.OrdinalIgnoreCase);
+            <MudMenuItem OnClick="() => ChooseAsync(language.Culture)" data-culture="@language.Culture">
+                <div class="cw-language">
+                    <span class="cw-language-flag"><LanguageFlag Culture="@language.Culture" Alt="" /></span>
+                    <span class="cw-language-names">
+                        <span class="cw-language-native">@language.Name</span>
+                        @if (EnglishName(language) is { } english)
+                        {
+                            <span class="cw-language-english">@english</span>
+                        }
+                    </span>
+                    @if (current)
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Check" Color="Color.Primary" Size="Size.Small" data-testid="language-current" />
+                    }
+                </div>
+            </MudMenuItem>
         }
-    </MudMenu>
+    </text>;
 }

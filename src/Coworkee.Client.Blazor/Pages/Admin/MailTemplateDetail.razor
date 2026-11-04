@@ -10,7 +10,7 @@
         @foreach (var culture in _summary.Cultures)
         {
             <MudChip T="string" Size="Size.Small" OnClick="() => Open(culture)" title="@Variants.Name(culture)" data-testid="@($"language-chip-{culture}")"
-                     Color="@(culture == Culture ? Color.Primary : Color.Default)" Variant="@(culture == Culture ? Variant.Filled : Variant.Outlined)">@LanguageFlags.For(culture) @culture</MudChip>
+                     Color="@(culture == Culture ? Color.Primary : Color.Default)" Variant="@(culture == Culture ? Variant.Filled : Variant.Outlined)"><LanguageFlag Culture="@culture" Size="12" Alt="" Style="margin-inline-end:6px" />@culture</MudChip>
         }
         <MudTooltip Text="@(Variants.Missing(_summary).Count > 0 ? L["Add language"] : L["Every active language has a variant"])">
             <MudIconButton Icon="@Icons.Material.Outlined.Translate" Size="Size.Small" aria-label="@L["Add language"]" Disabled="@(Variants.Missing(_summary).Count == 0)"
