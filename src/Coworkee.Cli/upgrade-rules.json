@@ -662,6 +662,48 @@
           ]
         }
       ]
+    },
+    {
+      "version": "0.0.1.62",
+      "breaking": [
+        "Identity: custom permissions are stored in the new table cw.CustomPermissions; ICoworkeeApi gets members for them.",
+        "AI: IAssistantApi.SendAsync/ConfirmAsync take an AiUiContext? ui parameter.",
+        "ASP.NET Core, EF Core and Microsoft.Extensions packages 10.0.14 (security fix)."
+      ],
+      "needsMigration": true,
+      "manual": [
+        {
+          "text": "Add a migration for the new table cw.CustomPermissions (coworkee migrations add CoworkeeLib062). The table is new, so no default is needed; without it the code permissions keep working and a warning is logged.",
+          "find": "class \\w+DbContext\\b",
+          "files": [
+            "src/**/*.cs"
+          ]
+        },
+        {
+          "text": "An own implementation or fake of ICoworkeeApi adds the custom permission members (GetCustomPermissionsAsync and the others of ICoworkeeApi).",
+          "find": ":\\s*ICoworkeeApi\\b",
+          "files": [
+            "src/**/*.cs",
+            "tests/**/*.cs"
+          ]
+        },
+        {
+          "text": "An own implementation of IAssistantApi adds the parameter AiUiContext? ui to SendAsync and ConfirmAsync.",
+          "find": ":\\s*IAssistantApi\\b",
+          "files": [
+            "src/**/*.cs",
+            "tests/**/*.cs"
+          ]
+        },
+        {
+          "text": "Raise Microsoft.AspNetCore.*, Microsoft.EntityFrameworkCore.* and Microsoft.Extensions.* references from 10.0.13 to 10.0.14.",
+          "find": "Version=\"10\\.0\\.13\"",
+          "files": [
+            "**/*.csproj",
+            "Directory.Packages.props"
+          ]
+        }
+      ]
     }
   ]
 }

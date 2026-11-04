@@ -18,6 +18,11 @@ Changes that need action in apps built on Coworkee. Newest first.
 - Country flags ship with the client (flag-icons, MIT, no CDN): `<CountryFlag Code="DE" />`, `<LanguageFlag Culture="de-AT" />`, `CountryCodes.Resolve`, `LanguageFlags.Region` and `CoworkeeClientOptions.LanguageRegions`.
 - `[CountryCode]` and `[FacetDisplay("…")]` mark how a property's values show. Facets carry it as `display`, and facet options, chosen-facet chips and table cells render through `CoworkeeClientOptions.ValueRenderers`. "country" (flag and text) is built in; apps add their own, e.g. "port".
 - The language menu shows flags with native and English names; the Languages page and the mail template language chips show flags. The theme menu shows color swatches and a light/system/dark switch; theme cards preview the app bar, surface and text of each theme.
+- The header page arranges the app bar by drag and drop, within and between the areas bar, overflow menu and hidden; the buttons remain for the keyboard.
+- Header items can be limited to users with any or all of a set of permissions (`Header.Items`: `permissions`, `match`); the app bar follows permission changes at once. The account menu stays visible to everyone.
+- New `PermissionPicker` component: grouped, searchable selection of permissions with removable chips and an optional any/all choice; `PermissionStore.HasAsync(permissions, match)` checks such a selection.
+- Custom permissions: administrators of the system organisation create permissions of their own (`Custom.*`, display name, description, group) on *Administration > Identity > Custom permissions*, grant them through roles, groups or users like any other, and delete them after a preview of the roles, groups and users that lose them; deleting removes every grant. Endpoints under `/api/v1/identity/permissions/custom`, new `ICoworkeeApi` members, `IStoredPermissionDefinitions` for definitions added at runtime.
+- Apps need a migration: new table `cw.CustomPermissions`. Without it the code permissions keep working and a warning is logged.
 
 ### Changed
 
@@ -30,6 +35,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 ### Fixed
 
 - A group opened again after the filter changed showed rows of the filter before.
+- `CoworkeeDataTable`: the pager of an opened group sits left; the table's own pager stays right.
 
 ## 0.0.1.61 (2026-11-03)
 

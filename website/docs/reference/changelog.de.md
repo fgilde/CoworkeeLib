@@ -18,6 +18,11 @@
 - Länderflaggen kommen mit dem Client (flag-icons, MIT, ohne CDN): `<CountryFlag Code="DE" />`, `<LanguageFlag Culture="de-AT" />`, `CountryCodes.Resolve`, `LanguageFlags.Region` und `CoworkeeClientOptions.LanguageRegions`.
 - `[CountryCode]` und `[FacetDisplay("…")]` legen fest, wie die Werte einer Eigenschaft erscheinen. Facetten liefern das als `display`; Facetten-Optionen, Chips gewählter Facetten und Tabellenzellen rendern über `CoworkeeClientOptions.ValueRenderers`. „country“ (Flagge und Text) ist eingebaut, Apps ergänzen eigene, etwa „port“.
 - Das Sprachmenü zeigt Flaggen mit dem Namen in der Landessprache und auf Englisch; die Seite Sprachen und die Sprach-Chips der Mailvorlagen zeigen Flaggen. Das Theme-Menü zeigt Farbmuster und einen Umschalter Hell/System/Dunkel; die Theme-Karten zeigen App-Bar, Fläche und Text jedes Themes als Vorschau.
+- Die Kopfzeilen-Seite ordnet die App-Leiste per Drag & Drop, innerhalb und zwischen den Bereichen Leiste, Überlaufmenü und ausgeblendet; die Knöpfe bleiben für die Tastatur.
+- Kopfzeilen-Elemente lassen sich auf Benutzer mit einer oder allen von mehreren Berechtigungen beschränken (`Header.Items`: `permissions`, `match`); die App-Leiste folgt Berechtigungsänderungen sofort. Das Benutzermenü bleibt für alle sichtbar.
+- Neue Komponente `PermissionPicker`: gruppierte, durchsuchbare Auswahl von Berechtigungen mit entfernbaren Chips und optionaler Wahl „eine/alle“; `PermissionStore.HasAsync(permissions, match)` prüft eine solche Auswahl.
+- Eigene Berechtigungen: Administratoren der Systemorganisation legen unter *Administration > Identität > Eigene Berechtigungen* eigene Berechtigungen an (`Custom.*`, Anzeigename, Beschreibung, Gruppe), vergeben sie über Rollen, Gruppen oder Benutzer wie jede andere und löschen sie nach einer Vorschau der Rollen, Gruppen und Benutzer, die sie verlieren; das Löschen entfernt jede Zuweisung. Endpunkte unter `/api/v1/identity/permissions/custom`, neue `ICoworkeeApi`-Member, `IStoredPermissionDefinitions` für zur Laufzeit hinzugefügte Definitionen.
+- Apps brauchen eine Migration: neue Tabelle `cw.CustomPermissions`. Ohne sie laufen die Code-Berechtigungen weiter, es wird eine Warnung geloggt.
 
 ### Geändert
 
@@ -30,6 +35,7 @@
 ### Behoben
 
 - Eine nach einem Filterwechsel wieder geöffnete Gruppe zeigte Zeilen des alten Filters.
+- `CoworkeeDataTable`: Der Pager einer geöffneten Gruppe sitzt links; der Pager der Tabelle bleibt rechts.
 
 ## 0.0.1.61 (2026-11-03)
 
