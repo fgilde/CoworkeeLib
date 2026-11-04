@@ -1,0 +1,58 @@
+<div class="d-flex flex-column gap-2" data-testid="permission-picker">
+    <div class="d-flex flex-wrap align-center gap-1" style="min-height:32px">
+        @if (Value.Count == 0)
+        {
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["No permission selected"]</MudText>
+        }
+        @foreach (var name in Value)
+        {
+            <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text" Icon="@Icons.Material.Outlined.Key" Text="@DisplayName(name)" title="@name"
+                     OnClose="() => ToggleAsync(name, false)" data-picker-chip="@name" />
+        }
+        @if (ShowMatch && Value.Count > 1)
+        {
+            <MudSpacer />
+            <MudButtonGroup Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" data-testid="picker-match">
+                @foreach (var (match, label) in new[] { (PermissionMatch.Any, "Any of them"), (PermissionMatch.All, "All of them") })
+                {
+                    <MudButton Variant="@(Match == match ? Variant.Filled : Variant.Outlined)" OnClick="() => SetMatchAsync(match)" aria-pressed="@(Match == match ? "true" : "false")"
+                               data-match="@match">@L[label]</MudButton>
+                }
+            </MudButtonGroup>
+        }
+    </div>
+
+    @if (_groups is null)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else
+    {
+        @if (_error is not null)
+        {
+            <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+        }
+        <MudTextField T="string" @bind-Value="_search" Immediate="true" Placeholder="@L["Search permissions"]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
+                      Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" data-testid="picker-search" />
+        <MudPaper Outlined="true" Class="pa-2" Style="max-height:320px;overflow-y:auto">
+            @foreach (var group in Visible())
+            {
+                <div data-picker-group="@group.Name">
+                    <MudText Typo="Typo.overline" Class="mud-text-secondary">@group.DisplayName</MudText>
+                    @foreach (var permission in group.Permissions.Where(Matches))
+                    {
+                        <div class="d-flex align-center" data-picker-permission="@permission.Name">
+                            <MudCheckBox T="bool" Value="@Value.Contains(permission.Name)" ValueChanged="on => ToggleAsync(permission.Name, on)" Size="Size.Small" Dense="true"
+                                         Label="@permission.DisplayName" />
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary ms-auto">@permission.Name</MudText>
+                        </div>
+                    }
+                </div>
+            }
+            @if (!Visible().Any())
+            {
+                <MudText Typo="Typo.body2" Class="mud-text-secondary pa-2">@L["Nothing found."]</MudText>
+            }
+        </MudPaper>
+    }
+</div>

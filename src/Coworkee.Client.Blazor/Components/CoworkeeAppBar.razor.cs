@@ -1,5 +1,6 @@
 using Coworkee.Client.Blazor.Layout;
 using Coworkee.Client.Blazor.Navigation;
+using Coworkee.Client.Blazor.Security;
 using Coworkee.Client.Blazor.Theming;
 using Coworkee.Contracts.Ai;
 using Coworkee.Contracts.Settings;
@@ -13,6 +14,8 @@ namespace Coworkee.Client.Blazor.Components;
 public partial class CoworkeeAppBar : IDisposable
 {
     private IReadOnlyList<(HeaderItem Item, HeaderPlacement Placement)> _arranged = [];
+    private IReadOnlyList<HeaderItemSetting> _restricted = [];
+    private IReadOnlySet<string> _permitted = new HashSet<string>();
     private IReadOnlyDictionary<string, string?>? _settings;
     private CoworkeeCommandPalette? _palette;
 
@@ -25,6 +28,8 @@ public partial class CoworkeeAppBar : IDisposable
     [Inject] private CoworkeePages Links { get; set; } = null!;
 
     [Inject] private IDialogService Dialogs { get; set; } = null!;
+
+    [Inject] private PermissionStore Permissions { get; set; } = null!;
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
 
     [Parameter] public bool Dark { get; set; }
@@ -50,12 +55,14 @@ public partial class CoworkeeAppBar : IDisposable
 
     // the assistant's item is there only while the administrator chose the app bar for it
     private bool Shown(HeaderItem item) =>
-        item.Id != HeaderItems.Assistant || Themes.ClientSettings.GetValueOrDefault(AiSettingNames.Display) == AssistantDisplay.AppBar;
+        (item.Id != HeaderItems.Assistant || Themes.ClientSettings.GetValueOrDefault(AiSettingNames.Display) == AssistantDisplay.AppBar)
+        && (_permitted.Contains(item.Id) || !_restricted.Any(r => r.Id == item.Id));
 
     protected override void OnInitialized()
     {
         Preferences.Changed += Refresh;
         Themes.Changed += SettingsChanged;
+        Permissions.Changed += PermissionsChanged;
         Arrange();
     }
 
@@ -63,13 +70,45 @@ public partial class CoworkeeAppBar : IDisposable
     {
         Preferences.Changed -= Refresh;
         Themes.Changed -= SettingsChanged;
+        Permissions.Changed -= PermissionsChanged;
     }
 
     private void Arrange()
     {
         _settings = Themes.ClientSettings;
-        _arranged = HeaderItems.Arrange(HeaderItems.All(Contributors), HeaderItems.Parse(_settings.GetValueOrDefault(HeaderSettings.Items)));
+        var configured = HeaderItems.Parse(_settings.GetValueOrDefault(HeaderSettings.Items));
+        _arranged = HeaderItems.Arrange(HeaderItems.All(Contributors), configured);
+        // the account menu is for everyone: without it nobody signs out
+        _restricted = configured.Where(c => c.Id != HeaderItems.User && c.Permissions is { Count: > 0 }).DistinctBy(c => c.Id).ToList();
+        _ = CheckPermissionsAsync();
     }
+
+    // restricted items stay hidden until the check allows them, so nobody sees an item flash that is not for them
+    private async Task CheckPermissionsAsync()
+    {
+        var restricted = _restricted;
+        if (restricted.Count == 0)
+        {
+            return;
+        }
+
+        var permitted = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var item in restricted)
+        {
+            if (await Permissions.HasAsync(item.Permissions!, item.Match))
+            {
+                permitted.Add(item.Id);
+            }
+        }
+
+        if (ReferenceEquals(restricted, _restricted))
+        {
+            _permitted = permitted;
+            Refresh();
+        }
+    }
+
+    private void PermissionsChanged() => _ = CheckPermissionsAsync();
 
     private void SettingsChanged()
     {

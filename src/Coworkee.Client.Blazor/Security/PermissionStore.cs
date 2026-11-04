@@ -20,6 +20,18 @@ public sealed class PermissionStore(ICoworkeeApi api, RealtimeClient realtime) :
 
     public async Task<bool> HasAsync(string permission) => (await (_permissions ??= LoadAsync())).Contains(permission);
 
+    /// <summary>Any or all of <paramref name="permissions"/>; an empty list restricts nothing.</summary>
+    public async Task<bool> HasAsync(IReadOnlyCollection<string> permissions, PermissionMatch match)
+    {
+        if (permissions.Count == 0)
+        {
+            return true;
+        }
+
+        var granted = await (_permissions ??= LoadAsync());
+        return match == PermissionMatch.All ? permissions.All(granted.Contains) : permissions.Any(granted.Contains);
+    }
+
     public void Reset()
     {
         _permissions = null;

@@ -12,37 +12,87 @@ else
         <MudPaper Outlined="true" Class="pa-4" data-testid="header-items">
             <MudText Typo="Typo.h6">@L["App bar"]</MudText>
             <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">@L["From left to right. On phones language, theme, direction, colour mode and about move into the overflow menu."]</MudText>
-            @for (var i = 0; i < _items.Count; i++)
-            {
-                var index = i;
-                var (item, placement) = _items[i];
-                <div class="d-flex align-center gap-2 py-1" data-header-item="@item.Id" data-placement="@placement">
-                    <MudIcon Icon="@item.Icon" Color="@(placement == HeaderPlacement.Hidden ? Color.Default : Color.Primary)" />
-                    <div class="flex-grow-1">
-                        <MudText Typo="Typo.body1" Class="@(placement == HeaderPlacement.Hidden ? "mud-text-disabled" : null)">@L[item.Title]</MudText>
-                        @if (item.Id == HeaderItems.Assistant)
+            <MudDropContainer T="HeaderItem" @ref="_drop" Items="_items.Select(i => i.Item)" ItemsSelector="@((item, zone) => PlacementOf(item).ToString() == zone)"
+                              CanDrop="@((item, zone) => item.Id != HeaderItems.User || zone == nameof(HeaderPlacement.Bar))" ItemDropped="Dropped"
+                              CanDropClass="mud-border-primary" NoDropClass="mud-border-error" Class="d-flex flex-column gap-3">
+                <ChildContent>
+                    @foreach (var (zone, label, icon) in Zones)
+                    {
+                        <div data-header-zone="@zone">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-1">
+                                <MudIcon Icon="@icon" Size="Size.Small" Class="mud-text-secondary" />
+                                <MudText Typo="Typo.subtitle2">@L[label]</MudText>
+                            </MudStack>
+                            <MudDropZone T="HeaderItem" Identifier="@zone.ToString()" AllowReorder="true" Class="rounded border-2 border-dashed mud-border-lines-default pa-1" Style="min-height:48px" />
+                        </div>
+                    }
+                </ChildContent>
+                <ItemRenderer>
+                    @{
+                        var item = context;
+                        var index = _items.FindIndex(i => i.Item.Id == item.Id);
+                        var placement = _items[index].Placement;
+                        var access = Access(item.Id);
+                    }
+                    @* the buttons keep everything reachable without a mouse *@
+                    <div class="d-flex align-center gap-2 py-1 px-1" data-header-item="@item.Id" data-placement="@placement">
+                        <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Size="Size.Small" Class="mud-text-secondary" Style="cursor:grab" />
+                        <MudIcon Icon="@item.Icon" Color="@(placement == HeaderPlacement.Hidden ? Color.Default : Color.Primary)" />
+                        <div class="flex-grow-1">
+                            <MudText Typo="Typo.body1" Class="@(placement == HeaderPlacement.Hidden ? "mud-text-disabled" : null)">@L[item.Title]</MudText>
+                            @if (item.Id == HeaderItems.Assistant)
+                            {
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["Shows only with the assistant display App bar button."]</MudText>
+                            }
+                            @if (access.Permissions.Count > 0)
+                            {
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary" data-testid="header-access-summary">
+                                    @L["Visible for"]: @(access.Permissions.Count > 1 ? L[access.Match == PermissionMatch.All ? "all of" : "any of"] + " " : null)@string.Join(", ", access.Permissions)
+                                </MudText>
+                            }
+                        </div>
+                        @if (item.Id != HeaderItems.User)
                         {
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["Shows only with the assistant display App bar button."]</MudText>
+                            <MudTooltip Text="@L["Visible for"]">
+                                <MudIconButton Icon="@(access.Permissions.Count > 0 ? Icons.Material.Filled.Lock : Icons.Material.Outlined.LockOpen)" Size="Size.Small"
+                                               Color="@(access.Permissions.Count > 0 ? Color.Warning : Color.Default)" OnClick="() => _editing = item"
+                                               aria-label="@L["Visible for"]" aria-expanded="@(_editing?.Id == item.Id ? "true" : "false")" data-testid="header-access" />
+                            </MudTooltip>
+                        }
+                        <MudIconButton Icon="@Icons.Material.Outlined.ArrowUpward" Size="Size.Small" Disabled="@(!CanMove(index, -1))" OnClick="() => Move(index, -1)" aria-label="@L["Move up"]" data-testid="header-up" />
+                        <MudIconButton Icon="@Icons.Material.Outlined.ArrowDownward" Size="Size.Small" Disabled="@(!CanMove(index, 1))" OnClick="() => Move(index, 1)" aria-label="@L["Move down"]" data-testid="header-down" />
+                        <MudTooltip Text="@L["In the bar"]">
+                            <MudIconButton Icon="@Icons.Material.Outlined.WebAsset" Size="Size.Small" Color="@Selected(placement, HeaderPlacement.Bar)" OnClick="() => Place(index, HeaderPlacement.Bar)"
+                                           aria-label="@L["In the bar"]" aria-pressed="@Pressed(placement, HeaderPlacement.Bar)" data-testid="header-bar" />
+                        </MudTooltip>
+                        @if (item.Id != HeaderItems.User)
+                        {
+                            <MudTooltip Text="@L["In the overflow menu"]">
+                                <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Color="@Selected(placement, HeaderPlacement.Overflow)" OnClick="() => Place(index, HeaderPlacement.Overflow)"
+                                               aria-label="@L["In the overflow menu"]" aria-pressed="@Pressed(placement, HeaderPlacement.Overflow)" data-testid="header-overflow" />
+                            </MudTooltip>
+                            <MudTooltip Text="@L["Hidden"]">
+                                <MudIconButton Icon="@Icons.Material.Outlined.VisibilityOff" Size="Size.Small" Color="@Selected(placement, HeaderPlacement.Hidden)" OnClick="() => Place(index, HeaderPlacement.Hidden)"
+                                               aria-label="@L["Hidden"]" aria-pressed="@Pressed(placement, HeaderPlacement.Hidden)" data-testid="header-hide" />
+                            </MudTooltip>
                         }
                     </div>
-                    <MudIconButton Icon="@Icons.Material.Outlined.ArrowUpward" Size="Size.Small" Disabled="@(index == 0)" OnClick="() => Move(index, -1)" aria-label="@L["Move up"]" data-testid="header-up" />
-                    <MudIconButton Icon="@Icons.Material.Outlined.ArrowDownward" Size="Size.Small" Disabled="@(index == _items.Count - 1)" OnClick="() => Move(index, 1)" aria-label="@L["Move down"]" data-testid="header-down" />
-                    <MudTooltip Text="@L["In the bar"]">
-                        <MudIconButton Icon="@Icons.Material.Outlined.WebAsset" Size="Size.Small" Color="@Selected(placement, HeaderPlacement.Bar)" OnClick="() => Place(index, HeaderPlacement.Bar)"
-                                       aria-label="@L["In the bar"]" aria-pressed="@Pressed(placement, HeaderPlacement.Bar)" data-testid="header-bar" />
-                    </MudTooltip>
-                    @if (item.Id != HeaderItems.User)
-                    {
-                        <MudTooltip Text="@L["In the overflow menu"]">
-                            <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Color="@Selected(placement, HeaderPlacement.Overflow)" OnClick="() => Place(index, HeaderPlacement.Overflow)"
-                                           aria-label="@L["In the overflow menu"]" aria-pressed="@Pressed(placement, HeaderPlacement.Overflow)" data-testid="header-overflow" />
-                        </MudTooltip>
-                        <MudTooltip Text="@L["Hidden"]">
-                            <MudIconButton Icon="@Icons.Material.Outlined.VisibilityOff" Size="Size.Small" Color="@Selected(placement, HeaderPlacement.Hidden)" OnClick="() => Place(index, HeaderPlacement.Hidden)"
-                                           aria-label="@L["Hidden"]" aria-pressed="@Pressed(placement, HeaderPlacement.Hidden)" data-testid="header-hide" />
-                        </MudTooltip>
-                    }
-                </div>
+                </ItemRenderer>
+            </MudDropContainer>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["Drag to reorder"]</MudText>
+            @if (_editing is { } edited)
+            {
+                var access = Access(edited.Id);
+                <MudPaper Outlined="true" Class="pa-3 mt-3" data-testid="header-access-panel">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+                        <MudIcon Icon="@Icons.Material.Outlined.Lock" Color="Color.Primary" />
+                        <MudText Typo="Typo.subtitle1" Class="flex-grow-1">@L["Visible for {0}", L[edited.Title]]</MudText>
+                        <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" OnClick="() => _editing = null" aria-label="@L["Close"]" />
+                    </MudStack>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">@L["Without a permission everyone sees the item; with several, any or all of them are needed."]</MudText>
+                    <PermissionPicker @key="edited.Id" Value="access.Permissions" ValueChanged="v => SetPermissions(edited.Id, v)" ShowMatch="true"
+                                      Match="access.Match" MatchChanged="m => SetMatch(edited.Id, m)" />
+                </MudPaper>
             }
         </MudPaper>
 
