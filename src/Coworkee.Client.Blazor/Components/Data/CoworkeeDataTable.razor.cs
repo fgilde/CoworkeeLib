@@ -21,6 +21,8 @@ public partial class CoworkeeDataTable<T> : IDisposable
     private IReadOnlyList<string> _declaredOrder = [];
     private bool? _dense;
     private string? _activeView;
+    private bool _holdRows;
+    private DataTableTotal? _total;
 
     [Inject] private IServiceProvider Services { get; set; } = null!;
 
@@ -193,8 +195,16 @@ public partial class CoworkeeDataTable<T> : IDisposable
         }
     }
 
+    // a render for the facets, chips or toolbar alone leaves the rows as they are (DataTableRowsGate)
+    private void RenderOutsideRows(bool outsideOnly)
+    {
+        _holdRows = outsideOnly;
+        StateHasChanged();
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        _holdRows = false;
         if (firstRender && _grid is not null)
         {
             _declaredOrder = DataGridLayout<T>.Named(_grid).Select(c => DataGridLayout<T>.Key(c)!).ToList();

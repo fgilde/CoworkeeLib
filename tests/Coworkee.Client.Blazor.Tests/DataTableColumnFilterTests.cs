@@ -149,6 +149,19 @@ public sealed class DataTableColumnFilterTests : ClientTestBase
     }
 
     [Fact]
+    public async Task An_open_facet_filter_shows_the_counts_of_facets_that_arrive()
+    {
+        var table = RenderTable();
+        await OpenFilterAsync(table, "Category");
+        _popovers.Find("[data-testid='column-filter']").TextContent.ShouldNotContain("777");
+
+        _odata.WithFacets(Category with { Options = [Category.Options[0] with { Count = 777 }, Category.Options[1]] });
+        await table.InvokeAsync(Table(table).ReloadAsync);
+
+        _popovers.WaitForAssertion(() => _popovers.Find("[data-testid='column-filter']").TextContent.ShouldContain("777"));
+    }
+
+    [Fact]
     public async Task Column_filters_come_back_with_a_saved_view_and_a_shared_link()
     {
         var table = RenderTable();

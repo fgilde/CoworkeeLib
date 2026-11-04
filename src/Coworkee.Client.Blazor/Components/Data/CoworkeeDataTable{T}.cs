@@ -79,8 +79,8 @@ public partial class CoworkeeDataTable<T>
                 if (!cancel.IsCancellationRequested)
                 {
                     ShowFacets(page.Facets);
-                    MarkFacetColumns();
-                    StateHasChanged();
+                    // inside the grid only the filter icons, open column filters and group heads show the facets
+                    RenderOutsideRows(!MarkFacetColumns() && _shownFilters == 0 && !GroupsTheResult);
                 }
             }
             catch (Exception exception) when (exception is OperationCanceledException or Api.ApiException or HttpRequestException)
@@ -111,7 +111,7 @@ public partial class CoworkeeDataTable<T>
     private void FacetViewsChanged()
     {
         WriteUrl();
-        StateHasChanged();
+        RenderOutsideRows(true);
     }
 
     private void RestoreFacets(DataTableState state)

@@ -73,6 +73,32 @@ public sealed class DataTablePageModeTests : ClientTestBase
         table.WaitForAssertion(() => table.Find(".mud-table-pagination-actions"));
     }
 
+    [Fact]
+    public void The_rows_scroll_inside_the_table_at_most_as_high_as_the_page_says()
+    {
+        var table = Render<CoworkeeDataTable<Row>>(p => p.Add(t => t.EntitySet, "Rows").Add(t => t.Columns, Columns()));
+        table.WaitForAssertion(() => table.Find(".mud-table-pagination-actions"));
+        var grid = table.Find("[data-testid='data-table']");
+        grid.ClassList.ShouldContain("cw-table-fill");
+        grid.GetAttribute("style").ShouldContain("--cw-table-height:calc(100vh - 300px)");
+
+        table.Render(p => p.Add(t => t.Height, "600px"));
+        table.Find("[data-testid='data-table']").GetAttribute("style").ShouldContain("--cw-table-height:600px");
+
+        table.Render(p => p.Add(t => t.FillHeight, false));
+        table.Find("[data-testid='data-table']").ClassList.ShouldNotContain("cw-table-fill");
+    }
+
+    [Fact]
+    public void Endless_scrolling_keeps_its_own_box_of_the_given_height()
+    {
+        var table = Render<CoworkeeDataTable<Row>>(p => p.Add(t => t.EntitySet, "Rows").Add(t => t.PageMode, DataTablePageMode.EndlessScroll).Add(t => t.Height, "70vh").Add(t => t.Columns, Columns()));
+
+        table.WaitForAssertion(() => table.Find("[data-testid='table-total']"));
+        table.Find("[data-testid='data-table']").ClassList.ShouldNotContain("cw-table-fill");
+        table.Find(".mud-table-container").GetAttribute("style").ShouldContain("height:70vh");
+    }
+
     private static RenderFragment Columns() => builder =>
     {
         builder.OpenComponent<PropertyColumn<Row, string>>(0);
