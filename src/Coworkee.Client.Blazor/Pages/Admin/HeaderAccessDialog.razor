@@ -1,0 +1,10 @@
+<MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial" data-testid="header-access-dialog">
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary mb-3">@L["Without a permission everyone sees the item; with several, any or all of them are needed."]</MudText>
+        <PermissionPicker @bind-Value="_permissions" ShowMatch="true" @bind-Match="_match" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()" data-testid="header-access-cancel">@L["Cancel"]</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Save" OnClick="Apply" data-testid="header-access-apply">@L["Save"]</MudButton>
+    </DialogActions>
+</MudDialog>

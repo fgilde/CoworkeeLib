@@ -55,8 +55,8 @@ else
                         {
                             <MudTooltip Text="@L["Visible for"]">
                                 <MudIconButton Icon="@(access.Permissions.Count > 0 ? Icons.Material.Filled.Lock : Icons.Material.Outlined.LockOpen)" Size="Size.Small"
-                                               Color="@(access.Permissions.Count > 0 ? Color.Warning : Color.Default)" OnClick="() => _editing = item"
-                                               aria-label="@L["Visible for"]" aria-expanded="@(_editing?.Id == item.Id ? "true" : "false")" data-testid="header-access" />
+                                               Color="@(access.Permissions.Count > 0 ? Color.Warning : Color.Default)" OnClick="() => EditAccessAsync(item)"
+                                               aria-label="@L["Visible for {0}", L[item.Title]]" aria-haspopup="dialog" data-testid="header-access" />
                             </MudTooltip>
                         }
                         <MudIconButton Icon="@Icons.Material.Outlined.ArrowUpward" Size="Size.Small" Disabled="@(!CanMove(index, -1))" OnClick="() => Move(index, -1)" aria-label="@L["Move up"]" data-testid="header-up" />
@@ -80,20 +80,6 @@ else
                 </ItemRenderer>
             </MudDropContainer>
             <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["Drag to reorder"]</MudText>
-            @if (_editing is { } edited)
-            {
-                var access = Access(edited.Id);
-                <MudPaper Outlined="true" Class="pa-3 mt-3" data-testid="header-access-panel">
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
-                        <MudIcon Icon="@Icons.Material.Outlined.Lock" Color="Color.Primary" />
-                        <MudText Typo="Typo.subtitle1" Class="flex-grow-1">@L["Visible for {0}", L[edited.Title]]</MudText>
-                        <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" OnClick="() => _editing = null" aria-label="@L["Close"]" />
-                    </MudStack>
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">@L["Without a permission everyone sees the item; with several, any or all of them are needed."]</MudText>
-                    <PermissionPicker @key="edited.Id" Value="access.Permissions" ValueChanged="v => SetPermissions(edited.Id, v)" ShowMatch="true"
-                                      Match="access.Match" MatchChanged="m => SetMatch(edited.Id, m)" />
-                </MudPaper>
-            }
         </MudPaper>
 
         <MudPaper Outlined="true" Class="pa-4" data-testid="assistant-display">

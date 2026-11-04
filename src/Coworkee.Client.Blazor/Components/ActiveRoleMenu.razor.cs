@@ -18,6 +18,9 @@ public partial class ActiveRoleMenu : IDisposable
 
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
 
+    /// <summary>Inside the app bar's overflow menu: a submenu instead of a button.</summary>
+    [Parameter] public bool Nested { get; set; }
+
     private MyRoleDto? Active => _roles?.Roles.FirstOrDefault(r => r.Id == _roles.ActiveRoleId);
 
     protected override async Task OnInitializedAsync()

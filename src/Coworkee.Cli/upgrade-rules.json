@@ -668,6 +668,7 @@
       "breaking": [
         "Identity: custom permissions are stored in the new table cw.CustomPermissions; ICoworkeeApi gets members for them.",
         "AI: IAssistantApi.SendAsync/ConfirmAsync take an AiUiContext? ui parameter.",
+        "Blazor: the switch of the active role left CoworkeeUserMenu for the header item role; an own app bar that renders CoworkeeUserMenu adds <ActiveRoleMenu /> itself.",
         "ASP.NET Core, EF Core and Microsoft.Extensions packages 10.0.14 (security fix)."
       ],
       "needsMigration": true,

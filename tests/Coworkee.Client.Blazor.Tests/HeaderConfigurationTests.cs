@@ -13,6 +13,8 @@ namespace Coworkee.Client.Blazor.Tests;
 
 public sealed class HeaderConfigurationTests : ClientTestBase
 {
+    private readonly IRenderedComponent<MudDialogProvider> _dialogs;
+
     public HeaderConfigurationTests()
     {
         Services.AddSingleton<IAppBarContributor>(new Bar());
@@ -24,6 +26,7 @@ public sealed class HeaderConfigurationTests : ClientTestBase
         ]);
         Render<MudPopoverProvider>();
         Render<MudSnackbarProvider>();
+        _dialogs = Render<MudDialogProvider>();
     }
 
     [Fact]
@@ -84,10 +87,21 @@ public sealed class HeaderConfigurationTests : ClientTestBase
         // the account menu stays for everyone
         page.FindAll($"[data-header-item='{HeaderItems.User}'] [data-testid='header-access']").ShouldBeEmpty();
 
-        await page.Find($"[data-header-item='{HeaderItems.About}'] [data-testid='header-access']").ClickAsync(new());
-        page.WaitForElement("[data-testid='header-access-panel'] [data-picker-permission='Mail.A'] input").Change(true);
-        page.Find("[data-testid='header-access-panel'] [data-picker-permission='Mail.B'] input").Change(true);
-        await page.Find("[data-testid='header-access-panel'] [data-match='All']").ClickAsync(new());
+        page.Find($"[data-header-item='{HeaderItems.About}'] [data-testid='header-access']").ClassList.ShouldNotContain("mud-warning-text");
+
+        // the permissions are chosen in a side sheet, not below the list
+        var editing = page.Find($"[data-header-item='{HeaderItems.About}'] [data-testid='header-access']").ClickAsync(new());
+        _dialogs.WaitForElement("[data-testid='header-access-dialog'] [data-picker-permission='Mail.A'] input");
+        // found and used on the renderer's thread, so no render of the sheet comes in between
+        await _dialogs.InvokeAsync(() => _dialogs.Find("[data-testid='header-access-dialog'] [data-picker-permission='Mail.A'] input").ChangeAsync(new() { Value = true }));
+        await _dialogs.InvokeAsync(() => _dialogs.Find("[data-testid='header-access-dialog'] [data-picker-permission='Mail.B'] input").ChangeAsync(new() { Value = true }));
+        await _dialogs.InvokeAsync(() => _dialogs.Find("[data-testid='header-access-dialog'] [data-match='All']").ClickAsync(new()));
+        await _dialogs.InvokeAsync(() => _dialogs.Find("[data-testid='header-access-apply']").ClickAsync(new()));
+        await editing;
+
+        // the lock shows the restriction at once
+        page.WaitForAssertion(() => page.Find($"[data-header-item='{HeaderItems.About}'] [data-testid='header-access']").ClassList.ShouldContain("mud-warning-text"));
+        page.FindAll("[data-testid='header-access-panel']").ShouldBeEmpty();
         await page.Find("[data-testid='header-save']").ClickAsync(new());
 
         await Api.Received(1).SetSettingsAsync(SettingScope.Global, Arg.Is<IReadOnlyDictionary<string, string?>>(v =>

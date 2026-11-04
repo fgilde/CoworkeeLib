@@ -128,6 +128,30 @@ public sealed class HeaderTests : ClientTestBase
     }
 
     [Fact]
+    public async Task The_role_switch_is_an_item_of_its_own_that_can_move_to_the_overflow_menu_or_be_hidden()
+    {
+        MyRoleDto[] roles = [new(Guid.NewGuid(), "Sales", null, true), new(Guid.NewGuid(), "Support", null, true)];
+        Api.GetMyRolesAsync(null, Arg.Any<CancellationToken>()).Returns(new MyRolesDto(true, null, roles));
+        Configure(null);
+        var layout = RenderLayout();
+        // by default in the bar, before the account menu and no longer inside it
+        layout.WaitForAssertion(() => layout.Find("[data-testid='active-role']"));
+        var bar = layout.Find(".mud-appbar").InnerHtml;
+        bar.IndexOf("active-role", StringComparison.Ordinal).ShouldBeLessThan(bar.IndexOf("user-menu", StringComparison.Ordinal));
+
+        Configure("""[{"id":"role","placement":"Overflow"}]""");
+        await layout.InvokeAsync(Services.GetRequiredService<ThemeService>().LoadAsync);
+        layout.WaitForAssertion(() => layout.FindAll(".mud-appbar [data-testid='active-role']").ShouldBeEmpty());
+        await layout.Find("[data-testid='app-bar-more'] button").ClickAsync(new());
+        layout.WaitForAssertion(() => layout.Find("[data-testid='active-role-menu']"));
+
+        Configure("""[{"id":"role","placement":"Hidden"}]""");
+        await layout.InvokeAsync(Services.GetRequiredService<ThemeService>().LoadAsync);
+        layout.WaitForAssertion(() => layout.FindAll("[data-testid='active-role-menu']").ShouldBeEmpty());
+        layout.Find("[data-testid='user-menu']");
+    }
+
+    [Fact]
     public async Task A_saved_header_reaches_the_open_app_bar()
     {
         Configure(null);

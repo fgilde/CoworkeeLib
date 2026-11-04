@@ -1,6 +1,5 @@
 <AuthorizeView>
     <Authorized>
-        <ActiveRoleMenu />
         <ChatNotifier />
         @if (context.User.FindFirst(ImpersonationClaims.ImpersonatorName)?.Value is { } impersonator)
         {

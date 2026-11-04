@@ -89,7 +89,7 @@ App items sit between the search and the language menu, ordered by `Order`. `Id`
 
 ### Managed header
 
-Under *Administration → User interface → Header* (`/admin/header`, `Settings.Manage`, system organisation only) an administrator reorders every item of the bar, the library's and the apps', and puts each one in the bar, in the overflow menu (⋮) or nowhere: by dragging it within or between the three areas *In the bar*, *In the overflow menu* and *Hidden*, or with the arrow and placement buttons of each row (keyboard). The lock of a row (*Visible for*) limits the item to users with permissions: with several, either any or all of them are needed. Without permissions everyone sees it; the restriction comes on top of an item's own rules (notifications and assistant still need a signed-in user), and it follows changes of the user's permissions at once. The account menu always stays in the bar and visible to everyone. *Reset to defaults* goes back to the built-in order. The choice is the global setting `Header.Items`, a JSON list in bar order:
+Under *Administration → User interface → Header* (`/admin/header`, `Settings.Manage`, system organisation only) an administrator reorders every item of the bar, the library's and the apps', and puts each one in the bar, in the overflow menu (⋮) or nowhere: by dragging it within or between the three areas *In the bar*, *In the overflow menu* and *Hidden*, or with the arrow and placement buttons of each row (keyboard). The lock of a row (*Visible for*) opens a sheet from the right that limits the item to users with permissions: with several, either any or all of them are needed. Without permissions everyone sees it; the restriction comes on top of an item's own rules (notifications and assistant still need a signed-in user), and it follows changes of the user's permissions at once. The account menu always stays in the bar and visible to everyone. *Reset to defaults* goes back to the built-in order. The choice is the global setting `Header.Items`, a JSON list in bar order:
 
 ```json
 [{"id":"search","placement":"Bar"},{"id":"about","placement":"Overflow","permissions":["Settings.Manage","Audit.View"],"match":"All"},{"id":"rtl","placement":"Hidden"}]
@@ -97,7 +97,7 @@ Under *Administration → User interface → Header* (`/admin/header`, `Settings
 
 `permissions` and `match` (`Any`, the default, or `All`) are optional; values saved without them keep working.
 
-The library's ids are `search`, `language`, `theme`, `rtl`, `dark-mode`, `notifications`, `user`, `assistant` and `about`. Items the list does not name (an app added later) appear after the item before them in the default order; names of items that are gone are ignored; an invalid value falls back to the default header. Saved values reach open pages at once. Hidden or in the overflow menu, the search keeps Ctrl+K. On phones language, theme, direction, colour mode and about still fold into the overflow menu.
+The library's ids are `search`, `language`, `theme`, `rtl`, `dark-mode`, `notifications`, `role`, `user`, `assistant` and `about`; `role` is the switch of the [active role](../modules/realtime.md#active-role), shown to users with several roles. Items the list does not name (an app added later) appear after the item before them in the default order; names of items that are gone are ignored; an invalid value falls back to the default header. Saved values reach open pages at once. Hidden or in the overflow menu, the search keeps Ctrl+K. On phones language, theme, direction, colour mode and about still fold into the overflow menu.
 
 The same page sets where the [assistant](../modules/ai.md#where-the-assistant-shows) shows.
 
@@ -181,7 +181,7 @@ builder.Services.AddSingleton(new ProfileTab("Documents", "documents", typeof(My
 | `RealtimeSubscription` | calls back when the server publishes on a topic, e.g. `type:Brand` |
 | `EntityWatch` | keeps a detail page in step with its entry, goes back when it is deleted |
 | `NotAllowed` | what the router shows instead of a forbidden page, with a switch to a role that grants it |
-| `ActiveRoleMenu`, `ChatNotifier` | in the user menu: the [active role](../modules/realtime.md#active-role) and chat snackbars |
+| `ActiveRoleMenu` | the header item `role`: the [active role](../modules/realtime.md#active-role) (`Nested` in the overflow menu) |
 | `CoworkeeDataTable<T>` | [data tables](data-table.md) |
 | `ShowEditAsync` | edit dialog generated from a model |
 | `AuditTimeline`, `VersionHistory` | change history of an entity |

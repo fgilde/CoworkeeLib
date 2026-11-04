@@ -39,9 +39,9 @@ public sealed class CustomPermissionsPageTests : ClientTestBase
         var adding = page.WaitForElement("[data-testid='create-custom-permission']").ClickAsync(new());
         _dialogs.WaitForElement("form");
 
-        // each change renders the dialog again, so the form is found anew for every input
-        await InputByLabel(_dialogs.Find("form"), "Name").ChangeAsync(new() { Value = "Custom.Header.Help" });
-        await InputByLabel(_dialogs.Find("form"), "Display name").ChangeAsync(new() { Value = "Help button" });
+        // found and changed on the renderer's thread, so no render of the dialog comes in between
+        await _dialogs.InvokeAsync(() => InputByLabel(_dialogs.Find("form"), "Name").Change("Custom.Header.Help"));
+        await _dialogs.InvokeAsync(() => InputByLabel(_dialogs.Find("form"), "Display name").Change("Help button"));
         await _dialogs.Find("form").SubmitAsync();
         await adding;
 

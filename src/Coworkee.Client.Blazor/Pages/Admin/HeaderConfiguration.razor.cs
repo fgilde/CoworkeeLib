@@ -32,7 +32,6 @@ public partial class HeaderConfiguration
     private List<(HeaderItem Item, HeaderPlacement Placement)>? _items;
     private readonly Dictionary<string, (IReadOnlyList<string> Permissions, PermissionMatch Match)> _access = new(StringComparer.Ordinal);
     private MudDropContainer<HeaderItem>? _drop;
-    private HeaderItem? _editing;
     private bool _reorder;
     private string _display = AssistantDisplay.BottomRight;
     private bool _busy;
@@ -46,6 +45,8 @@ public partial class HeaderConfiguration
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
+
+    [Inject] private IDialogService Dialogs { get; set; } = null!;
 
     private IReadOnlyList<HeaderItem> Available => HeaderItems.All(Contributors);
 
@@ -61,7 +62,6 @@ public partial class HeaderConfiguration
             _access.TryAdd(setting.Id, (setting.Permissions!, setting.Match));
         }
 
-        _editing = null;
         Show(HeaderItems.Arrange(Available, configured));
         _display = values.GetValueOrDefault(AiSettingNames.Display) is { } display && AssistantDisplay.All.Contains(display) ? display : AssistantDisplay.BottomRight;
     });
@@ -69,7 +69,6 @@ public partial class HeaderConfiguration
     private void Reset()
     {
         _access.Clear();
-        _editing = null;
         Show(HeaderItems.Arrange(Available, []));
     }
 
@@ -122,19 +121,26 @@ public partial class HeaderConfiguration
     private (IReadOnlyList<string> Permissions, PermissionMatch Match) Access(string id) =>
         _access.TryGetValue(id, out var access) ? access : ([], PermissionMatch.Any);
 
-    private void SetPermissions(string id, IReadOnlyList<string> permissions)
+    private async Task EditAccessAsync(HeaderItem item)
     {
-        if (permissions.Count == 0)
+        var access = Access(item.Id);
+        if (await HeaderAccessDialog.EditAsync(Dialogs, L["Visible for {0}", L[item.Title]], access.Permissions, access.Match) is not { } chosen)
         {
-            _access.Remove(id);
+            return;
+        }
+
+        if (chosen.Permissions.Count == 0)
+        {
+            _access.Remove(item.Id);
         }
         else
         {
-            _access[id] = (permissions, Access(id).Match);
+            _access[item.Id] = chosen;
         }
-    }
 
-    private void SetMatch(string id, PermissionMatch match) => _access[id] = (Access(id).Permissions, match);
+        // the drop zones render their items once; refreshing them shows the lock at once
+        Show(_items!);
+    }
 
     private static Color Selected(HeaderPlacement placement, HeaderPlacement button) => placement == button ? Color.Primary : Color.Default;
 

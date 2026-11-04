@@ -51,14 +51,14 @@ public sealed class DataTableStateTests : ClientTestBase
 
         await OpenAsync(table, popovers, "views", "[data-testid='save-view']");
         popovers.Find("input[data-testid='view-name'], [data-testid='view-name'] input").Input("Drills");
-        await popovers.Find("[data-testid='save-view']").ClickAsync(new());
+        await popovers.InvokeAsync(() => popovers.Find("[data-testid='save-view']").ClickAsync(new()));
 
         table.Find("input[data-testid='table-search'], [data-testid='table-search'] input").Input("");
         await SetColumnVisibleAsync(table, popovers, "Category", true);
         table.WaitForAssertion(() => table.Instance.CurrentState.IsEmpty.ShouldBeTrue(), TimeSpan.FromSeconds(3));
 
         await OpenAsync(table, popovers, "views", "[data-view='Drills']");
-        await popovers.Find("[data-view='Drills']").ClickAsync(new());
+        await popovers.InvokeAsync(() => popovers.Find("[data-view='Drills']").ClickAsync(new()));
 
         table.WaitForAssertion(() => (table.Instance.CurrentState.Search, table.Instance.CurrentState.HiddenColumns.Single()).ShouldBe(("dri", "Category")));
     }
@@ -68,7 +68,8 @@ public sealed class DataTableStateTests : ClientTestBase
     {
         if (popovers.FindAll(inner).Count == 0)
         {
-            await table.Find($"[data-testid='{menu}'] button").ClickAsync(new());
+            // found and clicked on the renderer's thread, so no render comes in between
+            await table.InvokeAsync(() => table.Find($"[data-testid='{menu}'] button").ClickAsync(new()));
         }
 
         popovers.WaitForElement(inner);

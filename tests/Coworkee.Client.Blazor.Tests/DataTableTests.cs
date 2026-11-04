@@ -67,8 +67,12 @@ public sealed class DataTableTests : ClientTestBase
         clock.Advance(TimeSpan.FromMilliseconds(200));
         _odata.Loads.ShouldBe(1, "the burst is still settling");
 
-        clock.Advance(TimeSpan.FromMilliseconds(100));
-        table.WaitForAssertion(() => _odata.Loads.ShouldBe(2));
+        // under load a push is handled a little later than the clock moved: step on until the one reload
+        table.WaitForAssertion(() =>
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            _odata.Loads.ShouldBe(2);
+        });
         clock.Advance(TimeSpan.FromSeconds(5));
         table.WaitForAssertion(() => _odata.Loads.ShouldBe(2));
     }

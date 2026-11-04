@@ -32,6 +32,9 @@
             case HeaderItems.Notifications:
                 <AuthorizeView><Authorized><NotificationBell /></Authorized></AuthorizeView>
                 break;
+            case HeaderItems.Role:
+                <AuthorizeView><Authorized><ActiveRoleMenu /></Authorized></AuthorizeView>
+                break;
             case HeaderItems.User:
                 <CoworkeeUserMenu />
                 break;
@@ -73,6 +76,9 @@
                         <AuthorizeView><Authorized>
                             <MudMenuItem Icon="@Icons.Material.Outlined.Notifications" Href="@Links.Href("/notifications")">@L["Notifications"]</MudMenuItem>
                         </Authorized></AuthorizeView>
+                        break;
+                    case HeaderItems.Role:
+                        <AuthorizeView><Authorized><ActiveRoleMenu Nested="true" /></Authorized></AuthorizeView>
                         break;
                     case HeaderItems.Assistant:
                         <AuthorizeView><Authorized><AssistantLauncher InAppBar="true" Nested="true" /></Authorized></AuthorizeView>

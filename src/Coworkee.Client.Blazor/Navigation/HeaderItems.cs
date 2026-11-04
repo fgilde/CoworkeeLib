@@ -13,6 +13,7 @@ public static class HeaderItems
     public const string RightToLeft = "rtl";
     public const string DarkMode = "dark-mode";
     public const string Notifications = "notifications";
+    public const string Role = "role";
     public const string User = "user";
     public const string Assistant = "assistant";
     public const string About = "about";
@@ -28,6 +29,7 @@ public static class HeaderItems
         new(RightToLeft, "Right to left", Icons.Material.Outlined.FormatTextdirectionRToL, 10_200),
         new(DarkMode, "Dark mode", Icons.Material.Outlined.DarkMode, 10_300),
         new(Notifications, "Notifications", Icons.Material.Outlined.Notifications, 10_400),
+        new(Role, "Act as", Icons.Material.Outlined.Shield, 10_450),
         new(User, "Account", Icons.Material.Outlined.AccountCircle, 10_500),
         new(Assistant, "Assistant", Icons.Material.Outlined.AutoAwesome, 10_600),
         new(About, "About", Icons.Material.Outlined.Info, 10_700),

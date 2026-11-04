@@ -89,7 +89,7 @@ App-Elemente stehen zwischen Suche und Sprachmenü, sortiert nach `Order`. `Id` 
 
 ### Verwaltete Kopfzeile
 
-Unter *Administration → Benutzeroberfläche → Kopfzeile* (`/admin/header`, `Settings.Manage`, nur Systemorganisation) ordnet ein Administrator jedes Element der Leiste um, die der Bibliothek wie die der Apps, und legt jedes in die Leiste, ins Überlaufmenü (⋮) oder blendet es aus: per Ziehen innerhalb und zwischen den drei Bereichen *In der Leiste*, *Im Überlaufmenü* und *Ausgeblendet* oder mit den Pfeil- und Platzierungsknöpfen jeder Zeile (Tastatur). Das Schloss einer Zeile (*Sichtbar für*) beschränkt das Element auf Benutzer mit Berechtigungen: bei mehreren ist wahlweise eine oder sind alle nötig. Ohne Berechtigungen sieht es jeder; die Beschränkung kommt zu den eigenen Regeln eines Elements hinzu (Benachrichtigungen und Assistent brauchen weiterhin einen angemeldeten Benutzer) und folgt Änderungen der Berechtigungen des Benutzers sofort. Das Benutzermenü bleibt immer in der Leiste und für alle sichtbar. *Auf Standard zurücksetzen* stellt die eingebaute Reihenfolge wieder her. Die Wahl ist die globale Einstellung `Header.Items`, eine JSON-Liste in Leistenreihenfolge:
+Unter *Administration → Benutzeroberfläche → Kopfzeile* (`/admin/header`, `Settings.Manage`, nur Systemorganisation) ordnet ein Administrator jedes Element der Leiste um, die der Bibliothek wie die der Apps, und legt jedes in die Leiste, ins Überlaufmenü (⋮) oder blendet es aus: per Ziehen innerhalb und zwischen den drei Bereichen *In der Leiste*, *Im Überlaufmenü* und *Ausgeblendet* oder mit den Pfeil- und Platzierungsknöpfen jeder Zeile (Tastatur). Das Schloss einer Zeile (*Sichtbar für*) öffnet ein Blatt von rechts, in dem das Element auf Benutzer mit Berechtigungen beschränkt wird: bei mehreren ist wahlweise eine oder sind alle nötig. Ohne Berechtigungen sieht es jeder; die Beschränkung kommt zu den eigenen Regeln eines Elements hinzu (Benachrichtigungen und Assistent brauchen weiterhin einen angemeldeten Benutzer) und folgt Änderungen der Berechtigungen des Benutzers sofort. Das Benutzermenü bleibt immer in der Leiste und für alle sichtbar. *Auf Standard zurücksetzen* stellt die eingebaute Reihenfolge wieder her. Die Wahl ist die globale Einstellung `Header.Items`, eine JSON-Liste in Leistenreihenfolge:
 
 ```json
 [{"id":"search","placement":"Bar"},{"id":"about","placement":"Overflow","permissions":["Settings.Manage","Audit.View"],"match":"All"},{"id":"rtl","placement":"Hidden"}]
@@ -97,7 +97,7 @@ Unter *Administration → Benutzeroberfläche → Kopfzeile* (`/admin/header`, `
 
 `permissions` und `match` (`Any`, der Standard, oder `All`) sind optional; ohne sie gespeicherte Werte gelten weiter.
 
-Die Ids der Bibliothek sind `search`, `language`, `theme`, `rtl`, `dark-mode`, `notifications`, `user`, `assistant` und `about`. Elemente, die die Liste nicht nennt (etwa eine später hinzugefügte App), erscheinen hinter dem Element, das in der Standardreihenfolge vor ihnen steht; Namen verschwundener Elemente werden ignoriert; ein ungültiger Wert ergibt die Standard-Kopfzeile. Gespeicherte Werte erreichen offene Seiten sofort. Ausgeblendet oder im Überlaufmenü behält die Suche Strg+K. Auf Smartphones wandern Sprache, Design, Schreibrichtung, Farbmodus und Info weiterhin ins Überlaufmenü.
+Die Ids der Bibliothek sind `search`, `language`, `theme`, `rtl`, `dark-mode`, `notifications`, `role`, `user`, `assistant` und `about`; `role` ist der Umschalter der [aktiven Rolle](../modules/realtime.md#aktive-rolle), sichtbar für Benutzer mit mehreren Rollen. Elemente, die die Liste nicht nennt (etwa eine später hinzugefügte App), erscheinen hinter dem Element, das in der Standardreihenfolge vor ihnen steht; Namen verschwundener Elemente werden ignoriert; ein ungültiger Wert ergibt die Standard-Kopfzeile. Gespeicherte Werte erreichen offene Seiten sofort. Ausgeblendet oder im Überlaufmenü behält die Suche Strg+K. Auf Smartphones wandern Sprache, Design, Schreibrichtung, Farbmodus und Info weiterhin ins Überlaufmenü.
 
 Dieselbe Seite legt fest, wo der [Assistent](../modules/ai.md#wo-der-assistent-erscheint) erscheint.
 
@@ -181,7 +181,7 @@ builder.Services.AddSingleton(new ProfileTab("Documents", "documents", typeof(My
 | `RealtimeSubscription` | ruft zurück, wenn der Server auf einem Thema veröffentlicht, z. B. `type:Brand` |
 | `EntityWatch` | hält eine Detailseite mit ihrem Eintrag gleich, geht zurück, wenn er gelöscht wird |
 | `NotAllowed` | was der Router statt einer verbotenen Seite zeigt, mit Wechsel zu einer Rolle, die sie erlaubt |
-| `ActiveRoleMenu`, `ChatNotifier` | im Benutzermenü: die [aktive Rolle](../modules/realtime.md#aktive-rolle) und Chat-Snackbars |
+| `ActiveRoleMenu` | das Kopfzeilen-Element `role`: die [aktive Rolle](../modules/realtime.md#aktive-rolle) (`Nested` im Überlaufmenü) |
 | `CoworkeeDataTable<T>` | [Datentabellen](data-table.md) |
 | `ShowEditAsync` | aus einem Modell erzeugter Bearbeitungsdialog |
 | `AuditTimeline`, `VersionHistory` | Änderungshistorie einer Entity |
