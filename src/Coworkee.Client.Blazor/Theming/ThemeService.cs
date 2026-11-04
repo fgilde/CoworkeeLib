@@ -26,14 +26,13 @@ public sealed class ThemeService(Api.ICoworkeeApi api)
     /// <summary>Cascades the theme's <see cref="CoworkeeTheme.Dense"/> to every component (registered with AddCascadingValue).</summary>
     public CascadingValueSource<Density> DensitySource { get; } = new(Density.Default, isFixed: false);
 
+    // both sources are read before anything changes: applying the organisation's theme first showed it for a moment before the user's choice
     public async Task LoadAsync()
     {
+        ThemeDto? theme = null;
         try
         {
-            if (await api.GetCurrentThemeAsync() is { } current)
-            {
-                Apply(current);
-            }
+            theme = await api.GetCurrentThemeAsync();
         }
         catch (Exception exception) when (exception is Api.ApiException or HttpRequestException or JsonException)
         {
@@ -44,14 +43,18 @@ public sealed class ThemeService(Api.ICoworkeeApi api)
             var settings = await api.GetClientSettingsAsync() ?? new Dictionary<string, string?>();
             ClientSettings = settings;
             Mode = settings.GetValueOrDefault(ThemeSettings.Mode) is { Length: > 0 } mode ? mode : "system";
-            if (settings.GetValueOrDefault(ThemeSettings.ThemeId) is { } id && Guid.TryParse(id, out var themeId) && themeId != Current?.Id
-                && (await api.GetThemesAsync() ?? []).FirstOrDefault(t => t.Id == themeId) is { } chosen)
+            if (settings.GetValueOrDefault(ThemeSettings.ThemeId) is { } id && Guid.TryParse(id, out var themeId) && themeId != theme?.Id)
             {
-                Apply(chosen);
+                theme = themeId == Current?.Id ? Current : (await api.GetThemesAsync() ?? []).FirstOrDefault(t => t.Id == themeId) ?? theme;
             }
         }
         catch (Exception exception) when (exception is Api.ApiException or HttpRequestException or JsonException)
         {
+        }
+
+        if (theme is not null)
+        {
+            Use(theme);
         }
 
         Notify();
@@ -59,9 +62,14 @@ public sealed class ThemeService(Api.ICoworkeeApi api)
 
     public void Apply(ThemeDto theme)
     {
+        Use(theme);
+        Notify();
+    }
+
+    private void Use(ThemeDto theme)
+    {
         Current = theme;
         Theme = ThemeMapper.ToTheme(theme);
-        Notify();
     }
 
     /// <summary>Switches between "light", "dark" and "system" for this session (setup, or a toggle before it is saved).</summary>

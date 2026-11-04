@@ -37,6 +37,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 - A group opened again after the filter changed showed rows of the filter before.
 - `CoworkeeDataTable`: the pager of an opened group sits left; the table's own pager stays right.
+- Choosing a theme no longer shows the organisation's theme for a moment: `ThemeService.LoadAsync` reads the current theme and the user's choice first and applies once.
 
 ## 0.0.1.61 (2026-11-03)
 

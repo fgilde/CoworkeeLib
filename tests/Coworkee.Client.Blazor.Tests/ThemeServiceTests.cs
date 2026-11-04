@@ -51,6 +51,26 @@ public sealed class ThemeServiceTests
     }
 
     [Fact]
+    public async Task Reloading_with_a_chosen_theme_never_shows_the_default_in_between()
+    {
+        var standard = Theme("#123456");
+        var chosen = Theme("#654321");
+        _api.GetCurrentThemeAsync(Arg.Any<CancellationToken>()).Returns(standard);
+        _api.GetThemesAsync(Arg.Any<CancellationToken>()).Returns([standard, chosen]);
+        _api.GetClientSettingsAsync(Arg.Any<CancellationToken>()).Returns(new Dictionary<string, string?> { [ThemeSettings.ThemeId] = chosen.Id.ToString() });
+        var service = new ThemeService(_api);
+        // the theme menu applies the choice at once; saving it brings the live reload
+        service.Apply(chosen);
+        var seen = new List<Guid?>();
+        service.Changed += () => seen.Add(service.Current?.Id);
+
+        await service.LoadAsync();
+
+        seen.ShouldAllBe(id => id == chosen.Id);
+        service.Current!.Id.ShouldBe(chosen.Id);
+    }
+
+    [Fact]
     public void Round_trips_every_section_through_json()
     {
         var theme = ThemeMapper.ToTheme(Theme("#123456"));

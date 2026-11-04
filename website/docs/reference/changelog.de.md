@@ -37,6 +37,7 @@
 
 - Eine nach einem Filterwechsel wieder geöffnete Gruppe zeigte Zeilen des alten Filters.
 - `CoworkeeDataTable`: Der Pager einer geöffneten Gruppe sitzt links; der Pager der Tabelle bleibt rechts.
+- Die Wahl eines Themes zeigt nicht mehr kurz das Theme der Organisation: `ThemeService.LoadAsync` liest erst das aktuelle Theme und die Wahl des Benutzers und wendet dann einmal an.
 
 ## 0.0.1.61 (2026-11-03)
 
