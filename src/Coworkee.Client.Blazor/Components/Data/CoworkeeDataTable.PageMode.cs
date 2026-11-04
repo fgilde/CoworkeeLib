@@ -17,6 +17,23 @@ public partial class CoworkeeDataTable<T>
     /// <summary>Height of the scrolling rows in endless mode, any CSS length.</summary>
     [Parameter] public string EndlessHeight { get; set; } = "calc(100vh - 300px)";
 
+    /// <summary>
+    /// The rows scroll inside the table, at most <see cref="Height"/> high, so the column headers, the horizontal scrollbar and the pager or total stay in
+    /// view; on narrow screens the page scrolls. Off, the page scrolls the whole table (endless scrolling keeps its own height).
+    /// </summary>
+    [Parameter] public bool FillHeight { get; set; } = true;
+
+    /// <summary>The height of the scrolling rows, any CSS length; by default <see cref="EndlessHeight"/>.</summary>
+    [Parameter] public string? Height { get; set; }
+
+    internal string ScrollHeight => Height ?? EndlessHeight;
+
+    private bool Fills => FillHeight && !Endless;
+
+    private string GridClass => $"{(GroupsTheResult ? "cw-grouped-result " : null)}{(Fills ? "cw-table-fill" : null)}".Trim();
+
+    private string? GridStyle => Fills ? $"--cw-table-height:{ScrollHeight}" : null;
+
     private Theming.ThemeService? Themes => Services.GetService(typeof(Theming.ThemeService)) as Theming.ThemeService;
 
     private DataTablePageMode ResolvedPageMode => PageMode != DataTablePageMode.FromSettings ? PageMode
@@ -92,8 +109,8 @@ public partial class CoworkeeDataTable<T>
         }, cancellationToken);
         if (fresh)
         {
-            // the total below the rows
-            StateHasChanged();
+            // the total below the rows; the rows render when the grid gets them
+            _total?.Refresh();
         }
 
         return new GridData<T> { Items = items, TotalItems = (int)pages.Total };

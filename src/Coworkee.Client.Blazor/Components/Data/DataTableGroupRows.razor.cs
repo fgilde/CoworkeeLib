@@ -36,7 +36,7 @@ public partial class DataTableGroupRows<T> : IDisposable
     private DataTablePages<T> Pages => Table.GroupPages(Conditions, Chunk);
 
     // as high as the rows (with the header), at most as high as the table's scrolling rows
-    private string Height => FormattableString.Invariant($"min({Count * Table.GroupRowHeight + 56}px, {Table.EndlessHeight})");
+    private string Height => FormattableString.Invariant($"min({Count * Table.GroupRowHeight + 56}px, {Table.ScrollHeight})");
 
     private Func<GridState<T>, CancellationToken, Task<GridData<T>>>? PagedLoader => Table.GroupRowsEndless ? null : LoadAsync;
 

@@ -9,6 +9,9 @@ namespace Coworkee.Client.Blazor.Components.Data;
 
 public partial class CoworkeeDataTable<T>
 {
+    // open column filters show the facets' counts from inside the grid
+    private int _shownFilters;
+
     [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
 
     /// <summary>
@@ -36,6 +39,7 @@ public partial class CoworkeeDataTable<T>
         builder.AddComponentParameter(3, nameof(DataTableColumnFilter<T>.Selection), _selection);
         builder.AddComponentParameter(4, nameof(DataTableColumnFilter<T>.Operators), OperatorsOf(column));
         builder.AddComponentParameter(5, nameof(DataTableColumnFilter<T>.LoadBounds), (Func<Task<(object? Min, object? Max)>>)(() => BoundsAsync(column)));
+        builder.AddComponentParameter(6, nameof(DataTableColumnFilter<T>.Shown), (Action<bool>)(shown => _shownFilters += shown ? 1 : -1));
         builder.CloseComponent();
     };
 
@@ -68,9 +72,10 @@ public partial class CoworkeeDataTable<T>
             || (property.Contains('.') && (f.Field.Equals(root, StringComparison.OrdinalIgnoreCase) || f.Field.Equals(root + "Id", StringComparison.OrdinalIgnoreCase))));
     }
 
-    // a column whose facet has a choice shows its filter icon as active
-    private void MarkFacetColumns()
+    // a column whose facet has a choice shows its filter icon as active; true when the marks changed
+    private bool MarkFacetColumns()
     {
+        var before = Marked();
         _grid!.FilterDefinitions.RemoveAll(d => d.Operator == DataTableFilters.FacetMarker);
         foreach (var column in DataGridLayout<T>.Named(_grid))
         {
@@ -79,6 +84,10 @@ public partial class CoworkeeDataTable<T>
                 _grid.FilterDefinitions.Add(DataGridLayout<T>.Definition(column, DataTableFilters.FacetMarker, facet.Key));
             }
         }
+
+        return !before.SequenceEqual(Marked());
+
+        List<Column<T>?> Marked() => [.. _grid!.FilterDefinitions.Where(d => d.Operator == DataTableFilters.FacetMarker).Select(d => d.Column)];
     }
 
     /// <summary>The smallest and largest value of the column in the set (the table's own filter applied), for the range slider of its filter.</summary>

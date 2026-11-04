@@ -14,7 +14,7 @@ namespace Coworkee.Client.Blazor.Components.Data;
 /// The filter of one column, opened from its header: an operator and a value for text, numbers and dates, check boxes for enums and yes/no,
 /// or the options of the column's facet with their counts, so a facet and its column filter are the same choice.
 /// </summary>
-public partial class DataTableColumnFilter<T>
+public partial class DataTableColumnFilter<T> : IDisposable
 {
     private string _operator = string.Empty;
     private object? _value;
@@ -37,6 +37,9 @@ public partial class DataTableColumnFilter<T>
 
     /// <summary>The smallest and largest value of the column, asked once "between" is chosen, for the range slider.</summary>
     [Parameter] public Func<Task<(object? Min, object? Max)>>? LoadBounds { get; set; }
+
+    /// <summary>Told when the filter opens (true) and closes (false).</summary>
+    [Parameter] public Action<bool>? Shown { get; set; }
 
 
     private IRange<decimal>? NumberBounds =>
@@ -111,6 +114,10 @@ public partial class DataTableColumnFilter<T>
             StateHasChanged();
         }
     }
+
+    protected override void OnInitialized() => Shown?.Invoke(true);
+
+    public void Dispose() => Shown?.Invoke(false);
 
     protected override void OnParametersSet()
     {

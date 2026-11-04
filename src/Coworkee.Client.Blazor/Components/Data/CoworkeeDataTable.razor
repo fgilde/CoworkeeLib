@@ -37,6 +37,13 @@
     .cw-table-facets { position: sticky; top: 72px; max-height: calc(100vh - 96px); overflow-y: auto; padding-right: 2px; }
     @@media (max-width: 960px) { .cw-table-paneled { grid-template-columns: 1fr; } .cw-table-facets { position: static; max-height: none; } }
     .cw-table-main { min-width: 0; }
+    /* the rows scroll inside the table, so the horizontal scrollbar, the headers and the pager stay in view; the whole head sticks, as the group zone is a row of it */
+    .cw-table-fill > .mud-table-container { max-height: var(--cw-table-height); }
+    .cw-table-fill > .mud-table-container > .mud-drop-container > .mud-table-root > .mud-table-head { position: sticky; top: 0; z-index: 3; background-color: var(--mud-palette-surface); }
+    @@media (max-width: 960px) {
+        .cw-table-fill > .mud-table-container { max-height: none; }
+        .cw-table-fill > .mud-table-container > .mud-drop-container > .mud-table-root > .mud-table-head { position: static; }
+    }
     /* a header keeps its label on one line, so a wide table scrolls sideways instead of squeezing its last columns under the sticky action column */
     .cw-table-main .mud-table-head th.mud-table-cell:not(.cw-row-actions) .column-header { white-space: nowrap; }
     .cw-advanced { margin-bottom: 12px; padding: 12px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--mud-palette-primary) 30%, var(--mud-palette-lines-default));
@@ -185,12 +192,13 @@
 }
 <div class="cw-table-main">
 <FacetChips Selection="_selection" Filters="FilterChips" OnRemove="RemoveFilterAsync" OnClear="ClearFilters" />
-<MudDataGrid @ref="_grid" T="T" ServerData="PagedLoader" VirtualizeServerData="EndlessLoader" Virtualize="Endless" Height="@(Endless ? EndlessHeight : null)"
+<DataTableRowsGate Hold="_holdRows">
+<MudDataGrid @ref="_grid" T="T" ServerData="PagedLoader" VirtualizeServerData="EndlessLoader" Virtualize="Endless" Height="@(Endless ? ScrollHeight : null)"
              FixedHeader="Endless" ItemSize="RowHeight" OverscanCount="10" MultiSelection="MultiSelection" SelectedItemsChanged="SelectionChangedAsync" RowsPerPage="PageSize"
              SortMode="SortMode.Multiple" Dense="Dense" Hover="true" Striped="@Theme.StripedTables" Elevation="0" Outlined="true" ChildRowContent="ChildRowContent"
              Groupable="Groupable" GroupExpanded="true" Hideable="ColumnChooser" DragDropColumnReordering="ReorderableColumns" ColumnReorderMode="DataGridDragAndDropColumnReorderMode.Insert"
              ColumnResizeMode="@(ResizableColumns ? ResizeMode.Column : ResizeMode.None)" Filterable="Filterable" FilterMode="DataGridFilterMode.ColumnFilterMenu"
-             FilterChanged="ColumnFiltersChanged" RowClick="RowClickedAsync" RowClassFunc="RowClass" Class="@(GroupsTheResult ? "cw-grouped-result" : null)" data-testid="data-table">
+             FilterChanged="ColumnFiltersChanged" RowClick="RowClickedAsync" RowClassFunc="RowClass" Class="@GridClass" Style="@GridStyle" data-testid="data-table">
     <Header>
         @if (Groupable && _grid is not null)
         {
@@ -218,7 +226,7 @@
     <PagerContent>
         @if (Endless || GroupsTheResult)
         {
-            <div class="cw-table-total" data-testid="table-total">@L["{0} rows", (GroupsTheResult ? _groupTotal : Pages.Total).ToString("N0", System.Globalization.CultureInfo.CurrentCulture)]</div>
+            <DataTableTotal @ref="_total" Count="() => GroupsTheResult ? _groupTotal : Pages.Total" />
         }
         else
         {
@@ -230,6 +238,7 @@
         }
     </PagerContent>
 </MudDataGrid>
+</DataTableRowsGate>
 </div>
 </div>
 

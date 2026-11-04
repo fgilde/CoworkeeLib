@@ -35,7 +35,8 @@
 | `SearchPlaceholder`, `NoRecordsText` | placeholder of the search box (`Search`) and text of an empty list (`Nothing found.`) |
 | `PageSize` | rows per page (25); in endless mode rows load in chunks of at least 50 |
 | `PageMode` | `FromSettings` (default), `Pager` or `EndlessScroll`, see [pages or endless scrolling](#pages-or-endless-scrolling) |
-| `EndlessHeight` | height of the scrolling rows in endless mode, any CSS length (`calc(100vh - 300px)`) |
+| `FillHeight`, `Height` | the rows scroll inside the table, at most `Height` high (any CSS length, default `EndlessHeight`), see [pages or endless scrolling](#pages-or-endless-scrolling); `FillHeight="false"` lets the page scroll the whole table |
+| `EndlessHeight` | height of the scrolling rows in endless mode, any CSS length (`calc(100vh - 300px)`); `Height` wins over it |
 | `Groupable`, `ReorderableColumns`, `ResizableColumns`, `DensityToggle` | grouping, moving columns by drag and drop, resizing columns and the density button (all `true`) |
 | `DataSource` | rows from somewhere else than the OData set, see below |
 | `ColumnFilters` | a filter in every column header, see [column filters](#column-filters) (default `options.DataTable.ColumnFilters`, `true`) |
@@ -294,7 +295,9 @@ builder.Services.AddScoped<ITableViewStore, MyTableViews>();
 
 With `PageMode="FromSettings"` (the default) a table follows the setting **Table rows** (`DataTable.DefaultPageMode`): `Pager` (default) or `EndlessScroll`. Administrators set it for everyone under *Settings → System*, each user can override it under *My settings*; open tables switch as soon as it is saved. `PageMode="Pager"` or `PageMode="EndlessScroll"` fixes it for one table.
 
-Endless scrolling shows one list with a fixed header (`EndlessHeight`) and the total below it. Only the visible rows are rendered; the rows come in chunks of `PageSize` (at least 50) while scrolling and stay until the query changes, so scrolling back needs no request. Only the first chunk of a query asks for the count; the facets come in their own request, as with pages. Sorting, search, facets, column filters, selection, realtime reloads, export (always the whole filtered result) and client entities work as with pages.
+With pages and grouped, the rows scroll inside the table (`FillHeight`, default `true`): the table is at most `Height` high (default `EndlessHeight`, `calc(100vh - 300px)`), the column headers and the group zone stay on top, the horizontal scrollbar stays at the bottom of the visible rows and the pager or the total right below them, so a wide or grouped list needs no trip to the end of the page and back. Below 960 px the page scrolls the table as before. Set `Height` to what the page leaves the table (e.g. `Height="600px"` or `Height="calc(100vh - 220px)"`), or `FillHeight="false"` to let the page scroll the whole table.
+
+Endless scrolling shows one list with a fixed header (`Height`, else `EndlessHeight`) and the total below it. Only the visible rows are rendered; the rows come in chunks of `PageSize` (at least 50) while scrolling and stay until the query changes, so scrolling back needs no request. Only the first chunk of a query asks for the count; the facets come in their own request, as with pages. Sorting, search, facets, column filters, selection, realtime reloads, export (always the whole filtered result) and client entities work as with pages.
 
 Grouped, each open group scrolls on its own (see [groups of the whole result](#columns-grouping-and-views)). Only where the table groups the loaded page (a `DataSource`) it shows pages with the hint *Grouped rows are shown in pages.* and goes back to scrolling when the grouping is removed. A chunk that starts loading finishes even when the table scrolls on, so scrolling back and forth requests each chunk once.
 
