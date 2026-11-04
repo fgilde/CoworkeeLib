@@ -1,3 +1,4 @@
+using Microsoft.JSInterop;
 using System.Web;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components.Data.Import;
@@ -200,6 +201,24 @@ public partial class CoworkeeDataTable<T> : IDisposable
     {
         _holdRows = outsideOnly;
         StateHasChanged();
+    }
+
+    private ElementReference _main;
+    private int? _shownPage;
+
+    [Inject] private IJSRuntime JS { get; set; } = null!;
+
+    // the grid renders the new page without the table: scroll the rows' box now, it keeps its position for them
+    private async Task ScrollRowsToTopAsync()
+    {
+        try
+        {
+            var module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
+            await module.InvokeVoidAsync("scrollRowsToTop", _main);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -427,7 +446,15 @@ public partial class CoworkeeDataTable<T> : IDisposable
         _orderBy = OrderBy(state.SortDefinitions);
         var filter = CurrentFilter;
         var context = Facets ? _selection.Context(BaseFilter, _facets) : null;
+        // another page of the same rows: its first row shows (the rows scroll inside the table)
+        var otherPage = _shownPage is { } shown && shown != state.Page;
+        _shownPage = state.Page;
         var page = await QueryAsync(new ODataQuery { Filter = filter, OrderBy = _orderBy, Expand = Expand, Top = state.PageSize, Skip = state.Page * state.PageSize }, cancellationToken);
+        if (otherPage)
+        {
+            await ScrollRowsToTopAsync();
+        }
+
         // a newer load (another page, filter or reload) took over: its rows are the ones to show
         cancellationToken.ThrowIfCancellationRequested();
         // after the rows: a local copy answers synchronously, counting first would keep the last page on the screen

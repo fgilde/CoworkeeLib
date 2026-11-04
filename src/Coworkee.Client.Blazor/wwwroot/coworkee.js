@@ -180,6 +180,20 @@ export function scrollToEnd(element) {
     }
 }
 
+// the rows of a table that scroll inside it (FillHeight): another page starts at its first row
+export function scrollRowsToTop(table) {
+    table?.querySelector('.mud-table-container')?.scrollTo({ top: 0 });
+}
+
+// back to the page the user came from (a link that only opens something, e.g. /assistant); a link opened on its own goes home
+export function backOrHome() {
+    if (history.length > 1) {
+        history.back();
+    } else {
+        location.replace(document.baseURI);
+    }
+}
+
 export function focus(element) {
     element?.focus();
 }

@@ -129,7 +129,8 @@ public sealed class DataTableTests : ClientTestBase
         table.WaitForAssertion(() => table.Markup.ShouldContain("Drill"));
         (_odata.LastSet, _odata.LastQuery!.Filter).ShouldBe(("Gadgets", null as string));
         table.WaitForAssertion(() => _odata.FacetLoads.ShouldBe(1));
-        await table.Find("[data-facet='category'] button").ClickAsync(new());
+        // the facets render after their request: click the button of that render
+        table.WaitForAssertion(() => table.Find("[data-facet='category'] button").Click());
         await popovers.WaitForElement("[data-option=\"Category eq 'Tools'\"]").ClickAsync(new());
 
         table.WaitForAssertion(() => _odata.LastQuery!.Filter.ShouldBe("Category eq 'Tools'"));
@@ -279,6 +280,24 @@ public sealed class DataTableTests : ClientTestBase
         table.Find("input[data-testid='table-search'], [data-testid='table-search'] input").Input("dri");
         table.WaitForAssertion(() => odata.Queries.Count(q => q.Facets).ShouldBe(2), TimeSpan.FromSeconds(3));
         odata.Queries.Last(q => q.Facets).Filter.ShouldBe("contains(tolower(Name),'dri')");
+    }
+
+    [Fact]
+    public async Task Another_page_starts_at_the_first_row()
+    {
+        var module = JSInterop.SetupModule("./_content/Coworkee.Client.Blazor/coworkee.js");
+        module.SetupVoid("scrollRowsToTop", _ => true);
+        var odata = new GatedOData();
+        odata.Facets.SetResult();
+        Services.AddSingleton<IODataClient>(odata);
+        var table = Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.Columns, Columns()));
+        table.WaitForAssertion(() => table.Markup.ShouldContain("Drill"));
+        module.Invocations.Count(i => i.Identifier == "scrollRowsToTop").ShouldBe(0, "the first page is at its top already");
+
+        var grid = table.FindComponent<MudDataGrid<Gadget>>().Instance;
+        await table.InvokeAsync(() => grid.NavigateTo(Page.Next));
+
+        table.WaitForAssertion(() => module.Invocations.Count(i => i.Identifier == "scrollRowsToTop").ShouldBe(1));
     }
 
     [Fact]

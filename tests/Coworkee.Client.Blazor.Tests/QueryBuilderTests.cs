@@ -134,12 +134,13 @@ public sealed class QueryBuilderTests : ClientTestBase
         var table = Render<CoworkeeDataTable<DataTableTests.Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.SearchFields, ["Name"]));
         table.WaitForAssertion(() => table.Find("[data-facet='status']"));
 
-        table.Find("[data-facet='status'] [data-testid='facet-button']").Click();
+        // the facets render again after the rows: click what the last render shows
+        table.WaitForAssertion(() => table.Find("[data-facet='status'] [data-testid='facet-button']").Click());
         popovers.WaitForElement("[data-option=\"Status eq 'Shipped'\"]").TextContent.ShouldContain("On the way");
-        popovers.Find("[data-option=\"Status eq 'Shipped'\"]").Click();
+        popovers.WaitForAssertion(() => popovers.Find("[data-option=\"Status eq 'Shipped'\"]").Click());
 
         table.WaitForAssertion(() => last!.FacetContext!.Groups["status"].ShouldBe("Status eq 'Shipped'"));
         last!.FacetContext!.Base.ShouldBeNull();
-        table.Find("[data-testid='facet-chips']").TextContent.ShouldContain("On the way");
+        table.WaitForAssertion(() => table.Find("[data-testid='facet-chips']").TextContent.ShouldContain("On the way"));
     }
 }

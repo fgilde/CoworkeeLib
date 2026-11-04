@@ -190,7 +190,7 @@
         <FacetPanel Groups="_facets" Selection="_selection" Views="_facetViews" ViewsChanged="FacetViewsChanged" />
     </aside>
 }
-<div class="cw-table-main">
+<div class="cw-table-main" @ref="_main">
 <FacetChips Selection="_selection" Filters="FilterChips" OnRemove="RemoveFilterAsync" OnClear="ClearFilters" />
 <DataTableRowsGate Hold="_holdRows">
 <MudDataGrid @ref="_grid" T="T" ServerData="PagedLoader" VirtualizeServerData="EndlessLoader" Virtualize="Endless" Height="@(Endless ? ScrollHeight : null)"
