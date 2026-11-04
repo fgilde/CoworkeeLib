@@ -1,7 +1,9 @@
 using Bunit;
 using Coworkee.Client.Blazor.Navigation;
 using Coworkee.Client.Blazor.Pages.Admin;
+using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.Ai;
+using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
@@ -44,6 +46,54 @@ public sealed class HeaderConfigurationTests : ClientTestBase
             && HeaderItems.Parse(v[HeaderSettings.Items]).Take(2).Select(i => i.Id).SequenceEqual(new[] { HeaderItems.Search, HeaderItems.About })
             && HeaderItems.Parse(v[HeaderSettings.Items]).Single(i => i.Id == HeaderItems.RightToLeft).Placement == HeaderPlacement.Hidden
             && HeaderItems.Parse(v[HeaderSettings.Items]).Single(i => i.Id == HeaderItems.Theme).Placement == HeaderPlacement.Overflow), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Dragging_orders_the_items_and_dropping_on_an_area_places_them_there_except_the_account_menu()
+    {
+        var page = Render<HeaderConfiguration>();
+        page.WaitForAssertion(() => page.FindAll("[data-header-item]").Count.ShouldBe(HeaderItems.BuiltIn.Count + 1));
+        var drop = page.FindComponent<MudDropContainer<HeaderItem>>().Instance.ItemDropped;
+        HeaderItem Item(string id) => HeaderItems.BuiltIn.Single(i => i.Id == id);
+
+        await page.InvokeAsync(() => drop.InvokeAsync(new MudItemDropInfo<HeaderItem>(Item(HeaderItems.Search), nameof(HeaderPlacement.Overflow), 0)));
+        await page.InvokeAsync(() => drop.InvokeAsync(new MudItemDropInfo<HeaderItem>(Item(HeaderItems.RightToLeft), nameof(HeaderPlacement.Bar), 0)));
+        await page.InvokeAsync(() => drop.InvokeAsync(new MudItemDropInfo<HeaderItem>(Item(HeaderItems.Theme), nameof(HeaderPlacement.Hidden), 0)));
+        await page.InvokeAsync(() => drop.InvokeAsync(new MudItemDropInfo<HeaderItem>(Item(HeaderItems.User), nameof(HeaderPlacement.Hidden), 0)));
+
+        page.WaitForAssertion(() => page.FindAll("[data-header-item]")[0].GetAttribute("data-header-item").ShouldBe(HeaderItems.RightToLeft));
+        page.Find($"[data-header-zone='{HeaderPlacement.Overflow}'] [data-header-item]").GetAttribute("data-header-item").ShouldBe(HeaderItems.Search);
+        page.Find($"[data-header-item='{HeaderItems.Search}']").GetAttribute("data-placement").ShouldBe(nameof(HeaderPlacement.Overflow));
+        page.Find($"[data-header-item='{HeaderItems.User}']").GetAttribute("data-placement").ShouldBe(nameof(HeaderPlacement.Bar));
+        await page.Find("[data-testid='header-save']").ClickAsync(new());
+
+        await Api.Received(1).SetSettingsAsync(SettingScope.Global, Arg.Is<IReadOnlyDictionary<string, string?>>(v =>
+            HeaderItems.Parse(v[HeaderSettings.Items]).Take(2).Select(i => i.Id).SequenceEqual(new[] { HeaderItems.RightToLeft, HeaderItems.About })
+            && HeaderItems.Parse(v[HeaderSettings.Items]).Single(i => i.Id == HeaderItems.Search).Placement == HeaderPlacement.Overflow
+            && HeaderItems.Parse(v[HeaderSettings.Items]).Single(i => i.Id == HeaderItems.Theme).Placement == HeaderPlacement.Hidden
+            && HeaderItems.Parse(v[HeaderSettings.Items]).Single(i => i.Id == HeaderItems.User).Placement == HeaderPlacement.Bar), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task An_item_can_be_limited_to_users_with_permissions()
+    {
+        Api.GetPermissionDefinitionsAsync(Arg.Any<CancellationToken>()).Returns(
+            [new PermissionGroupDto("Mail", "Mail", [new PermissionDto("Mail.A", "A", []), new PermissionDto("Mail.B", "B", [])])]);
+        var page = Render<HeaderConfiguration>();
+        page.WaitForAssertion(() => page.Find($"[data-header-item='{HeaderItems.About}'] [data-testid='header-access']"));
+        // the account menu stays for everyone
+        page.FindAll($"[data-header-item='{HeaderItems.User}'] [data-testid='header-access']").ShouldBeEmpty();
+
+        await page.Find($"[data-header-item='{HeaderItems.About}'] [data-testid='header-access']").ClickAsync(new());
+        page.WaitForElement("[data-testid='header-access-panel'] [data-picker-permission='Mail.A'] input").Change(true);
+        page.Find("[data-testid='header-access-panel'] [data-picker-permission='Mail.B'] input").Change(true);
+        await page.Find("[data-testid='header-access-panel'] [data-match='All']").ClickAsync(new());
+        await page.Find("[data-testid='header-save']").ClickAsync(new());
+
+        await Api.Received(1).SetSettingsAsync(SettingScope.Global, Arg.Is<IReadOnlyDictionary<string, string?>>(v =>
+            HeaderItems.Parse(v[HeaderSettings.Items]).Single(i => i.Id == HeaderItems.About).Permissions!.SequenceEqual(new[] { "Mail.A", "Mail.B" })
+            && HeaderItems.Parse(v[HeaderSettings.Items]).Single(i => i.Id == HeaderItems.About).Match == PermissionMatch.All
+            && HeaderItems.Parse(v[HeaderSettings.Items]).Single(i => i.Id == HeaderItems.Search).Permissions == null), Arg.Any<CancellationToken>());
     }
 
     [Fact]

@@ -89,11 +89,13 @@ App items sit between the search and the language menu, ordered by `Order`. `Id`
 
 ### Managed header
 
-Under *Administration → User interface → Header* (`/admin/header`, `Settings.Manage`, system organisation only) an administrator reorders every item of the bar, the library's and the apps', and puts each one in the bar, in the overflow menu (⋮) or nowhere. The account menu always stays in the bar. *Reset to defaults* goes back to the built-in order. The choice is the global setting `Header.Items`, a JSON list in bar order:
+Under *Administration → User interface → Header* (`/admin/header`, `Settings.Manage`, system organisation only) an administrator reorders every item of the bar, the library's and the apps', and puts each one in the bar, in the overflow menu (⋮) or nowhere: by dragging it within or between the three areas *In the bar*, *In the overflow menu* and *Hidden*, or with the arrow and placement buttons of each row (keyboard). The lock of a row (*Visible for*) limits the item to users with permissions: with several, either any or all of them are needed. Without permissions everyone sees it; the restriction comes on top of an item's own rules (notifications and assistant still need a signed-in user), and it follows changes of the user's permissions at once. The account menu always stays in the bar and visible to everyone. *Reset to defaults* goes back to the built-in order. The choice is the global setting `Header.Items`, a JSON list in bar order:
 
 ```json
-[{"id":"search","placement":"Bar"},{"id":"about","placement":"Overflow"},{"id":"rtl","placement":"Hidden"}]
+[{"id":"search","placement":"Bar"},{"id":"about","placement":"Overflow","permissions":["Settings.Manage","Audit.View"],"match":"All"},{"id":"rtl","placement":"Hidden"}]
 ```
+
+`permissions` and `match` (`Any`, the default, or `All`) are optional; values saved without them keep working.
 
 The library's ids are `search`, `language`, `theme`, `rtl`, `dark-mode`, `notifications`, `user`, `assistant` and `about`. Items the list does not name (an app added later) appear after the item before them in the default order; names of items that are gone are ignored; an invalid value falls back to the default header. Saved values reach open pages at once. Hidden or in the overflow menu, the search keeps Ctrl+K. On phones language, theme, direction, colour mode and about still fold into the overflow menu.
 
@@ -173,6 +175,7 @@ builder.Services.AddSingleton(new ProfileTab("Documents", "documents", typeof(My
 | `PageHeader` | title, description, actions on the right; sets the browser title. Pass text keys (`Title="Brands"`), it translates them itself; so does `CreateText` of `CoworkeeDataTable` |
 | `StickyMergeTabs` | wraps a `<MudTabs>`: its tab bar sticks below the app bar and shrinks to its tabs, so a sticky `MudExObjectEditForm` toolbar in the panel shows next to it; not on narrow screens |
 | `PermissionGate`, `PermissionView` | render content only with a permission |
+| `PermissionPicker` | picks permissions, see below |
 | `FeatureGate` | renders content only while a bool feature is on (`Disabled` for the other case) |
 | `GroupScopePicker` | lets users narrow lists to some of their groups, see [group tree and scope](../features/identity.md#group-tree-and-scope) |
 | `RealtimeSubscription` | calls back when the server publishes on a topic, e.g. `type:Brand` |
@@ -183,3 +186,16 @@ builder.Services.AddSingleton(new ProfileTab("Documents", "documents", typeof(My
 | `ShowEditAsync` | edit dialog generated from a model |
 | `AuditTimeline`, `VersionHistory` | change history of an entity |
 | `ResourcePermissionsPanel` | grants on a single resource |
+
+### Permission picker
+
+`PermissionPicker` lists the permission definitions of the server (`GetPermissionDefinitionsAsync`, the same the role page shows, custom ones included) by group with their display names and a search; the chosen ones show as removable chips, permissions that no longer exist by their name. With `ShowMatch` and two or more chosen it also asks whether any or all of them are needed. `PermissionStore.HasAsync(permissions, match)` checks such a choice for the signed-in user.
+
+```razor
+<PermissionPicker @bind-Value="_permissions" ShowMatch="true" @bind-Match="_match" />
+
+@code {
+    private IReadOnlyList<string> _permissions = [];
+    private PermissionMatch _match;
+}
+```

@@ -1,6 +1,7 @@
 using Bunit;
 using Coworkee.Client.Blazor.Components;
 using Coworkee.Client.Blazor.Navigation;
+using Coworkee.Client.Blazor.Security;
 using Coworkee.Client.Blazor.Theming;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Settings;
@@ -50,6 +51,42 @@ public sealed class HeaderTests : ClientTestBase
         HeaderItems.Parse(null).ShouldBeEmpty();
         var settings = new[] { new HeaderItemSetting("about", HeaderPlacement.Overflow) };
         HeaderItems.Parse(HeaderItems.Serialize(settings)).ShouldBe(settings);
+    }
+
+    [Fact]
+    public void Permissions_and_their_match_round_trip_and_are_left_out_when_there_are_none()
+    {
+        var parsed = HeaderItems.Parse("""[{"id":"about","placement":"Overflow","permissions":["A","B"],"match":"All"},{"id":"rtl","placement":"Bar"}]""");
+
+        parsed[0].Permissions.ShouldBe(["A", "B"]);
+        parsed[0].Match.ShouldBe(PermissionMatch.All);
+        // settings saved before items could be restricted have no restriction
+        parsed[1].Permissions.ShouldBeNull();
+        parsed[1].Match.ShouldBe(PermissionMatch.Any);
+        var json = HeaderItems.Serialize(parsed);
+        json.ShouldBe("""[{"id":"about","placement":"Overflow","permissions":["A","B"],"match":"All"},{"id":"rtl","placement":"Bar"}]""");
+        HeaderItems.Serialize([new HeaderItemSetting("about", HeaderPlacement.Bar, ["A"])]).ShouldBe("""[{"id":"about","placement":"Bar","permissions":["A"]}]""");
+    }
+
+    [Fact]
+    public async Task Restricted_items_show_only_with_any_or_all_of_their_permissions_and_follow_changes_of_them()
+    {
+        Api.GetMyPermissionsAsync(default).ReturnsForAnyArgs(["A"], ["A", "B"]);
+        Configure("""
+            [{"id":"about","placement":"Bar","permissions":["A","B"],"match":"All"},{"id":"rtl","placement":"Bar","permissions":["A","B"]},
+             {"id":"user","placement":"Bar","permissions":["X"]}]
+            """);
+
+        var layout = RenderLayout();
+
+        layout.WaitForAssertion(() => layout.Find("[data-testid='rtl-toggle']"));
+        layout.FindAll("[data-testid='about-button']").ShouldBeEmpty();
+        // nobody can be locked out of signing out
+        layout.Find("[data-testid='user-menu']");
+
+        await layout.InvokeAsync(Services.GetRequiredService<PermissionStore>().Reset);
+
+        layout.WaitForAssertion(() => layout.Find("[data-testid='about-button']"));
     }
 
     [Fact]
