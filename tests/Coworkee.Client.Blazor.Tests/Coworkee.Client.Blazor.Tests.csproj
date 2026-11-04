@@ -4,4 +4,8 @@
     <PackageReference Include="bunit" />
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- the shipped mail bodies, so the visual editor is tested against the real templates -->
+    <None Include="..\..\src\Coworkee.Mailing\Templates\*.body.scriban" Link="Templates\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

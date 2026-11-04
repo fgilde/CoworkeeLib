@@ -19,6 +19,9 @@ public sealed class MailBodyEditorTests : ClientTestBase
         new("notifications[].title", "string", "Hi", false),
     ];
 
+    // a whole document is the one thing the visual editor cannot hold
+    private const string SourceOnly = "<html><body>{{ for x in y }}{{ end }}</body></html>";
+
     private IRenderedComponent<MailBodyEditor> Render(string value, Action<string>? changed = null) =>
         Render<MailBodyEditor>(p => p
             .Add(e => e.Value, value)
@@ -28,7 +31,7 @@ public sealed class MailBodyEditorTests : ClientTestBase
     [Fact]
     public void Source_mode_offers_variables_as_completions()
     {
-        var cut = Render("{{ for x in y }}{{ end }}");
+        var cut = Render(SourceOnly);
 
         var editor = cut.FindComponent<CodeEditor>().Instance;
         editor.CompletionTrigger.ShouldBe("{{");
@@ -77,7 +80,7 @@ public sealed class MailBodyEditorTests : ClientTestBase
     public async Task Picking_a_list_variable_inserts_a_loop_skeleton()
     {
         string? received = null;
-        var cut = Render("{{ for x in y }}{{ end }}", v => received = v);
+        var cut = Render(SourceOnly, v => received = v);
 
         await cut.Find("[data-testid='mail-variable-notifications']").ClickAsync(new());
 
@@ -162,7 +165,7 @@ public sealed class MailBodyEditorTests : ClientTestBase
     public async Task Members_of_list_items_are_written_for_the_loop_variable()
     {
         string? received = null;
-        var cut = Render("{{ for x in y }}{{ end }}", v => received = v);
+        var cut = Render(SourceOnly, v => received = v);
 
         await cut.Find("[data-testid='mail-variable-notifications[].title']").ClickAsync(new());
 
@@ -171,12 +174,28 @@ public sealed class MailBodyEditorTests : ClientTestBase
     }
 
     [Fact]
-    public void A_body_with_a_styled_button_opens_in_the_source()
+    public void A_body_with_logic_and_a_styled_button_opens_visually_with_protected_chips()
     {
-        var cut = Render("<p style=\"margin:24px 0;\"><a href=\"{{ url }}\" style=\"background:#16140f;padding:12px 20px;\">Go</a></p>");
+        var cut = Render("<p>Hi</p>{{ if x }}<p style=\"margin:24px 0;\"><a href=\"{{ url }}\" style=\"background:#16140f;padding:12px 20px;\">Go</a></p>{{ end }}");
 
-        cut.FindComponents<RichTextEditor>().ShouldBeEmpty();
-        cut.Find("[data-testid='mail-mode-visual']").HasAttribute("disabled").ShouldBeTrue();
+        cut.Find("[data-testid='mail-mode-visual']").HasAttribute("disabled").ShouldBeFalse();
+        var html = cut.FindComponent<RichTextEditor>().Instance.Value.ShouldNotBeNull();
+        html.ShouldContain("data-value=\"if x\"");
+        html.ShouldContain("data-value=\"Button: Go\"");
+        cut.Markup.ShouldNotContain("This template uses layout or logic the visual editor would change");
+    }
+
+    [Fact]
+    public async Task Saving_visually_keeps_the_protected_fragments()
+    {
+        const string body = "<p>Hi</p>{{ if x }}<table><tr><td>{{ y }}</td></tr></table>{{ end }}";
+        string? received = null;
+        var cut = Render(body, v => received = v);
+        var editor = cut.FindComponent<RichTextEditor>();
+
+        await cut.InvokeAsync(() => editor.Instance.ValueChanged.InvokeAsync(editor.Instance.Value!.Replace("Hi", "Hello")));
+
+        received.ShouldBe("<p>Hello</p>{{ if x }}<table><tr><td>{{ y }}</td></tr></table>{{ end }}");
     }
 
     [Fact]

@@ -3,8 +3,9 @@ using System.Text.RegularExpressions;
 namespace Coworkee.Client.Blazor.Components.Mail;
 
 /// <summary>
-/// The visual editor rewrites markup, so it is only offered for bodies it cannot damage: no Scriban logic, and only the tags,
-/// attributes and styles TipTap and Quill keep (and write themselves). A styled button or a layout table opens in the source.
+/// The visual editor rewrites markup, so it only edits the tags, attributes and styles TipTap and Quill keep (and write themselves);
+/// everything else, Scriban logic included, opens as a protected chip (<see cref="MailMentionHtml"/>). Only what no chip can hold
+/// opens in the source: a whole document, or an element that is never closed.
 /// </summary>
 public static partial class MailVisualMode
 {
@@ -18,13 +19,13 @@ public static partial class MailVisualMode
 
     private static readonly HashSet<string> Styles = new(StringComparer.OrdinalIgnoreCase) { "color", "background-color", "text-align" };
 
-    public static bool Allowed(string body) => !Logic().IsMatch(body) && Tag().Matches(body).All(Kept);
+    public static bool Allowed(string body) => !Document().IsMatch(body) && MailMentionHtml.Protectable(body);
 
-    private static bool Kept(Match tag) =>
-        Tags.Contains(tag.Groups["name"].Value)
-        && Attribute().Matches(tag.Groups["attributes"].Value).All(a => Kept(a.Groups["name"].Value, Unquote(a.Groups["value"].Value)));
+    /// <summary>Whether the editor keeps a tag with these attributes as it is.</summary>
+    internal static bool Kept(string name, string attributes) =>
+        Tags.Contains(name) && Attribute().Matches(attributes).All(a => KeptAttribute(a.Groups["name"].Value, Unquote(a.Groups["value"].Value)));
 
-    private static bool Kept(string attribute, string value) => attribute.ToLowerInvariant() switch
+    private static bool KeptAttribute(string attribute, string value) => attribute.ToLowerInvariant() switch
     {
         _ when attribute.StartsWith("data-", StringComparison.OrdinalIgnoreCase) => true,
         "style" => value.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).All(d => Styles.Contains(d.Split(':')[0].Trim())),
@@ -35,12 +36,9 @@ public static partial class MailVisualMode
 
     private static string Unquote(string value) => value.Length >= 2 && value[0] is '"' or '\'' && value[^1] == value[0] ? value[1..^1] : value;
 
-    [GeneratedRegex(@"\{\{[-~]?\s*(if|for|while|case|capture|with|func|tablerow)\b")]
-    private static partial Regex Logic();
-
-    // comments and doctypes match without a name, so they count as unknown
-    [GeneratedRegex(@"</?(?<name>[a-zA-Z][a-zA-Z0-9]*)(?<attributes>[^>]*)>|<!")]
-    private static partial Regex Tag();
+    // the head and the body of a layout have no place in an editor of the content
+    [GeneratedRegex(@"<(?:html|head|body)\b", RegexOptions.IgnoreCase)]
+    private static partial Regex Document();
 
     [GeneratedRegex("""(?<name>[^\s=/"']+)(?:\s*=\s*(?<value>"[^"]*"|'[^']*'|[^\s>]+))?""")]
     private static partial Regex Attribute();
