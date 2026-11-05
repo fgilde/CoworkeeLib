@@ -8,28 +8,14 @@ public sealed class RealtimeClient(IRealtimeConnection connection)
     private readonly Lock _lock = new();
     private Task<bool>? _started;
 
+    /// <summary>
+    /// Follows a topic. The handler stays even while the hub is not reachable: a failed start is retried in the background and then subscribes every
+    /// followed topic, so a component that subscribes once (the layout's settings) still gets its events.
+    /// </summary>
     public async Task<IAsyncDisposable> SubscribeAsync(string topic, Func<RealtimeEnvelope, Task> handler)
     {
-        Task<bool> started;
-        lock (_lock)
-        {
-            started = _started ??= StartAsync();
-        }
-
-        if (!await started)
-        {
-            lock (_lock)
-            {
-                if (_started == started)
-                {
-                    _started = null;
-                }
-            }
-
-            return NoSubscription.Instance;
-        }
-
         bool first;
+        Task<bool> started;
         lock (_lock)
         {
             if (!_handlers.TryGetValue(topic, out var handlers))
@@ -39,19 +25,20 @@ public sealed class RealtimeClient(IRealtimeConnection connection)
 
             first = handlers.Count == 0;
             handlers.Add(handler);
+            started = _started ??= StartAsync();
         }
 
-        if (first && !await TryInvokeAsync(RealtimeHubMethods.Subscribe, topic))
+        // a subscription that fails now is made again by the retry or the next reconnect
+        if (await started && first)
         {
-            Remove(topic, handler);
-            return NoSubscription.Instance;
+            await TryInvokeAsync(RealtimeHubMethods.Subscribe, topic);
         }
 
         return new Subscription(this, topic, handler);
     }
 
-    /// <summary>False for what <see cref="SubscribeAsync"/> returns when the hub was not reachable: nothing arrives, subscribe again later.</summary>
-    public static bool IsActive(IAsyncDisposable subscription) => subscription is not NoSubscription;
+    /// <summary>True for every subscription <see cref="SubscribeAsync"/> returns: one made while the hub was not reachable follows once it is.</summary>
+    public static bool IsActive(IAsyncDisposable subscription) => subscription is Subscription;
 
     private bool _wired;
 
@@ -64,6 +51,39 @@ public sealed class RealtimeClient(IRealtimeConnection connection)
             connection.Reconnected += ResubscribeAsync;
         }
 
+        if (await TryStartAsync())
+        {
+            return true;
+        }
+
+        _ = RetryStartAsync();
+        return false;
+    }
+
+    // ponytail: retries for the life of the client (the app's lifetime in the browser), at most every 30 seconds
+    private async Task RetryStartAsync()
+    {
+        // never on the caller's stack: StartAsync runs under the lock and its result is stored after it returns
+        await Task.Yield();
+        var policy = new ForeverRetryPolicy();
+        for (var attempt = 0; ; attempt++)
+        {
+            await Task.Delay(policy.NextRetryDelay(new Microsoft.AspNetCore.SignalR.Client.RetryContext { PreviousRetryCount = attempt }) ?? TimeSpan.FromSeconds(30));
+            if (await TryStartAsync())
+            {
+                lock (_lock)
+                {
+                    _started = Task.FromResult(true);
+                }
+
+                await ResubscribeAsync();
+                return;
+            }
+        }
+    }
+
+    private async Task<bool> TryStartAsync()
+    {
         try
         {
             await connection.StartAsync();
@@ -136,12 +156,5 @@ public sealed class RealtimeClient(IRealtimeConnection connection)
                 await client.TryInvokeAsync(RealtimeHubMethods.Unsubscribe, topic);
             }
         }
-    }
-
-    private sealed class NoSubscription : IAsyncDisposable
-    {
-        public static readonly NoSubscription Instance = new();
-
-        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 }

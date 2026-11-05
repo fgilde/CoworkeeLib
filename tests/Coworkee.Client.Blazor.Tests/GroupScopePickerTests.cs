@@ -174,12 +174,14 @@ public sealed class GroupScopePickerTests : ClientTestBase
         await state.LoadAsync().WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
 
         state.Groups.Count.ShouldBe(4);
-        hub.SetException(new HttpRequestException("offline"));
+        // the first start fails; the client tries again on its own and subscribes once the hub answers
         Realtime.Gate = Task.CompletedTask;
-        await Task.Delay(50, Xunit.TestContext.Current.CancellationToken);
-        Realtime.Invocations.ShouldNotContain(("Subscribe", $"user:{Me}"));
+        hub.SetException(new HttpRequestException("offline"));
 
-        await state.LoadAsync().WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+        for (var i = 0; i < 100 && !Realtime.Invocations.Contains(("Subscribe", $"user:{Me}")); i++)
+        {
+            await Task.Delay(20, Xunit.TestContext.Current.CancellationToken);
+        }
 
         Realtime.Invocations.ShouldContain(("Subscribe", $"user:{Me}"));
     }

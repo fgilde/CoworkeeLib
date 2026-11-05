@@ -12,6 +12,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 - `CoworkeeDataTable` with pages: when the grid's first load was cancelled by a newer one (restoring the layout or the URL), the pager went on counting but no page loaded any more; MudDataGrid finishes setting itself up only after its first load returns. A cancelled load now returns the rows shown and the newer one brings its rows, also in the pages of a group.
 - "The app could not start" after an update: the browser kept resources of the older build (cache storage, service worker) that fail their integrity check, so reloading failed again while a private window worked. A failed start now drops them and reloads once per session, and the reload button does the same.
+- Live updates after a start without the realtime hub: when the hub did not answer while the app started, components that subscribe once (the layout's settings, so the app bar, theme and table mode) never followed a change until the page was reloaded. The client now retries the start in the background and then subscribes every followed topic; `RealtimeClient.SubscribeAsync` always keeps the handler.
 
 ## 0.0.1.62 (2026-11-04)
 

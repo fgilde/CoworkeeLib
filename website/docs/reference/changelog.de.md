@@ -12,6 +12,7 @@
 
 - `CoworkeeDataTable` mit Seiten: Wurde die erste Ladung des Grids von einer neueren abgebrochen (beim Wiederherstellen von Layout oder URL), zählte der Pager weiter, aber keine Seite lud mehr; MudDataGrid richtet sich erst fertig ein, wenn seine erste Ladung zurückkommt. Eine abgebrochene Ladung liefert jetzt die angezeigten Zeilen, die neuere bringt ihre, auch in den Seiten einer Gruppe.
 - „Die App konnte nicht starten“ nach einem Update: Der Browser hielt Dateien des älteren Builds (Cache Storage, Service Worker), die ihre Integritätsprüfung nicht bestehen, sodass Neuladen wieder scheiterte, während ein privates Fenster ging. Ein fehlgeschlagener Start verwirft sie jetzt und lädt einmal pro Sitzung neu, der Knopf „Neu laden“ ebenso.
+- Live-Änderungen nach einem Start ohne Realtime-Hub: Antwortete der Hub beim Start der App nicht, folgten Komponenten, die nur einmal abonnieren (die Einstellungen des Layouts, also App-Leiste, Theme und Tabellenmodus), keiner Änderung mehr, bis die Seite neu geladen wurde. Der Client versucht den Start jetzt im Hintergrund erneut und abonniert danach alle verfolgten Themen; `RealtimeClient.SubscribeAsync` behält den Handler immer.
 
 ## 0.0.1.62 (2026-11-04)
 

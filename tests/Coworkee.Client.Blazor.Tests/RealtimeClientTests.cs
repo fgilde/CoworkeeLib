@@ -26,15 +26,29 @@ public sealed class RealtimeClientTests : ClientTestBase
     }
 
     [Fact]
-    public async Task A_failed_first_start_is_retried_on_the_next_subscription()
+    public async Task A_subscription_made_while_the_hub_is_down_gets_its_events_once_the_hub_is_back()
     {
+        // e.g. the settings of the layout: subscribed once at the start, never again; without a retry the tab missed every change until a reload
         var connection = new FakeRealtimeConnection { FailStarts = 1 };
         var client = new RealtimeClient(connection);
+        var received = 0;
 
-        await client.SubscribeAsync("type:User", _ => Task.CompletedTask);
-        await client.SubscribeAsync("type:User", _ => Task.CompletedTask);
+        var subscription = await client.SubscribeAsync("settings:global", _ => { received++; return Task.CompletedTask; });
 
-        connection.Invocations.ShouldContain((RealtimeHubMethods.Subscribe, "type:User"));
+        await WaitUntilAsync(() => connection.Invocations.Contains((RealtimeHubMethods.Subscribe, "settings:global")));
+        connection.Push("settings:global");
+        received.ShouldBe(1);
+        RealtimeClient.IsActive(subscription).ShouldBeTrue();
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        for (var i = 0; i < 100 && !condition(); i++)
+        {
+            await Task.Delay(20, Xunit.TestContext.Current.CancellationToken);
+        }
+
+        condition().ShouldBeTrue();
     }
 
     [Fact]
