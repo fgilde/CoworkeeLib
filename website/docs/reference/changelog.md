@@ -4,6 +4,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Added
+
+- Dialog options in one place: `DialogOptionsContributor` gives every dialog of the library its `DialogOptionsEx` per `DialogPart` (side sheet, right sheet, small, full screen, progress, list item); an app overrides parts with `AddSingleton<DialogOptionsContributor, MyAppDialogOptions>()`, the defaults stay as they were. With `AdminEditable` administrators edit each part under *Administration > User interface > Dialog options* (setting `Dialogs.Options`, live). See [Dialogs](../ui/client.md#dialogs).
+
 ### Changed
 
 - MudBlazor 9.12.0, MudBlazor.Extensions 9.12.2 and Nextended 10.1.51; `coworkee update` moves the pinned packages.

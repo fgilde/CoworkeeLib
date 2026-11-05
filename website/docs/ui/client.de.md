@@ -105,6 +105,45 @@ Das Benutzermenü enthält *Mein Profil*, *Meine Einstellungen*, *Passwort und S
 
 ![Info-Dialog](../assets/screenshots/about.png){ .shot }
 
+## Dialoge
+
+Jeder Dialog der Bibliothek holt seine Optionen (`DialogOptionsEx` von MudBlazor.Extensions) an einer Stelle, `DialogOptionsContributor`, nach Art (`DialogPart`):
+
+| Teil | Für | Standard der Bibliothek |
+|---|---|---|
+| `SideSheet` | Bearbeitungsformulare (`ShowEditAsync`), `ShowSideSheetAsync`, Dateivorschau, Verlauf | volle Höhe, gleitet von der Seite herein, auf die geklickt wurde |
+| `RightSheet` | Info-Dialog, Versionsverlauf, Mail-Vorschau | schmal, volle Höhe, gleitet von rechts herein |
+| `Small` | Rückfragen (`ConfirmAsync`) und andere kleine zentrierte Dialoge | klappt herein |
+| `Fullscreen` | Code-Editor | ganzer Bildschirm |
+| `Progress` | Export-Fortschritt | nicht schließbar |
+| `ListItem` | ein Listeneintrag in einem Einstellungsformular | in der Größe veränderbar, verschiebbar |
+
+Eine App ändert Teile, indem sie vom Contributor ableitet und ihn registriert (die Vorlage bringt ein leeres `MyAppDialogOptions` mit):
+
+```csharp
+internal sealed class MyAppDialogOptions : DialogOptionsContributor
+{
+    public override DialogOptionsEx Small() => Perspective(base.Small());
+    public override DialogOptionsEx Fullscreen() => Perspective(base.Fullscreen());
+    public override DialogOptionsEx Progress() => Perspective(base.Progress());
+    public override DialogOptionsEx ListItem() => Perspective(base.ListItem());
+
+    private static DialogOptionsEx Perspective(DialogOptionsEx options)
+    {
+        options.Animations = [AnimationType.Perspective3d];
+        return options;
+    }
+}
+
+builder.Services.AddSingleton<DialogOptionsContributor, MyAppDialogOptions>();
+```
+
+Jede Methode liefert eine neue Instanz. Eigene Dialoge bekommen dieselben Optionen mit `EditDialogExtensions.Small()`, `RightSheet()`, `await SideSheetAsync()` oder `CoworkeeDialogOptions.For(DialogPart.X)`.
+
+### Dialogoptionen für Administratoren
+
+Mit `public override bool AdminEditable => true;` bekommt die Navigation *Administration → Benutzeroberfläche → Dialogoptionen* (`/admin/dialog-options`, `Settings.Manage`, nur Systemorganisation): ein Tab je Teil mit allen Optionen in einem Objekteditor, *Vorschau* öffnet einen Dialog damit, *Auf die Optionen der App zurücksetzen*. Gespeichert werden nur Teile, die von der App abweichen, in der globalen Einstellung `Dialogs.Options` (JSON je Teil, z. B. `{"Small":{"maxWidth":"Large"}}`); ein gespeicherter Teil ersetzt den Teil der App ganz, ein Side-Sheet öffnet sich trotzdem auf der geklickten Seite. Gespeicherte Werte erreichen offene Seiten sofort. Ohne `AdminEditable` (Standard) ist die Seite nicht gelistet und die Einstellung wird ignoriert.
+
 ## Head-Skript
 
 Mit `AddCoworkeeHeadScript()` auf dem Server pflegen Administratoren ein Skript wie einen Tag-Manager in einer Einstellung ([Einstellungen](../modules/settings.md#head-skript)), und `CoworkeeLayout` setzt es in die Seite; der Client braucht nichts. Sobald die App gestartet ist (Theme und Client-Einstellungen geladen) und wenn `HeadScript.Enabled` an und `HeadScript.Value` nicht leer ist, übergibt das Layout das HTML einmal pro Seitenaufruf an `coworkee.js`:

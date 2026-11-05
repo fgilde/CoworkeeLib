@@ -105,6 +105,45 @@ The user menu holds *My profile*, *My settings*, *Password and security* (the ac
 
 ![About dialog](../assets/screenshots/about.png){ .shot }
 
+## Dialogs
+
+Every dialog of the library takes its options (`DialogOptionsEx` of MudBlazor.Extensions) from one place, `DialogOptionsContributor`, by kind (`DialogPart`):
+
+| Part | Used for | Library default |
+|---|---|---|
+| `SideSheet` | edit forms (`ShowEditAsync`), `ShowSideSheetAsync`, file preview, history | full height, slides in from the side the user clicked on |
+| `RightSheet` | about dialog, version history, mail preview | narrow, full height, slides in from the right |
+| `Small` | confirmations (`ConfirmAsync`) and other small centered dialogs | flips in |
+| `Fullscreen` | code editor | whole screen |
+| `Progress` | export progress | cannot be closed |
+| `ListItem` | an item of a list in a settings form | resizable, draggable |
+
+An app changes parts by deriving from the contributor and registering it (the template has an empty `MyAppDialogOptions`):
+
+```csharp
+internal sealed class MyAppDialogOptions : DialogOptionsContributor
+{
+    public override DialogOptionsEx Small() => Perspective(base.Small());
+    public override DialogOptionsEx Fullscreen() => Perspective(base.Fullscreen());
+    public override DialogOptionsEx Progress() => Perspective(base.Progress());
+    public override DialogOptionsEx ListItem() => Perspective(base.ListItem());
+
+    private static DialogOptionsEx Perspective(DialogOptionsEx options)
+    {
+        options.Animations = [AnimationType.Perspective3d];
+        return options;
+    }
+}
+
+builder.Services.AddSingleton<DialogOptionsContributor, MyAppDialogOptions>();
+```
+
+Each method returns a new instance. Own dialogs get the same options with `EditDialogExtensions.Small()`, `RightSheet()`, `await SideSheetAsync()` or `CoworkeeDialogOptions.For(DialogPart.X)`.
+
+### Dialog options for administrators
+
+With `public override bool AdminEditable => true;` the navigation gets *Administration → User interface → Dialog options* (`/admin/dialog-options`, `Settings.Manage`, system organisation only): one tab per part with all options in an object editor, *Preview* to open a dialog with them and *Reset to the app's options*. Only parts that differ from the app are saved, in the global setting `Dialogs.Options` (JSON per part, e.g. `{"Small":{"maxWidth":"Large"}}`); a saved part replaces the app's part as a whole, and a side sheet still opens on the clicked side. Saved values reach open pages at once. Without `AdminEditable` (the default) the page is not listed and the setting is ignored.
+
 ## Head script
 
 With `AddCoworkeeHeadScript()` on the server, administrators keep a script such as a tag manager in a setting ([Settings](../modules/settings.md#head-script)), and `CoworkeeLayout` puts it into the page; the client needs nothing. Once the app has started (theme and client settings loaded) and when `HeadScript.Enabled` is on and `HeadScript.Value` is not empty, the layout hands the HTML to `coworkee.js` once per page load:

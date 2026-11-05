@@ -4,6 +4,10 @@
 
 ## Unveröffentlicht
 
+### Hinzugefügt
+
+- Dialogoptionen an einer Stelle: `DialogOptionsContributor` gibt jedem Dialog der Bibliothek seine `DialogOptionsEx` je `DialogPart` (Side-Sheet, rechtes Sheet, klein, Vollbild, Fortschritt, Listeneintrag); eine App überschreibt Teile mit `AddSingleton<DialogOptionsContributor, MyAppDialogOptions>()`, die Standards bleiben wie bisher. Mit `AdminEditable` bearbeiten Administratoren jeden Teil unter *Administration > Benutzeroberfläche > Dialogoptionen* (Einstellung `Dialogs.Options`, live). Siehe [Dialoge](../ui/client.md#dialoge).
+
 ### Geändert
 
 - MudBlazor 9.12.0, MudBlazor.Extensions 9.12.2 und Nextended 10.1.51; `coworkee update` hebt die festgelegten Pakete an.
