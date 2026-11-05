@@ -75,6 +75,12 @@ public sealed class AppThemeTests : ClientTestBase
         dialogs.Find("[data-testid='theme-logo']").ShouldNotBeNull();
         dialogs.FindAll(".mud-ex-property-container-for-ShowLogoInNav").ShouldNotBeEmpty(); // CoworkeeTheme's own properties stay in the simple mode
         dialogs.FindAll(".mud-ex-property-container-for-Dense").ShouldNotBeEmpty();
+
+        // without a grid item the first row slid under the panel above, its labels cut off at the top
+        foreach (var property in new[] { "ShowLogoInNav", "Dense", "IsPublished", "Motto" })
+        {
+            dialogs.Find($".mud-ex-property-container-for-{property}").ParentElement!.ClassList.ShouldContain("mud-grid-item", property);
+        }
     }
 
     public sealed class ShopTheme : CoworkeeTheme

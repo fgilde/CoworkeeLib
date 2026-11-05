@@ -8,6 +8,10 @@
 
 - MudExRichTextEditor 9.5.7 (auf MudBlazor.Extensions 9.12.2).
 
+### Behoben
+
+- Theme-Editor: Die Optionen von `CoworkeeTheme` und der Theme-Klasse der App standen ohne Grid-Elemente im Bereich der Palette, ihre erste Zeile war oben abgeschnitten. Sie sind jetzt eine eigene Gruppe (*Darstellung*), drei pro Zeile; Logo und eigenes CSS behalten die volle Breite.
+
 ## 0.0.1.63 (2026-11-05)
 
 ### Hinzugefügt

@@ -8,6 +8,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 - MudExRichTextEditor 9.5.7 (built on MudBlazor.Extensions 9.12.2).
 
+### Fixed
+
+- Theme editor: the options of `CoworkeeTheme` and of the app's theme class sat in the panel of the palette without grid items, so their first row was cut off at the top. They are a group of their own (*Appearance*), three to a row; logo and custom CSS keep the whole width.
+
 ## 0.0.1.63 (2026-11-05)
 
 ### Added
