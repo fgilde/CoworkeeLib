@@ -35,6 +35,7 @@ builder.Services.AddCoworkeeClient(baseAddress, options =>
     options.About.Credits.Add(Coworkee.Client.Blazor.Components.About.AboutCredit.AirWorks("0.6.0"));
 #endif
 });
+builder.Services.AddCoworkeeTheme<MyApp.Web.Client.Theming.MyAppTheme, MyApp.Web.Client.ObjectEdit.MyAppThemeEditMeta>();
 #if (samples)
 builder.Services.AddHttpClient<ICatalogApi, CatalogApi>(client => client.BaseAddress = baseAddress);
 builder.Services.AddHttpClient<IDocumentsApi, DocumentsApi>(client =>

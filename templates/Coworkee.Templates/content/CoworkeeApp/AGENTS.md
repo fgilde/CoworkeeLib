@@ -11,7 +11,7 @@ Rules for coding agents in this app. It is built on Coworkee (.NET 10, Aspire, B
 | `src/MyApp.Application` | requests that belong to no module |
 | `src/MyApp.Infrastructure` | DbContext, migrations, module composition (`MyAppDatabaseModule` depends on every module) |
 | `src/MyApp.Migrations` | applies migrations and the seed (`DemoSeed.cs`: roles and their permissions) |
-| `src/MyApp.Web.Client` | Blazor pages (`Pages/<Module>/`), API clients (`Api/`), navigation (`Navigation/MyAppNavigation.cs`), registrations in `Program.cs` |
+| `src/MyApp.Web.Client` | Blazor pages (`Pages/<Module>/`), API clients (`Api/`), navigation (`Navigation/MyAppNavigation.cs`), the app's theme (`Theming/MyAppTheme.cs`), form configurations (`ObjectEdit/`), registrations in `Program.cs` |
 | `src/MyApp.Api`, `src/MyApp.Web`, `src/MyApp.Auth` | hosts: API, web app with backend for frontend, auth server; rarely touched |
 | `src/MyApp.AppHost` | Aspire topology |
 <!--#if (airworks) -->
@@ -47,6 +47,8 @@ coworkee migrations add AddSales
 - Endpoints: `app.MapCoworkeeApi("/api/v1/<plural>").RequireAuthorization()`, each one dispatches a request and returns `.ToHttpResult()`. OData sets: `AddODataEntity<T>("<Plural>", <View permission>)`.
 - A request can carry its route instead (`[Get("/api/v1/<plural>/{id:guid}")]`, `[Post]`, `[Put]`, `[Delete]`): `UseCoworkee` maps it, no endpoint class. Services can carry Nextended's `[RegisterAs(typeof(IService), ServiceLifetime = ...)]` instead of `services.Add...` in the module.
 - Pages: `@attribute [Authorize(Policy = PermissionPolicy.Prefix + <View permission>)]`, `CoworkeeDataTable` for lists, code in a `.razor.cs` partial next to the `.razor` file. Texts through `L["English text"]`, translations in `MyApp.Contracts/Localization/<culture>.json`.
+- Theme: own look settings are properties of `MyAppTheme` (theme editor, saved with the theme, `ThemeService.Theme`), their editors go into `ObjectEdit/MyAppThemeEditMeta.cs`.
+- Forms: a form configuration used in several places is a class implementing `IObjectMetaConfiguration<T>` in `ObjectEdit/` (applies to every object form of `T`); one used by a single page stays in its `Configure` method.
 - Show files with MudBlazor.Extensions' `MudExFileDisplay` (absolute URL); do not build own previews or viewers.
 
 ## Pitfalls
