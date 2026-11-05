@@ -2,6 +2,18 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Geändert
+
+- Client Entities: Eine Kopie fragt den Server höchstens alle 10 Minuten nach den Facetten aller Zeilen (ein Lesen der ganzen Menge) statt nach jeder Änderung; die Zahlen kommen weiter aus den lokalen Zeilen. Eine Menge, die der Server minütlich ändert (die Sendungen eines Hubs), wird nicht mehr minütlich ganz gelesen.
+- Client Entities: Die Facetten des Servers werden mit der Kopie gespeichert; nach einem Neuladen zählen sie sofort auf den wiederhergestellten Zeilen und werden im Hintergrund neu angefragt.
+
+### Behoben
+
+- Client Entities: Zeilen mit einer Liste unter ihren Eigenschaften (z. B. `Tags`) luden ganze Serverzeilen; sie wählen jetzt nur ihre eigenen Eigenschaften (bei den Sendungen eines Hubs ein Drittel der Daten), die Liste kommt weiter über `$expand`.
+- Client Entities: Ein sofort fertiges Laden der Facetten verhinderte, dass die Kopie sie je wieder anfragte.
+
 ## 0.0.1.64 (2026-11-05)
 
 ### Geändert

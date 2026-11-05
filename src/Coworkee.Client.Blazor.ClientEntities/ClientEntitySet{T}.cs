@@ -46,6 +46,8 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     private IReadOnlyList<FacetGroupDto>? _facets;
     private Task<IReadOnlyList<FacetGroupDto>>? _facetsLoading;
     private bool _facetsStale;
+    private DateTimeOffset _facetsLoaded;
+    private string? _plainSelect;
     private readonly Dictionary<(string? Filter, string? OrderBy), LocalView> _views = [];
     private bool _selectRejected;
     private bool _restored;
@@ -74,6 +76,12 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     public string? Expand { get; }
 
     public bool IsLocal => _table is not null;
+
+    /// <summary>
+    /// How long the server's facets (which groups and options exist) serve changed rows before they are asked for again; the counts are always the local
+    /// rows'. Asking costs the server a read of the whole set, so a set whose rows change every minute must not ask every minute.
+    /// </summary>
+    internal TimeSpan FacetRefresh { get; set; } = TimeSpan.FromMinutes(10);
 
     /// <summary>All local rows; empty until the first download completed. Rows kept as columns become objects here.</summary>
     public IReadOnlyList<T> Items => _table?.All() ?? [];
@@ -281,24 +289,33 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     {
         if (_facets is not { } known)
         {
-            return await (_facetsLoading ??= LoadFacetsAsync()).WaitAsync(cancellationToken);
+            return await FacetsLoading().WaitAsync(cancellationToken);
         }
 
         if (_facetsStale)
         {
             _facetsStale = false;
-            _facetsLoading ??= LoadFacetsAsync();
+            _ = FacetsLoading();
         }
 
         return known;
     }
+
+    // one load at a time; a load that finished at once (its finally ran before the assignment) must not stand for the next one
+    private Task<IReadOnlyList<FacetGroupDto>> FacetsLoading() => _facetsLoading is { IsCompleted: false } loading ? loading : _facetsLoading = LoadFacetsAsync();
 
     private async Task<IReadOnlyList<FacetGroupDto>> LoadFacetsAsync()
     {
         try
         {
             // every value of the set: the copy counts on all its rows, a sample's options would miss some
-            return _facets = (await _server.QueryAsync<T>(EntitySet, new ODataQuery { Top = 0, Count = false, Facets = true, FacetsOfAllRows = true, Expand = Expand }, _stop.Token)).Facets;
+            var facets = (await _server.QueryAsync<T>(EntitySet, new ODataQuery { Top = 0, Count = false, Facets = true, FacetsOfAllRows = true, Expand = Expand }, _stop.Token)).Facets;
+            _facets = facets;
+            _facetsLoaded = DateTimeOffset.UtcNow;
+            _facetsStale = false;
+            // kept with the copy: the next visit counts them on the restored rows before the server answered
+            await WriteAsync(() => _storage.SaveAsync(FacetsKey, JsonSerializer.SerializeToUtf8Bytes(facets, Json)), "Keeping the facets of {EntitySet} failed");
+            return facets;
         }
         finally
         {
@@ -495,12 +512,12 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     // only the properties of the row type travel; a server that rejects them sends whole rows
     private async Task<ODataPage<T>> RowsAsync(ODataQuery query, CancellationToken cancellationToken)
     {
-        if (_selectRejected || LocalTable<T>.Shape is not { } shape)
+        if (_selectRejected)
         {
             return await _server.QueryAsync<T>(EntitySet, query with { Expand = Expand }, cancellationToken);
         }
 
-        var (select, expand) = shape.Query(Expand);
+        var (select, expand) = LocalTable<T>.Shape is { } shape ? shape.Query(Expand) : (PlainSelect, Expand);
         try
         {
             return await _server.QueryAsync<T>(EntitySet, query with { Select = select, Expand = expand }, cancellationToken);
@@ -513,6 +530,10 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         }
     }
 
+    // a row kept as JSON (a collection among its properties) selects its own members too; the expanded navigations come through $expand
+    private string PlainSelect => _plainSelect ??= string.Join(",", typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Where(p => p.GetMethod is not null && p.GetIndexParameters().Length == 0 && !Names(Expand).Contains(p.Name)).Select(p => p.Name));
+
     private void Commit(LocalTable<T> table, DateTimeOffset version, bool changed)
     {
         _version = version;
@@ -521,7 +542,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         if (changed || _table is null)
         {
             _table = table;
-            _facetsStale = true;
+            _facetsStale |= DateTimeOffset.UtcNow - _facetsLoaded >= FacetRefresh;
             revision++;
             _ = IndexAsync(table);
         }
@@ -565,6 +586,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         _download = null;
         _version = null;
         _facets = null;
+        _facetsLoaded = default;
         var waiting = _local;
         _local = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         waiting.TrySetException(new InvalidOperationException($"The copy of {EntitySet} belonged to another user or scope."));
@@ -577,6 +599,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         _download = null;
         _version = null;
         _facets = null;
+        _facetsLoaded = default;
         if (_local.Task.IsCompleted)
         {
             _local = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -585,12 +608,16 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         await WriteAsync(async () =>
         {
             await _storage.SaveAsync(StorageKey, []);
+            await _storage.SaveAsync(FacetsKey, []);
             await _storage.SaveAsync(ProgressKey, []);
             await _storage.DeleteAsync(PagesPrefix);
         }, "Dropping the kept copy of {EntitySet} failed");
     }
 
     private string StorageKey => $"{_partition}/{EntitySet}/{Expand}";
+
+    // the server's facets of the kept copy (not under PagesPrefix, which a finished download clears)
+    private string FacetsKey => StorageKey + "@facets";
 
     // the rounds of an unfinished download: "#progress" says how many there are, up to where and from which version
     private string PagesPrefix => StorageKey + "#";
@@ -720,6 +747,13 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
             {
                 _kept = kept.Table;
                 _version = kept.Version;
+                // they count on the restored rows at once; the first facet query asks the server again in the background
+                if (await _storage.LoadAsync(FacetsKey) is { Length: > 0 } facets && JsonSerializer.Deserialize<List<FacetGroupDto>>(facets, Json) is { } known)
+                {
+                    _facets = known;
+                    _facetsStale = true;
+                }
+
                 return;
             }
 
