@@ -4,11 +4,14 @@ using Microsoft.AspNetCore.Components;
 
 namespace Coworkee.Client.Blazor.Theming;
 
-public sealed class ThemeService(Api.ICoworkeeApi api)
+public sealed class ThemeService(Api.ICoworkeeApi api, AppThemeType? themeType = null)
 {
     private bool _dense = Density.Default.Dense;
 
-    public CoworkeeTheme Theme { get; private set; } = CoworkeeTheme.Default;
+    /// <summary>The app's theme class (AddCoworkeeTheme), else <see cref="CoworkeeTheme"/>; <see cref="Theme"/> is always one.</summary>
+    public Type ThemeType { get; } = themeType?.Type ?? typeof(CoworkeeTheme);
+
+    public CoworkeeTheme Theme { get; private set; } = ThemeMapper.As(CoworkeeTheme.Default, themeType?.Type ?? typeof(CoworkeeTheme));
 
     public ThemeDto? Current { get; private set; }
 
@@ -69,7 +72,7 @@ public sealed class ThemeService(Api.ICoworkeeApi api)
     private void Use(ThemeDto theme)
     {
         Current = theme;
-        Theme = ThemeMapper.ToTheme(theme);
+        Theme = ThemeMapper.ToTheme(theme, ThemeType);
     }
 
     /// <summary>Switches between "light", "dark" and "system" for this session (setup, or a toggle before it is saved).</summary>
@@ -96,3 +99,6 @@ public sealed class ThemeService(Api.ICoworkeeApi api)
         Changed?.Invoke();
     }
 }
+
+/// <summary>The app's theme class, registered by AddCoworkeeTheme.</summary>
+public sealed record AppThemeType(Type Type);

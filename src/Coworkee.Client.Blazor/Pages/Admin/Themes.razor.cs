@@ -5,6 +5,7 @@ using Coworkee.Client.Blazor.Theming;
 using Coworkee.Contracts.Theming;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using MudBlazor.Extensions;
 using MudBlazor.Extensions.Components;
 using MudBlazor.Utilities;
 
@@ -28,31 +29,33 @@ public partial class Themes
 
     protected override Task OnInitializedAsync() => ReloadAsync();
 
-    private async Task ReloadAsync() => _tiles = [.. (await Api.GetThemesAsync()).Select(t => (t, ThemeMapper.ToTheme(t)))];
+    private async Task ReloadAsync() => _tiles = [.. (await Api.GetThemesAsync()).Select(t => (t, ThemeMapper.ToTheme(t, ThemeService.ThemeType)))];
 
     private static string Hex(MudColor color) => color.ToString(MudColorOutputFormats.HexA);
 
     private Task CreateAsync()
     {
-        var presets = _tiles?.Select(t => new ThemePreset<CoworkeeTheme>(t.Dto.Name, ThemeMapper.ToTheme(t.Dto)) { Id = t.Dto.Id }).ToList() ?? [];
-        var start = presets.FirstOrDefault(p => _tiles!.Any(t => t.Dto.IsDefault && Equals(t.Dto.Id, p.Id)))?.Theme ?? new CoworkeeTheme();
+        var presets = _tiles?.Select(t => new ThemePreset<CoworkeeTheme>(t.Dto.Name, ThemeMapper.ToTheme(t.Dto, ThemeService.ThemeType)) { Id = t.Dto.Id }).ToList() ?? [];
+        var start = presets.FirstOrDefault(p => _tiles!.Any(t => t.Dto.IsDefault && Equals(t.Dto.Id, p.Id)))?.Theme ?? ThemeMapper.Create(ThemeService.ThemeType);
         start.IsPublished = false;
         return OpenAsync(L["New theme"], string.Empty, start, presets, (name, theme) => Api.CreateThemeAsync(ThemeMapper.ToRequest(name, theme)));
     }
 
-    private Task EditAsync(ThemeDto dto) => OpenAsync(L["Edit theme"], dto.IsGlobal ? L["{0} copy", dto.Name] : dto.Name, ThemeMapper.ToTheme(dto), null,
+    private Task EditAsync(ThemeDto dto) => OpenAsync(L["Edit theme"], dto.IsGlobal ? L["{0} copy", dto.Name] : dto.Name, ThemeMapper.ToTheme(dto, ThemeService.ThemeType), null,
         (name, theme) => dto.IsGlobal ? Api.CreateThemeAsync(ThemeMapper.ToRequest(name, theme)) : Api.UpdateThemeAsync(dto.Id, ThemeMapper.ToRequest(name, theme)));
 
     private async Task OpenAsync(string title, string name, CoworkeeTheme theme, List<ThemePreset<CoworkeeTheme>>? presets, Func<string, CoworkeeTheme, Task<ThemeDto>> save)
     {
         var parameters = new DialogParameters
         {
-            { nameof(ThemeEditDialog.Name), name },
-            { nameof(ThemeEditDialog.Theme), theme },
-            { nameof(ThemeEditDialog.Presets), presets },
-            { nameof(ThemeEditDialog.Save), save },
+            { nameof(ThemeEditDialog<CoworkeeTheme>.Name), name },
+            { nameof(ThemeEditDialog<CoworkeeTheme>.Theme), theme },
+            { nameof(ThemeEditDialog<CoworkeeTheme>.Presets), presets },
+            { nameof(ThemeEditDialog<CoworkeeTheme>.Save), save },
         };
-        var dialog = await Dialogs.ShowSideSheetAsync<ThemeEditDialog>(title, parameters, o => o.MaxWidth = MaxWidth.Large);
+        var options = await EditDialogExtensions.SideSheetAsync();
+        options.MaxWidth = MaxWidth.Large;
+        var dialog = await Dialogs.ShowExAsync(typeof(ThemeEditDialog<>).MakeGenericType(ThemeService.ThemeType), title, parameters, options);
         var result = await dialog.Result;
         // drops an unsaved preview, shows a saved one
         await ThemeService.LoadAsync();
@@ -68,6 +71,18 @@ public partial class Themes
         if (await Dialogs.ConfirmAsync(L["Delete theme"], L["Delete the theme {0}? Users who chose it get the default theme.", dto.Name], L["Delete"], L["Cancel"],
                 Icons.Material.Outlined.Delete)
             && await Snackbar.RunAsync(() => Api.DeleteThemeAsync(dto.Id), L["Theme {0} deleted", dto.Name]))
+        {
+            await ThemeService.LoadAsync();
+            await ReloadAsync();
+        }
+    }
+
+    // the stored sections go back as they are, so publishing never touches what the editor saved
+    private async Task TogglePublishedAsync(ThemeDto dto)
+    {
+        var request = new ThemeRequest(dto.Name, dto.PaletteLight, dto.PaletteDark, dto.Typography, dto.LayoutProperties, dto.Logo, dto.CustomCss, dto.Shadows, dto.Options,
+            !dto.IsPublished);
+        if (await Snackbar.RunAsync(() => Api.UpdateThemeAsync(dto.Id, request), L[request.IsPublished ? "Theme {0} published" : "Theme {0} unpublished", dto.Name]))
         {
             await ThemeService.LoadAsync();
             await ReloadAsync();

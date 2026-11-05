@@ -8,7 +8,7 @@ Themes are data: palettes for light and dark mode, typography, border radius, dr
 
 ## Managing themes
 
-- *Administration > User interface > Themes* (`/cw/admin/themes`, permission `Themes.Manage`) shows a tile per theme: light and dark colors, name, published state, *Edit*, *Make default* and *Delete* (own themes only, after a confirmation). *Edit* and *New theme* open a `MudExThemeEdit<CoworkeeTheme>` with a live preview; a new theme starts from one of the existing themes. Built-in themes stay read-only, saving one creates a copy.
+- *Administration > User interface > Themes* (`/cw/admin/themes`, permission `Themes.Manage`) shows a tile per theme: light and dark colors, name, published state, *Edit*, *Make default* and *Delete* (own themes only, after a confirmation). *Edit* and *New theme* open a `MudExThemeEdit` for the app's theme class (`CoworkeeTheme` unless the app has [its own](#the-apps-own-theme-class)) with a live preview; the published chip of an own theme publishes or unpublishes it at once; a new theme starts from one of the existing themes. Built-in themes stay read-only, saving one creates a copy.
 - Everyone can choose the built-in themes and the *published* ones; the tenant default applies until a user picks another theme (and light, dark or system mode) in the account settings or from the palette in the app bar.
 - `CoworkeeTheme` derives from `MudTheme` and adds: `ShowLogoInNav`, `ShowLogoInAppBar`, `ShowNavFilter`, `CanPinNav`, `CanChangeNavExpandMode`, `NavSingleExpand` (until the user chooses), `Dense`, `StripedTables`, `IsPublished`, `Logo`, `CustomCss`. All of them are fields in the editor. `CustomCss` is a stylesheet for the whole app (rendered after the theme), edited with the CssRulesEditor: in *Rules* mode a list of rules (a selector and a style editor each, with move and delete buttons) and *Add rule*; in *Raw* mode the whole stylesheet in a Monaco code editor (also full screen). At-rules, comments and nested CSS stay raw blocks in the rules list. The mode is remembered per browser; saving from the rules list normalises the CSS (one declaration per line), an empty stylesheet is stored as nothing. CssRulesEditor is also usable on its own (Value, ValueChanged, Label, HelperText, ReadOnly).
 - `CoworkeeLayout` adds a few rules for MudBlazor components to every app: tab badges (`MudTabPanel.BadgeData`) flow inline after the tab text, so counts longer than one digit show in full instead of running into the next tab. Override them in `CustomCss` or the app's stylesheet (`.mud-tab .mud-tab-badge .mud-badge-wrapper`, `.mud-tab .mud-tab-badge .mud-badge`).
@@ -19,21 +19,35 @@ Themes are data: palettes for light and dark mode, typography, border radius, dr
 - On the server `ThemeLogo.TryRead(theme.Logo, out var bytes, out var contentType)` (`Coworkee.Contracts.Theming`) turns either form into bytes and content type, for example to write the logo to a file.
 - Setup offers the theme as one of its steps.
 - The auth server's account pages follow the default theme's colors, font and logo. Their layout and media are one setting for the whole installation: the card *Sign-in page* at the top of *Administration > User interface > Themes*, see [Sign-in pages and designs](../security/sign-in-pages.md).
-- The theme editor's fields come from MudEx object edit metadata. The library registers `CoworkeeThemeEditMeta` as `IObjectMetaConfiguration<CoworkeeTheme>` (the `Logo` and `CustomCss` fields); register your own after `AddCoworkeeClient` to render fields differently (it replaces the library's):
+- The theme editor's fields come from MudEx object edit metadata. The library's `CoworkeeThemeEditMeta<TTheme>` configures the `Logo` and `CustomCss` fields.
+- `ThemeService` in the client applies a theme at runtime (`Apply`, `Preview`, `SetMode`).
+
+### The app's own theme class
+
+An app keeps its own look settings in a class derived from `CoworkeeTheme` and registers it with its editor configuration after `AddCoworkeeClient`. New apps get both from the template: `Theming/MyAppTheme.cs` (empty) and `ObjectEdit/MyAppThemeEditMeta.cs` in the client project.
 
 ```csharp
-builder.Services.AddScoped<IObjectMetaConfiguration<CoworkeeTheme>, MyThemeEditMeta>();
+builder.Services.AddCoworkeeTheme<MyAppTheme, MyAppThemeEditMeta>();
 
-public sealed class MyThemeEditMeta : IObjectMetaConfiguration<CoworkeeTheme>
+public class MyAppTheme : CoworkeeTheme
 {
-    public Task ConfigureAsync(ObjectEditMeta<CoworkeeTheme> meta)
+    public bool ShowMapLegend { get; set; } = true;
+}
+
+public class MyAppThemeEditMeta(CoworkeeLocalizer l) : CoworkeeThemeEditMeta<MyAppTheme>(l)
+{
+    public override async Task ConfigureAsync(ObjectEditMeta<MyAppTheme> meta)
     {
-        meta.Property(t => t.Logo).WithLabel("Company logo");
-        return Task.CompletedTask;
+        await base.ConfigureAsync(meta); // logo and custom CSS
+        meta.Property(t => t.ShowMapLegend).WithLabel(L["Map legend"]);
     }
 }
 ```
-- `ThemeService` in the client applies a theme at runtime (`Apply`, `Preview`, `SetMode`).
+
+- Every theme is then a `MyAppTheme`: `ThemeService.Theme` (also the built-in default before a theme loads), the tiles and the editor of the Themes page, new themes. Read it with `(MyAppTheme)ThemeService.Theme`.
+- The class's properties are fields of the theme editor, also in its simple mode, and are stored in the theme's options next to `Dense` and the others; a theme saved before a property existed gets the class's default. Supported types: `string`, `string[]`, `bool`, `int`, `double`, enums, `MudColor`, their nullable forms and classes of those.
+- `AddCoworkeeTheme<MyAppTheme>()` uses the library's editor configuration only.
+- Without `AddCoworkeeTheme` everything stays `CoworkeeTheme`. To change only how the library's fields render, derive from `CoworkeeThemeEditMeta` and register it as `IObjectMetaConfiguration<CoworkeeTheme>` after `AddCoworkeeClient` (it replaces the library's).
 
 ## Built-in themes
 
@@ -129,4 +143,5 @@ In production Keycloak caches themes. Share a volume between the API and Keycloa
 ## Upgrading older apps
 
 - Apps created before the loading screen add `<Coworkee.Bff.CoworkeeLoadingScreen Logo="..." />` as the first line of `<body>` in `MyApp.Web/App.razor`.
+- Apps created before the app's own theme class can add one: copy `Theming/MyAppTheme.cs` and `ObjectEdit/MyAppThemeEditMeta.cs` from a new app (or write them as above) into `MyApp.Web.Client` and call `builder.Services.AddCoworkeeTheme<MyAppTheme, MyAppThemeEditMeta>();` after `AddCoworkeeClient` in its `Program.cs`.
 - The column `LogoSvg` of the theme table is now `Logo`: add a migration to an existing app (EF Core renames the column when you edit the generated migration to use `RenameColumn`).

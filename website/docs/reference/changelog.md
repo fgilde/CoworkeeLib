@@ -4,6 +4,11 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Added
+
+- Own theme class per app: `AddCoworkeeTheme<TTheme, TEditMeta>()` in the client makes every theme a `TTheme : CoworkeeTheme`; its properties are fields of the theme editor and are saved and loaded with the theme. `CoworkeeThemeEditMeta<TTheme>` is the base of the app's editor configuration (override `ConfigureAsync`, call the base). New apps get an empty `MyAppTheme` in `Theming/` and `MyAppThemeEditMeta` in the new `ObjectEdit/` folder of the client, registered in `Program.cs`. Existing apps: see *Upgrading older apps* on the [Theming](../modules/theming.md) page.
+- The published chip of an own theme on the Themes page publishes or unpublishes it at once.
+
 ### Changed
 
 - MudBlazor 9.12.0, MudBlazor.Extensions 9.12.2 and Nextended 10.1.51; `coworkee update` moves the pinned packages.

@@ -6,14 +6,23 @@ using MudBlazor.Utilities;
 
 namespace Coworkee.Client.Blazor.Theming;
 
-/// <summary>Maps the stored theme sections (palettes, typography, layout, shadows, options) to a <see cref="CoworkeeTheme"/> and back.</summary>
+/// <summary>
+/// Maps the stored theme sections (palettes, typography, layout, shadows, options) to a <see cref="CoworkeeTheme"/> and back. The options hold the
+/// properties of <see cref="CoworkeeTheme"/> and of an app's class derived from it.
+/// </summary>
 public static class ThemeMapper
 {
     private static readonly string[] Meta = [nameof(CoworkeeTheme.IsPublished), nameof(CoworkeeTheme.Logo), nameof(CoworkeeTheme.CustomCss)];
 
-    public static CoworkeeTheme ToTheme(ThemeDto dto)
+    public static CoworkeeTheme ToTheme(ThemeDto dto) => ToTheme(dto, typeof(CoworkeeTheme));
+
+    /// <summary>The theme as instance of <paramref name="type"/>, the app's theme class (AddCoworkeeTheme).</summary>
+    public static CoworkeeTheme ToTheme(ThemeDto dto, Type type)
     {
-        var theme = new CoworkeeTheme { IsPublished = dto.IsPublished, Logo = dto.Logo, CustomCss = dto.CustomCss };
+        var theme = Create(type);
+        theme.IsPublished = dto.IsPublished;
+        theme.Logo = dto.Logo;
+        theme.CustomCss = dto.CustomCss;
         Fill(theme.PaletteLight, dto.PaletteLight);
         Fill(theme.PaletteDark, dto.PaletteDark);
         Fill(theme.Typography, dto.Typography);
@@ -27,6 +36,22 @@ public static class ThemeMapper
         }
 
         return theme;
+    }
+
+    /// <summary>A new theme of the app's theme class with its own defaults (MudBlazor's colors, unlike <see cref="CoworkeeTheme.Default"/>).</summary>
+    internal static CoworkeeTheme Create(Type type) => (CoworkeeTheme)Activator.CreateInstance(type)!;
+
+    /// <summary><paramref name="theme"/> as instance of <paramref name="type"/>, with the values it shares.</summary>
+    internal static CoworkeeTheme As(CoworkeeTheme theme, Type type)
+    {
+        if (theme.GetType() == type)
+        {
+            return theme;
+        }
+
+        var r = ToRequest(string.Empty, theme);
+        return ToTheme(new ThemeDto(Guid.Empty, r.Name, false, false, r.PaletteLight, r.PaletteDark, r.Typography, r.LayoutProperties, r.Logo, r.CustomCss, 0,
+            r.Shadows, r.Options, r.IsPublished), type);
     }
 
     // themes saved before the table-only option became Dense; saving one again stores Dense
@@ -44,8 +69,9 @@ public static class ThemeMapper
         JsonSerializer.SerializeToElement(Values(theme, Options)),
         theme.IsPublished);
 
+    // the properties CoworkeeTheme and an app's theme class add to MudTheme
     private static IEnumerable<PropertyInfo> Options(Type type) =>
-        typeof(CoworkeeTheme).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Where(p => !Meta.Contains(p.Name));
+        Settable(type).Where(p => p.DeclaringType != typeof(MudTheme) && typeof(CoworkeeTheme).IsAssignableFrom(p.DeclaringType) && !Meta.Contains(p.Name));
 
     private static IEnumerable<PropertyInfo> Settable(Type type) =>
         type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead && p.CanWrite && p.GetIndexParameters().Length == 0);

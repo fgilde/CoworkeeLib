@@ -31,6 +31,19 @@ public sealed class TemplateTests(TemplateFixture template)
     }
 
     [Fact]
+    public async Task The_client_brings_an_own_theme_class_and_its_editor_configuration_registered_in_the_program()
+    {
+        var app = await template.CreateAsync("app-theme", "--samples", "false");
+        var client = Path.Combine(app, "src", "Shop.Web.Client");
+
+        File.ReadAllText(Path.Combine(client, "Theming", "ShopTheme.cs")).ShouldContain("public class ShopTheme : CoworkeeTheme");
+        File.ReadAllText(Path.Combine(client, "ObjectEdit", "ShopThemeEditMeta.cs")).ShouldContain("public class ShopThemeEditMeta(CoworkeeLocalizer l) : CoworkeeThemeEditMeta<ShopTheme>(l)");
+        File.ReadAllText(Path.Combine(client, "Program.cs")).ShouldContain("builder.Services.AddCoworkeeTheme<Shop.Web.Client.Theming.ShopTheme, Shop.Web.Client.ObjectEdit.ShopThemeEditMeta>();");
+        File.ReadAllText(Path.Combine(app, "AGENTS.md")).ShouldContain("form configurations (`ObjectEdit/`)");
+        ShouldHaveNoLeftovers(app);
+    }
+
+    [Fact]
     public async Task By_default_the_samples_and_tests_are_included()
     {
         var app = await template.CreateAsync("full", "--keycloak", "true", "--repository", "acme/shop");

@@ -1,3 +1,4 @@
+using System.Reflection;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Theming;
@@ -8,9 +9,21 @@ using MudBlazor.Extensions.Components;
 
 namespace Coworkee.Client.Blazor.Pages.Admin;
 
-/// <summary>MudExThemeEdit for one theme with a live preview; closes with the saved theme, stays open with the API's messages.</summary>
-public partial class ThemeEditDialog
+/// <summary>
+/// MudExThemeEdit for one theme of the app's theme class <typeparamref name="TTheme"/> with a live preview; closes with the saved theme, stays open with
+/// the API's messages.
+/// </summary>
+public partial class ThemeEditDialog<TTheme> where TTheme : CoworkeeTheme
 {
+    // besides its simple list MudEx shows only the properties TTheme declares itself; those of CoworkeeTheme belong there too when an app derives from it
+    private static readonly string[] SimpleMode =
+    [
+        .. new MudExThemeEdit<TTheme>().PropertiesForSimpleMode,
+        .. typeof(CoworkeeTheme).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Select(p => p.Name),
+    ];
+
+    private List<ThemePreset<TTheme>>? _presets;
+
     [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = null!;
 
     [Inject] private ThemeService ThemeService { get; set; } = null!;
@@ -28,7 +41,10 @@ public partial class ThemeEditDialog
 
     [Parameter, EditorRequired] public Func<string, CoworkeeTheme, Task<ThemeDto>> Save { get; set; } = null!;
 
-    private async Task SaveAsync(ThemeChangedArgs<CoworkeeTheme> args)
+    protected override void OnParametersSet() =>
+        _presets = Presets?.Select(p => new ThemePreset<TTheme>(p.Name, (TTheme)p.Theme) { Id = p.Id }).ToList();
+
+    private async Task SaveAsync(ThemeChangedArgs<TTheme> args)
     {
         ThemeDto? saved = null;
         if (await Snackbar.RunAsync(async () => saved = await Save(Name.Trim(), args.Theme)))
