@@ -15,6 +15,7 @@ public partial class DataTableGroupRows<T> : IDisposable
     private MudDataGrid<T>? _grid;
     private int _version;
     private bool _laidOut;
+    private GridData<T>? _shownData;
     private bool _loading;
 
     [Parameter, EditorRequired] public CoworkeeDataTable<T> Table { get; set; } = null!;
@@ -76,8 +77,16 @@ public partial class DataTableGroupRows<T> : IDisposable
 
     private async Task<GridData<T>> LoadAsync(GridState<T> state, CancellationToken cancellationToken)
     {
-        var items = await RowsAsync(Pages, state.Page * state.PageSize, state.PageSize, cancellationToken);
-        return new GridData<T> { Items = items, TotalItems = Total };
+        try
+        {
+            var items = await RowsAsync(Pages, state.Page * state.PageSize, state.PageSize, cancellationToken);
+            return _shownData = new GridData<T> { Items = items, TotalItems = Total };
+        }
+        // as in the table: a cancelled first load must return, or MudDataGrid never loads another page
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return _shownData ?? new GridData<T> { Items = [], TotalItems = Total };
+        }
     }
 
     private async Task<GridData<T>> LoadEndlessAsync(GridStateVirtualize<T> state, CancellationToken cancellationToken)

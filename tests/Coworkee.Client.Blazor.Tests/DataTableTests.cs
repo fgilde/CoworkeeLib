@@ -287,6 +287,49 @@ public sealed class DataTableTests : ClientTestBase
     }
 
     [Fact]
+    public async Task The_pager_shows_the_rows_of_the_next_page_and_back()
+    {
+        var rows = Enumerable.Range(1, 60).Select(i => new Gadget(Guid.CreateVersion7(), $"Item {i:00}", "Tools")).ToArray();
+        Services.AddSingleton<IODataClient>(new PagingODataClient<Gadget>(rows, Category));
+        var table = Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.Columns, Columns()));
+        table.WaitForAssertion(() => table.Markup.ShouldContain("Item 01"));
+
+        // first, previous, next, last
+        await table.InvokeAsync(() => table.FindAll(".mud-table-pagination-actions button")[2].ClickAsync(new()));
+
+        table.WaitForAssertion(() => table.Markup.ShouldContain("Item 26"));
+        table.Markup.ShouldNotContain("Item 01");
+        // the facets came in between: the following pages render their rows too
+        table.WaitForAssertion(() => table.Find("[data-facet='category']"));
+        await table.InvokeAsync(() => table.FindAll(".mud-table-pagination-actions button")[2].ClickAsync(new()));
+        table.WaitForAssertion(() => table.Markup.ShouldContain("Item 51"));
+        table.Markup.ShouldNotContain("Item 26");
+        await table.InvokeAsync(() => table.FindAll(".mud-table-pagination-actions button")[1].ClickAsync(new()));
+        table.WaitForAssertion(() => table.Markup.ShouldContain("Item 26"));
+        table.Markup.ShouldNotContain("Item 51");
+    }
+
+    [Fact]
+    public async Task The_pager_keeps_loading_pages_when_the_first_load_was_cancelled()
+    {
+        var rows = Enumerable.Range(1, 100).Select(i => new Gadget(Guid.CreateVersion7(), $"Item {i:00}", "Tools")).ToArray();
+        var odata = new PagingODataClient<Gadget>(rows) { HoldNextRows = new TaskCompletionSource() };
+        Services.AddSingleton<IODataClient>(odata);
+        var table = Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.Columns, Columns()));
+        table.WaitForAssertion(() => odata.Queries.Count(q => q.Top > 0).ShouldBe(1));
+
+        // a reload while the grid's first load is on its way cancels that load
+        await table.InvokeAsync(table.Instance.ReloadAsync);
+        table.WaitForAssertion(() => table.Markup.ShouldContain("Item 01"));
+
+        foreach (var first in new[] { "Item 26", "Item 51", "Item 76" })
+        {
+            await table.InvokeAsync(() => table.FindAll(".mud-table-pagination-actions button")[2].ClickAsync(new()));
+            table.WaitForAssertion(() => table.Markup.ShouldContain(first));
+        }
+    }
+
+    [Fact]
     public async Task Another_page_starts_at_the_first_row()
     {
         var module = JSInterop.SetupModule("./_content/Coworkee.Client.Blazor/coworkee.js");

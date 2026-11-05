@@ -205,6 +205,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     private ElementReference _main;
     private int? _shownPage;
+    private GridData<T>? _shownData;
 
     [Inject] private IJSRuntime JS { get; set; } = null!;
 
@@ -437,6 +438,20 @@ public partial class CoworkeeDataTable<T> : IDisposable
     }
 
     private async Task<GridData<T>> LoadAsync(GridState<T> state, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return _shownData = await LoadRowsAsync(state, cancellationToken);
+        }
+        // MudDataGrid finishes setting itself up only after its first load returns, and Blazor drops a cancelled one silently: the grid would never load
+        // another page. The newer load that cancelled this one brings its rows; until then the rows shown stay.
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return _shownData ?? new GridData<T> { Items = [], TotalItems = 0 };
+        }
+    }
+
+    private async Task<GridData<T>> LoadRowsAsync(GridState<T> state, CancellationToken cancellationToken)
     {
         if (GroupsTheResult)
         {
