@@ -1,0 +1,38 @@
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + SettingsPermissions.Manage)]
+@using Coworkee.Client.Blazor.Dialogs
+@using MudBlazor.Extensions.Components.ObjectEdit
+@using MudBlazor.Extensions.Options
+
+<PageHeader Title="Dialog options" Description="How the dialogs of the app open, per kind of dialog: size, position, animation and buttons. A kind you do not change keeps the options of the app." />
+
+@if (!DialogOptions.Contributor.AdminEditable)
+{
+    <MudAlert Severity="Severity.Info" data-testid="dialogs-locked">@L["The app does not let administrators change its dialogs."]</MudAlert>
+}
+else if (_parts is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <MudStack Spacing="4" data-testid="dialog-configuration">
+        <MudTabs Outlined="true" Border="true" TabPanelsClass="pa-4" @bind-ActivePanelIndex="_tab">
+            @foreach (var (part, label, description) in Parts)
+            {
+                <MudTabPanel Text="@L[label]" data-dialog-part="@part">
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary mb-3">@L[description]</MudText>
+                    <MudStack Row="true" Spacing="2" Class="mb-3">
+                        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.PlayArrow" OnClick="() => PreviewAsync(part, label)" data-testid="dialog-preview">@L["Preview"]</MudButton>
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.RestartAlt" OnClick="() => Reset(part)" Disabled="@(!Changed(part))" data-testid="dialog-reset">@L["Reset to the app's options"]</MudButton>
+                    </MudStack>
+                    <MudExObjectEdit T="DialogOptionsEx" @key="_parts[part]" Value="_parts[part]" GroupingStyle="GroupingStyle.Flat" AutoSaveRestoreState="false" />
+                </MudTabPanel>
+            }
+        </MudTabs>
+
+        <MudStack Row="true" Spacing="2" Justify="Justify.FlexEnd">
+            <MudButton Variant="Variant.Text" OnClick="LoadAsync" Disabled="_busy" data-testid="dialogs-discard">@L["Discard changes"]</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Save" OnClick="SaveAsync" Disabled="_busy" data-testid="dialogs-save">@L["Save"]</MudButton>
+        </MudStack>
+    </MudStack>
+}
