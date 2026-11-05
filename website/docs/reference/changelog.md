@@ -2,6 +2,18 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Changed
+
+- Client entities: a copy asks the server for the facets of all its rows (a read of the whole set) at most every 10 minutes instead of after every change; the counts stay the local rows'. A set the server changes every minute (a hub's shipments) no longer has its whole set read every minute.
+- Client entities: the server's facets are kept with the copy; after a reload they count on the restored rows at once and are asked for again in the background.
+
+### Fixed
+
+- Client entities: rows with a collection among their properties (e.g. `Tags`) downloaded whole server rows; they select their own members now (a third of the data for a hub's shipments), the collection still comes through `$expand`.
+- Client entities: a facet load that finished at once kept the copy from ever asking for the facets again.
+
 ## 0.0.1.64 (2026-11-05)
 
 ### Changed
