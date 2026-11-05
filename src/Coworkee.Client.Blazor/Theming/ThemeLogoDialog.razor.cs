@@ -33,7 +33,7 @@ public partial class ThemeLogoDialog : IAsyncDisposable
     public static async Task<string?> ShowAsync(IDialogService dialogs)
     {
         // a MudEx dialog: the file picker opened from here is one too, and MudEx would otherwise take this dialog for it
-        var dialog = await dialogs.ShowExAsync<ThemeLogoDialog>(string.Empty, new DialogParameters(), new MudBlazor.Extensions.Options.DialogOptionsEx { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true });
+        var dialog = await dialogs.ShowExAsync<ThemeLogoDialog>(string.Empty, new DialogParameters(), Components.Data.EditDialogExtensions.Small());
         return await dialog.Result is { Canceled: false, Data: string logo } ? logo : null;
     }
 

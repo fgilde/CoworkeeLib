@@ -3,6 +3,7 @@ using Coworkee.Client.Blazor.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using MudBlazor.Extensions;
 
 namespace Coworkee.Client.Blazor;
@@ -91,6 +92,9 @@ public static class CoworkeeClientExtensions
         services.AddScoped<Features.FeatureStore>();
         services.AddScoped<Theming.ThemeService>();
         services.AddCascadingValue(sp => sp.GetRequiredService<Theming.ThemeService>().DensitySource);
+        // an app's AddSingleton<DialogOptionsContributor, MyDialogOptions>() wins, before or after this call
+        services.TryAddSingleton<Dialogs.DialogOptionsContributor>();
+        services.AddScoped<Dialogs.CoworkeeDialogOptions>();
         services.AddScoped<Layout.LayoutPreferences>();
         services.AddScoped<Layout.PwaService>();
         services.AddScoped<Realtime.IRealtimeConnection, Realtime.SignalRRealtimeConnection>();

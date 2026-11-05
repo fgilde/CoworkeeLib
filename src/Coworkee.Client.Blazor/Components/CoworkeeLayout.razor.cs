@@ -42,6 +42,8 @@ public partial class CoworkeeLayout : IAsyncDisposable
 
     [Inject] private LayoutPreferences Preferences { get; set; } = null!;
 
+    [Inject] private Dialogs.CoworkeeDialogOptions DialogOptions { get; set; } = null!;
+
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
 
     [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
@@ -115,6 +117,7 @@ public partial class CoworkeeLayout : IAsyncDisposable
         // ponytail: upload fields of the first page rendered before this keep no pickers until they render again
         Blazor.Files.CloudFilePickers.Apply(MudEx, ThemeService.ClientSettings);
         await Data.DialogPlacement.StartAsync(JS);
+        Dialogs.CoworkeeDialogOptions.Current = DialogOptions;
         await Viewport.SubscribeAsync(_viewport, FollowViewport, new MudBlazor.Services.ResizeOptions { NotifyOnBreakpointOnly = true }, fireImmediately: true);
         await L.InitializeAsync(ThemeService.ClientSettings.GetValueOrDefault(Contracts.Localization.LocalizationSettings.Culture));
         _systemDark = _provider is not null && await _provider.GetSystemDarkModeAsync();
