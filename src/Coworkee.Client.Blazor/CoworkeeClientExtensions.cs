@@ -130,6 +130,22 @@ public static class CoworkeeClientExtensions
     public const string AppSettingsTitle = "App settings";
 
     /// <summary>
+    /// The app's own theme class instead of <see cref="Theming.CoworkeeTheme"/>: themes are created, loaded, stored and edited as <typeparamref name="TTheme"/>,
+    /// its properties show in the theme editor, configured by <typeparamref name="TEditMeta"/> (derived from CoworkeeThemeEditMeta&lt;TTheme&gt;).
+    /// </summary>
+    public static IServiceCollection AddCoworkeeTheme<TTheme, TEditMeta>(this IServiceCollection services)
+        where TTheme : Theming.CoworkeeTheme, new()
+        where TEditMeta : class, MudBlazor.Extensions.Components.ObjectEdit.IObjectMetaConfiguration<TTheme>
+    {
+        services.AddSingleton(new Theming.AppThemeType(typeof(TTheme)));
+        return services.AddScoped<MudBlazor.Extensions.Components.ObjectEdit.IObjectMetaConfiguration<TTheme>, TEditMeta>();
+    }
+
+    /// <summary>The app's own theme class with the library's editor configuration.</summary>
+    public static IServiceCollection AddCoworkeeTheme<TTheme>(this IServiceCollection services) where TTheme : Theming.CoworkeeTheme, new() =>
+        services.AddCoworkeeTheme<TTheme, Theming.CoworkeeThemeEditMeta<TTheme>>();
+
+    /// <summary>
     /// Lets admins edit another typed section under Settings (the server registers the same type with
     /// AddCoworkeeAppConfiguration); <paramref name="meta"/> tunes the form like any MudExObjectEditForm.
     /// </summary>
