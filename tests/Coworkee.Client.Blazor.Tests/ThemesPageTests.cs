@@ -52,6 +52,25 @@ public sealed class ThemesPageTests : ClientTestBase
     }
 
     [Fact]
+    public async Task The_published_chip_of_an_own_theme_publishes_it_at_once_and_keeps_the_rest_of_the_theme()
+    {
+        var own = Own with { CustomCss = ".brand { color: red; }", Options = JsonSerializer.SerializeToElement(new { Dense = false, Unknown = 1 }) };
+        Api.GetThemesAsync(Arg.Any<CancellationToken>()).Returns([BuiltIn, own], [BuiltIn, own with { IsPublished = true }]);
+        Api.UpdateThemeAsync(own.Id, Arg.Any<ThemeRequest>(), Arg.Any<CancellationToken>()).Returns(own with { IsPublished = true });
+        Render<MudSnackbarProvider>();
+        var page = Render<Themes>();
+        page.WaitForElement("[data-theme='Brand'] [data-testid='theme-published']");
+        Tile(page, "Coworkee").QuerySelector("[data-testid='theme-published']")!.ClassList.ShouldNotContain("mud-clickable");
+
+        await page.Find("[data-theme='Brand'] [data-testid='theme-published']").ClickAsync(new());
+
+        await Api.Received(1).UpdateThemeAsync(own.Id, Arg.Is<ThemeRequest>(r => r.IsPublished && r.Name == "Brand" && r.CustomCss == own.CustomCss
+            && r.PaletteLight.GetRawText() == own.PaletteLight.GetRawText() && r.Options!.Value.GetRawText() == own.Options!.Value.GetRawText()), Arg.Any<CancellationToken>());
+        page.WaitForAssertion(() => Tile(page, "Brand").QuerySelector("[data-testid='theme-published']")!.TextContent.Trim().ShouldBe("Published"));
+        Services.GetRequiredService<ISnackbar>().ShownSnackbars.ShouldContain(s => s.Message == "Theme Brand published");
+    }
+
+    [Fact]
     public void Edit_opens_the_theme_editor_for_that_theme_and_a_built_in_one_as_copy()
     {
         var dialogs = Render<MudDialogProvider>();

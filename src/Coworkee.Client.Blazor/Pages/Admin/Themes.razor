@@ -48,10 +48,14 @@ else
                             }
                         </MudStack>
                         <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" Class="mt-1">
-                            <MudChip T="string" Size="Density.Size" Variant="Variant.Outlined" Color="@(dto.IsPublished ? Color.Success : Color.Default)"
-                                     Icon="@(dto.IsPublished ? Icons.Material.Outlined.Visibility : Icons.Material.Outlined.VisibilityOff)" data-testid="theme-published">
-                                @L[dto.IsPublished ? "Published" : "Not published"]
-                            </MudChip>
+                            @* built-in themes are always published; an own theme's chip switches it *@
+                            <MudTooltip Text="@(dto.IsGlobal ? null : L[dto.IsPublished ? "Unpublish" : "Publish"])">
+                                <MudChip T="string" Size="Density.Size" Variant="Variant.Outlined" Color="@(dto.IsPublished ? Color.Success : Color.Default)"
+                                         Icon="@(dto.IsPublished ? Icons.Material.Outlined.Visibility : Icons.Material.Outlined.VisibilityOff)"
+                                         OnClick="@(dto.IsGlobal ? default : EventCallback.Factory.Create<MouseEventArgs>(this, () => TogglePublishedAsync(dto)))" data-testid="theme-published">
+                                    @L[dto.IsPublished ? "Published" : "Not published"]
+                                </MudChip>
+                            </MudTooltip>
                             @if (dto.IsGlobal)
                             {
                                 <MudChip T="string" Size="Density.Size" Variant="Variant.Outlined" Icon="@Icons.Material.Outlined.Lock">@L["built-in"]</MudChip>

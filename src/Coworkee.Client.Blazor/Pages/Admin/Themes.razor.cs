@@ -74,6 +74,18 @@ public partial class Themes
         }
     }
 
+    // the stored sections go back as they are, so publishing never touches what the editor saved
+    private async Task TogglePublishedAsync(ThemeDto dto)
+    {
+        var request = new ThemeRequest(dto.Name, dto.PaletteLight, dto.PaletteDark, dto.Typography, dto.LayoutProperties, dto.Logo, dto.CustomCss, dto.Shadows, dto.Options,
+            !dto.IsPublished);
+        if (await Snackbar.RunAsync(() => Api.UpdateThemeAsync(dto.Id, request), L[request.IsPublished ? "Theme {0} published" : "Theme {0} unpublished", dto.Name]))
+        {
+            await ThemeService.LoadAsync();
+            await ReloadAsync();
+        }
+    }
+
     private async Task SetDefaultAsync(ThemeDto dto)
     {
         if (await Snackbar.RunAsync(() => Api.SetDefaultThemeAsync(dto.Id)))
