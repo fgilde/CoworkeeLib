@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Changed
+
+- MudExRichTextEditor 9.5.7 (built on MudBlazor.Extensions 9.12.2).
+
 ## 0.0.1.63 (2026-11-05)
 
 ### Added

@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Geändert
+
+- MudExRichTextEditor 9.5.7 (auf MudBlazor.Extensions 9.12.2).
+
 ## 0.0.1.63 (2026-11-05)
 
 ### Hinzugefügt
