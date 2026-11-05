@@ -208,6 +208,10 @@ public sealed class LoadingScreenTests
         var script = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         script.ShouldContain("location.reload()");
         script.ShouldContain("fail(");
+        // a reload after a failed start drops what the browser kept of an older build: service worker and cache storage (Blazor's resources)
+        script.ShouldContain("serviceWorker.getRegistrations()");
+        script.ShouldContain("caches.delete(");
+        script.ShouldContain("sessionStorage");
     }
 
     [Fact]

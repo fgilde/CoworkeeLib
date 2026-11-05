@@ -11,14 +11,16 @@ namespace Coworkee.Bff;
 /// A layout that hides it once its theme is applied claims the screen with an element <c>[data-coworkee-loading-claim]</c>; without a claim the
 /// screen goes as soon as the app rendered its first content into the body. A claiming layout that never calls hide() loses the screen 30 s
 /// after the download finished (or after the start when Blazor reports no progress).
-/// It is its own cacheable file, never inline, so pages with a Content-Security-Policy without <c>'unsafe-inline'</c> run it.
+/// A failed start drops the service worker and the cache storage (resources of an older build fail their integrity check) and reloads, once per session;
+/// the reload button does the same. It is its own cacheable file, never inline, so pages with a Content-Security-Policy without <c>'unsafe-inline'</c> run it.
 /// </summary>
 internal static class LoadingScreenScript
 {
     public const string Source = """
         (()=>{const el=document.getElementById('coworkee-loading');if(!el)return;const root=document.documentElement;let since=Date.now(),timer,failed=false,last='';
         el.querySelectorAll('.cwl-media').forEach(m=>{const drop=()=>m.parentNode&&m.parentNode.remove();m.addEventListener('error',drop);if(m.error||(m.complete&&!m.naturalWidth))drop();});
-        el.querySelector('.cwl-reload').addEventListener('click',()=>location.reload());
+        const fresh=async()=>{try{if(navigator.serviceWorker)await Promise.all((await navigator.serviceWorker.getRegistrations()).map(r=>r.unregister()));if(window.caches)await Promise.all((await caches.keys()).map(k=>caches.delete(k)));}catch(e){}location.reload();};
+        el.querySelector('.cwl-reload').addEventListener('click',fresh);
         const video=el.querySelector('video');if(video&&!matchMedia('(prefers-reduced-motion: reduce)').matches)video.play().catch(()=>{});
         const log=console.error,text=x=>x instanceof Error?(x.stack||x.message):String(x),ours=s=>/_framework|blazor|dotnet|webassembly/i.test(s||'');
         console.error=(...a)=>{last=a.map(text).join(' ').slice(0,4000);return log.apply(console,a);};
@@ -31,10 +33,11 @@ internal static class LoadingScreenScript
         const check=()=>{if(!claimed()&&rendered())requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!claimed())hide();}));};
         const app=new MutationObserver(check),observe=()=>{[...document.body.children].forEach(n=>statics.add(n));app.observe(document.body,{childList:true,subtree:true});check();};
         const stop=()=>{clearInterval(timer);console.error=log;removeEventListener('error',onError,true);removeEventListener('unhandledrejection',onRejection);watch.disconnect();app.disconnect();removeEventListener('DOMContentLoaded',observe);};
-        const hide=()=>{if(failed||el.classList.contains('cwl-done'))return;stop();el.classList.add('cwl-done');setTimeout(()=>el.remove(),600);};
+        const hide=()=>{if(failed||el.classList.contains('cwl-done'))return;stop();try{sessionStorage.removeItem('cwl-fresh');}catch(e){}el.classList.add('cwl-done');setTimeout(()=>el.remove(),600);};
         const fail=detail=>{if(failed||el.classList.contains('cwl-done'))return;failed=true;stop();el.classList.remove('cwl-indeterminate');el.classList.add('cwl-failed');
         ['role','aria-valuenow','aria-valuemin','aria-valuemax'].forEach(a=>el.removeAttribute(a));el.querySelector('.cwl-error').setAttribute('role','alert');
-        el.querySelector('.cwl-detail').textContent=detail||last||'Blazor reported an error during the start.';el.querySelector('.cwl-reload').focus();};
+        el.querySelector('.cwl-detail').textContent=detail||last||'Blazor reported an error during the start.';el.querySelector('.cwl-reload').focus();
+        let retried=true;try{retried=!!sessionStorage.getItem('cwl-fresh');if(!retried)sessionStorage.setItem('cwl-fresh','1');}catch(e){}if(!retried)fresh();};
         window.coworkeeLoadingScreen={hide,fail};
         addEventListener('error',onError,true);addEventListener('unhandledrejection',onRejection);if(ui)watch.observe(ui,{attributes:true,attributeFilter:['style']});
         const tick=()=>{const p=parseFloat(getComputedStyle(root).getPropertyValue('--blazor-load-percentage'));
