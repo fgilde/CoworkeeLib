@@ -709,9 +709,19 @@
     {
       "version": "0.0.1.63",
       "breaking": [
-        "MudBlazor 9.12.0, MudBlazor.Extensions 9.12.2 and Nextended 10.1.51: apps that pin these packages move up."
+        "MudBlazor 9.12.0, MudBlazor.Extensions 9.12.2 and Nextended 10.1.51: apps that pin these packages move up.",
+        "Blazor: ThemeEditDialog is generic (ThemeEditDialog<TTheme>, the app's theme class); CoworkeeThemeEditMeta derives from CoworkeeThemeEditMeta<CoworkeeTheme>."
       ],
       "needsMigration": false,
+      "manual": [
+        {
+          "text": "Optional: give the app its own theme class. Add Theming/<App>Theme.cs (public class <App>Theme : CoworkeeTheme) and ObjectEdit/<App>ThemeEditMeta.cs (public class <App>ThemeEditMeta(CoworkeeLocalizer l) : CoworkeeThemeEditMeta<<App>Theme>(l)) to the client project, as a new app has them, and call builder.Services.AddCoworkeeTheme<<App>Theme, <App>ThemeEditMeta>(); after AddCoworkeeClient. Its properties become fields of the theme editor and are stored with the theme.",
+          "find": "\\bAddCoworkeeClient\\(",
+          "files": [
+            "src/**/Program.cs"
+          ]
+        }
+      ],
       "packages": [
         { "id": "MudBlazor", "version": "9.12.0" },
         { "id": "MudBlazor.Extensions", "version": "9.12.2" },
