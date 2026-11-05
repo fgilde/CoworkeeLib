@@ -237,6 +237,19 @@ public sealed class SettingsTests(SettingsApp app) : IAsyncLifetime
         await PutAsync(Admin, "global", HeaderSettings.Items, null);
     }
 
+    [Fact]
+    public async Task The_dialog_options_reach_the_client_and_only_the_system_sets_them()
+    {
+        const string dialogs = """{"Small":{"maxWidth":"Large"}}""";
+        await PutAsync(Admin, "global", DialogSettings.Options, dialogs);
+
+        (await ClientValuesAsync(Admin))[DialogSettings.Options].ShouldBe(dialogs);
+        var groups = (await Admin.GetFromJsonAsync<List<SettingGroupDto>>("/api/v1/settings/definitions", Ct))!;
+        groups.Single(g => g.Settings.Any(s => s.Name == DialogSettings.Options)).Page.ShouldBe("/admin/dialog-options");
+        (await SendAsync(Admin, "tenant", DialogSettings.Options, dialogs)).IsSuccessStatusCode.ShouldBeFalse();
+        await PutAsync(Admin, "global", DialogSettings.Options, null);
+    }
+
     private static async Task<Dictionary<string, string?>> ClientValuesAsync(HttpClient client) =>
         (await client.GetFromJsonAsync<Dictionary<string, string?>>("/api/v1/settings/client", Ct))!;
 

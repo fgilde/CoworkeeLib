@@ -8,6 +8,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 - Own theme class per app: `AddCoworkeeTheme<TTheme, TEditMeta>()` in the client makes every theme a `TTheme : CoworkeeTheme`; its properties are fields of the theme editor and are saved and loaded with the theme. `CoworkeeThemeEditMeta<TTheme>` is the base of the app's editor configuration (override `ConfigureAsync`, call the base). New apps get an empty `MyAppTheme` in `Theming/` and `MyAppThemeEditMeta` in the new `ObjectEdit/` folder of the client, registered in `Program.cs`. Existing apps: see *Upgrading older apps* on the [Theming](../modules/theming.md) page.
 - The published chip of an own theme on the Themes page publishes or unpublishes it at once.
+- Dialog options in one place: `DialogOptionsContributor` gives every dialog of the library its `DialogOptionsEx` per `DialogPart` (side sheet, right sheet, small, full screen, progress, list item); an app overrides parts with `AddSingleton<DialogOptionsContributor, MyAppDialogOptions>()`, the defaults stay as they were. With `AdminEditable` administrators edit each part under *Administration > User interface > Dialog options* (setting `Dialogs.Options`, live). See [Dialogs](../ui/client.md#dialogs).
 
 ### Changed
 

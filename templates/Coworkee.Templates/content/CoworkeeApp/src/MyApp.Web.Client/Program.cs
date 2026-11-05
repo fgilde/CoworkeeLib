@@ -50,6 +50,7 @@ builder.Services.AddCommandPaletteCommand(new CommandPaletteCommand("New product
 builder.Services.AddSingleton(new ProfileTab("Documents", "documents", typeof(MyDocuments), DocumentPermissions.Documents.View, MudBlazor.Icons.Material.Outlined.Description));
 #endif
 builder.Services.Configure<NavigationMenuOptions>(MyAppNavigation.Order);
+builder.Services.AddSingleton<Coworkee.Client.Blazor.Dialogs.DialogOptionsContributor, MyApp.Web.Client.MyAppDialogOptions>();
 #if (clientEntities)
 builder.Services.AddCoworkeeClientEntities();
 #endif

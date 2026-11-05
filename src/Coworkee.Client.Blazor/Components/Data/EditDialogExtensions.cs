@@ -1,4 +1,5 @@
 using Coworkee.Client.Blazor.Api;
+using Coworkee.Client.Blazor.Dialogs;
 using MudBlazor;
 using MudBlazor.Extensions;
 using MudBlazor.Extensions.Components.ObjectEdit;
@@ -34,50 +35,18 @@ public static class EditDialogExtensions
         return await dialogs.ShowExAsync<TDialog>(title, parameters, options);
     }
 
-    public static async Task<DialogOptionsEx> SideSheetAsync() => new()
-    {
-        CloseButton = true,
-        CloseOnEscapeKey = true,
-        MaxWidth = MaxWidth.Medium,
-        FullWidth = true,
-        BackdropClick = false,
-        MaximizeButton = true,
-        DragMode = MudDialogDragMode.Simple,
-        Position = await DialogPlacement.ClickedLeftAsync() ? DialogPosition.CenterLeft : DialogPosition.CenterRight,
-        Animations = [AnimationType.SlideIn],
-        FullHeight = true,
-        DisableSizeMarginY = true,
-        DisablePositionMargin = true,
-    };
+    /// <summary>The side sheet options (<see cref="DialogPart.SideSheet"/>), on the side the user clicked on.</summary>
+    public static async Task<DialogOptionsEx> SideSheetAsync() => CoworkeeDialogOptions.For(DialogPart.SideSheet, await DialogPlacement.ClickedLeftAsync());
 
-    /// <summary>A narrow full height sheet that always slides in from the right, like the about dialog.</summary>
-    public static DialogOptionsEx RightSheet() => new()
-    {
-        CloseButton = true,
-        CloseOnEscapeKey = true,
-        MaxWidth = MaxWidth.Small,
-        FullWidth = true,
-        Position = DialogPosition.CenterRight,
-        Animations = [AnimationType.SlideIn],
-        FullHeight = true,
-        DisableSizeMarginY = true,
-        DisablePositionMargin = true,
-    };
+    /// <summary>A narrow full height sheet that always slides in from the right, like the about dialog (<see cref="DialogPart.RightSheet"/>).</summary>
+    public static DialogOptionsEx RightSheet() => CoworkeeDialogOptions.For(DialogPart.RightSheet);
 
     /// <summary>Asks before something that cannot be undone.</summary>
     public static Task<bool> ConfirmAsync(this IDialogService dialogs, string title, string message, string confirmText, string cancelText, string? icon = null) =>
         dialogs.ShowConfirmationDialogAsync(title, message, confirmText, cancelText, icon ?? Icons.Material.Outlined.HelpOutline, Small());
 
-    /// <summary>Small centered dialogs such as confirmations.</summary>
-    public static DialogOptionsEx Small() => new()
-    {
-        CloseButton = true,
-        CloseOnEscapeKey = true,
-        MaxWidth = MaxWidth.Small,
-        FullWidth = true,
-        BackdropClick = false,
-        Animations = [AnimationType.FadeIn, AnimationType.FlipX],
-    };
+    /// <summary>Small centered dialogs such as confirmations (<see cref="DialogPart.Small"/>).</summary>
+    public static DialogOptionsEx Small() => CoworkeeDialogOptions.For(DialogPart.Small);
 
     // two columns on wider screens like the classic forms; a page's meta can widen single fields with WrapInMudItem(i => i.md = 12)
 #pragma warning disable BL0005 // MudEx configures the wrapping grid items through these instances

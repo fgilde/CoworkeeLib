@@ -33,7 +33,7 @@ public sealed class NavigationEntryTests
         var admin = tree.Single(e => e.Text == NavigationGroups.Administration);
         admin.Children!.Select(e => e.Text).ShouldBe(["Identity", "System", "Communication", "Localization", "Monitoring", "User interface"]);
         admin.Children!.Single(e => e.Text == "System").Children!.Select(e => e.Href).ShouldContain("/admin/services");
-        admin.Children!.Single(e => e.Text == "User interface").Children!.Select(e => e.Href).ShouldBe(["/admin/themes", "/admin/header"]);
+        admin.Children!.Single(e => e.Text == "User interface").Children!.Select(e => e.Href).ShouldBe(["/admin/themes", "/admin/header", "/admin/dialog-options"]);
         new AdminNavigation().Items.Select(i => i.Href).ShouldNotContain("/admin/jobs");
     }
 

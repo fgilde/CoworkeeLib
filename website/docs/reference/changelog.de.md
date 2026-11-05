@@ -8,6 +8,7 @@
 
 - Eigene Theme-Klasse je App: `AddCoworkeeTheme<TTheme, TEditMeta>()` im Client macht jedes Theme zu einem `TTheme : CoworkeeTheme`; seine Eigenschaften sind Felder im Theme-Editor und werden mit dem Theme gespeichert und geladen. `CoworkeeThemeEditMeta<TTheme>` ist die Basis der Editor-Konfiguration der App (`ConfigureAsync` überschreiben, Basis aufrufen). Neue Apps bekommen ein leeres `MyAppTheme` in `Theming/` und `MyAppThemeEditMeta` im neuen Ordner `ObjectEdit/` des Clients, registriert in `Program.cs`. Bestehende Apps: siehe *Ältere Apps aktualisieren* auf der Seite [Themes](../modules/theming.md).
 - Der Veröffentlicht-Chip eines eigenen Themes auf der Themes-Seite veröffentlicht es sofort oder nimmt die Veröffentlichung zurück.
+- Dialogoptionen an einer Stelle: `DialogOptionsContributor` gibt jedem Dialog der Bibliothek seine `DialogOptionsEx` je `DialogPart` (Side-Sheet, rechtes Sheet, klein, Vollbild, Fortschritt, Listeneintrag); eine App überschreibt Teile mit `AddSingleton<DialogOptionsContributor, MyAppDialogOptions>()`, die Standards bleiben wie bisher. Mit `AdminEditable` bearbeiten Administratoren jeden Teil unter *Administration > Benutzeroberfläche > Dialogoptionen* (Einstellung `Dialogs.Options`, live). Siehe [Dialoge](../ui/client.md#dialoge).
 
 ### Geändert
 

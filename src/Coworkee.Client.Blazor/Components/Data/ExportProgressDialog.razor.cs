@@ -1,6 +1,7 @@
 using System.Net;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Data;
+using Coworkee.Client.Blazor.Dialogs;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Data;
 using Microsoft.AspNetCore.Components;
@@ -59,7 +60,7 @@ public partial class ExportProgressDialog : IDisposable
         var dialog = await dialogs.ShowExAsync<ExportProgressDialog>(title, new DialogParameters<ExportProgressDialog>
         {
             { d => d.EntitySet, entitySet }, { d => d.Query, query }, { d => d.FileName, fileName },
-        }, new DialogOptionsEx { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true, BackdropClick = false, CloseOnEscapeKey = false, CloseButton = false });
+        }, CoworkeeDialogOptions.For(DialogPart.Progress));
         await dialog.Result;
     }
 

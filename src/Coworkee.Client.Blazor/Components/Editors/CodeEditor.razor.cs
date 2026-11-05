@@ -1,5 +1,6 @@
 using BlazorMonaco;
 using BlazorMonaco.Editor;
+using Coworkee.Client.Blazor.Dialogs;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Theming;
 using Microsoft.AspNetCore.Components;
@@ -251,7 +252,7 @@ public partial class CodeEditor : IAsyncDisposable
             { d => d.CompletionTrigger, CompletionTrigger },
             { d => d.Highlight, Highlight },
         },
-        new DialogOptionsEx { FullScreen = true, CloseButton = true });
+        CoworkeeDialogOptions.For(DialogPart.Fullscreen));
 
     public async ValueTask DisposeAsync()
     {

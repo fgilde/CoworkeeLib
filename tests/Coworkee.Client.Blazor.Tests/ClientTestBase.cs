@@ -52,6 +52,8 @@ public abstract class ClientTestBase : BunitContext
         Services.AddSingleton<Navigation.CoworkeePages>();
         Services.AddScoped<Navigation.LinkNavigation>();
         Services.AddScoped<Theming.ThemeService>();
+        Services.AddSingleton<Dialogs.DialogOptionsContributor>();
+        Services.AddScoped<Dialogs.CoworkeeDialogOptions>();
         Services.AddScoped<Layout.LayoutPreferences>();
         Services.AddScoped<Layout.PwaService>();
         Services.AddScoped<Data.FileDownloader>();

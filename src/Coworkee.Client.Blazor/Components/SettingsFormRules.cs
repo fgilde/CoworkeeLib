@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
+using Coworkee.Client.Blazor.Dialogs;
 using MudBlazor;
 using MudBlazor.Extensions;
 using MudBlazor.Extensions.Components.ObjectEdit;
@@ -84,12 +85,5 @@ public static class SettingsFormRules
     private static bool IsList(ObjectEditPropertyMeta property) =>
         property.PropertyInfo.PropertyType != typeof(string) && property.PropertyInfo.PropertyType.IsAssignableTo(typeof(System.Collections.IEnumerable));
 
-    private static DialogOptionsEx ItemDialog() => new()
-    {
-        MaxWidth = MaxWidth.Medium,
-        FullWidth = true,
-        CloseButton = true,
-        Resizeable = true,
-        DragMode = MudDialogDragMode.Simple,
-    };
+    private static DialogOptionsEx ItemDialog() => CoworkeeDialogOptions.For(DialogPart.ListItem);
 }

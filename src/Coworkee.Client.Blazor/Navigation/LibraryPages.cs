@@ -38,6 +38,7 @@ internal static class LibraryPages
         new("tenants", typeof(Tenants), "admin/tenants"),
         new("themes", typeof(Themes), "admin/themes"),
         new("header", typeof(HeaderConfiguration), "admin/header"),
+        new("dialog-options", typeof(DialogConfiguration), "admin/dialog-options"),
         new("webhooks", typeof(Pages.Admin.Webhooks), "admin/webhooks"),
         new("approvals", typeof(Approvals), "workflows/approvals"),
         new("assistant", typeof(Assistant), "assistant"),
