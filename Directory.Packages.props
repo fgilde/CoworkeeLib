@@ -57,15 +57,15 @@
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.14" />
     <PackageVersion Include="Aspire.Hosting.Keycloak" Version="13.6.4-preview.1.26523.11" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.10.0" />
-    <PackageVersion Include="Nextended.Core" Version="10.1.48" />
-    <PackageVersion Include="Nextended.CodeGen" Version="10.1.48" />
-    <PackageVersion Include="Nextended.Web" Version="10.1.48" />
-    <PackageVersion Include="Nextended.ResponseFilters.AspNetCore" Version="10.1.48" />
-    <PackageVersion Include="Nextended.Aspire.Hosting.Grafana" Version="10.1.48" />
-    <PackageVersion Include="Nextended.Aspire.Hosting.WebDataStudio" Version="10.1.48" />
-    <PackageVersion Include="Nextended.Aspire.Hosting.AspireUI" Version="10.1.48" />
-    <PackageVersion Include="MudBlazor" Version="9.11.0" />
-    <PackageVersion Include="MudBlazor.Extensions" Version="9.11.6" />
+    <PackageVersion Include="Nextended.Core" Version="10.1.51" />
+    <PackageVersion Include="Nextended.CodeGen" Version="10.1.51" />
+    <PackageVersion Include="Nextended.Web" Version="10.1.51" />
+    <PackageVersion Include="Nextended.ResponseFilters.AspNetCore" Version="10.1.51" />
+    <PackageVersion Include="Nextended.Aspire.Hosting.Grafana" Version="10.1.51" />
+    <PackageVersion Include="Nextended.Aspire.Hosting.WebDataStudio" Version="10.1.51" />
+    <PackageVersion Include="Nextended.Aspire.Hosting.AspireUI" Version="10.1.51" />
+    <PackageVersion Include="MudBlazor" Version="9.12.0" />
+    <PackageVersion Include="MudBlazor.Extensions" Version="9.12.2" />
     <PackageVersion Include="MudExRichTextEditor" Version="9.5.5" />
     <PackageVersion Include="BlazorMonaco" Version="3.5.0" />
     <PackageVersion Include="Blazor-ApexCharts" Version="7.0.0" />

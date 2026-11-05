@@ -4,6 +4,10 @@
 
 ## Unveröffentlicht
 
+### Geändert
+
+- MudBlazor 9.12.0, MudBlazor.Extensions 9.12.2 und Nextended 10.1.51; `coworkee update` hebt die festgelegten Pakete an.
+
 ### Behoben
 
 - `CoworkeeDataTable` mit Seiten: Wurde die erste Ladung des Grids von einer neueren abgebrochen (beim Wiederherstellen von Layout oder URL), zählte der Pager weiter, aber keine Seite lud mehr; MudDataGrid richtet sich erst fertig ein, wenn seine erste Ladung zurückkommt. Eine abgebrochene Ladung liefert jetzt die angezeigten Zeilen, die neuere bringt ihre, auch in den Seiten einer Gruppe.

@@ -4,6 +4,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Changed
+
+- MudBlazor 9.12.0, MudBlazor.Extensions 9.12.2 and Nextended 10.1.51; `coworkee update` moves the pinned packages.
+
 ### Fixed
 
 - `CoworkeeDataTable` with pages: when the grid's first load was cancelled by a newer one (restoring the layout or the URL), the pager went on counting but no page loaded any more; MudDataGrid finishes setting itself up only after its first load returns. A cancelled load now returns the rows shown and the newer one brings its rows, also in the pages of a group.

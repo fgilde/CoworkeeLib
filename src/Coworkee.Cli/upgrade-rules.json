@@ -705,6 +705,20 @@
           ]
         }
       ]
+    },
+    {
+      "version": "0.0.1.63",
+      "breaking": [
+        "MudBlazor 9.12.0, MudBlazor.Extensions 9.12.2 and Nextended 10.1.51: apps that pin these packages move up."
+      ],
+      "needsMigration": false,
+      "packages": [
+        { "id": "MudBlazor", "version": "9.12.0" },
+        { "id": "MudBlazor.Extensions", "version": "9.12.2" },
+        { "id": "Nextended.Aspire.Hosting.AspireUI", "version": "10.1.51" },
+        { "id": "Nextended.Core", "version": "10.1.51" },
+        { "id": "Nextended.Web", "version": "10.1.51" }
+      ]
     }
   ]
 }
