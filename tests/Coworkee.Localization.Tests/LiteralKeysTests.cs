@@ -44,7 +44,7 @@ public sealed partial class LiteralKeysTests
         ];
     }
 
-    // L["..."], l["..."] and T("..."); both texts of L[a ? "..." : "..."]; the texts PageHeader and CoworkeeDataTable translate themselves
+    // L["..."], l["..."] and T("..."); both texts of L[a ? "..." : "..."] and of L[a ? "..." : "...", args]; the texts PageHeader and CoworkeeDataTable translate themselves
     private static IEnumerable<string> Keys(string source) =>
         Literal().Matches(source).Select(m => m.Groups[1].Value)
             .Concat(Choice().Matches(source).SelectMany(m => new[] { m.Groups[1].Value, m.Groups[2].Value }))
@@ -54,7 +54,7 @@ public sealed partial class LiteralKeysTests
     [GeneratedRegex("""\b(?:[Ll]\[|T\()"((?:[^"\\]|\\.)*)"(?!\s*\+)""")]
     private static partial Regex Literal();
 
-    [GeneratedRegex("""\b[Ll]\[[^\[\]"\n]*\?\s*"((?:[^"\\]|\\.)*)"\s*:\s*"((?:[^"\\]|\\.)*)"\s*\]""")]
+    [GeneratedRegex("""\b[Ll]\[[^\[\]"\n]*\?\s*"((?:[^"\\]|\\.)*)"\s*:\s*"((?:[^"\\]|\\.)*)"\s*[\],]""")]
     private static partial Regex Choice();
 
     [GeneratedRegex("""<(?:PageHeader|CoworkeeDataTable)\b[^>]*>""", RegexOptions.Singleline)]
