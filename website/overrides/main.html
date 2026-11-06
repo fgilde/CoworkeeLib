@@ -28,8 +28,9 @@
   <meta name="twitter:image" content="{{ cw_image }}">
   {% if page.file.alternates is defined %}
     {% for lang, alt in page.file.alternates.items() %}
-      <link rel="alternate" hreflang="{{ lang }}" href="{{ config.site_url ~ alt.url }}">
-      {% if lang == "en" %}<link rel="alternate" hreflang="x-default" href="{{ config.site_url ~ alt.url }}">{% endif %}
+      {% set alt_url = config.site_url ~ (alt.url if alt.url != "./" else "") %}
+      <link rel="alternate" hreflang="{{ lang }}" href="{{ alt_url }}">
+      {% if lang == "en" %}<link rel="alternate" hreflang="x-default" href="{{ alt_url }}">{% endif %}
     {% endfor %}
   {% endif %}
   {% if page.is_homepage %}
