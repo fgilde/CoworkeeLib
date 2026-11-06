@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- PoC: the copies of client entities in SQLite inside the browser (EF Core). The app's client needs <WasmBuildNative>true</WasmBuildNative> (wasm-tools workload). -->
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+    <ProjectReference Include="..\Coworkee.Client.Blazor.ClientEntities\Coworkee.Client.Blazor.ClientEntities.csproj" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+  </ItemGroup>
+</Project>

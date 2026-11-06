@@ -11,6 +11,7 @@
     <Project Path="src/Coworkee.Client.Blazor/Coworkee.Client.Blazor.csproj" />
     <Project Path="src/Coworkee.CodeGen/Coworkee.CodeGen.csproj" />
     <Project Path="src/Coworkee.Client.Blazor.ClientEntities/Coworkee.Client.Blazor.ClientEntities.csproj" />
+    <Project Path="src/Coworkee.Client.Blazor.ClientEntities.Sqlite/Coworkee.Client.Blazor.ClientEntities.Sqlite.csproj" />
     <Project Path="src/Coworkee.Contracts/Coworkee.Contracts.csproj" />
     <Project Path="src/Coworkee.Core/Coworkee.Core.csproj" />
     <Project Path="src/Coworkee.Domain/Coworkee.Domain.csproj" />

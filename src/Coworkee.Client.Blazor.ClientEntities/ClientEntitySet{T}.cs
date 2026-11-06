@@ -54,7 +54,12 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     private int _nudged;
     private Task? _running;
 
-    internal ClientEntitySet(ClientEntitySetInfo info, string? expand, string partition, IODataClient server, ClientEntityApi api, IClientEntityStorage storage, ILogger logger)
+    // an engine's store (SQLite) instead of the columns in memory: it keeps the rows itself and answers the queries
+    private readonly IClientEntityStore<T>? _store;
+    private bool _storeLocal;
+
+    internal ClientEntitySet(ClientEntitySetInfo info, string? expand, string partition, IODataClient server, ClientEntityApi api, IClientEntityStorage storage, ILogger logger,
+        IClientEntityEngine? engine = null)
     {
         _info = info;
         Expand = string.IsNullOrWhiteSpace(expand) ? null : expand;
@@ -63,6 +68,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         _api = api;
         _storage = storage;
         _logger = logger;
+        _store = engine?.Open<T>(StorageKey);
     }
 
     internal static bool CanMirror => IdOf is not null;
@@ -75,7 +81,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     /// <summary>The navigation properties each row carries, as in $expand.</summary>
     public string? Expand { get; }
 
-    public bool IsLocal => _table is not null;
+    public bool IsLocal => _table is not null || _storeLocal;
 
     /// <summary>
     /// How long the server's facets (which groups and options exist) serve changed rows before they are asked for again; the counts are always the local
@@ -96,6 +102,23 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     public async Task<ODataPage<T>> QueryAsync(ODataQuery query, CancellationToken cancellationToken = default)
     {
         Start();
+        if (_store is not null)
+        {
+            if (Mode == ClientEntityMode.Client && _storeLocal && Covers(query))
+            {
+                try
+                {
+                    return await _store.QueryAsync(query, FacetsAsync, cancellationToken);
+                }
+                catch (Exception exception) when (LocalQueryNotSupportedException.IsUnanswerable(exception))
+                {
+                    _logger.LogDebug(exception, "{EntitySet} answers {Filter} on the server", EntitySet, query.Filter);
+                }
+            }
+
+            return await _server.QueryAsync<T>(EntitySet, query, cancellationToken);
+        }
+
         if (Mode == ClientEntityMode.Client && _table is { } table && Covers(query))
         {
             try
@@ -161,6 +184,13 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
             var watch = System.Diagnostics.Stopwatch.StartNew();
             var remote = await _server.QueryAsync<T>(EntitySet, query, cancellationToken);
             return (watch.Elapsed, remote.Count);
+        }
+
+        if (_store is not null && _storeLocal)
+        {
+            var timer = System.Diagnostics.Stopwatch.StartNew();
+            var stored = await _store.QueryAsync(query, FacetsAsync, cancellationToken);
+            return (timer.Elapsed, stored.Count);
         }
 
         var table = _table ?? throw new InvalidOperationException($"{EntitySet} is not local yet.");
@@ -401,7 +431,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         if (_download is null)
         {
             await DropPagesAsync();
-            _download = new Download(start.Version);
+            _download = new Download(start.Version) { Kept = _store is null };
         }
 
         var download = _download;
@@ -442,6 +472,13 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         }
 
         _download = null;
+        if (_store is not null)
+        {
+            await _store.ReplaceAsync(download.Rows.Values, download.Version, cancellationToken);
+            CommitStore(download.Version, changed: true);
+            return;
+        }
+
         Commit(LocalTable<T>.Of(download.Rows.Values), download.Version, changed: true);
         await SaveAsync();
         await DropPagesAsync();
@@ -463,6 +500,12 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         {
             page = await ChangesAsync(_version, changedIds.Count, cancellationToken);
             changedIds.AddRange(page.Changed);
+        }
+
+        if (_store is not null)
+        {
+            await UpdateStoreAsync(changes, changedIds, cancellationToken);
+            return;
         }
 
         var table = _table ?? _kept!;
@@ -492,6 +535,47 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         {
             await SaveAsync();
         }
+    }
+
+    private async Task UpdateStoreAsync(ClientEntityChanges changes, List<Guid> changedIds, CancellationToken cancellationToken)
+    {
+        var store = _store!;
+        if (changedIds.Count == 0 && changes.Deleted.Count == 0 && changes.Count == store.Count)
+        {
+            CommitStore(changes.Version, changed: false);
+            return;
+        }
+
+        var rows = new Dictionary<Guid, T>();
+        await FetchIntoAsync(rows, changedIds, cancellationToken);
+        List<Guid> deleted = [.. changes.Deleted];
+        if (store.Count - deleted.Count + rows.Count != changes.Count)
+        {
+            // rows vanished unseen or are missing: compare all ids once
+            var visible = (await _api.IdsAsync(EntitySet, cancellationToken)).ToHashSet();
+            var kept = (await store.IdsAsync(cancellationToken)).ToHashSet();
+            deleted.AddRange(kept.Where(id => !visible.Contains(id)));
+            await FetchIntoAsync(rows, [.. visible.Where(id => !kept.Contains(id) && !rows.ContainsKey(id))], cancellationToken);
+        }
+
+        var changed = rows.Count > 0 || deleted.Count > 0;
+        await store.ApplyAsync(rows.Values, deleted, changes.Version, cancellationToken);
+        CommitStore(changes.Version, changed);
+    }
+
+    private void CommitStore(DateTimeOffset version, bool changed)
+    {
+        _version = version;
+        var revision = Status.Revision;
+        if (changed || !_storeLocal)
+        {
+            _storeLocal = true;
+            _facetsStale |= DateTimeOffset.UtcNow - _facetsLoaded >= FacetRefresh;
+            revision++;
+        }
+
+        Publish(new ClientEntityStatus(ClientEntitySyncState.Idle, true, _store!.Count, _store.Count, version, null, revision));
+        _local.TrySetResult();
     }
 
     private async Task<bool> FetchIntoAsync(Dictionary<Guid, T> rows, IReadOnlyList<Guid> ids, CancellationToken cancellationToken)
@@ -581,6 +665,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
 
     private void Drop()
     {
+        _storeLocal = false;
         _table = null;
         _kept = null;
         _download = null;
@@ -594,6 +679,12 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
 
     private async Task ForgetAsync()
     {
+        _storeLocal = false;
+        if (_store is not null)
+        {
+            await _store.DropAsync();
+        }
+
         _table = null;
         _kept = null;
         _download = null;
@@ -743,6 +834,21 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     {
         try
         {
+            if (_store is not null)
+            {
+                if (await _store.RestoreAsync(_stop.Token) is { } storedVersion)
+                {
+                    _version = storedVersion;
+                    if (await _storage.LoadAsync(FacetsKey) is { Length: > 0 } storedFacets && JsonSerializer.Deserialize<List<FacetGroupDto>>(storedFacets, Json) is { } knownFacets)
+                    {
+                        _facets = knownFacets;
+                        _facetsStale = true;
+                    }
+                }
+
+                return;
+            }
+
             if (await _storage.LoadAsync(StorageKey) is { Length: > 0 } data && await UnpackAsync(data) is { } kept)
             {
                 _kept = kept.Table;

@@ -25,14 +25,16 @@ public sealed class ClientEntities : IClientDataCache, IAsyncDisposable
     private readonly ClientEntitySignal _signal;
     private readonly ILogger<ClientEntities> _logger;
     private readonly ClientEntityModes? _modes;
+    private readonly IClientEntityEngine? _engine;
     private readonly Dictionary<string, ClientEntitySet> _sets = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<Task<IAsyncDisposable>> _subscriptions = [];
     private Task<ClientEntityManifest?>? _manifest;
 
     internal ClientEntities(ClientEntityApi api, IODataClient server, IClientEntityStorage storage, RealtimeClient? realtime, ClientEntitySignal signal, ILogger<ClientEntities> logger,
-        ClientEntityModes? modes = null)
+        ClientEntityModes? modes = null, IClientEntityEngine? engine = null)
     {
         _modes = modes;
+        _engine = engine;
         _api = api;
         _server = server;
         _storage = storage;
@@ -72,7 +74,7 @@ public sealed class ClientEntities : IClientDataCache, IAsyncDisposable
         }
 
         // an expand named by the server is the same in every session, whichever page asks first
-        var set = new ClientEntitySet<T>(info, info.Expand ?? expand, manifest.Partition, _server, _api, _storage, _logger);
+        var set = new ClientEntitySet<T>(info, info.Expand ?? expand, manifest.Partition, _server, _api, _storage, _logger, _engine);
         _sets[entitySet] = set;
         set.Changed += s => Changed?.Invoke(s);
         set.Rescoped += () => _ = ScopeChangedAsync();
