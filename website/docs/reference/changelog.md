@@ -19,6 +19,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixed
 
+- OData: facets of a bounded set read the keys of the matching rows first and their members by key. Read at once under a costly row filter (an organisation scope with an `EXISTS` over millions of rows), SQL Server tested the filter row by row: the facets of 11,772 hub shipments took more than five minutes and never reached the table or the local copy; now about 3 s (keys 0.7 s, members 2.7 s).
 - Client entities: rows with a collection among their properties (e.g. `Tags`) downloaded whole server rows; they select their own members now (a third of the data for a hub's shipments), the collection still comes through `$expand`.
 - Client entities: a facet load that finished at once kept the copy from ever asking for the facets again.
 - Themes: a changed theme or default reached only the open pages of theme managers; every page of the organisation applies it at once now.
