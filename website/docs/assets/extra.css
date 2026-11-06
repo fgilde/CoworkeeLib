@@ -79,6 +79,15 @@
 /* docs */
 .md-header { box-shadow: none; }
 [data-md-color-scheme="slate"] .md-header, [data-md-color-scheme="slate"] .md-tabs { border-bottom: 1px solid var(--cw-line); }
+/* NuGet button next to the repository link (partials/source.html), in the header and in the drawer */
+@media screen and (min-width: 60em) { .md-header__source { display: flex; align-items: center; width: 13.9rem; max-width: 13.9rem; } }
+@media screen and (max-width: 76.234em) { .md-nav__source { display: flex; align-items: center; } }
+.md-header__source .md-source { flex: 0 1 auto; min-width: 0; }
+.md-header__source .md-source__repository { max-width: 10.5rem; }
+.md-nav__source .md-source { flex: 1 1 auto; min-width: 0; }
+.cw-nuget { flex: none; display: flex; margin: 0 .4rem; color: inherit; opacity: .7; transition: opacity .25s; }
+.cw-nuget:hover, .cw-nuget:focus-visible { color: inherit; opacity: 1; }
+.cw-nuget svg { width: 1.2rem; height: 1.2rem; fill: currentColor; }
 .md-typeset h1 { color: var(--cw-primary); font-weight: 600; }
 .md-typeset pre > code, .md-typeset .highlight, .md-typeset .admonition, .md-typeset details { border-radius: 10px; }
 .md-typeset table:not([class]) { border-radius: 10px; border-color: var(--cw-line); background: var(--cw-surface); }
