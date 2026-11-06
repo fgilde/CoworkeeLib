@@ -28,4 +28,4 @@ coworkee run
 | `coworkee ui [args]` | Installs or updates the global tool `Coworkee.Studio` to the CLI version and starts the desktop wizard (`coworkee-ui`) |
 | `coworkee mcp` | MCP server over stdio for AI agents: `claude mcp add coworkee -- coworkee mcp` |
 
-Docs: https://fgilde.github.io/CoworkeeLib/getting-started/cli/ and https://fgilde.github.io/CoworkeeLib/getting-started/mcp/
+Docs: https://framework.coworkee.de/getting-started/cli/ and https://framework.coworkee.de/getting-started/mcp/

@@ -178,30 +178,51 @@
   (("Einsatzbeispiele" if de else "Use cases"), None, "features/use-cases/")
 ] %}
 
+{# icon: a Material icon or one of overrides/.icons/brands (monochrome); img: a colored logo in assets/brands #}
 {% set cw_brands = [
+  (("Grundlage" if de else "Foundation"), [
+    ("simple/dotnet", None, ".NET 10", "ASP.NET Core, EF Core", "getting-started/installation/"),
+    (None, "nextended.png", "Nextended", None, "https://fgilde.github.io/Nextended/"),
+    ("simple/openapiinitiative", None, "OpenAPI", "Swagger UI", "web/http-api/")
+  ]),
+  ("Frontend", [
+    ("simple/blazor", None, "Blazor", "WebAssembly", "ui/client/"),
+    ("brands/mudblazor", None, "MudBlazor", None, "https://mudblazor.com"),
+    (None, "mudex.png", "MudBlazor.Extensions", None, "https://www.mudex.org"),
+    (None, "airworks.png", "AirWorks", None, "https://fgilde.github.io/AirWorks/"),
+    ("simple/avaloniaui", None, "Avalonia", "Coworkee Studio", "getting-started/studio/")
+  ]),
   (("Daten" if de else "Data"), [
     ("simple/postgresql", None, "PostgreSQL", None, "features/data/"),
     ("material/database", None, "SQL Server", None, "features/data/"),
     ("simple/sqlite", None, "SQLite", None, "features/data/"),
-    ("simple/redis", None, "Redis", None, "hosting/redis/")
+    ("simple/redis", None, "Redis", None, "hosting/redis/"),
+    ("simple/elasticsearch", None, "Elasticsearch", "Kibana", "modules/search/"),
+    (None, "webdatastudio.svg", "WebDataStudio", None, "https://fgilde.github.io/WebDataStudio/")
   ]),
-  (("Hosting und Anmeldung" if de else "Hosting and sign-in"), [
-    ("simple/dotnet", None, "Aspire", None, "features/observability/"),
-    ("simple/keycloak", None, "Keycloak", None, "features/identity/"),
+  (("Messaging und Workflows" if de else "Messaging and workflows"), [
+    ("simple/rabbitmq", None, "RabbitMQ", None, "fundamentals/events/"),
+    ("brands/elsa", None, "Elsa Workflows", None, "modules/workflows-elsa/"),
+    ("brands/mailpit", None, "Mailpit", None, "modules/mailing/")
+  ]),
+  (("Hosting und Betrieb" if de else "Hosting and operations"), [
+    ("simple/dotnet", None, "Aspire", None, "hosting/aspire/"),
+    (None, "aspireui.svg", "AspireUI", None, "https://fgilde.github.io/AspireUI/"),
+    ("simple/docker", None, "Docker", "Compose", "hosting/deployment/"),
+    ("simple/kubernetes", None, "Kubernetes", None, "hosting/deployment/"),
+    ("simple/opentelemetry", None, "OpenTelemetry", None, "features/observability/"),
     ("simple/grafana", None, "Grafana", "Prometheus, Loki, Tempo", "features/observability/")
+  ]),
+  (("Anmeldung" if de else "Sign-in"), [
+    ("simple/keycloak", None, "Keycloak", None, "features/identity/"),
+    ("simple/openid", None, "OpenID Connect", "OpenIddict", "security/authentication/")
   ]),
   (("KI und Übersetzung" if de else "AI and translation"), [
     ("simple/anthropic", None, "Anthropic", None, "features/ai/"),
     ("simple/openai", None, "OpenAI", None, "features/ai/"),
     ("simple/ollama", None, "Ollama", None, "features/ai/"),
+    ("simple/modelcontextprotocol", None, "MCP", None, "modules/mcp/"),
     ("simple/libretranslate", None, "LibreTranslate", None, "features/localization/")
-  ]),
-  (("Vom selben Autor" if de else "By the same author"), [
-    (None, "mudex.png", "MudBlazor.Extensions", None, "https://www.mudex.org"),
-    (None, "nextended.png", "Nextended", None, "https://fgilde.github.io/Nextended/"),
-    (None, "airworks.png", "AirWorks", None, "https://fgilde.github.io/AirWorks/"),
-    (None, "webdatastudio.svg", "WebDataStudio", None, "https://fgilde.github.io/WebDataStudio/"),
-    (None, "aspireui.svg", "AspireUI", None, "https://fgilde.github.io/AspireUI/")
   ])
 ] %}
 

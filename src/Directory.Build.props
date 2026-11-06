@@ -9,7 +9,7 @@
     <Authors>fgilde</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageProjectUrl>https://fgilde.github.io/CoworkeeLib/</PackageProjectUrl>
+    <PackageProjectUrl>https://framework.coworkee.de/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/fgilde/CoworkeeLib</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>coworkee;framework;modular;aspnetcore;blazor;mudblazor;aspire;efcore;ddd</PackageTags>

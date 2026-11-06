@@ -7,7 +7,7 @@ namespace Coworkee.Cli.Mcp;
 /// <summary>Searches the published search index of the documentation; offline, the page titles.</summary>
 internal static partial class DocsSearch
 {
-    public const string Site = "https://fgilde.github.io/CoworkeeLib/";
+    public const string Site = "https://framework.coworkee.de/";
 
     // ponytail: copy of the English nav in website/mkdocs.yml, only used offline; a test keeps it in line
     public static readonly IReadOnlyList<(string Title, string Path)> Pages =

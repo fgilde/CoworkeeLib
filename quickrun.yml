@@ -3,7 +3,7 @@ version: 1
 name: Coworkee Studio
 description: "Builds and starts Coworkee Studio, the desktop wizard that configures and creates a Coworkee app. Creating an app needs the coworkee CLI (dotnet tool install -g Coworkee.Cli); running it needs Docker."
 icon: assets/icon.svg
-docs: https://fgilde.github.io/CoworkeeLib/getting-started/studio/
+docs: https://framework.coworkee.de/getting-started/studio/
 
 requires:
   - tool: dotnet

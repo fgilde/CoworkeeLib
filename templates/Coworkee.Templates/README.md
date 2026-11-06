@@ -29,8 +29,8 @@ dotnet run --project src/Shop.AppHost
 | `--colorMode`, `--registration` | `system`, `false` | Seeded color mode and self registration |
 | `--githubActions`, `--devcontainer` | `false` | CI workflow and dev container |
 
-With other modules than the default ones the app has no migration yet: run `coworkee migrations add Initial`. The [Coworkee CLI](https://fgilde.github.io/CoworkeeLib/getting-started/cli/) does that, copies logo and media and adds generated modules with entities (`coworkee new --spec`).
+With other modules than the default ones the app has no migration yet: run `coworkee migrations add Initial`. The [Coworkee CLI](https://framework.coworkee.de/getting-started/cli/) does that, copies logo and media and adds generated modules with entities (`coworkee new --spec`).
 
 Use a simple name (letters and digits). The generated app references the Coworkee packages of the same version as this template. The seeded users and their generated passwords are in `LOGIN.md` of the solution (from `src/<Name>.Migrations/DemoUsers.cs`).
 
-The [Coworkee CLI](https://www.nuget.org/packages/Coworkee.Cli) (`coworkee new`) wraps this template. Docs: https://fgilde.github.io/CoworkeeLib/
+The [Coworkee CLI](https://www.nuget.org/packages/Coworkee.Cli) (`coworkee new`) wraps this template. Docs: https://framework.coworkee.de/

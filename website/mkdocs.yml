@@ -1,6 +1,6 @@
 site_name: Coworkee
 site_description: Coworkee is a free .NET application framework for Blazor, ASP.NET Core and Aspire, with identity, multi-tenancy, admin UI and AI built in.
-site_url: https://fgilde.github.io/CoworkeeLib/
+site_url: https://framework.coworkee.de/
 repo_url: https://github.com/fgilde/CoworkeeLib
 repo_name: fgilde/CoworkeeLib
 edit_uri: edit/main/website/docs/

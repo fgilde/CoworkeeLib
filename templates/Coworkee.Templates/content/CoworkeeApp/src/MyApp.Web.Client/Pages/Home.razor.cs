@@ -9,7 +9,7 @@ public partial class Home
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
     private const string ProjectUrl = "https://github.com/fgilde/CoworkeeLib";
-    private const string DocumentationUrl = "https://fgilde.github.io/CoworkeeLib/";
+    private const string DocumentationUrl = "https://framework.coworkee.de/";
 
     [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
 }

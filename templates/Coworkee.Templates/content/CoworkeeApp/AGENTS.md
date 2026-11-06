@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Rules for coding agents in this app. It is built on Coworkee (.NET 10, Aspire, Blazor WebAssembly, EF Core); docs: https://fgilde.github.io/CoworkeeLib/
+Rules for coding agents in this app. It is built on Coworkee (.NET 10, Aspire, Blazor WebAssembly, EF Core); docs: https://framework.coworkee.de/
 
 ## Layout
 

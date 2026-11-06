@@ -1,0 +1,14 @@
+{#- Material's source.html plus a NuGet button; the partial sits in the header and in the drawer of the navigation -#}
+<a href="{{ config.repo_url }}" title="{{ lang.t('source') }}" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    {% set icon = config.theme.icon.repo or "fontawesome/brands/git-alt" %}
+    {% include ".icons/" ~ icon ~ ".svg" %}
+  </div>
+  <div class="md-source__repository">
+    {{ config.repo_name }}
+  </div>
+</a>
+{% set nuget = "Coworkee-Pakete auf NuGet" if config.theme.language == "de" else "Coworkee packages on NuGet" %}
+<a href="https://www.nuget.org/packages?q=Coworkee" class="cw-nuget md-icon" title="{{ nuget }}" aria-label="{{ nuget }}" target="_blank" rel="noopener">
+  {% include ".icons/simple/nuget.svg" %}
+</a>

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "AirWorks web desktop for Coworkee apps: sign-in through the app's BFF, theme, texts, realtime and apps for settings, files, data, chat, reports, the assistant and the administration",
   "license": "MIT",
-  "homepage": "https://fgilde.github.io/CoworkeeLib/web/airworks/",
+  "homepage": "https://framework.coworkee.de/web/airworks/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/fgilde/CoworkeeLib.git",
