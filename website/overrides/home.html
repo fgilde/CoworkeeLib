@@ -66,7 +66,19 @@
   "walk_lead": ("Coworkee Studio Schritt für Schritt, dann die App im Browser. Echte Screenshots; die App-Bilder zeigen die Demo-App, die auf denselben Paketen läuft." if de else "Coworkee Studio step by step, then the app in the browser. Real screenshots; the app screens show the demo app, which runs on the same packages."),
   "walk_play": ("Abspielen" if de else "Play"),
   "walk_pause": ("Anhalten" if de else "Pause"),
-  "walk_step": ("Schritt" if de else "Step")
+  "walk_step": ("Schritt" if de else "Step"),
+  "live": ("Einmal ändern, alle sehen es sofort" if de else "Change it once, everyone sees it live"),
+  "live_lead": ("Jeder offene Browser hält eine SignalR-Verbindung. Speichert jemand, ziehen alle anderen nach, während sie hinschauen: kein Neuladen, kein Aktualisieren-Knopf, kein Polling-Code in deinen Seiten. Links der Administrator, rechts John in einem zweiten Browser, auf Deutsch." if de else "Every open browser keeps one SignalR connection. When someone saves, everyone else updates while they look: no reload, no refresh button, no polling code in your pages. Left the administrator, right John in a second browser, working in German."),
+  "live_video": ("Zwei Browser nebeneinander: Was der Administrator links ändert, erscheint rechts bei John sofort" if de else "Two browsers side by side: what the administrator changes on the left appears at once for John on the right"),
+  "live_items": [
+    (("Daten" if de else "Data"), ("Neue und geänderte Datensätze erscheinen in jeder offenen Liste und Detailseite." if de else "New and changed records show up in every open list and detail page.")),
+    (("Berechtigungen" if de else "Permissions"), ("Rolle oder Recht geändert: Menü, Schaltflächen und Seitenschutz ziehen nach." if de else "A role or grant changes: menu, buttons and page guards follow.")),
+    ("Themes", ("Ein neues Standard-Theme oder geänderte Farben färben jede offene App um." if de else "A new default theme or edited colours repaint every open app.")),
+    (("Layout und Einstellungen" if de else "Layout and settings"), ("App-Leisten, Header-Elemente und Einstellungen gelten sofort." if de else "App bars, header items and settings apply at once.")),
+    (("Sprachen" if de else "Languages"), ("Wird eine Sprache abgeschaltet, wechseln ihre Benutzer zur Standardsprache." if de else "Switch a language off and its users move to the default one."))
+  ],
+  "live_also": ("Ebenso live: Benachrichtigungen, Chat, Anwesenheit, Kommentare." if de else "Live as well: notifications, chat, presence, comments."),
+  "live_more": ("So funktioniert Realtime" if de else "How realtime works")
 } %}
 
 {% set kit = ["Identity", "AuthServer", "Realtime", "Workflows", "Reporting", "Ai", "Search", "Files", "Localization", "Notifications", "Auditing", "Theming"] %}
@@ -298,6 +310,26 @@
             {% endfor %}
           </div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cw-section cw-section--alt md-typeset cw-live" id="live">
+    <div class="md-grid">
+      <h2>{{ t.live }}</h2>
+      <p class="cw-section__lead">{{ t.live_lead }}</p>
+      <div class="cw-live__frame">
+        <video autoplay muted loop playsinline controls preload="metadata" width="1600" height="618" poster="{{ 'assets/videos/realtime-live-poster.webp' | url }}" aria-label="{{ t.live_video }}">
+          <source src="{{ 'assets/videos/realtime-live.webm' | url }}" type="video/webm">
+          <source src="{{ 'assets/videos/realtime-live.mp4' | url }}" type="video/mp4">
+        </video>
+      </div>
+      <ul class="cw-live__list">
+        {% for title, text in t.live_items %}<li><strong>{{ title }}</strong>{{ text }}</li>{% endfor %}
+      </ul>
+      <div class="cw-ctas cw-live__more">
+        <span>{{ t.live_also }}</span>
+        <a class="cw-btn" href="{{ (base ~ 'features/realtime/') | url }}">{% include ".icons/material/lightning-bolt.svg" %}{{ t.live_more }}</a>
       </div>
     </div>
   </section>
@@ -553,6 +585,8 @@
 
       // hero: the packages snap into the app one by one, then the round starts again
       const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      // the realtime video waits for a click when motion is reduced
+      if (still) { const live = document.querySelector(".cw-live video"); live.removeAttribute("autoplay"); live.pause(); }
       const kit = document.querySelector(".cw-kit");
       if (!still) {
         const chips = [...kit.querySelectorAll("li")], name = kit.querySelector(".cw-kit__name");
