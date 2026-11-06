@@ -11,7 +11,7 @@
                 .cw-theme-dot + .cw-theme-dot { margin-inline-start: -4px; }
                 .cw-theme-item-name { flex: 1; }
             </style>
-            <MudMenu Icon="@(Nested ? null : Icons.Material.Outlined.Palette)" StartIcon="@(Nested ? Icons.Material.Outlined.Palette : null)" Label="@(Nested ? L["Theme"] : null)" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense"
+            <MudMenu Icon="@(Nested ? null : Icons.Material.Outlined.Palette)" StartIcon="@(Nested ? Icons.Material.Outlined.Palette : null)" Label="@(Nested ? L["Theme"] : null)" Color="Color.Inherit" AnchorOrigin="@MenuOrigins.Anchor" TransformOrigin="@MenuOrigins.Transform" Dense="Density.Dense"
                      aria-label="@L["Theme"]" data-testid="theme-menu">
                 <div class="cw-theme-modes" data-testid="theme-modes" role="group" aria-label="@L["Color mode"]">
                     <span class="label">@L["Color mode"]</span>

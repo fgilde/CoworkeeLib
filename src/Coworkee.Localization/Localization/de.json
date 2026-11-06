@@ -2002,5 +2002,9 @@
   "Position of the app bar": "Position der App-Leiste",
   "Position of the second app bar": "Position der zweiten App-Leiste",
   "Top, Bottom, Left or Right.": "Top, Bottom, Left oder Right.",
-  "Top, Bottom, Left or Right; empty: no second app bar.": "Top, Bottom, Left oder Right; leer: keine zweite App-Leiste."
+  "Top, Bottom, Left or Right; empty: no second app bar.": "Top, Bottom, Left oder Right; leer: keine zweite App-Leiste.",
+  "Spacer": "Abstandhalter",
+  "Add spacer": "Abstandhalter hinzufügen",
+  "Pushes the items after it to the other end of the bar.": "Schiebt die Elemente danach ans andere Ende der Leiste.",
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Ohne Abstandhalter stehen die Elemente einer Leiste quer über das Fenster an ihrem Ende, die einer Leiste an der Seite oben."
 }

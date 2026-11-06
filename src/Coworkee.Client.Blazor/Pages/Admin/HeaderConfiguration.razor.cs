@@ -157,9 +157,25 @@ public partial class HeaderConfiguration
 
     private HeaderPlacement PlacementOf(HeaderItem item) => _items!.Find(i => i.Item.Id == item.Id).Placement;
 
-    // the account menu stays in a bar: without it nobody signs out
+    // the account menu stays in a bar: without it nobody signs out; a spacer is removed instead of hidden
     private static bool CanPlace(HeaderItem item, HeaderPlacement placement) =>
-        item.Id != HeaderItems.User || placement is HeaderPlacement.Bar or HeaderPlacement.SecondBar;
+        (item.Id != HeaderItems.User || placement is HeaderPlacement.Bar or HeaderPlacement.SecondBar)
+        && !(HeaderItems.IsSpacer(item.Id) && placement == HeaderPlacement.Hidden);
+
+    // a new spacer starts the first bar: what follows it moves to the far end; dragged on, it splits wherever it lands
+    private void AddSpacer()
+    {
+        var items = _items!;
+        var spacer = HeaderItems.SpacerItem(HeaderItems.NewSpacerId(items.Select(i => i.Item.Id)));
+        items.Insert(items.Count(i => i.Placement < HeaderPlacement.Bar), (spacer, HeaderPlacement.Bar));
+        Show(items);
+    }
+
+    private void Remove(int index)
+    {
+        _items!.RemoveAt(index);
+        Show(_items);
+    }
 
     private static Color ZoneColor(HeaderPlacement placement) => placement switch
     {

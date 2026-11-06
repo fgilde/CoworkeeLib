@@ -10,6 +10,11 @@ namespace Coworkee.Client.Blazor.Components;
 /// <summary>The unread count in the app bar, the latest notifications on click and a snackbar for each that arrives.</summary>
 public partial class NotificationBell : IDisposable
 {
+    /// <summary>Where the menu opens: cascaded by the app bar the menu sits in.</summary>
+    [CascadingParameter] private Navigation.HeaderMenuOrigins? HeaderOrigins { get; set; }
+
+    private Navigation.HeaderMenuOrigins MenuOrigins => HeaderOrigins ?? Navigation.HeaderMenuOrigins.Default;
+
     private const int Latest = 10;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;

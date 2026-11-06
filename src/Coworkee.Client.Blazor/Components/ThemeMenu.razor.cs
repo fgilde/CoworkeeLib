@@ -8,6 +8,11 @@ namespace Coworkee.Client.Blazor.Components;
 
 public partial class ThemeMenu : IDisposable
 {
+    /// <summary>Where the menu opens: cascaded by the app bar the menu sits in.</summary>
+    [CascadingParameter] private Navigation.HeaderMenuOrigins? HeaderOrigins { get; set; }
+
+    private Navigation.HeaderMenuOrigins MenuOrigins => HeaderOrigins ?? Navigation.HeaderMenuOrigins.Default;
+
     /// <summary>Shown as submenu of the app bar's overflow menu on phones.</summary>
     [Parameter] public bool Nested { get; set; }
 

@@ -8,6 +8,11 @@ namespace Coworkee.Client.Blazor.Components;
 /// <summary>Lets a user with several roles act within one of them; hidden when the system setting is off or there is nothing to choose.</summary>
 public partial class ActiveRoleMenu : IDisposable
 {
+    /// <summary>Where the menu opens: cascaded by the app bar the menu sits in.</summary>
+    [CascadingParameter] private Navigation.HeaderMenuOrigins? HeaderOrigins { get; set; }
+
+    private Navigation.HeaderMenuOrigins MenuOrigins => HeaderOrigins ?? Navigation.HeaderMenuOrigins.Default;
+
     private MyRolesDto? _roles;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;

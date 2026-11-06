@@ -2002,5 +2002,9 @@
   "Position of the app bar": "موضع شريط التطبيق",
   "Position of the second app bar": "موضع شريط التطبيق الثاني",
   "Top, Bottom, Left or Right.": "Top أو Bottom أو Left أو Right.",
-  "Top, Bottom, Left or Right; empty: no second app bar.": "Top أو Bottom أو Left أو Right؛ فارغ: لا شريط ثانٍ."
+  "Top, Bottom, Left or Right; empty: no second app bar.": "Top أو Bottom أو Left أو Right؛ فارغ: لا شريط ثانٍ.",
+  "Spacer": "فاصل",
+  "Add spacer": "إضافة فاصل",
+  "Pushes the items after it to the other end of the bar.": "يدفع العناصر التي تليه إلى الطرف الآخر من الشريط.",
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "بدون فاصل تظهر عناصر الشريط الأفقي في نهايته، وعناصر الشريط الجانبي في أعلاه."
 }

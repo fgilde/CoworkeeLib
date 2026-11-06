@@ -17,14 +17,14 @@
         </text>;
     @if (Nested)
     {
-        <MudMenu StartIcon="@Icons.Material.Outlined.Shield" Label="@(Active?.Name ?? L["All roles"])" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight"
+        <MudMenu StartIcon="@Icons.Material.Outlined.Shield" Label="@(Active?.Name ?? L["All roles"])" Color="Color.Inherit" AnchorOrigin="@MenuOrigins.Anchor" TransformOrigin="@MenuOrigins.Transform"
                  Dense="Density.Dense" aria-label="@L["Act as"]" data-testid="active-role-menu">
             @items
         </MudMenu>
     }
     else
     {
-        <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense" data-testid="active-role-menu">
+        <MudMenu AnchorOrigin="@MenuOrigins.Anchor" TransformOrigin="@MenuOrigins.Transform" Dense="Density.Dense" data-testid="active-role-menu">
             <ActivatorContent Context="menu">
                 <MudTooltip Text="@L["Act as"]">
                     <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small" Style="text-transform:none" StartIcon="@Icons.Material.Outlined.Shield"

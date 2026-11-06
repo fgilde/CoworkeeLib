@@ -2002,5 +2002,9 @@
   "Position of the app bar": "ទីតាំងរបារកម្មវិធី",
   "Position of the second app bar": "ទីតាំងរបារទីពីរ",
   "Top, Bottom, Left or Right.": "Top, Bottom, Left ឬ Right។",
-  "Top, Bottom, Left or Right; empty: no second app bar.": "Top, Bottom, Left ឬ Right; ទទេ៖ គ្មានរបារទីពីរ។"
+  "Top, Bottom, Left or Right; empty: no second app bar.": "Top, Bottom, Left ឬ Right; ទទេ៖ គ្មានរបារទីពីរ។",
+  "Spacer": "ចន្លោះ",
+  "Add spacer": "បន្ថែមចន្លោះ",
+  "Pushes the items after it to the other end of the bar.": "រុញធាតុបន្ទាប់ពីវាទៅចុងម្ខាងទៀតនៃរបារ។",
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "បើគ្មានចន្លោះ ធាតុនៃរបារផ្ដេកនៅចុងរបារ ហើយធាតុនៃរបារចំហៀងនៅខាងលើ។"
 }

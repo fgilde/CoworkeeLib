@@ -5,6 +5,11 @@ namespace Coworkee.Client.Blazor.Components;
 
 public partial class CoworkeeUserMenu : IDisposable
 {
+    /// <summary>Where the menu opens: cascaded by the app bar the menu sits in.</summary>
+    [CascadingParameter] private Navigation.HeaderMenuOrigins? HeaderOrigins { get; set; }
+
+    private Navigation.HeaderMenuOrigins MenuOrigins => HeaderOrigins ?? Navigation.HeaderMenuOrigins.Default;
+
     [Inject] private Layout.PwaService Pwa { get; set; } = null!;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;

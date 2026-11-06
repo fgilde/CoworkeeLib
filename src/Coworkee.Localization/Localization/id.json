@@ -2002,5 +2002,9 @@
   "Position of the app bar": "Posisi bilah aplikasi",
   "Position of the second app bar": "Posisi bilah kedua",
   "Top, Bottom, Left or Right.": "Top, Bottom, Left, atau Right.",
-  "Top, Bottom, Left or Right; empty: no second app bar.": "Top, Bottom, Left, atau Right; kosong: tanpa bilah kedua."
+  "Top, Bottom, Left or Right; empty: no second app bar.": "Top, Bottom, Left, atau Right; kosong: tanpa bilah kedua.",
+  "Spacer": "Pemisah",
+  "Add spacer": "Tambah pemisah",
+  "Pushes the items after it to the other end of the bar.": "Mendorong item setelahnya ke ujung lain bilah.",
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Tanpa pemisah, item bilah horizontal berada di ujungnya dan item bilah samping di atasnya."
 }

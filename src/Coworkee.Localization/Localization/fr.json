@@ -2002,5 +2002,9 @@
   "Position of the app bar": "Position de la barre",
   "Position of the second app bar": "Position de la deuxième barre",
   "Top, Bottom, Left or Right.": "Top, Bottom, Left ou Right.",
-  "Top, Bottom, Left or Right; empty: no second app bar.": "Top, Bottom, Left ou Right ; vide : pas de deuxième barre."
+  "Top, Bottom, Left or Right; empty: no second app bar.": "Top, Bottom, Left ou Right ; vide : pas de deuxième barre.",
+  "Spacer": "Espaceur",
+  "Add spacer": "Ajouter un espaceur",
+  "Pushes the items after it to the other end of the bar.": "Repousse les éléments qui le suivent à l'autre extrémité de la barre.",
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Sans espaceur, les éléments d'une barre horizontale sont à sa fin, ceux d'une barre latérale en haut."
 }

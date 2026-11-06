@@ -242,6 +242,49 @@ public sealed class HeaderTests : ClientTestBase
         layout.Find("[data-testid='app-bar-2']").GetAttribute("data-position").ShouldBe("Left");
     }
 
+    [Fact]
+    public void Spacers_stay_where_the_administrator_put_them_and_a_hidden_one_is_gone()
+    {
+        HeaderItem[] available = [Item("a", 1), Item("b", 2)];
+
+        var arranged = HeaderItems.Arrange(available,
+            [new("a", HeaderPlacement.Bar), new("spacer", HeaderPlacement.Bar), new("b", HeaderPlacement.Bar), new("spacer-2", HeaderPlacement.Hidden)]);
+
+        arranged.Select(i => i.Item.Id).ShouldBe(["a", "spacer", "b"]);
+        HeaderItems.Arrange(available, []).ShouldNotContain(i => HeaderItems.IsSpacer(i.Item.Id), "without a configuration the bar keeps its items at the end");
+        HeaderItems.NewSpacerId(["spacer", "spacer-2"]).ShouldBe("spacer-3");
+    }
+
+    [Fact]
+    public async Task A_spacer_splits_the_bar_and_the_menus_open_towards_its_middle()
+    {
+        Configure("""[{"id":"user","placement":"Bar"},{"id":"spacer","placement":"Bar"},{"id":"about","placement":"Bar"},{"id":"theme","placement":"Overflow"}]""");
+
+        var layout = RenderLayout();
+
+        layout.WaitForAssertion(() => layout.Find("[data-testid='app-bar'] [data-testid='app-bar-spacer']"));
+        var bar = layout.Find(".mud-appbar").InnerHtml;
+        bar.IndexOf("user-menu", StringComparison.Ordinal).ShouldBeLessThan(bar.IndexOf("app-bar-spacer", StringComparison.Ordinal));
+        bar.IndexOf("app-bar-spacer", StringComparison.Ordinal).ShouldBeLessThan(bar.IndexOf("about-button", StringComparison.Ordinal));
+        // the account menu sits at the start now: it opens from its left edge, not off the window
+        await layout.Find("[data-testid='user-menu'] button").ClickAsync(new());
+        layout.WaitForAssertion(() => layout.Find(".mud-popover-open").ClassList.ShouldContain("mud-popover-anchor-bottom-left"));
+    }
+
+    [Fact]
+    public async Task The_menus_of_a_bar_at_the_bottom_open_upwards()
+    {
+        Configure("""[{"id":"about","placement":"Overflow"}]""", "Bottom");
+
+        var layout = RenderLayout();
+
+        layout.WaitForAssertion(() => layout.Find("[data-testid='app-bar-more']"));
+        await layout.Find("[data-testid='app-bar-more'] button").ClickAsync(new());
+        layout.WaitForAssertion(() => layout.Find(".mud-popover-open").ClassList.ShouldContain("mud-popover-anchor-top-right"));
+        await layout.Find("[data-testid='user-menu'] button").ClickAsync(new());
+        layout.WaitForAssertion(() => layout.FindAll(".mud-popover-open").ShouldAllBe(p => p.ClassList.Contains("mud-popover-anchor-top-right")));
+    }
+
     private sealed class Bar : IAppBarContributor
     {
         public IEnumerable<AppBarItem> Items => [new(typeof(LayoutCustomizationTests.LanguageSwitch))];

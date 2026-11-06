@@ -45,7 +45,7 @@ internal static class ChatStyles
         .cw-chat-thread.compact .cw-chat-editor .ql-toolbar, .cw-chat-thread.compact .cw-chat-editor .tt-toolbar { display: none; }
         .cw-chat-person { cursor: pointer; border-radius: 6px; }
         .cw-chat-person:hover { background: var(--mud-palette-action-default-hover); }
-        .cw-chat-dock { position: fixed; bottom: 0; right: 96px; z-index: 1140; display: flex; flex-direction: row-reverse; align-items: flex-end; gap: 8px; pointer-events: none; }
+        .cw-chat-dock { position: fixed; bottom: var(--cw-edge-bottom, 0px); inset-inline-end: calc(96px + var(--cw-edge-end, 0px)); z-index: 1140; display: flex; flex-direction: row-reverse; align-items: flex-end; gap: 8px; pointer-events: none; }
         .cw-chat-window { pointer-events: auto; width: 328px; background: var(--mud-palette-surface); color: var(--mud-palette-text-primary); border: 1px solid var(--mud-palette-lines-default);
           border-bottom: 0; border-radius: 10px 10px 0 0; box-shadow: var(--mud-elevation-8); display: flex; flex-direction: column; }
         .cw-chat-window.open { height: 440px; }
