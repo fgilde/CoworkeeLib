@@ -92,8 +92,7 @@ internal static class FacetCounts
         var row = Expression.MemberInit(Expression.New(create), members.Select(m => Expression.Bind(m, Expression.Property(it, m))));
         var matches = Expression.NewArrayInit(typeof(bool), options.SelectMany(o => o.Filters).Select(f => ReplacingExpressionVisitor.Replace(f.Parameters[0], it, f.Body)));
         var shape = Expression.Lambda<Func<T, Row<T>>>(Expression.New(typeof(Row<T>).GetConstructors()[0], row, matches), it);
-        // no TOP: the caller counted the set already, and a TOP of more rows than match is a row goal that may scan the whole table
-        var loaded = await filtered.Select(shape).ToListAsync(cancellationToken);
+        var loaded = await LoadAsync(filtered, shape, cancellationToken);
 
         var items = loaded.Select(r => r.Item).ToList();
         var counted = new List<Counted>();
@@ -130,6 +129,48 @@ internal static class FacetCounts
 
         public bool[] Matches { get; } = matches;
     }
+
+    private static readonly MethodInfo ByKeyMethod = typeof(FacetCounts).GetMethod(nameof(LoadByKeyAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
+
+    /// <summary>
+    /// The rows of <paramref name="filtered"/> in the shape: their keys under every filter first, then the members by key. A wide read under a costly
+    /// row filter (an organisation scope with an <c>EXISTS</c> over millions of rows) gets a plan that tests the filter row by row; on SQL Server the
+    /// 18 facet members of 11,772 shipments took 144 s that way, their keys 0.7 s and the members by key 2.7 s. No TOP: the caller counted the set
+    /// already, and a TOP of more rows than match is a row goal that may scan the whole table. A set without one key of its own is read at once.
+    /// </summary>
+    private static async Task<List<Row<T>>> LoadAsync<T>(IQueryable<T> filtered, Expression<Func<T, Row<T>>> shape, CancellationToken cancellationToken)
+        where T : class
+    {
+        if (Root(filtered.Expression) is not { } root || root.EntityType.ClrType != typeof(T)
+            || root.EntityType.FindPrimaryKey() is not { Properties: [{ PropertyInfo: { } key }] })
+        {
+            return await filtered.Select(shape).ToListAsync(cancellationToken);
+        }
+
+        return await (Task<List<Row<T>>>)ByKeyMethod.MakeGenericMethod(typeof(T), key.PropertyType).Invoke(null, [filtered, root, key, shape, cancellationToken])!;
+    }
+
+    private static async Task<List<Row<T>>> LoadByKeyAsync<T, TKey>(IQueryable<T> filtered, EntityQueryRootExpression root, PropertyInfo key,
+        Expression<Func<T, Row<T>>> shape, CancellationToken cancellationToken)
+        where T : class
+    {
+        var it = Expression.Parameter(typeof(T), "it");
+        var keys = await filtered.Select(Expression.Lambda<Func<T, TKey>>(Expression.Property(it, key), it)).ToListAsync(cancellationToken);
+        // the keys came through every filter of the request (tenant, scope, row rules, $filter); by key the set needs none of them again
+        // ponytail: one list parameter of up to FacetRowLimit keys (OPENJSON on SQL Server); batch it if a provider inlines them as constants
+        return await filtered.Provider.CreateQuery<T>(root).IgnoreQueryFilters()
+            .Where(row => keys.Contains(EF.Property<TKey>(row, key.Name)))
+            .Select(shape)
+            .ToListAsync(cancellationToken);
+    }
+
+    // the set the query starts from, if it starts from one
+    private static EntityQueryRootExpression? Root(Expression expression) => expression switch
+    {
+        EntityQueryRootExpression root => root,
+        MethodCallExpression { Arguments.Count: > 0 } call => Root(call.Arguments[0]),
+        _ => null,
+    };
 
     // the condition of the single Where a filter added to the rows; null when it is anything else
     private static LambdaExpression? Predicate<T>(IQueryable<T> rows, IQueryable<T> filtered) =>

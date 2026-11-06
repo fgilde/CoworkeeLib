@@ -78,11 +78,24 @@ public sealed class FacetPassTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task A_bounded_set_reads_its_facets_in_at_most_three_statements()
+    public async Task A_bounded_set_reads_its_facets_in_at_most_four_statements()
     {
-        // one count of the set, one read of the row's members, one query for the group through the maker (Widgets has none)
-        (await FacetStatementsAsync("Pumps")).ShouldBeLessThanOrEqualTo(3);
-        (await FacetStatementsAsync("Widgets")).ShouldBe(2);
+        // one count of the set, its keys, the row's members by key, one query for the group through the maker (Widgets has none)
+        (await FacetStatementsAsync("Pumps")).ShouldBeLessThanOrEqualTo(4);
+        (await FacetStatementsAsync("Widgets")).ShouldBe(3);
+    }
+
+    [Fact]
+    public async Task A_bounded_set_reads_its_keys_under_the_filters_and_the_members_by_key_alone()
+    {
+        app.Commands.Clear();
+
+        var facets = await FacetsAsync(app.App, "Pumps", "Active eq true");
+
+        // a costly row filter (an organisation scope with an EXISTS) runs for the keys only; the wide read of the members gets a plan by key
+        facets.Single(g => g.Key == "color").Options.Select(o => (o.Value.GetString(), o.Count)).ShouldBe([("Red", 3)]);
+        var reads = app.Commands.Of("Pumps");
+        reads.ShouldContain(c => c.Contains("Price", StringComparison.Ordinal) && !c.Contains("TenantId", StringComparison.Ordinal), string.Join("\n---\n", reads));
     }
 
     [Fact]
@@ -93,7 +106,7 @@ public sealed class FacetPassTests(ODataApp app) : IAsyncLifetime
 
         Shape(await FacetsAsync(bounded, "Pumps", null)).ShouldBe(Shape(await FacetsAsync(database, "Pumps", null)));
         (await FacetStatementsAsync("Pumps", bounded)).ShouldBeGreaterThan(5, "five rows are more than four: ranges and computed options query the database");
-        (await FacetStatementsAsync("Pumps", bounded, "Active eq true")).ShouldBeLessThanOrEqualTo(3, "four rows are not");
+        (await FacetStatementsAsync("Pumps", bounded, "Active eq true")).ShouldBeLessThanOrEqualTo(4, "four rows are not");
     }
 
     [Fact]
@@ -205,6 +218,9 @@ public sealed class CommandRecorder : DbCommandInterceptor
 
     /// <summary>The statements that read <paramref name="table"/>.</summary>
     public int Count(string table) => _commands.Count(c => c.Contains(table, StringComparison.Ordinal));
+
+    /// <summary>The statements that read <paramref name="table"/>, in order.</summary>
+    public IReadOnlyList<string> Of(string table) => [.. _commands.Where(c => c.Contains(table, StringComparison.Ordinal))];
 
     public override InterceptionResult<DbDataReader> ReaderExecuting(DbCommand command, CommandEventData eventData, InterceptionResult<DbDataReader> result)
     {

@@ -19,6 +19,7 @@
 
 ### Behoben
 
+- OData: Facetten einer begrenzten Menge lesen erst die Schlüssel der passenden Zeilen und dann deren Felder per Schlüssel. In einem Zug unter einem teuren Zeilenfilter (ein Organisations-Scope mit `EXISTS` über Millionen Zeilen) prüfte SQL Server den Filter Zeile für Zeile: Die Facetten von 11.772 Hub-Sendungen brauchten über fünf Minuten und kamen weder in der Tabelle noch in der lokalen Kopie an; jetzt etwa 3 s (Schlüssel 0,7 s, Felder 2,7 s).
 - Client Entities: Zeilen mit einer Liste unter ihren Eigenschaften (z. B. `Tags`) luden ganze Serverzeilen; sie wählen jetzt nur ihre eigenen Eigenschaften (bei den Sendungen eines Hubs ein Drittel der Daten), die Liste kommt weiter über `$expand`.
 - Client Entities: Ein sofort fertiges Laden der Facetten verhinderte, dass die Kopie sie je wieder anfragte.
 - Themes: Ein geändertes Theme oder ein neuer Standard erreichte nur die offenen Seiten von Theme-Verwaltern; jetzt übernimmt jede Seite der Organisation es sofort.
