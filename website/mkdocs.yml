@@ -86,6 +86,7 @@ plugins:
             Getting started: Erste Schritte
             Installation: Installation
             Command line: Kommandozeile
+            Manual setup: Manuelle Einrichtung
             MCP server of the CLI: MCP-Server der CLI
             Solution structure: Aufbau der Solution
             Your first feature: Das erste Feature
@@ -203,6 +204,7 @@ nav:
       - Your first feature: getting-started/first-feature.md
       - Command line: getting-started/cli.md
       - Coworkee Studio: getting-started/studio.md
+      - Manual setup: getting-started/manual-setup.md
       - Starter specs: getting-started/gallery.md
       - MCP server of the CLI: getting-started/mcp.md
   - Fundamentals:
