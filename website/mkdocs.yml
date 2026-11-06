@@ -157,6 +157,9 @@ plugins:
             Reference: Referenz
             Packages and namespaces: Pakete und Namespaces
             Changelog: Änderungsprotokoll
+            About: Über Coworkee
+            History: Geschichte
+            Symvopath in production: Symvopath in Produktion
 
 markdown_extensions:
   - admonition
@@ -274,3 +277,6 @@ nav:
   - Reference:
       - Packages and namespaces: reference/packages.md
       - Changelog: reference/changelog.md
+  - About:
+      - History: about/history.md
+      - Symvopath in production: showcase/symvopath.md
