@@ -27,10 +27,10 @@ public static class HelpSnippets
         }
         """;
     public const string Prompt = @"Create a shop app in C:\work: no samples, no chat, with files and the Forest theme in our green #0a7d5a. It needs customers (name, email) and orders (number, total, order date) that users filter all day.";
-    public const string Docs = "https://fgilde.github.io/CoworkeeLib/";
-    public const string McpDocs = "https://fgilde.github.io/CoworkeeLib/getting-started/mcp/";
-    public const string CliDocs = "https://fgilde.github.io/CoworkeeLib/getting-started/cli/";
-    public const string StudioDocs = "https://fgilde.github.io/CoworkeeLib/getting-started/studio/";
+    public const string Docs = "https://framework.coworkee.de/";
+    public const string McpDocs = "https://framework.coworkee.de/getting-started/mcp/";
+    public const string CliDocs = "https://framework.coworkee.de/getting-started/cli/";
+    public const string StudioDocs = "https://framework.coworkee.de/getting-started/studio/";
 
     public static IReadOnlyList<McpTool> Tools { get; } =
     [

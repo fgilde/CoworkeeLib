@@ -149,7 +149,7 @@
             <DockPanel Margin="30,30,30,22">
               <StackPanel DockPanel.Dock="Bottom" Spacing="4" Margin="4,16,0,0">
                 <StackPanel Orientation="Horizontal" Spacing="14">
-                  <Button Classes="link" Foreground="#e6ffffff" Content="{l:L 'Documentation'}" Command="{Binding OpenLinkCommand}" CommandParameter="https://fgilde.github.io/CoworkeeLib/" />
+                  <Button Classes="link" Foreground="#e6ffffff" Content="{l:L 'Documentation'}" Command="{Binding OpenLinkCommand}" CommandParameter="https://framework.coworkee.de/" />
                   <Button Classes="link" Foreground="#e6ffffff" Content="{l:L 'MCP server'}" Command="{Binding ShowHelpCommand}" CommandParameter="2" />
                 </StackPanel>
                 <TextBlock Foreground="#a6ffffff" FontSize="11.5" Text="{Binding Version, StringFormat='Coworkee Studio {0}'}" />

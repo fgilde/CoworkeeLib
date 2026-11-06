@@ -9,7 +9,7 @@ builder.Services.AddCoworkeeClient(baseAddress, options =>
 {
     options.AppTitle = "MyApp";
     options.AppDescription = "Modular business app for Blazor, built on Coworkee.";
-    options.AboutLinks.Add(new AboutLink("Documentation", "https://fgilde.github.io/CoworkeeLib/"));
+    options.AboutLinks.Add(new AboutLink("Documentation", "https://framework.coworkee.de/"));
 });
 builder.Services.AddHttpClient<ICatalogApi, CatalogApi>(client => client.BaseAddress = baseAddress);
 builder.Services.AddSingleton<INavigationContributor, MyAppNavigation>();

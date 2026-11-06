@@ -26,7 +26,7 @@ internal static class McpCommand
         VS Code (.vscode/mcp.json):
           { "servers": { "coworkee": { "type": "stdio", "command": "coworkee", "args": ["mcp"] } } }
 
-        Docs: https://fgilde.github.io/CoworkeeLib/getting-started/mcp/
+        Docs: https://framework.coworkee.de/getting-started/mcp/
         """;
 
     public static Command Create() => new Command("mcp", Description).Handle(async (_, cancellationToken) =>

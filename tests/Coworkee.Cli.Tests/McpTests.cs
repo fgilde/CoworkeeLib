@@ -146,7 +146,7 @@ public sealed class McpTests : IAsyncLifetime
 
         var result = await DocsSearch.SearchAsync("client entities", online, Ct);
 
-        result.Split('\n')[0].ShouldBe("Client entities - https://fgilde.github.io/CoworkeeLib/ui/client-entities/");
+        result.Split('\n')[0].ShouldBe("Client entities - https://framework.coworkee.de/ui/client-entities/");
         result.ShouldNotContain("de/ui");
         result.ShouldNotContain("<code>");
         (await DocsSearch.SearchAsync("client entities", offline, Ct)).ShouldContain("pages by title");

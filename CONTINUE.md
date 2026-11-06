@@ -81,7 +81,7 @@ Old worktrees under `C:\dev\privat\github\wt\` are disposable.
 - CLI template tests with real app builds: `COWORKEE_TEST_FEED=<absolute path>/artifacts/nuget dotnet test tests/Coworkee.Cli.Tests -c Release`.
 - **Whenever a module changes the EF model:** run `pwsh templates/Coworkee.Templates/update-migrations.ps1` (template initial migration), and add a migration in demo/Sharemee.
 - OpenAPI snapshots: demo `MYAPP_UPDATE_OPENAPI=1`, Sharemee `SHAREME_UPDATE_OPENAPI=1` + `npm run generate` in `sdk/typescript`.
-- Docs: `python -m mkdocs build --strict -f website/mkdocs.yml -d <tmp>`; published by CI to https://fgilde.github.io/CoworkeeLib/.
+- Docs: `python -m mkdocs build --strict -f website/mkdocs.yml -d <tmp>`; published by CI to https://framework.coworkee.de/.
 - Release: `gh release create 0.0.1.X --target main` → release workflow packs the slnx and pushes to nuget.org (incl. Coworkee.Cli and Coworkee.Studio tools).
 - Changelog convention: new entries go under `## Unreleased` (EN, `website/docs/reference/changelog.md`) and `## Unveröffentlicht` (DE, `changelog.de.md`) at the top; create the heading when it is missing. After a successful release the workflow job `changelog` runs `build/release-changelog.py <version>` (renames both headings to `## <version> (<date>)`, idempotent), commits `docs: changelog for <version>` as github-actions[bot] to main and starts the docs workflow, so the release line of the website (`website/hooks/release.py`, newest `## x (date)` heading) stays right. Never write a version heading by hand before the release. If main is protected, allow github-actions to push or move the heading by hand with the script.
 

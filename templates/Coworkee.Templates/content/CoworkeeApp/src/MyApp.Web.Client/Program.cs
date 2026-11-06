@@ -30,7 +30,7 @@ builder.Services.AddCoworkeeClient(baseAddress, options =>
 #endif
     options.AppDescription = "Modular business app for Blazor, built on Coworkee.";
     options.AboutLinks.Add(new AboutLink("Project page", "https://github.com/fgilde/CoworkeeLib"));
-    options.AboutLinks.Add(new AboutLink("Documentation", "https://fgilde.github.io/CoworkeeLib/"));
+    options.AboutLinks.Add(new AboutLink("Documentation", "https://framework.coworkee.de/"));
 #if (airworks)
     options.About.Credits.Add(Coworkee.Client.Blazor.Components.About.AboutCredit.AirWorks("0.6.0"));
 #endif

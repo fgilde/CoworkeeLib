@@ -1,6 +1,6 @@
 # @coworkee/client
 
-Typed TypeScript client for the API of apps built on [Coworkee](https://fgilde.github.io/CoworkeeLib/): types generated from the OpenAPI description of the library endpoints, `createCoworkeeClient()` (openapi-fetch), `apiRequest`, `ApiError` with problem details, the realtime hub (`createRealtime()`, SignalR), streamed answers (`postNdjson`), and helpers for the BFF session, theme, texts and OData.
+Typed TypeScript client for the API of apps built on [Coworkee](https://framework.coworkee.de/): types generated from the OpenAPI description of the library endpoints, `createCoworkeeClient()` (openapi-fetch), `apiRequest`, `ApiError` with problem details, the realtime hub (`createRealtime()`, SignalR), streamed answers (`postNdjson`), and helpers for the BFF session, theme, texts and OData.
 
 ```bash
 npm install @coworkee/client
@@ -16,6 +16,6 @@ const stop = createRealtime().subscribe(`user:${userId}`, ({ type, payload }) =>
 
 - Every Coworkee release publishes it in the version of the release (`a.b.c.d` becomes `a.b.(c*1000+d)`, npm knows no fourth part).
 - `npm run openapi -- <url of /openapi/v1.json> [more documents]` refreshes `openapi.json`, `npm run generate` the types.
-- Documentation: [SDKs](https://fgilde.github.io/CoworkeeLib/web/sdk/)
+- Documentation: [SDKs](https://framework.coworkee.de/web/sdk/)
 
 License: MIT

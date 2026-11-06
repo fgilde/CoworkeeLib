@@ -30,4 +30,4 @@ The help (F1) explains the wizard, the CLI commands and the MCP server `coworkee
 
 Settings (recent specs, CLI path, template source, local package feed, language) are kept per user in the application data folder under `Coworkee/Studio`.
 
-Documentation: https://fgilde.github.io/CoworkeeLib/getting-started/studio/
+Documentation: https://framework.coworkee.de/getting-started/studio/

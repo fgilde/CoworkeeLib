@@ -10,7 +10,7 @@
 
 ---
 
-**Documentation:** [fgilde.github.io/CoworkeeLib](https://fgilde.github.io/CoworkeeLib/) (English, [Deutsch](https://fgilde.github.io/CoworkeeLib/de/)) · **Demo app:** [fgilde/Coworkee](https://github.com/fgilde/Coworkee/tree/master), a complete application on the packages
+**Documentation:** [framework.coworkee.de](https://framework.coworkee.de/) (English, [Deutsch](https://framework.coworkee.de/de/)) · **Demo app:** [fgilde/Coworkee](https://github.com/fgilde/Coworkee/tree/master), a complete application on the packages
 
 ```bash
 dotnet tool install -g Coworkee.Cli

@@ -4,7 +4,7 @@
 [![QuickRun](https://quickrun.org/badge.svg)](https://quickrun.org/run?repo=COWORKEE_REPOSITORY)
 
 <!--#endif -->
-Built on [Coworkee](https://fgilde.github.io/CoworkeeLib/). Needs the .NET SDK from `global.json` and Docker.
+Built on [Coworkee](https://framework.coworkee.de/). Needs the .NET SDK from `global.json` and Docker.
 
 ```bash
 coworkee run                      # or: dotnet run --project src/MyApp.AppHost
