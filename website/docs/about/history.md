@@ -5,7 +5,7 @@ description: "Where Coworkee comes from: a Blazor template started in 2021, in p
 
 # History
 
-Coworkee went public in October 2026, so it looks new. The code base behind it is not. It grew out of a Blazor template I started in September 2021 and kept to myself: no packages, no documentation, no announcement. Apps were built on it, and one of them, [Symvopath](../showcase/symvopath.md), has run in production since 2022. In 2026 I turned the template into NuGet packages, a CLI and this site.
+Coworkee went public in October 2026, so it looks new. The code base behind it is not. It grew out of a Blazor template I started in September 2021 and kept to myself: no packages, no documentation, no announcement. Apps were built on it, and one of them, [Symvopath](../showcase/symvopath.md), has run in production since 2022. In 2026 the template became NuGet packages, a CLI, Coworkee Studio and this site.
 
 ## Timeline
 
@@ -21,10 +21,5 @@ Every date comes from the git history of the repositories involved.
 | December 2022 | The solution is renamed Coworkee (30 December 2022). |
 | 2023 and 2024 | .NET 8 (November 2023), mail templates (January 2024), then .NET 9, an Aspire app host and sign-in through Keycloak (December 2024). |
 | 2025 | First plans to split the template into modules (September 2025), .NET 10 (November 2025). |
-| October 2026 | The CoworkeeLib repository starts on 1 October 2026, the template becomes the demo app on the new packages the next day, and version 0.0.1.11 is the first tagged release on 9 October 2026. |
+| October 2026 | The packages, the CLI and Coworkee Studio go public; version 0.0.1.11 is the first tagged release on 9 October 2026. |
 
-## What AI did
-
-A lot. The template repository has 395 commits from September 2021 to September 2026. CoworkeeLib had more than 1,600 commits in its first five weeks, and that pace came from AI coding agents: they wrote a large part of the code, the tests and these pages, while I decided what to build, reviewed it and corrected it.
-
-What did not come out of a prompt is what the packages are built around: permissions per role, translations managed in the running app, realtime notifications by user, group and permission, themes, the audit trail, OData tables, Aspire and Keycloak. Those were built and changed over five years in the template, most of them in production at Symvopath since 2022. The packages are new code on these ideas. Judge them by their code and tests, not by the date of the first commit.

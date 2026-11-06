@@ -5,7 +5,7 @@ description: "Woher Coworkee kommt: ein Blazor-Template aus dem Jahr 2021, seit 
 
 # Geschichte
 
-Coworkee ist seit Oktober 2026 öffentlich und wirkt deshalb neu. Die Codebasis dahinter ist es nicht. Sie ist aus einem Blazor-Template gewachsen, das ich im September 2021 begonnen und für mich behalten habe: keine Pakete, keine Dokumentation, keine Ankündigung. Auf dem Template sind Apps entstanden, eine davon, [Symvopath](../showcase/symvopath.md), läuft seit 2022 in Produktion. 2026 habe ich aus dem Template NuGet-Pakete, ein CLI und diese Seite gemacht.
+Coworkee ist seit Oktober 2026 öffentlich und wirkt deshalb neu. Die Codebasis dahinter ist es nicht. Sie ist aus einem Blazor-Template gewachsen, das ich im September 2021 begonnen und für mich behalten habe: keine Pakete, keine Dokumentation, keine Ankündigung. Auf dem Template sind Apps entstanden, eine davon, [Symvopath](../showcase/symvopath.md), läuft seit 2022 in Produktion. 2026 wurden aus dem Template NuGet-Pakete, ein CLI, Coworkee Studio und diese Seite.
 
 ## Zeitleiste
 
@@ -21,10 +21,5 @@ Jedes Datum stammt aus der Git-Historie der beteiligten Repositories.
 | Dezember 2022 | Die Solution heißt ab jetzt Coworkee (30. Dezember 2022). |
 | 2023 und 2024 | .NET 8 (November 2023), Mailvorlagen (Januar 2024), dann .NET 9, ein Aspire-AppHost und Anmeldung über Keycloak (Dezember 2024). |
 | 2025 | Erste Pläne, das Template in Module aufzuteilen (September 2025), .NET 10 (November 2025). |
-| Oktober 2026 | Das Repository CoworkeeLib beginnt am 1. Oktober 2026, am Tag darauf wird das Template zur Demo-App auf den neuen Paketen, und Version 0.0.1.11 ist am 9. Oktober 2026 das erste getaggte Release. |
+| Oktober 2026 | Die Pakete, das CLI und Coworkee Studio werden öffentlich; Version 0.0.1.11 ist am 9. Oktober 2026 das erste getaggte Release. |
 
-## Was die KI gemacht hat
-
-Viel. Das Template-Repository hat 395 Commits von September 2021 bis September 2026. CoworkeeLib hatte in den ersten fünf Wochen über 1.600 Commits, und dieses Tempo kam von KI-Coding-Agenten: Sie haben einen großen Teil des Codes, der Tests und dieser Seiten geschrieben, während ich entschieden habe, was gebaut wird, es geprüft und korrigiert habe.
-
-Nicht aus einem Prompt kommt das, worum die Pakete gebaut sind: Berechtigungen pro Rolle, Übersetzungen, die in der laufenden App gepflegt werden, Realtime-Benachrichtigungen nach Benutzer, Gruppe und Berechtigung, Themes, der Audit-Trail, OData-Tabellen, Aspire und Keycloak. Das ist über fünf Jahre im Template entstanden und umgebaut worden, das meiste davon seit 2022 bei Symvopath in Produktion. Die Pakete sind neuer Code auf diesen Ideen. Beurteile sie nach ihrem Code und ihren Tests, nicht nach dem Datum des ersten Commits.
