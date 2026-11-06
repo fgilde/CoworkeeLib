@@ -2002,5 +2002,9 @@
   "Position of the app bar": "Applinjens placering",
   "Position of the second app bar": "Den anden applinjes placering",
   "Top, Bottom, Left or Right.": "Top, Bottom, Left eller Right.",
-  "Top, Bottom, Left or Right; empty: no second app bar.": "Top, Bottom, Left eller Right; tom: ingen anden linje."
+  "Top, Bottom, Left or Right; empty: no second app bar.": "Top, Bottom, Left eller Right; tom: ingen anden linje.",
+  "Spacer": "Afstandsholder",
+  "Add spacer": "Tilføj afstandsholder",
+  "Pushes the items after it to the other end of the bar.": "Skubber elementerne efter den til den anden ende af bjælken.",
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Uden afstandsholder står elementerne i en vandret bjælke i dens ende og elementerne i en sidebjælke øverst."
 }

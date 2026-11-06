@@ -35,6 +35,29 @@ public static class HeaderItems
         new(About, "About", Icons.Material.Outlined.Info, 10_700),
     ];
 
+    /// <summary>
+    /// Ids of spacers start with this: a spacer pushes the items after it to the other end of its bar (a line in a menu). A bar without one keeps its
+    /// items at the end (across the window, after the app's name) or at the top (at the side).
+    /// </summary>
+    public const string Spacer = "spacer";
+
+    public static bool IsSpacer(string id) => id == Spacer || id.StartsWith(Spacer + "-", StringComparison.Ordinal);
+
+    public static HeaderItem SpacerItem(string id) => new(id, "Spacer", Icons.Material.Outlined.SpaceBar, 0);
+
+    /// <summary>A spacer id the <paramref name="taken"/> ids do not use yet.</summary>
+    public static string NewSpacerId(IEnumerable<string> taken)
+    {
+        var used = taken.ToHashSet(StringComparer.Ordinal);
+        var id = Spacer;
+        for (var n = 2; used.Contains(id); n++)
+        {
+            id = $"{Spacer}-{n}";
+        }
+
+        return id;
+    }
+
     /// <summary>On phones these leave the bar for the overflow menu.</summary>
     public static IReadOnlySet<string> FoldOnPhones { get; } = new HashSet<string>(StringComparer.Ordinal) { Language, Theme, RightToLeft, DarkMode, About };
 
@@ -65,7 +88,9 @@ public static class HeaderItems
     {
         var defaults = available.OrderBy(i => i.Order).ToList();
         var byId = defaults.ToDictionary(i => i.Id, StringComparer.Ordinal);
-        var arranged = configured.Where(c => byId.ContainsKey(c.Id)).DistinctBy(c => c.Id).Select(c => (Item: byId[c.Id], c.Placement)).ToList();
+        // spacers exist only where the administrator put them; a hidden one is gone
+        var arranged = configured.Where(c => byId.ContainsKey(c.Id) || (IsSpacer(c.Id) && c.Placement != HeaderPlacement.Hidden)).DistinctBy(c => c.Id)
+            .Select(c => (Item: byId.TryGetValue(c.Id, out var item) ? item : SpacerItem(c.Id), c.Placement)).ToList();
         for (var i = 0; i < defaults.Count; i++)
         {
             if (arranged.Exists(a => a.Item.Id == defaults[i].Id))

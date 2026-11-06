@@ -2002,5 +2002,9 @@
   "Position of the app bar": "Positie van de app-balk",
   "Position of the second app bar": "Positie van de tweede balk",
   "Top, Bottom, Left or Right.": "Top, Bottom, Left of Right.",
-  "Top, Bottom, Left or Right; empty: no second app bar.": "Top, Bottom, Left of Right; leeg: geen tweede balk."
+  "Top, Bottom, Left or Right; empty: no second app bar.": "Top, Bottom, Left of Right; leeg: geen tweede balk.",
+  "Spacer": "Opvulling",
+  "Add spacer": "Opvulling toevoegen",
+  "Pushes the items after it to the other end of the bar.": "Duwt de items erna naar het andere uiteinde van de balk.",
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Zonder opvulling staan de items van een horizontale balk aan het einde en die van een zijbalk bovenaan."
 }

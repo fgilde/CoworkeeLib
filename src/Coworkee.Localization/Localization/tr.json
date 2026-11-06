@@ -2002,5 +2002,9 @@
   "Position of the app bar": "Uygulama çubuğunun konumu",
   "Position of the second app bar": "İkinci çubuğun konumu",
   "Top, Bottom, Left or Right.": "Top, Bottom, Left veya Right.",
-  "Top, Bottom, Left or Right; empty: no second app bar.": "Top, Bottom, Left veya Right; boş: ikinci çubuk yok."
+  "Top, Bottom, Left or Right; empty: no second app bar.": "Top, Bottom, Left veya Right; boş: ikinci çubuk yok.",
+  "Spacer": "Boşluk",
+  "Add spacer": "Boşluk ekle",
+  "Pushes the items after it to the other end of the bar.": "Sonrasındaki öğeleri çubuğun diğer ucuna iter.",
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Boşluk olmadan yatay çubuğun öğeleri sonunda, yan çubuğun öğeleri üstte durur."
 }

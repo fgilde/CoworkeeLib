@@ -5,7 +5,7 @@ internal static class AssistantStyles
 {
     public const string Css =
         """
-        .cw-ai-fab { position: fixed; right: 24px; bottom: 24px; z-index: 1150; width: 56px; height: 56px; border: 0; border-radius: 50%; cursor: pointer;
+        .cw-ai-fab { position: fixed; inset-inline-end: calc(24px + var(--cw-edge-end, 0px)); bottom: calc(24px + var(--cw-edge-bottom, 0px)); z-index: 1150; width: 56px; height: 56px; border: 0; border-radius: 50%; cursor: pointer;
           color: var(--mud-palette-primary-text); display: grid; place-items: center;
           background: linear-gradient(135deg, var(--mud-palette-primary), var(--mud-palette-secondary, var(--mud-palette-primary-darken)));
           box-shadow: 0 6px 20px -4px var(--mud-palette-primary); transition: transform .2s ease, box-shadow .2s ease; }
@@ -20,11 +20,11 @@ internal static class AssistantStyles
         @keyframes cw-ai-dot { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
         @media (prefers-reduced-motion: reduce) { .cw-ai-fab::after, .cw-ai-window { animation: none !important; } }
 
-        .cw-ai-window { position: fixed; right: 24px; bottom: 92px; z-index: 1150; width: 420px; height: min(640px, calc(100vh - 140px));
+        .cw-ai-window { position: fixed; inset-inline-end: calc(24px + var(--cw-edge-end, 0px)); bottom: calc(92px + var(--cw-edge-bottom, 0px)); z-index: 1150; width: 420px; height: min(640px, calc(100vh - 140px));
           display: flex; flex-direction: column; overflow: hidden; border-radius: 16px; background: var(--mud-palette-surface);
           border: 1px solid var(--mud-palette-lines-default); box-shadow: var(--mud-elevation-12); animation: cw-ai-in .18s ease-out; }
         .cw-ai-window.large { width: min(980px, calc(100vw - 48px)); height: calc(100vh - 140px); }
-        .cw-ai-window.full { inset: var(--mud-appbar-height, 64px) 0 0 0; width: auto; height: auto; border-radius: 0; border: 0; }
+        .cw-ai-window.full { inset-block: var(--cw-edge-top, var(--mud-appbar-height, 64px)) var(--cw-edge-bottom, 0px); inset-inline: var(--cw-edge-start, 0px) var(--cw-edge-end, 0px); width: auto; height: auto; border-radius: 0; border: 0; }
         @media (max-width: 600px) { .cw-ai-window, .cw-ai-window.large, .cw-ai-window.full { inset: 0; width: auto; height: auto; border-radius: 0; z-index: 1350; } }
 
         .cw-ai-header { display: flex; align-items: center; gap: 4px; padding: 6px 8px 6px 14px; color: var(--mud-palette-primary-text);

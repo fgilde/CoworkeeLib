@@ -51,9 +51,16 @@ else
                         {
                             <div class="cw-header-preview-bar cw-header-preview-@position.ToString().ToLowerInvariant() @(bar == 1 ? "cw-header-preview-second" : null)"
                                  data-preview-bar="@bar" data-position="@position">
-                                @foreach (var item in InZone(bar == 0 ? HeaderPlacement.Bar : HeaderPlacement.SecondBar).Take(8))
+                                @foreach (var item in InZone(bar == 0 ? HeaderPlacement.Bar : HeaderPlacement.SecondBar).Take(10))
                                 {
-                                    <MudIcon Icon="@item.Icon" Style="font-size:14px" />
+                                    @if (HeaderItems.IsSpacer(item.Id))
+                                    {
+                                        <span class="cw-header-preview-spacer" data-preview-spacer></span>
+                                    }
+                                    else
+                                    {
+                                        <MudIcon Icon="@item.Icon" Style="font-size:14px" />
+                                    }
                                 }
                                 @if (InZone(bar == 0 ? HeaderPlacement.Overflow : HeaderPlacement.SecondOverflow).Any())
                                 {
@@ -73,8 +80,13 @@ else
         </MudPaper>
 
         <MudPaper Outlined="true" Class="pa-4" data-testid="header-items">
-            <MudText Typo="Typo.h6">@L["Items"]</MudText>
-            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-3">@L["Drag the items between the areas and into their order, or use the menu of an item. On phones language, theme, direction, colour mode and about move into the overflow menu."]</MudText>
+            <MudStack Row="true" AlignItems="AlignItems.Center">
+                <MudText Typo="Typo.h6">@L["Items"]</MudText>
+                <MudSpacer />
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Outlined.SpaceBar" OnClick="AddSpacer" data-testid="header-add-spacer">@L["Add spacer"]</MudButton>
+            </MudStack>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["Drag the items between the areas and into their order, or use the menu of an item. On phones language, theme, direction, colour mode and about move into the overflow menu."]</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-3">@L["Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top."]</MudText>
             <MudDropContainer T="HeaderItem" @ref="_drop" Items="_items.Select(i => i.Item)" ItemsSelector="@((item, zone) => PlacementOf(item).ToString() == zone)"
                               CanDrop="@((item, zone) => CanPlace(item, Enum.Parse<HeaderPlacement>(zone)))" ItemDropped="Dropped"
                               CanDropClass="mud-border-primary" NoDropClass="mud-border-error" Class="cw-header-zones">
@@ -105,6 +117,10 @@ else
                         <MudIcon Icon="@item.Icon" Size="Size.Small" Color="@(placement == HeaderPlacement.Hidden ? Color.Default : ZoneColor(placement))" />
                         <div class="flex-grow-1" style="min-width:0">
                             <MudText Typo="Typo.body2" Class="@(placement == HeaderPlacement.Hidden ? "mud-text-disabled text-truncate" : "text-truncate")">@L[item.Title]</MudText>
+                            @if (HeaderItems.IsSpacer(item.Id))
+                            {
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["Pushes the items after it to the other end of the bar."]</MudText>
+                            }
                             @if (item.Id == HeaderItems.Assistant)
                             {
                                 <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["Shows only with the assistant display App bar button."]</MudText>
@@ -132,7 +148,12 @@ else
                             {
                                 <MudMenuItem Icon="@icon" OnClick="() => Place(index, zone)" data-testid="@($"header-place-{zone}")">@L[label]</MudMenuItem>
                             }
-                            @if (item.Id != HeaderItems.User)
+                            @if (HeaderItems.IsSpacer(item.Id))
+                            {
+                                <MudDivider />
+                                <MudMenuItem Icon="@Icons.Material.Outlined.Delete" OnClick="() => Remove(index)" data-testid="header-remove">@L["Remove"]</MudMenuItem>
+                            }
+                            else if (item.Id != HeaderItems.User)
                             {
                                 <MudDivider />
                                 <MudMenuItem Icon="@Icons.Material.Outlined.Lock" OnClick="() => EditAccessAsync(item)" aria-haspopup="dialog" data-testid="header-access">@L["Visible for"]…</MudMenuItem>
@@ -179,6 +200,7 @@ else
     .cw-header-preview-left, .cw-header-preview-right { top: 0; bottom: 0; width: 26px; flex-direction: column; justify-content: flex-start; }
     .cw-header-preview-left { left: 0; }
     .cw-header-preview-right { right: 0; }
+    .cw-header-preview-spacer { flex: 1 1 auto; }
     .cw-header-preview-page { position: absolute; display: flex; }
     .cw-header-preview-nav { width: 22%; background: var(--mud-palette-drawer-background); border-right: 1px solid var(--mud-palette-lines-default); }
     .cw-header-preview-content { flex: 1; padding: 10px; display: flex; flex-direction: column; gap: 8px; }

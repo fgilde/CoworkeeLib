@@ -16,7 +16,6 @@ else
             }
             <CoworkeeBrand />
         }
-        <MudSpacer />
         @Content(vertical: false)
     </MudAppBar>
 }
@@ -28,19 +27,31 @@ else
             @* in the overflow menu or hidden: Ctrl+K still opens the palette *@
             <CoworkeeCommandPalette @ref="_palette" ShowButton="false" />
         }
-        @foreach (var item in Bar)
+        @if (!vertical && !HasSpacer)
         {
-            @InBar(item)
+            @* without a spacer the items sit at the end of a bar across the window *@
+            <div class="cw-bar-spacer"></div>
+        }
+        @foreach (var (item, end) in Laid(vertical))
+        {
+            @if (HeaderItems.IsSpacer(item.Id))
+            {
+                <div class="cw-bar-spacer" data-testid="app-bar-spacer"></div>
+            }
+            else
+            {
+                @* the item's menus open away from the edge and towards the middle of the bar *@
+                <CascadingValue Value="HeaderMenuOrigins.For(Position, end)">@InBar(item)</CascadingValue>
+            }
         }
         @if (Overflow.Count > 0)
         {
-            @if (vertical)
+            @if (vertical && !HasSpacer)
             {
-                <div style="flex:1 1 auto"></div>
+                <div class="cw-bar-spacer"></div>
             }
             <MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Dense="Density.Dense"
-                     AnchorOrigin="@(vertical ? (Position == HeaderPosition.Left ? Origin.BottomRight : Origin.BottomLeft) : Origin.BottomRight)"
-                     TransformOrigin="@(vertical ? (Position == HeaderPosition.Left ? Origin.BottomLeft : Origin.BottomRight) : Origin.TopRight)"
+                     AnchorOrigin="@HeaderMenuOrigins.For(Position, true).Anchor" TransformOrigin="@HeaderMenuOrigins.For(Position, true).Transform"
                      aria-label="@L["More"]" data-testid="@(Second ? "app-bar-more-2" : "app-bar-more")">
                 @foreach (var item in Overflow)
                 {
@@ -123,6 +134,9 @@ else
                 break;
             case HeaderItems.About:
                 <MudMenuItem Icon="@Icons.Material.Outlined.Info" OnClick="ShowAboutAsync" data-testid="about-button">@L["About"]</MudMenuItem>
+                break;
+            case var id when HeaderItems.IsSpacer(id):
+                <MudDivider Class="my-1" />
                 break;
             default:
                 <DynamicComponent Type="item.App!.Component" Parameters="item.App.Parameters" />

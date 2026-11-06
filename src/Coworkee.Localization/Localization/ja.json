@@ -2002,5 +2002,9 @@
   "Position of the app bar": "アプリバーの位置",
   "Position of the second app bar": "2 番目のアプリバーの位置",
   "Top, Bottom, Left or Right.": "Top、Bottom、Left、Right のいずれか。",
-  "Top, Bottom, Left or Right; empty: no second app bar.": "Top、Bottom、Left、Right のいずれか。空の場合は 2 番目のバーなし。"
+  "Top, Bottom, Left or Right; empty: no second app bar.": "Top、Bottom、Left、Right のいずれか。空の場合は 2 番目のバーなし。",
+  "Spacer": "スペーサー",
+  "Add spacer": "スペーサーを追加",
+  "Pushes the items after it to the other end of the bar.": "後ろの項目をバーの反対側の端へ寄せます。",
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "スペーサーがない場合、横のバーの項目は末尾に、サイドバーの項目は上部に並びます。"
 }

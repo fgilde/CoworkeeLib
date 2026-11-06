@@ -174,6 +174,28 @@ public sealed class HeaderConfigurationTests : ClientTestBase
     }
 
     [Fact]
+    public async Task A_spacer_is_added_to_the_first_bar_saved_with_the_items_and_removed_instead_of_hidden()
+    {
+        var page = Render<HeaderConfiguration>();
+        page.WaitForAssertion(() => page.FindAll("[data-header-item]").Count.ShouldBe(HeaderItems.BuiltIn.Count + 1));
+
+        await page.Find("[data-testid='header-add-spacer']").ClickAsync(new());
+        await page.Find("[data-testid='header-add-spacer']").ClickAsync(new());
+
+        page.WaitForAssertion(() => page.FindAll("[data-header-item^='spacer']").Select(e => e.GetAttribute("data-placement")).ShouldBe(["Bar", "Bar"]));
+        page.FindAll("[data-preview-spacer]").Count.ShouldBe(2);
+        await page.Find("[data-header-item='spacer-2'] [data-testid='header-item-menu'] button").ClickAsync(new());
+        _popovers.WaitForElement("[data-testid='header-remove']");
+        _popovers.FindAll("[data-testid='header-place-Hidden']").ShouldBeEmpty();
+        await _popovers.Find("[data-testid='header-remove']").ClickAsync(new());
+        page.WaitForAssertion(() => page.FindAll("[data-header-item^='spacer']").Count.ShouldBe(1));
+        await page.Find("[data-testid='header-save']").ClickAsync(new());
+
+        await Api.Received(1).SetSettingsAsync(SettingScope.Global, Arg.Is<IReadOnlyDictionary<string, string?>>(v =>
+            HeaderItems.Parse(v[HeaderSettings.Items])[0].Id == "spacer" && HeaderItems.Parse(v[HeaderSettings.Items])[0].Placement == HeaderPlacement.Bar), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task Reset_goes_back_to_the_default_header()
     {
         var page = Render<HeaderConfiguration>();

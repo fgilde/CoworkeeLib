@@ -2002,5 +2002,9 @@
   "Position of the app bar": "앱 바 위치",
   "Position of the second app bar": "두 번째 앱 바 위치",
   "Top, Bottom, Left or Right.": "Top, Bottom, Left 또는 Right.",
-  "Top, Bottom, Left or Right; empty: no second app bar.": "Top, Bottom, Left 또는 Right. 비어 있으면 두 번째 바 없음."
+  "Top, Bottom, Left or Right; empty: no second app bar.": "Top, Bottom, Left 또는 Right. 비어 있으면 두 번째 바 없음.",
+  "Spacer": "간격",
+  "Add spacer": "간격 추가",
+  "Pushes the items after it to the other end of the bar.": "뒤에 오는 항목을 바의 반대쪽 끝으로 밉니다.",
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "간격이 없으면 가로 바의 항목은 끝에, 측면 바의 항목은 위쪽에 놓입니다."
 }

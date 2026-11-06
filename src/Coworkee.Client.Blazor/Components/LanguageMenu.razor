@@ -9,14 +9,14 @@
     </style>
     @if (Nested)
     {
-        <MudMenu StartIcon="@Icons.Material.Outlined.Translate" Label="@L["Language"]" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense"
+        <MudMenu StartIcon="@Icons.Material.Outlined.Translate" Label="@L["Language"]" Color="Color.Inherit" AnchorOrigin="@MenuOrigins.Anchor" TransformOrigin="@MenuOrigins.Transform" Dense="Density.Dense"
                  aria-label="@L["Language"]" data-testid="language-menu">
             @Items
         </MudMenu>
     }
     else
     {
-        <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense" aria-label="@L["Language"]" data-testid="language-menu">
+        <MudMenu AnchorOrigin="@MenuOrigins.Anchor" TransformOrigin="@MenuOrigins.Transform" Dense="Density.Dense" aria-label="@L["Language"]" data-testid="language-menu">
             <ActivatorContent Context="menu">
                 <MudTooltip Text="@L["Language"]">
                     <MudIconButton Icon="@(CurrentRegion is null ? Icons.Material.Outlined.Translate : null)" Color="Color.Inherit" aria-label="@L["Language"]" OnClick="menu.ToggleAsync">

@@ -2002,5 +2002,9 @@
   "Position of the app bar": "Położenie paska aplikacji",
   "Position of the second app bar": "Położenie drugiego paska",
   "Top, Bottom, Left or Right.": "Top, Bottom, Left lub Right.",
-  "Top, Bottom, Left or Right; empty: no second app bar.": "Top, Bottom, Left lub Right; puste: brak drugiego paska."
+  "Top, Bottom, Left or Right; empty: no second app bar.": "Top, Bottom, Left lub Right; puste: brak drugiego paska.",
+  "Spacer": "Odstęp",
+  "Add spacer": "Dodaj odstęp",
+  "Pushes the items after it to the other end of the bar.": "Przesuwa elementy za nim na drugi koniec paska.",
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Bez odstępu elementy poziomego paska są na jego końcu, a paska bocznego na górze."
 }

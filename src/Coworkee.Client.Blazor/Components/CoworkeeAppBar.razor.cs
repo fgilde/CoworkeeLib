@@ -64,6 +64,22 @@ public partial class CoworkeeAppBar : IDisposable
 
     private IReadOnlyList<HeaderItem> Overflow => Placed(Second ? HeaderPlacement.SecondOverflow : HeaderPlacement.Overflow);
 
+    private bool HasSpacer => Bar.Any(i => HeaderItems.IsSpacer(i.Id));
+
+    // each item with the end of the bar it sits at: after a spacer the far end; without one the end across the window, the top at the side
+    private List<(HeaderItem Item, bool End)> Laid(bool vertical)
+    {
+        var end = !vertical && !HasSpacer;
+        var laid = new List<(HeaderItem, bool)>();
+        foreach (var item in Bar)
+        {
+            end |= HeaderItems.IsSpacer(item.Id);
+            laid.Add((item, end));
+        }
+
+        return laid;
+    }
+
     // the hidden palette keeps Ctrl+K and opens from the overflow menu: in the bar whose overflow menu has the search, in the first one when it is hidden
     private bool HasHiddenPalette => _arranged.FirstOrDefault(a => a.Item.Id == HeaderItems.Search) is { Item: not null } search
         && (Where(search) == (Second ? HeaderPlacement.SecondOverflow : HeaderPlacement.Overflow) || (!Second && Where(search) == HeaderPlacement.Hidden));
