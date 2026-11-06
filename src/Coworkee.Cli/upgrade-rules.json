@@ -729,6 +729,31 @@
         { "id": "Nextended.Core", "version": "10.1.51" },
         { "id": "Nextended.Web", "version": "10.1.51" }
       ]
+    },
+    {
+      "version": "0.0.1.65",
+      "breaking": [
+        "Theming: cw.Themes gets the columns BuiltInId and IsCustomized (an organisation's own version of a built-in theme); ICoworkeeApi gets ResetThemeAsync and SetThemePublishedAsync.",
+        "Navigation: HeaderPlacement gets SecondBar and SecondOverflow before Hidden; saved header settings keep working, they store the names."
+      ],
+      "needsMigration": true,
+      "manual": [
+        {
+          "text": "Add a migration for the new columns of cw.Themes (coworkee migrations add CoworkeeLib065). Existing themes need no data: the columns default to null and false.",
+          "find": "class \\w+DbContext\\b",
+          "files": [
+            "src/**/*.cs"
+          ]
+        },
+        {
+          "text": "An own implementation or fake of ICoworkeeApi adds ResetThemeAsync and SetThemePublishedAsync.",
+          "find": ":\\s*ICoworkeeApi\\b",
+          "files": [
+            "src/**/*.cs",
+            "tests/**/*.cs"
+          ]
+        }
+      ]
     }
   ]
 }

@@ -1,6 +1,6 @@
 @attribute [Authorize(Policy = "perm:" + ThemePermissions.Manage)]
 
-<PageHeader Title="Themes" Description="Colors, fonts, radius, shadows, density, navigation and logo. Everyone can choose the published themes. Built-in themes stay as they are: saving one creates a copy.">
+<PageHeader Title="Themes" Description="Colors, fonts, radius, shadows, density, navigation and logo. Users choose among the themes switched on for them. Changes to a built-in theme apply to this organisation and can be reset.">
     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" OnClick="CreateAsync" data-testid="theme-new">@L["New theme"]</MudButton>
 </PageHeader>
 <RealtimeSubscription Topic="type:ThemeDefinition" OnEvent="_ => ReloadAsync()" />
@@ -48,25 +48,33 @@ else
                             }
                         </MudStack>
                         <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" Class="mt-1">
-                            @* built-in themes are always published; an own theme's chip switches it *@
-                            <MudTooltip Text="@(dto.IsGlobal ? null : L[dto.IsPublished ? "Unpublish" : "Publish"])">
-                                <MudChip T="string" Size="Density.Size" Variant="Variant.Outlined" Color="@(dto.IsPublished ? Color.Success : Color.Default)"
-                                         Icon="@(dto.IsPublished ? Icons.Material.Outlined.Visibility : Icons.Material.Outlined.VisibilityOff)"
-                                         OnClick="@(dto.IsGlobal ? default : EventCallback.Factory.Create<MouseEventArgs>(this, () => TogglePublishedAsync(dto)))" data-testid="theme-published">
-                                    @L[dto.IsPublished ? "Published" : "Not published"]
-                                </MudChip>
-                            </MudTooltip>
                             @if (dto.IsGlobal)
                             {
-                                <MudChip T="string" Size="Density.Size" Variant="Variant.Outlined" Icon="@Icons.Material.Outlined.Lock">@L["built-in"]</MudChip>
+                                <MudChip T="string" Size="Density.Size" Variant="Variant.Outlined" Icon="@Icons.Material.Outlined.Inventory2" data-testid="theme-built-in">@L["built-in"]</MudChip>
+                            }
+                            @if (dto.IsChanged)
+                            {
+                                <MudChip T="string" Size="Density.Size" Variant="Variant.Outlined" Color="Color.Info" Icon="@Icons.Material.Outlined.Brush" data-testid="theme-changed">@L["changed"]</MudChip>
                             }
                         </MudStack>
+                        @* built-in themes too: an organisation can withdraw one from its users *@
+                        <div data-testid="theme-published">
+                            <MudSwitch T="bool" Value="dto.IsPublished" ValueChanged="published => SetPublishedAsync(dto, published)" Color="Color.Success" Class="mt-2"
+                                       Label="@L["Users can choose it"]" />
+                        </div>
                     </MudCardContent>
                     <MudCardActions>
                         <MudButton Size="Size.Small" StartIcon="@Icons.Material.Outlined.Edit" OnClick="() => EditAsync(dto)" data-testid="theme-edit">@L["Edit"]</MudButton>
                         <MudButton Size="Size.Small" StartIcon="@Icons.Material.Outlined.Star" Disabled="dto.IsDefault" OnClick="() => SetDefaultAsync(dto)"
                                    data-testid="theme-default">@L["Make default"]</MudButton>
                         <MudSpacer />
+                        @if (dto.IsChanged)
+                        {
+                            <MudTooltip Text="@L["Reset to the built-in look"]">
+                                <MudIconButton Size="Size.Small" Icon="@Icons.Material.Outlined.SettingsBackupRestore" aria-label="@L["Reset to the built-in look"]"
+                                               OnClick="() => ResetAsync(dto)" data-testid="theme-reset" />
+                            </MudTooltip>
+                        }
                         @if (!dto.IsGlobal)
                         {
                             <MudIconButton Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Outlined.Delete" aria-label="@L["Delete"]"

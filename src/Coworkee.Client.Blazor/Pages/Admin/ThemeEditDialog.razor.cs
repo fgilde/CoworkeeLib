@@ -34,6 +34,9 @@ public partial class ThemeEditDialog<TTheme> where TTheme : CoworkeeTheme
 
     [Parameter] public string Name { get; set; } = string.Empty;
 
+    /// <summary>A built-in theme: the name stays.</summary>
+    [Parameter] public bool FixedName { get; set; }
+
     [Parameter, EditorRequired] public CoworkeeTheme Theme { get; set; } = null!;
 
     /// <summary>Themes to start a new one from.</summary>

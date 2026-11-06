@@ -4,6 +4,14 @@
 
 ## Unveröffentlicht
 
+### Hinzugefügt
+
+- Themes: Speichern eines eingebauten Themes ändert es für die Organisation an Ort und Stelle statt eine Kopie anzulegen; Name und Id bleiben, die Kachel zeigt *geändert* und bietet *Auf das mitgelieferte Aussehen zurücksetzen* (`POST /api/v1/themes/{id}/reset`).
+- Themes: Jede Kachel hat den Schalter *Für Benutzer wählbar*, auch eingebaute Themes (`PUT /api/v1/themes/{id}/published`).
+- Themes: `NavMiniMode` (jeder Link, oder die erste Ebene mit den Links einer Gruppe in einem Menü per Klick oder Hover), `NavMiniDividers` (Linien zwischen den Gruppen der schmalen Navigation) und `NavBesideAppBar` (die Navigation in voller Höhe neben der App-Leiste, im Kopf Name der App und Menüknopf).
+- Kopfzeile: Die App-Leiste oben, rechts, unten oder links (`Header.Position`) und eine optionale zweite App-Leiste an einem anderen Rand (`Header.SecondPosition`), jede mit eigenem Überlaufmenü; die Seite zeigt das Layout als kleines Bild und gibt jedem Element ein Menü statt fünf Knöpfen.
+- App-Themes (`ThemingOptions.Themes`) bringen `Options`, `Layout`, `Typography` und `CustomCss` über die ihres Basis-Themes.
+
 ### Geändert
 
 - Client Entities: Eine Kopie fragt den Server höchstens alle 10 Minuten nach den Facetten aller Zeilen (ein Lesen der ganzen Menge) statt nach jeder Änderung; die Zahlen kommen weiter aus den lokalen Zeilen. Eine Menge, die der Server minütlich ändert (die Sendungen eines Hubs), wird nicht mehr minütlich ganz gelesen.
@@ -13,6 +21,7 @@
 
 - Client Entities: Zeilen mit einer Liste unter ihren Eigenschaften (z. B. `Tags`) luden ganze Serverzeilen; sie wählen jetzt nur ihre eigenen Eigenschaften (bei den Sendungen eines Hubs ein Drittel der Daten), die Liste kommt weiter über `$expand`.
 - Client Entities: Ein sofort fertiges Laden der Facetten verhinderte, dass die Kopie sie je wieder anfragte.
+- Themes: Ein geändertes Theme oder ein neuer Standard erreichte nur die offenen Seiten von Theme-Verwaltern; jetzt übernimmt jede Seite der Organisation es sofort.
 
 ## 0.0.1.64 (2026-11-05)
 

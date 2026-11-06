@@ -47,6 +47,36 @@ public sealed class ThemeSeedTests
         JsonSerializer.Deserialize<Dictionary<string, string>>(shop.PaletteDark)!["Primary"].ShouldBe("#ffeb3b");
     }
 
+    [Fact]
+    public void An_app_theme_brings_its_own_options_layout_fonts_and_css_over_those_of_its_base()
+    {
+        var options = new ThemingOptions();
+        options.Themes.Add(new AppTheme("Lepton", "Ocean", new Dictionary<string, string> { ["Primary"] = "#355dff" })
+        {
+            Options = new Dictionary<string, object> { ["NavBesideAppBar"] = true, ["NavMiniMode"] = "GroupsOnHover" },
+            Layout = new Dictionary<string, object> { ["DefaultBorderRadius"] = "8px" },
+            Typography = new Dictionary<string, object> { ["Default"] = new Dictionary<string, object> { ["FontSize"] = ".875rem" } },
+            CustomCss = ".mud-drawer { border: 0; }",
+        });
+
+        var themes = ThemeSeeds.Create(options);
+        var lepton = themes.Single(t => t.Name == "Lepton");
+        var ocean = themes.Single(t => t.Name == "Ocean");
+
+        var own = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(lepton.Options!)!;
+        own["NavBesideAppBar"].GetBoolean().ShouldBeTrue();
+        own["NavMiniMode"].GetString().ShouldBe("GroupsOnHover");
+        // the base theme's other options stay
+        own["NavSingleExpand"].GetBoolean().ShouldBeTrue();
+        var layout = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(lepton.LayoutProperties!)!;
+        layout["DefaultBorderRadius"].GetString().ShouldBe("8px");
+        layout["DrawerWidthLeft"].GetString().ShouldBe(JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(ocean.LayoutProperties!)!["DrawerWidthLeft"].GetString());
+        var font = JsonDocument.Parse(lepton.Typography!).RootElement.GetProperty("Default");
+        font.GetProperty("FontSize").GetString().ShouldBe(".875rem");
+        font.GetProperty("FontFamily").GetArrayLength().ShouldBeGreaterThan(0);
+        lepton.CustomCss.ShouldBe(".mud-drawer { border: 0; }");
+    }
+
     [Theory]
     [InlineData("Forest", "Ocean")]
     [InlineData("Shop", "Ocean", "shop")]

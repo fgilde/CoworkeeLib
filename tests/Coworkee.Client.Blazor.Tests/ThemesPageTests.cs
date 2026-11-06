@@ -38,10 +38,11 @@ public sealed class ThemesPageTests : ClientTestBase
         var page = Render<Themes>();
         page.WaitForAssertion(() => page.FindAll("[data-testid='theme-tile']").Count.ShouldBe(2));
 
-        Tile(page, "Coworkee").QuerySelector("[data-testid='theme-published']")!.TextContent.Trim().ShouldBe("Published");
+        Published(page, "Coworkee").ShouldBeTrue();
         Tile(page, "Coworkee").QuerySelector("[data-testid='theme-delete']").ShouldBeNull();
+        Tile(page, "Coworkee").QuerySelector("[data-testid='theme-reset']").ShouldBeNull();
         Tile(page, "Coworkee").QuerySelector("[data-testid='theme-is-default']").ShouldNotBeNull();
-        Tile(page, "Brand").QuerySelector("[data-testid='theme-published']")!.TextContent.Trim().ShouldBe("Not published");
+        Published(page, "Brand").ShouldBeFalse();
 
         var deleting = page.Find("[data-theme='Brand'] [data-testid='theme-delete']").ClickAsync(new());
         dialogs.WaitForAssertion(() => dialogs.FindAll("button").Any(b => b.TextContent.Trim() == "Delete").ShouldBeTrue());
@@ -51,38 +52,67 @@ public sealed class ThemesPageTests : ClientTestBase
         await Api.Received(1).DeleteThemeAsync(Own.Id, Arg.Any<CancellationToken>());
     }
 
-    [Fact]
-    public async Task The_published_chip_of_an_own_theme_publishes_it_at_once_and_keeps_the_rest_of_the_theme()
+    [Theory]
+    [InlineData("Brand", true)]
+    [InlineData("Coworkee", false)]
+    public async Task The_switch_on_a_tile_lets_users_choose_the_theme_or_not_also_a_built_in_one(string name, bool published)
     {
-        var own = Own with { CustomCss = ".brand { color: red; }", Options = JsonSerializer.SerializeToElement(new { Dense = false, Unknown = 1 }) };
-        Api.GetThemesAsync(Arg.Any<CancellationToken>()).Returns([BuiltIn, own], [BuiltIn, own with { IsPublished = true }]);
-        Api.UpdateThemeAsync(own.Id, Arg.Any<ThemeRequest>(), Arg.Any<CancellationToken>()).Returns(own with { IsPublished = true });
+        var theme = name == "Brand" ? Own : BuiltIn;
+        Api.GetThemesAsync(Arg.Any<CancellationToken>()).Returns([BuiltIn, Own], [BuiltIn with { IsPublished = theme == BuiltIn ? published : true }, Own with { IsPublished = theme == Own ? published : false }]);
         Render<MudSnackbarProvider>();
         var page = Render<Themes>();
-        page.WaitForElement("[data-theme='Brand'] [data-testid='theme-published']");
-        Tile(page, "Coworkee").QuerySelector("[data-testid='theme-published']")!.ClassList.ShouldNotContain("mud-clickable");
+        page.WaitForElement($"[data-theme='{name}'] [data-testid='theme-published'] input");
 
-        await page.Find("[data-theme='Brand'] [data-testid='theme-published']").ClickAsync(new());
+        await page.Find($"[data-theme='{name}'] [data-testid='theme-published'] input").ChangeAsync(new() { Value = published });
 
-        await Api.Received(1).UpdateThemeAsync(own.Id, Arg.Is<ThemeRequest>(r => r.IsPublished && r.Name == "Brand" && r.CustomCss == own.CustomCss
-            && r.PaletteLight.GetRawText() == own.PaletteLight.GetRawText() && r.Options!.Value.GetRawText() == own.Options!.Value.GetRawText()), Arg.Any<CancellationToken>());
-        page.WaitForAssertion(() => Tile(page, "Brand").QuerySelector("[data-testid='theme-published']")!.TextContent.Trim().ShouldBe("Published"));
-        Services.GetRequiredService<ISnackbar>().ShownSnackbars.ShouldContain(s => s.Message == "Theme Brand published");
+        await Api.Received(1).SetThemePublishedAsync(theme.Id, published, Arg.Any<CancellationToken>());
+        await Api.DidNotReceiveWithAnyArgs().UpdateThemeAsync(default, default!, default);
+        page.WaitForAssertion(() => Published(page, name).ShouldBe(published));
+        Services.GetRequiredService<ISnackbar>().ShownSnackbars.ShouldContain(s => s.Message == (published ? $"Theme {name} published" : $"Theme {name} unpublished"));
     }
 
     [Fact]
-    public void Edit_opens_the_theme_editor_for_that_theme_and_a_built_in_one_as_copy()
+    public async Task Editing_a_built_in_theme_saves_it_in_place_under_its_own_name()
     {
+        Api.UpdateThemeAsync(BuiltIn.Id, Arg.Any<ThemeRequest>(), Arg.Any<CancellationToken>()).Returns(BuiltIn with { IsChanged = true });
         var dialogs = Render<MudDialogProvider>();
         Render<MudPopoverProvider>();
+        Render<MudSnackbarProvider>();
         var page = Render<Themes>();
         page.WaitForElement("[data-theme='Coworkee'] [data-testid='theme-edit']");
 
         _ = page.Find("[data-theme='Coworkee'] [data-testid='theme-edit']").ClickAsync(new());
 
-        dialogs.WaitForAssertion(() => dialogs.Find("input[data-testid='theme-name'], [data-testid='theme-name'] input").GetAttribute("value").ShouldBe("Coworkee copy"), TimeSpan.FromSeconds(30)); // the theme editor renders a lot, slow CI runners need the time
+        // the theme editor renders a lot, slow CI runners need the time
+        dialogs.WaitForAssertion(() => dialogs.Find("input[data-testid='theme-name'], [data-testid='theme-name'] input").GetAttribute("value").ShouldBe("Coworkee"), TimeSpan.FromSeconds(30));
+        dialogs.Find("input[data-testid='theme-name'], [data-testid='theme-name'] input").HasAttribute("readonly").ShouldBeTrue();
         dialogs.Find("[data-testid='theme-editor']").ChildElementCount.ShouldBeGreaterThan(0);
         dialogs.WaitForAssertion(() => dialogs.Find("[data-testid='theme-logo']").QuerySelector("[data-testid='theme-logo-choose']").ShouldNotBeNull());
+        // the editor renders again while it settles: find the button anew until the click lands
+        await dialogs.InvokeAsync(() => { });
+        dialogs.WaitForAssertion(() => dialogs.FindAll("button").First(b => b.TextContent.Trim() == "Save").Click());
+
+        await Api.Received(1).UpdateThemeAsync(BuiltIn.Id, Arg.Is<ThemeRequest>(r => r.Name == "Coworkee"), Arg.Any<CancellationToken>());
+        await Api.DidNotReceiveWithAnyArgs().CreateThemeAsync(default!, default);
+    }
+
+    [Fact]
+    public async Task A_changed_built_in_theme_offers_a_reset_to_its_built_in_look()
+    {
+        var changed = BuiltIn with { IsChanged = true };
+        Api.GetThemesAsync(Arg.Any<CancellationToken>()).Returns([changed, Own], [BuiltIn, Own]);
+        var dialogs = Render<MudDialogProvider>();
+        Render<MudPopoverProvider>();
+        var page = Render<Themes>();
+        page.WaitForElement("[data-theme='Coworkee'] [data-testid='theme-changed']");
+
+        var resetting = page.Find("[data-theme='Coworkee'] [data-testid='theme-reset']").ClickAsync(new());
+        dialogs.WaitForAssertion(() => dialogs.FindAll("button").Any(b => b.TextContent.Trim() == "Reset").ShouldBeTrue());
+        await dialogs.FindAll("button").First(b => b.TextContent.Trim() == "Reset").ClickAsync(new());
+        await resetting;
+
+        await Api.Received(1).ResetThemeAsync(BuiltIn.Id, Arg.Any<CancellationToken>());
+        page.WaitForAssertion(() => Tile(page, "Coworkee").QuerySelector("[data-testid='theme-reset']").ShouldBeNull());
     }
 
     [Fact]
@@ -173,15 +203,18 @@ public sealed class ThemesPageTests : ClientTestBase
     public async Task Tiles_follow_the_theme_density()
     {
         var page = Render<Themes>();
-        page.WaitForAssertion(() => page.Find("[data-testid='theme-published']").ClassList.ShouldContain("mud-chip-size-small"));
+        page.WaitForAssertion(() => page.Find("[data-testid='theme-built-in']").ClassList.ShouldContain("mud-chip-size-small"));
 
         await page.InvokeAsync(() => Services.GetRequiredService<ThemeService>().Preview(new CoworkeeTheme { Dense = false }));
 
-        page.WaitForAssertion(() => page.Find("[data-testid='theme-published']").ClassList.ShouldContain("mud-chip-size-medium"));
+        page.WaitForAssertion(() => page.Find("[data-testid='theme-built-in']").ClassList.ShouldContain("mud-chip-size-medium"));
     }
 
     private static AppConfigurationValuesDto Design(SignInDesign design) =>
         new(SignInDesign.Section, JsonSerializer.SerializeToElement(design, JsonSerializerOptions.Web), JsonSerializer.SerializeToElement(new SignInDesign()), []);
+
+    private static bool Published(IRenderedComponent<Themes> page, string name) =>
+        Tile(page, name).QuerySelector("[data-testid='theme-published'] input")!.HasAttribute("checked");
 
     private static AngleSharp.Dom.IElement Tile(IRenderedComponent<Themes> page, string name) => page.Find($"[data-theme='{name}']");
 

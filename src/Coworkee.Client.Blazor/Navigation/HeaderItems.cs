@@ -59,7 +59,7 @@ public static class HeaderItems
 
     /// <summary>
     /// The configured items in their configured order; items the setting does not name follow the item before them in the default order,
-    /// names of items that are gone are ignored. The account menu stays in the bar: without it nobody signs out.
+    /// names of items that are gone are ignored. The account menu stays in a bar: without it nobody signs out.
     /// </summary>
     public static IReadOnlyList<(HeaderItem Item, HeaderPlacement Placement)> Arrange(IReadOnlyList<HeaderItem> available, IReadOnlyList<HeaderItemSetting> configured)
     {
@@ -82,7 +82,7 @@ public static class HeaderItems
             arranged.Insert(at, (defaults[i], HeaderPlacement.Bar));
         }
 
-        return arranged.Select(a => a.Item.Id == User ? (a.Item, HeaderPlacement.Bar) : a).ToList();
+        return arranged.Select(a => a.Item.Id == User && a.Placement != HeaderPlacement.SecondBar ? (a.Item, HeaderPlacement.Bar) : a).ToList();
     }
 
     public static IReadOnlyList<HeaderItemSetting> Parse(string? json)

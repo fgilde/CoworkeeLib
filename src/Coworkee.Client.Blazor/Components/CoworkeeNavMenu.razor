@@ -24,14 +24,46 @@
         }
     </div>
 }
-@if (!Mini && Theme.ShowLogoInNav)
+@if (!Mini && ShowLogo && Theme.ShowLogoInNav)
 {
     <div data-testid="nav-logo">
         <div class="d-flex justify-center mt-2 mb-3"><CoworkeeLogo Height="88" /></div>
         <MudDivider Class="mb-2" />
     </div>
 }
-@if (_entries is not null)
+@if (_entries is not null && Mini && Theme.NavMiniMode != Theming.NavMiniMode.Links)
+{
+    @* the first level only; a group opens its links in a menu next to it *@
+    <div class="d-flex flex-column align-center gap-1 pt-1" data-testid="nav-mini-groups">
+        @foreach (var entry in _entries)
+        {
+            if (entry.HasChildren)
+            {
+                <div data-nav-group-button="@entry.Text" data-activation="@(Theme.NavMiniMode == Theming.NavMiniMode.GroupsOnHover ? "hover" : "click")">
+                    <MudMenu ActivationEvent="@(Theme.NavMiniMode == Theming.NavMiniMode.GroupsOnHover ? MouseEvent.MouseOver : MouseEvent.LeftClick)"
+                             AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.TopLeft" Dense="true">
+                        <ActivatorContent Context="menu">
+                            <MudBadge Dot="true" Visible="@(GroupBadge(entry) > 0)" Color="Color.Secondary" Overlap="true">
+                                <MudIconButton Icon="@(entry.Icon ?? Icons.Material.Outlined.Folder)" Size="Size.Small" Class="ml-1 mt-1" aria-label="@L[entry.Text]"
+                                               OnClick="@(() => menu.ToggleAsync())"
+                                               Color="@(Contains(entry, _selected) ? Color.Primary : Color.Default)" />
+                            </MudBadge>
+                        </ActivatorContent>
+                        <ChildContent>
+                            <MudText Typo="Typo.subtitle2" Class="px-4 pt-2 pb-1 mud-text-secondary">@L[entry.Text]</MudText>
+                            @GroupItems(entry.Children!)
+                        </ChildContent>
+                    </MudMenu>
+                </div>
+            }
+            else if (HasLink(entry))
+            {
+                @MiniLink(entry)
+            }
+        }
+    </div>
+}
+else if (_entries is not null)
 {
     <MudExTreeView T="NavigationEntry" Items="_entries"
                    SelectedNode="_selected" SelectedNodeChanged="SelectAsync"
@@ -73,12 +105,42 @@
     private RenderFragment MiniItem(TreeViewItemContext<NavigationEntry> context) => @<text>
         @if (HasLink(context.Value))
         {
-            <MudTooltip Text="@L[context.Value!.Text]" Placement="Placement.End">
-                <MudBadge Content="@Badges[context.Value.Href]" Visible="@(Badges[context.Value.Href] > 0)" Color="Color.Secondary" Overlap="true" Max="99">
-                    <MudIconButton Icon="@context.Value.Icon" Size="Size.Small" Class="ml-1 mt-1" OnClick="() => SelectAsync(context.Value)" aria-label="@L[context.Value.Text]"
-                                   Color="@(context.Value == _selected ? Color.Primary : Color.Default)" data-nav="@context.Value.Href" />
-                </MudBadge>
-            </MudTooltip>
+            @MiniLink(context.Value!)
+        }
+        else if (context.Value is { HasChildren: true, Parent: null } group && Theme.NavMiniDividers)
+        {
+            <MudDivider Class="my-1" data-nav-divider="@group.Text" />
+        }
+    </text>;
+
+    private RenderFragment MiniLink(NavigationEntry entry) => @<MudTooltip Text="@L[entry.Text]" Placement="Placement.End">
+        <MudBadge Content="@Badges[entry.Href]" Visible="@(Badges[entry.Href] > 0)" Color="Color.Secondary" Overlap="true" Max="99">
+            <MudIconButton Icon="@entry.Icon" Size="Size.Small" Class="ml-1 mt-1" OnClick="() => SelectAsync(entry)" aria-label="@L[entry.Text]"
+                           Color="@(entry == _selected ? Color.Primary : Color.Default)" data-nav="@entry.Href" />
+        </MudBadge>
+    </MudTooltip>;
+
+    private RenderFragment GroupItems(IEnumerable<NavigationEntry> entries) => @<text>
+        @foreach (var entry in entries)
+        {
+            if (entry.HasChildren)
+            {
+                <div data-nav-group="@entry.Text">
+                    <MudMenu Label="@L[entry.Text]" StartIcon="@entry.Icon" Dense="true" AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.TopLeft">
+                        @GroupItems(entry.Children!)
+                    </MudMenu>
+                </div>
+            }
+            else if (HasLink(entry))
+            {
+                <MudMenuItem Icon="@entry.Icon" OnClick="() => SelectAsync(entry)" data-nav="@entry.Href" Class="@(entry == _selected ? "mud-primary-text" : null)">
+                    @L[entry.Text]
+                    @if (Badges[entry.Href] is > 0 and var count)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Class="ml-2">@count</MudChip>
+                    }
+                </MudMenuItem>
+            }
         }
     </text>;
 }

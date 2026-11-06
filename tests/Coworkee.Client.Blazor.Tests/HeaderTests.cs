@@ -21,8 +21,11 @@ public sealed class HeaderTests : ClientTestBase
         AddAuthorization().SetAuthorized("Ada");
     }
 
-    private void Configure(string? json) =>
-        Api.GetClientSettingsAsync(default).ReturnsForAnyArgs(new Dictionary<string, string?> { [HeaderSettings.Items] = json });
+    private void Configure(string? json, string? position = null, string? second = null) =>
+        Api.GetClientSettingsAsync(default).ReturnsForAnyArgs(new Dictionary<string, string?>
+        {
+            [HeaderSettings.Items] = json, [HeaderSettings.Position] = position, [HeaderSettings.SecondPosition] = second,
+        });
 
     private IRenderedComponent<CoworkeeLayout> RenderLayout() =>
         Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
@@ -162,6 +165,81 @@ public sealed class HeaderTests : ClientTestBase
         await layout.InvokeAsync(Services.GetRequiredService<ThemeService>().LoadAsync);
 
         layout.WaitForAssertion(() => layout.FindAll("[data-testid='rtl-toggle']").ShouldBeEmpty());
+    }
+
+    [Fact]
+    public void A_second_bar_shows_the_items_placed_there_at_its_own_edge_with_its_own_overflow_menu()
+    {
+        Configure("""[{"id":"about","placement":"SecondBar"},{"id":"rtl","placement":"SecondOverflow"},{"id":"user","placement":"SecondBar"}]""", "Top", "Right");
+
+        var layout = RenderLayout();
+
+        layout.WaitForAssertion(() => layout.Find("[data-testid='app-bar-2']").GetAttribute("data-position").ShouldBe("Right"));
+        var second = layout.Find("[data-testid='app-bar-2']");
+        second.QuerySelector("[data-testid='about-button']").ShouldNotBeNull();
+        second.QuerySelector("[data-testid='user-menu']").ShouldNotBeNull();
+        second.QuerySelector("[data-testid='app-bar-more-2']").ShouldNotBeNull();
+        var first = layout.Find("[data-testid='app-bar']");
+        first.QuerySelector("[data-testid='about-button']").ShouldBeNull();
+        first.QuerySelector("[data-testid='user-menu']").ShouldBeNull();
+        first.QuerySelector("[data-testid='app-bar-menu']").ShouldNotBeNull();
+        layout.Find(".mud-layout").ClassList.ShouldContain("cw-bar-right");
+    }
+
+    [Fact]
+    public void Without_a_second_bar_its_items_stay_in_the_first_one()
+    {
+        Configure("""[{"id":"about","placement":"SecondBar"},{"id":"user","placement":"SecondBar"}]""");
+
+        var layout = RenderLayout();
+
+        layout.WaitForAssertion(() => layout.Find("[data-testid='app-bar'] [data-testid='about-button']"));
+        layout.Find("[data-testid='app-bar'] [data-testid='user-menu']");
+        layout.FindAll("[data-testid='app-bar-2']").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void A_bar_at_the_right_edge_alone_leaves_the_menu_button_and_the_name_to_the_navigation()
+    {
+        Configure(null, "Right");
+
+        var layout = RenderLayout();
+
+        layout.WaitForAssertion(() => layout.Find("[data-testid='app-bar']").TagName.ShouldBe("NAV"));
+        layout.Find("[data-testid='app-bar']").GetAttribute("data-position").ShouldBe("Right");
+        layout.FindAll(".mud-appbar").ShouldBeEmpty();
+        layout.Find("[data-testid='drawer-head'] [data-testid='drawer-toggle']");
+        layout.Find(".mud-layout").ClassList.ShouldContain("cw-no-top-bar");
+        layout.Find(".mud-drawer").ClassList.ShouldContain("mud-drawer-clipped-never");
+    }
+
+    [Fact]
+    public async Task A_theme_puts_the_navigation_beside_the_app_bar_with_the_menu_button_in_its_head()
+    {
+        Configure(null);
+        var layout = RenderLayout();
+        layout.WaitForAssertion(() => layout.Find("[data-testid='app-bar-menu']"));
+        layout.Find(".mud-drawer").ClassList.ShouldContain("mud-drawer-clipped-always");
+
+        await layout.InvokeAsync(() => Services.GetRequiredService<ThemeService>().Preview(new CoworkeeTheme { NavBesideAppBar = true }));
+
+        layout.WaitForAssertion(() => layout.Find("[data-testid='drawer-head'] [data-testid='drawer-toggle']"));
+        layout.FindAll("[data-testid='app-bar-menu']").ShouldBeEmpty();
+        layout.Find(".mud-drawer").ClassList.ShouldContain("mud-drawer-clipped-never");
+    }
+
+    [Fact]
+    public async Task A_saved_position_moves_the_open_app_bar()
+    {
+        Configure(null);
+        var layout = RenderLayout();
+        layout.WaitForAssertion(() => layout.Find("[data-testid='app-bar']").GetAttribute("data-position").ShouldBe("Top"));
+
+        Configure(null, "Bottom", "Left");
+        await layout.InvokeAsync(Services.GetRequiredService<ThemeService>().LoadAsync);
+
+        layout.WaitForAssertion(() => layout.Find("[data-testid='app-bar']").GetAttribute("data-position").ShouldBe("Bottom"));
+        layout.Find("[data-testid='app-bar-2']").GetAttribute("data-position").ShouldBe("Left");
     }
 
     private sealed class Bar : IAppBarContributor

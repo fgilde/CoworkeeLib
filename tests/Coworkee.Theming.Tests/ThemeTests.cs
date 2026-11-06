@@ -186,12 +186,100 @@ public sealed class ThemeTests(ThemeApp app) : IAsyncLifetime
         (await Admin.PostAsJsonAsync("/api/v1/themes", Brand(logo: logo), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
     [Fact]
-    public async Task Global_themes_are_read_only()
+    public async Task Built_in_themes_cannot_be_deleted()
     {
         var coworkee = (await Admin.GetFromJsonAsync<ThemeDto[]>("/api/v1/themes", Ct))!.Single(t => t.Name == "Coworkee");
 
-        (await Admin.PutAsJsonAsync($"/api/v1/themes/{coworkee.Id}", Brand("Hacked"), Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await Admin.DeleteAsync($"/api/v1/themes/{coworkee.Id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task A_built_in_theme_is_changed_in_place_for_the_organisation_only()
+    {
+        var before = await Admin.GetFromJsonAsync<ThemeDto[]>("/api/v1/themes", Ct);
+        var coworkee = before!.Single(t => t.Name == "Coworkee");
+
+        var response = await Admin.PutAsJsonAsync($"/api/v1/themes/{coworkee.Id}", Brand("Renamed", primary: "#123456"), Ct);
+
+        response.EnsureSuccessStatusCode();
+        var after = await Admin.GetFromJsonAsync<ThemeDto[]>("/api/v1/themes", Ct);
+        after!.Length.ShouldBe(before.Length);
+        var changed = after.Single(t => t.Id == coworkee.Id);
+        changed.Name.ShouldBe("Coworkee");
+        changed.IsGlobal.ShouldBeTrue();
+        changed.IsChanged.ShouldBeTrue();
+        changed.PaletteLight.GetProperty("Primary").GetString().ShouldBe("#123456");
+        changed.Revision.ShouldBeGreaterThan(coworkee.Revision);
+        var (user, tenant) = await app.CreateTenantAdminAsync();
+        var other = (await app.As(user, tenant).GetFromJsonAsync<ThemeDto[]>("/api/v1/themes", Ct))!.Single(t => t.Id == coworkee.Id);
+        other.IsChanged.ShouldBeFalse();
+        other.PaletteLight.GetProperty("Primary").GetString().ShouldBe(coworkee.PaletteLight.GetProperty("Primary").GetString());
+    }
+
+    [Fact]
+    public async Task The_organisation_default_shows_its_changes_of_a_built_in_theme()
+    {
+        var ocean = (await Admin.GetFromJsonAsync<ThemeDto[]>("/api/v1/themes", Ct))!.Single(t => t.Name == "Ocean");
+
+        (await Admin.PutAsJsonAsync($"/api/v1/themes/{ocean.Id}", Brand(primary: "#654321"), Ct)).EnsureSuccessStatusCode();
+
+        var current = await Admin.GetFromJsonAsync<ThemeDto>("/api/v1/themes/current", Ct);
+        current!.Id.ShouldBe(ocean.Id);
+        current.PaletteLight.GetProperty("Primary").GetString().ShouldBe("#654321");
+    }
+
+    [Fact]
+    public async Task Resetting_a_built_in_theme_brings_back_its_original_look_with_a_new_revision()
+    {
+        var coworkee = (await Admin.GetFromJsonAsync<ThemeDto[]>("/api/v1/themes", Ct))!.Single(t => t.Name == "Coworkee");
+        var changed = await (await Admin.PutAsJsonAsync($"/api/v1/themes/{coworkee.Id}", Brand(primary: "#123456"), Ct)).Content.ReadFromJsonAsync<ThemeDto>(Ct);
+
+        var response = await Admin.PostAsync($"/api/v1/themes/{coworkee.Id}/reset", null, Ct);
+
+        response.EnsureSuccessStatusCode();
+        var reset = (await Admin.GetFromJsonAsync<ThemeDto[]>("/api/v1/themes", Ct))!.Single(t => t.Id == coworkee.Id);
+        reset.IsChanged.ShouldBeFalse();
+        reset.PaletteLight.GetProperty("Primary").GetString().ShouldBe(coworkee.PaletteLight.GetProperty("Primary").GetString());
+        // the loading screen keeps logos by id and revision: an earlier revision must never come back
+        reset.Revision.ShouldBeGreaterThan(changed!.Revision);
+    }
+
+    [Fact]
+    public async Task Only_built_in_themes_can_be_reset()
+    {
+        var created = await (await Admin.PostAsJsonAsync("/api/v1/themes", Brand(), Ct)).Content.ReadFromJsonAsync<ThemeDto>(Ct);
+
+        (await Admin.PostAsync($"/api/v1/themes/{created!.Id}/reset", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task A_built_in_theme_can_be_withdrawn_from_the_users_of_the_organisation()
+    {
+        var octo = (await Admin.GetFromJsonAsync<ThemeDto[]>("/api/v1/themes", Ct))!.Single(t => t.Name == "Octo");
+        var response = await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest("eve@acme.test", "Passw0rd!x", null, null), Ct);
+        var eve = app.As((await response.Content.ReadFromJsonAsync<UserDto>(Ct))!.Id, _setup.TenantId);
+
+        (await Admin.PutAsJsonAsync($"/api/v1/themes/{octo.Id}/published", false, Ct)).EnsureSuccessStatusCode();
+
+        var managed = (await Admin.GetFromJsonAsync<ThemeDto[]>("/api/v1/themes", Ct))!.Single(t => t.Id == octo.Id);
+        managed.IsPublished.ShouldBeFalse();
+        managed.IsChanged.ShouldBeFalse();
+        (await eve.GetFromJsonAsync<ThemeDto[]>("/api/v1/themes", Ct))!.ShouldNotContain(t => t.Id == octo.Id);
+
+        (await Admin.PutAsJsonAsync($"/api/v1/themes/{octo.Id}/published", true, Ct)).EnsureSuccessStatusCode();
+        (await eve.GetFromJsonAsync<ThemeDto[]>("/api/v1/themes", Ct))!.ShouldContain(t => t.Id == octo.Id);
+    }
+
+    [Fact]
+    public async Task Publishing_an_own_theme_keeps_what_the_editor_saved()
+    {
+        var created = await (await Admin.PostAsJsonAsync("/api/v1/themes", Brand(css: ".a{color:red}"), Ct)).Content.ReadFromJsonAsync<ThemeDto>(Ct);
+
+        (await Admin.PutAsJsonAsync($"/api/v1/themes/{created!.Id}/published", true, Ct)).EnsureSuccessStatusCode();
+
+        var published = (await Admin.GetFromJsonAsync<ThemeDto[]>("/api/v1/themes", Ct))!.Single(t => t.Id == created.Id);
+        published.IsPublished.ShouldBeTrue();
+        published.CustomCss.ShouldBe(".a{color:red}");
     }
 
     [Fact]

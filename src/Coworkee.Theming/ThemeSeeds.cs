@@ -127,12 +127,40 @@ internal static class ThemeSeeds
         IsPublished = true,
         PaletteLight = Merge(source.PaletteLight, theme.Light),
         PaletteDark = Merge(source.PaletteDark, theme.Dark ?? theme.Light),
-        LayoutProperties = source.LayoutProperties,
-        Typography = source.Typography,
+        LayoutProperties = Over(source.LayoutProperties, theme.Layout),
+        Typography = Over(source.Typography, theme.Typography),
         Shadows = source.Shadows,
-        Options = source.Options,
-        CustomCss = source.CustomCss,
+        Options = Over(source.Options, theme.Options),
+        CustomCss = theme.CustomCss ?? source.CustomCss,
     };
+
+    // the app theme's values over the base theme's, section by section
+    private static string? Over(string? json, IReadOnlyDictionary<string, object>? values)
+    {
+        if (values is null)
+        {
+            return json;
+        }
+
+        var merged = (json is null ? null : JsonNode.Parse(json) as JsonObject) ?? [];
+        Set(merged, JsonSerializer.SerializeToNode(values)!.AsObject());
+        return merged.ToJsonString();
+    }
+
+    private static void Set(JsonObject target, JsonObject values)
+    {
+        foreach (var (key, value) in values.ToList())
+        {
+            if (value is JsonObject section && target[key] is JsonObject existing)
+            {
+                Set(existing, section);
+            }
+            else
+            {
+                target[key] = value?.DeepClone();
+            }
+        }
+    }
 
     private static string Merge(string palette, IReadOnlyDictionary<string, string> colors)
     {

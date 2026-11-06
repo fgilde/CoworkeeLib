@@ -4,6 +4,14 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Added
+
+- Themes: saving a built-in theme changes it for the organisation in place instead of creating a copy; it keeps its name and id, the tile shows *changed* and offers *Reset to the built-in look* (`POST /api/v1/themes/{id}/reset`).
+- Themes: every tile has the switch *Users can choose it*, built-in themes too (`PUT /api/v1/themes/{id}/published`).
+- Themes: `NavMiniMode` (every link, or the first level with a group's links in a menu on click or hover), `NavMiniDividers` (lines between the groups of the narrow navigation) and `NavBesideAppBar` (the navigation the full height beside the app bar, its head with the app's name and menu button).
+- Header: the app bar at the top, right, bottom or left (`Header.Position`) and an optional second app bar at another edge (`Header.SecondPosition`), each with its own overflow menu; the header page shows the layout as a small picture and gives every item one menu instead of five buttons.
+- App themes (`ThemingOptions.Themes`) bring `Options`, `Layout`, `Typography` and `CustomCss` over those of their base theme.
+
 ### Changed
 
 - Client entities: a copy asks the server for the facets of all its rows (a read of the whole set) at most every 10 minutes instead of after every change; the counts stay the local rows'. A set the server changes every minute (a hub's shipments) no longer has its whole set read every minute.
@@ -13,6 +21,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 - Client entities: rows with a collection among their properties (e.g. `Tags`) downloaded whole server rows; they select their own members now (a third of the data for a hub's shipments), the collection still comes through `$expand`.
 - Client entities: a facet load that finished at once kept the copy from ever asking for the facets again.
+- Themes: a changed theme or default reached only the open pages of theme managers; every page of the organisation applies it at once now.
 
 ## 0.0.1.64 (2026-11-05)
 

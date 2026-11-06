@@ -260,6 +260,12 @@ public interface ICoworkeeApi
 
     Task SetDefaultThemeAsync(Guid id, CancellationToken cancellationToken = default);
 
+    /// <summary>Gives a built-in theme its original look back in the organisation.</summary>
+    Task ResetThemeAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>Whether the users of the organisation may choose the theme, a built-in one too.</summary>
+    Task SetThemePublishedAsync(Guid id, bool published, CancellationToken cancellationToken = default);
+
     /// <summary>The Keycloak login theme the API keeps in the app's design.</summary>
     Task<KeycloakThemeStatusDto> GetKeycloakThemeStatusAsync(CancellationToken cancellationToken = default);
 

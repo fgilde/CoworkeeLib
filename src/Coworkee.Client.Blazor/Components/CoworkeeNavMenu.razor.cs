@@ -46,6 +46,9 @@ public partial class CoworkeeNavMenu : IDisposable
     /// <summary>The drawer shows icons only: the tree becomes a flat icon list and the tools hide.</summary>
     [Parameter] public bool Mini { get; set; }
 
+    /// <summary>The theme's logo above the menu; off while the navigation's head shows the app's name.</summary>
+    [Parameter] public bool ShowLogo { get; set; } = true;
+
     private TreeViewMode ViewMode => Mini ? TreeViewMode.FlatList : _viewMode;
 
     private Theming.CoworkeeTheme Theme => ThemeService.Theme;
@@ -103,6 +106,21 @@ public partial class CoworkeeNavMenu : IDisposable
     }
 
     private static bool HasLink(NavigationEntry? entry) => !string.IsNullOrWhiteSpace(entry?.Href);
+
+    private static bool Contains(NavigationEntry group, NavigationEntry? entry)
+    {
+        for (var parent = entry?.Parent; parent is not null; parent = parent.Parent)
+        {
+            if (parent == group)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private int GroupBadge(NavigationEntry group) => group.Children?.Sum(c => c.HasChildren ? GroupBadge(c) : Badges[c.Href]) ?? 0;
 
     // the tree reports the entry SelectCurrent chose as a selection too; going there would drop the query or leave a detail page
     private Task SelectAsync(NavigationEntry? entry)

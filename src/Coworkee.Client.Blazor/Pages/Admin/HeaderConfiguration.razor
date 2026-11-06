@@ -1,6 +1,6 @@
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + SettingsPermissions.Manage)]
 
-<PageHeader Title="Header" Description="The order of the app bar items, whether each shows in the bar, in the overflow menu or not at all, and where the assistant shows." />
+<PageHeader Title="Header" Description="Where the app bars sit, which items they show, in which order and for whom, and where the assistant shows." />
 
 @if (_items is null)
 {
@@ -9,21 +9,87 @@
 else
 {
     <MudStack Spacing="4" data-testid="header-configuration">
+        <MudPaper Outlined="true" Class="pa-4" data-testid="header-layout">
+            <MudText Typo="Typo.h6">@L["Layout"]</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-3">@L["The edge of the window each bar sits on. Bars at the left or right are narrow columns of icons. Phones always show one bar at the top."]</MudText>
+            <MudGrid Spacing="4">
+                <MudItem xs="12" md="5">
+                    <MudStack Spacing="3">
+                        <div>
+                            <MudText Typo="Typo.subtitle2" Class="mb-1">@L["App bar"]</MudText>
+                            <MudToggleGroup T="HeaderPosition" Value="_position" ValueChanged="SetPosition" Color="Color.Primary" Size="Size.Small" data-testid="header-position">
+                                @foreach (var (position, label, icon) in Positions)
+                                {
+                                    <MudToggleItem Value="position">
+                                        <span class="d-flex align-center gap-1" data-position="@position"><MudIcon Icon="@icon" Size="Size.Small" />@L[label]</span>
+                                    </MudToggleItem>
+                                }
+                            </MudToggleGroup>
+                        </div>
+                        <div>
+                            <div data-testid="header-second">
+                                <MudSwitch T="bool" Value="_second is not null" ValueChanged="ToggleSecond" Color="Color.Secondary" Label="@L["Second app bar"]" />
+                            </div>
+                            @if (_second is { } second)
+                            {
+                                <MudToggleGroup T="HeaderPosition" Value="second" ValueChanged="SetSecond" Color="Color.Secondary" Size="Size.Small" data-testid="header-second-position">
+                                    @foreach (var (position, label, icon) in Positions.Where(p => p.Position != _position))
+                                    {
+                                        <MudToggleItem Value="position">
+                                            <span class="d-flex align-center gap-1" data-position="@position"><MudIcon Icon="@icon" Size="Size.Small" />@L[label]</span>
+                                        </MudToggleItem>
+                                    }
+                                </MudToggleGroup>
+                            }
+                        </div>
+                    </MudStack>
+                </MudItem>
+                <MudItem xs="12" md="7">
+                    @* a small picture of the window: the bars with their items, the navigation and the page *@
+                    <div class="cw-header-preview" data-testid="header-preview" aria-hidden="true">
+                        @foreach (var (bar, position) in Bars)
+                        {
+                            <div class="cw-header-preview-bar cw-header-preview-@position.ToString().ToLowerInvariant() @(bar == 1 ? "cw-header-preview-second" : null)"
+                                 data-preview-bar="@bar" data-position="@position">
+                                @foreach (var item in InZone(bar == 0 ? HeaderPlacement.Bar : HeaderPlacement.SecondBar).Take(8))
+                                {
+                                    <MudIcon Icon="@item.Icon" Style="font-size:14px" />
+                                }
+                                @if (InZone(bar == 0 ? HeaderPlacement.Overflow : HeaderPlacement.SecondOverflow).Any())
+                                {
+                                    <MudIcon Icon="@Icons.Material.Filled.MoreVert" Style="font-size:14px" />
+                                }
+                            </div>
+                        }
+                        <div class="cw-header-preview-page" style="@PreviewPageStyle">
+                            <div class="cw-header-preview-nav"></div>
+                            <div class="cw-header-preview-content">
+                                <div></div><div></div><div></div>
+                            </div>
+                        </div>
+                    </div>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+
         <MudPaper Outlined="true" Class="pa-4" data-testid="header-items">
-            <MudText Typo="Typo.h6">@L["App bar"]</MudText>
-            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">@L["From left to right. On phones language, theme, direction, colour mode and about move into the overflow menu."]</MudText>
+            <MudText Typo="Typo.h6">@L["Items"]</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-3">@L["Drag the items between the areas and into their order, or use the menu of an item. On phones language, theme, direction, colour mode and about move into the overflow menu."]</MudText>
             <MudDropContainer T="HeaderItem" @ref="_drop" Items="_items.Select(i => i.Item)" ItemsSelector="@((item, zone) => PlacementOf(item).ToString() == zone)"
-                              CanDrop="@((item, zone) => item.Id != HeaderItems.User || zone == nameof(HeaderPlacement.Bar))" ItemDropped="Dropped"
-                              CanDropClass="mud-border-primary" NoDropClass="mud-border-error" Class="d-flex flex-column gap-3">
+                              CanDrop="@((item, zone) => CanPlace(item, Enum.Parse<HeaderPlacement>(zone)))" ItemDropped="Dropped"
+                              CanDropClass="mud-border-primary" NoDropClass="mud-border-error" Class="cw-header-zones">
                 <ChildContent>
                     @foreach (var (zone, label, icon) in Zones)
                     {
-                        <div data-header-zone="@zone">
+                        <div data-header-zone="@zone" class="@(zone == HeaderPlacement.Hidden ? "cw-header-zone-wide" : null)">
                             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-1">
-                                <MudIcon Icon="@icon" Size="Size.Small" Class="mud-text-secondary" />
+                                <MudIcon Icon="@icon" Size="Size.Small" Color="@ZoneColor(zone)" />
                                 <MudText Typo="Typo.subtitle2">@L[label]</MudText>
+                                <MudSpacer />
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">@_items.Count(i => i.Placement == zone)</MudText>
                             </MudStack>
-                            <MudDropZone T="HeaderItem" Identifier="@zone.ToString()" AllowReorder="true" Class="rounded border-2 border-dashed mud-border-lines-default pa-1" Style="min-height:48px" />
+                            <MudDropZone T="HeaderItem" Identifier="@zone.ToString()" AllowReorder="true"
+                                         Class="@($"rounded border-2 border-dashed mud-border-lines-default pa-1 {(zone == HeaderPlacement.Hidden ? "d-flex flex-wrap gap-1" : "")}")" Style="min-height:56px" />
                         </div>
                     }
                 </ChildContent>
@@ -34,52 +100,47 @@ else
                         var placement = _items[index].Placement;
                         var access = Access(item.Id);
                     }
-                    @* the buttons keep everything reachable without a mouse *@
-                    <div class="d-flex align-center gap-2 py-1 px-1" data-header-item="@item.Id" data-placement="@placement">
-                        <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Size="Size.Small" Class="mud-text-secondary" Style="cursor:grab" />
-                        <MudIcon Icon="@item.Icon" Color="@(placement == HeaderPlacement.Hidden ? Color.Default : Color.Primary)" />
-                        <div class="flex-grow-1">
-                            <MudText Typo="Typo.body1" Class="@(placement == HeaderPlacement.Hidden ? "mud-text-disabled" : null)">@L[item.Title]</MudText>
+                    <MudPaper Outlined="true" Class="d-flex align-center gap-2 py-1 px-2 my-1" Style="cursor:grab" data-header-item="@item.Id" data-placement="@placement">
+                        <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Size="Size.Small" Class="mud-text-secondary" />
+                        <MudIcon Icon="@item.Icon" Size="Size.Small" Color="@(placement == HeaderPlacement.Hidden ? Color.Default : ZoneColor(placement))" />
+                        <div class="flex-grow-1" style="min-width:0">
+                            <MudText Typo="Typo.body2" Class="@(placement == HeaderPlacement.Hidden ? "mud-text-disabled text-truncate" : "text-truncate")">@L[item.Title]</MudText>
                             @if (item.Id == HeaderItems.Assistant)
                             {
                                 <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["Shows only with the assistant display App bar button."]</MudText>
                             }
                             @if (access.Permissions.Count > 0)
                             {
-                                <MudText Typo="Typo.caption" Class="mud-text-secondary" data-testid="header-access-summary">
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary d-block text-truncate" data-testid="header-access-summary">
                                     @L["Visible for"]: @(access.Permissions.Count > 1 ? L[access.Match == PermissionMatch.All ? "all of" : "any of"] + " " : null)@string.Join(", ", access.Permissions)
                                 </MudText>
                             }
                         </div>
-                        @if (item.Id != HeaderItems.User)
+                        @if (access.Permissions.Count > 0)
                         {
                             <MudTooltip Text="@L["Visible for"]">
-                                <MudIconButton Icon="@(access.Permissions.Count > 0 ? Icons.Material.Filled.Lock : Icons.Material.Outlined.LockOpen)" Size="Size.Small"
-                                               Color="@(access.Permissions.Count > 0 ? Color.Warning : Color.Default)" OnClick="() => EditAccessAsync(item)"
-                                               aria-label="@L["Visible for {0}", L[item.Title]]" aria-haspopup="dialog" data-testid="header-access" />
+                                <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Warning" data-testid="header-access-badge" />
                             </MudTooltip>
                         }
-                        <MudIconButton Icon="@Icons.Material.Outlined.ArrowUpward" Size="Size.Small" Disabled="@(!CanMove(index, -1))" OnClick="() => Move(index, -1)" aria-label="@L["Move up"]" data-testid="header-up" />
-                        <MudIconButton Icon="@Icons.Material.Outlined.ArrowDownward" Size="Size.Small" Disabled="@(!CanMove(index, 1))" OnClick="() => Move(index, 1)" aria-label="@L["Move down"]" data-testid="header-down" />
-                        <MudTooltip Text="@L["In the bar"]">
-                            <MudIconButton Icon="@Icons.Material.Outlined.WebAsset" Size="Size.Small" Color="@Selected(placement, HeaderPlacement.Bar)" OnClick="() => Place(index, HeaderPlacement.Bar)"
-                                           aria-label="@L["In the bar"]" aria-pressed="@Pressed(placement, HeaderPlacement.Bar)" data-testid="header-bar" />
-                        </MudTooltip>
-                        @if (item.Id != HeaderItems.User)
-                        {
-                            <MudTooltip Text="@L["In the overflow menu"]">
-                                <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Color="@Selected(placement, HeaderPlacement.Overflow)" OnClick="() => Place(index, HeaderPlacement.Overflow)"
-                                               aria-label="@L["In the overflow menu"]" aria-pressed="@Pressed(placement, HeaderPlacement.Overflow)" data-testid="header-overflow" />
-                            </MudTooltip>
-                            <MudTooltip Text="@L["Hidden"]">
-                                <MudIconButton Icon="@Icons.Material.Outlined.VisibilityOff" Size="Size.Small" Color="@Selected(placement, HeaderPlacement.Hidden)" OnClick="() => Place(index, HeaderPlacement.Hidden)"
-                                               aria-label="@L["Hidden"]" aria-pressed="@Pressed(placement, HeaderPlacement.Hidden)" data-testid="header-hide" />
-                            </MudTooltip>
-                        }
-                    </div>
+                        @* everything the drag does, without a mouse *@
+                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="true" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight"
+                                 aria-label="@L["Actions for {0}", L[item.Title]]" data-testid="header-item-menu">
+                            <MudMenuItem Icon="@Icons.Material.Outlined.ArrowUpward" Disabled="@(!CanMove(index, -1))" OnClick="() => Move(index, -1)" data-testid="header-up">@L["Move up"]</MudMenuItem>
+                            <MudMenuItem Icon="@Icons.Material.Outlined.ArrowDownward" Disabled="@(!CanMove(index, 1))" OnClick="() => Move(index, 1)" data-testid="header-down">@L["Move down"]</MudMenuItem>
+                            <MudDivider />
+                            @foreach (var (zone, label, icon) in Zones.Where(z => z.Zone != placement && CanPlace(item, z.Zone)))
+                            {
+                                <MudMenuItem Icon="@icon" OnClick="() => Place(index, zone)" data-testid="@($"header-place-{zone}")">@L[label]</MudMenuItem>
+                            }
+                            @if (item.Id != HeaderItems.User)
+                            {
+                                <MudDivider />
+                                <MudMenuItem Icon="@Icons.Material.Outlined.Lock" OnClick="() => EditAccessAsync(item)" aria-haspopup="dialog" data-testid="header-access">@L["Visible for"]…</MudMenuItem>
+                            }
+                        </MudMenu>
+                    </MudPaper>
                 </ItemRenderer>
             </MudDropContainer>
-            <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["Drag to reorder"]</MudText>
         </MudPaper>
 
         <MudPaper Outlined="true" Class="pa-4" data-testid="assistant-display">
@@ -104,3 +165,23 @@ else
         </MudStack>
     </MudStack>
 }
+
+<style>
+    .cw-header-zones { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .cw-header-zone-wide { grid-column: 1 / -1; }
+    .cw-header-zone-wide .mud-drop-zone > .mud-paper { flex: 0 1 260px; }
+    .cw-header-preview { position: relative; height: 200px; border-radius: 8px; overflow: hidden; border: 1px solid var(--mud-palette-lines-default); background: var(--mud-palette-background); }
+    .cw-header-preview-bar { position: absolute; display: flex; gap: 4px; align-items: center; justify-content: flex-end; padding: 4px; z-index: 1;
+      background: var(--mud-palette-primary); color: var(--mud-palette-primary-text); }
+    .cw-header-preview-second { background: var(--mud-palette-secondary); color: var(--mud-palette-secondary-text); }
+    .cw-header-preview-top { top: 0; left: 0; right: 0; height: 26px; }
+    .cw-header-preview-bottom { bottom: 0; left: 0; right: 0; height: 26px; }
+    .cw-header-preview-left, .cw-header-preview-right { top: 0; bottom: 0; width: 26px; flex-direction: column; justify-content: flex-start; }
+    .cw-header-preview-left { left: 0; }
+    .cw-header-preview-right { right: 0; }
+    .cw-header-preview-page { position: absolute; display: flex; }
+    .cw-header-preview-nav { width: 22%; background: var(--mud-palette-drawer-background); border-right: 1px solid var(--mud-palette-lines-default); }
+    .cw-header-preview-content { flex: 1; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .cw-header-preview-content div { height: 18px; border-radius: 4px; background: var(--mud-palette-surface); border: 1px solid var(--mud-palette-lines-default); }
+    .cw-header-preview-content div:nth-child(2) { height: 48px; }
+</style>

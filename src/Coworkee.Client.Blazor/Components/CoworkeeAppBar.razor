@@ -1,15 +1,57 @@
-<MudAppBar Elevation="0">
-    <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" aria-label="@L["Navigation"]" />
-    <CoworkeeBrand />
-    <MudSpacer />
-    @if (!Bar.Any(i => i.Id == HeaderItems.Search))
-    {
-        @* in the overflow menu or hidden: Ctrl+K still opens the palette *@
-        <CoworkeeCommandPalette @ref="_palette" ShowButton="false" />
-    }
-    @foreach (var item in Bar)
-    {
-        switch (item.Id)
+@if (HeaderLayout.IsVertical(Position))
+{
+    @* a narrow column of icons at the left or right edge; its overflow menu at the bottom *@
+    <nav class="cw-side-bar cw-side-bar-@Position.ToString().ToLowerInvariant()" data-testid="@TestId" data-position="@Position" aria-label="@L["App bar"]">
+        @Content(vertical: true)
+    </nav>
+}
+else
+{
+    <MudAppBar Elevation="0" Bottom="@(Position == HeaderPosition.Bottom)" data-testid="@TestId" data-position="@Position">
+        @if (ShowBrand)
+        {
+            @if (ShowMenuButton)
+            {
+                <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" aria-label="@L["Navigation"]" data-testid="app-bar-menu" />
+            }
+            <CoworkeeBrand />
+        }
+        <MudSpacer />
+        @Content(vertical: false)
+    </MudAppBar>
+}
+
+@code {
+    private RenderFragment Content(bool vertical) => @<text>
+        @if (HasHiddenPalette)
+        {
+            @* in the overflow menu or hidden: Ctrl+K still opens the palette *@
+            <CoworkeeCommandPalette @ref="_palette" ShowButton="false" />
+        }
+        @foreach (var item in Bar)
+        {
+            @InBar(item)
+        }
+        @if (Overflow.Count > 0)
+        {
+            @if (vertical)
+            {
+                <div style="flex:1 1 auto"></div>
+            }
+            <MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Dense="Density.Dense"
+                     AnchorOrigin="@(vertical ? (Position == HeaderPosition.Left ? Origin.BottomRight : Origin.BottomLeft) : Origin.BottomRight)"
+                     TransformOrigin="@(vertical ? (Position == HeaderPosition.Left ? Origin.BottomLeft : Origin.BottomRight) : Origin.TopRight)"
+                     aria-label="@L["More"]" data-testid="@(Second ? "app-bar-more-2" : "app-bar-more")">
+                @foreach (var item in Overflow)
+                {
+                    @InMenu(item)
+                }
+            </MudMenu>
+        }
+    </text>;
+
+    private RenderFragment InBar(HeaderItem item) => @<text>
+        @switch (item.Id)
         {
             case HeaderItems.Search:
                 <CoworkeeCommandPalette @ref="_palette" />
@@ -48,49 +90,43 @@
                 <DynamicComponent Type="item.App!.Component" Parameters="item.App.Parameters" />
                 break;
         }
-    }
-    @if (Overflow.Count > 0)
-    {
-        <MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense"
-                 aria-label="@L["More"]" data-testid="app-bar-more">
-            @foreach (var item in Overflow)
-            {
-                switch (item.Id)
-                {
-                    case HeaderItems.Search:
-                        <MudMenuItem Icon="@Icons.Material.Outlined.Search" OnClick="OpenSearchAsync" data-testid="header-search">@L["Search"]</MudMenuItem>
-                        break;
-                    case HeaderItems.Language:
-                        <LanguageMenu Nested="true" />
-                        break;
-                    case HeaderItems.Theme:
-                        <ThemeMenu Nested="true" />
-                        break;
-                    case HeaderItems.RightToLeft:
-                        <MudMenuItem Icon="@Icons.Material.Outlined.FormatTextdirectionRToL" OnClick="ToggleRightToLeftAsync" data-testid="rtl-toggle">@L["Right to left"]</MudMenuItem>
-                        break;
-                    case HeaderItems.DarkMode:
-                        <MudMenuItem Icon="@(Dark ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" OnClick="ToggleDark">@L["Dark mode"]</MudMenuItem>
-                        break;
-                    case HeaderItems.Notifications:
-                        <AuthorizeView><Authorized>
-                            <MudMenuItem Icon="@Icons.Material.Outlined.Notifications" Href="@Links.Href("/notifications")">@L["Notifications"]</MudMenuItem>
-                        </Authorized></AuthorizeView>
-                        break;
-                    case HeaderItems.Role:
-                        <AuthorizeView><Authorized><ActiveRoleMenu Nested="true" /></Authorized></AuthorizeView>
-                        break;
-                    case HeaderItems.Assistant:
-                        <AuthorizeView><Authorized><AssistantLauncher InAppBar="true" Nested="true" /></Authorized></AuthorizeView>
-                        break;
-                    case HeaderItems.About:
-                        <MudMenuItem Icon="@Icons.Material.Outlined.Info" OnClick="ShowAboutAsync" data-testid="about-button">@L["About"]</MudMenuItem>
-                        break;
-                    default:
-                        <DynamicComponent Type="item.App!.Component" Parameters="item.App.Parameters" />
-                        break;
-                }
-            }
-        </MudMenu>
-    }
-</MudAppBar>
+    </text>;
+
+    private RenderFragment InMenu(HeaderItem item) => @<text>
+        @switch (item.Id)
+        {
+            case HeaderItems.Search:
+                <MudMenuItem Icon="@Icons.Material.Outlined.Search" OnClick="OpenSearchAsync" data-testid="header-search">@L["Search"]</MudMenuItem>
+                break;
+            case HeaderItems.Language:
+                <LanguageMenu Nested="true" />
+                break;
+            case HeaderItems.Theme:
+                <ThemeMenu Nested="true" />
+                break;
+            case HeaderItems.RightToLeft:
+                <MudMenuItem Icon="@Icons.Material.Outlined.FormatTextdirectionRToL" OnClick="ToggleRightToLeftAsync" data-testid="rtl-toggle">@L["Right to left"]</MudMenuItem>
+                break;
+            case HeaderItems.DarkMode:
+                <MudMenuItem Icon="@(Dark ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" OnClick="ToggleDark">@L["Dark mode"]</MudMenuItem>
+                break;
+            case HeaderItems.Notifications:
+                <AuthorizeView><Authorized>
+                    <MudMenuItem Icon="@Icons.Material.Outlined.Notifications" Href="@Links.Href("/notifications")">@L["Notifications"]</MudMenuItem>
+                </Authorized></AuthorizeView>
+                break;
+            case HeaderItems.Role:
+                <AuthorizeView><Authorized><ActiveRoleMenu Nested="true" /></Authorized></AuthorizeView>
+                break;
+            case HeaderItems.Assistant:
+                <AuthorizeView><Authorized><AssistantLauncher InAppBar="true" Nested="true" /></Authorized></AuthorizeView>
+                break;
+            case HeaderItems.About:
+                <MudMenuItem Icon="@Icons.Material.Outlined.Info" OnClick="ShowAboutAsync" data-testid="about-button">@L["About"]</MudMenuItem>
+                break;
+            default:
+                <DynamicComponent Type="item.App!.Component" Parameters="item.App.Parameters" />
+                break;
+        }
+    </text>;
+}

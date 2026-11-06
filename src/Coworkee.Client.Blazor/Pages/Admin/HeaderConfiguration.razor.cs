@@ -9,7 +9,10 @@ using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Pages.Admin;
 
-/// <summary>The app bar of the installation (<see cref="HeaderSettings.Items"/>) and where the assistant shows (<see cref="AiSettingNames.Display"/>), saved as system wide settings.</summary>
+/// <summary>
+/// The app bars of the installation: their edges (<see cref="HeaderSettings.Position"/>, <see cref="HeaderSettings.SecondPosition"/>), their items
+/// (<see cref="HeaderSettings.Items"/>) and where the assistant shows (<see cref="AiSettingNames.Display"/>), saved as system wide settings.
+/// </summary>
 public partial class HeaderConfiguration
 {
     private static readonly (string Display, string Label, string Icon)[] Displays =
@@ -21,11 +24,12 @@ public partial class HeaderConfiguration
         (AssistantDisplay.Off, "Only Ctrl+I", Icons.Material.Outlined.Keyboard),
     ];
 
-    private static readonly (HeaderPlacement Zone, string Label, string Icon)[] Zones =
+    private static readonly (HeaderPosition Position, string Label, string Icon)[] Positions =
     [
-        (HeaderPlacement.Bar, "In the bar", Icons.Material.Outlined.WebAsset),
-        (HeaderPlacement.Overflow, "In the overflow menu", Icons.Material.Filled.MoreVert),
-        (HeaderPlacement.Hidden, "Hidden", Icons.Material.Outlined.VisibilityOff),
+        (HeaderPosition.Top, "Top edge", Icons.Material.Outlined.BorderTop),
+        (HeaderPosition.Right, "Right edge", Icons.Material.Outlined.BorderRight),
+        (HeaderPosition.Bottom, "Bottom edge", Icons.Material.Outlined.BorderBottom),
+        (HeaderPosition.Left, "Left edge", Icons.Material.Outlined.BorderLeft),
     ];
 
     // kept grouped by placement, so the list order is the order within each zone
@@ -33,6 +37,8 @@ public partial class HeaderConfiguration
     private readonly Dictionary<string, (IReadOnlyList<string> Permissions, PermissionMatch Match)> _access = new(StringComparer.Ordinal);
     private MudDropContainer<HeaderItem>? _drop;
     private bool _reorder;
+    private HeaderPosition _position = HeaderPosition.Top;
+    private HeaderPosition? _second;
     private string _display = AssistantDisplay.BottomRight;
     private bool _busy;
 
@@ -50,11 +56,42 @@ public partial class HeaderConfiguration
 
     private IReadOnlyList<HeaderItem> Available => HeaderItems.All(Contributors);
 
+    // the second bar's areas only while there is one
+    private IEnumerable<(HeaderPlacement Zone, string Label, string Icon)> Zones
+    {
+        get
+        {
+            yield return (HeaderPlacement.Bar, "App bar", Icons.Material.Outlined.WebAsset);
+            yield return (HeaderPlacement.Overflow, "More menu of the app bar", Icons.Material.Filled.MoreVert);
+            if (_second is not null)
+            {
+                yield return (HeaderPlacement.SecondBar, "Second app bar", Icons.Material.Outlined.ViewSidebar);
+                yield return (HeaderPlacement.SecondOverflow, "More menu of the second bar", Icons.Material.Filled.MoreVert);
+            }
+
+            yield return (HeaderPlacement.Hidden, "Hidden", Icons.Material.Outlined.VisibilityOff);
+        }
+    }
+
+    private IEnumerable<(int Bar, HeaderPosition Position)> Bars => _second is { } second ? [(0, _position), (1, second)] : [(0, _position)];
+
+    private string PreviewPageStyle
+    {
+        get
+        {
+            string Edge(HeaderPosition position) => _position == position || _second == position ? "26px" : "0";
+            return $"top:{Edge(HeaderPosition.Top)};bottom:{Edge(HeaderPosition.Bottom)};left:{Edge(HeaderPosition.Left)};right:{Edge(HeaderPosition.Right)}";
+        }
+    }
+
     protected override Task OnInitializedAsync() => LoadAsync();
 
     private Task LoadAsync() => Snackbar.RunAsync(async () =>
     {
         var values = (await Api.GetSettingsAsync(SettingScope.Global)).ToDictionary(v => v.Name, v => v.Value, StringComparer.Ordinal);
+        var layout = HeaderLayout.From(values);
+        _position = layout.Position;
+        _second = layout.Second;
         var configured = HeaderItems.Parse(values.GetValueOrDefault(HeaderSettings.Items));
         _access.Clear();
         foreach (var setting in configured.Where(c => c.Id != HeaderItems.User && c.Permissions is { Count: > 0 }))
@@ -62,14 +99,42 @@ public partial class HeaderConfiguration
             _access.TryAdd(setting.Id, (setting.Permissions!, setting.Match));
         }
 
-        Show(HeaderItems.Arrange(Available, configured));
+        Show(HeaderItems.Arrange(Available, configured).Select(i => (i.Item, layout.Effective(i.Placement))));
         _display = values.GetValueOrDefault(AiSettingNames.Display) is { } display && AssistantDisplay.All.Contains(display) ? display : AssistantDisplay.BottomRight;
     });
 
     private void Reset()
     {
         _access.Clear();
+        _position = HeaderPosition.Top;
+        _second = null;
         Show(HeaderItems.Arrange(Available, []));
+    }
+
+    private void SetPosition(HeaderPosition position)
+    {
+        // the second bar gives way to the first
+        if (_second == position)
+        {
+            _second = Positions.Select(p => p.Position).First(p => p != position);
+        }
+
+        _position = position;
+    }
+
+    private void SetSecond(HeaderPosition position) => _second = position;
+
+    private void ToggleSecond(bool on)
+    {
+        if (on)
+        {
+            _second = _position == HeaderPosition.Right ? HeaderPosition.Left : HeaderPosition.Right;
+            return;
+        }
+
+        // without the second bar its items are the first bar's
+        _second = null;
+        Show(_items!.Select(i => (i.Item, HeaderLayout.Default.Effective(i.Placement))));
     }
 
     private void Show(IEnumerable<(HeaderItem Item, HeaderPlacement Placement)> items)
@@ -88,7 +153,20 @@ public partial class HeaderConfiguration
         }
     }
 
+    private IEnumerable<HeaderItem> InZone(HeaderPlacement placement) => _items!.Where(i => i.Placement == placement).Select(i => i.Item);
+
     private HeaderPlacement PlacementOf(HeaderItem item) => _items!.Find(i => i.Item.Id == item.Id).Placement;
+
+    // the account menu stays in a bar: without it nobody signs out
+    private static bool CanPlace(HeaderItem item, HeaderPlacement placement) =>
+        item.Id != HeaderItems.User || placement is HeaderPlacement.Bar or HeaderPlacement.SecondBar;
+
+    private static Color ZoneColor(HeaderPlacement placement) => placement switch
+    {
+        HeaderPlacement.Bar or HeaderPlacement.Overflow => Color.Primary,
+        HeaderPlacement.SecondBar or HeaderPlacement.SecondOverflow => Color.Secondary,
+        _ => Color.Default,
+    };
 
     private bool CanMove(int index, int by) => index + by >= 0 && index + by < _items!.Count && _items[index + by].Placement == _items[index].Placement;
 
@@ -107,7 +185,7 @@ public partial class HeaderConfiguration
     private void Dropped(MudItemDropInfo<HeaderItem> drop)
     {
         var placement = Enum.Parse<HeaderPlacement>(drop.DropzoneIdentifier);
-        if (drop.Item is not { } item || (item.Id == HeaderItems.User && placement != HeaderPlacement.Bar))
+        if (drop.Item is not { } item || !CanPlace(item, placement))
         {
             Show(_items!);
             return;
@@ -142,10 +220,6 @@ public partial class HeaderConfiguration
         Show(_items!);
     }
 
-    private static Color Selected(HeaderPlacement placement, HeaderPlacement button) => placement == button ? Color.Primary : Color.Default;
-
-    private static string Pressed(HeaderPlacement placement, HeaderPlacement button) => placement == button ? "true" : "false";
-
     private async Task SaveAsync()
     {
         _busy = true;
@@ -157,7 +231,13 @@ public partial class HeaderConfiguration
                 ? new HeaderItemSetting(i.Item.Id, i.Placement, access.Permissions, access.Match)
                 : new HeaderItemSetting(i.Item.Id, i.Placement)));
         await Snackbar.RunAsync(
-            () => Api.SetSettingsAsync(SettingScope.Global, new Dictionary<string, string?>(StringComparer.Ordinal) { [HeaderSettings.Items] = header, [AiSettingNames.Display] = _display }),
+            () => Api.SetSettingsAsync(SettingScope.Global, new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                [HeaderSettings.Items] = header,
+                [HeaderSettings.Position] = _position == HeaderPosition.Top ? null : _position.ToString(),
+                [HeaderSettings.SecondPosition] = _second?.ToString(),
+                [AiSettingNames.Display] = _display,
+            }),
             L["Saved"]);
         _busy = false;
     }

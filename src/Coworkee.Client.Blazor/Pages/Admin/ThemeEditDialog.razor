@@ -3,7 +3,7 @@
 
 <MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial" data-testid="theme-dialog">
     <DialogContent>
-        <MudTextField T="string" @bind-Value="Name" Label="@L["Name"]" Required="true" MaxLength="100" Margin="Density.Margin" Variant="Variant.Outlined"
+        <MudTextField T="string" @bind-Value="Name" Label="@L["Name"]" Required="true" MaxLength="100" ReadOnly="FixedName" HelperText="@(FixedName ? L["Built-in themes keep their name."] : null)" Margin="Density.Margin" Variant="Variant.Outlined"
                       Class="mb-3" data-testid="theme-name" />
         <div data-testid="theme-editor">
             <MudExThemeEdit TTheme="TTheme" Theme="(TTheme)Theme" Presets="_presets" PropertiesForSimpleMode="SimpleMode" AllowPresetsEdit="false" AllowModeToggle="true"
