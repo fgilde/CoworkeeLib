@@ -39,16 +39,6 @@ public partial class LanguageMenu : IDisposable
         }
     }
 
-    private async Task RefreshAsync(Contracts.Realtime.RealtimeEnvelope _)
-    {
-        var previous = L.Culture;
-        if (await L.RefreshAsync() is { } fallback)
-        {
-            var name = L.Languages.FirstOrDefault(l => l.Culture == fallback)?.Name ?? fallback;
-            Snackbar.Add(L["The language {0} was switched off; the app now shows {1}.", previous, name], MudBlazor.Severity.Info);
-        }
-    }
-
     protected override void OnInitialized() => L.Changed += Refresh;
 
     public void Dispose() => L.Changed -= Refresh;

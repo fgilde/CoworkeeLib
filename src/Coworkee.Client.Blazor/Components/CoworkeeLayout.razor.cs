@@ -24,6 +24,7 @@ public partial class CoworkeeLayout : IAsyncDisposable
     private (string Mode, Guid? Id, string Culture)? _shown;
     private readonly Guid _viewport = Guid.NewGuid();
     private bool _phone;
+    private IReadOnlyDictionary<string, string?>? _settings;
 
     // the layout lives on while the user navigates, so the first address decides: ?embed=1 shows the page without app bar, menu and assistant
     private bool _embedded;
@@ -146,7 +147,8 @@ public partial class CoworkeeLayout : IAsyncDisposable
         await Data.DialogPlacement.StartAsync(JS);
         Dialogs.CoworkeeDialogOptions.Current = DialogOptions;
         await Viewport.SubscribeAsync(_viewport, FollowViewport, new MudBlazor.Services.ResizeOptions { NotifyOnBreakpointOnly = true }, fireImmediately: true);
-        await L.InitializeAsync(ThemeService.ClientSettings.GetValueOrDefault(Contracts.Localization.LocalizationSettings.Culture));
+        _settings = ThemeService.ClientSettings;
+        await L.InitializeAsync(_settings.GetValueOrDefault(Contracts.Localization.LocalizationSettings.Culture));
         _systemDark = _provider is not null && await _provider.GetSystemDarkModeAsync();
         _started = true;
         Refresh();
@@ -246,6 +248,13 @@ public partial class CoworkeeLayout : IAsyncDisposable
 
     private void Refresh() => InvokeAsync(() =>
     {
+        // reloaded settings may carry a language the user chose elsewhere
+        if (_started && !ReferenceEquals(_settings, ThemeService.ClientSettings))
+        {
+            _settings = ThemeService.ClientSettings;
+            _ = L.InitializeAsync(_settings.GetValueOrDefault(Contracts.Localization.LocalizationSettings.Culture));
+        }
+
         _dark = ThemeService.Mode switch
         {
             "dark" => true,

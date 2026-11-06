@@ -33,7 +33,7 @@ public sealed class LocalizationTests : ClientTestBase
     [Fact]
     public async Task The_stored_language_translates_navigation_and_offers_the_others()
     {
-        JSInterop.Setup<string?>("localStorage.getItem", "coworkee.culture").SetResult("de");
+        JSInterop.Setup<string?>("localStorage.getItem", Blazor.Localization.CoworkeeLocalizer.StorageKey).SetResult("de");
 
         var layout = Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
 
@@ -80,6 +80,64 @@ public sealed class LocalizationTests : ClientTestBase
 
         (await localizer.RefreshAsync()).ShouldBe("en");
         localizer.Culture.ShouldBe("en");
+    }
+
+    [Fact]
+    public async Task An_edited_translation_shows_at_once_in_the_open_app()
+    {
+        JSInterop.Setup<string?>("localStorage.getItem", Blazor.Localization.CoworkeeLocalizer.StorageKey).SetResult("de");
+        var layout = Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
+        await OpenNavigationAsync(layout);
+        layout.WaitForAssertion(() => layout.Markup.ShouldContain("Produkte"));
+
+        Localization.GetTextsAsync("de", Arg.Any<CancellationToken>()).Returns(new TextsDto("de", new Dictionary<string, string> { ["Products"] = "Artikel", ["Catalog"] = "Katalog" }));
+        await layout.InvokeAsync(() => Services.GetRequiredService<Localization.CoworkeeLocalizer>().RefreshAsync());
+
+        layout.WaitForAssertion(() => layout.Markup.ShouldContain("Artikel"));
+        layout.Markup.ShouldNotContain("Produkte");
+    }
+
+    [Fact]
+    public async Task Unchanged_texts_do_not_rebuild_the_app()
+    {
+        var localizer = Services.GetRequiredService<Localization.CoworkeeLocalizer>();
+        await localizer.UseAsync("de");
+        var revision = localizer.Revision;
+
+        await localizer.RefreshAsync();
+
+        localizer.Revision.ShouldBe(revision);
+    }
+
+    [Fact]
+    public async Task A_new_default_language_reaches_users_without_a_language_of_their_own_but_not_those_who_chose_one()
+    {
+        var follows = Services.GetRequiredService<Localization.CoworkeeLocalizer>();
+        await follows.InitializeAsync(null);
+        follows.Culture.ShouldBe("en");
+        Localization.GetLanguagesAsync(Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            .Returns([new LanguageDto(null, "en", "English", true, false), new LanguageDto(null, "de", "Deutsch", true, true)]);
+
+        (await follows.RefreshAsync()).ShouldBeNull();
+
+        follows.Culture.ShouldBe("de");
+        var chose = new Localization.CoworkeeLocalizer(Localization, JSInterop.JSRuntime);
+        await chose.InitializeAsync("en");
+        await chose.RefreshAsync();
+        chose.Culture.ShouldBe("en");
+    }
+
+    [Fact]
+    public async Task A_language_saved_in_the_user_settings_elsewhere_replaces_the_choice_of_this_device()
+    {
+        var localizer = Services.GetRequiredService<Localization.CoworkeeLocalizer>();
+        await localizer.InitializeAsync("en");
+        await localizer.UseAsync("en");
+
+        await localizer.InitializeAsync("de");
+
+        localizer.Culture.ShouldBe("de");
+        JSInterop.VerifyInvoke("localStorage.removeItem");
     }
 
     [Fact]
