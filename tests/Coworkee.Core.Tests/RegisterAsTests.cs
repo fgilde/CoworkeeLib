@@ -46,6 +46,17 @@ public sealed class RegisterAsTests
         services.Count(d => d.ServiceType == typeof(IClock)).ShouldBe(1);
     }
 
+    [Fact]
+    public void A_client_without_modules_registers_its_assembly_once_however_often_it_is_scanned()
+    {
+        var services = new ServiceCollection();
+
+        services.AddRegisterAsServices(typeof(RegisterAsTests).Assembly);
+        services.AddRegisterAsServices(typeof(RegisterAsTests).Assembly);
+
+        services.Count(d => d.ServiceType == typeof(IClock)).ShouldBe(1);
+    }
+
     public interface IGreeter;
 
     public interface IClock;

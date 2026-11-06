@@ -11,13 +11,20 @@ namespace Coworkee.Client.Blazor.Localization;
 public sealed class CoworkeeLocalizer(ILocalizationApi api, IJSRuntime js) : IDisposable
 {
     public const string English = "en";
-    private const string StorageKey = "coworkee.culture";
+    // only a language the user picked on this device; a chosen one is kept, an automatic one follows the user setting and the default
+    internal const string StorageKey = "coworkee.culture.chosen";
     private readonly HashSet<string> _reported = new(StringComparer.Ordinal);
     private readonly HashSet<string> _missing = new(StringComparer.Ordinal);
     private IReadOnlyDictionary<string, string> _texts = new Dictionary<string, string>();
     private Timer? _flush;
+    private string? _chosen;
+    private string? _userCulture;
+    private string? _browser;
 
     public string Culture { get; private set; } = English;
+
+    /// <summary>Counts every change of the language or its texts; the layout rebuilds with it, so an edited translation shows at once.</summary>
+    public int Revision { get; private set; }
 
     public IReadOnlyList<Contracts.Localization.LanguageDto> Languages { get; private set; } = [];
 
@@ -41,23 +48,32 @@ public sealed class CoworkeeLocalizer(ILocalizationApi api, IJSRuntime js) : IDi
     public bool IsInitialized { get; private set; }
 
     /// <summary>
-    /// Picks the language: the stored choice, then the user setting, then the browser, then the default. Runs at startup before the
-    /// first render (see InitializeCoworkeeClientAsync), so pages never rebuild for it; later calls only apply a user setting on a new device.
+    /// Picks the language: the choice made on this device, then the user setting, then the browser, then the default. The first call runs before
+    /// the first render; later calls bring a changed user setting (saved on another device or in the settings) live: it replaces the choice of
+    /// this device.
     /// </summary>
     public async Task InitializeAsync(string? userCulture)
     {
-        var stored = await TryJsAsync<string?>("localStorage.getItem", StorageKey);
         if (IsInitialized)
         {
-            if (stored is null && IsOffered(userCulture) && !string.Equals(userCulture, Culture, StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(userCulture, _userCulture, StringComparison.OrdinalIgnoreCase))
             {
-                await UseAsync(userCulture!);
+                _userCulture = userCulture;
+                if (IsOffered(userCulture))
+                {
+                    _chosen = null;
+                    await TryJsAsync<object?>("localStorage.removeItem", StorageKey);
+                }
+
+                await FollowAsync();
             }
 
             return;
         }
 
         IsInitialized = true;
+        _userCulture = userCulture;
+        _chosen = await TryJsAsync<string?>("localStorage.getItem", StorageKey);
         try
         {
             Languages = await api.GetLanguagesAsync();
@@ -67,39 +83,21 @@ public sealed class CoworkeeLocalizer(ILocalizationApi api, IJSRuntime js) : IDi
             return;
         }
 
-        var browser = await TryJsAsync<string?>("eval", "navigator.language");
-        var culture = new[] { stored, userCulture, browser, browser?.Split('-')[0] }.FirstOrDefault(IsOffered)
-            ?? Languages.FirstOrDefault(l => l.IsDefault)?.Culture ?? English;
-        await UseAsync(culture);
+        _browser = await TryJsAsync<string?>("eval", "navigator.language");
+        await ApplyAsync(Preferred());
     }
 
+    /// <summary>The user picks <paramref name="culture"/>: kept on this device until the user setting changes.</summary>
     public async Task UseAsync(string culture)
     {
-        IReadOnlyDictionary<string, string> texts;
-        try
-        {
-            texts = (await api.GetTextsAsync(culture)).Texts;
-        }
-        catch (Exception exception) when (exception is ApiException or HttpRequestException)
-        {
-            texts = new Dictionary<string, string>();
-        }
-
-        // re-rendering the whole layout resets inputs being typed into, so only when something changed
-        var changed = culture != Culture || texts.Count > 0 || _texts.Count > 0;
-        (_texts, Culture) = (texts, culture);
-        var info = CultureInfo.GetCultureInfo(culture);
-        CultureInfo.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = info;
+        _chosen = culture;
         await TryJsAsync<object?>("localStorage.setItem", StorageKey, culture);
-        if (changed)
-        {
-            Changed?.Invoke();
-        }
+        await ApplyAsync(culture);
     }
 
     /// <summary>
-    /// After an administrator changed languages or texts: reloads both. Returns the language switched to when the current one
-    /// was switched off, otherwise null.
+    /// After an administrator changed languages or texts: reloads both, shows edited texts at once and moves users without a choice of their own to a
+    /// new default. Returns the language switched to when the current one was switched off, otherwise null.
     /// </summary>
     public async Task<string?> RefreshAsync()
     {
@@ -112,16 +110,43 @@ public sealed class CoworkeeLocalizer(ILocalizationApi api, IJSRuntime js) : IDi
             return null;
         }
 
-        if (IsOffered(Culture))
+        var switchedOff = !IsOffered(Culture);
+        await ApplyAsync(Preferred());
+        return switchedOff ? Culture : null;
+    }
+
+    private Task FollowAsync() => string.Equals(Preferred(), Culture, StringComparison.OrdinalIgnoreCase) ? Task.CompletedTask : ApplyAsync(Preferred());
+
+    private string Preferred() =>
+        new[] { _chosen, _userCulture, _browser, _browser?.Split('-')[0] }.FirstOrDefault(IsOffered)
+        ?? Languages.FirstOrDefault(l => l.IsDefault)?.Culture ?? Languages.FirstOrDefault()?.Culture ?? English;
+
+    private async Task ApplyAsync(string culture)
+    {
+        IReadOnlyDictionary<string, string> texts;
+        try
         {
-            await UseAsync(Culture);
-            return null;
+            texts = (await api.GetTextsAsync(culture)).Texts;
+        }
+        catch (Exception exception) when (exception is ApiException or HttpRequestException)
+        {
+            texts = new Dictionary<string, string>();
         }
 
-        var fallback = Languages.FirstOrDefault(l => l.IsDefault)?.Culture ?? Languages.FirstOrDefault()?.Culture ?? English;
-        await UseAsync(fallback);
-        return fallback;
+        // re-rendering the whole layout resets inputs being typed into, so only when something changed
+        var changed = culture != Culture || !Same(texts, _texts);
+        (_texts, Culture) = (texts, culture);
+        var info = CultureInfo.GetCultureInfo(culture);
+        CultureInfo.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = info;
+        if (changed)
+        {
+            Revision++;
+            Changed?.Invoke();
+        }
     }
+
+    private static bool Same(IReadOnlyDictionary<string, string> a, IReadOnlyDictionary<string, string> b) =>
+        a.Count == b.Count && a.All(pair => b.TryGetValue(pair.Key, out var other) && other == pair.Value);
 
     public void Dispose() => _flush?.Dispose();
 

@@ -22,6 +22,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 - Client entities: rows with a collection among their properties (e.g. `Tags`) downloaded whole server rows; they select their own members now (a third of the data for a hub's shipments), the collection still comes through `$expand`.
 - Client entities: a facet load that finished at once kept the copy from ever asking for the facets again.
 - Themes: a changed theme or default reached only the open pages of theme managers; every page of the organisation applies it at once now.
+- Localization: edited translations, a new default language and a language the user saved elsewhere reached open apps only after a reload; they show live now, also when the language menu is hidden. Only a language picked on the device is kept in the browser (`coworkee.culture.chosen`); the switched-off note names the language instead of its code.
 
 ## 0.0.1.64 (2026-11-05)
 
