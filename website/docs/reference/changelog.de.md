@@ -6,6 +6,7 @@
 
 ### Hinzugefügt
 
+- Kopfzeile: Abstandhalter (*Abstandhalter hinzufügen* auf der Kopfzeilen-Seite, Ids `spacer`, `spacer-2`, ... in `Header.Items`) schieben die Elemente danach ans andere Ende ihrer Leiste; ohne einen bleiben die Elemente, wo sie waren. Menüs der App-Leisten öffnen sich weg vom Rand der Leiste und vom Ende, an dem ihr Element steht (`HeaderMenuOrigins`, an jedes Element weitergereicht; die Menüs der Bibliothek und die Gruppenauswahl lesen es).
 - Themes: Speichern eines eingebauten Themes ändert es für die Organisation an Ort und Stelle statt eine Kopie anzulegen; Name und Id bleiben, die Kachel zeigt *geändert* und bietet *Auf das mitgelieferte Aussehen zurücksetzen* (`POST /api/v1/themes/{id}/reset`).
 - Themes: Jede Kachel hat den Schalter *Für Benutzer wählbar*, auch eingebaute Themes (`PUT /api/v1/themes/{id}/published`).
 - Themes: `NavMiniMode` (jeder Link, oder die erste Ebene mit den Links einer Gruppe in einem Menü per Klick oder Hover), `NavMiniDividers` (Linien zwischen den Gruppen der schmalen Navigation) und `NavBesideAppBar` (die Navigation in voller Höhe neben der App-Leiste, im Kopf Name der App und Menüknopf).
@@ -19,6 +20,7 @@
 
 ### Behoben
 
+- Kopfzeile: Der schwebende Assistent und die Chat-Leiste lagen unter einer Leiste am rechten oder unteren Rand; jetzt halten sie Abstand zu Seiten- und unteren Leisten, der Assistent in voller Größe passt zwischen die Leisten. Seitenleisten und der Platz, den die Seite ihnen lässt, werden von rechts nach links gespiegelt.
 - Client Entities: Zeilen mit einer Liste unter ihren Eigenschaften (z. B. `Tags`) luden ganze Serverzeilen; sie wählen jetzt nur ihre eigenen Eigenschaften (bei den Sendungen eines Hubs ein Drittel der Daten), die Liste kommt weiter über `$expand`.
 - Client Entities: Ein sofort fertiges Laden der Facetten verhinderte, dass die Kopie sie je wieder anfragte.
 - Themes: Ein geändertes Theme oder ein neuer Standard erreichte nur die offenen Seiten von Theme-Verwaltern; jetzt übernimmt jede Seite der Organisation es sofort.

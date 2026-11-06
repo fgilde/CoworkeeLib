@@ -13,6 +13,11 @@ namespace Coworkee.Client.Blazor.Components.Groups;
 /// </summary>
 public partial class GroupScopePicker : IDisposable
 {
+    /// <summary>Where the list opens: cascaded by the app bar the picker sits in; elsewhere below its start.</summary>
+    [CascadingParameter] private Navigation.HeaderMenuOrigins? HeaderOrigins { get; set; }
+
+    private Navigation.HeaderMenuOrigins MenuOrigins => HeaderOrigins ?? new(MudBlazor.Origin.BottomLeft, MudBlazor.Origin.TopLeft);
+
     private bool _scopeAll;
     private bool _open;
     private IReadOnlyList<GroupNodeDto> _nodes = [];
