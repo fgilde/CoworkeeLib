@@ -64,6 +64,9 @@ public sealed class CoworkeeThemingModule : CoworkeeModule, IWebModule
         managed.MapPost("/", (ThemeRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new CreateTheme(body), ct).ToHttpResult());
         managed.MapPut("/{id:guid}", (Guid id, ThemeRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new UpdateTheme(id, body), ct).ToHttpResult());
         managed.MapDelete("/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteTheme(id), ct).ToHttpResult());
+        managed.MapPost("/{id:guid}/reset", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new ResetTheme(id), ct).ToHttpResult());
+        managed.MapPut("/{id:guid}/published", (Guid id, [Microsoft.AspNetCore.Mvc.FromBody] bool published, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new SetThemePublished(id, published), ct).ToHttpResult());
         managed.MapPost("/{id:guid}/default", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetDefaultTheme(id), ct).ToHttpResult());
         managed.MapGet("/keycloak", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetKeycloakThemeStatus(), ct).ToHttpResult());
         managed.MapPost("/keycloak/apply", (IDispatcher d, CancellationToken ct) => d.SendAsync(new ApplyKeycloakTheme(), ct).ToHttpResult());

@@ -9,6 +9,15 @@ public sealed class ThemeDefinition : AuditedAggregateRoot, IVersioned
 
     public Guid? TenantId { get; set; }
 
+    /// <summary>
+    /// Set on an organisation's own version of a built-in theme: the organisation sees the built-in theme with this row's look (when
+    /// <see cref="IsCustomized"/>) and publishing; lists and choices keep the built-in theme's id.
+    /// </summary>
+    public Guid? BuiltInId { get; set; }
+
+    /// <summary>The organisation changed the built-in theme's look; without it the built-in look applies, also after the app updates it.</summary>
+    public bool IsCustomized { get; set; }
+
     public bool IsDefault { get; set; }
 
     public required string PaletteLight { get; set; }

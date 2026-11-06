@@ -41,14 +41,17 @@ public partial class Themes
         return OpenAsync(L["New theme"], string.Empty, start, presets, (name, theme) => Api.CreateThemeAsync(ThemeMapper.ToRequest(name, theme)));
     }
 
-    private Task EditAsync(ThemeDto dto) => OpenAsync(L["Edit theme"], dto.IsGlobal ? L["{0} copy", dto.Name] : dto.Name, ThemeMapper.ToTheme(dto, ThemeService.ThemeType), null,
-        (name, theme) => dto.IsGlobal ? Api.CreateThemeAsync(ThemeMapper.ToRequest(name, theme)) : Api.UpdateThemeAsync(dto.Id, ThemeMapper.ToRequest(name, theme)));
+    // a built-in theme is changed in place for the organisation; it keeps its name
+    private Task EditAsync(ThemeDto dto) => OpenAsync(L["Edit theme"], dto.Name, ThemeMapper.ToTheme(dto, ThemeService.ThemeType), null,
+        (name, theme) => Api.UpdateThemeAsync(dto.Id, ThemeMapper.ToRequest(name, theme)), fixedName: dto.IsGlobal);
 
-    private async Task OpenAsync(string title, string name, CoworkeeTheme theme, List<ThemePreset<CoworkeeTheme>>? presets, Func<string, CoworkeeTheme, Task<ThemeDto>> save)
+    private async Task OpenAsync(string title, string name, CoworkeeTheme theme, List<ThemePreset<CoworkeeTheme>>? presets, Func<string, CoworkeeTheme, Task<ThemeDto>> save,
+        bool fixedName = false)
     {
         var parameters = new DialogParameters
         {
             { nameof(ThemeEditDialog<CoworkeeTheme>.Name), name },
+            { nameof(ThemeEditDialog<CoworkeeTheme>.FixedName), fixedName },
             { nameof(ThemeEditDialog<CoworkeeTheme>.Theme), theme },
             { nameof(ThemeEditDialog<CoworkeeTheme>.Presets), presets },
             { nameof(ThemeEditDialog<CoworkeeTheme>.Save), save },
@@ -77,12 +80,19 @@ public partial class Themes
         }
     }
 
-    // the stored sections go back as they are, so publishing never touches what the editor saved
-    private async Task TogglePublishedAsync(ThemeDto dto)
+    private async Task SetPublishedAsync(ThemeDto dto, bool published)
     {
-        var request = new ThemeRequest(dto.Name, dto.PaletteLight, dto.PaletteDark, dto.Typography, dto.LayoutProperties, dto.Logo, dto.CustomCss, dto.Shadows, dto.Options,
-            !dto.IsPublished);
-        if (await Snackbar.RunAsync(() => Api.UpdateThemeAsync(dto.Id, request), L[request.IsPublished ? "Theme {0} published" : "Theme {0} unpublished", dto.Name]))
+        if (await Snackbar.RunAsync(() => Api.SetThemePublishedAsync(dto.Id, published), L[published ? "Theme {0} published" : "Theme {0} unpublished", dto.Name]))
+        {
+            await ReloadAsync();
+        }
+    }
+
+    private async Task ResetAsync(ThemeDto dto)
+    {
+        if (await Dialogs.ConfirmAsync(L["Reset theme"], L["Reset {0} to its built-in look? The changes of this organisation are discarded.", dto.Name], L["Reset"], L["Cancel"],
+                Icons.Material.Outlined.SettingsBackupRestore)
+            && await Snackbar.RunAsync(() => Api.ResetThemeAsync(dto.Id), L["Theme {0} reset", dto.Name]))
         {
             await ThemeService.LoadAsync();
             await ReloadAsync();
