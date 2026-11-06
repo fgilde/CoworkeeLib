@@ -29,6 +29,7 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         services.AddSingleton<ODataModels>();
         services.AddSingleton<IEdmModel>(sp => sp.GetRequiredService<ODataModels>().Of((string?)null));
         services.AddScoped<IODataQueries, ODataQueries>();
+        services.AddMemoryCache(); // the sizes of the visible rows (ODataPipeline)
         services.AddSingleton<Microsoft.Extensions.Options.IConfigureOptions<ODataOptions>, Computed.ODataRoute>();
         services.AddTransient<IFacetBuilder>(sp => new FacetBuilder(sp.GetRequiredService<IServiceScopeFactory>(), FacetLiterals.Options(), new FacetLiterals()));
         services.AddOptions<CoworkeeODataOptions>().Bind(context.Configuration.GetSection(CoworkeeODataOptions.Section))
@@ -37,6 +38,7 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
             .Validate(o => o.MaxOrderByNodeCount >= 1, "Coworkee:OData:MaxOrderByNodeCount is at least 1.")
             .Validate(o => o.MaxExpansionDepth >= 0, "Coworkee:OData:MaxExpansionDepth is at least 0.")
             .Validate(o => o.FacetRowLimit >= 0, "Coworkee:OData:FacetRowLimit is at least 0.")
+            .Validate(o => o.KeyedRowLimit >= 0, "Coworkee:OData:KeyedRowLimit is at least 0.")
             .Validate(o => o.MaxFacetRows >= 0, "Coworkee:OData:MaxFacetRows is at least 0.")
             .ValidateOnStart();
         services.AddDataTransfer();

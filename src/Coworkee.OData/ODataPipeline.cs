@@ -2,6 +2,8 @@ using Coworkee.Application.Groups;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData.Extensions;
 using Microsoft.AspNetCore.OData.Query;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OData;
 using Microsoft.OData.Edm;
@@ -110,10 +112,49 @@ internal static class ODataPipeline
             return new Refusal(StatusCodes.Status400BadRequest, "The query is not valid.", "$apply cannot read through navigations into rows with row rules or permissions; group and aggregate the set's own properties.");
         }
 
+        if (!byKey)
+        {
+            visible = await KeyedAsync(services, visible, cancellationToken);
+        }
+
         http.Items[ScopedEnableQueryAttribute.ScopeItem] = scope;
         http.Items[VisibleItem] = visible;
         return null;
     }
+
+    /// <summary>
+    /// A list reads its page, count, groups and facets among the keys of the visible rows: the row filters run once, for the keys. How many rows the
+    /// user sees is counted once and remembered per set and partition (user, tenant, client, group selection; the read of the keys refreshes it):
+    /// a stale size costs time, never rows, since the keys are read for every request.
+    /// </summary>
+    private static async Task<IQueryable<TEntity>> KeyedAsync<TEntity>(IServiceProvider services, IQueryable<TEntity> visible, CancellationToken cancellationToken)
+        where TEntity : class
+    {
+        var limit = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<CoworkeeODataOptions>>().Value.KeyedRowLimit;
+        if (limit <= 0 || !KeyedRows.Readable(visible))
+        {
+            return visible;
+        }
+
+        var sizes = services.GetRequiredService<IMemoryCache>();
+        var key = $"coworkee:odata:visible-rows:{typeof(TEntity).FullName}:{await ClientEntities.ClientEntityEndpoints.PartitionAsync(services, cancellationToken)}";
+        if (!sizes.TryGetValue(key, out long size))
+        {
+            size = await visible.LongCountAsync(cancellationToken);
+            sizes.Set(key, size, SizeLifetime);
+        }
+
+        if (size > limit || await KeyedRows.ByKeysAsync(visible, cancellationToken) is not { } keyed)
+        {
+            return visible;
+        }
+
+        sizes.Set(key, (long)keyed.Count, SizeLifetime);
+        // grown past the limit since it was counted: read as it is from now on
+        return keyed.Count > limit ? visible : keyed.Rows;
+    }
+
+    private static readonly TimeSpan SizeLifetime = TimeSpan.FromMinutes(2);
 
     /// <summary>The visible rows <see cref="PrepareAsync{TEntity}"/> kept.</summary>
     public static IQueryable<TEntity> Visible<TEntity>(HttpContext http) =>
