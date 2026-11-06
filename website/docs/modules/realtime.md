@@ -7,6 +7,15 @@
 public sealed class MyAppDatabaseModule : CoworkeeModule;
 ```
 
+## Live for everyone
+
+What one user saves reaches every other open browser of the organisation at once, without code in your pages. Left the administrator, right John in a second browser, working in German: a new product appears in his list, a role adds the *Sales* menu, another default theme repaints his app, the app bar moves to the bottom, and when German is switched off his app turns English.
+
+<video class="cw-doc-video" autoplay muted loop playsinline controls preload="metadata" width="1600" height="618" poster="../../assets/videos/realtime-live-poster.webp" aria-label="Two browsers side by side: what the administrator changes on the left appears at once for John on the right">
+  <source src="../../assets/videos/realtime-live.webm" type="video/webm">
+  <source src="../../assets/videos/realtime-live.mp4" type="video/mp4">
+</video>
+
 ## What arrives live
 
 Every open tab follows these changes without a reload:
@@ -22,7 +31,10 @@ Every open tab follows these changes without a reload:
 | Someone comes online or goes offline | a green dot on every avatar of that user |
 | Someone changes name or picture | every avatar and user card showing that user updates |
 | A notification arrives or changes | bell, count and notifications page follow |
-| Features, languages, themes | feature gates, language menu and theme lists follow |
+| Features, languages, theme lists | feature gates, language menu and theme lists follow |
+| The organisation's default theme changes, or a theme in use is edited | every client repaints with it |
+| A global or organisation setting is saved (also app bars and header items) | every client reloads its settings; theme, layout and assistant follow |
+| A language is switched off | its users move to the default language and are told so |
 
 ## Entity changes
 

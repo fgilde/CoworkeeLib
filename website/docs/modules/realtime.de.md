@@ -7,6 +7,15 @@
 public sealed class MyAppDatabaseModule : CoworkeeModule;
 ```
 
+## Live bei allen
+
+Was ein Benutzer speichert, erreicht jeden anderen offenen Browser der Organisation sofort, ohne Code in deinen Seiten. Links der Administrator, rechts John in einem zweiten Browser, auf Deutsch: Ein neues Produkt erscheint in seiner Liste, eine Rolle bringt das Menü *Vertrieb*, ein anderes Standard-Theme färbt seine App um, die App-Leiste wandert nach unten, und wird Deutsch abgeschaltet, zeigt seine App Englisch.
+
+<video class="cw-doc-video" autoplay muted loop playsinline controls preload="metadata" width="1600" height="618" poster="../../../assets/videos/realtime-live-poster.webp" aria-label="Zwei Browser nebeneinander: Was der Administrator links ändert, erscheint rechts bei John sofort">
+  <source src="../../../assets/videos/realtime-live.webm" type="video/webm">
+  <source src="../../../assets/videos/realtime-live.mp4" type="video/mp4">
+</video>
+
 ## Was live ankommt
 
 Jeder offene Tab folgt diesen Änderungen ohne Neuladen:
@@ -22,7 +31,10 @@ Jeder offene Tab folgt diesen Änderungen ohne Neuladen:
 | Jemand kommt online oder geht offline | ein grüner Punkt an jedem Avatar dieses Benutzers |
 | Jemand ändert Namen oder Bild | jeder Avatar und jede Benutzerkarte dieses Benutzers aktualisiert sich |
 | Eine Benachrichtigung kommt oder ändert sich | Glocke, Zähler und Benachrichtigungsseite folgen |
-| Features, Sprachen, Themes | Feature-Schalter, Sprachmenü und Theme-Listen folgen |
+| Features, Sprachen, Theme-Listen | Feature-Schalter, Sprachmenü und Theme-Listen folgen |
+| Das Standard-Theme der Organisation wechselt, oder ein benutztes Theme wird bearbeitet | jeder Client färbt sich um |
+| Eine globale Einstellung oder eine der Organisation wird gespeichert (auch App-Leisten und Header-Elemente) | jeder Client lädt seine Einstellungen neu; Theme, Layout und Assistent folgen |
+| Eine Sprache wird abgeschaltet | ihre Benutzer wechseln zur Standardsprache und erfahren es |
 
 ## Änderungen an Entities
 
