@@ -35,6 +35,7 @@ Jeder offene Tab folgt diesen Änderungen ohne Neuladen:
 | Das Standard-Theme der Organisation wechselt, oder ein benutztes Theme wird bearbeitet | jeder Client färbt sich um |
 | Eine globale Einstellung oder eine der Organisation wird gespeichert (auch App-Leisten und Header-Elemente) | jeder Client lädt seine Einstellungen neu; Theme, Layout und Assistent folgen |
 | Eine Sprache wird abgeschaltet | ihre Benutzer wechseln zur Standardsprache und erfahren es |
+| Eine Übersetzung wird geändert, die Standardsprache wechselt | die Texte ändern sich sofort; Benutzer ohne eigene Sprache wechseln zur neuen Standardsprache |
 
 ## Änderungen an Entities
 

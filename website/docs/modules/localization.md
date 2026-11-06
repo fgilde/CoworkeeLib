@@ -105,7 +105,7 @@ The account pages and mails read their own embedded texts and templates, not the
 
 `L.Stored(text)` translates text that users or a seed stored (a report name, a widget title) when the app has a text for it and shows it as it is otherwise, without reporting it as missing; `L.Server(text, arguments)` fills a localizable text of the server (a notification).
 
-The user picks the language in the app bar; it is kept as the user setting `Localization.Culture` (*Default language*, also a system and an organisation setting that new users and the digest mails fall back to). The client takes the stored choice, then that setting, then the browser's language, then the default language. MudBlazor's own texts (pager, filters, dialogs) are translated as well. Set the culture before the first render:
+The user picks the language in the app bar; it is kept as the user setting `Localization.Culture` (*Default language*, also a system and an organisation setting that new users and the digest mails fall back to). The client takes the language picked on this device (kept in the browser), then that setting, then the browser's language, then the default language. Everything an administrator changes shows live in every open app: edited translations, a language switched off (its users move to the default, with a note), a new default language for everyone who did not pick one, and a language a user saved on another device or in the settings (it replaces the choice of this device). MudBlazor's own texts (pager, filters, dialogs) are translated as well. Set the culture before the first render:
 
 ```csharp title="Program.cs"
 var host = builder.Build();

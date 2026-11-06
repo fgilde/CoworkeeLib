@@ -35,6 +35,7 @@ Every open tab follows these changes without a reload:
 | The organisation's default theme changes, or a theme in use is edited | every client repaints with it |
 | A global or organisation setting is saved (also app bars and header items) | every client reloads its settings; theme, layout and assistant follow |
 | A language is switched off | its users move to the default language and are told so |
+| A translation is edited, the default language changes | the texts change at once; users without a language of their own move to the new default |
 
 ## Entity changes
 
