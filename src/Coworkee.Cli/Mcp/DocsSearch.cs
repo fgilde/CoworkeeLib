@@ -33,6 +33,7 @@ internal static partial class DocsSearch
         ("Your first feature", "getting-started/first-feature/"),
         ("Command line", "getting-started/cli/"),
         ("Coworkee Studio", "getting-started/studio/"),
+        ("Manual setup", "getting-started/manual-setup/"),
         ("Starter specs", "getting-started/gallery/"),
         ("MCP server of the CLI", "getting-started/mcp/"),
         ("Modules", "fundamentals/modules/"),
@@ -97,6 +98,8 @@ internal static partial class DocsSearch
         ("Testing", "testing/"),
         ("Packages and namespaces", "reference/packages/"),
         ("Changelog", "reference/changelog/"),
+        ("History", "about/history/"),
+        ("Symvopath in production", "showcase/symvopath/"),
     ];
 
     public static async Task<string> SearchAsync(string query, HttpClient http, CancellationToken cancellationToken)
