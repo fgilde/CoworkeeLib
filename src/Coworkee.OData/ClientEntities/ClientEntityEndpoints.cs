@@ -61,6 +61,10 @@ internal static class ClientEntityEndpoints
 
     private static string Owner(ICurrentUser user) => $"{user.UserId}|{user.TenantId}|{user.ClientId}";
 
+    /// <summary>Who the request reads for: user, tenant, client and every <see cref="IClientEntityPartitionPart"/> (the group selection), hashed.</summary>
+    internal static Task<string> PartitionAsync(IServiceProvider services, CancellationToken cancellationToken) =>
+        PartitionAsync(services, services.GetRequiredService<ICurrentUser>(), cancellationToken);
+
     private static async Task<string> PartitionAsync(IServiceProvider services, ICurrentUser user, CancellationToken cancellationToken)
     {
         var key = new StringBuilder(Owner(user));

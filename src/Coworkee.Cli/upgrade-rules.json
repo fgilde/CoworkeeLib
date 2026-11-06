@@ -734,7 +734,8 @@
       "version": "0.0.1.65",
       "breaking": [
         "Theming: cw.Themes gets the columns BuiltInId and IsCustomized (an organisation's own version of a built-in theme); ICoworkeeApi gets ResetThemeAsync and SetThemePublishedAsync.",
-        "Navigation: HeaderPlacement gets SecondBar and SecondOverflow before Hidden; saved header settings keep working, they store the names."
+        "Navigation: HeaderPlacement gets SecondBar and SecondOverflow before Hidden; saved header settings keep working, they store the names.",
+        "OData: a list of a set the user sees at most Coworkee:OData:KeyedRowLimit rows of (default 50,000) reads the keys of those rows first (the count of the visible rows is remembered for two minutes), then its page, count, groups and facets among them; a test that counts the statements of a list sees one or two more, KeyedRowLimit 0 reads as before."
       ],
       "needsMigration": true,
       "manual": [

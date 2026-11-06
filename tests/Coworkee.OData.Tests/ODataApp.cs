@@ -258,8 +258,10 @@ public sealed class GadgetModule : CoworkeeModule
     {
         context.Services.AddSingleton<IModelContributor, GadgetModelContributor>();
         context.Services.AddSingleton<Coworkee.Application.Authorization.IPermissionDefinitionContributor, GadgetPermissions>();
+        // the tests start many apps in one process (StartAnotherAsync), each with its own EF service provider
         context.Services.AddCoworkeeDbContext<GadgetDbContext>((provider, options) =>
-            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test")
+                .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.ManyServiceProvidersCreatedWarning)));
         context.Services.AddODataEntity<Gadget>("Gadgets", ODataApp.ViewGadgets, o => o.Hide(g => g.SerialCode).HideUnless(g => g.Category, ODataApp.SeeCategories));
         context.Services.AddScoped<IODataEntityFilter<Gadget>, HideSecretGadgets>();
         context.Services.AddGlobalSearch<Gadget>(s => s.Fields(g => g.Name, g => g.Category).Subtitle(g => g.Category).Page("/gadgets"));
@@ -314,7 +316,8 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddGlobalSearch<Country>(s => s.Fields(c => c.Name).Page("/countries"));
         context.Services.AddODataEntity<Rank>("Ranks", ODataApp.ViewGadgets, o => o.Key(r => r.Number));
         context.Services.AddDbContext<ParcelDbContext>((provider, options) =>
-            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test")
+                .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.ManyServiceProvidersCreatedWarning)));
         context.Services.AddCoworkeeExternalDbContext<ParcelDbContext>();
         context.Services.AddODataEntity<Parcel>("Parcels", ODataApp.ViewGadgets);
         context.Services.AddScoped<IODataEntityFilter<Parcel>, HideSecretParcels>();

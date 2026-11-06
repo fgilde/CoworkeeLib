@@ -34,6 +34,13 @@ public sealed class CoworkeeODataOptions
     public int FacetRowLimit { get; set; } = 50_000;
 
     /// <summary>
+    /// A list of a set the user sees at most this many rows of reads their keys first (one count, one read of the keys), then its page, count,
+    /// groups and facets among those keys, every filter still on. A costly row filter then runs once, and conditions no index serves test the listed
+    /// rows instead of the whole table. A larger set is read as it is; 0 turns it off.
+    /// </summary>
+    public int KeyedRowLimit { get; set; } = 50_000;
+
+    /// <summary>
     /// A filtered set of more rows than this gets no facets: every group would read all of it. Checked with one full count of the filtered set
     /// (the same count <see cref="FacetRowLimit"/> uses) before any facet query. 0 (the default) counts the facets of every set.
     /// </summary>

@@ -6,6 +6,7 @@
 
 ### Hinzugefügt
 
+- OData: Eine Liste liest zuerst die Schlüssel ihrer sichtbaren Zeilen (`Coworkee:OData:KeyedRowLimit`, Standard 50.000; ein Lesen der Schlüssel, die Zählung der sichtbaren Zeilen zwei Minuten je Benutzer und Gruppenauswahl gemerkt), dann Seite, `$count`, Gruppen, Facetten und die Seiten einer lokalen Kopie unter ihnen, mit allen Filtern. Ein teurer Zeilenfilter läuft einmal, für die Schlüssel, und eine Bedingung, die kein Index bedient, liest nicht mehr die ganze Tabelle: 282 von 19.007 Hub-Sendungen, gefiltert nach Abholdatum, brauchten 117 s für eine Seite mit Zählung, jetzt etwa 2,5 s; eine Seite mit 1.000 Zeilen für eine lokale Kopie brauchte 36 bis 46 s, jetzt etwa 2 s (19.000 Sendungen in etwa einer Minute statt über zehn).
 - Kopfzeile: Abstandhalter (*Abstandhalter hinzufügen* auf der Kopfzeilen-Seite, Ids `spacer`, `spacer-2`, ... in `Header.Items`) schieben die Elemente danach ans andere Ende ihrer Leiste; ohne einen bleiben die Elemente, wo sie waren. Menüs der App-Leisten öffnen sich weg vom Rand der Leiste und vom Ende, an dem ihr Element steht (`HeaderMenuOrigins`, an jedes Element weitergereicht; die Menüs der Bibliothek und die Gruppenauswahl lesen es).
 - Themes: Speichern eines eingebauten Themes ändert es für die Organisation an Ort und Stelle statt eine Kopie anzulegen; Name und Id bleiben, die Kachel zeigt *geändert* und bietet *Auf das mitgelieferte Aussehen zurücksetzen* (`POST /api/v1/themes/{id}/reset`).
 - Themes: Jede Kachel hat den Schalter *Für Benutzer wählbar*, auch eingebaute Themes (`PUT /api/v1/themes/{id}/published`).
@@ -20,6 +21,7 @@
 
 ### Behoben
 
+- OData: Das Lesen der Facetten-Member per Schlüssel ließ alle Query-Filter weg, auch die der Navigationen, über die es las (eine Beschriftung über ein soft gelöschtes oder fremdes Ziel); jetzt bleiben sie.
 - OData: Facetten einer begrenzten Menge lesen erst die Schlüssel der passenden Zeilen und dann deren Felder per Schlüssel. In einem Zug unter einem teuren Zeilenfilter (ein Organisations-Scope mit `EXISTS` über Millionen Zeilen) prüfte SQL Server den Filter Zeile für Zeile: Die Facetten von 11.772 Hub-Sendungen brauchten über fünf Minuten und kamen weder in der Tabelle noch in der lokalen Kopie an; jetzt etwa 3 s (Schlüssel 0,7 s, Felder 2,7 s).
 - Kopfzeile: Der schwebende Assistent und die Chat-Leiste lagen unter einer Leiste am rechten oder unteren Rand; jetzt halten sie Abstand zu Seiten- und unteren Leisten, der Assistent in voller Größe passt zwischen die Leisten. Seitenleisten und der Platz, den die Seite ihnen lässt, werden von rechts nach links gespiegelt.
 - Client Entities: Zeilen mit einer Liste unter ihren Eigenschaften (z. B. `Tags`) luden ganze Serverzeilen; sie wählen jetzt nur ihre eigenen Eigenschaften (bei den Sendungen eines Hubs ein Drittel der Daten), die Liste kommt weiter über `$expand`.

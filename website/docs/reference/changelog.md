@@ -6,6 +6,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Added
 
+- OData: a list reads the keys of its visible rows first (`Coworkee:OData:KeyedRowLimit`, default 50,000; one read of the keys, the count of the visible rows remembered for two minutes per user and group selection), then its page, `$count`, groups, facets and the pages of a local copy among them with every filter still on. A costly row filter runs once, for the keys, and a condition no index serves no longer scans the whole table: 282 of 19,007 hub shipments filtered by their pickup date took 117 s for a page with its count, now about 2.5 s; a page of 1,000 rows for a local copy took 36 to 46 s, now about 2 s (19,000 shipments in about a minute instead of more than ten).
 - Header: spacers (*Add spacer* on the header page, ids `spacer`, `spacer-2`, ... in `Header.Items`) push the items after them to the other end of their bar; without one a bar keeps its items where they were. Menus of the app bars open away from the bar's edge and from the end of the bar the item sits at (`HeaderMenuOrigins`, cascaded to every item; the library's menus and the group picker read it).
 - Themes: saving a built-in theme changes it for the organisation in place instead of creating a copy; it keeps its name and id, the tile shows *changed* and offers *Reset to the built-in look* (`POST /api/v1/themes/{id}/reset`).
 - Themes: every tile has the switch *Users can choose it*, built-in themes too (`PUT /api/v1/themes/{id}/published`).
@@ -20,6 +21,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixed
 
+- OData: the facets' read of the members by key dropped every query filter, also those of the navigations it read through (a label through a soft deleted or other target); it keeps them now.
 - OData: facets of a bounded set read the keys of the matching rows first and their members by key. Read at once under a costly row filter (an organisation scope with an `EXISTS` over millions of rows), SQL Server tested the filter row by row: the facets of 11,772 hub shipments took more than five minutes and never reached the table or the local copy; now about 3 s (keys 0.7 s, members 2.7 s).
 - Header: the floating assistant and the chat dock lay under a bar at the right or the bottom edge; they keep clear of side and bottom bars now, the full-size assistant fits between the bars. Side bars and the room the page leaves them mirror in a right-to-left layout.
 - Client entities: rows with a collection among their properties (e.g. `Tags`) downloaded whole server rows; they select their own members now (a third of the data for a hub's shipments), the collection still comes through `$expand`.
