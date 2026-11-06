@@ -66,8 +66,21 @@
   "walk_lead": ("Coworkee Studio Schritt für Schritt, dann die App im Browser. Echte Screenshots; die App-Bilder zeigen die Demo-App, die auf denselben Paketen läuft." if de else "Coworkee Studio step by step, then the app in the browser. Real screenshots; the app screens show the demo app, which runs on the same packages."),
   "walk_play": ("Abspielen" if de else "Play"),
   "walk_pause": ("Anhalten" if de else "Pause"),
-  "walk_step": ("Schritt" if de else "Step")
+  "walk_step": ("Schritt" if de else "Step"),
+  "origin": ("Seit 2022 in Produktion" if de else "In production since 2022"),
+  "origin_lead": ("Coworkee ist seit Oktober 2026 öffentlich. Das Template, aus dem es entstanden ist, gibt es seit 2021." if de else "Coworkee has been public since October 2026. The template it grew out of has been around since 2021."),
+  "origin_sv": ("Symvopath, eine Plattform, auf der Pathologen komplexe diagnostische Fälle digital vorstellen und von Spezialisten begutachten lassen, läuft seit 2022 auf dem Coworkee-Template." if de else "Symvopath, a platform where pathologists present complex diagnostic cases digitally and have specialists review them, has run on the Coworkee template since 2022."),
+  "origin_show": ("Die Features im Einsatz" if de else "The features in use"),
+  "origin_hist": ("Seit 2021" if de else "Since 2021"),
+  "origin_more": ("Die ganze Geschichte" if de else "The full history")
 } %}
+
+{% set origin_years = [
+  ("2021", ("Blazor-Template auf .NET 5, mit Berechtigungen, Übersetzungen, Themes und SignalR" if de else "Blazor template on .NET 5, with permissions, translations, themes and SignalR")),
+  ("2022", ("Symvopath geht in Produktion, die Solution heißt ab jetzt Coworkee" if de else "Symvopath goes into production, the solution is renamed Coworkee")),
+  ("2024", (".NET 9, Aspire-AppHost und Anmeldung über Keycloak" if de else ".NET 9, an Aspire app host and sign-in through Keycloak")),
+  ("2026", ("NuGet-Pakete, CLI und Doku, mit viel Hilfe von KI-Agenten geschrieben" if de else "NuGet packages, CLI and docs, written with a lot of help from AI agents"))
+] %}
 
 {% set kit = ["Identity", "AuthServer", "Realtime", "Workflows", "Reporting", "Ai", "Search", "Files", "Localization", "Notifications", "Auditing", "Theming"] %}
 
@@ -297,6 +310,28 @@
               <img class="cw-dark{{ auth }}" src="{{ shot(n ~ '-dark') }}" alt="" loading="lazy">
             {% endfor %}
           </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cw-section cw-section--alt md-typeset" id="production">
+    <div class="md-grid">
+      <h2>{{ t.origin }}</h2>
+      <p class="cw-section__lead">{{ t.origin_lead }}</p>
+      <div class="cw-origin">
+        <div class="cw-origin__card">
+          <a class="cw-origin__logo" href="https://www.symvopath.de" target="_blank" rel="noopener"><img src="{{ 'assets/brands/symvopath.svg' | url }}" alt="Symvopath" width="181" height="50"></a>
+          <p>{{ t.origin_sv }}</p>
+          <div class="cw-ctas">
+            <a class="cw-btn cw-btn--primary" href="{{ (base ~ 'showcase/symvopath/') | url }}">{{ t.origin_show }} {% include ".icons/material/arrow-right.svg" %}</a>
+            <a class="cw-btn" href="https://www.symvopath.de" target="_blank" rel="noopener">{% include ".icons/material/open-in-new.svg" %}symvopath.de</a>
+          </div>
+        </div>
+        <div class="cw-origin__card">
+          <h3>{% include ".icons/material/history.svg" %}{{ t.origin_hist }}</h3>
+          <ol class="cw-origin__years">{% for year, text in origin_years %}<li><strong>{{ year }}</strong><span>{{ text }}</span></li>{% endfor %}</ol>
+          <a class="cw-origin__more" href="{{ (base ~ 'about/history/') | url }}">{{ t.origin_more }} {% include ".icons/material/arrow-right.svg" %}</a>
         </div>
       </div>
     </div>
