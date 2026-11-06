@@ -1,5 +1,6 @@
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Layout;
+using Coworkee.Client.Blazor.Navigation;
 using Coworkee.Client.Blazor.Theming;
 using Coworkee.Contracts.Settings;
 using Coworkee.Contracts.Theming;
@@ -63,6 +64,32 @@ public partial class CoworkeeLayout : IAsyncDisposable
 
     // phones have no room for the mini strip: the menu is an overlay that closes after each navigation
     private bool Pinned => Preferences.Pinned && !_phone;
+
+    // phones get one bar at the top
+    private HeaderLayout Bars => _phone ? HeaderLayout.Default : HeaderLayout.From(ThemeService.ClientSettings);
+
+    // the navigation carries the app's name and menu button when it runs beside the app bar or no bar runs across the window
+    private bool DrawerHead => Pinned && (ThemeService.Theme.NavBesideAppBar || Bars.BrandBar is null);
+
+    private DrawerClipMode ClipMode => Pinned && !DrawerHead && Bars.Has(HeaderPosition.Top) ? DrawerClipMode.Always : DrawerClipMode.Never;
+
+    private string LayoutClass
+    {
+        get
+        {
+            var bars = Bars;
+            string?[] classes =
+            [
+                bars.Has(HeaderPosition.Top) ? null : "cw-no-top-bar",
+                bars.Has(HeaderPosition.Bottom) ? "cw-bar-bottom" : null,
+                bars.Has(HeaderPosition.Left) ? "cw-bar-left" : null,
+                bars.Has(HeaderPosition.Right) ? "cw-bar-right" : null,
+            ];
+            return string.Join(' ', classes.Where(c => c is not null));
+        }
+    }
+
+    private void ToggleDrawer() => _drawer = !_drawer;
 
     protected override async Task OnInitializedAsync()
     {

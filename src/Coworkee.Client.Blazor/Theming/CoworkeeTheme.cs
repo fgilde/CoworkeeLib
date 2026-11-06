@@ -46,6 +46,15 @@ public class CoworkeeTheme : MudTheme
 
     public bool CanChangeNavExpandMode { get; set; } = true;
 
+    /// <summary>What the pinned, narrow navigation shows: every link, or the first level with the links of a group in a menu next to it.</summary>
+    public NavMiniMode NavMiniMode { get; set; } = NavMiniMode.Links;
+
+    /// <summary>Lines between the groups of the narrow navigation (<see cref="NavMiniMode.Links"/>).</summary>
+    public bool NavMiniDividers { get; set; } = true;
+
+    /// <summary>The navigation runs the full height of the window beside the app bar instead of below it; it shows the logo and its own menu button.</summary>
+    public bool NavBesideAppBar { get; set; }
+
     /// <summary>Only one navigation group open at a time, until the user chooses otherwise.</summary>
     public bool NavSingleExpand { get; set; }
 

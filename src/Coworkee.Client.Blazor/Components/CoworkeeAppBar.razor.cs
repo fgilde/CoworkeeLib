@@ -10,10 +10,14 @@ using MudBlazor.Extensions;
 
 namespace Coworkee.Client.Blazor.Components;
 
-/// <summary>The app bar in the order, places and visibility the administrator chose (<see cref="HeaderSettings.Items"/>); apps add items with <see cref="IAppBarContributor"/>.</summary>
+/// <summary>
+/// One app bar in the order, places and visibility the administrator chose (<see cref="HeaderSettings.Items"/>), at its edge of the window
+/// (<see cref="HeaderLayout"/>); the layout renders a second one with <see cref="Second"/>. Apps add items with <see cref="IAppBarContributor"/>.
+/// </summary>
 public partial class CoworkeeAppBar : IDisposable
 {
     private IReadOnlyList<(HeaderItem Item, HeaderPlacement Placement)> _arranged = [];
+    private HeaderLayout _layout = HeaderLayout.Default;
     private IReadOnlyList<HeaderItemSetting> _restricted = [];
     private IReadOnlySet<string> _permitted = new HashSet<string>();
     private IReadOnlyDictionary<string, string?>? _settings;
@@ -38,20 +42,51 @@ public partial class CoworkeeAppBar : IDisposable
 
     [Parameter] public EventCallback ToggleDark { get; set; }
 
-    /// <summary>Phone width: the secondary actions sit in one overflow menu.</summary>
+    /// <summary>Phone width: one bar at the top, the secondary actions and the second bar's items sit in its overflow menu.</summary>
     [Parameter] public bool Compact { get; set; }
+
+    /// <summary>The second app bar: the items placed there (<see cref="HeaderPlacement.SecondBar"/>, <see cref="HeaderPlacement.SecondOverflow"/>).</summary>
+    [Parameter] public bool Second { get; set; }
+
+    [Parameter] public HeaderPosition Position { get; set; } = HeaderPosition.Top;
+
+    /// <summary>The menu button and the app's name at the start of the bar (a bar across the window only).</summary>
+    [Parameter] public bool ShowBrand { get; set; } = true;
+
+    /// <summary>The menu button with the name; off while the navigation carries its own.</summary>
+    [Parameter] public bool ShowMenuButton { get; set; } = true;
+
+    private string TestId => Second ? "app-bar-2" : "app-bar";
 
     private Task ToggleRightToLeftAsync() => Preferences.SetRightToLeftAsync(!Preferences.RightToLeft);
 
-    private IReadOnlyList<HeaderItem> Bar => Placed(HeaderPlacement.Bar);
+    private IReadOnlyList<HeaderItem> Bar => Placed(Second ? HeaderPlacement.SecondBar : HeaderPlacement.Bar);
 
-    private IReadOnlyList<HeaderItem> Overflow => Placed(HeaderPlacement.Overflow);
+    private IReadOnlyList<HeaderItem> Overflow => Placed(Second ? HeaderPlacement.SecondOverflow : HeaderPlacement.Overflow);
+
+    // the hidden palette keeps Ctrl+K and opens from the overflow menu: in the bar whose overflow menu has the search, in the first one when it is hidden
+    private bool HasHiddenPalette => _arranged.FirstOrDefault(a => a.Item.Id == HeaderItems.Search) is { Item: not null } search
+        && (Where(search) == (Second ? HeaderPlacement.SecondOverflow : HeaderPlacement.Overflow) || (!Second && Where(search) == HeaderPlacement.Hidden));
 
     private IReadOnlyList<HeaderItem> Placed(HeaderPlacement placement) =>
         _arranged.Where(a => Where(a) == placement && Shown(a.Item)).Select(a => a.Item).ToList();
 
-    private HeaderPlacement Where((HeaderItem Item, HeaderPlacement Placement) entry) =>
-        Compact && entry.Placement == HeaderPlacement.Bar && HeaderItems.FoldOnPhones.Contains(entry.Item.Id) ? HeaderPlacement.Overflow : entry.Placement;
+    private HeaderPlacement Where((HeaderItem Item, HeaderPlacement Placement) entry)
+    {
+        var placement = _layout.Effective(entry.Placement);
+        if (!Compact)
+        {
+            return placement;
+        }
+
+        return placement switch
+        {
+            HeaderPlacement.Bar when HeaderItems.FoldOnPhones.Contains(entry.Item.Id) => HeaderPlacement.Overflow,
+            HeaderPlacement.SecondBar when entry.Item.Id == HeaderItems.User => HeaderPlacement.Bar,
+            HeaderPlacement.SecondBar or HeaderPlacement.SecondOverflow => HeaderPlacement.Overflow,
+            _ => placement,
+        };
+    }
 
     // the assistant's item is there only while the administrator chose the app bar for it
     private bool Shown(HeaderItem item) =>
@@ -76,6 +111,7 @@ public partial class CoworkeeAppBar : IDisposable
     private void Arrange()
     {
         _settings = Themes.ClientSettings;
+        _layout = HeaderLayout.From(_settings);
         var configured = HeaderItems.Parse(_settings.GetValueOrDefault(HeaderSettings.Items));
         _arranged = HeaderItems.Arrange(HeaderItems.All(Contributors), configured);
         // the account menu is for everyone: without it nobody signs out
