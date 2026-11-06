@@ -60,6 +60,8 @@ services.AddODataEntity<Customer>("Customers", SalesPermissions.Orders.View);
 
 Mehr braucht der Server nicht. Die Zeilen kommen über das OData-Set selbst; Berechtigung des Sets, Mandanten- und Soft-Delete-Filter, Zeilenfilter (`IODataEntityFilter`) und versteckte Eigenschaften gelten für die Kopie also genau wie für jede Abfrage.
 
+Eine Entity, die das Attribut nicht tragen kann (eine Klasse einer anderen Bibliothek, die Tabelle einer [externen Datenbank](../fundamentals/persistence.md#externe-datenbanken)), wird genauso mit `o.For<TEntity>()` in den Optionen oder über ihren Application Service gespiegelt (Schritt 2); alle drei Wege führen zur selben Kopie.
+
 ## Schritt 2: Einstellungen (optional)
 
 Jedes Set startet mit den Standardwerten, dann wirken das Attribut, die Optionen und zuletzt sein Anwendungsdienst:
@@ -84,6 +86,16 @@ Jedes Set startet mit den Standardwerten, dann wirken das Attribut, die Optionen
         o.For<Product>(s => s.RefreshInterval = TimeSpan.FromMinutes(1));   // gespiegelt ohne Attribut
         o.For<Brand>(s => s.Enabled = false);                               // markierte Entity abgeschaltet
     });
+    ```
+
+    Eine Tabelle ohne `IAuditable`, hier die Sendungen einer externen Hub-Datenbank, die ein Job jede Minute neu schreibt, nennt das Datum, an dem man Änderungen erkennt, und schaut weiter zurück, weil eine Zeile dort bis zu einen Lauf nach ihrem Datum ankommt:
+
+    ```csharp
+    services.AddCoworkeeClientEntities(o => o.For<CalculatedShipment>(s =>
+    {
+        s.ChangedAt = [nameof(CalculatedShipment.DateUpdatedUtc)];
+        s.Overlap = TimeSpan.FromMinutes(5);
+    }));
     ```
 
     Die Standardwerte können auch aus der Konfiguration kommen (`Coworkee:ClientEntities:Default`).

@@ -60,6 +60,8 @@ services.AddODataEntity<Customer>("Customers", SalesPermissions.Orders.View);
 
 `[ClientEntity]` is all the server needs. The rows travel through the OData set itself, so its permission, the tenant and soft delete filters, `IODataEntityFilter` row filters and hidden properties apply to the copy exactly as to every query.
 
+An entity that cannot carry the attribute (a class of another library, the table of an [external database](../fundamentals/persistence.md#external-databases)) is mirrored the same way with `o.For<TEntity>()` in the options or through its [application service](#step-2-settings-optional); all three ways lead to the same copy.
+
 ## Step 2: settings (optional)
 
 Each set starts from the defaults, then the attribute, then the options, then its application service apply:
@@ -84,6 +86,16 @@ Each set starts from the defaults, then the attribute, then the options, then it
         o.For<Product>(s => s.RefreshInterval = TimeSpan.FromMinutes(1));   // mirrored without the attribute
         o.For<Brand>(s => s.Enabled = false);                               // an attributed entity switched off
     });
+    ```
+
+    A table without `IAuditable`, here the shipments of an external hub database that a job rewrites every minute, names the date that tells what changed and looks further back, because a row lands there up to a run after its date:
+
+    ```csharp
+    services.AddCoworkeeClientEntities(o => o.For<CalculatedShipment>(s =>
+    {
+        s.ChangedAt = [nameof(CalculatedShipment.DateUpdatedUtc)];
+        s.Overlap = TimeSpan.FromMinutes(5);
+    }));
     ```
 
     The defaults can also come from configuration (`Coworkee:ClientEntities:Default`).
