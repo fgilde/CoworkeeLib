@@ -89,6 +89,55 @@ public sealed class UserAppearanceTests : ClientTestBase
     }
 
     [Fact]
+    public async Task A_theme_the_user_chose_and_someone_edits_applies_at_the_next_reload()
+    {
+        Api.GetClientSettingsAsync(Arg.Any<CancellationToken>()).Returns(new Dictionary<string, string?> { [ThemeSettings.ThemeId] = Ocean.Id.ToString() });
+        var service = Services.GetRequiredService<ThemeService>();
+        await service.LoadAsync();
+        service.Theme.ShowLogoInNav.ShouldBeTrue();
+
+        Api.GetThemesAsync(Arg.Any<CancellationToken>()).Returns([Brand, Ocean with { Options = JsonSerializer.SerializeToElement(new { ShowLogoInNav = false }), Revision = 2 }]);
+        await service.LoadAsync();
+
+        service.Current!.Name.ShouldBe("Ocean");
+        service.Theme.ShowLogoInNav.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task A_deleted_theme_the_user_chose_gives_way_to_the_organisation_theme_and_leaves_the_menu()
+    {
+        Api.GetClientSettingsAsync(Arg.Any<CancellationToken>()).Returns(new Dictionary<string, string?> { [ThemeSettings.ThemeId] = Ocean.Id.ToString() });
+        AddAuthorization().SetAuthorized("Ada");
+        var service = Services.GetRequiredService<ThemeService>();
+        await service.LoadAsync();
+        var popovers = Render<MudBlazor.MudPopoverProvider>();
+        var menu = Render<ThemeMenu>();
+        await menu.WaitForElement("[data-testid='theme-menu'] button").ClickAsync(new());
+        popovers.WaitForElement("[data-theme='Ocean']");
+
+        Api.GetThemesAsync(Arg.Any<CancellationToken>()).Returns([Brand, Theme("Forest")]);
+        await menu.InvokeAsync(service.LoadAsync);
+
+        service.Current!.Name.ShouldBe("Brand");
+        popovers.WaitForAssertion(() => popovers.FindAll("[data-theme='Ocean']").ShouldBeEmpty());
+        popovers.FindAll("[data-theme='Forest']").ShouldNotBeEmpty();
+    }
+
+    [Fact]
+    public async Task The_theme_cards_of_the_user_settings_follow_deleted_and_new_themes()
+    {
+        AddAuthorization().SetAuthorized("Ada");
+        var page = Render<UserSettings>();
+        page.WaitForElement("[data-theme='Ocean']");
+
+        Api.GetThemesAsync(Arg.Any<CancellationToken>()).Returns([Brand, Theme("Forest")]);
+        await page.InvokeAsync(Services.GetRequiredService<ThemeService>().LoadAsync);
+
+        page.WaitForAssertion(() => page.FindAll("[data-theme='Ocean']").ShouldBeEmpty());
+        page.FindAll("[data-theme='Forest']").ShouldNotBeEmpty();
+    }
+
+    [Fact]
     public async Task The_organisation_default_clears_the_users_choice()
     {
         AddAuthorization().SetAuthorized("Ada");

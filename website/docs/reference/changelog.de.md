@@ -22,6 +22,7 @@
 - Client Entities: Zeilen mit einer Liste unter ihren Eigenschaften (z. B. `Tags`) luden ganze Serverzeilen; sie wählen jetzt nur ihre eigenen Eigenschaften (bei den Sendungen eines Hubs ein Drittel der Daten), die Liste kommt weiter über `$expand`.
 - Client Entities: Ein sofort fertiges Laden der Facetten verhinderte, dass die Kopie sie je wieder anfragte.
 - Themes: Ein geändertes Theme oder ein neuer Standard erreichte nur die offenen Seiten von Theme-Verwaltern; jetzt übernimmt jede Seite der Organisation es sofort.
+- Themes: Ein selbst gewähltes Theme behielt nach einer Änderung (Logo in der Navigation, Farben) sein altes Aussehen und blieb nach dem Löschen aktiv, auch bei dem, der es geändert hat; jetzt ändert es sich sofort, ein gelöschtes weicht dem Theme der Organisation. Theme-Menü, Theme-Karten der Benutzereinstellungen, Befehlspalette und Assistent zeigen gelöschte Themes nicht mehr und neue sofort (`ThemeService.ThemesAsync`).
 - Lokalisierung: Geänderte Übersetzungen, eine neue Standardsprache und eine anderswo gespeicherte Sprache des Benutzers erreichten offene Apps erst nach einem Neuladen; jetzt erscheinen sie sofort, auch wenn das Sprachmenü ausgeblendet ist. Nur eine auf dem Gerät gewählte Sprache wird im Browser gemerkt (`coworkee.culture.chosen`); der Hinweis zur abgeschalteten Sprache nennt ihren Namen statt des Codes.
 
 ## 0.0.1.64 (2026-11-05)

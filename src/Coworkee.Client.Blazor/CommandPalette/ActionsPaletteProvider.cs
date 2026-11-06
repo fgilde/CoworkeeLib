@@ -18,7 +18,6 @@ internal sealed class ActionsPaletteProvider(
 {
     public const string Group = "Actions";
     private const int Order = 20;
-    private IReadOnlyList<ThemeDto>? _themes;
     private MyRolesDto? _roles;
 
     public async Task<IEnumerable<CommandPaletteItem>> GetItemsAsync(string query, CancellationToken cancellationToken)
@@ -63,17 +62,7 @@ internal sealed class ActionsPaletteProvider(
     private static CommandPaletteItem Item(string title, string icon, Func<Task>? run, string? keywords) =>
         new(Group, title) { Icon = icon, Run = run, Keywords = keywords, Order = Order };
 
-    private async Task<IReadOnlyList<ThemeDto>> ThemesAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            return _themes ??= await api.GetThemesAsync(cancellationToken) ?? [];
-        }
-        catch (Exception exception) when (exception is ApiException or HttpRequestException)
-        {
-            return _themes = [];
-        }
-    }
+    private Task<IReadOnlyList<ThemeDto>> ThemesAsync(CancellationToken cancellationToken) => themes.ThemesAsync().WaitAsync(cancellationToken);
 
     private async Task<MyRolesDto?> RolesAsync(CancellationToken cancellationToken)
     {

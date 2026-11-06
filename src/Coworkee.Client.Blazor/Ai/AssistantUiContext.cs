@@ -19,10 +19,8 @@ namespace Coworkee.Client.Blazor.Ai;
 public sealed class AssistantUiContext(
     IEnumerable<INavigationContributor> contributors, IOptions<NavigationMenuOptions> menu, CoworkeePages pageLinks, AuthenticationStateProvider authentication,
     IAuthorizationService authorization, Features.FeatureStore features, IServiceProvider services, NavigationManager nav, ThemeService themes, LayoutPreferences layout,
-    ICoworkeeApi api, CoworkeeLocalizer l, IEnumerable<IAssistantClientAction> actions)
+    CoworkeeLocalizer l, IEnumerable<IAssistantClientAction> actions)
 {
-    private IReadOnlyList<string>? _themes;
-
     public async Task<AiUiContext> BuildAsync(CancellationToken cancellationToken)
     {
         var options = menu.Value;
@@ -46,15 +44,6 @@ public sealed class AssistantUiContext(
 
     private string? Group(string? group) => group is null ? null : string.Join(" > ", group.Split(NavigationEntry.GroupSeparator).Select(g => l[g]));
 
-    private async Task<IReadOnlyList<string>> ThemesAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            return _themes ??= [.. (await api.GetThemesAsync(cancellationToken) ?? []).Select(t => t.Name)];
-        }
-        catch (Exception exception) when (exception is ApiException or HttpRequestException)
-        {
-            return [];
-        }
-    }
+    private async Task<IReadOnlyList<string>> ThemesAsync(CancellationToken cancellationToken) =>
+        [.. (await themes.ThemesAsync().WaitAsync(cancellationToken)).Select(t => t.Name)];
 }

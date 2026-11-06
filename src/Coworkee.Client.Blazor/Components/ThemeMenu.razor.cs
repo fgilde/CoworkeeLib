@@ -20,20 +20,16 @@ public partial class ThemeMenu : IDisposable
 
     protected override void OnInitialized() => ThemeService.Changed += Refresh;
 
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            _themes = await Api.GetThemesAsync() ?? [];
-        }
-        catch (Exception exception) when (exception is ApiException or HttpRequestException)
-        {
-        }
-    }
+    protected override async Task OnInitializedAsync() => _themes = await ThemeService.ThemesAsync();
 
     public void Dispose() => ThemeService.Changed -= Refresh;
 
-    private void Refresh() => InvokeAsync(StateHasChanged);
+    // themes deleted, added or edited elsewhere
+    private void Refresh() => InvokeAsync(async () =>
+    {
+        _themes = await ThemeService.ThemesAsync();
+        StateHasChanged();
+    });
 
     private Task ChooseAsync(ThemeDto theme)
     {
