@@ -755,6 +755,13 @@
           ]
         }
       ]
+    },
+    {
+      "version": "0.0.1.66",
+      "breaking": [
+        "Client entities: AddCoworkeeClientEntitiesSqlite() keeps only row types in SQLite that the in-memory copy keeps as JSON (a list among their properties); AddCoworkeeClientEntitiesSqlite(o => o.AllRowTypes = true) keeps every copy there as 0.0.1.65 did."
+      ],
+      "needsMigration": false
     }
   ]
 }

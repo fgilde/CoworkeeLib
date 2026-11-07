@@ -2,7 +2,6 @@ using System.Reflection;
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Contracts.Data;
 using Coworkee.OData.ClientEntities;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Coworkee.Client.Blazor.ClientEntities.Sqlite.Tests;
 
@@ -173,7 +172,57 @@ public sealed class CopyRoundTripTests : IDisposable
         }
     }
 
-    private SqliteClientEntityStore<Row> Store(string key) => new(key, _storage, NullLogger.Instance, _directory);
+    public static TheoryData<string, string[]> RangeGroups() => new()
+    {
+        { "Day", ["Day lt 2026-02-15", "Day ge 2026-02-15 and Day lt 2026-03-01", "Day ge 2026-03-01 and Day lt 2026-03-15", "Day ge 2026-03-15"] },
+        { "MaybeDay", ["MaybeDay le 2024-03-10", "MaybeDay gt 2024-03-10 and MaybeDay le 2024-04-01", "MaybeDay eq 2024-03-05"] },
+        { "When", ["When lt 2026-02-10T00:00:00Z", "When ge 2026-02-10T00:00:00Z and When lt 2026-02-25T12:00:00+02:00", "When ge 2026-02-25T12:00:00+02:00"] },
+        { "MaybeWhen", ["MaybeWhen lt 2026-01-01T00:00:00Z", "MaybeWhen ge 2026-01-01T00:00:00Z"] },
+        { "Price", ["Price lt 20", "Price ge 20 and Price lt 30.25", "Price ge 30.25 and Price le 40.25", "Price gt 40.25", "Price ge 15 and Price lt 45"] },
+        { "Number", ["Number lt 10", "Number ge 10 and Number lt 10", "Number eq 39", "Number gt 39"] },
+        { "Span", ["Span lt duration'PT0S'", "Span ge duration'PT0S' and Span lt duration'PT12H'", "Span ge duration'PT12H'"] },
+    };
+
+    [Theory]
+    [MemberData(nameof(RangeGroups))]
+    public async Task Range_facets_count_as_on_the_rows(string path, string[] filters)
+    {
+        await using var store = await SnapshotAsync();
+        var group = new FacetGroupDto(path, path, path, FacetKind.Range, default, [.. filters.Select(f => new FacetOptionDto(default, f, true, -1, f))], true, 0);
+
+        var page = await store.QueryAsync(new ODataQuery { Top = 0, Facets = true, Filter = "Number ne 3" },
+            _ => Task.FromResult<IReadOnlyList<FacetGroupDto>>([group]), TestContext.Current.CancellationToken);
+
+        var rows = Rows.Where(r => r.Number != 3).AsQueryable();
+        page.Facets.Single().Options.Select(o => (o.OData, o.Count)).ShouldBe(filters.Select(f => (f, rows.Count(ODataLinq.Filter<Row>(f)))));
+    }
+
+    [Fact]
+    public async Task List_facets_count_as_on_the_rows_also_for_a_chosen_group()
+    {
+        await using var store = await SnapshotAsync();
+        string[] level = ["Level eq 'Low'", "Level eq 'Middle'", "Level eq 'High'"];
+        string[] letter = ["Letter eq 'A'", "Letter eq 'B'", "Letter eq 'Z'"];
+        string[] name = ["Name eq null", "Name eq 'Row 01'", "contains(Name,'2')"];
+        FacetGroupDto Group(string key, string[] filters) =>
+            new(key, key, key, FacetKind.CheckboxList, default, [.. filters.Select(f => new FacetOptionDto(default, f, true, -1, f))], true, 0);
+
+        // the same counts for two filter values in a row: the second runs the compiled statements with other parameters
+        foreach (var below in new[] { 30, 12 })
+        {
+            var filter = $"Number lt {below}";
+            var page = await store.QueryAsync(new ODataQuery { Top = 0, Facets = true, Filter = filter },
+                _ => Task.FromResult<IReadOnlyList<FacetGroupDto>>([Group("Level", level), Group("Letter", letter), Group("Name", name)]), TestContext.Current.CancellationToken);
+
+            var rows = Rows.Where(r => r.Number < below).AsQueryable();
+            var expected = level.Concat(letter).Concat(name).Select(f => (f, rows.Count(ODataLinq.Filter<Row>(f)))).Where(x => x.Item2 > 0);
+            page.Facets.SelectMany(g => g.Options).Select(o => (o.OData, o.Count)).ShouldBe(expected, filter);
+        }
+    }
+
+    private readonly ListLogger _log = new();
+
+    private SqliteClientEntityStore<Row> Store(string key) => new(key, _storage, _log, _directory);
 
     private async Task<SqliteClientEntityStore<Row>> SnapshotAsync()
     {
@@ -227,6 +276,18 @@ public sealed class CopyRoundTripTests : IDisposable
             a.Tags.ShouldBe(e.Tags);
             a.Inner.ShouldBe(e.Inner);
         }
+    }
+
+    private sealed class ListLogger : Microsoft.Extensions.Logging.ILogger
+    {
+        public List<string> Messages { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
+
+        public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, Microsoft.Extensions.Logging.EventId eventId, TState state, Exception? exception,
+            Func<TState, Exception?, string> formatter) => Messages.Add(formatter(state, exception));
     }
 
     private sealed class MemoryStorage : IClientEntityStorage

@@ -2,6 +2,16 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Geändert
+
+- Client-Entities: `AddCoworkeeClientEntitiesSqlite()` legt nur die Zeilentypen in SQLite, die die Kopie im Speicher als JSON hält (eine Liste unter ihren Properties); Zeilentypen aus einfachen Properties bleiben Spalten im Speicher, deren Facetten etwa zehnmal schneller antworten. `AddCoworkeeClientEntitiesSqlite(o => o.AllRowTypes = true)` legt jede Kopie in SQLite ([welche Kopien](../ui/client-entities.md#welche-kopien)).
+
+### Behoben
+
+- Client-Entities (SQLite): Bereichs-Facetten über viele verschiedene Werte holten jeden Wert in den Browser (100.000 Auftragsdaten: 1,3 s); sie zählen jetzt in einer Abfrage (etwa 60 ms). Die Werte eines Filters sind Parameter, ein anderer Suchtext oder eine andere Auswahl übersetzt also nicht mehr jede Abfrage neu: gefilterte Anzahl und Seite brauchten 38 und 36 ms, jetzt 7 und 5 ms.
+
 ## 0.0.1.65 (2026-11-07)
 
 ### Hinzugefügt
