@@ -153,3 +153,5 @@ On top of that, the workflow of a row is only there for users who see the row th
 ## In a new app
 
 `coworkee new MyApp --workflows` (or the *Workflows and approvals* card in the Studio) adds the module. With the samples, products get the workflow above in short: product managers submit, an administrator approves within three days, and the products table has an *Approval* column to filter, sort and group by.
+
+An [app spec](../getting-started/cli.md#workflows) declares workflows too: `workflow` on an entity makes the CLI write its declaration, register it and add the state column to the list, for a new app (`coworkee new --spec`) and for an existing one (`coworkee add --spec`, `coworkee entity add`). Coworkee Studio edits it on the *Entities* page, and every [starter spec](../getting-started/gallery.md) brings its processes this way.

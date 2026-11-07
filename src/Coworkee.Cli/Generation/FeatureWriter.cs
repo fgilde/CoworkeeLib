@@ -42,6 +42,11 @@ internal static class FeatureWriter
             await changes.EditAsync(project, text => AppEdits.AddToItems(text, ServerFiles.MapperlyReference), cancellationToken);
         }
 
+        if (entity.Spec.Workflow is not null)
+        {
+            await changes.EditAsync(project, text => AppEdits.AddToItems(text, ServerFiles.WorkflowsReference), cancellationToken);
+        }
+
         foreach (var module in entity.ReferencedModules)
         {
             var target = Path.Combine(solution.Src, $"{solution.Name}.{module}", $"{solution.Name}.{module}.csproj");

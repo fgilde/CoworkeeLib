@@ -1,0 +1,133 @@
+{
+  "name": "People",
+  "options": {
+    "samples": false,
+    "chat": false,
+    "files": true
+  },
+  "branding": {
+    "title": "People Hub",
+    "theme": "Mint",
+    "signInLayout": "Card"
+  },
+  "modules": [
+    {
+      "name": "Staff",
+      "entities": [
+        {
+          "name": "Department",
+          "properties": [
+            { "name": "Name", "required": true, "maxLength": 120, "display": true, "unique": true },
+            { "name": "CostCenter", "maxLength": 20, "label": "Cost center" }
+          ]
+        },
+        {
+          "name": "Employee",
+          "properties": [
+            { "name": "FullName", "required": true, "maxLength": 200, "display": true, "label": "Name" },
+            { "name": "Email", "type": "email", "required": true, "maxLength": 250, "unique": true },
+            { "name": "Department", "type": "reference", "reference": "Department", "inverse": "Employees", "onDelete": "setNull", "facet": true },
+            { "name": "JobTitle", "maxLength": 120, "label": "Job title" },
+            { "name": "StartedOn", "type": "dateOnly", "label": "Started on" },
+            { "name": "LeaveDaysPerYear", "type": "int", "required": true, "default": "30", "label": "Leave days per year" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SelfService",
+      "entities": [
+        {
+          "name": "LeaveRequest",
+          "properties": [
+            { "name": "Employee", "type": "reference", "reference": "Staff.Employee", "required": true, "facet": true },
+            { "name": "Kind", "type": "enum", "enum": "LeaveKind", "required": true, "default": "Vacation", "facet": true },
+            { "name": "FirstDay", "type": "dateOnly", "required": true, "label": "First day" },
+            { "name": "LastDay", "type": "dateOnly", "required": true, "label": "Last day" },
+            { "name": "Days", "type": "decimal", "precision": 5, "scale": 1, "required": true, "default": "1" },
+            { "name": "Note", "type": "text" },
+            { "name": "DecidedOn", "type": "dateTime", "label": "Decided on" }
+          ],
+          "workflow": {
+            "initial": "Draft",
+            "transitions": [
+              { "name": "Submit", "from": ["Draft"], "to": "Pending" },
+              { "name": "Revise", "from": ["Rejected"], "to": "Draft" },
+              { "name": "Cancel", "from": ["Draft", "Pending", "Approved"], "to": "Cancelled", "comment": true }
+            ],
+            "states": [
+              {
+                "name": "Pending",
+                "color": "warning",
+                "approval": { "approved": "Approved", "rejected": "Rejected", "roles": ["Team Lead"], "dueInDays": 3, "remindAfterDays": 1, "notByRequester": true }
+              },
+              { "name": "Approved", "color": "success", "stamp": "DecidedOn", "notify": "HR" },
+              { "name": "Rejected", "color": "error", "stamp": "DecidedOn" },
+              { "name": "Cancelled", "color": "secondary", "notify": "HR" }
+            ]
+          }
+        },
+        {
+          "name": "ExpenseClaim",
+          "properties": [
+            { "name": "Title", "required": true, "maxLength": 200, "display": true },
+            { "name": "Employee", "type": "reference", "reference": "Staff.Employee", "required": true, "facet": true },
+            { "name": "Category", "type": "enum", "enum": "ExpenseCategory", "required": true, "default": "Travel", "facet": true },
+            { "name": "SpentOn", "type": "dateOnly", "required": true, "label": "Spent on" },
+            { "name": "Amount", "type": "money", "required": true },
+            { "name": "Receipt", "type": "url", "maxLength": 500, "label": "Receipt link" },
+            { "name": "PaidOn", "type": "dateTime", "label": "Paid on" }
+          ],
+          "workflow": {
+            "initial": "Draft",
+            "transitions": [
+              { "name": "Submit", "from": ["Draft"], "to": "In review" },
+              { "name": "Revise", "from": ["Returned"], "to": "Draft" },
+              { "name": "Pay out", "from": ["Approved"], "to": "Paid", "permission": "Pay" },
+              { "name": "Withdraw", "from": ["Draft", "In review"], "to": "Withdrawn" }
+            ],
+            "states": [
+              {
+                "name": "In review",
+                "color": "warning",
+                "approval": { "approved": "Approved", "rejected": "Returned", "roles": ["Team Lead"], "dueInDays": 5, "remindAfterDays": 2, "notByRequester": true }
+              },
+              { "name": "Approved", "color": "info", "notify": "Accounting" },
+              { "name": "Returned", "color": "error" },
+              { "name": "Paid", "color": "success", "stamp": "PaidOn" },
+              { "name": "Withdrawn", "color": "secondary" }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "enums": [
+    { "name": "LeaveKind", "values": ["Vacation", "Sick", "Parental", "Unpaid", "Training"] },
+    { "name": "ExpenseCategory", "values": ["Travel", "Meals", "Lodging", "Equipment", "Training", "Other"] }
+  ],
+  "roles": [
+    {
+      "name": "Staff",
+      "description": "Requests leave and claims expenses",
+      "permissions": ["Staff.Departments.View", "Staff.Employees.View", "SelfService.LeaveRequests.View", "SelfService.LeaveRequests.Create", "SelfService.LeaveRequests.Edit",
+        "SelfService.ExpenseClaims.View", "SelfService.ExpenseClaims.Create", "SelfService.ExpenseClaims.Edit", "Workflows.View"]
+    },
+    {
+      "name": "Team Lead",
+      "description": "Approves leave and expenses of the team",
+      "permissions": ["Staff.Departments.View", "Staff.Employees.View", "SelfService.LeaveRequests.View", "SelfService.ExpenseClaims.View", "Workflows.View"]
+    },
+    {
+      "name": "HR",
+      "description": "Keeps departments and employees, hears about approved leave",
+      "permissions": ["Staff.Departments.View", "Staff.Departments.Create", "Staff.Departments.Edit", "Staff.Departments.Delete",
+        "Staff.Employees.View", "Staff.Employees.Create", "Staff.Employees.Edit", "Staff.Employees.Delete", "SelfService.LeaveRequests.View"]
+    },
+    {
+      "name": "Accounting",
+      "description": "Pays approved expense claims",
+      "permissions": ["Staff.Employees.View", "SelfService.ExpenseClaims.View", "SelfService.ExpenseClaims.Pay"]
+    }
+  ]
+}

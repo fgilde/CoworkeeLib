@@ -67,6 +67,11 @@ public static partial class SpecValidator
             errors.Add("options.clientEntities: an entity is a client entity, so the option cannot be off.");
         }
 
+        if (values["workflows"] == "false" && spec.Modules.SelectMany(m => m.Entities).Any(e => e.Workflow is not null))
+        {
+            errors.Add("options.workflows: an entity has a workflow, so the option cannot be off.");
+        }
+
         if (SpecOptions.IsSet(spec, "backup") && values["backup"] == "true" && values["database"] != "postgres")
         {
             errors.Add("options.backup: database backups from the admin pages need the postgres database.");

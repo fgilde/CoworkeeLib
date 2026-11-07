@@ -153,3 +153,5 @@ Darüber hinaus gibt es den Workflow einer Zeile nur für Benutzer, die die Zeil
 ## In einer neuen App
 
 `coworkee new MyApp --workflows` (oder die Karte *Workflows and approvals* im Studio) fügt das Modul hinzu. Mit den Beispielen bekommen Produkte den Workflow von oben in kurz: Produktmanager reichen ein, ein Administrator genehmigt innerhalb von drei Tagen, und die Produkttabelle hat eine Spalte *Freigabe*, nach der du filtern, sortieren und gruppieren kannst.
+
+Auch eine [App-Spezifikation](../getting-started/cli.md#workflows) deklariert Workflows: `workflow` an einer Entity lässt die CLI die Deklaration schreiben, sie registrieren und die Statusspalte in die Liste setzen, für eine neue App (`coworkee new --spec`) und für eine bestehende (`coworkee add --spec`, `coworkee entity add`). Coworkee Studio bearbeitet sie auf der Seite *Entities*, und jede [Startvorlage](../getting-started/gallery.md) bringt ihre Abläufe so mit.

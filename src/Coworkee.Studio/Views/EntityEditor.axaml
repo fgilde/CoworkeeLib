@@ -161,6 +161,105 @@
       </StackPanel>
     </Border>
 
+    <Border Classes="card">
+      <StackPanel Spacing="10">
+        <Grid ColumnDefinitions="*,Auto">
+          <StackPanel Spacing="2">
+            <TextBlock Classes="h3" Text="{l:L Workflow}" />
+            <TextBlock Classes="caption" TextWrapping="Wrap" Text="{l:L 'States and the moves between them, each with its permission; approvals with a deadline, notifications and time stamps. The list gets a state column with the actions.'}" />
+          </StackPanel>
+          <ToggleSwitch Grid.Column="1" IsChecked="{Binding HasWorkflow}" VerticalAlignment="Center" Margin="12,0,0,0" />
+        </Grid>
+        <Panel IsVisible="{Binding HasWorkflow}">
+        <StackPanel Spacing="10" DataContext="{Binding Workflow}" x:DataType="vm:WorkflowViewModel">
+          <Grid ColumnDefinitions="*,12,*">
+            <StackPanel Spacing="4">
+              <TextBlock Classes="head" Text="{l:L 'State of a new row'}" />
+              <TextBox Text="{Binding Initial}" PlaceholderText="Draft" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Spacing="4">
+              <TextBlock Classes="head" Text="{l:L 'Also write the state into'}" />
+              <TextBox Text="{Binding MirrorTo}" PlaceholderText="{l:L 'an optional string property, for client entities'}" />
+            </StackPanel>
+          </Grid>
+
+          <Grid ColumnDefinitions="*,Auto" Margin="0,6,0,0">
+            <TextBlock Classes="head" Text="{l:L Transitions}" VerticalAlignment="Center" />
+            <Button Grid.Column="1" Command="{Binding AddTransitionCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <PathIcon Classes="small" Data="{StaticResource Icon.Plus}" />
+                <TextBlock Text="{l:L Transition}" />
+              </StackPanel>
+            </Button>
+          </Grid>
+          <Grid ColumnDefinitions="*,8,*,8,*,8,100,8,70,4,34">
+            <TextBlock Classes="head" Text="{l:L Name}" />
+            <TextBlock Grid.Column="2" Classes="head" Text="{l:L 'From (comma separated)'}" />
+            <TextBlock Grid.Column="4" Classes="head" Text="{l:L To}" />
+            <TextBlock Grid.Column="6" Classes="head" Text="{l:L Permission}" />
+            <TextBlock Grid.Column="8" Classes="head" Text="{l:L Comment}" />
+          </Grid>
+          <ItemsControl ItemsSource="{Binding Transitions}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:TransitionViewModel">
+                <Grid ColumnDefinitions="*,8,*,8,*,8,100,8,70,4,34" Margin="0,3">
+                  <TextBox Text="{Binding Name}" PlaceholderText="Submit" />
+                  <TextBox Grid.Column="2" Text="{Binding From}" PlaceholderText="Draft" />
+                  <TextBox Grid.Column="4" Text="{Binding To}" PlaceholderText="In review" />
+                  <TextBox Grid.Column="6" Text="{Binding Permission}" PlaceholderText="Edit" ToolTip.Tip="{l:L 'Edit, View, Create, Delete or an own one like Approve'}" />
+                  <CheckBox Grid.Column="8" IsChecked="{Binding Comment}" HorizontalAlignment="Center" ToolTip.Tip="{l:L 'Asks for a comment'}" />
+                  <Button Grid.Column="10" Classes="icon danger" Width="34" Height="34" ToolTip.Tip="{l:L 'Remove transition'}"
+                          Command="{Binding $parent[ItemsControl].((vm:WorkflowViewModel)DataContext).RemoveTransitionCommand}" CommandParameter="{Binding}">
+                    <PathIcon Classes="small" Data="{StaticResource Icon.Delete}" />
+                  </Button>
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <Grid ColumnDefinitions="*,Auto" Margin="0,6,0,0">
+            <TextBlock Classes="head" Text="{l:L 'What happens in a state'}" VerticalAlignment="Center" />
+            <Button Grid.Column="1" Command="{Binding AddStateCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <PathIcon Classes="small" Data="{StaticResource Icon.Plus}" />
+                <TextBlock Text="{l:L State}" />
+              </StackPanel>
+            </Button>
+          </Grid>
+          <ItemsControl ItemsSource="{Binding States}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:StateViewModel">
+                <Border Classes="soft" Padding="12,10" Margin="0,3">
+                  <StackPanel Spacing="8">
+                    <Grid ColumnDefinitions="*,8,110,8,*,8,*,4,34">
+                      <TextBox Text="{Binding Name}" PlaceholderText="{l:L State}" />
+                      <ComboBox Grid.Column="2" ItemsSource="{x:Static vm:WorkflowViewModel.Colors}" SelectedItem="{Binding Color}" HorizontalAlignment="Stretch" PlaceholderText="{l:L Color}" />
+                      <TextBox Grid.Column="4" Text="{Binding Stamp}" PlaceholderText="{l:L 'Time stamp: dateTime property'}" />
+                      <TextBox Grid.Column="6" Text="{Binding Notify}" PlaceholderText="{l:L 'Notify role'}" />
+                      <Button Grid.Column="8" Classes="icon danger" Width="34" Height="34" ToolTip.Tip="{l:L 'Remove state'}"
+                              Command="{Binding $parent[ItemsControl].((vm:WorkflowViewModel)DataContext).RemoveStateCommand}" CommandParameter="{Binding}">
+                        <PathIcon Classes="small" Data="{StaticResource Icon.Delete}" />
+                      </Button>
+                    </Grid>
+                    <CheckBox IsChecked="{Binding HasApproval}" Content="{l:L 'Entering the state asks for an approval'}" />
+                    <Grid ColumnDefinitions="*,8,*,8,*,8,80,8,80" IsVisible="{Binding HasApproval}">
+                      <TextBox Text="{Binding Roles}" PlaceholderText="{l:L 'Roles that decide'}" />
+                      <TextBox Grid.Column="2" Text="{Binding Approved}" PlaceholderText="{l:L 'State when approved'}" />
+                      <TextBox Grid.Column="4" Text="{Binding Rejected}" PlaceholderText="{l:L 'State when rejected'}" />
+                      <NumericUpDown Grid.Column="6" Value="{Binding DueInDays}" Minimum="1" Maximum="365" FormatString="0" ShowButtonSpinner="False" PlaceholderText="{l:L 'Days'}" ToolTip.Tip="{l:L 'Deadline in days'}" />
+                      <NumericUpDown Grid.Column="8" Value="{Binding RemindAfterDays}" Minimum="1" Maximum="365" FormatString="0" ShowButtonSpinner="False" PlaceholderText="{l:L 'Remind'}" ToolTip.Tip="{l:L 'Reminder after days'}" />
+                    </Grid>
+                    <CheckBox IsChecked="{Binding NotByRequester}" IsVisible="{Binding HasApproval}" Content="{l:L 'Not decided by the one who asked'}" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+        </Panel>
+      </StackPanel>
+    </Border>
+
     <Button Classes="ghost danger" HorizontalAlignment="Left"
             Command="{Binding $parent[v:EntitiesView].((vm:EntitiesStep)DataContext).RemoveEntityCommand}" CommandParameter="{Binding}">
       <StackPanel Orientation="Horizontal" Spacing="6">

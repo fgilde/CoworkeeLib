@@ -10,7 +10,7 @@ internal static class ServerFiles
     public static IEnumerable<GeneratedFile> Module(string app, string module, IReadOnlyList<EntityModel> entities)
     {
         var root = $"src/{app}.{module}";
-        yield return new($"{root}/{app}.{module}.csproj", Project(app, entities.Any(e => e.Mapping == MappingStrategy.Mapperly), entities.SelectMany(e => e.ReferencedModules).Distinct()));
+        yield return new($"{root}/{app}.{module}.csproj", Project(app, entities.Any(e => e.Mapping == MappingStrategy.Mapperly), entities.SelectMany(e => e.ReferencedModules).Distinct(), entities.Any(e => e.Spec.Workflow is not null)));
         yield return new($"{root}/{ModuleClass(app, module)}.cs", $$"""
             using Coworkee.Application.Authorization;
             using Coworkee.Application.Messaging;
@@ -45,7 +45,7 @@ internal static class ServerFiles
             """);
     }
 
-    public static string Project(string app, bool mapperly, IEnumerable<string>? modules = null) => $"""
+    public static string Project(string app, bool mapperly, IEnumerable<string>? modules = null, bool workflows = false) => $"""
         <Project Sdk="Microsoft.NET.Sdk">
           <ItemGroup>
             <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -54,12 +54,14 @@ internal static class ServerFiles
         {string.Concat((modules ?? []).Select(m => ModuleReference(app, m)))}    <CoworkeePackage Include="Coworkee.AspNetCore" />
             <CoworkeePackage Include="Coworkee.Infrastructure" />
             <CoworkeePackage Include="Coworkee.OData" />
-        {(mapperly ? MapperlyReference : string.Empty)}  </ItemGroup>
+        {(workflows ? WorkflowsReference : string.Empty)}{(mapperly ? MapperlyReference : string.Empty)}  </ItemGroup>
         </Project>
 
         """;
 
     public static string ModuleReference(string app, string module) => $"    <ProjectReference Include=\"..\\{app}.{module}\\{app}.{module}.csproj\" />\n";
+
+    public const string WorkflowsReference = "    <CoworkeePackage Include=\"Coworkee.Workflows\" />\n";
 
     public const string MapperlyReference = "    <PackageReference Include=\"Riok.Mapperly\" PrivateAssets=\"all\" ExcludeAssets=\"runtime\" />\n";
 
@@ -68,7 +70,7 @@ internal static class ServerFiles
                 context.Services.AddSingleton<IModelContributor, {e.Name}ModelContributor>();
                 context.Services.AddSingleton<IPermissionDefinitionContributor, {e.Name}PermissionDefinitions>();
                 context.Services.AddODataEntity<{e.Name}>("{e.Plural}", {e.Permissions}.View);
-        {GlobalSearch(e)}
+        {GlobalSearch(e)}{WorkflowFiles.Registration(e)}
         """.ReplaceLineEndings("\n");
 
     /// <summary>Ctrl+K and /search find the entity by its text properties; a hit opens its list searched for it.</summary>
@@ -106,7 +108,7 @@ internal static class ServerFiles
 
             public sealed class AddEdit{{e.Name}}Request
             {
-            {{string.Join("\n\n", e.Properties.Select(p => "    " + EntityModel.Settable(p)))}}
+            {{string.Join("\n\n", e.Editable.Select(p => "    " + EntityModel.Settable(p)))}}
             }
 
             """);
@@ -121,6 +123,11 @@ internal static class ServerFiles
 
         yield return new($"{features}/Delete{e.Plural}.cs", Delete(e));
         yield return new($"{features}/{e.Name}Mapping.cs", CommandFiles.Mapping(e));
+        if (e.Spec.Workflow is { } workflow)
+        {
+            yield return new($"{features}/{e.Name}Workflow.cs", WorkflowFiles.Declaration(e, workflow));
+        }
+
         yield return new($"{root}/Endpoints/{e.Name}Endpoints.cs", Endpoints(e));
     }
 
@@ -136,7 +143,7 @@ internal static class ServerFiles
                 public const string Create = "{{e.Module}}.{{e.Plural}}.Create";
                 public const string Edit = "{{e.Module}}.{{e.Plural}}.Edit";
                 public const string Delete = "{{e.Module}}.{{e.Plural}}.Delete";
-            }
+        {{string.Concat(Extra(e).Select(p => $"        public const string {p} = \"{e.Module}.{e.Plural}.{p}\";\n"))}}            }
         }
 
         """;
@@ -185,6 +192,8 @@ internal static class ServerFiles
         var navigation = p.Type == PropertyType.Reference ? $"    public {e.Target(p).Name}? {p.Name} {{ get; set; }}\n\n" : string.Empty;
         return $"{facet}    {EntityModel.Settable(p)}\n\n{navigation}";
     }
+
+    private static IEnumerable<string> Extra(EntityModel e) => e.Spec.Workflow?.ExtraPermissions ?? [];
 
     private static string ModelContributor(EntityModel e) => $$"""
         using Coworkee.Infrastructure.Persistence;
@@ -240,7 +249,7 @@ internal static class ServerFiles
                     .Add({{e.Permissions}}.View, "View {{e.PluralWords}}")
                     .Add({{e.Permissions}}.Create, "Create {{e.PluralWords}}", {{e.Permissions}}.View)
                     .Add({{e.Permissions}}.Edit, "Edit {{e.PluralWords}}", {{e.Permissions}}.View)
-                    .Add({{e.Permissions}}.Delete, "Delete {{e.PluralWords}}", {{e.Permissions}}.View);
+                    .Add({{e.Permissions}}.Delete, "Delete {{e.PluralWords}}", {{e.Permissions}}.View){{string.Concat(Extra(e).Select(p => $"\n                .Add({e.Permissions}.{p}, \"{EntityModel.Sentence(p)} {e.PluralWords}\", {e.Permissions}.View)"))}};
         }
 
         """;

@@ -41,7 +41,7 @@ public static class PermissionCatalog
         return
         [
             .. Packages.Where(p => p.Option is null || values[p.Option] == "true").SelectMany(p => p.Permissions),
-            .. spec.Modules.SelectMany(m => m.Entities.SelectMany(e => EntityActions.Select(a => $"{m.Name}.{e.PluralName}.{a}"))),
+            .. spec.Modules.SelectMany(m => m.Entities.SelectMany(e => EntityActions.Concat(e.Workflow?.ExtraPermissions ?? []).Select(a => $"{m.Name}.{e.PluralName}.{a}"))),
         ];
     }
 

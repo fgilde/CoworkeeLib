@@ -330,6 +330,8 @@ public sealed partial class MainViewModel : ObservableObject
         var (spec, inferred) = Coworkee.Cli.Spec.ExistingApp.Read(root);
         spec.Output = null;
         Load(spec, null);
+        Apps.Opened(root, spec);
+        Welcome.Refresh();
         Basics.Location = Path.GetDirectoryName(root) ?? root;
         SpecPath = null;
         ExistingApp = root;
@@ -340,7 +342,22 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         Generate.Reset();
+        Page = null;
         GoTo(Review);
+    }
+
+    /// <summary>A spec or an app of the start page.</summary>
+    [RelayCommand]
+    public void OpenRecent(RecentItem item)
+    {
+        if (item.IsApp)
+        {
+            OpenApp(item.Path);
+        }
+        else
+        {
+            Open(item.Path);
+        }
     }
 
     [RelayCommand]

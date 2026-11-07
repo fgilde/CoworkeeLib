@@ -30,6 +30,12 @@ public static class SpecOptions
             values["clientEntities"] = "true";
         }
 
+        if (!spec.Options.Keys.Any(k => k.Equals("workflows", StringComparison.OrdinalIgnoreCase))
+            && spec.Modules.SelectMany(m => m.Entities).Any(e => e.Workflow is not null))
+        {
+            values["workflows"] = "true";
+        }
+
         foreach (var option in OptionCatalog.All.Where(o => o.Choices is not null && o.Kind == OptionKind.Choice))
         {
             values[option.Id] = option.Choices!.FirstOrDefault(c => c.Value.Equals(values[option.Id], StringComparison.OrdinalIgnoreCase))?.Value ?? values[option.Id];

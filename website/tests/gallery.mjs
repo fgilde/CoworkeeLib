@@ -24,16 +24,16 @@ try {
 
       const cards = page.locator('.cw-spec');
       await cards.first().waitFor();
-      assert.equal(await cards.count(), 6);
+      assert.equal(await cards.count(), 10);
       const visible = () => page.locator('.cw-spec:visible').count();
 
-      await page.fill('#cw-starters input[type=search]', 'orders');
+      await page.fill('#cw-starters input[type=search]', 'refund');
       assert.equal(await visible(), 1, 'search');
       await page.fill('#cw-starters input[type=search]', '');
       await page.click('.cw-starters__tags button:text-is("#sales")');
-      assert.equal(await visible(), 2, 'tag');
+      assert.equal(await visible(), 3, 'tag');
       await page.click('.cw-starters__tags button:text-is("#sales")');
-      assert.equal(await visible(), 6, 'tag off');
+      assert.equal(await visible(), 10, 'tag off');
       assert.match(await page.locator('#spec-crm .cw-line code').textContent(), /^coworkee new MyApp --spec crm\.json$/);
 
       const href = await page.locator('#spec-shop a[download]').getAttribute('href');

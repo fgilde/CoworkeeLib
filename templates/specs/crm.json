@@ -40,22 +40,47 @@
             { "name": "Title", "required": true, "maxLength": 200, "display": true },
             { "name": "Company", "type": "reference", "reference": "Company", "required": true, "inverse": "Deals", "facet": true },
             { "name": "Contact", "type": "reference", "reference": "Contact", "onDelete": "setNull" },
-            { "name": "Stage", "type": "enum", "enum": "DealStage", "required": true, "default": "Lead", "facet": true },
             { "name": "Value", "type": "money", "required": true },
-            { "name": "ExpectedClose", "type": "dateOnly", "label": "Expected close" }
-          ]
+            { "name": "Discount", "type": "decimal", "precision": 5, "scale": 2, "label": "Discount %" },
+            { "name": "ExpectedClose", "type": "dateOnly", "label": "Expected close" },
+            { "name": "ClosedOn", "type": "dateTime", "label": "Closed on" }
+          ],
+          "workflow": {
+            "initial": "Lead",
+            "transitions": [
+              { "name": "Qualify", "from": ["Lead"], "to": "Qualified" },
+              { "name": "Send proposal", "from": ["Qualified"], "to": "Proposal" },
+              { "name": "Ask for discount", "from": ["Proposal"], "to": "Discount review", "comment": true },
+              { "name": "Win", "from": ["Proposal"], "to": "Won" },
+              { "name": "Lose", "from": ["Lead", "Qualified", "Proposal"], "to": "Lost", "comment": true },
+              { "name": "Reopen", "from": ["Lost"], "to": "Qualified", "comment": true }
+            ],
+            "states": [
+              { "name": "Qualified", "color": "info" },
+              { "name": "Proposal", "color": "primary" },
+              {
+                "name": "Discount review",
+                "color": "warning",
+                "approval": { "approved": "Proposal", "rejected": "Proposal", "roles": ["Sales Manager"], "dueInDays": 2, "remindAfterDays": 1 }
+              },
+              { "name": "Won", "color": "success", "stamp": "ClosedOn", "notify": "Sales Manager" },
+              { "name": "Lost", "color": "error", "stamp": "ClosedOn" }
+            ]
+          }
         }
       ]
     }
-  ],
-  "enums": [
-    { "name": "DealStage", "values": ["Lead", "Qualified", "Proposal", "Won", "Lost"] }
   ],
   "roles": [
     {
       "name": "Sales Rep",
       "description": "Works the pipeline",
       "permissions": ["Sales.Companies.View", "Sales.Contacts.View", "Sales.Contacts.Create", "Sales.Contacts.Edit", "Sales.Deals.View", "Sales.Deals.Create", "Sales.Deals.Edit", "Reports.View"]
+    },
+    {
+      "name": "Sales Manager",
+      "description": "Approves discounts and hears about every deal won",
+      "permissions": ["Sales.Companies.View", "Sales.Companies.Create", "Sales.Companies.Edit", "Sales.Contacts.View", "Sales.Deals.View", "Sales.Deals.Edit", "Reports.View", "Reports.Dashboard", "Workflows.View"]
     }
   ]
 }

@@ -4,7 +4,7 @@ description: Starter specs for coworkee new, a CRM, a helpdesk, a shop and more,
 
 # Starter specs
 
-A blank app is fine when you know what goes in. Often it's quicker to start from something close and delete what you don't need. These specs are small on purpose: one or two modules, a handful of entities, an enum or two, sometimes a role. The options are the ones I'd pick for that kind of app. Change them before you create it, nothing here is fixed.
+A blank app is fine when you know what goes in. Often it's quicker to start from something close and delete what you don't need. Most specs are small on purpose: one or two modules, a handful of entities, an enum or two; the ERP has four modules. Every one brings a real process as [workflows](cli.md#workflows): the states a record goes through, the actions people take with their permissions, approvals with a deadline, notifications, and the roles that fit. The options are the ones I'd pick for that kind of app. Change them before you create it, nothing here is fixed.
 
 <div class="cw-starters" id="cw-starters">
   <div class="cw-starters__bar">

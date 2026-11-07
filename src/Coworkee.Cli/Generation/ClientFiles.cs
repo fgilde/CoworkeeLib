@@ -78,7 +78,7 @@ internal static class ClientFiles
                                CreateText="New {{e.Words}}" CreatePermission="@{{e.Permissions}}.Create" EditPermission="@{{e.Permissions}}.Edit" DeletePermission="@{{e.Permissions}}.Delete"
                                OnCreate="CreateAsync" OnEdit="EditAsync" OnDelete="DeleteAsync">
                 <Columns>
-            {{string.Concat(e.Columns.Select(p => Column(e, p)))}}    </Columns>
+            {{string.Concat(e.Columns.Select(p => Column(e, p)))}}{{WorkflowFiles.Column(e)}}    </Columns>
             </CoworkeeDataTable>
 
             """;
@@ -140,7 +140,7 @@ internal static class ClientFiles
             private Task CreateAsync() => EditAsync(null, new AddEdit{{e.Name}}Request());
 
             private Task EditAsync({{e.Name}}Dto item) =>
-                EditAsync(item.Id, new AddEdit{{e.Name}}Request { {{string.Join(", ", e.Properties.Select(p => $"{EntityModel.Field(p)} = item.{EntityModel.Field(p)}"))}} });
+                EditAsync(item.Id, new AddEdit{{e.Name}}Request { {{string.Join(", ", e.Editable.Select(p => $"{EntityModel.Field(p)} = item.{EntityModel.Field(p)}"))}} });
 
             private async Task EditAsync(Guid? id, AddEdit{{e.Name}}Request model)
             {
@@ -153,7 +153,7 @@ internal static class ClientFiles
         #pragma warning disable BL0005 // MudEx configures the wrapping grid items through these instances
             private void Configure(ObjectEditMeta<AddEdit{{e.Name}}Request> meta)
             {
-        {{string.Concat(e.Properties.Select((p, i) => $"        meta.Property(p => p.{EntityModel.Field(p)}).WithLabel(L[\"{EntityModel.Label(p)}\"]).WithOrder({i}){Editor(e, p)};\n"))}}    }
+        {{string.Concat(e.Editable.Select((p, i) => $"        meta.Property(p => p.{EntityModel.Field(p)}).WithLabel(L[\"{EntityModel.Label(p)}\"]).WithOrder({i}){Editor(e, p)};\n"))}}    }
         #pragma warning restore BL0005
 
             private Task DeleteAsync(IReadOnlyCollection<{{e.Name}}Dto> items) => Snackbar.RunAsync(() => Api.DeleteAsync([.. items.Select(i => i.Id)]));

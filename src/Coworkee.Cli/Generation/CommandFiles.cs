@@ -35,7 +35,7 @@ internal static class CommandFiles
                     return Error.NotFound("{{e.ErrorCode}}_not_found", "The {{e.Words}} does not exist.");
                 }
 
-        {{string.Concat(e.Properties.Select(Assignment))}}{{string.Concat(e.Properties.Where(p => p.Unique).Select(p => UniqueCheck(e, p)))}}        return entity.ToDto();
+        {{string.Concat(e.Editable.Select(Assignment))}}{{string.Concat(e.Editable.Where(p => p.Unique).Select(p => UniqueCheck(e, p)))}}        return entity.ToDto();
             }
 
             private {{e.Name}} Add()
@@ -50,8 +50,8 @@ internal static class CommandFiles
 
     public static string? Validator(EntityModel e)
     {
-        var rules = e.Properties.Select(p => (Field: EntityModel.Field(p), Rule: Rule(p))).Where(r => r.Rule.Length > 0).ToList();
-        var urls = e.Properties.Any(p => p.Type == PropertyType.Url);
+        var rules = e.Editable.Select(p => (Field: EntityModel.Field(p), Rule: Rule(p))).Where(r => r.Rule.Length > 0).ToList();
+        var urls = e.Editable.Any(p => p.Type == PropertyType.Url);
         return rules.Count == 0 ? null : $$"""
             using FluentValidation;
 

@@ -14,7 +14,7 @@ public sealed class GalleryTests
         var files = Directory.GetFiles(Path.Combine(Repository, "templates", "specs"), "*.json").Select(Path.GetFileNameWithoutExtension).Where(n => n != "gallery");
 
         SpecGallery.All.Select(e => e.Id).ShouldBe(files, ignoreOrder: true);
-        SpecGallery.All.Count.ShouldBeInRange(5, 8);
+        SpecGallery.All.Count.ShouldBeInRange(8, 14);
         foreach (var entry in SpecGallery.All)
         {
             var spec = SpecGallery.Read(entry.Id);

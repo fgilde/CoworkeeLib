@@ -32,13 +32,13 @@ The panel on the left shows where you are; every page you have seen is one click
 
 ### Welcome
 
-Start a new app, open a spec (`.json` from the CLI, the [MCP server](mcp.md) or an earlier session), open an existing app or pick one of the recent specs. Below those: **Start from a template** and **My apps**.
+Start a new app, open a spec (`.json` from the CLI, the [MCP server](mcp.md) or an earlier session), open an existing app or pick one of the recent specs and apps; an app opens in the wizard, ready to extend (see [Open existing app](#open-existing-app)). Below those: **Start from a template** and **My apps**.
 
 ![Welcome](../assets/screenshots/studio-welcome-light.webp)
 
 #### Start from a template
 
-The [starter specs](gallery.md) (CRM, helpdesk, asset portal, small shop, events, approval requests) as cards with a search box and tag filter. A click fills every page of the wizard with that spec and opens *Basics*; from there it is your app, rename it and change what you like.
+The [starter specs](gallery.md) (ERP, HR self-service, repair shop, recruiting, CRM, helpdesk, asset portal, small shop, events, approval requests, each with its processes) as cards with a search box and tag filter. A click fills every page of the wizard with that spec and opens *Basics*; from there it is your app, rename it and change what you like.
 
 ![Start from a template](../assets/screenshots/studio-gallery-light.webp)
 
@@ -46,7 +46,7 @@ The [starter specs](gallery.md) (CRM, helpdesk, asset portal, small shop, events
 
 Every app the Studio created lands in this list, with its folder, the day it was made and the options that differ from the template. **Add a folder** points the Studio at the place where your apps live; it looks up to three levels down for `.coworkee/app.json` (written by the CLI) or a solution with an `*.AppHost` project, so apps made with `coworkee new` show up too.
 
-For each app you see whether it runs. The Studio checks for the app host process (`Shop.AppHost`), so an app started from Visual Studio or `coworkee run` counts as well, and it warns when another program sits on the dashboard port. **Start** and **Stop** use the same runner as the *Create* page. While it runs, the links open the Aspire dashboard (with the login token when the Studio started it), the web app and API, and Grafana and WebDataStudio. Those two get their ports from Aspire at start-up, so their links open the dashboard, where the address is listed next to the resource. Below that sit the last line of the output and links to the folder, the solution and VS Code.
+For each app you see whether it runs. The Studio checks for the app host process (`Shop.AppHost`), so an app started from Visual Studio or `coworkee run` counts as well, and it warns when another program sits on the dashboard port. **Start** and **Stop** use the same runner as the *Create* page. While it runs, the links open the Aspire dashboard (with the login token when the Studio started it), the web app and API, and Grafana and WebDataStudio. Those two get their ports from Aspire at start-up, so their links open the dashboard, where the address is listed next to the resource. Below that sit the last line of the output and links: **Edit in the Studio** opens the app in the wizard (see [Open existing app](#open-existing-app)), then the folder, the solution and VS Code.
 
 ### Basics
 
@@ -104,6 +104,8 @@ The languages of the app in a grid you can search by code, own or English name; 
 
 Feature modules with their entities: name, plural, client entity, DTO mapping and a grid of properties (name, type, required, maximum length). The cog of a property opens the rest: label, default value, search box, unique, display text and facet; for an enum its name, for a reference the target (`Module.Entity`, suggested from the designer), the shown text, the delete behaviour and the collection on the target; precision and scale for decimals and money. Below the modules, **Enums** holds the value lists. Problems are shown on the module, entity, property or enum they concern. The panel on the right shows what the CLI generates for the selected entity: page route, API route, permission names and files. **Example** adds a Sales module with customers and orders, a reference between them and an order status enum.
 
+The **Workflow** card of an entity gives it a process ([workflows in a spec](cli.md#workflows)): the state of a new row, an optional string property the state is written into, the transitions (name, from which states, to which, permission, comment) and per state its color, a `dateTime` property stamped on entry, a role to notify and an approval (deciding roles, the states after approval and rejection, deadline and reminder in days, not by the one who asked). The generated list gets a state column with the actions.
+
 ![Entities](../assets/screenshots/studio-entities-light.webp)
 
 **Diagram** shows the same entities as boxes with their properties; references are lines from the property to the target with `*` on the referencing side and `1` (required) or `0..1` (optional, dashed) at the target. Drag a box to move it, drag the dot on its header onto another box to add a reference (a small dialog asks for name, required and delete behaviour), drag the background to pan and use the wheel to zoom. Clicking a box opens the entity in the editor beside the diagram. **Auto layout** puts referenced entities above the ones that reference them, **Export PNG** saves the whole diagram as an image. The positions are saved in the spec (`layout` of an entity) and have no effect on the generated code.
@@ -140,7 +142,7 @@ The Studio writes the spec, runs `coworkee spec validate` and `coworkee new --sp
 
 ### Open existing app
 
-*Open existing app* on the welcome page takes the folder of an app created with Coworkee. The wizard opens on *Review* with the app's state: its `.coworkee/app.json`, or for older apps the options its files show. Switch modules and options on, add languages, modules and entities, then **Show the changes**: the Studio runs `coworkee add --spec ... --dry-run` in the app's folder and shows the plan (options, files to add, update, merge or delete, conflicts, modules and entities to generate). **Apply the changes** runs it for real, with the same live log as *Create*; files whose changes did not merge are listed as `.rej` files afterwards, see [Changing an existing app](cli.md#changing-an-existing-app).
+*Open existing app* on the welcome page takes the folder of an app created with Coworkee; an app under *Recent* or **Edit in the Studio** in *My apps* opens the same way, and an app opened here joins *My apps*. The wizard opens on *Review* with the app's state: its `.coworkee/app.json`, or for older apps the options its files show. Switch modules and options on, add languages, modules and entities, then **Show the changes**: the Studio runs `coworkee add --spec ... --dry-run` in the app's folder and shows the plan (options, files to add, update, merge or delete, conflicts, modules and entities to generate). **Apply the changes** runs it for real, with the same live log as *Create*; files whose changes did not merge are listed as `.rej` files afterwards, see [Changing an existing app](cli.md#changing-an-existing-app).
 
 When the CLI is not installed, the Studio offers to run `dotnet tool install -g Coworkee.Cli` or to use a local CLI (`coworkee.exe` or `Coworkee.Cli.dll`).
 

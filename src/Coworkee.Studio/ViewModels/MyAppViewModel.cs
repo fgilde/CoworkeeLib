@@ -112,6 +112,10 @@ public sealed partial class MyAppViewModel : ObservableObject
     [RelayCommand]
     public void Open(string url) => _owner.Main.Dialogs.Open(url);
 
+    /// <summary>Shows the app in the wizard: add modules, entities and options, then apply them with coworkee add.</summary>
+    [RelayCommand]
+    public void Edit() => _owner.Main.OpenApp(Path);
+
     [RelayCommand]
     public void OpenFolder() => _owner.Main.Dialogs.Open(Path);
 

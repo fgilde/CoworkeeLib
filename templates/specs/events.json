@@ -32,8 +32,24 @@
             { "name": "EndsAt", "type": "dateTime", "label": "Ends" },
             { "name": "Seats", "type": "int", "required": true },
             { "name": "Price", "type": "money" },
-            { "name": "Published", "type": "bool", "default": "false", "facet": true }
-          ]
+            { "name": "PublishedOn", "type": "dateTime", "label": "Published on" }
+          ],
+          "workflow": {
+            "initial": "Draft",
+            "transitions": [
+              { "name": "Publish", "from": ["Draft"], "to": "On sale", "permission": "Publish" },
+              { "name": "Sold out", "from": ["On sale"], "to": "Sold out" },
+              { "name": "Reopen sales", "from": ["Sold out"], "to": "On sale" },
+              { "name": "Cancel", "from": ["Draft", "On sale", "Sold out"], "to": "Cancelled", "permission": "Publish", "comment": true },
+              { "name": "Finish", "from": ["On sale", "Sold out"], "to": "Done" }
+            ],
+            "states": [
+              { "name": "On sale", "color": "success", "stamp": "PublishedOn" },
+              { "name": "Sold out", "color": "warning" },
+              { "name": "Cancelled", "color": "error", "notify": "Box Office" },
+              { "name": "Done", "color": "secondary" }
+            ]
+          }
         },
         {
           "name": "Reservation",
@@ -42,13 +58,46 @@
             { "name": "GuestName", "required": true, "maxLength": 150, "display": true, "label": "Guest" },
             { "name": "GuestEmail", "type": "email", "required": true, "maxLength": 250, "label": "Email" },
             { "name": "Tickets", "type": "int", "required": true, "default": "1" },
-            { "name": "State", "type": "enum", "enum": "ReservationState", "required": true, "default": "Requested", "facet": true }
-          ]
+            { "name": "ConfirmedOn", "type": "dateTime", "label": "Confirmed on" },
+            { "name": "CheckedInOn", "type": "dateTime", "label": "Checked in" }
+          ],
+          "workflow": {
+            "initial": "Requested",
+            "transitions": [
+              { "name": "Confirm", "from": ["Requested", "Waitlist"], "to": "Confirmed" },
+              { "name": "Put on waitlist", "from": ["Requested"], "to": "Waitlist" },
+              { "name": "Check in", "from": ["Confirmed"], "to": "Checked in", "permission": "CheckIn" },
+              { "name": "No show", "from": ["Confirmed"], "to": "No show", "permission": "CheckIn" },
+              { "name": "Cancel", "from": ["Requested", "Waitlist", "Confirmed"], "to": "Cancelled", "comment": true }
+            ],
+            "states": [
+              { "name": "Waitlist", "color": "warning" },
+              { "name": "Confirmed", "color": "info", "stamp": "ConfirmedOn" },
+              { "name": "Checked in", "color": "success", "stamp": "CheckedInOn" },
+              { "name": "No show", "color": "secondary" },
+              { "name": "Cancelled", "color": "error" }
+            ]
+          }
         }
       ]
     }
   ],
-  "enums": [
-    { "name": "ReservationState", "values": ["Requested", "Confirmed", "CheckedIn", "Cancelled"] }
+  "roles": [
+    {
+      "name": "Box Office",
+      "description": "Confirms reservations and keeps the waitlist",
+      "permissions": ["Booking.Venues.View", "Booking.Events.View", "Booking.Reservations.View", "Booking.Reservations.Create", "Booking.Reservations.Edit"]
+    },
+    {
+      "name": "Door Staff",
+      "description": "Checks guests in at the door",
+      "permissions": ["Booking.Events.View", "Booking.Reservations.View", "Booking.Reservations.CheckIn"]
+    },
+    {
+      "name": "Organizer",
+      "description": "Plans events and puts them on sale",
+      "permissions": ["Booking.Venues.View", "Booking.Venues.Create", "Booking.Venues.Edit", "Booking.Events.View", "Booking.Events.Create", "Booking.Events.Edit", "Booking.Events.Publish",
+        "Booking.Reservations.View", "Reports.View"]
+    }
   ]
 }

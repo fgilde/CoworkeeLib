@@ -33,8 +33,28 @@
             { "name": "Collection", "type": "reference", "reference": "Collection", "inverse": "Assets", "onDelete": "setNull", "facet": true },
             { "name": "SourceUrl", "type": "url", "maxLength": 500, "label": "Source" },
             { "name": "Copyright", "maxLength": 200 },
-            { "name": "LicenseEnds", "type": "dateOnly", "label": "License ends" }
-          ]
+            { "name": "LicenseEnds", "type": "dateOnly", "label": "License ends" },
+            { "name": "Status", "maxLength": 50, "facet": true },
+            { "name": "PublishedOn", "type": "dateTime", "label": "Published on" }
+          ],
+          "workflow": {
+            "initial": "Draft",
+            "mirrorTo": "Status",
+            "transitions": [
+              { "name": "Submit", "from": ["Draft"], "to": "Rights check" },
+              { "name": "Archive", "from": ["Published"], "to": "Archived", "permission": "Publish" },
+              { "name": "Restore", "from": ["Archived"], "to": "Draft" }
+            ],
+            "states": [
+              {
+                "name": "Rights check",
+                "color": "warning",
+                "approval": { "approved": "Published", "rejected": "Draft", "roles": ["Rights Manager"], "dueInDays": 5, "remindAfterDays": 2 }
+              },
+              { "name": "Published", "color": "success", "stamp": "PublishedOn" },
+              { "name": "Archived", "color": "secondary" }
+            ]
+          }
         },
         {
           "name": "Tag",
@@ -48,5 +68,17 @@
   ],
   "enums": [
     { "name": "AssetKind", "values": ["Image", "Video", "Document", "Audio", "Font"] }
+  ],
+  "roles": [
+    {
+      "name": "Editor",
+      "description": "Uploads and describes assets",
+      "permissions": ["Media.Collections.View", "Media.Assets.View", "Media.Assets.Create", "Media.Assets.Edit", "Media.Tags.View", "Media.Tags.Create", "Files.View", "Files.Upload"]
+    },
+    {
+      "name": "Rights Manager",
+      "description": "Checks source and license before an asset is published",
+      "permissions": ["Media.Collections.View", "Media.Assets.View", "Media.Assets.Publish", "Media.Tags.View", "Files.View", "Workflows.View"]
+    }
   ]
 }
