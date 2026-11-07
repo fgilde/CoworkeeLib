@@ -38,7 +38,8 @@ public sealed class RetentionPageTests : ClientTestBase
         page.Find("button[data-delete='webhook-deliveries']").HasAttribute("disabled").ShouldBeFalse();
         await page.InvokeAsync(() => page.Find("[data-key='webhook-deliveries'] input, input[data-key='webhook-deliveries']").Change("60"));
         page.WaitForAssertion(() => page.Find("button[data-delete='webhook-deliveries']").HasAttribute("disabled").ShouldBeTrue("an unsaved value is never deleted with"));
-        await page.Find("[data-testid='save-retention']").ClickAsync(new());
+        // found and clicked in one go: the count of the typed days re-renders the page meanwhile, a button found before is gone
+        await page.InvokeAsync(() => page.Find("[data-testid='save-retention']").ClickAsync(new()));
         await _api.Received(1).SetDaysAsync(Arg.Is<IReadOnlyDictionary<string, int?>>(d => d.Count == 2 && d["audit"] == 365 && d["webhook-deliveries"] == 60), Arg.Any<CancellationToken>());
     }
 
