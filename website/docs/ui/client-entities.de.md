@@ -310,6 +310,14 @@ builder.Services.AddCoworkeeClientEntitiesSqlite();
 
 Am Server, an den Seiten und an den Einstellungen der Sets ändert sich nichts; Schalter, Modi, Deltas und Partitionen funktionieren wie oben beschrieben.
 
+### Welche Kopien
+
+Standardmäßig kommen nur Zeilentypen in SQLite, die die Kopie im Speicher als JSON halten würde: solche mit einer Liste oder einem anderen Typ unter ihren Properties, den sie nicht in Spalten zerlegen kann. Dort ist SQLite in allem schneller. Zeilentypen aus einfachen Properties (und verschachtelten Objekten daraus) bleiben Spalten im Speicher: deren Indizes beantworten Facetten etwa zehnmal schneller als SQL. `AllRowTypes` legt jede Kopie in SQLite, dann sind erster Download und Reload um ein Mehrfaches schneller und die Facetten langsamer; die Demo macht das für ihre Aufträge:
+
+```csharp title="MyApp.Web.Client/Program.cs"
+builder.Services.AddCoworkeeClientEntitiesSqlite(o => o.AllRowTypes = true);
+```
+
 ### Was du brauchst
 
 - **Den `wasm-tools`-Workload dort, wo der Client gebaut wird** (Entwicklerrechner, CI): `dotnet workload install wasm-tools`, einmal pro Rechner. SQLite ist nativer Code, der Build linkt ihn in `dotnet.native.wasm`. Das Paket schaltet `<WasmBuildNative>true</WasmBuildNative>` im WebAssembly-Projekt selbst ein; ohne den Workload bricht der Build mit `NETSDK1147` ab und nennt den Befehl.
@@ -328,7 +336,7 @@ In der CI den Workload vor dem Build installieren:
 - **Erster Download als eine Datei**: statt Seiten von JSON fragt der Client `POST /api/v1/client-entities/{set}/snapshot` mit den Spalten seiner Tabelle. Der Server liest die Zeilen über denselben OData-Weg wie die Seiten (Berechtigung, Mandant, Soft Delete, `IODataEntityFilter`-Zeilenfilter, versteckte Properties, Gruppenauswahl), schreibt sie in eine SQLite-Datei und schickt sie gzip-komprimiert; der Browser speichert und öffnet sie nur. Klappt das nicht (ein älterer Server, eine Property, die das Set versteckt, mehr Zeilen als `MaxRows`), lädt der Client wie bisher Seiten.
 - **Zwischen Besuchen behalten**: die Datenbankdatei kommt unverändert in IndexedDB. Ein Reload öffnet sie, statt Zeilen zu parsen, etwa eine Sekunde für 23.000 Sendungen.
 - **Änderungen**: die Deltas des Änderungs-Feeds werden in die Datenbank geschrieben (Löschen und Einfügen per Id, in Scheiben, damit die Seite dazwischen rendern kann).
-- **Abfragen**: Filter, Sortierung, Seite und Anzahl sind SQL über EF Core auf indizierten Spalten. Facetten zählen mit einem `GROUP BY` pro Spalte, egal wie viele Optionen; Datumsbereiche addieren die Zählungen der sortierten Werte, statt jede Option einzeln zu prüfen. Die Facetten einer Kopie werden nach dem Öffnen einmal im Hintergrund gezählt, damit der erste Klick nicht das Übersetzen der Abfragen bezahlt.
+- **Abfragen**: Filter, Sortierung, Seite und Anzahl sind SQL über EF Core auf indizierten Spalten. Listen-Facetten zählen mit einem `GROUP BY` pro Spalte, egal wie viele Optionen; Bereichs-Facetten (Datum, Beträge) mit einer Abfrage, die jede Zeile dem Intervall zwischen den Grenzen der Optionen zuordnet (`CASE`). Die Werte eines Filters sind Parameter, ein anderer Suchtext oder eine andere Auswahl nutzt also die Abfragen, die EF Core schon übersetzt hat. Die Facetten einer Kopie werden nach dem Öffnen einmal im Hintergrund gezählt, damit der erste Klick nicht das Übersetzen der Abfragen bezahlt.
 - **Was beim Server bleibt**: `$search`, `any`/`all` über Listen, Filter auf Listen und verschachtelte Objekte (als JSON-Spalten gehalten) und Gruppieren in der Tabelle gehen an den Server, ebenso Facettenoptionen von Listen (ihre Zahlen sind die des Servers).
 - **Ein geänderter Zeilentyp** öffnet eine neue Datenbank: der Schlüssel der gespeicherten Kopie enthält die Spalten und ihre Formate, eine neue Property liest also nie eine alte Datei.
 
@@ -360,7 +368,15 @@ Die Tests der Library (`CopyRoundTripTests`, `ClientEntitySnapshotTests`) schrei
 | Facetten aller Zeilen / gefiltert | (Server, 2-5 s) | 1,3 s / 0,25 s |
 | längste Blockade der Seite | 10-29 s | unter 0,7 s |
 
-Für Zeilentypen aus einfachen Properties sind die Spalten im Speicher nach dem Laden genauso schnell; SQLite lohnt sich für große Kopien, Zeilentypen mit Listen und Seiten, die oft neu geladen werden.
+Die 100.000 Aufträge der Demo, ein Zeilentyp aus einfachen Properties, mit `AllRowTypes` (Release-Build, Chromium, lokales Postgres):
+
+| | im Speicher | SQLite |
+|---|---|---|
+| erste Kopie lokal nach dem Öffnen der Seite | 33,7 s | 9,4 s |
+| Reload, bis die Kopie antwortet | 11,5 s | 4,4 s |
+| die Abfrage der Tabelle mit ihren 10 Facettengruppen | 37 ms | etwa 370 ms |
+
+Der Server beantwortete dieselbe Abfrage in 210 ms. Deshalb bleiben solche Zeilentypen ohne `AllRowTypes` im Speicher: SQLite hat sie früher lokal, die Spalten im Speicher beantworten die Klicks schneller.
 
 ## Speicher und Grenzen
 
@@ -390,4 +406,5 @@ Für Zeilentypen aus einfachen Properties sind die Spalten im Speicher nach dem 
 | `MyApp.Sales/SalesModule.cs` | OData-Sets und die Client-Entity-Einstellungen des Dienstes |
 | `MyApp.Contracts/Sales/ISalesOrderAppService.cs` | das Schreiben, siehe [Anwendungsdienste](../web/application-services.md) |
 | `MyApp.Migrations/DemoSales.cs` | 100.000 Aufträge, von Postgres in einer Anweisung erzeugt |
+| `MyApp.Web.Client/Program.cs` | `AddCoworkeeClientEntities()` und `AddCoworkeeClientEntitiesSqlite(o => o.AllRowTypes = true)`: die Aufträge in [SQLite](#sqlite-im-browser-optional) |
 | `MyApp.Web.Client/Pages/Sales/SalesOrders.razor(.cs)` | die Tabelle; der Schalter kommt mit ihr |

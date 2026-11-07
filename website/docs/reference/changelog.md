@@ -2,6 +2,16 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Changed
+
+- Client entities: `AddCoworkeeClientEntitiesSqlite()` keeps only the row types in SQLite that the in-memory copy keeps as JSON (a list among their properties); row types of simple properties stay columns in memory, whose facets answer about ten times faster. `AddCoworkeeClientEntitiesSqlite(o => o.AllRowTypes = true)` puts every copy into SQLite ([which copies](../ui/client-entities.md#which-copies)).
+
+### Fixed
+
+- Client entities (SQLite): range facets over many distinct values brought every value into the browser (100,000 order dates: 1.3 s); they count in one statement now (about 60 ms). The values of a filter are parameters, so another search text or choice no longer compiles every statement again: a filtered count and page took 38 and 36 ms, now 7 and 5 ms.
+
 ## 0.0.1.65 (2026-11-07)
 
 ### Added

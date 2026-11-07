@@ -225,7 +225,7 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
     }
 
     private static IQueryable<T> Filtered(IQueryable<T> rows, string? filter) =>
-        string.IsNullOrWhiteSpace(filter) ? rows : rows.Where(ODataLinq.Filter<T>(filter));
+        string.IsNullOrWhiteSpace(filter) ? rows : rows.Where(Parameters.Of(ODataLinq.Filter<T>(filter)));
 
     // "$orderby=Name desc,Id"; without one in the order of the ids, as the in-memory copy (the download order)
     private static IQueryable<T> Ordered(IQueryable<T> rows, string? orderBy)
@@ -258,6 +258,7 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
     {
         var counted = new Dictionary<(string? Scope, string Path), List<(object? Value, int Count)>>();
         var result = new List<FacetGroupDto>(groups.Count);
+        var sincePause = Stopwatch.StartNew();
         foreach (var group in groups)
         {
             var own = context is not null && context.Groups.ContainsKey(group.Key) && context.Combines?.GetValueOrDefault(group.Key) != FacetCombine.All;
@@ -266,12 +267,14 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
             var options = new List<FacetOptionDto>();
             var groupWatch = Stopwatch.StartNew();
             var queriesBefore = counted.Count;
-            foreach (var option in group.Options)
+            var ranged = group.Type is FacetKind.Range or FacetKind.DateRange ? await RangeCountsAsync(group.Options, basis, cancellationToken) : null;
+            for (var i = 0; i < group.Options.Count; i++)
             {
+                var option = group.Options[i];
                 int count;
                 try
                 {
-                    count = await OptionCountAsync(option, basis, own ? filter : AllRows, counted, cancellationToken);
+                    count = ranged?[i] ?? await OptionCountAsync(option, basis, own ? filter : AllRows, counted, cancellationToken);
                 }
                 catch (Exception exception) when (exception is NotSupportedException or InvalidOperationException)
                 {
@@ -289,8 +292,12 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
             logger.LogDebug("Facet {Group} ({Type}, {Options} options, {Grouped} group-bys): {Ms} ms",
                 group.Key, group.Type, group.Options.Count, counted.Count - queriesBefore, groupWatch.ElapsedMilliseconds);
 
-            // the first count of a query shape compiles it (about a third of a second in the browser): the page renders between groups
-            await Pause();
+            // the first count of a query shape compiles it (about a third of a second in the browser): the page renders between groups that took a while
+            if (sincePause.ElapsedMilliseconds > 40)
+            {
+                await Pause();
+                sincePause.Restart();
+            }
         }
 
         return result;
@@ -302,7 +309,7 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
     {
         if (SinglePath(ODataLinq.Parse(option.OData)) is not { } path || path.Contains('/'))
         {
-            return await basis.Where(ODataLinq.Filter<T>(option.OData)).CountAsync(cancellationToken);
+            return await basis.Where(Parameters.Of(ODataLinq.Filter<T>(option.OData))).CountAsync(cancellationToken);
         }
 
         if (!counted.TryGetValue((scope, path), out var values))
@@ -311,12 +318,12 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
             values = counted[(scope, path)] = await (Task<List<(object?, int)>>)CountsMethod.MakeGenericMethod(key.ReturnType).Invoke(null, [basis, key, cancellationToken])!;
         }
 
-        // a range ("Etd ge X and Etd lt Y"): the sorted values and a binary search instead of testing each of thousands of dates
-        var token = ODataLinq.Parse(option.OData);
-        var valueType = Nullable.GetUnderlyingType(ODataLinq.Key<T>(path).ReturnType) ?? ODataLinq.Key<T>(path).ReturnType;
-        if (typeof(IComparable).IsAssignableFrom(valueType) && valueType != typeof(string) && Bounds(token, valueType) is { } bounds)
+        // "P eq value", most options of a list: looked up instead of tested against every value
+        var valueType = ODataLinq.Key<T>(path).ReturnType;
+        if (ODataLinq.Parse(option.OData) is BinaryOperatorToken { OperatorKind: BinaryOperatorKind.Equal, Left: PathToken, Right: LiteralToken literal })
         {
-            return Sorted(values).CountWithin(bounds);
+            var lookup = Lookups.GetValue(values, v => v.Where(x => x.Value is not null).ToDictionary(x => x.Value!, x => x.Count));
+            return ODataLinq.Literal(literal.Value, valueType) is { } wanted ? lookup.GetValueOrDefault(wanted) : values.Where(x => x.Value is null).Sum(x => x.Count);
         }
 
         var accepts = Predicates.GetOrAdd(option.OData, text => ODataLinq.Filter<T>(text).Compile());
@@ -338,55 +345,88 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
 
     private sealed record Range(IComparable? Low, bool LowIncluded, IComparable? High, bool HighIncluded);
 
-    // the non-null values in order with the running count, made once per value list
-    private sealed class SortedCounts
+    private static readonly ConditionalWeakTable<List<(object? Value, int Count)>, Dictionary<object, int>> Lookups = new();
+
+    private static readonly HashSet<Type> OrderedTypes =
+    [
+        typeof(byte), typeof(sbyte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong), typeof(float), typeof(double), typeof(decimal),
+        typeof(DateTime), typeof(DateTimeOffset), typeof(DateOnly), typeof(TimeOnly), typeof(TimeSpan),
+    ];
+
+    // the options of a range group on one column ("Total ge 10 and Total lt 20", the months of a date): one statement puts every row into the interval
+    // between the options' bounds it falls in (CASE), each option adds up its intervals. A GROUP BY of the column brought every distinct value into the
+    // browser's .NET: 100,000 order dates took more than a second, this a few milliseconds. Null when an option is no range on that column.
+    private static async Task<int[]?> RangeCountsAsync(IReadOnlyList<FacetOptionDto> options, IQueryable<T> basis, CancellationToken cancellationToken)
     {
-        private readonly IComparable[] _values;
-        private readonly long[] _before;
-
-        public SortedCounts(List<(object? Value, int Count)> values)
+        string? path = null;
+        LambdaExpression? key = null;
+        Type? valueType = null;
+        var ranges = new List<Range>(options.Count);
+        foreach (var option in options)
         {
-            var known = values.Where(v => v.Value is not null).OrderBy(v => (IComparable)v.Value!).ToList();
-            _values = [.. known.Select(v => (IComparable)v.Value!)];
-            _before = new long[known.Count + 1];
-            for (var i = 0; i < known.Count; i++)
+            var token = ODataLinq.Parse(option.OData);
+            if (SinglePath(token) is not { } own || own.Contains('/') || (path is not null && !string.Equals(own, path, StringComparison.OrdinalIgnoreCase)))
             {
-                _before[i + 1] = _before[i] + known[i].Count;
+                return null;
             }
-        }
 
-        public int CountWithin(Range range)
-        {
-            var from = range.Low is null ? 0 : Index(range.Low, firstAbove: !range.LowIncluded);
-            var to = range.High is null ? _values.Length : Index(range.High, firstAbove: range.HighIncluded);
-            return to > from ? (int)(_before[to] - _before[from]) : 0;
-        }
-
-        // the first index whose value is above (or at, when not firstAbove) the bound
-        private int Index(IComparable bound, bool firstAbove)
-        {
-            int low = 0, high = _values.Length;
-            while (low < high)
+            if (key is null)
             {
-                var middle = (low + high) / 2;
-                var compared = _values[middle].CompareTo(bound);
-                if (compared < 0 || (firstAbove && compared == 0))
+                path = own;
+                key = ODataLinq.Key<T>(own);
+                valueType = Nullable.GetUnderlyingType(key.ReturnType) ?? key.ReturnType;
+                if (!OrderedTypes.Contains(valueType))
                 {
-                    low = middle + 1;
-                }
-                else
-                {
-                    high = middle;
+                    return null;
                 }
             }
 
-            return low;
+            if (Bounds(token, valueType!) is not { } range)
+            {
+                return null;
+            }
+
+            ranges.Add(range);
         }
+
+        if (key is null)
+        {
+            return null;
+        }
+
+        // bucket 2i: below bound i (and above the one before), 2i+1: equal to bound i, 2n: above every bound, -1: null
+        var bounds = ranges.SelectMany(r => new[] { r.Low, r.High }).OfType<IComparable>().Distinct().Order(Comparer<IComparable>.Default).ToList();
+        var member = key.Body;
+        Expression bucket = Expression.Constant(2 * bounds.Count);
+        for (var i = bounds.Count - 1; i >= 0; i--)
+        {
+            var bound = Expression.Constant(bounds[i], member.Type);
+            bucket = Expression.Condition(Expression.LessThan(member, bound), Expression.Constant(2 * i),
+                Expression.Condition(Expression.Equal(member, bound), Expression.Constant(2 * i + 1), bucket));
+        }
+
+        if (!member.Type.IsValueType || Nullable.GetUnderlyingType(member.Type) is not null)
+        {
+            bucket = Expression.Condition(Expression.Equal(member, Expression.Constant(null, member.Type)), Expression.Constant(-1), bucket);
+        }
+
+        var counts = (await basis.GroupBy(Expression.Lambda<Func<T, int>>(bucket, key.Parameters)).Select(g => new { g.Key, Count = g.Count() }).ToListAsync(cancellationToken))
+            .ToDictionary(g => g.Key, g => g.Count);
+        var index = bounds.Select((b, i) => (b, i)).ToDictionary(x => (object)x.b, x => x.i);
+        var result = new int[ranges.Count];
+        for (var r = 0; r < ranges.Count; r++)
+        {
+            var range = ranges[r];
+            var from = range.Low is null ? 0 : 2 * index[range.Low] + (range.LowIncluded ? 1 : 2);
+            var to = range.High is null ? 2 * bounds.Count : 2 * index[range.High] + (range.HighIncluded ? 1 : 0);
+            for (var b = from; b <= to; b++)
+            {
+                result[r] += counts.GetValueOrDefault(b);
+            }
+        }
+
+        return result;
     }
-
-    private static readonly ConditionalWeakTable<List<(object?, int)>, SortedCounts> SortedCache = new();
-
-    private static SortedCounts Sorted(List<(object?, int)> values) => SortedCache.GetValue(values, v => new SortedCounts(v));
 
     // "P ge a", "P lt b", "P eq c" and their "and": one interval of the column's values; null for anything else
     private static Range? Bounds(QueryToken token, Type type)
