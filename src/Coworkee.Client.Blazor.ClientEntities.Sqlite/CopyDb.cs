@@ -17,7 +17,8 @@ internal sealed class CopyDb<T>(DbContextOptions<CopyDb<T>> options) : DbContext
 
 /// <summary>
 /// How a row type becomes a table: plain values are columns (indexed after a download, like the columns of the in-memory copy), DateTimeOffset a sortable
-/// 64-bit value, decimal a double (SQLite compares neither natively), collections and nested objects JSON. Filters on JSON columns go to the server.
+/// 64-bit value, decimal a double (SQLite compares neither natively), TimeOnly and TimeSpan their ticks, collections and nested objects JSON. Filters on
+/// JSON columns go to the server. The server writes snapshots in the same formats (<see cref="Kind"/>).
 /// </summary>
 internal static class CopyModel
 {
@@ -53,11 +54,16 @@ internal static class CopyModel
             if (plain == typeof(DateTimeOffset))
             {
                 // EF never hands a null to a converter: the one of DateTimeOffset serves DateTimeOffset? too
-                column.HasConversion(new DateTimeOffsetToBinaryConverter());
+                column.HasConversion(new ValueConverter<DateTimeOffset, long>(
+                    v => Contracts.Data.ClientEntitySnapshotKinds.ToInstant(v), v => Contracts.Data.ClientEntitySnapshotKinds.FromInstant(v)));
             }
             else if (plain == typeof(decimal))
             {
                 column.HasConversion<double>();
+            }
+            else if (plain == typeof(TimeOnly) || plain == typeof(TimeSpan))
+            {
+                column.HasConversion<long>();
             }
             else if (plain.IsEnum)
             {
@@ -82,6 +88,9 @@ internal static class CopyModel
         var plain = Nullable.GetUnderlyingType(type) ?? type;
         return plain == typeof(DateTimeOffset) ? Contracts.Data.ClientEntitySnapshotKinds.DateTimeOffset
             : plain == typeof(DateTime) ? Contracts.Data.ClientEntitySnapshotKinds.DateTime
+            : plain == typeof(DateOnly) ? Contracts.Data.ClientEntitySnapshotKinds.Date
+            : plain == typeof(TimeOnly) || plain == typeof(TimeSpan) ? Contracts.Data.ClientEntitySnapshotKinds.Ticks
+            : plain == typeof(char) ? Contracts.Data.ClientEntitySnapshotKinds.Text
             : plain == typeof(Guid) ? Contracts.Data.ClientEntitySnapshotKinds.Guid
             : plain == typeof(bool) ? Contracts.Data.ClientEntitySnapshotKinds.Boolean
             : plain == typeof(decimal) || plain == typeof(double) || plain == typeof(float) ? Contracts.Data.ClientEntitySnapshotKinds.Real

@@ -16,7 +16,7 @@ internal sealed class ClientEntityApi(HttpClient http) : ApiClientBase(http)
         return GetAsync<ClientEntityChanges>($"{Root}/{Uri.EscapeDataString(entitySet)}/changes{query}", cancellationToken);
     }
 
-    /// <summary>PoC: the copy as a SQLite file built by the server, and the version it was taken at; null when the server has no snapshots.</summary>
+    /// <summary>The copy as a SQLite file built by the server, and the version it was taken at; null when the server has no snapshots.</summary>
     public async Task<(byte[] File, DateTimeOffset Version)?> SnapshotAsync(string entitySet, ClientEntitySnapshotRequest request, CancellationToken cancellationToken)
     {
         try

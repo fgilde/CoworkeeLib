@@ -5,7 +5,6 @@ using System.Text.Json;
 using Coworkee.Contracts.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -13,14 +12,12 @@ using Microsoft.Extensions.Options;
 namespace Coworkee.OData.ClientEntities;
 
 /// <summary>
-/// PoC: a set's copy as a SQLite file, built on the server. The rows come from the same in-process OData read as the pages of a download
+/// A set's copy as a SQLite file, built on the server. The rows come from the same in-process OData read as the pages of a download
 /// (permission, hidden properties, row filters, navigation scope), all at once by key; SQLite writes them natively in a fraction of what the
 /// browser's interpreter needs to parse and insert them. The file goes out gzip-encoded, the browser unpacks it natively.
 /// </summary>
 internal static class ClientEntitySnapshot
 {
-    private static readonly DateTimeOffsetToBinaryConverter Binary = new();
-
     public static async Task<IResult> HandleAsync(string entitySet, ClientEntitySnapshotRequest request, HttpContext http)
     {
         var services = http.RequestServices;
@@ -79,7 +76,7 @@ internal static class ClientEntitySnapshot
                 await file.CopyToAsync(gzip, http.RequestAborted);
             }
 
-            logger.LogInformation("PoC snapshot of {Set}: {Rows} rows, {Bytes} bytes; read {Read} ms, written {Written} ms, sent {Sent} ms",
+            logger.LogDebug("Snapshot of {Set}: {Rows} rows, {Bytes} bytes; read {Read} ms, written {Written} ms, sent {Sent} ms",
                 entitySet, rows.Count, size, queried, written - queried, watch.ElapsedMilliseconds - written);
             return Results.Empty;
         }
@@ -90,7 +87,7 @@ internal static class ClientEntitySnapshot
         }
     }
 
-    private static void Write(string path, IReadOnlyList<ClientEntitySnapshotColumn> columns, IReadOnlyList<IReadOnlyDictionary<string, object?>> rows, DateTimeOffset version)
+    internal static void Write(string path, IReadOnlyList<ClientEntitySnapshotColumn> columns, IReadOnlyList<IReadOnlyDictionary<string, object?>> rows, DateTimeOffset version)
     {
         using var connection = new SqliteConnection($"Data Source={path};Pooling=False");
         connection.Open();
@@ -129,7 +126,7 @@ internal static class ClientEntitySnapshot
 
     private static string SqlType(string kind) => kind switch
     {
-        ClientEntitySnapshotKinds.Integer or ClientEntitySnapshotKinds.Boolean or ClientEntitySnapshotKinds.DateTimeOffset => "INTEGER",
+        ClientEntitySnapshotKinds.Integer or ClientEntitySnapshotKinds.Boolean or ClientEntitySnapshotKinds.DateTimeOffset or ClientEntitySnapshotKinds.Ticks => "INTEGER",
         ClientEntitySnapshotKinds.Real => "REAL",
         _ => "TEXT",
     };
@@ -144,13 +141,31 @@ internal static class ClientEntitySnapshot
             ClientEntitySnapshotKinds.Integer => Convert.ToInt64(value, CultureInfo.InvariantCulture),
             ClientEntitySnapshotKinds.Real => Convert.ToDouble(value, CultureInfo.InvariantCulture),
             ClientEntitySnapshotKinds.Boolean => Convert.ToBoolean(value, CultureInfo.InvariantCulture) ? 1L : 0L,
-            ClientEntitySnapshotKinds.DateTimeOffset => Binary.ConvertToProvider(value switch
+            ClientEntitySnapshotKinds.DateTimeOffset => ClientEntitySnapshotKinds.ToInstant(value switch
             {
                 DateTimeOffset offset => offset,
                 DateTime time => new DateTimeOffset(time.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(time, DateTimeKind.Utc) : time),
                 _ => DateTimeOffset.Parse(value.ToString()!, CultureInfo.InvariantCulture),
             }),
-            ClientEntitySnapshotKinds.DateTime => (value is DateTimeOffset offset ? offset.UtcDateTime : (DateTime)value).ToString("yyyy\\-MM\\-dd HH\\:mm\\:ss.FFFFFFF", CultureInfo.InvariantCulture),
+            ClientEntitySnapshotKinds.DateTime => (value switch
+            {
+                DateTimeOffset offset => offset.UtcDateTime,
+                DateTime time => time,
+                _ => DateTime.Parse(value.ToString()!, CultureInfo.InvariantCulture),
+            }).ToString("yyyy\\-MM\\-dd HH\\:mm\\:ss.FFFFFFF", CultureInfo.InvariantCulture),
+            ClientEntitySnapshotKinds.Date => (value switch
+            {
+                DateOnly date => date,
+                DateTime time => DateOnly.FromDateTime(time),
+                DateTimeOffset offset => DateOnly.FromDateTime(offset.Date),
+                _ => DateOnly.Parse(value.ToString()!, CultureInfo.InvariantCulture),
+            }).ToString("yyyy\\-MM\\-dd", CultureInfo.InvariantCulture),
+            ClientEntitySnapshotKinds.Ticks => value switch
+            {
+                TimeSpan span => span.Ticks,
+                TimeOnly time => time.Ticks,
+                _ => TimeSpan.Parse(value.ToString()!, CultureInfo.InvariantCulture).Ticks,
+            },
             ClientEntitySnapshotKinds.Json => JsonSerializer.Serialize(value),
             _ => value is IFormattable formattable ? formattable.ToString(null, CultureInfo.InvariantCulture) : value.ToString(),
         },

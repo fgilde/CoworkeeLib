@@ -299,11 +299,74 @@ The first sort on a column right after the very first download can take up to 1.
 
 The library's tests (`LargeSetTests`, `LocalTableTests`) check the same with 100,000 rows in .NET.
 
+## SQLite in the browser (optional)
+
+By default the copy lives as columns in memory and, gzip compressed, in IndexedDB. That suits row types of simple properties. A row type with a list among its properties (tags, for example) is kept as JSON, and a JSON copy of tens of thousands of rows takes 20 to 30 seconds to parse after every reload, with the browser busy all that time. The package `Coworkee.Client.Blazor.ClientEntities.Sqlite` keeps each copy in its own SQLite database inside the browser instead, and EF Core answers the table's queries with SQL:
+
+```csharp title="MyApp.Web.Client/Program.cs"
+builder.Services.AddCoworkeeClientEntities();
+builder.Services.AddCoworkeeClientEntitiesSqlite();
+```
+
+Nothing changes on the server, on the pages or in the settings of the sets; the switch, the modes, the deltas and the partitions work as described above.
+
+### What you need
+
+- **The `wasm-tools` workload where the client is built** (developer machines, CI): `dotnet workload install wasm-tools`, once per machine. SQLite is native code, so the build links it into `dotnet.native.wasm`. The package turns on `<WasmBuildNative>true</WasmBuildNative>` in the WebAssembly project by itself; without the workload the build stops with `NETSDK1147` and names the command.
+- **Nothing in the browser**: users download the linked file like every other file of the app, on any machine.
+- Costs: about 1.7 MB more to download once (brotli: EF Core and SQLite 1.4 MB, the larger `dotnet.native.wasm` 0.3 MB), and a client build that takes about a minute longer.
+- A client built without native SQLite (`WasmBuildNative` set to `false`, an app referencing the library's projects instead of the package without setting it) logs a warning in the browser console and keeps its copies in memory as before.
+
+In CI, add the workload before the build:
+
+```yaml
+- run: dotnet workload install wasm-tools
+```
+
+### How the copy works
+
+- **First download as one file**: instead of pages of JSON the client asks `POST /api/v1/client-entities/{set}/snapshot` with the columns of its table. The server reads the rows through the same OData read as the pages (permission, tenant, soft delete, `IODataEntityFilter` row filters, hidden properties, group selection), writes them into a SQLite file and sends it gzip compressed; the browser only stores and opens it. If that fails (an older server, a property the set hides, more rows than `MaxRows`), the client downloads pages as before.
+- **Kept between visits**: the database file goes to IndexedDB as it is. A reload opens it instead of parsing rows, about a second for 23,000 shipments.
+- **Changes**: the deltas of the change feed are written into the database (delete and insert by id, in slices so the page can render in between).
+- **Queries**: filter, order, page and count are SQL through EF Core on indexed columns. Facets count with one `GROUP BY` per column, whatever the number of options; date ranges add up the counts of the sorted values instead of testing each option. The facets of a copy are counted once in the background after it opened, so the first click does not pay for compiling the queries.
+- **What stays with the server**: `$search`, `any`/`all` over lists, filters on lists and nested objects (kept as JSON columns) and grouping in the table go to the server, as do facet options of lists (their counts are the server's).
+- **A changed row type** opens a new database: the key of the stored copy includes the columns and their formats, so a new property never reads an old file.
+
+Columns are stored like this; the server writes the snapshot in the same formats:
+
+| Property type | Column |
+|---|---|
+| text, `char`, enums (by name) | `TEXT` |
+| `Guid` | `TEXT`, upper case |
+| integers, `bool` | `INTEGER` |
+| `decimal`, `double`, `float` | `REAL` (`decimal` compares as `double`) |
+| `DateTimeOffset` | `INTEGER`: the UTC instant in 0.1 ms, then the offset, so values of different offsets sort by the instant |
+| `DateTime` | `TEXT` `yyyy-MM-dd HH:mm:ss.FFFFFFF` |
+| `DateOnly` | `TEXT` `yyyy-MM-dd` |
+| `TimeOnly`, `TimeSpan` | `INTEGER`, their ticks |
+| lists, nested objects, expanded navigations | `TEXT`, JSON |
+
+The library's tests (`CopyRoundTripTests`, `ClientEntitySnapshotTests`) write every type in the browser and as a server snapshot, read it back and compare filters and orders with the rows themselves.
+
+### Measured
+
+A hub's 23,177 shipments with tags (JSON in memory), Chromium, local machine, SQL Server in Azure:
+
+| | in memory | SQLite |
+|---|---|---|
+| first copy local after opening the page | 59-80 s | 12-16 s |
+| reload until the copy answers | 20-29 s, page blocked | about 1 s |
+| filtered count / page | (server, 2-7 s) | 6-40 ms |
+| facets of all rows / filtered | (server, 2-5 s) | 1.3 s / 0.25 s |
+| longest block of the page | 10-29 s | under 0.7 s |
+
+For row types of simple properties the in-memory columns are just as fast once loaded; SQLite pays off for large copies, row types with lists and pages that are reloaded often.
+
 ## Storage and limits
 
 - The rows live in memory as columns and, gzip compressed, in IndexedDB (`coworkee-client-entities`), keyed by the server's partition (user, tenant, group selection), the set and its expand. The next visit only asks for changes (see [above](#kept-between-visits-and-when-the-copy-starts-over)). A changed row type discards the stored copy. Replace `IClientEntityStorage` to keep the copies elsewhere, or register `NoClientEntityStorage` to keep nothing between visits; a replacement should also implement `DeleteAsync(prefix)`, which removes the rounds of a finished download and the copies of old group selections (the default removes nothing).
 - Row types with properties of simple types (text, numbers, dates, `Guid`, enums, their nullable forms) and nested objects of such properties are kept as columns. Other row types (for example with lists) work too, but are kept as JSON, which is slower to restore, and filter row by row.
-- Everything is plain .NET: no native SQLite, no `wasm-tools` workload, no extra files to serve.
+- The default copy is plain .NET: no native SQLite, no `wasm-tools` workload, no extra files to serve. [SQLite in the browser](#sqlite-in-the-browser-optional) is the option for large copies and row types with lists.
 - Memory: 100,000 orders take some tens of MB in the browser tab; keep `MaxRows` in proportion and expand only what you show.
 - The first download of a large set takes a while (14.5 s for 100,000 rows) and keeps the browser busy; the table answers from the server meanwhile, slower than usual. Response compression in the API (or the BFF) helps on slow networks.
 - Changes come from `IAuditable` (`CreatedAt`, `ModifiedAt`), deletions from `ISoftDelete` (`DeletedAt`). When the row count after a delta differs from the server's, the client compares ids, so hard deletes and rows that are no longer visible disappear too. Entities without `IAuditable` and without `ChangedAt` are downloaded again at each refresh. Changes that move no date are reported with [`IClientEntityChangeLog`](#changes-no-date-sees).
@@ -317,6 +380,7 @@ The library's tests (`LargeSetTests`, `LocalTableTests`) check the same with 100
 | `GET /api/v1/client-entities` | the sets this user may mirror with their settings, a partition key per user, tenant and group selection and an owner key per user and tenant |
 | `GET /api/v1/client-entities/{set}/changes?since=…&skip=…` | new version, visible row count, changed and deleted ids and the caller's partition; with `skip` the changed ids come in pages of `BatchSize × 10` (`more`), without it more than that answers `reset`; also `reset` when `since` is older than `ChangeLogLifetime` |
 | `GET /api/v1/client-entities/{set}/ids` | all visible ids, to find rows that vanished unseen |
+| `POST /api/v1/client-entities/{set}/snapshot` | with [SQLite in the browser](#sqlite-in-the-browser-optional): the visible rows as a SQLite file (gzip) in the columns the body names, the version in `X-Coworkee-Version`; 400 for a hidden property, 403 without the permission, 413 above `MaxRows` |
 
 ## Files of the demo
 

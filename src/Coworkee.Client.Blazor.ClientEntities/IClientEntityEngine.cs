@@ -25,10 +25,10 @@ public interface IClientEntityStore<T> : IAsyncDisposable
     /// <summary>Replaces every row (a finished download).</summary>
     Task ReplaceAsync(IReadOnlyCollection<T> rows, DateTimeOffset version, CancellationToken cancellationToken);
 
-    /// <summary>PoC: the columns the server writes a snapshot of this copy with, or null when the store takes no snapshots.</summary>
+    /// <summary>The columns the server writes a snapshot of this copy with, or null when the store takes no snapshots.</summary>
     ClientEntitySnapshotRequest? Snapshot(string? expand) => null;
 
-    /// <summary>PoC: replaces every row by a snapshot file of the server.</summary>
+    /// <summary>Replaces every row by a snapshot file of the server.</summary>
     Task ReplaceWithFileAsync(byte[] file, DateTimeOffset version, CancellationToken cancellationToken) => throw new NotSupportedException();
 
     /// <summary>Writes changed rows and removes deleted ones (an update).</summary>

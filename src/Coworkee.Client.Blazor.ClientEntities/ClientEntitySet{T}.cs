@@ -440,7 +440,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
                 {
                     var received = watch.ElapsedMilliseconds;
                     await _store.ReplaceWithFileAsync(file.File, file.Version, cancellationToken);
-                    _logger.LogInformation("PoC sqlite: snapshot of {EntitySet} ({Bytes} bytes) received in {Received} ms, opened in {Opened} ms",
+                    _logger.LogDebug("Snapshot of {EntitySet} ({Bytes} bytes) received in {Received} ms, opened in {Opened} ms",
                         EntitySet, file.File.Length, received, watch.ElapsedMilliseconds - received);
                     _download = null;
                     CommitStore(file.Version, changed: true);
@@ -629,7 +629,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
             await Task.Delay(500, _stop.Token);
             var watch = System.Diagnostics.Stopwatch.StartNew();
             await _store!.QueryAsync(new ODataQuery { Top = 0, Count = false, Facets = true, Expand = Expand }, FacetsAsync, _stop.Token);
-            _logger.LogInformation("PoC sqlite: {EntitySet} warmed in {Ms} ms", EntitySet, watch.ElapsedMilliseconds);
+            _logger.LogDebug("{EntitySet} warmed in {Ms} ms", EntitySet, watch.ElapsedMilliseconds);
         }
         catch (OperationCanceledException)
         {

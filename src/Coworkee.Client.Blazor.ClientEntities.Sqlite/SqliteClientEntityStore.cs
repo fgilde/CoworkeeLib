@@ -22,12 +22,15 @@ namespace Coworkee.Client.Blazor.ClientEntities.Sqlite;
 internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
     where T : class
 {
-    private const string Directory = "/coworkee-copies";
     private const string AllRows = "\u0001";
     private static readonly ConcurrentDictionary<string, Func<T, bool>> Predicates = new(StringComparer.Ordinal);
     private static readonly MethodInfo CountsMethod = typeof(SqliteClientEntityStore<T>).GetMethod(nameof(CountsAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
     private static readonly MethodInfo OrderMethod = typeof(SqliteClientEntityStore<T>).GetMethod(nameof(Order), BindingFlags.NonPublic | BindingFlags.Static)!;
 
+    private static readonly string Schema = "1|" + typeof(T).FullName + "|"
+        + string.Join(",", CopyModel.Properties(typeof(T)).Select(p => p.Name + " " + CopyModel.Kind(p.PropertyType) + " " + p.PropertyType.Name));
+
+    private readonly string _directory;
     private readonly string _key;
     private readonly string _path;
     private readonly IClientEntityStorage _storage;
@@ -38,10 +41,13 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
     private SqliteConnection? _connection;
     private DbContextOptions<CopyDb<T>>? _options;
 
-    public SqliteClientEntityStore(string key, IClientEntityStorage storage, ILogger logger)
+    // directory: the browser's in-memory file system; tests pass a temporary folder
+    public SqliteClientEntityStore(string key, IClientEntityStorage storage, ILogger logger, string? directory)
     {
-        _key = key + "@sqlite";
-        _path = $"{Directory}/{Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(key)))[..16]}.db";
+        _directory = directory ?? "/coworkee-copies";
+        // the columns in the key: a changed row type starts a new copy instead of reading a file without its columns
+        _key = key + "@sqlite:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Schema)))[..12];
+        _path = $"{_directory}/{Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(key)))[..16]}.db";
         _storage = storage;
         _logger = logger;
     }
@@ -60,12 +66,12 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
         try
         {
             Close();
-            System.IO.Directory.CreateDirectory(Directory);
+            System.IO.Directory.CreateDirectory(_directory);
             await File.WriteAllBytesAsync(_path, data, cancellationToken);
             await using var db = Open();
             var version = await ScalarAsync("SELECT version FROM meta");
             Count = await db.Set<T>().CountAsync(cancellationToken);
-            _logger.LogInformation("PoC sqlite: restored {Count} rows ({Bytes} bytes) of {Key} in {Ms} ms (storage {Loaded} ms)", Count, data.Length, _key, watch.ElapsedMilliseconds, loaded);
+            _logger.LogDebug("Restored {Count} rows ({Bytes} bytes) of {Key} in {Ms} ms (storage {Loaded} ms)", Count, data.Length, _key, watch.ElapsedMilliseconds, loaded);
             return new DateTimeOffset(version, TimeSpan.Zero);
         }
         catch (Exception exception) when (exception is SqliteException or IOException or InvalidOperationException or InvalidCastException)
@@ -84,7 +90,7 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
         try
         {
             Close();
-            System.IO.Directory.CreateDirectory(Directory);
+            System.IO.Directory.CreateDirectory(_directory);
             File.Delete(_path);
             await using (var db = Open())
             {
@@ -107,7 +113,7 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
                 }
             }
 
-            _logger.LogInformation("PoC sqlite: wrote {Count} rows of {Key} in {Written} ms, indexed in {Indexed} ms", rows.Count, _key, written, watch.ElapsedMilliseconds - written);
+            _logger.LogDebug("Wrote {Count} rows of {Key} in {Written} ms, indexed in {Indexed} ms", rows.Count, _key, written, watch.ElapsedMilliseconds - written);
         }
         finally
         {
@@ -131,7 +137,7 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
         try
         {
             Close();
-            System.IO.Directory.CreateDirectory(Directory);
+            System.IO.Directory.CreateDirectory(_directory);
             await File.WriteAllBytesAsync(_path, file, cancellationToken);
             await using var db = Open();
             Count = await db.Set<T>().CountAsync(cancellationToken);
@@ -193,7 +199,7 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
             IReadOnlyList<T> items = query.Top is 0 ? [] : await Ordered(rows, query.OrderBy).Skip(query.Skip ?? 0).Take(query.Top ?? int.MaxValue).ToListAsync(cancellationToken);
             var paged = watch.ElapsedMilliseconds;
             IReadOnlyList<FacetGroupDto> counts = query.Facets ? await FacetsAsync(all, rows, groups, query.FacetContext, _logger, cancellationToken) : [];
-            _logger.LogInformation("PoC sqlite: {Filter} | {OrderBy} -> {Count} rows, page {Items}, {Facets} facet groups: count {Counted} ms, page {Paged} ms, facets {Faceted} ms",
+            _logger.LogDebug("{Filter} | {OrderBy} -> {Count} rows, page {Items}, {Facets} facet groups: count {Counted} ms, page {Paged} ms, facets {Faceted} ms",
                 query.Filter, query.OrderBy, count, items.Count, counts.Count, counted, paged - counted, watch.ElapsedMilliseconds - paged);
             return new ODataPage<T>(items, count, counts);
         }
@@ -280,7 +286,7 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
             }
 
             result.Add(group with { Options = options, SampleRows = null, TotalRows = null });
-            logger.LogInformation("PoC sqlite facet {Group} ({Type}, {Options} options, {Grouped} group-bys): {Ms} ms",
+            logger.LogDebug("Facet {Group} ({Type}, {Options} options, {Grouped} group-bys): {Ms} ms",
                 group.Key, group.Type, group.Options.Count, counted.Count - queriesBefore, groupWatch.ElapsedMilliseconds);
 
             // the first count of a query shape compiles it (about a third of a second in the browser): the page renders between groups
@@ -539,9 +545,16 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
         var watch = Stopwatch.StartNew();
         try
         {
-            var data = await File.ReadAllBytesAsync(_path);
+            // shared: the connection keeps the file open (a sharing violation on Windows, where the tests run)
+            byte[] data;
+            await using (var file = new FileStream(_path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            {
+                data = new byte[file.Length];
+                await file.ReadExactlyAsync(data);
+            }
+
             await _storage.SaveAsync(_key, data);
-            _logger.LogInformation("PoC sqlite: kept {Bytes} bytes of {Key} in {Ms} ms", data.Length, _key, watch.ElapsedMilliseconds);
+            _logger.LogDebug("Kept {Bytes} bytes of {Key} in {Ms} ms", data.Length, _key, watch.ElapsedMilliseconds);
         }
         catch (Exception exception)
         {

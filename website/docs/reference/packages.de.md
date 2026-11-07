@@ -45,6 +45,7 @@ Welches Paket wohin gehört und was in den `using`-Block kommt.
 | `Coworkee.Client` | SDKs, andere .NET-Apps | `Coworkee.Client` | `CoworkeeApiClient`, `CoworkeeApiException`, `BearerTokenHandler`, `ODataResult<T>` |
 | `Coworkee.Client.Blazor` | WebAssembly-Client | `Coworkee.Client.Blazor`, `.Components`, `.Components.Data`, `.Data`, `.Api`, `.Navigation`, `.Security`, `.Customization` | `AddCoworkeeClient`, `CoworkeeLayout`, `CoworkeeDataTable<T>`, `IODataClient`, `ApiClientBase`, `ReplaceComponent` |
 | `Coworkee.Client.Blazor.ClientEntities` | WebAssembly-Client: lokale Kopien von OData-Sets | `Coworkee.Client.Blazor.ClientEntities` | `AddCoworkeeClientEntities`, `ClientEntities`, `ClientEntitySet<T>`, `ClientEntitySwitch`, `ODataLinq` |
+| `Coworkee.Client.Blazor.ClientEntities.Sqlite` | WebAssembly-Client: die lokalen Kopien in SQLite im Browser (EF Core; `wasm-tools`-Workload zum Bauen) | `Coworkee.Client.Blazor.ClientEntities.Sqlite` | `AddCoworkeeClientEntitiesSqlite` |
 | `Coworkee.Client.Blazor.Reporting` | WebAssembly-Client: Berichte und Dashboards | `Coworkee.Client.Blazor.Reporting` | `AddCoworkeeReporting`, `ReportingOptions`, `ReportGrid`, `ReportFacetFilter` |
 | `Coworkee.Aspire` | AppHost | `Aspire.Hosting`, `Coworkee.Aspire.Settings` | `AddCoworkeeApp`, `CoworkeeApp`, `WithSetting` |
 | `Coworkee.Testing` | Tests | `Coworkee.Testing` | `DatabaseFixture` (Postgres, SQL Server, SQLite), `DatabaseWebApplicationFactory`, `AddTestAuthentication` |

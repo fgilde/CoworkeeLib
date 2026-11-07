@@ -299,11 +299,74 @@ Die erste Sortierung nach einer Spalte direkt nach dem allerersten Download kann
 
 Die Tests der Bibliothek (`LargeSetTests`, `LocalTableTests`) prüfen dasselbe mit 100.000 Zeilen in .NET.
 
+## SQLite im Browser (optional)
+
+Standardmäßig liegt die Kopie als Spalten im Speicher und gzip-komprimiert in IndexedDB. Das passt für Zeilentypen aus einfachen Properties. Ein Zeilentyp mit einer Liste unter seinen Properties (zum Beispiel Tags) wird als JSON gehalten, und eine JSON-Kopie von zehntausenden Zeilen braucht nach jedem Reload 20 bis 30 Sekunden zum Parsen, in denen der Browser beschäftigt ist. Das Paket `Coworkee.Client.Blazor.ClientEntities.Sqlite` hält stattdessen jede Kopie in einer eigenen SQLite-Datenbank im Browser, und EF Core beantwortet die Abfragen der Tabelle mit SQL:
+
+```csharp title="MyApp.Web.Client/Program.cs"
+builder.Services.AddCoworkeeClientEntities();
+builder.Services.AddCoworkeeClientEntitiesSqlite();
+```
+
+Am Server, an den Seiten und an den Einstellungen der Sets ändert sich nichts; Schalter, Modi, Deltas und Partitionen funktionieren wie oben beschrieben.
+
+### Was du brauchst
+
+- **Den `wasm-tools`-Workload dort, wo der Client gebaut wird** (Entwicklerrechner, CI): `dotnet workload install wasm-tools`, einmal pro Rechner. SQLite ist nativer Code, der Build linkt ihn in `dotnet.native.wasm`. Das Paket schaltet `<WasmBuildNative>true</WasmBuildNative>` im WebAssembly-Projekt selbst ein; ohne den Workload bricht der Build mit `NETSDK1147` ab und nennt den Befehl.
+- **Nichts im Browser**: Nutzer laden die gelinkte Datei wie jede andere Datei der App, auf jedem Rechner.
+- Kosten: einmalig etwa 1,7 MB mehr Download (Brotli: EF Core und SQLite 1,4 MB, das größere `dotnet.native.wasm` 0,3 MB) und ein Client-Build, der etwa eine Minute länger dauert.
+- Ein Client ohne natives SQLite (`WasmBuildNative` auf `false`, eine App, die die Projekte der Library statt des Pakets referenziert und es nicht setzt) schreibt eine Warnung in die Browser-Konsole und hält seine Kopien wie bisher im Speicher.
+
+In der CI den Workload vor dem Build installieren:
+
+```yaml
+- run: dotnet workload install wasm-tools
+```
+
+### Wie die Kopie arbeitet
+
+- **Erster Download als eine Datei**: statt Seiten von JSON fragt der Client `POST /api/v1/client-entities/{set}/snapshot` mit den Spalten seiner Tabelle. Der Server liest die Zeilen über denselben OData-Weg wie die Seiten (Berechtigung, Mandant, Soft Delete, `IODataEntityFilter`-Zeilenfilter, versteckte Properties, Gruppenauswahl), schreibt sie in eine SQLite-Datei und schickt sie gzip-komprimiert; der Browser speichert und öffnet sie nur. Klappt das nicht (ein älterer Server, eine Property, die das Set versteckt, mehr Zeilen als `MaxRows`), lädt der Client wie bisher Seiten.
+- **Zwischen Besuchen behalten**: die Datenbankdatei kommt unverändert in IndexedDB. Ein Reload öffnet sie, statt Zeilen zu parsen, etwa eine Sekunde für 23.000 Sendungen.
+- **Änderungen**: die Deltas des Änderungs-Feeds werden in die Datenbank geschrieben (Löschen und Einfügen per Id, in Scheiben, damit die Seite dazwischen rendern kann).
+- **Abfragen**: Filter, Sortierung, Seite und Anzahl sind SQL über EF Core auf indizierten Spalten. Facetten zählen mit einem `GROUP BY` pro Spalte, egal wie viele Optionen; Datumsbereiche addieren die Zählungen der sortierten Werte, statt jede Option einzeln zu prüfen. Die Facetten einer Kopie werden nach dem Öffnen einmal im Hintergrund gezählt, damit der erste Klick nicht das Übersetzen der Abfragen bezahlt.
+- **Was beim Server bleibt**: `$search`, `any`/`all` über Listen, Filter auf Listen und verschachtelte Objekte (als JSON-Spalten gehalten) und Gruppieren in der Tabelle gehen an den Server, ebenso Facettenoptionen von Listen (ihre Zahlen sind die des Servers).
+- **Ein geänderter Zeilentyp** öffnet eine neue Datenbank: der Schlüssel der gespeicherten Kopie enthält die Spalten und ihre Formate, eine neue Property liest also nie eine alte Datei.
+
+So werden Spalten gespeichert; der Server schreibt den Snapshot in denselben Formaten:
+
+| Property-Typ | Spalte |
+|---|---|
+| Text, `char`, Enums (als Name) | `TEXT` |
+| `Guid` | `TEXT`, Großbuchstaben |
+| Ganzzahlen, `bool` | `INTEGER` |
+| `decimal`, `double`, `float` | `REAL` (`decimal` vergleicht als `double`) |
+| `DateTimeOffset` | `INTEGER`: der UTC-Zeitpunkt in 0,1 ms, dann der Offset, damit Werte verschiedener Offsets nach dem Zeitpunkt sortieren |
+| `DateTime` | `TEXT` `yyyy-MM-dd HH:mm:ss.FFFFFFF` |
+| `DateOnly` | `TEXT` `yyyy-MM-dd` |
+| `TimeOnly`, `TimeSpan` | `INTEGER`, ihre Ticks |
+| Listen, verschachtelte Objekte, expandierte Navigationen | `TEXT`, JSON |
+
+Die Tests der Library (`CopyRoundTripTests`, `ClientEntitySnapshotTests`) schreiben jeden Typ im Browser und als Server-Snapshot, lesen ihn zurück und vergleichen Filter und Sortierungen mit den Zeilen selbst.
+
+### Gemessen
+
+23.177 Sendungen eines Hubs mit Tags (JSON im Speicher), Chromium, lokaler Rechner, SQL Server in Azure:
+
+| | im Speicher | SQLite |
+|---|---|---|
+| erste Kopie lokal nach dem Öffnen der Seite | 59-80 s | 12-16 s |
+| Reload, bis die Kopie antwortet | 20-29 s, Seite blockiert | etwa 1 s |
+| gefilterte Anzahl / Seite | (Server, 2-7 s) | 6-40 ms |
+| Facetten aller Zeilen / gefiltert | (Server, 2-5 s) | 1,3 s / 0,25 s |
+| längste Blockade der Seite | 10-29 s | unter 0,7 s |
+
+Für Zeilentypen aus einfachen Properties sind die Spalten im Speicher nach dem Laden genauso schnell; SQLite lohnt sich für große Kopien, Zeilentypen mit Listen und Seiten, die oft neu geladen werden.
+
 ## Speicher und Grenzen
 
 - Die Zeilen liegen als Spalten im Speicher und, mit gzip komprimiert, in IndexedDB (`coworkee-client-entities`), getrennt nach der Partition des Servers (Benutzer, Mandant, Gruppenauswahl), dem Set und seinem Expand. Der nächste Besuch fragt nur nach Änderungen (siehe [oben](#zwischen-besuchen-behalten-und-wann-die-kopie-neu-beginnt)). Ändert sich der Zeilentyp, wird die gespeicherte Kopie verworfen. Ersetze `IClientEntityStorage`, um die Kopien anderswo abzulegen, oder registriere `NoClientEntityStorage`, um zwischen Besuchen nichts zu behalten; ein Ersatz sollte auch `DeleteAsync(prefix)` umsetzen, das die Runden eines fertigen Downloads und die Kopien alter Gruppenauswahlen entfernt (der Standard entfernt nichts).
 - Zeilentypen mit Eigenschaften einfacher Typen (Text, Zahlen, Datumswerte, `Guid`, Enums, jeweils auch nullable) und verschachtelten Objekten aus solchen Eigenschaften werden als Spalten gehalten. Andere Zeilentypen (etwa mit Listen) funktionieren auch, werden aber als JSON abgelegt, langsamer wiederhergestellt und Zeile für Zeile gefiltert.
-- Alles ist reines .NET: kein natives SQLite, kein `wasm-tools`-Workload, keine zusätzlichen Dateien.
+- Die Standard-Kopie ist reines .NET: kein natives SQLite, kein `wasm-tools`-Workload, keine zusätzlichen Dateien. [SQLite im Browser](#sqlite-im-browser-optional) ist die Option für große Kopien und Zeilentypen mit Listen.
 - Arbeitsspeicher: 100.000 Aufträge belegen einige zehn MB im Browser-Tab; halte `MaxRows` im Rahmen und expandiere nur, was du anzeigst.
 - Der erste Download eines großen Sets dauert (14,5 s für 100.000 Zeilen) und beschäftigt den Browser; die Tabelle antwortet währenddessen vom Server, langsamer als sonst. Antwortkomprimierung in der API (oder im BFF) hilft bei langsamen Netzen.
 - Änderungen erkennt der Server an `IAuditable` (`CreatedAt`, `ModifiedAt`), Löschungen an `ISoftDelete` (`DeletedAt`). Stimmt die Zeilenzahl nach einem Delta nicht mit der des Servers überein, vergleicht der Client die Ids; so verschwinden auch hart gelöschte Zeilen und solche, die nicht mehr sichtbar sind. Entities ohne `IAuditable` und ohne `ChangedAt` werden bei jeder Aktualisierung neu geladen. Änderungen, die kein Datum bewegen, meldet [`IClientEntityChangeLog`](#anderungen-die-kein-datum-sieht).
@@ -317,6 +380,7 @@ Die Tests der Bibliothek (`LargeSetTests`, `LocalTableTests`) prüfen dasselbe m
 | `GET /api/v1/client-entities` | die Sets, die dieser Benutzer spiegeln darf, mit ihren Einstellungen, ein Partitionsschlüssel pro Benutzer, Mandant und Gruppenauswahl und ein Besitzerschlüssel pro Benutzer und Mandant |
 | `GET /api/v1/client-entities/{set}/changes?since=…&skip=…` | neue Version, Zahl der sichtbaren Zeilen, geänderte und gelöschte Ids und die Partition des Aufrufers; mit `skip` kommen die geänderten Ids in Seiten von `BatchSize × 10` (`more`), ohne antwortet mehr als das mit `reset`; auch `reset`, wenn `since` älter als `ChangeLogLifetime` ist |
 | `GET /api/v1/client-entities/{set}/ids` | alle sichtbaren Ids, um unbemerkt verschwundene Zeilen zu finden |
+| `POST /api/v1/client-entities/{set}/snapshot` | mit [SQLite im Browser](#sqlite-im-browser-optional): die sichtbaren Zeilen als SQLite-Datei (gzip) in den Spalten, die der Body nennt, die Version in `X-Coworkee-Version`; 400 für eine versteckte Property, 403 ohne Berechtigung, 413 über `MaxRows` |
 
 ## Dateien der Demo
 

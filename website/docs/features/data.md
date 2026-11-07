@@ -53,7 +53,7 @@ For conditions users assemble themselves, `QueryBuilder` produces nested *all / 
 
 Put `[ClientEntity]` on an entity and the Blazor client keeps a copy of its OData set. While the copy downloads, queries go to the server. Once it is complete, filters, search, sorting and facet counts run locally, and changes arrive as deltas.
 
-The copy is a small column store with per-column indexes, persisted to IndexedDB. For the 100,000 orders the first download takes about 14.5 s; after a page reload, queries are local again 0.3 s after the first rows show. With no filter, the table query measured 216-236 ms on the server and 39-56 ms in the browser.
+The copy is a small column store with per-column indexes, persisted to IndexedDB. For the 100,000 orders the first download takes about 14.5 s; after a page reload, queries are local again 0.3 s after the first rows show. With no filter, the table query measured 216-236 ms on the server and 39-56 ms in the browser. Large copies and row types with lists can live in [SQLite inside the browser](../ui/client-entities.md#sqlite-in-the-browser-optional) instead (one more package and line): the server sends the first copy as a SQLite file, a reload opens it in about a second, and EF Core answers with SQL.
 
 Each table over such a set has a switch with *Compare and choose the faster*, which runs the current query three times on each side and keeps the winner. The copy only holds what the user could read through OData anyway. It is not encrypted on the device, though, so sets with sensitive data should stay on the server.
 

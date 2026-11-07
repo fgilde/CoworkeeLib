@@ -33,7 +33,7 @@ internal static class ClientEntityEndpoints
         sync.MapGet("/{entitySet}/changes", (string entitySet, DateTimeOffset? since, int? skip, HttpContext http) =>
             DispatchAsync(entitySet, http, nameof(ChangesAsync), new Feed(since, skip is { } s ? Math.Max(0, s) : null)));
         sync.MapGet("/{entitySet}/ids", (string entitySet, HttpContext http) => DispatchAsync(entitySet, http, nameof(IdsAsync), new Feed(null, null)));
-        // PoC: the copy as a SQLite file
+        // the copy as a SQLite file, for clients that keep their copies in SQLite
         sync.MapPost("/{entitySet}/snapshot", (string entitySet, ClientEntitySnapshotRequest request, HttpContext http) => ClientEntitySnapshot.HandleAsync(entitySet, request, http));
     }
 
