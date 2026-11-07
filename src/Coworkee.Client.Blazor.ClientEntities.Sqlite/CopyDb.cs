@@ -59,12 +59,35 @@ internal static class CopyModel
             {
                 column.HasConversion<double>();
             }
+            else if (plain.IsEnum)
+            {
+                // by name: the server writes snapshots without knowing the client's enum values
+                column.HasConversion<string>();
+            }
 
         }
     }
 
     private static ValueConverter JsonConverter<TValue>() =>
         new ValueConverter<TValue, string>(v => JsonSerializer.Serialize(v, Json), s => JsonSerializer.Deserialize<TValue>(s, Json)!);
+
+    /// <summary>How the server writes a column of a snapshot, as this model stores it.</summary>
+    public static string Kind(Type type)
+    {
+        if (!IsColumn(type))
+        {
+            return Contracts.Data.ClientEntitySnapshotKinds.Json;
+        }
+
+        var plain = Nullable.GetUnderlyingType(type) ?? type;
+        return plain == typeof(DateTimeOffset) ? Contracts.Data.ClientEntitySnapshotKinds.DateTimeOffset
+            : plain == typeof(DateTime) ? Contracts.Data.ClientEntitySnapshotKinds.DateTime
+            : plain == typeof(Guid) ? Contracts.Data.ClientEntitySnapshotKinds.Guid
+            : plain == typeof(bool) ? Contracts.Data.ClientEntitySnapshotKinds.Boolean
+            : plain == typeof(decimal) || plain == typeof(double) || plain == typeof(float) ? Contracts.Data.ClientEntitySnapshotKinds.Real
+            : plain.IsPrimitive ? Contracts.Data.ClientEntitySnapshotKinds.Integer
+            : Contracts.Data.ClientEntitySnapshotKinds.Text;
+    }
 
     /// <summary>Reads a property of a row, boxed.</summary>
     public static Func<object, object?> Getter(PropertyInfo property)

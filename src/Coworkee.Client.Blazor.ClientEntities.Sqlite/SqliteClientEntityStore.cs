@@ -117,6 +117,34 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
         await PersistAsync();
     }
 
+    public ClientEntitySnapshotRequest? Snapshot(string? expand)
+    {
+        using var db = new CopyDb<T>(new DbContextOptionsBuilder<CopyDb<T>>().UseSqlite("Data Source=:memory:").Options);
+        return new ClientEntitySnapshotRequest(
+            [.. db.Model.FindEntityType(typeof(T))!.GetProperties().Select(p => new ClientEntitySnapshotColumn(p.GetColumnName(), CopyModel.Kind(p.ClrType), CopyModel.IsColumn(p.ClrType)))],
+            expand);
+    }
+
+    public async Task ReplaceWithFileAsync(byte[] file, DateTimeOffset version, CancellationToken cancellationToken)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            Close();
+            System.IO.Directory.CreateDirectory(Directory);
+            await File.WriteAllBytesAsync(_path, file, cancellationToken);
+            await using var db = Open();
+            Count = await db.Set<T>().CountAsync(cancellationToken);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+
+        // kept as it came: no need to read the file back
+        await _storage.SaveAsync(_key, file);
+    }
+
     public async Task ApplyAsync(IReadOnlyCollection<T> changed, IReadOnlyCollection<Guid> deleted, DateTimeOffset version, CancellationToken cancellationToken)
     {
         await _gate.WaitAsync(cancellationToken);
@@ -164,7 +192,7 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
             var counted = watch.ElapsedMilliseconds;
             IReadOnlyList<T> items = query.Top is 0 ? [] : await Ordered(rows, query.OrderBy).Skip(query.Skip ?? 0).Take(query.Top ?? int.MaxValue).ToListAsync(cancellationToken);
             var paged = watch.ElapsedMilliseconds;
-            IReadOnlyList<FacetGroupDto> counts = query.Facets ? await FacetsAsync(all, rows, groups, query.FacetContext, cancellationToken) : [];
+            IReadOnlyList<FacetGroupDto> counts = query.Facets ? await FacetsAsync(all, rows, groups, query.FacetContext, _logger, cancellationToken) : [];
             _logger.LogInformation("PoC sqlite: {Filter} | {OrderBy} -> {Count} rows, page {Items}, {Facets} facet groups: count {Counted} ms, page {Paged} ms, facets {Faceted} ms",
                 query.Filter, query.OrderBy, count, items.Count, counts.Count, counted, paged - counted, watch.ElapsedMilliseconds - paged);
             return new ODataPage<T>(items, count, counts);
@@ -220,7 +248,7 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
 
     // the server's groups with local counts; a chosen "any of" group counts on the rows of the other choices, as the server does
     private static async Task<IReadOnlyList<FacetGroupDto>> FacetsAsync(IQueryable<T> all, IQueryable<T> rows, IReadOnlyList<FacetGroupDto> groups, FacetContextDto? context,
-        CancellationToken cancellationToken)
+        ILogger logger, CancellationToken cancellationToken)
     {
         var counted = new Dictionary<(string? Scope, string Path), List<(object? Value, int Count)>>();
         var result = new List<FacetGroupDto>(groups.Count);
@@ -230,6 +258,8 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
             var filter = own ? context!.Without(group.Key) : null;
             var basis = own ? Filtered(all, filter) : rows;
             var options = new List<FacetOptionDto>();
+            var groupWatch = Stopwatch.StartNew();
+            var queriesBefore = counted.Count;
             foreach (var option in group.Options)
             {
                 int count;
@@ -250,6 +280,11 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
             }
 
             result.Add(group with { Options = options, SampleRows = null, TotalRows = null });
+            logger.LogInformation("PoC sqlite facet {Group} ({Type}, {Options} options, {Grouped} group-bys): {Ms} ms",
+                group.Key, group.Type, group.Options.Count, counted.Count - queriesBefore, groupWatch.ElapsedMilliseconds);
+
+            // the first count of a query shape compiles it (about a third of a second in the browser): the page renders between groups
+            await Pause();
         }
 
         return result;
@@ -270,6 +305,14 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
             values = counted[(scope, path)] = await (Task<List<(object?, int)>>)CountsMethod.MakeGenericMethod(key.ReturnType).Invoke(null, [basis, key, cancellationToken])!;
         }
 
+        // a range ("Etd ge X and Etd lt Y"): the sorted values and a binary search instead of testing each of thousands of dates
+        var token = ODataLinq.Parse(option.OData);
+        var valueType = Nullable.GetUnderlyingType(ODataLinq.Key<T>(path).ReturnType) ?? ODataLinq.Key<T>(path).ReturnType;
+        if (typeof(IComparable).IsAssignableFrom(valueType) && valueType != typeof(string) && Bounds(token, valueType) is { } bounds)
+        {
+            return Sorted(values).CountWithin(bounds);
+        }
+
         var accepts = Predicates.GetOrAdd(option.OData, text => ODataLinq.Filter<T>(text).Compile());
         var property = typeof(T).GetProperty(path, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase)
             ?? throw new NotSupportedException($"{typeof(T).Name} has no property {path}.");
@@ -285,6 +328,100 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
         }
 
         return count;
+    }
+
+    private sealed record Range(IComparable? Low, bool LowIncluded, IComparable? High, bool HighIncluded);
+
+    // the non-null values in order with the running count, made once per value list
+    private sealed class SortedCounts
+    {
+        private readonly IComparable[] _values;
+        private readonly long[] _before;
+
+        public SortedCounts(List<(object? Value, int Count)> values)
+        {
+            var known = values.Where(v => v.Value is not null).OrderBy(v => (IComparable)v.Value!).ToList();
+            _values = [.. known.Select(v => (IComparable)v.Value!)];
+            _before = new long[known.Count + 1];
+            for (var i = 0; i < known.Count; i++)
+            {
+                _before[i + 1] = _before[i] + known[i].Count;
+            }
+        }
+
+        public int CountWithin(Range range)
+        {
+            var from = range.Low is null ? 0 : Index(range.Low, firstAbove: !range.LowIncluded);
+            var to = range.High is null ? _values.Length : Index(range.High, firstAbove: range.HighIncluded);
+            return to > from ? (int)(_before[to] - _before[from]) : 0;
+        }
+
+        // the first index whose value is above (or at, when not firstAbove) the bound
+        private int Index(IComparable bound, bool firstAbove)
+        {
+            int low = 0, high = _values.Length;
+            while (low < high)
+            {
+                var middle = (low + high) / 2;
+                var compared = _values[middle].CompareTo(bound);
+                if (compared < 0 || (firstAbove && compared == 0))
+                {
+                    low = middle + 1;
+                }
+                else
+                {
+                    high = middle;
+                }
+            }
+
+            return low;
+        }
+    }
+
+    private static readonly ConditionalWeakTable<List<(object?, int)>, SortedCounts> SortedCache = new();
+
+    private static SortedCounts Sorted(List<(object?, int)> values) => SortedCache.GetValue(values, v => new SortedCounts(v));
+
+    // "P ge a", "P lt b", "P eq c" and their "and": one interval of the column's values; null for anything else
+    private static Range? Bounds(QueryToken token, Type type)
+    {
+        switch (token)
+        {
+            case BinaryOperatorToken { OperatorKind: BinaryOperatorKind.And } and:
+                return Bounds(and.Left, type) is { } left && Bounds(and.Right, type) is { } right ? Intersect(left, right) : null;
+            case BinaryOperatorToken { Left: PathToken, Right: LiteralToken literal } compare:
+                return Compare(compare.OperatorKind, ODataLinq.Literal(literal.Value, type) as IComparable);
+            case BinaryOperatorToken { Left: LiteralToken literal, Right: PathToken } compare:
+                return Compare(compare.OperatorKind switch
+                {
+                    BinaryOperatorKind.GreaterThan => BinaryOperatorKind.LessThan,
+                    BinaryOperatorKind.GreaterThanOrEqual => BinaryOperatorKind.LessThanOrEqual,
+                    BinaryOperatorKind.LessThan => BinaryOperatorKind.GreaterThan,
+                    BinaryOperatorKind.LessThanOrEqual => BinaryOperatorKind.GreaterThanOrEqual,
+                    var same => same,
+                }, ODataLinq.Literal(literal.Value, type) as IComparable);
+            default:
+                return null;
+        }
+    }
+
+    private static Range? Compare(BinaryOperatorKind kind, IComparable? value) => value is null ? null : kind switch
+    {
+        BinaryOperatorKind.GreaterThan => new Range(value, false, null, false),
+        BinaryOperatorKind.GreaterThanOrEqual => new Range(value, true, null, false),
+        BinaryOperatorKind.LessThan => new Range(null, false, value, false),
+        BinaryOperatorKind.LessThanOrEqual => new Range(null, false, value, true),
+        BinaryOperatorKind.Equal => new Range(value, true, value, true),
+        _ => null,
+    };
+
+    private static Range Intersect(Range a, Range b)
+    {
+        var (low, lowIncluded) = a.Low is null ? (b.Low, b.LowIncluded) : b.Low is null ? (a.Low, a.LowIncluded)
+            : a.Low.CompareTo(b.Low) switch { > 0 => (a.Low, a.LowIncluded), < 0 => (b.Low, b.LowIncluded), _ => (a.Low, a.LowIncluded && b.LowIncluded) };
+        var (high, highIncluded) = a.High is null ? (b.High, b.HighIncluded) : b.High is null ? (a.High, a.HighIncluded)
+            : a.High.CompareTo(b.High) switch { < 0 => (a.High, a.HighIncluded), > 0 => (b.High, b.HighIncluded), _ => (a.High, a.HighIncluded && b.HighIncluded) };
+        return new Range(low, lowIncluded, high, highIncluded);
     }
 
     private static async Task<List<(object?, int)>> CountsAsync<TKey>(IQueryable<T> rows, Expression<Func<T, TKey>> key, CancellationToken cancellationToken) =>

@@ -8,4 +8,8 @@
     <PackageReference Include="Nextended.Web" />
     <PackageReference Include="ClosedXML" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- PoC: ClientEntitySnapshot -->
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+  </ItemGroup>
 </Project>

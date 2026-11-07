@@ -57,6 +57,8 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     // an engine's store (SQLite) instead of the columns in memory: it keeps the rows itself and answers the queries
     private readonly IClientEntityStore<T>? _store;
     private bool _storeLocal;
+    private bool _snapshotRejected;
+    private bool _warmed;
 
     internal ClientEntitySet(ClientEntitySetInfo info, string? expand, string partition, IODataClient server, ClientEntityApi api, IClientEntityStorage storage, ILogger logger,
         IClientEntityEngine? engine = null)
@@ -428,6 +430,33 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
             return;
         }
 
+        if (_store?.Snapshot(Expand) is { } snapshot && !_snapshotRejected)
+        {
+            try
+            {
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+                Publish(Status with { State = ClientEntitySyncState.Downloading, Loaded = 0, Total = start.Count, Error = null });
+                if (await _api.SnapshotAsync(EntitySet, snapshot, cancellationToken) is { } file)
+                {
+                    var received = watch.ElapsedMilliseconds;
+                    await _store.ReplaceWithFileAsync(file.File, file.Version, cancellationToken);
+                    _logger.LogInformation("PoC sqlite: snapshot of {EntitySet} ({Bytes} bytes) received in {Received} ms, opened in {Opened} ms",
+                        EntitySet, file.File.Length, received, watch.ElapsedMilliseconds - received);
+                    _download = null;
+                    CommitStore(file.Version, changed: true);
+                    return;
+                }
+
+                _snapshotRejected = true;
+            }
+            catch (Exception exception) when (exception is Api.ApiException or HttpRequestException or InvalidOperationException or FormatException)
+            {
+                // the pages of a download still work
+                _logger.LogWarning(exception, "The snapshot of {EntitySet} failed, it comes in pages", EntitySet);
+                _snapshotRejected = true;
+            }
+        }
+
         if (_download is null)
         {
             await DropPagesAsync();
@@ -576,6 +605,39 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
 
         Publish(new ClientEntityStatus(ClientEntitySyncState.Idle, true, _store!.Count, _store.Count, version, null, revision));
         _local.TrySetResult();
+        if (!_warmed && Mode == ClientEntityMode.Client)
+        {
+            _warmed = true;
+            _ = WarmAsync();
+        }
+    }
+
+    private protected override void ModeChanged()
+    {
+        if (!_warmed && _storeLocal && Mode == ClientEntityMode.Client)
+        {
+            _warmed = true;
+            _ = WarmAsync();
+        }
+    }
+
+    // the first facet count of a session compiles EF's queries (about 7 s in the browser, in slices): done in the background, the table's first is quick
+    private async Task WarmAsync()
+    {
+        try
+        {
+            await Task.Delay(500, _stop.Token);
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            await _store!.QueryAsync(new ODataQuery { Top = 0, Count = false, Facets = true, Expand = Expand }, FacetsAsync, _stop.Token);
+            _logger.LogInformation("PoC sqlite: {EntitySet} warmed in {Ms} ms", EntitySet, watch.ElapsedMilliseconds);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+        {
+            _logger.LogDebug(exception, "Warming {EntitySet} failed", EntitySet);
+        }
     }
 
     private async Task<bool> FetchIntoAsync(Dictionary<Guid, T> rows, IReadOnlyList<Guid> ids, CancellationToken cancellationToken)

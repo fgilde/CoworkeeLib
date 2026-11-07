@@ -21,9 +21,14 @@ public abstract class ClientEntitySet : IAsyncDisposable
             if (field != value)
             {
                 field = value;
+                ModeChanged();
                 Changed?.Invoke(this);
             }
         }
+    }
+
+    private protected virtual void ModeChanged()
+    {
     }
 
     /// <summary>Asks the server for changes now instead of at the next interval.</summary>
