@@ -29,14 +29,15 @@ public sealed class RecordAttachmentTests : ClientTestBase
         Render<RecordAttachment>(p => p.Add(a => a.EntityType, "LeaveRequests").Add(a => a.EntityId, _id).Add(a => a.Slot, "certificate"));
 
     [Fact]
-    public void A_picked_file_is_uploaded_to_the_slot_and_the_list_reloads()
+    public async Task A_picked_file_is_uploaded_to_the_slot_and_the_list_reloads()
     {
         var uploaded = File("note.pdf");
         _api.GetSlotAsync("LeaveRequests", _id, "certificate", Arg.Any<CancellationToken>()).Returns(Slot(true), Slot(true, uploaded));
         var attachment = Render();
         attachment.WaitForAssertion(() => attachment.FindComponent<InputFile>());
 
-        attachment.FindComponent<InputFile>().UploadFiles(InputFileContent.CreateFromBinary([1, 2, 3], "note.pdf", null, "application/pdf"));
+        // found and picked in one go: a render in between can replace the input the upload would go to
+        await attachment.InvokeAsync(() => attachment.FindComponent<InputFile>().UploadFiles(InputFileContent.CreateFromBinary([1, 2, 3], "note.pdf", null, "application/pdf")));
 
         attachment.WaitForAssertion(() => _api.Received(1).UploadAsync("LeaveRequests", _id, "certificate", "note.pdf", "application/pdf", Arg.Any<Stream>(), Arg.Any<CancellationToken>()));
         attachment.WaitForAssertion(() => attachment.Find($"[data-attachment='{uploaded.Id}']").TextContent.ShouldContain("note.pdf"));
