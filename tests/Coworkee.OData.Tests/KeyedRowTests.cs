@@ -35,6 +35,12 @@ public sealed class KeyedRowTests(ODataApp app) : IAsyncLifetime
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
+    // the identifiers without the quotes of the provider: p."Id" (Postgres), "p"."Id" (SQLite), [p].[Id] (SQL Server)
+    private static string Unquoted(string sql) => sql.Replace("\"", "").Replace("[", "").Replace("]", "");
+
+    // count(*), or COUNT_BIG(*) on SQL Server
+    private static bool IsCount(string sql) => System.Text.RegularExpressions.Regex.IsMatch(sql, @"count(_big)?\(\*\)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
     [Fact]
     public async Task A_list_reads_the_keys_of_its_visible_rows_first_then_its_page_and_count_among_them()
     {
@@ -46,8 +52,8 @@ public sealed class KeyedRowTests(ODataApp app) : IAsyncLifetime
         page.GetProperty("@odata.count").GetInt32().ShouldBe(4);
         var reads = app.Commands.Of("Pumps");
         var log = string.Join("\n---\n", reads);
-        reads[0].ShouldContain("count(*)", Case.Insensitive, log);
-        reads[1].ShouldStartWith("SELECT p.\"Id\"", Case.Sensitive, log);
+        IsCount(reads[0]).ShouldBeTrue(log);
+        Unquoted(reads[1]).ShouldStartWith("SELECT p.Id", Case.Sensitive, log);
         reads.Skip(2).ShouldNotBeEmpty(log);
         reads.Skip(2).ShouldAllBe(c => c.Contains("@keys") && c.Contains("TenantId"), log);
     }
@@ -68,10 +74,10 @@ public sealed class KeyedRowTests(ODataApp app) : IAsyncLifetime
         // the remembered size only decides whether to read by key; the keys are read again for every request
         Names(page).ShouldBe(["P1", "P2", "P3", "P4", "P5", "P6"]);
         page.GetProperty("@odata.count").GetInt32().ShouldBe(6);
-        var reads = app.Commands.Of("Pumps").Where(c => !c.StartsWith("INSERT", StringComparison.Ordinal)).ToList();
+        var reads = app.Commands.Of("Pumps").Where(c => !c.Contains("INSERT INTO", StringComparison.Ordinal)).ToList();
         var log = string.Join("\n---\n", reads);
-        reads[0].ShouldStartWith("SELECT p.\"Id\"", Case.Sensitive, log);
-        reads.ShouldNotContain(c => c.Contains("count(*)", StringComparison.OrdinalIgnoreCase) && !c.Contains("@keys"), "no count before the keys: " + log);
+        Unquoted(reads[0]).ShouldStartWith("SELECT p.Id", Case.Sensitive, log);
+        reads.ShouldNotContain(c => IsCount(c) && !c.Contains("@keys"), "no count before the keys: " + log);
     }
 
     [Fact]
