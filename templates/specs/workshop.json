@@ -1,0 +1,130 @@
+{
+  "name": "Workshop",
+  "options": {
+    "samples": false,
+    "files": true,
+    "reports": true
+  },
+  "branding": {
+    "title": "Repair Shop",
+    "theme": "Ember",
+    "signInLayout": "Slide"
+  },
+  "modules": [
+    {
+      "name": "Service",
+      "entities": [
+        {
+          "name": "Customer",
+          "properties": [
+            { "name": "Name", "required": true, "maxLength": 200, "display": true },
+            { "name": "Phone", "maxLength": 50 },
+            { "name": "Email", "type": "email", "maxLength": 250 },
+            { "name": "Address", "type": "text" }
+          ]
+        },
+        {
+          "name": "Device",
+          "properties": [
+            { "name": "SerialNumber", "required": true, "maxLength": 60, "unique": true, "display": true, "label": "Serial number" },
+            { "name": "Model", "required": true, "maxLength": 120, "facet": true },
+            { "name": "Customer", "type": "reference", "reference": "Customer", "required": true, "inverse": "Devices", "facet": true },
+            { "name": "WarrantyEnds", "type": "dateOnly", "label": "Warranty ends" }
+          ]
+        },
+        {
+          "name": "Part",
+          "properties": [
+            { "name": "Sku", "required": true, "maxLength": 40, "unique": true, "label": "SKU" },
+            { "name": "Name", "required": true, "maxLength": 200, "display": true },
+            { "name": "InStock", "type": "int", "required": true, "default": "0", "label": "In stock" },
+            { "name": "Price", "type": "money", "required": true }
+          ]
+        },
+        {
+          "name": "WorkOrder",
+          "clientEntity": true,
+          "properties": [
+            { "name": "Number", "required": true, "maxLength": 20, "unique": true, "display": true },
+            { "name": "Customer", "type": "reference", "reference": "Customer", "required": true, "facet": true },
+            { "name": "Device", "type": "reference", "reference": "Device", "onDelete": "setNull" },
+            { "name": "Problem", "type": "text", "required": true },
+            { "name": "Priority", "type": "enum", "enum": "WorkPriority", "required": true, "default": "Normal", "facet": true },
+            { "name": "Technician", "maxLength": 120, "facet": true },
+            { "name": "ScheduledFor", "type": "dateTime", "label": "Scheduled for" },
+            { "name": "LaborHours", "type": "decimal", "precision": 6, "scale": 2, "label": "Labor hours" },
+            { "name": "Total", "type": "money" },
+            { "name": "Status", "maxLength": 50, "facet": true },
+            { "name": "StartedOn", "type": "dateTime", "label": "Started on" },
+            { "name": "CompletedOn", "type": "dateTime", "label": "Completed on" }
+          ],
+          "workflow": {
+            "initial": "New",
+            "mirrorTo": "Status",
+            "transitions": [
+              { "name": "Schedule", "from": ["New"], "to": "Scheduled", "permission": "Dispatch" },
+              { "name": "Start", "from": ["Scheduled"], "to": "In progress" },
+              { "name": "Wait for parts", "from": ["In progress"], "to": "Waiting for parts", "comment": true },
+              { "name": "Parts arrived", "from": ["Waiting for parts"], "to": "In progress" },
+              { "name": "Finish", "from": ["In progress"], "to": "Quality check" },
+              { "name": "Hand over", "from": ["Ready for pickup"], "to": "Handed over" },
+              { "name": "Invoice", "from": ["Handed over"], "to": "Invoiced", "permission": "Invoice" },
+              { "name": "Cancel", "from": ["New", "Scheduled", "Waiting for parts"], "to": "Cancelled", "permission": "Dispatch", "comment": true }
+            ],
+            "states": [
+              { "name": "New", "color": "info", "notify": "Dispatcher" },
+              { "name": "Scheduled", "color": "primary" },
+              { "name": "In progress", "color": "primary", "stamp": "StartedOn" },
+              { "name": "Waiting for parts", "color": "warning" },
+              {
+                "name": "Quality check",
+                "color": "warning",
+                "approval": { "approved": "Ready for pickup", "rejected": "In progress", "roles": ["Service Manager"], "dueInDays": 1, "notByRequester": true }
+              },
+              { "name": "Ready for pickup", "color": "success", "stamp": "CompletedOn", "notify": "Dispatcher" },
+              { "name": "Handed over", "color": "success", "notify": "Billing" },
+              { "name": "Invoiced", "color": "secondary" },
+              { "name": "Cancelled", "color": "error" }
+            ]
+          }
+        },
+        {
+          "name": "WorkOrderPart",
+          "properties": [
+            { "name": "WorkOrder", "type": "reference", "reference": "WorkOrder", "required": true, "inverse": "Parts", "onDelete": "cascade", "label": "Work order" },
+            { "name": "Part", "type": "reference", "reference": "Part", "required": true },
+            { "name": "Quantity", "type": "int", "required": true, "default": "1" }
+          ]
+        }
+      ]
+    }
+  ],
+  "enums": [
+    { "name": "WorkPriority", "values": ["Normal", "Low", "High", "Emergency"] }
+  ],
+  "roles": [
+    {
+      "name": "Dispatcher",
+      "description": "Takes in repairs and plans the technicians",
+      "permissions": ["Service.Customers.View", "Service.Customers.Create", "Service.Customers.Edit", "Service.Devices.View", "Service.Devices.Create", "Service.Devices.Edit",
+        "Service.WorkOrders.View", "Service.WorkOrders.Create", "Service.WorkOrders.Edit", "Service.WorkOrders.Dispatch", "Service.Parts.View"]
+    },
+    {
+      "name": "Technician",
+      "description": "Repairs devices and books the parts used",
+      "permissions": ["Service.Customers.View", "Service.Devices.View", "Service.WorkOrders.View", "Service.WorkOrders.Edit", "Service.Parts.View",
+        "Service.WorkOrderParts.View", "Service.WorkOrderParts.Create", "Service.WorkOrderParts.Edit", "Service.WorkOrderParts.Delete"]
+    },
+    {
+      "name": "Service Manager",
+      "description": "Checks the quality of every repair before pickup",
+      "permissions": ["Service.Customers.View", "Service.Devices.View", "Service.WorkOrders.View", "Service.WorkOrders.Edit", "Service.WorkOrders.Dispatch",
+        "Service.Parts.View", "Service.Parts.Create", "Service.Parts.Edit", "Service.WorkOrderParts.View", "Reports.View", "Workflows.View"]
+    },
+    {
+      "name": "Billing",
+      "description": "Invoices handed over repairs",
+      "permissions": ["Service.Customers.View", "Service.WorkOrders.View", "Service.WorkOrders.Invoice", "Service.WorkOrderParts.View", "Service.Parts.View", "Reports.View"]
+    }
+  ]
+}

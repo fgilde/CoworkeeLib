@@ -1,0 +1,235 @@
+{
+  "name": "Erp",
+  "options": {
+    "samples": false,
+    "reports": true,
+    "files": true,
+    "chat": false
+  },
+  "branding": {
+    "title": "Operations",
+    "theme": "Slate",
+    "signInLayout": "Split"
+  },
+  "modules": [
+    {
+      "name": "MasterData",
+      "entities": [
+        {
+          "name": "Customer",
+          "properties": [
+            { "name": "Name", "required": true, "maxLength": 200, "display": true, "unique": true },
+            { "name": "Email", "type": "email", "maxLength": 250 },
+            { "name": "Phone", "maxLength": 50 },
+            { "name": "BillingAddress", "type": "text", "label": "Billing address" },
+            { "name": "PaymentTermsDays", "type": "int", "required": true, "default": "14", "label": "Payment terms (days)" },
+            { "name": "CreditLimit", "type": "money", "label": "Credit limit" }
+          ]
+        },
+        {
+          "name": "Supplier",
+          "properties": [
+            { "name": "Name", "required": true, "maxLength": 200, "display": true, "unique": true },
+            { "name": "Email", "type": "email", "maxLength": 250 },
+            { "name": "Phone", "maxLength": 50 },
+            { "name": "LeadTimeDays", "type": "int", "label": "Lead time (days)" }
+          ]
+        },
+        {
+          "name": "Product",
+          "clientEntity": true,
+          "properties": [
+            { "name": "Sku", "required": true, "maxLength": 40, "unique": true, "label": "SKU" },
+            { "name": "Name", "required": true, "maxLength": 200, "display": true },
+            { "name": "Unit", "required": true, "maxLength": 10, "default": "pcs", "facet": true },
+            { "name": "Price", "type": "money", "required": true },
+            { "name": "Cost", "type": "money" },
+            { "name": "InStock", "type": "int", "required": true, "default": "0", "label": "In stock" },
+            { "name": "ReorderLevel", "type": "int", "label": "Reorder level" },
+            { "name": "PreferredSupplier", "type": "reference", "reference": "Supplier", "onDelete": "setNull", "facet": true, "label": "Preferred supplier" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sales",
+      "entities": [
+        {
+          "name": "SalesOrder",
+          "properties": [
+            { "name": "Number", "required": true, "maxLength": 30, "unique": true, "display": true },
+            { "name": "Customer", "type": "reference", "reference": "MasterData.Customer", "required": true, "facet": true },
+            { "name": "OrderedOn", "type": "dateOnly", "required": true, "label": "Order date" },
+            { "name": "DeliverBy", "type": "dateOnly", "label": "Deliver by" },
+            { "name": "Total", "type": "money" },
+            { "name": "Note", "type": "text" },
+            { "name": "ConfirmedOn", "type": "dateTime", "label": "Confirmed on" },
+            { "name": "ShippedOn", "type": "dateTime", "label": "Shipped on" }
+          ],
+          "workflow": {
+            "initial": "Quote",
+            "transitions": [
+              { "name": "Confirm", "from": ["Quote"], "to": "Confirmed" },
+              { "name": "Start picking", "from": ["Confirmed"], "to": "Picking", "permission": "Ship" },
+              { "name": "Ship", "from": ["Picking"], "to": "Shipped", "permission": "Ship" },
+              { "name": "Invoice", "from": ["Shipped"], "to": "Invoiced", "permission": "Invoice" },
+              { "name": "Put on hold", "from": ["Confirmed", "Picking"], "to": "On hold", "comment": true },
+              { "name": "Release", "from": ["On hold"], "to": "Confirmed" },
+              { "name": "Cancel", "from": ["Quote", "Confirmed", "On hold"], "to": "Cancelled", "comment": true }
+            ],
+            "states": [
+              { "name": "Confirmed", "color": "info", "stamp": "ConfirmedOn", "notify": "Warehouse" },
+              { "name": "Picking", "color": "primary" },
+              { "name": "Shipped", "color": "success", "stamp": "ShippedOn", "notify": "Accounting" },
+              { "name": "Invoiced", "color": "secondary" },
+              { "name": "On hold", "color": "warning" },
+              { "name": "Cancelled", "color": "error" }
+            ]
+          }
+        },
+        {
+          "name": "SalesOrderLine",
+          "properties": [
+            { "name": "SalesOrder", "type": "reference", "reference": "SalesOrder", "required": true, "inverse": "Lines", "onDelete": "cascade", "label": "Order" },
+            { "name": "Product", "type": "reference", "reference": "MasterData.Product", "required": true },
+            { "name": "Quantity", "type": "int", "required": true, "default": "1" },
+            { "name": "UnitPrice", "type": "money", "required": true, "label": "Unit price" },
+            { "name": "DiscountPercent", "type": "decimal", "precision": 5, "scale": 2, "label": "Discount %" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Purchasing",
+      "entities": [
+        {
+          "name": "PurchaseOrder",
+          "properties": [
+            { "name": "Number", "required": true, "maxLength": 30, "unique": true, "display": true },
+            { "name": "Supplier", "type": "reference", "reference": "MasterData.Supplier", "required": true, "facet": true },
+            { "name": "OrderedOn", "type": "dateOnly", "label": "Order date" },
+            { "name": "ExpectedOn", "type": "dateOnly", "label": "Expected on" },
+            { "name": "Total", "type": "money" },
+            { "name": "Reason", "type": "text" },
+            { "name": "ApprovedOn", "type": "dateTime", "label": "Approved on" },
+            { "name": "ReceivedOn", "type": "dateTime", "label": "Received on" }
+          ],
+          "workflow": {
+            "initial": "Draft",
+            "transitions": [
+              { "name": "Submit", "from": ["Draft"], "to": "Awaiting approval" },
+              { "name": "Send to supplier", "from": ["Approved"], "to": "Ordered", "permission": "Order" },
+              { "name": "Receive part", "from": ["Ordered"], "to": "Partly received", "permission": "Receive" },
+              { "name": "Receive", "from": ["Ordered", "Partly received"], "to": "Received", "permission": "Receive" },
+              { "name": "Close", "from": ["Received"], "to": "Closed", "permission": "Order" },
+              { "name": "Revise", "from": ["Rejected"], "to": "Draft" },
+              { "name": "Cancel", "from": ["Draft", "Approved", "Ordered"], "to": "Cancelled", "comment": true }
+            ],
+            "states": [
+              {
+                "name": "Awaiting approval",
+                "color": "warning",
+                "approval": { "approved": "Approved", "rejected": "Rejected", "roles": ["Purchasing Manager"], "dueInDays": 2, "remindAfterDays": 1, "notByRequester": true }
+              },
+              { "name": "Approved", "color": "info", "stamp": "ApprovedOn", "notify": "Purchasing" },
+              { "name": "Rejected", "color": "error" },
+              { "name": "Ordered", "color": "primary" },
+              { "name": "Partly received", "color": "warning" },
+              { "name": "Received", "color": "success", "stamp": "ReceivedOn", "notify": "Accounting" },
+              { "name": "Closed", "color": "secondary" },
+              { "name": "Cancelled", "color": "secondary" }
+            ]
+          }
+        },
+        {
+          "name": "PurchaseOrderLine",
+          "properties": [
+            { "name": "PurchaseOrder", "type": "reference", "reference": "PurchaseOrder", "required": true, "inverse": "Lines", "onDelete": "cascade", "label": "Order" },
+            { "name": "Product", "type": "reference", "reference": "MasterData.Product", "required": true },
+            { "name": "Quantity", "type": "int", "required": true, "default": "1" },
+            { "name": "UnitCost", "type": "money", "required": true, "label": "Unit cost" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Finance",
+      "entities": [
+        {
+          "name": "Invoice",
+          "properties": [
+            { "name": "Number", "required": true, "maxLength": 30, "unique": true, "display": true },
+            { "name": "Customer", "type": "reference", "reference": "MasterData.Customer", "required": true, "facet": true },
+            { "name": "SalesOrder", "type": "reference", "reference": "Sales.SalesOrder", "onDelete": "setNull", "label": "Order" },
+            { "name": "IssuedOn", "type": "dateOnly", "label": "Issued on" },
+            { "name": "DueOn", "type": "dateOnly", "label": "Due on" },
+            { "name": "Amount", "type": "money", "required": true },
+            { "name": "SentOn", "type": "dateTime", "label": "Sent on" },
+            { "name": "PaidOn", "type": "dateTime", "label": "Paid on" }
+          ],
+          "workflow": {
+            "initial": "Draft",
+            "transitions": [
+              { "name": "Send", "from": ["Draft"], "to": "Open" },
+              { "name": "Send reminder", "from": ["Open"], "to": "Overdue" },
+              { "name": "Record payment", "from": ["Open", "Overdue"], "to": "Paid", "permission": "Book" },
+              { "name": "Write off", "from": ["Overdue"], "to": "Write-off review", "comment": true },
+              { "name": "Cancel", "from": ["Draft", "Open"], "to": "Cancelled", "comment": true }
+            ],
+            "states": [
+              { "name": "Open", "color": "info", "stamp": "SentOn" },
+              { "name": "Overdue", "color": "warning", "notify": "Sales" },
+              { "name": "Paid", "color": "success", "stamp": "PaidOn" },
+              {
+                "name": "Write-off review",
+                "color": "error",
+                "approval": { "approved": "Written off", "rejected": "Overdue", "roles": ["Finance Manager"], "dueInDays": 5 }
+              },
+              { "name": "Written off", "color": "error" },
+              { "name": "Cancelled", "color": "secondary" }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "roles": [
+    {
+      "name": "Sales",
+      "description": "Keeps customers and turns quotes into orders",
+      "permissions": ["MasterData.Customers.View", "MasterData.Customers.Create", "MasterData.Customers.Edit", "MasterData.Products.View",
+        "Sales.SalesOrders.View", "Sales.SalesOrders.Create", "Sales.SalesOrders.Edit", "Sales.SalesOrderLines.View", "Sales.SalesOrderLines.Create", "Sales.SalesOrderLines.Edit", "Sales.SalesOrderLines.Delete",
+        "Finance.Invoices.View", "Reports.View"]
+    },
+    {
+      "name": "Warehouse",
+      "description": "Picks and ships orders, receives goods",
+      "permissions": ["MasterData.Products.View", "MasterData.Products.Edit", "Sales.SalesOrders.View", "Sales.SalesOrders.Ship", "Sales.SalesOrderLines.View",
+        "Purchasing.PurchaseOrders.View", "Purchasing.PurchaseOrders.Receive", "Purchasing.PurchaseOrderLines.View"]
+    },
+    {
+      "name": "Purchasing",
+      "description": "Keeps suppliers and products, orders from suppliers",
+      "permissions": ["MasterData.Suppliers.View", "MasterData.Suppliers.Create", "MasterData.Suppliers.Edit", "MasterData.Products.View", "MasterData.Products.Create", "MasterData.Products.Edit",
+        "Purchasing.PurchaseOrders.View", "Purchasing.PurchaseOrders.Create", "Purchasing.PurchaseOrders.Edit", "Purchasing.PurchaseOrders.Order",
+        "Purchasing.PurchaseOrderLines.View", "Purchasing.PurchaseOrderLines.Create", "Purchasing.PurchaseOrderLines.Edit", "Purchasing.PurchaseOrderLines.Delete"]
+    },
+    {
+      "name": "Purchasing Manager",
+      "description": "Approves purchase orders within two days",
+      "permissions": ["MasterData.Suppliers.View", "MasterData.Products.View", "Purchasing.PurchaseOrders.View", "Purchasing.PurchaseOrders.Order", "Purchasing.PurchaseOrderLines.View",
+        "Reports.View", "Workflows.View"]
+    },
+    {
+      "name": "Accounting",
+      "description": "Invoices shipped orders and books payments",
+      "permissions": ["MasterData.Customers.View", "Sales.SalesOrders.View", "Sales.SalesOrders.Invoice", "Sales.SalesOrderLines.View", "Purchasing.PurchaseOrders.View",
+        "Finance.Invoices.View", "Finance.Invoices.Create", "Finance.Invoices.Edit", "Finance.Invoices.Book", "Reports.View"]
+    },
+    {
+      "name": "Finance Manager",
+      "description": "Decides on write-offs",
+      "permissions": ["MasterData.Customers.View", "Finance.Invoices.View", "Finance.Invoices.Book", "Reports.View", "Reports.Dashboard", "Workflows.View"]
+    }
+  ]
+}

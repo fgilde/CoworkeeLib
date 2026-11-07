@@ -4,6 +4,8 @@ namespace Coworkee.Studio.ViewModels;
 
 public sealed partial class WelcomeStep(MainViewModel main) : StepViewModel(main)
 {
+    private const int MaxRecent = 8;
+
     protected override string TitleText => "Welcome";
 
     protected override string SubtitleText => "Configure a Coworkee app, see what every choice brings, and let the CLI create it.";
@@ -13,13 +15,13 @@ public sealed partial class WelcomeStep(MainViewModel main) : StepViewModel(main
     public override string Icon => "Icon.Rocket";
 
     [ObservableProperty]
-    public partial IReadOnlyList<RecentSpec> Recent { get; set; } = [.. main.Settings.RecentSpecs.Where(File.Exists).Select(f => new RecentSpec(f))];
+    public partial IReadOnlyList<RecentItem> Recent { get; set; } = RecentItem.Of(main.Settings, MaxRecent);
 
     public bool HasRecent => Recent.Count > 0;
 
     public override void Refresh()
     {
-        Recent = [.. Main.Settings.RecentSpecs.Where(File.Exists).Select(f => new RecentSpec(f))];
+        Recent = RecentItem.Of(Main.Settings, MaxRecent);
         OnPropertyChanged(nameof(HasRecent));
     }
 }

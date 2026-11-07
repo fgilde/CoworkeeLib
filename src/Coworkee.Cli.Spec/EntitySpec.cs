@@ -19,6 +19,9 @@ public sealed class EntitySpec
 
     public List<PropertySpec> Properties { get; set; } = [];
 
+    [Description("States, transitions and approvals (Coworkee.Workflows); switches the workflows option on.")]
+    public WorkflowSpec? Workflow { get; set; }
+
     [Description("Where the diagram of Coworkee Studio shows the entity; no effect on the generated code.")]
     public LayoutSpec? Layout { get; set; }
 

@@ -144,6 +144,7 @@
                            TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" ToolTip.Tip="{Binding LastLog}" />
 
                 <WrapPanel ItemSpacing="18">
+                  <Button Classes="link" Content="{l:L 'Edit in the Studio'}" Command="{Binding EditCommand}" ToolTip.Tip="{l:L 'Add modules, entities and options in the wizard'}" />
                   <Button Classes="link" Content="{l:L 'Open folder'}" Command="{Binding OpenFolderCommand}" />
                   <Button Classes="link" Content="{l:L 'Open solution'}" Command="{Binding OpenSolutionCommand}" />
                   <Button Classes="link" Content="{l:L 'VS Code'}" Command="{Binding OpenInCodeCommand}" />

@@ -31,27 +31,46 @@
             { "name": "Reason", "type": "text", "required": true },
             { "name": "Amount", "type": "money" },
             { "name": "NeededBy", "type": "dateOnly", "label": "Needed by" },
-            { "name": "Status", "type": "enum", "enum": "ApprovalStatus", "required": true, "default": "Draft", "facet": true },
-            { "name": "DecidedOn", "type": "dateTime", "label": "Decided on" },
-            { "name": "Decision", "type": "text", "label": "Comment of the approver" }
-          ]
+            { "name": "SubmittedOn", "type": "dateTime", "label": "Submitted on" },
+            { "name": "DecidedOn", "type": "dateTime", "label": "Decided on" }
+          ],
+          "workflow": {
+            "initial": "Draft",
+            "transitions": [
+              { "name": "Submit", "from": ["Draft"], "to": "In review" },
+              { "name": "Withdraw", "from": ["In review"], "to": "Draft" },
+              { "name": "Reopen", "from": ["Rejected"], "to": "Draft", "comment": true }
+            ],
+            "states": [
+              {
+                "name": "In review",
+                "color": "warning",
+                "stamp": "SubmittedOn",
+                "approval": { "approved": "Approved", "rejected": "Rejected", "roles": ["Approver"], "dueInDays": 3, "remindAfterDays": 1, "notByRequester": true }
+              },
+              { "name": "Approved", "color": "success", "stamp": "DecidedOn", "notify": "Purchasing" },
+              { "name": "Rejected", "color": "error", "stamp": "DecidedOn" }
+            ]
+          }
         }
       ]
     }
-  ],
-  "enums": [
-    { "name": "ApprovalStatus", "values": ["Draft", "Submitted", "Approved", "Rejected", "Withdrawn"] }
   ],
   "roles": [
     {
       "name": "Requester",
       "description": "Files requests",
-      "permissions": ["Desk.Categories.View", "Desk.Requests.View", "Desk.Requests.Create", "Desk.Requests.Edit"]
+      "permissions": ["Desk.Categories.View", "Desk.Requests.View", "Desk.Requests.Create", "Desk.Requests.Edit", "Workflows.View"]
     },
     {
       "name": "Approver",
-      "description": "Decides on requests",
-      "permissions": ["Desk.Categories.View", "Desk.Categories.Edit", "Desk.Requests.View", "Desk.Requests.Edit"]
+      "description": "Decides on requests within three days",
+      "permissions": ["Desk.Categories.View", "Desk.Categories.Edit", "Desk.Requests.View", "Workflows.View"]
+    },
+    {
+      "name": "Purchasing",
+      "description": "Is told about approved requests and orders them",
+      "permissions": ["Desk.Categories.View", "Desk.Requests.View", "Workflows.View"]
     }
   ]
 }

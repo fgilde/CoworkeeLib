@@ -46,10 +46,34 @@
           "properties": [
             { "name": "Number", "required": true, "maxLength": 30, "unique": true, "display": true },
             { "name": "CustomerEmail", "type": "email", "required": true, "maxLength": 250, "label": "Customer" },
-            { "name": "Status", "type": "enum", "enum": "OrderStatus", "required": true, "default": "Open", "facet": true },
             { "name": "OrderedOn", "type": "dateOnly", "required": true, "label": "Order date" },
-            { "name": "Total", "type": "money" }
-          ]
+            { "name": "Total", "type": "money" },
+            { "name": "TrackingNumber", "maxLength": 60, "label": "Tracking number" },
+            { "name": "PaidOn", "type": "dateTime", "label": "Paid on" },
+            { "name": "ShippedOn", "type": "dateTime", "label": "Shipped on" }
+          ],
+          "workflow": {
+            "initial": "Open",
+            "transitions": [
+              { "name": "Mark paid", "from": ["Open"], "to": "Paid" },
+              { "name": "Ship", "from": ["Paid"], "to": "Shipped", "permission": "Ship" },
+              { "name": "Mark delivered", "from": ["Shipped"], "to": "Delivered", "permission": "Ship" },
+              { "name": "Cancel", "from": ["Open", "Paid"], "to": "Cancelled", "comment": true },
+              { "name": "Request refund", "from": ["Delivered"], "to": "Refund requested", "comment": true }
+            ],
+            "states": [
+              { "name": "Paid", "color": "info", "stamp": "PaidOn", "notify": "Shop Staff" },
+              { "name": "Shipped", "color": "primary", "stamp": "ShippedOn" },
+              { "name": "Delivered", "color": "success" },
+              { "name": "Cancelled", "color": "secondary" },
+              {
+                "name": "Refund requested",
+                "color": "warning",
+                "approval": { "approved": "Refunded", "rejected": "Delivered", "roles": ["Shop Manager"], "dueInDays": 2 }
+              },
+              { "name": "Refunded", "color": "error" }
+            ]
+          }
         },
         {
           "name": "OrderLine",
@@ -63,14 +87,17 @@
       ]
     }
   ],
-  "enums": [
-    { "name": "OrderStatus", "values": ["Open", "Paid", "Shipped", "Cancelled"] }
-  ],
   "roles": [
     {
       "name": "Shop Staff",
-      "description": "Packs and ships orders",
-      "permissions": ["Inventory.Products.View", "Sales.Orders.View", "Sales.Orders.Edit", "Sales.OrderLines.View"]
+      "description": "Packs and ships paid orders",
+      "permissions": ["Inventory.Products.View", "Sales.Orders.View", "Sales.Orders.Ship", "Sales.OrderLines.View"]
+    },
+    {
+      "name": "Shop Manager",
+      "description": "Runs the shop and decides on refunds",
+      "permissions": ["Inventory.Brands.View", "Inventory.Brands.Create", "Inventory.Brands.Edit", "Inventory.Products.View", "Inventory.Products.Create", "Inventory.Products.Edit",
+        "Sales.Orders.View", "Sales.Orders.Create", "Sales.Orders.Edit", "Sales.Orders.Ship", "Sales.OrderLines.View", "Sales.OrderLines.Create", "Sales.OrderLines.Edit", "Reports.View", "Workflows.View"]
     }
   ]
 }

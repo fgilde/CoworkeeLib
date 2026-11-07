@@ -2,6 +2,22 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- App specs: an entity takes a `workflow` (states, transitions with their permission, approvals with deadline and reminder, notifications, time stamps, a mirrored state). The CLI writes the declaration for Coworkee.Workflows, registers it and adds the state column to the list, in new apps and with `coworkee add --spec` or `coworkee entity add` ([workflows in a spec](../getting-started/cli.md#workflows)); Coworkee Studio edits it on the *Entities* page.
+- Starter specs: ERP (order to cash, purchase to pay, invoices), HR self-service (leave and expenses), repair shop and recruiting. The six others got their processes: deals with a discount approval, tickets with escalation, orders through shipping with a refund approval, events on sale and reservations with waitlist and check-in, a rights check for assets, requests with a reminder ([starter specs](../getting-started/gallery.md)).
+- Coworkee Studio: *Recent* on the start page lists apps next to specs; an app opens in the wizard to extend it, and *My apps* has **Edit in the Studio**.
+
+### Changed
+
+- App specs: entity names that are namespaces of the app (`Application`, `Contracts`, `Infrastructure`, `Domain`, `Features`, `Persistence`, `Permissions`, `Endpoints`) are refused; the namespace hid the type and the app did not build.
+
+### Fixed
+
+- Template: a new app referenced the Microsoft packages in 10.0.13, which has a known vulnerability (NU1903) and is older than the Coworkee packages need (NU1605), so its restore failed; they are 10.0.14 now.
+
 ## 0.0.1.67 (2026-11-07)
 
 ### Changed

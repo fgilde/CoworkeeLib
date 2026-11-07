@@ -22,11 +22,33 @@
             { "name": "Subject", "required": true, "maxLength": 250, "display": true },
             { "name": "Description", "type": "text" },
             { "name": "RequesterEmail", "type": "email", "required": true, "maxLength": 250, "label": "Requester" },
-            { "name": "Status", "type": "enum", "enum": "TicketStatus", "required": true, "default": "New", "facet": true },
             { "name": "Priority", "type": "enum", "enum": "TicketPriority", "required": true, "default": "Normal", "facet": true },
             { "name": "RespondBy", "type": "dateTime", "label": "First response due" },
-            { "name": "ResolveBy", "type": "dateTime", "label": "Resolution due" }
-          ]
+            { "name": "ResolveBy", "type": "dateTime", "label": "Resolution due" },
+            { "name": "Status", "maxLength": 50, "facet": true },
+            { "name": "ResolvedOn", "type": "dateTime", "label": "Resolved on" }
+          ],
+          "workflow": {
+            "initial": "New",
+            "mirrorTo": "Status",
+            "transitions": [
+              { "name": "Take", "from": ["New"], "to": "Open" },
+              { "name": "Wait for customer", "from": ["Open"], "to": "Waiting" },
+              { "name": "Customer replied", "from": ["Waiting"], "to": "Open" },
+              { "name": "Escalate", "from": ["New", "Open", "Waiting"], "to": "Escalated", "comment": true },
+              { "name": "Take over", "from": ["Escalated"], "to": "Open", "permission": "Escalations" },
+              { "name": "Resolve", "from": ["Open", "Waiting", "Escalated"], "to": "Resolved" },
+              { "name": "Close", "from": ["Resolved"], "to": "Closed" },
+              { "name": "Reopen", "from": ["Resolved", "Closed"], "to": "Open", "comment": true }
+            ],
+            "states": [
+              { "name": "New", "color": "info", "notify": "Agent" },
+              { "name": "Waiting", "color": "secondary" },
+              { "name": "Escalated", "color": "error", "notify": "Team Lead" },
+              { "name": "Resolved", "color": "success", "stamp": "ResolvedOn" },
+              { "name": "Closed", "color": "secondary" }
+            ]
+          }
         },
         {
           "name": "TicketComment",
@@ -40,7 +62,6 @@
     }
   ],
   "enums": [
-    { "name": "TicketStatus", "values": ["New", "Open", "Waiting", "Resolved", "Closed"] },
     { "name": "TicketPriority", "values": ["Normal", "Low", "High", "Urgent"] }
   ],
   "roles": [
@@ -48,6 +69,11 @@
       "name": "Agent",
       "description": "Answers tickets",
       "permissions": ["Support.Tickets.View", "Support.Tickets.Create", "Support.Tickets.Edit", "Support.TicketComments.View", "Support.TicketComments.Create", "Chat.Use"]
+    },
+    {
+      "name": "Team Lead",
+      "description": "Takes over escalated tickets",
+      "permissions": ["Support.Tickets.View", "Support.Tickets.Edit", "Support.Tickets.Escalations", "Support.TicketComments.View", "Support.TicketComments.Create", "Chat.Use"]
     }
   ]
 }

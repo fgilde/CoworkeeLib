@@ -31,6 +31,34 @@ public sealed class MyAppsTests
     }
 
     [Fact]
+    public void Apps_are_on_the_start_page_and_open_in_the_wizard_from_there_and_from_my_apps()
+    {
+        using var folder = new TempFolder();
+        var crm = App(folder, "Crm");
+        var shop = App(folder, "Shop");
+        var main = Studio.Create(folder);
+        main.Apps.Remember(crm, new AppSpec { Name = "Crm" });
+        main.Apps.Remember(shop, new AppSpec { Name = "Shop" });
+        main.Welcome.Refresh();
+
+        var recent = main.Welcome.Recent.Where(r => r.IsApp).ToList();
+        recent.Select(r => r.Name).ShouldBe(["Shop", "Crm"], ignoreOrder: true);
+        main.OpenRecentCommand.Execute(recent.Single(r => r.Name == "Crm"));
+
+        main.ExistingApp.ShouldBe(crm);
+        main.Current.ShouldBe(main.Review);
+        main.Welcome.Recent.First().Name.ShouldBe("Crm");
+        main.Settings.Apps.First().Opened.ShouldNotBeNull();
+
+        main.ShowApps();
+        main.Apps.Apps.Single(a => a.Name == "Shop").EditCommand.Execute(null);
+
+        main.HasPage.ShouldBeFalse();
+        main.ExistingApp.ShouldBe(shop);
+        StudioSettings.Load(folder.File("settings.json")).Apps.Select(a => a.Name).ShouldBe(["Shop", "Crm"]);
+    }
+
+    [Fact]
     public void Folders_are_searched_for_app_json_and_app_hosts()
     {
         using var folder = new TempFolder();

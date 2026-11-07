@@ -17,9 +17,9 @@ public sealed class GalleryTests
         gallery.Tags.ShouldContain("sales");
 
         gallery.Tag = "sales";
-        gallery.Items.Select(i => i.Entry.Id).ShouldBe(["crm", "shop"]);
+        gallery.Items.Select(i => i.Entry.Id).ShouldBe(["erp", "crm", "shop"]);
 
-        gallery.Search = "orders";
+        gallery.Search = "refund";
         gallery.Items.Select(i => i.Entry.Id).ShouldBe(["shop"]);
 
         gallery.Search = "nothing like this";
@@ -42,6 +42,24 @@ public sealed class GalleryTests
         main.Errors.ShouldBeEmpty();
         main.Review.IsReachable.ShouldBeTrue();
         main.ToSpec().Modules.ShouldHaveSingleItem().Entities.Select(e => e.Name).ShouldBe(["Ticket", "TicketComment"]);
+    }
+
+    [Fact]
+    public void Every_template_keeps_its_workflows_through_the_wizard()
+    {
+        using var folder = new TempFolder();
+        var main = Studio.Create(folder);
+
+        foreach (var item in main.Gallery.Items)
+        {
+            main.Gallery.Pick(item);
+
+            main.Errors.ShouldBeEmpty(item.Entry.Id);
+            var expected = SpecGallery.Read(item.Entry.Id).Modules.SelectMany(m => m.Entities).Select(e => Json(e.Workflow));
+            main.ToSpec().Modules.SelectMany(m => m.Entities).Select(e => Json(e.Workflow)).ShouldBe(expected, item.Entry.Id);
+        }
+
+        static string Json(WorkflowSpec? workflow) => System.Text.Json.JsonSerializer.Serialize(workflow, SpecJson.Options);
     }
 
     [Fact]

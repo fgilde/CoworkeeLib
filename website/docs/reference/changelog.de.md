@@ -2,6 +2,22 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Neu
+
+- App-Spezifikationen: Eine Entity nimmt einen `workflow` (Zustände, Übergänge mit ihrer Berechtigung, Genehmigungen mit Frist und Erinnerung, Benachrichtigungen, Zeitstempel, ein gespiegelter Zustand). Die CLI schreibt die Deklaration für Coworkee.Workflows, registriert sie und setzt die Statusspalte in die Liste, in neuen Apps und mit `coworkee add --spec` oder `coworkee entity add` ([Workflows in einer Spezifikation](../getting-started/cli.md#workflows)); Coworkee Studio bearbeitet ihn auf der Seite *Entities*.
+- Startvorlagen: ERP (Auftrag bis Zahlung, Einkauf bis Wareneingang, Rechnungen), HR-Selfservice (Urlaub und Spesen), Reparaturwerkstatt und Recruiting. Die sechs anderen haben ihre Abläufe bekommen: Deals mit Rabattfreigabe, Tickets mit Eskalation, Bestellungen bis zum Versand mit Erstattungsfreigabe, Events im Verkauf und Reservierungen mit Warteliste und Check-in, eine Rechteprüfung für Assets, Anträge mit Erinnerung ([Startvorlagen](../getting-started/gallery.md)).
+- Coworkee Studio: *Zuletzt geöffnet* auf der Startseite listet Apps neben Spezifikationen; eine App öffnet sich im Assistenten zum Erweitern, und *Meine Apps* hat **Im Studio bearbeiten**.
+
+### Geändert
+
+- App-Spezifikationen: Namen von Entities, die Namespaces der App sind (`Application`, `Contracts`, `Infrastructure`, `Domain`, `Features`, `Persistence`, `Permissions`, `Endpoints`), werden abgelehnt; der Namespace verdeckte den Typ, und die App baute nicht.
+
+### Behoben
+
+- Vorlage: Eine neue App referenzierte die Microsoft-Pakete in 10.0.13, die eine bekannte Sicherheitslücke hat (NU1903) und älter ist, als die Coworkee-Pakete brauchen (NU1605); ihr Restore schlug deshalb fehl. Sie stehen jetzt auf 10.0.14.
+
 ## 0.0.1.67 (2026-11-07)
 
 ### Geändert

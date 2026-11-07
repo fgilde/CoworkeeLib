@@ -104,7 +104,26 @@ public sealed class RichTemplateTests(TemplateFixture template)
                 new PropertySpec { Name = "Supplier", Type = PropertyType.Reference, Reference = "Crm.Supplier", OnDelete = DeleteBehavior.SetNull, Facet = true },
                 new PropertySpec { Name = "Status", Type = PropertyType.Enum, Enum = "OrderStatus" },
                 new PropertySpec { Name = "Fee", Type = PropertyType.Money, Precision = 12, Scale = 3 },
+                new PropertySpec { Name = "ShippedOn", Type = PropertyType.DateTime },
             ],
+            Workflow = new WorkflowSpec
+            {
+                Initial = "Planned",
+                Transitions =
+                [
+                    new WorkflowTransitionSpec { Name = "Ship", From = ["Planned"], To = "Shipped", Permission = "Ship" },
+                    new WorkflowTransitionSpec { Name = "Request refund", From = ["Shipped"], To = "Refund requested", Comment = true },
+                ],
+                States =
+                [
+                    new WorkflowStateSpec { Name = "Shipped", Color = "success", Stamp = "ShippedOn", Notify = "admin" },
+                    new WorkflowStateSpec
+                    {
+                        Name = "Refund requested",
+                        Approval = new ApprovalSpec { Approved = "Refunded", Rejected = "Shipped", Roles = ["admin"], DueInDays = 2, RemindAfterDays = 1 },
+                    },
+                ],
+            },
         });
         using var assets = new TempFolder();
         SpecValidator.Validate(spec, assets.Path).ShouldBeEmpty();
@@ -119,12 +138,15 @@ public sealed class RichTemplateTests(TemplateFixture template)
         {
             Name = "Invoice",
             Properties = [FeatureOptions.Property("Number:string:required:30:unique"), FeatureOptions.Property("Supplier:ref=Crm.Supplier:required"), FeatureOptions.Property("Kind:enum=InvoiceKind:default=Final:facet")],
+            Workflow = new WorkflowSpec { Initial = "Open", Transitions = [new WorkflowTransitionSpec { Name = "Pay", From = ["Open"], To = "Paid" }] },
         };
         (await EntityCommand.AddAsync(solution, "Sales", invoice, Ct, [FeatureOptions.EnumSpec("InvoiceKind=Draft,Final")])).ShouldBe(0);
         await Dotnet.RunAsync(app, [.. MigrationsCommand.AddArgs(solution, "AddInvoice")[1..]]);
 
         Read(app, "src/Shop.Infrastructure/ShopInfrastructureModule.cs").ShouldContain("localization.Languages = [\"en\", \"de\", \"fr\"];");
         Read(app, "src/Shop.Sales/Shop.Sales.csproj").ShouldContain("Shop.Crm.csproj");
+        Read(app, "src/Shop.Sales/Shop.Sales.csproj").ShouldContain("Coworkee.Workflows");
+        Read(app, "src/Shop.Sales/ShopSalesModule.cs").ShouldContain("Features.Invoices.InvoiceWorkflow.AddInvoiceWorkflow(context.Services);");
         var appHost = Read(app, "src/Shop.AppHost/AppHost.cs");
         appHost.ShouldContain("options.UseSqlServer();");
         appHost.ShouldContain("options.WithoutRedis();");

@@ -1,0 +1,123 @@
+{
+  "name": "Recruiting",
+  "options": {
+    "samples": false,
+    "files": true,
+    "social": true,
+    "chat": false
+  },
+  "branding": {
+    "title": "Talent",
+    "theme": "Aubergine",
+    "signInLayout": "Split"
+  },
+  "modules": [
+    {
+      "name": "Hiring",
+      "entities": [
+        {
+          "name": "Position",
+          "properties": [
+            { "name": "Title", "required": true, "maxLength": 200, "display": true },
+            { "name": "Department", "maxLength": 120, "facet": true },
+            { "name": "Location", "maxLength": 120, "facet": true },
+            { "name": "Openings", "type": "int", "required": true, "default": "1" },
+            { "name": "SalaryBudget", "type": "money", "label": "Salary budget" },
+            { "name": "Description", "type": "text" },
+            { "name": "OpenedOn", "type": "dateTime", "label": "Opened on" }
+          ],
+          "workflow": {
+            "initial": "Draft",
+            "transitions": [
+              { "name": "Request approval", "from": ["Draft"], "to": "Budget approval" },
+              { "name": "Put on hold", "from": ["Open"], "to": "On hold", "comment": true },
+              { "name": "Resume", "from": ["On hold"], "to": "Open" },
+              { "name": "Mark filled", "from": ["Open"], "to": "Filled" },
+              { "name": "Close", "from": ["Draft", "Open", "On hold"], "to": "Closed", "comment": true }
+            ],
+            "states": [
+              {
+                "name": "Budget approval",
+                "color": "warning",
+                "approval": { "approved": "Open", "rejected": "Draft", "roles": ["HR Director"], "dueInDays": 5, "remindAfterDays": 2 }
+              },
+              { "name": "Open", "color": "success", "stamp": "OpenedOn", "notify": "Recruiter" },
+              { "name": "On hold", "color": "warning" },
+              { "name": "Filled", "color": "info" },
+              { "name": "Closed", "color": "secondary" }
+            ]
+          }
+        },
+        {
+          "name": "Candidate",
+          "properties": [
+            { "name": "FullName", "required": true, "maxLength": 200, "display": true, "label": "Name" },
+            { "name": "Email", "type": "email", "required": true, "maxLength": 250, "unique": true },
+            { "name": "Phone", "maxLength": 50 },
+            { "name": "Profile", "type": "url", "maxLength": 500, "label": "Profile link" },
+            { "name": "Source", "type": "enum", "enum": "CandidateSource", "required": true, "default": "Website", "facet": true }
+          ]
+        },
+        {
+          "name": "JobApplication",
+          "properties": [
+            { "name": "Candidate", "type": "reference", "reference": "Candidate", "required": true, "inverse": "JobApplications", "onDelete": "cascade", "facet": true },
+            { "name": "Position", "type": "reference", "reference": "Position", "required": true, "inverse": "JobApplications", "facet": true },
+            { "name": "AppliedOn", "type": "dateOnly", "required": true, "label": "Applied on" },
+            { "name": "Rating", "type": "int", "facet": true },
+            { "name": "OfferedSalary", "type": "money", "label": "Offered salary" },
+            { "name": "Notes", "type": "text" },
+            { "name": "HiredOn", "type": "dateTime", "label": "Hired on" }
+          ],
+          "workflow": {
+            "initial": "Applied",
+            "transitions": [
+              { "name": "Screen", "from": ["Applied"], "to": "Screening" },
+              { "name": "Invite to interview", "from": ["Screening"], "to": "Interview" },
+              { "name": "Prepare offer", "from": ["Interview"], "to": "Offer review" },
+              { "name": "Offer accepted", "from": ["Offer sent"], "to": "Hired" },
+              { "name": "Offer declined", "from": ["Offer sent"], "to": "Declined", "comment": true },
+              { "name": "Reject", "from": ["Applied", "Screening", "Interview"], "to": "Rejected", "comment": true },
+              { "name": "Withdraw", "from": ["Applied", "Screening", "Interview", "Offer sent"], "to": "Withdrawn" }
+            ],
+            "states": [
+              { "name": "Screening", "color": "info" },
+              { "name": "Interview", "color": "primary" },
+              {
+                "name": "Offer review",
+                "color": "warning",
+                "approval": { "approved": "Offer sent", "rejected": "Interview", "roles": ["Hiring Manager"], "dueInDays": 2, "remindAfterDays": 1 }
+              },
+              { "name": "Offer sent", "color": "primary" },
+              { "name": "Hired", "color": "success", "stamp": "HiredOn", "notify": "HR Director" },
+              { "name": "Declined", "color": "secondary" },
+              { "name": "Rejected", "color": "error" },
+              { "name": "Withdrawn", "color": "secondary" }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "enums": [
+    { "name": "CandidateSource", "values": ["Website", "Referral", "JobBoard", "Agency", "Event", "Other"] }
+  ],
+  "roles": [
+    {
+      "name": "Recruiter",
+      "description": "Keeps candidates and moves applications along",
+      "permissions": ["Hiring.Positions.View", "Hiring.Candidates.View", "Hiring.Candidates.Create", "Hiring.Candidates.Edit",
+        "Hiring.JobApplications.View", "Hiring.JobApplications.Create", "Hiring.JobApplications.Edit"]
+    },
+    {
+      "name": "Hiring Manager",
+      "description": "Opens positions, interviews and approves offers",
+      "permissions": ["Hiring.Positions.View", "Hiring.Positions.Create", "Hiring.Positions.Edit", "Hiring.Candidates.View", "Hiring.JobApplications.View", "Hiring.JobApplications.Edit", "Workflows.View"]
+    },
+    {
+      "name": "HR Director",
+      "description": "Approves the budget of new positions",
+      "permissions": ["Hiring.Positions.View", "Hiring.JobApplications.View", "Hiring.Candidates.View", "Workflows.View"]
+    }
+  ]
+}

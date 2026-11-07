@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Coworkee.Studio.ViewModels"
              xmlns:l="using:Coworkee.Studio.Localization"
+             xmlns:v="using:Coworkee.Studio.Views"
              x:Class="Coworkee.Studio.Views.WelcomeView"
              x:DataType="vm:WelcomeStep">
   <ScrollViewer>
@@ -70,7 +71,7 @@
       </UniformGrid>
 
       <StackPanel Spacing="10" IsVisible="{Binding HasRecent}">
-        <TextBlock Classes="overline" Text="{l:L 'RECENT SPECS'}" />
+        <TextBlock Classes="overline" Text="{l:L 'RECENT'}" />
         <ItemsControl ItemsSource="{Binding Recent}">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
@@ -78,12 +79,12 @@
             </ItemsPanelTemplate>
           </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
-            <DataTemplate x:DataType="vm:RecentSpec">
+            <DataTemplate x:DataType="vm:RecentItem">
               <Button Width="270" HorizontalContentAlignment="Stretch" Padding="14,10"
-                      Command="{Binding $parent[ItemsControl].((vm:WelcomeStep)DataContext).Main.OpenCommand}" CommandParameter="{Binding Path}"
+                      Command="{Binding $parent[ItemsControl].((vm:WelcomeStep)DataContext).Main.OpenRecentCommand}" CommandParameter="{Binding}"
                       ToolTip.Tip="{Binding Path}">
                 <Grid ColumnDefinitions="Auto,*">
-                  <PathIcon Data="{StaticResource Icon.File}" Foreground="{DynamicResource Primary}" VerticalAlignment="Top" Margin="0,2,0,0" />
+                  <PathIcon Data="{Binding Icon, Converter={x:Static v:Converters.Icon}}" Foreground="{DynamicResource Primary}" VerticalAlignment="Top" Margin="0,2,0,0" />
                   <StackPanel Grid.Column="1" Margin="10,0,0,0">
                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                     <TextBlock Classes="caption" Text="{Binding Folder}" TextTrimming="PathSegmentEllipsis" TextWrapping="NoWrap" />

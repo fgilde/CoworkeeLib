@@ -121,7 +121,7 @@ coworkee spec show shop.json         # was die Spezifikation erzeugt: Bibliothek
 coworkee new --spec shop.json
 ```
 
-Mit der CLI kommen sechs Startvorlagen (CRM, Helpdesk, Asset-Portal, kleiner Shop, Events, Anträge mit Freigabe): `coworkee specs list` zählt sie auf, `coworkee new Sales --template-spec crm` legt eine an, `coworkee specs show crm > crm.json` gibt sie aus, damit du sie vorher anpassen kannst. Auf der Seite [Startvorlagen](gallery.md) gibt es sie zum Herunterladen, dazu einen kleinen Assistenten, der eine Spezifikation im Browser schreibt.
+Mit der CLI kommen zehn Startvorlagen (ERP, HR-Selfservice, Reparaturwerkstatt, Recruiting, CRM, Helpdesk, Asset-Portal, kleiner Shop, Events, Anträge mit Freigabe), jede mit ihren Abläufen als [Workflows](#workflows): `coworkee specs list` zählt sie auf, `coworkee new Sales --template-spec crm` legt eine an, `coworkee specs show crm > crm.json` gibt sie aus, damit du sie vorher anpassen kannst. Auf der Seite [Startvorlagen](gallery.md) gibt es sie zum Herunterladen, dazu einen kleinen Assistenten, der eine Spezifikation im Browser schreibt.
 
 ```json title="shop.json"
 {
@@ -177,6 +177,41 @@ Mit der CLI kommen sechs Startvorlagen (CRM, Helpdesk, Asset-Portal, kleiner Sho
 - `reference` verweist auf eine andere Entity über ihren Namen (`Customer`) oder mit Modul (`Crm.Customer`): die Eigenschaft ist die Navigation, `<Name>Id` der Fremdschlüssel. `referenceDisplay` ist die Texteigenschaft des Ziels, die Liste und Auswahl zeigen (Standard: seine Anzeige-Eigenschaft), `onDelete` ist `restrict` (Standard), `cascade` oder `setNull` (nur für optionale Referenzen), `inverse` gibt dem Ziel eine Sammlung (nur im selben Modul). Ein Modul darf andere Module referenzieren, solange keines zurückverweist.
 - `default` setzt den Anfangswert von Zahlen, Bools, Enums und Texten; `unique` legt einen eindeutigen Index je Mandant und eine Prüfung im Command an; `label` ist die Beschriftung von Spalte und Feld; `display` markiert den Text, der eine Zeile benennt; `searchable` (Standard: true für Texte) nimmt sie ins Suchfeld; `facet` bietet sie als Facette neben der Liste an (Bools, Enums, Referenzen, ganze Zahlen, Strings).
 - `plural` benennt Tabelle, OData-Set, Route und Seite (Standard: ein englischer Plural des Namens). `mapping` übersteuert die Option `mapping`.
+- Namen von Entities dürfen keine Namespaces der App sein (`Application`, `Contracts`, `Infrastructure`, `Domain`, `Features`, `Persistence`, `Permissions`, `Endpoints`): In der App würde der Namespace den Typ verdecken.
+
+### Workflows
+
+```json
+{
+  "name": "Request",
+  "properties": [
+    { "name": "Title", "required": true, "maxLength": 200, "display": true },
+    { "name": "DecidedOn", "type": "dateTime" }
+  ],
+  "workflow": {
+    "initial": "Draft",
+    "transitions": [
+      { "name": "Submit", "from": ["Draft"], "to": "In review" },
+      { "name": "Reopen", "from": ["Rejected"], "to": "Draft", "permission": "Reopen", "comment": true }
+    ],
+    "states": [
+      {
+        "name": "In review",
+        "color": "warning",
+        "approval": { "approved": "Approved", "rejected": "Rejected", "roles": ["Approver"], "dueInDays": 3, "remindAfterDays": 1, "notByRequester": true }
+      },
+      { "name": "Approved", "color": "success", "stamp": "DecidedOn", "notify": "Purchasing" },
+      { "name": "Rejected", "color": "error", "stamp": "DecidedOn" }
+    ]
+  }
+}
+```
+
+- `workflow` gibt einer Entity die Zustände, Übergänge und Genehmigungen von [Workflows und Genehmigungen](../modules/workflows.md) und schaltet die Option `workflows` ein. Die CLI schreibt `Features/<Plural>/<Name>Workflow.cs` mit der Deklaration (`AddCoworkeeWorkflows`), registriert sie im Modul und setzt eine Spalte *Status* mit dem Zustand und seinen Aktionen in die Liste; offene Genehmigungen warten auf der Seite *Genehmigungen* (`/workflows/approvals`). Bedingungen (`When`), Aktionen (`Then`, `OnEnter`) und alles, was die Spezifikation nicht abdeckt, kommen danach in diese Datei.
+- `initial` ist der Zustand einer neuen Zeile. Ein Übergang hat einen `name` (die Aktion, die man anklickt), die Zustände, aus denen er startet (`from`), und den Zustand, zu dem er führt (`to`). `permission` ist eine Berechtigung der Entity, ohne Angabe `Edit`, oder eine eigene wie `Ship`, die als `<Modul>.<Plural>.Ship` für Rollen entsteht. `comment` fragt nach einer Begründung.
+- `states` führen nur Zustände auf, die etwas tun: `color` des Chips (`primary`, `secondary`, `info`, `success`, `warning`, `error`), `stamp` eine optionale `dateTime`-Eigenschaft, die beim Eintritt gesetzt wird, `notify` eine Rolle, deren Mitglieder dann benachrichtigt werden, und `approval`: Die Mitglieder von `roles` (Rollen der Spezifikation oder `admin`) entscheiden, einer reicht, mit optionaler Frist (`dueInDays`), einer Erinnerung (`remindAfterDays`) und `notByRequester`; danach geht der Workflow zu `approved` oder `rejected` weiter.
+- `mirrorTo` nennt eine optionale Text-Eigenschaft, die den Namen des Zustands zusätzlich bekommt, für Berichte und für Client-Entities, deren Statusspalte darauf filtert, sortiert und gruppiert. Die gespiegelte Eigenschaft und die Zeitstempel setzt der Workflow, deshalb stehen sie nicht im Formular.
+- Namen von Zuständen und Übergängen laufen durch den Localizer; nimm sie für andere Sprachen in die Texte der App auf.
 
 ### Benutzer und Rollen
 
@@ -188,7 +223,7 @@ Mit der CLI kommen sechs Startvorlagen (CRM, Helpdesk, Asset-Portal, kleiner Sho
 ]
 ```
 
-- `roles` werden neben den eigenen Rollen der Vorlage angelegt (mit Beispielen *Product Manager* und *Brand Manager*, ohne *User*). Die Berechtigungen müssen zur App gehören: die der gewählten Module (`Identity.Users.View`, `Chat.Use`, `Reports.View`, ...), der Beispiele und `<Modul>.<Plural>.View|Create|Edit|Delete` der Entities der Spezifikation; die Prüfung zählt sie auf.
+- `roles` werden neben den eigenen Rollen der Vorlage angelegt (mit Beispielen *Product Manager* und *Brand Manager*, ohne *User*). Die Berechtigungen müssen zur App gehören: die der gewählten Module (`Identity.Users.View`, `Chat.Use`, `Reports.View`, ...), der Beispiele, `<Modul>.<Plural>.View|Create|Edit|Delete` der Entities der Spezifikation und die eigenen Berechtigungen ihrer Workflow-Übergänge (`<Modul>.<Plural>.Ship`); die Prüfung zählt sie auf.
 - `users` brauchen eine E-Mail; `displayName` ist ohne Angabe der Teil vor `@`, `roles` nennt Rollen der Spezifikation oder der Vorlage, `admin` gibt alle Berechtigungen. Ohne `password` wird eines erzeugt; ein angegebenes braucht 8 Zeichen mit Groß- und Kleinbuchstaben, einer Ziffer und einem Sonderzeichen.
 
 `coworkee spec validate` und `coworkee new` melden jedes Problem mit seinem Pfad, zum Beispiel `modules[0].entities[1].properties[0].name: 'Id' is taken by the entity itself.`

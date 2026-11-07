@@ -4,7 +4,7 @@ description: Startvorlagen für coworkee new, ein CRM, ein Helpdesk, ein Shop un
 
 # Startvorlagen
 
-Eine leere App passt, wenn du schon weißt, was hinein soll. Oft geht es schneller, mit etwas Ähnlichem anzufangen und zu löschen, was du nicht brauchst. Die Specs hier sind absichtlich klein: ein oder zwei Module, eine Handvoll Entities, ein, zwei Enums, manchmal eine Rolle. Die Optionen sind die, die ich für so eine App wählen würde. Ändere sie, bevor du die App anlegst, festgelegt ist hier nichts.
+Eine leere App passt, wenn du schon weißt, was hinein soll. Oft geht es schneller, mit etwas Ähnlichem anzufangen und zu löschen, was du nicht brauchst. Die meisten Specs hier sind absichtlich klein: ein oder zwei Module, eine Handvoll Entities, ein, zwei Enums; das ERP hat vier Module. Jede bringt einen echten Ablauf als [Workflows](cli.md#workflows) mit: die Zustände, die ein Datensatz durchläuft, die Aktionen der Leute mit ihren Berechtigungen, Genehmigungen mit Frist, Benachrichtigungen und die passenden Rollen. Die Optionen sind die, die ich für so eine App wählen würde. Ändere sie, bevor du die App anlegst, festgelegt ist hier nichts.
 
 <div class="cw-starters" id="cw-starters">
   <div class="cw-starters__bar">

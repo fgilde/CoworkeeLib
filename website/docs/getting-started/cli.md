@@ -121,7 +121,7 @@ coworkee spec show shop.json         # what the spec creates: library modules on
 coworkee new --spec shop.json
 ```
 
-Six starter specs come with the CLI (CRM, helpdesk, asset portal, small shop, events, approval requests): `coworkee specs list` names them, `coworkee new Sales --template-spec crm` creates one, `coworkee specs show crm > crm.json` prints it to change first. The [starter specs page](gallery.md) has them as downloads and a small wizard that writes a spec in the browser.
+Ten starter specs come with the CLI (ERP, HR self-service, repair shop, recruiting, CRM, helpdesk, asset portal, small shop, events, approval requests), each with its processes as [workflows](#workflows): `coworkee specs list` names them, `coworkee new Sales --template-spec crm` creates one, `coworkee specs show crm > crm.json` prints it to change first. The [starter specs page](gallery.md) has them as downloads and a small wizard that writes a spec in the browser.
 
 ```json title="shop.json"
 {
@@ -177,6 +177,41 @@ Six starter specs come with the CLI (CRM, helpdesk, asset portal, small shop, ev
 - `reference` points to another entity by name (`Customer`) or with its module (`Crm.Customer`): the property is the navigation, `<Name>Id` the foreign key. `referenceDisplay` is the text property of the target shown in the list and the picker (default: its display property), `onDelete` is `restrict` (default), `cascade` or `setNull` (optional references only), `inverse` gives the target a collection (same module only). A module may reference other modules as long as none references it back.
 - `default` sets the initial value of numbers, bools, enums and texts; `unique` adds a unique index per tenant and a check in the command; `label` is the column and field caption; `display` marks the text that names a row; `searchable` (default: true for texts) puts it in the search box; `facet` offers it as facet next to the list (bools, enums, references, whole numbers, strings).
 - `plural` names table, OData set, route and page (default: an English plural of the name). `mapping` overrides the `mapping` option.
+- Entity names must not be namespaces of the app (`Application`, `Contracts`, `Infrastructure`, `Domain`, `Features`, `Persistence`, `Permissions`, `Endpoints`): inside the app the namespace would hide the type.
+
+### Workflows
+
+```json
+{
+  "name": "Request",
+  "properties": [
+    { "name": "Title", "required": true, "maxLength": 200, "display": true },
+    { "name": "DecidedOn", "type": "dateTime" }
+  ],
+  "workflow": {
+    "initial": "Draft",
+    "transitions": [
+      { "name": "Submit", "from": ["Draft"], "to": "In review" },
+      { "name": "Reopen", "from": ["Rejected"], "to": "Draft", "permission": "Reopen", "comment": true }
+    ],
+    "states": [
+      {
+        "name": "In review",
+        "color": "warning",
+        "approval": { "approved": "Approved", "rejected": "Rejected", "roles": ["Approver"], "dueInDays": 3, "remindAfterDays": 1, "notByRequester": true }
+      },
+      { "name": "Approved", "color": "success", "stamp": "DecidedOn", "notify": "Purchasing" },
+      { "name": "Rejected", "color": "error", "stamp": "DecidedOn" }
+    ]
+  }
+}
+```
+
+- `workflow` gives an entity the states, transitions and approvals of [Workflows and approvals](../modules/workflows.md) and switches the `workflows` option on. The CLI writes `Features/<Plural>/<Name>Workflow.cs` with the declaration (`AddCoworkeeWorkflows`), registers it in the module and puts a *Status* column with the state and its actions into the list; open approvals wait on the *Approvals* page (`/workflows/approvals`). Guards (`When`), actions (`Then`, `OnEnter`) and whatever else the spec does not cover go into that file afterwards.
+- `initial` is the state of a new row. A transition has a `name` (the action people click), the states it starts `from` and the state it leads `to`. `permission` is a permission of the entity, `Edit` unless given, or one of its own like `Ship`, which becomes `<Module>.<Plural>.Ship` for roles. `comment` asks for a reason.
+- `states` list only states that do something: `color` of the chip (`primary`, `secondary`, `info`, `success`, `warning`, `error`), `stamp` an optional `dateTime` property set when the state is entered, `notify` a role whose members get a notification then, and `approval`: the members of `roles` (roles of the spec or `admin`) decide, one of them is enough, with an optional deadline (`dueInDays`), one reminder (`remindAfterDays`) and `notByRequester`; afterwards the workflow moves on to `approved` or `rejected`.
+- `mirrorTo` names an optional string property that gets the state name as well, for reports and for client entities, whose state column filters, sorts and groups on it. The workflow sets the mirrored property and the stamps, so they are not in the form.
+- State and transition names go through the localizer; add them to the app's texts for other languages.
 
 ### Users and roles
 
@@ -188,7 +223,7 @@ Six starter specs come with the CLI (CRM, helpdesk, asset portal, small shop, ev
 ]
 ```
 
-- `roles` are seeded next to the template's own (with samples *Product Manager* and *Brand Manager*, without *User*). Permissions must belong to the app: those of the chosen modules (`Identity.Users.View`, `Chat.Use`, `Reports.View`, ...), of the samples and `<Module>.<Plural>.View|Create|Edit|Delete` of the spec's entities; validation lists them.
+- `roles` are seeded next to the template's own (with samples *Product Manager* and *Brand Manager*, without *User*). Permissions must belong to the app: those of the chosen modules (`Identity.Users.View`, `Chat.Use`, `Reports.View`, ...), of the samples, `<Module>.<Plural>.View|Create|Edit|Delete` of the spec's entities and the own permissions of their workflow transitions (`<Module>.<Plural>.Ship`); validation lists them.
 - `users` need an email; `displayName` defaults to the part before `@`, `roles` names roles of the spec or the template, `admin` grants every permission. Without `password` one is generated; a given one needs 8 characters with upper and lower case letters, a digit and a symbol.
 
 `coworkee spec validate` and `coworkee new` report every problem with its path, for example `modules[0].entities[1].properties[0].name: 'Id' is taken by the entity itself.`

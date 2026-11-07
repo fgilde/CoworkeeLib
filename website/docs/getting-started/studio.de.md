@@ -32,13 +32,13 @@ Das Panel links zeigt, wo du bist; jede Seite, die du schon gesehen hast, ist ei
 
 ### Willkommen
 
-Eine neue App beginnen, eine Spezifikation öffnen (`.json` aus der CLI, dem [MCP-Server](mcp.md) oder einer früheren Sitzung), eine bestehende App öffnen oder eine der zuletzt geöffneten Spezifikationen wählen. Darunter: **Mit einer Vorlage starten** und **Meine Apps**.
+Eine neue App beginnen, eine Spezifikation öffnen (`.json` aus der CLI, dem [MCP-Server](mcp.md) oder einer früheren Sitzung), eine bestehende App öffnen oder eine der zuletzt geöffneten Spezifikationen und Apps wählen; eine App öffnet sich im Assistenten, bereit zum Erweitern (siehe [Bestehende App öffnen](#bestehende-app-offnen)). Darunter: **Mit einer Vorlage starten** und **Meine Apps**.
 
 ![Willkommen](../assets/screenshots/studio-welcome-light-de.webp)
 
 #### Mit einer Vorlage starten
 
-Die [Startvorlagen](gallery.md) (CRM, Helpdesk, Asset-Portal, kleiner Shop, Events, Anträge mit Freigabe) als Karten mit Suchfeld und Tag-Filter. Ein Klick füllt jede Seite des Assistenten mit dieser Spezifikation und öffnet *Grundlagen*; ab da ist es deine App, benenn sie um und ändere, was du willst.
+Die [Startvorlagen](gallery.md) (ERP, HR-Selfservice, Reparaturwerkstatt, Recruiting, CRM, Helpdesk, Asset-Portal, kleiner Shop, Events, Anträge mit Freigabe, jede mit ihren Abläufen) als Karten mit Suchfeld und Tag-Filter. Ein Klick füllt jede Seite des Assistenten mit dieser Spezifikation und öffnet *Grundlagen*; ab da ist es deine App, benenn sie um und ändere, was du willst.
 
 ![Mit einer Vorlage starten](../assets/screenshots/studio-gallery-light-de.webp)
 
@@ -46,7 +46,7 @@ Die [Startvorlagen](gallery.md) (CRM, Helpdesk, Asset-Portal, kleiner Shop, Even
 
 Jede App, die das Studio angelegt hat, landet in dieser Liste, mit Ordner, Datum und den Optionen, die von der Vorlage abweichen. Über **Ordner hinzufügen** sagst du dem Studio, wo deine Apps liegen; es sucht dort bis zu drei Ebenen tief nach `.coworkee/app.json` (schreibt die CLI) oder einer Solution mit `*.AppHost`-Projekt. So tauchen auch Apps auf, die mit `coworkee new` entstanden sind.
 
-Zu jeder App siehst du, ob sie läuft. Das Studio schaut nach dem Prozess des AppHosts (`Shop.AppHost`), eine App aus Visual Studio oder `coworkee run` zählt also mit, und es warnt, wenn ein anderes Programm den Dashboard-Port belegt. **Starten** und **Stoppen** nutzen denselben Runner wie die Seite *Anlegen*. Solange sie läuft, öffnen die Links das Aspire-Dashboard (mit Login-Token, wenn das Studio sie gestartet hat), Web-App und API sowie Grafana und WebDataStudio. Die beiden bekommen ihre Ports erst beim Start von Aspire, ihre Links führen deshalb ins Dashboard, wo die Adresse bei der Ressource steht. Darunter stehen die letzte Zeile der Ausgabe und Links zu Ordner, Solution und VS Code.
+Zu jeder App siehst du, ob sie läuft. Das Studio schaut nach dem Prozess des AppHosts (`Shop.AppHost`), eine App aus Visual Studio oder `coworkee run` zählt also mit, und es warnt, wenn ein anderes Programm den Dashboard-Port belegt. **Starten** und **Stoppen** nutzen denselben Runner wie die Seite *Anlegen*. Solange sie läuft, öffnen die Links das Aspire-Dashboard (mit Login-Token, wenn das Studio sie gestartet hat), Web-App und API sowie Grafana und WebDataStudio. Die beiden bekommen ihre Ports erst beim Start von Aspire, ihre Links führen deshalb ins Dashboard, wo die Adresse bei der Ressource steht. Darunter stehen die letzte Zeile der Ausgabe und Links: **Im Studio bearbeiten** öffnet die App im Assistenten (siehe [Bestehende App öffnen](#bestehende-app-offnen)), dann Ordner, Solution und VS Code.
 
 ### Grundlagen
 
@@ -104,6 +104,8 @@ Die Sprachen der App in einem Raster, durchsuchbar nach Code, eigenem oder engli
 
 Feature-Module mit ihren Entities: Name, Plural, Client-Entity, DTO-Mapping und ein Raster der Eigenschaften (Name, Typ, Pflicht, maximale Länge). Das Zahnrad einer Eigenschaft öffnet den Rest: Beschriftung, Standardwert, Suchfeld, eindeutig, Anzeigetext und Facette; bei einem Enum dessen Name, bei einer Referenz das Ziel (`Modul.Entity`, aus dem Designer vorgeschlagen), der angezeigte Text, das Löschverhalten und die Sammlung am Ziel; Stellen und Nachkommastellen bei Decimal und Money. Unter den Modulen stehen unter **Enums** die Wertelisten. Probleme erscheinen am Modul, an der Entity, Eigenschaft oder dem Enum, die sie betreffen. Das Panel rechts zeigt, was die CLI für die gewählte Entity erzeugt: Route der Seite, Route der API, Namen der Berechtigungen und Dateien. **Beispiel** fügt ein Sales-Modul mit Kunden und Aufträgen hinzu, mit einer Referenz dazwischen und einem Enum für den Auftragsstatus.
 
+Die Karte **Workflow** einer Entity gibt ihr einen Ablauf ([Workflows in einer Spezifikation](cli.md#workflows)): den Zustand einer neuen Zeile, eine optionale Text-Eigenschaft, in die der Zustand zusätzlich geschrieben wird, die Übergänge (Name, aus welchen Zuständen, in welchen, Berechtigung, Kommentar) und je Zustand Farbe, eine `dateTime`-Eigenschaft als Zeitstempel beim Eintritt, eine Rolle zum Benachrichtigen und eine Genehmigung (entscheidende Rollen, die Zustände nach Genehmigung und Ablehnung, Frist und Erinnerung in Tagen, nicht durch die anfragende Person). Die erzeugte Liste bekommt eine Statusspalte mit den Aktionen.
+
 ![Entities](../assets/screenshots/studio-entities-light-de.webp)
 
 **Diagramm** zeigt dieselben Entities als Kästen mit ihren Eigenschaften; Referenzen sind Linien von der Eigenschaft zum Ziel, mit `*` auf der referenzierenden Seite und `1` (Pflicht) oder `0..1` (optional, gestrichelt) am Ziel. Zieh einen Kasten, um ihn zu verschieben, zieh den Punkt an seinem Kopf auf einen anderen Kasten, um eine Referenz anzulegen (ein kleiner Dialog fragt nach Name, Pflicht und Löschverhalten), zieh den Hintergrund, um die Ansicht zu verschieben, und zoome mit dem Mausrad. Ein Klick auf einen Kasten öffnet die Entity im Editor neben dem Diagramm. **Automatisch anordnen** setzt referenzierte Entities über die, die sie referenzieren, **Als PNG exportieren** speichert das ganze Diagramm als Bild. Die Positionen stehen in der Spezifikation (`layout` einer Entity) und ändern nichts am erzeugten Code.
@@ -140,7 +142,7 @@ Das Studio schreibt die Spezifikation, ruft `coworkee spec validate` und `cowork
 
 ### Bestehende App öffnen
 
-*Bestehende App öffnen* auf der Willkommensseite nimmt den Ordner einer mit Coworkee angelegten App. Der Assistent öffnet sich auf *Prüfen* mit dem Stand der App: ihrer `.coworkee/app.json` oder, bei älteren Apps, den Optionen, die ihre Dateien zeigen. Schalte Module und Optionen ein, ergänze Sprachen, Module und Entities, dann **Änderungen anzeigen**: Das Studio ruft `coworkee add --spec ... --dry-run` im Ordner der App auf und zeigt den Plan (Optionen, Dateien zum Hinzufügen, Aktualisieren, Zusammenführen oder Löschen, Konflikte, zu erzeugende Module und Entities). **Änderungen übernehmen** führt ihn wirklich aus, mit derselben Live-Ausgabe wie *Anlegen*; Dateien, deren Änderungen sich nicht zusammenführen ließen, stehen danach als `.rej`-Dateien in der Liste, siehe [Eine bestehende App ändern](cli.md#eine-bestehende-app-andern).
+*Bestehende App öffnen* auf der Willkommensseite nimmt den Ordner einer mit Coworkee angelegten App; eine App unter *Zuletzt geöffnet* oder **Im Studio bearbeiten** in *Meine Apps* öffnet sich genauso, und eine hier geöffnete App kommt zu *Meine Apps* dazu. Der Assistent öffnet sich auf *Prüfen* mit dem Stand der App: ihrer `.coworkee/app.json` oder, bei älteren Apps, den Optionen, die ihre Dateien zeigen. Schalte Module und Optionen ein, ergänze Sprachen, Module und Entities, dann **Änderungen anzeigen**: Das Studio ruft `coworkee add --spec ... --dry-run` im Ordner der App auf und zeigt den Plan (Optionen, Dateien zum Hinzufügen, Aktualisieren, Zusammenführen oder Löschen, Konflikte, zu erzeugende Module und Entities). **Änderungen übernehmen** führt ihn wirklich aus, mit derselben Live-Ausgabe wie *Anlegen*; Dateien, deren Änderungen sich nicht zusammenführen ließen, stehen danach als `.rej`-Dateien in der Liste, siehe [Eine bestehende App ändern](cli.md#eine-bestehende-app-andern).
 
 Ist die CLI nicht installiert, bietet das Studio an, `dotnet tool install -g Coworkee.Cli` auszuführen oder eine lokale CLI zu verwenden (`coworkee.exe` oder `Coworkee.Cli.dll`).
 

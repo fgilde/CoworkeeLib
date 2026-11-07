@@ -30,6 +30,9 @@ internal sealed partial record EntityModel(string App, string Module, EntitySpec
 
     public IReadOnlyList<PropertySpec> Properties => Spec.Properties;
 
+    /// <summary>The properties of the add/edit request and form: all but those the workflow sets (the mirrored state and the time stamps).</summary>
+    public IEnumerable<PropertySpec> Editable => Properties.Where(p => Spec.Workflow is not { } w || (p.Name != w.MirrorTo && !w.States.Any(s => s.Stamp == p.Name)));
+
     public IEnumerable<PropertySpec> References => Properties.Where(p => p.Type == PropertyType.Reference);
 
     public IEnumerable<PropertySpec> Searchable => Properties.Where(p => p.Searchable ?? p.Type is PropertyType.String or PropertyType.Text or PropertyType.Email or PropertyType.Url);

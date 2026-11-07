@@ -44,6 +44,17 @@ public sealed partial class MyAppsViewModel : ObservableObject
         Load();
     }
 
+    /// <summary>Moves an app the wizard opened to the top of the list and of the start page; an app not in the list yet joins it.</summary>
+    public void Opened(string folder, AppSpec spec)
+    {
+        var full = Path.GetFullPath(folder);
+        var known = Main.Settings.Apps.FirstOrDefault(a => Same(a.Path, full));
+        Main.Settings.Apps.RemoveAll(a => Same(a.Path, full));
+        Main.Settings.Apps.Insert(0, (known ?? new KnownApp(full, spec.Name, Directory.GetCreationTime(full), Differences(spec))) with { Opened = DateTimeOffset.Now });
+        Main.SaveSettings();
+        Load();
+    }
+
     [RelayCommand]
     public async Task AddFolderAsync()
     {

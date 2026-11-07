@@ -11,6 +11,8 @@ public static partial class SpecValidator
     [
         "Task", "Guid", "String", "Uri", "Result", "Error", "Color", "Severity", "Icons", "Description", "DateOnly", "TimeOnly", "DateTimeOffset",
         "Enum", "Object", "Action", "Func", "List", "Dictionary", "Math", "Type", "Exception", "Console", "Environment", "Program",
+        // namespaces of the app's projects and module folders: an entity of that name is hidden by the namespace inside the app
+        "Application", "Contracts", "Infrastructure", "Domain", "Features", "Persistence", "Permissions", "Endpoints",
     ];
 
     private static readonly HashSet<string> Keywords = new(StringComparer.Ordinal)
@@ -173,6 +175,8 @@ public static partial class SpecValidator
 
             Property(errors, at, module, property, index);
         }
+
+        Workflow(errors, path + ".workflow", entity, index.Spec);
     }
 
     private static void Property(List<string> errors, string at, string module, PropertySpec property, SpecIndex index)

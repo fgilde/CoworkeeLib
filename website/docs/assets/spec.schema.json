@@ -720,6 +720,141 @@
                     }
                   }
                 },
+                "workflow": {
+                  "description": "States, transitions and approvals (Coworkee.Workflows); switches the workflows option on.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "initial": {
+                      "description": "State of a new row, e.g. Draft.",
+                      "type": "string"
+                    },
+                    "transitions": {
+                      "description": "The moves people make, e.g. { \"name\": \"Submit\", \"from\": [\"Draft\"], \"to\": \"In review\" }.",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "description": "What the button says, e.g. Submit.",
+                            "type": "string"
+                          },
+                          "from": {
+                            "description": "States it starts from.",
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "to": {
+                            "description": "State it leads to.",
+                            "type": "string"
+                          },
+                          "permission": {
+                            "description": "Permission of the entity it needs: Edit (default), View, Create, Delete or an own one like Approve (<Module>.<Plural>.Approve, for roles).",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "comment": {
+                            "description": "Asks for a comment, e.g. a reason to reopen.",
+                            "type": "boolean"
+                          }
+                        }
+                      }
+                    },
+                    "states": {
+                      "description": "What happens in a state: color, a time stamp, a notification, an approval; states only named in transitions need no entry.",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "description": "State name.",
+                            "type": "string"
+                          },
+                          "color": {
+                            "description": "Color of the state chip: primary, secondary, info, success, warning or error.",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "stamp": {
+                            "description": "A dateTime property set to the moment the state is entered, e.g. ApprovedOn.",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "notify": {
+                            "description": "A role of the spec whose members get a notification when the state is entered.",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "approval": {
+                            "description": "Entering the state asks for a decision; the workflow moves on to approved or rejected.",
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "approved": {
+                                "description": "State after an approval.",
+                                "type": "string"
+                              },
+                              "rejected": {
+                                "description": "State after a rejection.",
+                                "type": "string"
+                              },
+                              "roles": {
+                                "description": "Roles whose members decide (one of them is enough); a role of the spec or admin.",
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "dueInDays": {
+                                "description": "Days until the deadline; without, no deadline.",
+                                "type": [
+                                  "string",
+                                  "integer",
+                                  "null"
+                                ],
+                                "pattern": "^-?(?:0|[1-9]\\d*)$"
+                              },
+                              "remindAfterDays": {
+                                "description": "Days after which the approvers who have not decided are reminded once.",
+                                "type": [
+                                  "string",
+                                  "integer",
+                                  "null"
+                                ],
+                                "pattern": "^-?(?:0|[1-9]\\d*)$"
+                              },
+                              "notByRequester": {
+                                "description": "The user who started the approval does not decide it.",
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "mirrorTo": {
+                      "description": "A string property that gets the state name as well, for filters on client entities and in reports.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                },
                 "layout": {
                   "description": "Where the diagram of Coworkee Studio shows the entity; no effect on the generated code.",
                   "type": [

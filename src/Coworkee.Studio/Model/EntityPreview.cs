@@ -15,7 +15,7 @@ public sealed record EntityPreview(string Route, string ApiRoute, IReadOnlyList<
         return new(
             $"/{Kebab(module)}/{Kebab(plural)}",
             $"api/v1/{Kebab(plural)}",
-            new[] { "View", "Create", "Edit", "Delete" }.Select(p => $"{module}.{plural}.{p}").ToList(),
+            new[] { "View", "Create", "Edit", "Delete" }.Concat(entity.Workflow?.ExtraPermissions ?? []).Select(p => $"{module}.{plural}.{p}").ToList(),
             [
                 $"{contracts}/{entity.Name}Dto.cs",
                 $"{contracts}/AddEdit{entity.Name}Request.cs",
@@ -26,6 +26,7 @@ public sealed record EntityPreview(string Route, string ApiRoute, IReadOnlyList<
                 $"{root}/Features/{plural}/AddEdit{entity.Name}.cs",
                 $"{root}/Features/{plural}/Delete{plural}.cs",
                 $"{root}/Features/{plural}/{entity.Name}Mapping.cs",
+                .. entity.Workflow is null ? Array.Empty<string>() : [$"{root}/Features/{plural}/{entity.Name}Workflow.cs"],
                 $"{root}/Endpoints/{entity.Name}Endpoints.cs",
                 $"{client}/Pages/{module}/{plural}Page.razor",
                 $"{client}/Api/{plural}Api.cs",
