@@ -9,7 +9,9 @@ internal sealed class ClientEntityHttpHandler(ClientEntitySignal signal, IClient
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var response = await base.SendAsync(request, cancellationToken);
-        if (!response.IsSuccessStatusCode || request.Method == HttpMethod.Get || request.Method == HttpMethod.Head || request.Method == HttpMethod.Options)
+        // the sync's own requests (a snapshot is a POST) write nothing
+        if (!response.IsSuccessStatusCode || request.Method == HttpMethod.Get || request.Method == HttpMethod.Head || request.Method == HttpMethod.Options
+            || request.RequestUri?.AbsolutePath.Contains("/api/v1/client-entities/", StringComparison.OrdinalIgnoreCase) == true)
         {
             return response;
         }

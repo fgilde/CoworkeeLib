@@ -143,6 +143,7 @@ public static class ODataLinq
                 _ when type == typeof(DateTimeOffset) => value is DateTime date ? new DateTimeOffset(date) : DateTimeOffset.Parse(text, CultureInfo.InvariantCulture),
                 _ when type == typeof(DateTime) => value is DateTimeOffset offset ? offset.UtcDateTime : DateTime.Parse(text, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal),
                 _ when type == typeof(DateOnly) => DateOnly.Parse(text, CultureInfo.InvariantCulture),
+                _ when type == typeof(TimeOnly) => TimeOnly.Parse(text, CultureInfo.InvariantCulture),
                 _ when type == typeof(string) => text,
                 _ => Convert.ChangeType(value, type, CultureInfo.InvariantCulture),
             };

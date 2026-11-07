@@ -3,5 +3,6 @@
     <SupportedPlatform Include="browser" />
     <ProjectReference Include="..\Coworkee.Client.Blazor\Coworkee.Client.Blazor.csproj" />
     <PackageReference Include="Microsoft.OData.Core" />
+    <InternalsVisibleTo Include="Coworkee.Client.Blazor.ClientEntities.Sqlite" />
   </ItemGroup>
 </Project>

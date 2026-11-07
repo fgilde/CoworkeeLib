@@ -1,0 +1,6 @@
+<Project>
+  <!-- SQLite is native code: the WebAssembly client links it in (wasm-tools workload). An app sets WasmBuildNative to false to opt out; its copies then stay in memory. -->
+  <PropertyGroup>
+    <WasmBuildNative Condition="'$(WasmBuildNative)' == ''">true</WasmBuildNative>
+  </PropertyGroup>
+</Project>

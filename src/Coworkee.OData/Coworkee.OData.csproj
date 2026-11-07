@@ -8,4 +8,10 @@
     <PackageReference Include="Nextended.Web" />
     <PackageReference Include="ClosedXML" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- ClientEntitySnapshot -->
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <!-- the snapshot written here, read by the client's SQLite copy -->
+    <InternalsVisibleTo Include="Coworkee.Client.Blazor.ClientEntities.Sqlite.Tests" />
+  </ItemGroup>
 </Project>

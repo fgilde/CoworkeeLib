@@ -53,7 +53,7 @@ Für Bedingungen, die Benutzer selbst zusammenklicken, gibt es den `QueryBuilder
 
 Setz `[ClientEntity]` an eine Entity, und der Blazor-Client hält eine Kopie ihres OData-Sets. Solange die Kopie lädt, gehen Abfragen an den Server. Ist sie vollständig, laufen Filter, Suche, Sortierung und Facettenzählung lokal, und Änderungen kommen als Deltas nach.
 
-Die Kopie ist ein kleiner Spaltenspeicher mit Indizes pro Spalte und liegt in IndexedDB. Bei den 100.000 Aufträgen dauert der erste Download etwa 14,5 s; nach einem Neuladen der Seite laufen Abfragen 0,3 s nach den ersten Zeilen wieder lokal. Ohne Filter brauchte die Tabellenabfrage auf dem Server 216 bis 236 ms, im Browser 39 bis 56 ms.
+Die Kopie ist ein kleiner Spaltenspeicher mit Indizes pro Spalte und liegt in IndexedDB. Bei den 100.000 Aufträgen dauert der erste Download etwa 14,5 s; nach einem Neuladen der Seite laufen Abfragen 0,3 s nach den ersten Zeilen wieder lokal. Ohne Filter brauchte die Tabellenabfrage auf dem Server 216 bis 236 ms, im Browser 39 bis 56 ms. Große Kopien und Zeilentypen mit Listen können stattdessen in [SQLite im Browser](../ui/client-entities.md#sqlite-im-browser-optional) liegen (ein Paket und eine Zeile mehr): der Server schickt die erste Kopie als SQLite-Datei, ein Reload öffnet sie in etwa einer Sekunde, und EF Core antwortet mit SQL.
 
 Jede Tabelle über so einem Set hat einen Schalter mit *Vergleichen und das Schnellere wählen*: Er führt die aktuelle Abfrage auf jeder Seite dreimal aus und behält die schnellere. In der Kopie steht nur, was der Benutzer per OData ohnehin lesen dürfte. Verschlüsselt ist sie auf dem Gerät allerdings nicht, Sets mit sensiblen Daten lässt du also besser auf dem Server.
 

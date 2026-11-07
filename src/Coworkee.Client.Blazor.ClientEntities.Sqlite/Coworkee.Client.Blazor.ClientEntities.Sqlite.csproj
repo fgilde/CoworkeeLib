@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The copies of client entities in SQLite inside the browser (EF Core). buildTransitive turns on WasmBuildNative in the app's client (wasm-tools workload). -->
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+    <ProjectReference Include="..\Coworkee.Client.Blazor.ClientEntities\Coworkee.Client.Blazor.ClientEntities.csproj" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <None Include="buildTransitive\**" Pack="true" PackagePath="buildTransitive\" />
+  </ItemGroup>
+</Project>

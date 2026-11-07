@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Coworkee.Client.Blazor.ClientEntities.Sqlite\Coworkee.Client.Blazor.ClientEntities.Sqlite.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.OData\Coworkee.OData.csproj" />
+  </ItemGroup>
+</Project>
