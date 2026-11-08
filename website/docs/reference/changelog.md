@@ -2,7 +2,7 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
-## Unreleased
+## 0.0.1.68 (2026-11-08)
 
 ### Added
 
