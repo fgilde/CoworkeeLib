@@ -107,7 +107,7 @@ Clients connect to the hub at `/hubs/realtime` (signed in; the connection ends w
 | `tenant:...` | every signed-in user of the organisation | e.g. `tenant:permissions`, `tenant:presence` |
 | `global:...` | every signed-in user | e.g. `global:permissions` |
 
-Other prefixes are refused unless an app registers its own `IRealtimeTopicAuthorizer` (`Handles(topic)`, `AuthorizeAsync(topic, ct)`), as the social, workflow and record attachment modules do for their topics. `IRealtimePublisher.PublishAsync(tenantId, topic, type, payload)` sends to a topic; apps can decorate it to forward messages to hubs of their own. `SessionRevoked` (`SessionRevokedPayload`: reason, `KeptSessionId`) passes the publisher once per session change on every instance, but `RealtimePublisher` sends it to no group: the identity module ends exactly the hub connections of that session (see [Clients and sessions](../security/clients.md#signing-out-everywhere-and-locking)).
+Other prefixes are refused unless an app registers its own `IRealtimeTopicAuthorizer` (`Handles(topic)`, `AuthorizeAsync(topic, ct)`), as the social, workflow and record attachment modules do for their topics. `IRealtimePublisher.PublishAsync(tenantId, topic, type, payload)` sends to a topic; apps can decorate it to forward messages to hubs of their own. `SessionRevoked` (`SessionRevokedPayload`: reason, `KeptSessionId`, `EndedSessionId` when only one [session](../security/clients.md#sessions) ended) passes the publisher once per session change on every instance, but `RealtimePublisher` sends it to no group: the identity module ends exactly the hub connections of that session (see [Clients and sessions](../security/clients.md#signing-out-everywhere-and-locking)).
 
 ## Permissions
 

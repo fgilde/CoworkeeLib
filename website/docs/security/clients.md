@@ -107,7 +107,44 @@ A new password changes the stamp too, so changing it ends the other sessions: th
 
 Apps without the account pages change it through the API, with the same rules: `PUT /api/v1/identity/me/password` with `{ currentPassword, newPassword }` answers `204`. A wrong current password answers `400` (field `CurrentPassword`) and counts towards the lockout, the password rules and the history answer `400` (field `NewPassword`), an account without password `409` (`account.no_password`). It is refused while signed in as another user (`auth.impersonating`) and with an API key (`account.own_sign_in_required`), and limited like the sign-in (rate limit policy `auth`). The calling session keeps its tokens through the `sid` of its access token; a token without one ends with the others. The auth server's sign-in cookie of that browser no longer counts, the next sign-in there asks for the new password.
 
-Other modules hook in with `IUserSessionListener` (called after an administrator ended a user's sessions).
+Other modules hook in with `IUserSessionListener`: `SessionsEndedAsync` after an administrator ended all sessions of a user, `SessionEndedAsync(userId, sid)` after one session ended (the auth store revokes its authorizations and tokens there).
+
+## Sessions
+
+Every sign-in at the auth server is a session: one browser or device, whichever apps of the installation it then opens (the web app, single-page apps; they share the sign-in and its `sid`). API keys and service clients have none. The table `cw.UserSessions` keeps one row per session: user, organisation, the app it signed in for (`ClientId`), device and browser read from the user agent (the full one is kept too), IP address, start, last activity (a sign-in or token refresh, written at most every five minutes), expiry (the last activity plus the lifetime of the auth server's cookie, 14 days by default), and when, why and by whom it ended. A session of [Log in as](../features/identity.md#log-in-as-another-user) names the impersonator (`ImpersonatorId`). Sessions that signed in before this table existed have no row and go on as before.
+
+Ending a session refuses exactly its tokens and its sign-in, at once:
+
+- The row ends (`UserSession.End`); once saved, the auth store revokes the authorizations of that session with their tokens (every authorization the auth server creates names its session, property `coworkee_sid`), and the session change goes to every instance like a stamp change.
+- The API refuses access tokens of an ended session (the cached stamp lists the ended sessions whose tokens may still be around), the token endpoint refuses its refresh tokens, and the auth server's cookie of that browser no longer signs in (checked on every request of the auth server).
+- `SessionRevoked` goes to the realtime connections of that session only, with `SessionRevokedPayload.EndedSessionId` = its `sid`; `SessionGuard` signs that browser out and says why (reason `ended` by an administrator, `ended-by-user` from another session of the user, `limit`). Hubs of the app hear it through `IRealtimePublisher` on `user:{id}` like the other session changes; a decorator ends only the connections whose token carries that `sid`, and a single-page app ignores a `SessionRevoked` whose `EndedSessionId` is not the `sid` of its own token.
+- Signing out in the browser ends the session (`logged-out`) and revokes its tokens; a new sign-in in the same browser ends the one before (`replaced`), except *Log in as*, which leaves the impersonator's own session and tokens for *Back to my account*. A changed security stamp (sign out everywhere, lock, new password) ends the rows of all sessions it ended, the kept one of a password change and the browser whose account page made the change and signed it in again (two-step setup, for example) aside.
+- Each end writes `UserSessionEnded(SessionId, UserId, TenantId, Reason, EndedBy, ImpersonatorId)` to the outbox with the row. The library writes it to the [security log](../modules/auditing.md#security-log) (`SessionEnded`), and an app can handle it too with an `IDomainEventHandler<UserSessionEnded>`; `EndedBy` is null when the sign-in itself ended the session (limit, sign-out).
+
+### Pages and API
+
+**Administration › Monitoring › Sessions** (`/admin/sessions`, page key `sessions`) lists the active sessions of the organisation (*Show ended* adds the ended ones with their reason): user with the number of his active sessions, device, browser, IP address, app, start and last activity; it updates live. Its menu per row ends the session, all sessions of the user, or sets his own limit. The user detail page shows the user's sessions with the same actions. Users see their own on the account page (*Security › Sessions*) and end any but the one they are in.
+
+| Request | Endpoint | Permission |
+|---|---|---|
+| `GetMySessions` | `GET /api/v1/identity/sessions/me` | signed in (marks the own session, `Current`) |
+| `EndSession(id)` | `POST /api/v1/identity/sessions/{id}/end` | own session: none; someone else's: `Identity.Sessions.Manage` |
+| `GetUserSessions(userId)` | `GET /api/v1/identity/users/{id}/sessions` | `Identity.Sessions.View` |
+| `GetSessionCounts(userIds)` | `POST /api/v1/identity/sessions/counts` | `Identity.Sessions.View` |
+| `EndUserSessions(userId)` | `POST /api/v1/identity/users/{id}/sessions/end` | `Identity.Sessions.Manage` |
+| `SetSessionLimit(userId, maxSessions)` | `PUT /api/v1/identity/users/{id}/session-limit` | `Identity.Sessions.Manage` |
+| OData set `UserSessions` | `GET /odata/UserSessions` | `Identity.Sessions.View` |
+
+`Identity.Sessions.View` implies `Identity.Users.View`, `Identity.Sessions.Manage` implies `Identity.Sessions.View`. The rules of [other accounts](permissions.md#other-accounts-and-handing-out-permissions) apply: an administrator sees and ends sessions of users of his organisation in his reach, ends none of a user who holds a permission he lacks, and none of another administrator unless he is one. Nobody ends the session he is in (`409 identity.own_session`, the user menu signs out), API keys end none (`403 identity.sessions_from_key`), and nobody ends sessions while signed in as another user. `EndUserSessions` is *Sign out everywhere* for holders of the session permission. In Blazor, `ISessionsApi` calls these endpoints.
+
+### Session limit
+
+How many sessions a user may have at once is the setting `Account.Sessions.MaxPerUser` (**Administration › Settings › Sign-in security › Sessions per user**, scope Global or the organisation, default `0` = unlimited). A user's own limit wins (`User.MaxSessions`: empty takes the setting, `0` is unlimited, a number its limit), set on the user page or the sessions page. `Account.Sessions.LimitMode` decides what a sign-in beyond the limit does:
+
+- `EndOldest` (default): the sign-in goes on, the oldest sessions end (reason `limit`) and their browsers are signed out at once. A user with a limit of 1 always ends his older session by signing in elsewhere.
+- `Refuse`: the sign-in is refused with *You are signed in on too many devices* until a session ends (the user signs out there, the session expires, or an administrator ends it). A browser that is closed without signing out keeps its session until it expires.
+
+Only active sessions count (not ended, not expired); sessions of someone signed in as the user neither count nor end. The limit applies at sign-in: lowering it leaves the sessions a user has until he signs in again. Settings take effect at once on every instance like all settings.
 
 ## Cross-origin calls (CORS)
 

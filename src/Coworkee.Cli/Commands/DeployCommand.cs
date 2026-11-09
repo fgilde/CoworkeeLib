@@ -1,4 +1,5 @@
 using System.CommandLine;
+using Coworkee.Cli.Spec;
 
 namespace Coworkee.Cli.Commands;
 
@@ -10,8 +11,7 @@ internal static class DeployCommand
 {
     public static readonly string[] Targets = ["compose", "azure", "k8s"];
 
-    /// <summary>The tools of the app host (CoworkeeTools); each one is deployed when the app uses it, Mailpit only with <c>--with mailpit</c>.</summary>
-    public static readonly string[] Tools = ["keycloak", "mailpit", "libretranslate", "grafana", "webdatastudio", "ollama", "aspireui", "kibana", "openwebui", "elsastudio"];
+    public static readonly string[] Tools = Deployments.Tools;
 
     private static readonly Argument<string> Target = new Argument<string>("target")
     {
@@ -33,16 +33,81 @@ internal static class DeployCommand
         Description = "Deploy a tool that stays out by default: --with mailpit for a test deployment without a real mail server.", AllowMultipleArgumentsPerToken = true,
     }.AcceptOnlyFromAmong(Tools);
 
-    private static readonly Option<string?> AdminEmail = new("--admin-email") { Description = "Email of the first administrator (compose; asked for, or admin@<app>.local)." };
+    private static readonly Option<string?> AdminEmail = new("--admin-email")
+    {
+        Description = "Email of the first administrator (compose: asked for, or admin@<app>.local; azure --apply: the signed-in Azure account).",
+    };
+
+    private static readonly Option<bool> Apply = new("--apply") { Description = "azure: deploy into --resource-group as well (Azure CLI signed in; Aspire builds, pushes and deploys)." };
+
+    private static readonly Option<string?> ResourceGroup = new("--resource-group", "-g") { Description = "azure --apply: the resource group, made when missing; nothing is created outside it." };
+
+    private static readonly Option<string?> Location = new("--location", "-l") { Description = "azure --apply and --github: the Azure region, e.g. germanywestcentral." };
+
+    private static readonly Option<string?> Subscription = new("--subscription") { Description = "azure --apply: the subscription (default: the Azure CLI's)." };
+
+    private static readonly Option<string?> Name = new("--name") { Description = "azure --apply: the name of the deployment in .coworkee/deployments (default: the resource group)." };
+
+    private static readonly Option<bool> Yes = new("--yes", "-y") { Description = "azure --apply: do not ask before deploying." };
+
+    private static readonly Option<bool> GitHub = new("--github") { Description = $"azure: write {GitHubDeployWorkflow.RelativePath}, which deploys every push to --branches into a resource group of its own." };
+
+    private static readonly Option<string?> ResourceGroupPrefix = new("--resource-group-prefix") { Description = "azure --github: the resource groups are <prefix>-<branch> (empty: the app's name)." };
+
+    private static readonly Option<string[]> Branches = new("--branches") { Description = "azure --github: the branches to deploy (default main); * matches like in GitHub.", AllowMultipleArgumentsPerToken = true };
+
+    private static readonly Option<bool?> Teardown = new("--teardown-on-delete") { Description = "azure --github: delete a branch's resource group when the branch is deleted (true/false, default false)." };
+
+    private static readonly Option<bool> Force = new("--force") { Description = "azure --github: overwrite a workflow that was changed by hand." };
 
     public static Command Create() =>
         new Command("deploy", "Write the deployment artifacts of the app and its tools: Docker Compose, Azure Container Apps (Bicep) or Kubernetes (Helm).")
         {
-            Target, Output, NoBuild, Without, With, AdminEmail,
+            Target, Output, NoBuild, Without, With, AdminEmail, Apply, ResourceGroup, Location, Subscription, Name, Yes, GitHub, ResourceGroupPrefix, Branches, Teardown, Force,
         }
-        .Handle((result, cancellationToken) => RunAsync(
+        .Handle((result, cancellationToken) => result.GetValue(GitHub) ? GitHubWorkflowAsync(result, cancellationToken) : RunAsync(
             result.GetValue(Target)!, result.GetValue(Output), result.GetValue(NoBuild), ToolSwitches(result.GetValue(Without), result.GetValue(With)), result.GetValue(AdminEmail),
-            cancellationToken));
+            AzureTarget(result), result.GetValue(Yes), cancellationToken));
+
+    private static AzureDeploy.Target? AzureTarget(ParseResult result)
+    {
+        if (!result.GetValue(Apply))
+        {
+            return null;
+        }
+
+        if (result.GetValue(Target) != "azure")
+        {
+            throw new CliException("--apply deploys to Azure only: coworkee deploy azure --resource-group <name> --location <region> --apply");
+        }
+
+        var group = result.GetValue(ResourceGroup) ?? throw new CliException("--apply needs --resource-group.");
+        var location = result.GetValue(Location) ?? throw new CliException("--apply needs --location, e.g. germanywestcentral.");
+        return new AzureDeploy.Target(group, location, result.GetValue(Subscription), result.GetValue(Name) ?? group);
+    }
+
+    /// <summary>The settings of the app (.coworkee/app.json) with the given switches over them: the workflow is written and the settings are kept.</summary>
+    private static async Task<int> GitHubWorkflowAsync(ParseResult result, CancellationToken cancellationToken)
+    {
+        if (result.GetValue(Target) != "azure" || result.GetValue(Apply) || result.GetValue(Subscription) is not null)
+        {
+            throw new CliException("--github writes the deploy workflow for Azure: coworkee deploy azure --github [--location <region>] (without --apply; the subscription is the GitHub secret AZURE_SUBSCRIPTION_ID)");
+        }
+
+        var solution = Solution.Find(Environment.CurrentDirectory);
+        var (spec, _) = Apps.AppState.Read(solution);
+        var saved = DeployWorkflowSettings.Of(spec);
+        var settings = new DeployWorkflowSettings("azure", result.GetValue(ResourceGroupPrefix) is { } prefix ? (prefix.Length > 0 ? prefix : null) : saved.ResourceGroupPrefix, result.GetValue(Location) ?? saved.Location,
+            result.GetValue(Branches) is { Length: > 0 } branches ? DeployWorkflowSettings.BranchList(string.Join(",", branches)) : saved.Branches,
+            result.GetValue(Teardown) ?? saved.TeardownOnDelete);
+        var path = await GitHubDeployWorkflow.WriteAsync(solution, settings, result.GetValue(Force), cancellationToken);
+        settings.WriteTo(spec);
+        Apps.AppState.Write(solution.Root, spec);
+        return NextSteps(path, "The GitHub Actions deploy workflow", [],
+            "once in Azure: an app registration with a federated credential per branch environment and its role assignments (see Hosting > Deployment in the docs)",
+            $"in GitHub: secrets AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID and COWORKEE_SECRETS_TOKEN; variable {solution.Name.ToUpperInvariant()}_ADMIN_EMAIL",
+            "commit and push the workflow; the settings are kept in .coworkee/app.json");
+    }
 
     public static string OutputFolder(Solution solution, string target, string? output) =>
         Path.GetFullPath(output ?? Path.Combine(solution.Root, "deploy", target));
@@ -81,7 +146,7 @@ internal static class DeployCommand
             : null;
 
     private static async Task<int> RunAsync(string target, string? output, bool noBuild, IReadOnlyDictionary<string, bool> tools, string? adminEmail,
-        CancellationToken cancellationToken)
+        AzureDeploy.Target? azure, bool yes, CancellationToken cancellationToken)
     {
         var solution = Solution.Find(Environment.CurrentDirectory);
         var folder = OutputFolder(solution, target, output);
@@ -101,10 +166,10 @@ internal static class DeployCommand
         return target switch
         {
             "compose" => await ComposeAsync(solution, folder, envPath, previous, build, adminEmail, cancellationToken),
+            "azure" when azure is not null => await AzureDeploy.ApplyAsync(solution, folder, azure, yes, adminEmail, tools, cancellationToken),
             "azure" => NextSteps(folder, "Azure Container Apps (Bicep)", DeploySummary.PublicAddresses(folder),
                 "az bicep build --file main.bicep  (checks the templates)",
-                "azd init, then azd up (asks for the public addresses, the administrator, the mail server, certificates and secrets)",
-                "after each deployment start the migrations: az containerapp job start -n <app>-migrations -g <resource group>"),
+                "deploy: coworkee deploy azure --resource-group <name> --location <region> --apply  (Azure CLI signed in)"),
             _ => Kubernetes(folder),
         };
     }

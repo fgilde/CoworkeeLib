@@ -15,7 +15,7 @@ public sealed class RetentionTests(RetentionApp app) : IAsyncLifetime
     private static readonly string[] LibraryTargets =
     [
         "audit", "snapshots", "outbox", "soft-deleted", "inbox", "ai-tool-calls", "ai-sessions", "webhook-deliveries", "mail-log", "notifications",
-        "data-transfer-jobs", "deleted-files", "backups", "auth-tokens", "access-tokens",
+        "data-transfer-jobs", "deleted-files", "backups", "auth-tokens", "access-tokens", "security-events",
     ];
 
     private SetupResultDto _setup = null!;
@@ -45,7 +45,7 @@ public sealed class RetentionTests(RetentionApp app) : IAsyncLifetime
         targets.Select(t => t.Key).ShouldBe(registered);
         registered.ShouldBe(LibraryTargets, ignoreOrder: true);
         targets.ShouldAllBe(t => t.Title.Length > 0 && !t.Running && t.LastRunAt == null);
-        targets.Where(t => t.Days != null).Select(t => (t.Key, t.Days, t.DefaultDays)).ShouldBe([("outbox", (int?)14, (int?)14), ("webhook-deliveries", (int?)30, (int?)30), ("access-tokens", (int?)1, (int?)1)], ignoreOrder: true);
+        targets.Where(t => t.Days != null).Select(t => (t.Key, t.Days, t.DefaultDays)).ShouldBe([("outbox", (int?)14, (int?)14), ("webhook-deliveries", (int?)30, (int?)30), ("access-tokens", (int?)1, (int?)1), ("security-events", (int?)365, (int?)365)], ignoreOrder: true);
         (await Admin.GetFromJsonAsync<List<RetentionTargetDto>>("/api/v1/retention?counts=false", Ct))!.ShouldAllBe(t => t.Affected == null);
     }
 

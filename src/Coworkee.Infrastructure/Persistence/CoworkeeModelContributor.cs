@@ -21,6 +21,21 @@ internal sealed class CoworkeeModelContributor : IModelContributor
             entity.OwnsMany(e => e.Changes, changes => changes.ToJson());
         });
 
+        modelBuilder.Entity<SecurityEvent>(entity =>
+        {
+            entity.ToTable("SecurityEvents", Schema);
+            entity.Property(e => e.Action).HasMaxLength(SecurityEvent.ActionLength);
+            entity.Property(e => e.Reason).HasMaxLength(200);
+            entity.Property(e => e.ClientId).HasMaxLength(200);
+            entity.Property(e => e.Ip).HasMaxLength(64);
+            entity.Property(e => e.UserAgent).HasMaxLength(512);
+            entity.Property(e => e.TraceId).HasMaxLength(64);
+            entity.Property(e => e.Details).HasMaxLength(4000);
+            entity.HasIndex(e => new { e.TenantId, e.At });
+            entity.HasIndex(e => new { e.UserId, e.At });
+            entity.HasIndex(e => e.At);
+        });
+
         modelBuilder.Entity<DataProtection.DataProtectionKey>(entity =>
         {
             entity.ToTable("DataProtectionKeys", Schema);

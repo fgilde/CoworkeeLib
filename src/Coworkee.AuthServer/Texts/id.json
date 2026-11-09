@@ -169,5 +169,6 @@
   "Sign in as another user": "Masuk sebagai pengguna lain",
   "You may not sign in as this user.": "Anda tidak boleh masuk sebagai pengguna ini.",
   "Back to my account": "Kembali ke akun saya",
-  "{0} is signed in as {1}.": "{0} masuk sebagai {1}."
+  "{0} is signed in as {1}.": "{0} masuk sebagai {1}.",
+  "You are signed in on too many devices. Sign out on one of them first or ask an administrator to end a session.": "Anda masuk di terlalu banyak perangkat. Keluar dulu dari salah satunya atau minta administrator mengakhiri sesi."
 }

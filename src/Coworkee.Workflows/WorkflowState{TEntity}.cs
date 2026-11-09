@@ -30,8 +30,11 @@ public sealed class WorkflowState<TEntity>(string name) : WorkflowState(name)
     });
 
     /// <summary>Tells the users of a role that the entity reached this state.</summary>
-    public WorkflowState<TEntity> NotifyRole(string role, string title = "{0} is now {1}", string? body = null) =>
-        OnEnter(async context => await context.NotifyAsync(await context.UsersInRoleAsync(role), title, body));
+    public WorkflowState<TEntity> NotifyRole(string role, string title = "{0} is now {1}", string? body = null)
+    {
+        NotifiedRoles.Add(role);
+        return OnEnter(async context => await context.NotifyAsync(await context.UsersInRoleAsync(role), title, body));
+    }
 
     /// <summary>
     /// Entering the state asks for an approval; once it is decided the workflow moves on to <paramref name="approved"/> or <paramref name="rejected"/>.

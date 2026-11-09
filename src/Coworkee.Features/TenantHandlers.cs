@@ -27,6 +27,7 @@ internal sealed class TenantHandlers(CoworkeeDbContext db, UserManager<User> use
         }
 
         db.Add(tenant);
+        tenant.RequestSeed();
         if (string.IsNullOrWhiteSpace(request.AdminEmail))
         {
             return tenant.Id;

@@ -32,6 +32,13 @@ internal static class ComposeEnv
     }
 
     /// <summary>The mail server of a deployment, asked for by <c>coworkee deploy</c> and never generated.</summary>
+    /// <summary>Values for <paramref name="keys"/> the way a new .env gets them (passwords, certificates, one push key pair); unknown keys stay empty.</summary>
+    public static Dictionary<string, string> Generate(IEnumerable<string> keys, string appName)
+    {
+        var vapid = new Lazy<(string Public, string Private)>(VapidKeys);
+        return keys.Distinct().ToDictionary(k => k, k => Default(k, null, appName, vapid));
+    }
+
     public static bool IsSmtp(string key) => key.Contains("_SMTP_", StringComparison.Ordinal);
 
     public static bool IsAdminEmail(string key) => key.EndsWith("_ADMIN_EMAIL", StringComparison.Ordinal);

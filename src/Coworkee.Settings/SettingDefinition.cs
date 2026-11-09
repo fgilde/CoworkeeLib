@@ -25,6 +25,12 @@ public sealed record SettingDefinition(
         SettingType.Bool when !bool.TryParse(value, out _) => "Expected true or false.",
         SettingType.Int when !int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _) => "Expected a whole number.",
         SettingType.Choice when Choices?.Contains(value, StringComparer.Ordinal) != true => $"Expected one of: {string.Join(", ", Choices ?? [])}.",
+        SettingType.MultiChoice when SplitChoices(value).Any(v => Choices?.Contains(v, StringComparer.Ordinal) != true) =>
+            $"Expected some of: {string.Join(", ", Choices ?? [])}, comma separated.",
         _ => null,
     };
+
+    /// <summary>The chosen values of a <see cref="SettingType.MultiChoice"/> value.</summary>
+    public static IReadOnlyList<string> SplitChoices(string? value) =>
+        value?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
 }

@@ -24,7 +24,10 @@ public partial class GroupRolesTab
 
     [Parameter] public EventCallback Changed { get; set; }
 
-    protected override Task OnInitializedAsync() => Snackbar.RunAsync(async () => _roles = await Api.GetRolesAsync());
+    protected override Task OnInitializedAsync() => ReloadRolesAsync();
+
+    // a renamed or new role shows at once
+    private Task ReloadRolesAsync() => Snackbar.RunAsync(async () => _roles = await Api.GetRolesAsync());
 
     private string RoleName(Guid id) => _roles.FirstOrDefault(r => r.Id == id)?.Name ?? string.Empty;
 

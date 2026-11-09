@@ -96,6 +96,35 @@ public sealed class LivePermissionTests(RealtimeApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Moving_the_users_of_a_role_tells_the_organisation_and_their_permissions_follow_at_once()
+    {
+        var bob = await CreateUserAsync("bob@acme.test");
+        var plain = await CreateRoleAsync("Plain");
+        var readers = await CreateRoleAsync("Ticket readers", Ticket.ViewPermission);
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{bob.Id}/roles", new IdListRequest([plain]), Ct)).EnsureSuccessStatusCode();
+        (await PermissionsOfAsync(bob.Id)).ShouldNotContain(Ticket.ViewPermission);
+        await using var listener = await app.ConnectAsync(bob.Id, _setup.TenantId);
+        await listener.SubscribeAsync(RealtimeTopics.TenantPermissions);
+
+        (await Admin.PostAsJsonAsync($"/api/v1/identity/roles/{plain}/users/transfer", new TransferRoleUsersRequest([readers], Move: true), Ct)).EnsureSuccessStatusCode();
+
+        await listener.NextAsync(e => e.Topic == RealtimeTopics.TenantPermissions);
+        (await PermissionsOfAsync(bob.Id)).ShouldContain(Ticket.ViewPermission);
+    }
+
+    [Fact]
+    public async Task A_renamed_role_reaches_open_role_lists()
+    {
+        var readers = await CreateRoleAsync("Ticket readers");
+        await using var listener = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
+        await listener.SubscribeAsync("type:Role");
+
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/roles/{readers}", new RoleRequest("Ticket viewers", null), Ct)).EnsureSuccessStatusCode();
+
+        await listener.NextAsync(e => e.Topic == "type:Role");
+    }
+
+    [Fact]
     public async Task Deactivating_a_user_ends_his_sessions()
     {
         var bob = await CreateUserAsync("bob@acme.test");

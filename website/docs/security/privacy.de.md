@@ -50,6 +50,7 @@ Der Verlauf beantwortet, *was mit welchem Datensatz wann geschah, und ob eine Pe
 | Abschnitt | Modul | Im Export | Löschen |
 |---|---|---|---|
 | `profile` | Identity | Name, E-Mail, Telefon, Adresse, Bild, Zwei-Faktor an oder aus, Rollen, Gruppen, externe Anmeldungen, Passkeys (Name, Datum, Sicherungsstatus), `claims`, eigene `permissionGrants`, `resourcePermissions` (Typ, ID, Rolle), `selectedGroups` | Benutzer gelöscht samt Rollen, Claims, Anmeldungen, Tokens, Passkeys, Mitgliedschaften und Gruppenauswahl (Kaskade); eigene Berechtigungen und Ressourcen-Berechtigungen gelöscht |
+| `sessions` | Identity | [Sitzungen](clients.md#sitzungen) (App, Gerät, Browser, User-Agent, IP-Adresse, Beginn, letzte Aktivität, Ende und Grund) | seine Sitzungen gelöscht; Sitzungen anderer, als die er angemeldet war oder die er beendet hat, behalten das mit dem Platzhalter |
 | `apiKeys` | Identity | [API-Schlüssel](api-keys.md) (Name, Präfix, Berechtigungen, Daten, letzte Nutzung), nie der Hash | seine Schlüssel gelöscht; Schlüssel anderer, die er widerrufen hat, behalten den Widerruf mit dem Platzhalter |
 | `signIns` | Auth-Server | freigegebene Clients | Freigaben und Tokens gelöscht, jede Sitzung endet |
 | `settings` | Einstellungen | Werte mit Benutzerbereich (Geheimnisse als `***`) | gelöscht |
@@ -59,6 +60,8 @@ Der Verlauf beantwortet, *was mit welchem Datensatz wann geschah, und ob eine Pe
 | `social` | Kommentare, Tags, Bewertungen, Reaktionen | eigene Kommentare, Bewertungen und Reaktionen | gelöscht, Antworten auf die Kommentare ebenso |
 | `aiToolCalls`, `aiConversations` | KI | Tool-Aufrufe (Tool, Kanal, Eingabe, Ergebnis), Unterhaltungen | gelöscht |
 | `activity` | Audit | was der Benutzer geändert hat, selbst oder als anderer Benutzer angemeldet (`asOtherUser`) | Verlauf bleibt wie oben beschrieben |
+| `securityLog` | Identity | seine Einträge im [Sicherheitsprotokoll](../modules/auditing.md#sicherheitsprotokoll): Anmeldungen, Sperren, Änderungen an Passwort, E-Mail, Schlüsseln und Zugriffen (Zeit, Aktion, Ergebnis, Grund, Adresse, Browser, Details) | Einträge bleiben mit dem Platzhalter für ihn als Benutzer, Handelnden oder Angemeldeten; Adresse, Browser und Details werden entfernt |
+| `requests` | Audit | seine letzten 1000 Aufrufe im [Request-Log](../modules/auditing.md#request-log) (Zeit, Methode, Pfad, Status, Adresse, Browser; keine Header oder Inhalte) | Zeilen bleiben mit dem Platzhalter; Adresse, Browser, Header und Inhalte werden entfernt |
 | `files` | Dateien | hochgeladene Dateien (Name, Typ, Größe) | bleiben mit dem Platzhalter als hochladender Person; seine Registrierungsunterlagen (`Registrations/{user}`) samt Inhalt und Ordner gelöscht |
 | `attachments` | Anhänge an Datensätzen | angehängte Dateien (Datensatz, Slot, Name, Typ, Größe) | bleiben mit dem Platzhalter als hochladender Person |
 | `reports` | Berichte | eigene `reports`, `favorites`, `subscriptions` (Zeitplan, Filter), `dashboard` | private Berichte, Favoriten, Abos und Dashboard-Wahl gelöscht; geteilte Berichte bleiben für ihr Publikum, Eigentümer ist der Platzhalter (niemand ändert sie mehr) |

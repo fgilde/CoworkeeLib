@@ -47,13 +47,13 @@ internal sealed class FakeServer : HttpMessageHandler, IODataClient
 
     public ClientEntitySetInfo Info => new("Gadgets", BatchSize, MaxRows, TimeSpan.Zero, RealtimeTopic, Expand, ParallelPages);
 
-    public ClientEntitySet<Gadget> Set(IClientEntityStorage? storage = null, string partition = "p1") =>
-        new(Info, "Brand", partition, this, Api, storage ?? new NoClientEntityStorage(), NullLogger.Instance);
+    public ClientEntitySet<Gadget> Set(IClientEntityStorage? storage = null, string partition = "p1", IClientEntityEngine? engine = null) =>
+        new(Info, "Brand", partition, this, Api, storage ?? new NoClientEntityStorage(), NullLogger.Instance, engine);
 
     public ClientEntityApi Api => new(new HttpClient(this) { BaseAddress = new Uri("http://app/") });
 
-    public ClientEntities Entities(IClientEntityStorage? storage = null) =>
-        new(Api, this, storage ?? new NoClientEntityStorage(), null, new ClientEntitySignal(), NullLogger<ClientEntities>.Instance);
+    public ClientEntities Entities(IClientEntityStorage? storage = null, IClientEntityEngine? engine = null) =>
+        new(Api, this, storage ?? new NoClientEntityStorage(), null, new ClientEntitySignal(), NullLogger<ClientEntities>.Instance, engine: engine);
 
     public async Task<ODataPage<T>> QueryAsync<T>(string entitySet, ODataQuery query, CancellationToken cancellationToken = default)
     {
@@ -98,6 +98,17 @@ internal sealed class FakeServer : HttpMessageHandler, IODataClient
     /// <summary>The changes pages the client asked for, with their skip.</summary>
     public List<string> ChangeRequests { get; } = [];
 
+    /// <summary>The server builds snapshots (SQLite in the browser); without, it answers 404.</summary>
+    public bool Snapshots { get; set; } = true;
+
+    /// <summary>Holds the snapshots back.</summary>
+    public Task SnapshotGate { get; set; } = Task.CompletedTask;
+
+    public int SnapshotRequests { get; private set; }
+
+    /// <summary>How often the client asked for all visible ids.</summary>
+    public int IdsRequests { get; private set; }
+
     /// <summary>Further pages of changed ids, served to a client that asks with a skip.</summary>
     public Queue<ClientEntityChanges> MoreChanges { get; } = new();
 
@@ -127,6 +138,26 @@ internal sealed class FakeServer : HttpMessageHandler, IODataClient
         if (path.EndsWith("/changes", StringComparison.Ordinal))
         {
             ChangeRequests.Add(query);
+        }
+
+        if (path.EndsWith("/ids", StringComparison.Ordinal))
+        {
+            IdsRequests++;
+        }
+
+        if (path.EndsWith("/snapshot", StringComparison.Ordinal))
+        {
+            SnapshotRequests++;
+            await SnapshotGate;
+            if (!Snapshots)
+            {
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            }
+
+            // the file of a MemoryStore: the rows as JSON
+            var file = new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(JsonSerializer.SerializeToUtf8Bytes(Rows, JsonSerializerOptions.Web)) };
+            file.Headers.Add(ClientEntitySnapshotKinds.VersionHeader, Now.ToString("O"));
+            return file;
         }
 
         object body = path switch
@@ -175,6 +206,77 @@ internal sealed class MemoryStorage : IClientEntityStorage
 
     /// <summary>The keys holding data; an empty entry counts as dropped.</summary>
     public IEnumerable<string> Kept => Saved.Where(e => e.Value.Length > 0).Select(e => e.Key).Order(StringComparer.Ordinal);
+}
+
+/// <summary>An engine with one store in memory: the sync's store path (as with SQLite) without a database.</summary>
+internal sealed class MemoryStore : IClientEntityEngine, IClientEntityStore<Gadget>
+{
+    public Dictionary<Guid, Gadget> Rows { get; private set; } = [];
+
+    /// <summary>How often the sync read all ids of the store.</summary>
+    public int IdReads { get; private set; }
+
+    public bool Disposed { get; private set; }
+
+    public int Count => Rows.Count;
+
+    /// <summary>Asks the server for snapshots, as SQLite does.</summary>
+    public bool TakesSnapshots { get; set; }
+
+    public IClientEntityStore<T>? Open<T>(string key) => this as IClientEntityStore<T>;
+
+    public ClientEntitySnapshotRequest? Snapshot(string? expand) => TakesSnapshots ? new ClientEntitySnapshotRequest([], expand) : null;
+
+    public Task ReplaceWithFileAsync(byte[] file, DateTimeOffset version, CancellationToken cancellationToken)
+    {
+        Rows = JsonSerializer.Deserialize<Gadget[]>(file, JsonSerializerOptions.Web)!.ToDictionary(r => r.Id);
+        return Task.CompletedTask;
+    }
+
+    public Task<DateTimeOffset?> RestoreAsync(CancellationToken cancellationToken) => Task.FromResult<DateTimeOffset?>(null);
+
+    public Task ReplaceAsync(IReadOnlyCollection<Gadget> rows, DateTimeOffset version, CancellationToken cancellationToken)
+    {
+        Rows = rows.ToDictionary(r => r.Id);
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> ApplyAsync(IReadOnlyCollection<Gadget> changed, IReadOnlyCollection<Guid> deleted, DateTimeOffset version, CancellationToken cancellationToken)
+    {
+        var touched = deleted.Count(Rows.Remove) > 0;
+        foreach (var row in changed)
+        {
+            touched |= !Rows.TryGetValue(row.Id, out var held) || held != row;
+            Rows[row.Id] = row;
+        }
+
+        return Task.FromResult(touched);
+    }
+
+    public Task<IReadOnlyList<Guid>> IdsAsync(CancellationToken cancellationToken)
+    {
+        IdReads++;
+        return Task.FromResult<IReadOnlyList<Guid>>([.. Rows.Keys]);
+    }
+
+    public Task<ODataPage<Gadget>> QueryAsync(ODataQuery query, Func<CancellationToken, Task<IReadOnlyList<FacetGroupDto>>> facets, CancellationToken cancellationToken)
+    {
+        var rows = string.IsNullOrWhiteSpace(query.Filter) ? Rows.Values.ToList() : Rows.Values.Where(ODataLinq.Filter<Gadget>(query.Filter).Compile()).ToList();
+        var page = ODataLinq.OrderBy(rows, query.OrderBy).Skip(query.Skip ?? 0).Take(query.Top ?? int.MaxValue).ToList();
+        return Task.FromResult(new ODataPage<Gadget>(page, rows.Count, []));
+    }
+
+    public Task DropAsync()
+    {
+        Rows = [];
+        return Task.CompletedTask;
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        Disposed = true;
+        return ValueTask.CompletedTask;
+    }
 }
 
 internal sealed class FakeRealtime : Realtime.IRealtimeConnection

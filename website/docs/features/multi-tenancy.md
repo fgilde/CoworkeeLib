@@ -32,6 +32,8 @@ Cached queries are shared per tenant by default (`CacheScope.Tenant`).
 
 A tenant is an organisation with a name, an identifier and an active flag. One of them is the system organisation, which runs the installation: its administrators create organisations under *Administration > Tenants*, optionally with a first administrator, and deactivate them. A deactivated organisation takes its users' API keys down with it.
 
+A new organisation gets the per-tenant [seed contributors](../fundamentals/persistence.md#seed-contributors) of the modules right after it is created (from the api, in the background after the commit, `context.IsNew` true), and every later migrations run gets them for every organisation, inactive ones included. Contributors of the migrations project reach a new organisation with the next migrations run.
+
 Permissions such as `Features.Tenants` and `Identity.Clients.Manage` belong to the host. Every administrator holds them; only administrators of the system organisation can use them.
 
 ## Settings at three levels

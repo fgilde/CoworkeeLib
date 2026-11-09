@@ -140,13 +140,15 @@ public static void Configure(IdentitySeedOptions seed)
 }
 ```
 
+After the seed, and on every later run, the migrations run the [seed contributors](../fundamentals/persistence.md#seed-contributors) of the app. A system set up in the wizard gets the per-tenant contributors of the modules right away, from the api in the background after the commit; contributors of the migrations project, and the role reconcile of `SyncRolesInDeployments`, reach it with the next migrations run.
+
 ## Account features
 
 Registration is off by default; the setting `Account.AllowRegistration` turns it on, and apps from the template seed it on (`--registration false` leaves it off). The wizard, activation, allowed addresses, documents and the sign-in rules are described in [Registration and sign-in rules](registration.md); layout, theme and media of the account pages in [Sign-in pages and designs](sign-in-pages.md). Users change password, two-step verification and [passkeys](passkeys.md) on the account page of the auth server, linked from the user menu; the password also through the API ([changing the own password](clients.md#changing-the-own-password)). The email address changes under *My profile › Security* in the app: after the current password, the new address gets a confirmation link and the old one a notice; the old address keeps working until the link is opened. An address another account uses gets no link, and the answer is the same, so nobody learns which addresses exist.
 
 On a user's page administrators edit everything about the user: user name, names, phone, address, language, active, email confirmed, the address itself (at once, confirmed or with a confirmation mail; the old address gets a notice), the password (set one or send a reset link), an invitation for users without password, lockout, two-step verification reset, external sign-ins, roles, groups and the picture. New users are created in a dialog, either invited by mail to choose a password or with an initial password.
 
-Administrators manage further clients and scopes in the app, end sessions at once and set password rules: see [Clients, sessions and password rules](clients.md).
+Administrators manage further clients and scopes in the app, end sessions at once and set password rules: see [Clients, sessions and password rules](clients.md). Every sign-in (also a failed one, with its reason), sign-out, lockout and change of password, address, two-step verification, passkeys, keys, roles and permissions lands in the [security log](../modules/auditing.md#security-log); the user page links to the entries of the user.
 
 ## Security headers of the web app
 

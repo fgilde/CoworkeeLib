@@ -1,0 +1,12 @@
+<MudPaper Outlined="true" Class="pa-4 mt-4" data-testid="profile-sessions">
+    <MudText Typo="Typo.h6" Class="mb-2">@L["Sessions"]</MudText>
+    <MudText Class="mud-text-secondary mb-4">@L["Where you are signed in. End a session you do not recognise; that browser is signed out at once."]</MudText>
+    @if (_sessions is null)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else
+    {
+        <SessionTable Sessions="_sessions" CanEnd="true" OnEnd="EndAsync" />
+    }
+</MudPaper>

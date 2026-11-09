@@ -113,7 +113,6 @@ builder.AddCoworkeeMigrations<MyAppDbContext>(options =>
     options.DevelopmentSeed = DemoSeed.Configure;
     options.DeploymentSeed = DemoSeed.ConfigureDeployment;
 });
-builder.Services.AddScoped<ISetupStep, DemoData>();
 using var host = builder.Build();
 return await host.RunCoworkeeMigrationsAsync();
 ```
@@ -122,9 +121,65 @@ return await host.RunCoworkeeMigrationsAsync();
 
 1. die Datenbank migrieren, alle 3 Sekunden erneut versucht, solange ihr Server noch keine Verbindungen annimmt (`Migrations:Attempts`, Standard 20, oder `options.Attempts`), und Gruppen ohne `Code`-Pfad bekommen ihren;
 2. seeden: mit einem ersten Administrator aus den Deploy-Parametern (`Coworkee:InitialAdmin`, siehe [Setup-Assistent oder Seed](../security/authentication.md#setup-assistent-oder-seed)) `DeploymentSeed` mit ihm; sonst `DevelopmentSeed` in der Development-Umgebung (`options.DevelopmentUsers` entscheidet anders), danach `SyncDevelopmentUsersAsync`; sonst nichts, und die Setup-Seite mit ihrem Token richtet das System ein;
-3. `options.AfterSeed` ausführen, die eigenen Datenschritte der App, falls gesetzt;
-4. ein deploytes Keycloak abgleichen (`ReconcileKeycloakRealmAsync`).
+3. die [Seed-Contributors](#seed-contributors) der App und ihrer Module ausführen, auch wenn Schritt 2 nichts getan hat;
+4. `options.AfterSeed` ausführen, falls gesetzt (besser: Seed-Contributors);
+5. ein deploytes Keycloak abgleichen (`ReconcileKeycloakRealmAsync`);
+6. die zwischengespeicherten Berechtigungen, Einstellungen und Features laufender Dienste verwerfen (mit Redis auf jeder Instanz), damit ein erneuter Lauf gegen eine laufende App oder ein rollendes Deployment sofort wirkt.
 
 Außerdem baut es den Container mit den Produktions-Standards: Ein lokaler Lauf ist Development, und dessen Prüfung der Scopes scheitert an den MVC-Diensten von OData in einem Host ohne Web-Umgebung.
 
-`AddCoworkeeIdentitySeed` ersetzt den Setup-Assistenten: Er legt einmalig den Standard-Mandanten, den Administrator, Rollen mit ihren Berechtigungen, weitere Benutzer und systemweite Einstellungen (`seed.Settings["Theme.Mode"] = "dark"`) an. `ISetupStep`-Implementierungen laufen im selben Setup als Administrator und sind der Ort für Beispieldaten. `SyncDevelopmentUsersAsync` läuft nur in der Development-Umgebung (oder mit `Coworkee:Identity:SyncDevelopmentUsers`, das der Aspire-App-Host für die Migrationen eines lokalen Laufs setzt) und hält eine bestehende Datenbank im Stand des Seeds: Fehlende Benutzer und Rollen kommen dazu, Seed-Benutzer bekommen die seitdem im Seed ergänzten Rollen, Seed-Rollen die ergänzten Berechtigungen, Seed-Benutzer mit anderem Passwort bekommen wieder das geseedete; andere Benutzer, Rollen und Berechtigungen bleiben, wie sie sind, entfernt wird nichts. Siehe [Anmeldung](../security/authentication.md#setup-assistent-oder-seed).
+`AddCoworkeeIdentitySeed` ersetzt den Setup-Assistenten: Er legt einmalig den Standard-Mandanten, den Administrator, Rollen mit ihren Berechtigungen, weitere Benutzer und systemweite Einstellungen (`seed.Settings["Theme.Mode"] = "dark"`) an. `ISetupStep`-Implementierungen laufen im selben Setup (hier oder im Setup-Assistenten) als Administrator; für Daten der App sind Seed-Contributors der bessere Ort. `SyncDevelopmentUsersAsync` läuft nur in der Development-Umgebung (oder mit `Coworkee:Identity:SyncDevelopmentUsers`, das der Aspire-App-Host für die Migrationen eines lokalen Laufs setzt) und hält eine bestehende Datenbank im Stand des Seeds: Fehlende Benutzer und Rollen kommen dazu, Seed-Benutzer bekommen die seitdem im Seed ergänzten Rollen, Seed-Rollen die ergänzten Berechtigungen, Seed-Benutzer mit anderem Passwort bekommen wieder das geseedete; andere Benutzer, Rollen und Berechtigungen bleiben, wie sie sind, entfernt wird nichts. Siehe [Anmeldung](../security/authentication.md#setup-assistent-oder-seed).
+
+`options.SyncRolesInDeployments = true` macht den Rollen-Teil davon für Deployments: Bei jedem Lauf kommen die Rollen von `DeploymentSeed` und ihre Berechtigungen in den Standard-Mandanten, auch in eine früher oder im Browser eingerichtete Datenbank (`DeploymentSeed` wird dann mit einem Platzhalter-Administrator aufgerufen, nur für seine Rollen). Fehlende Rollen und Berechtigungen kommen dazu, entfernt wird nichts, Benutzer und Passwörter bleiben unberührt. Standardmäßig aus; läuft vor den anderen Seed-Contributors.
+
+### Seed-Contributors
+
+Daten, die jede Datenbank braucht (Stammdaten, Tags, Einstellungen eines Moduls), und Änderungen an den geseedeten Konten gehören in einen `ISeedContributor` (`Coworkee.Application.Setup`), eine Klasse mit injizierten Diensten wie jede andere:
+
+```csharp title="MyApp.Sales/Seeds/StandardTagsSeed.cs"
+[RegisterAs(typeof(ISeedContributor))]
+internal sealed class StandardTagsSeed(SalesDbContext db, IDispatcher dispatcher) : ISeedContributor
+{
+    private static readonly string[] Tags = ["Urgent", "Customs hold"];
+
+    public async Task SeedAsync(SeedContext context, CancellationToken cancellationToken)
+    {
+        var existing = await db.Tags.Select(t => t.Name).ToListAsync(cancellationToken);
+        foreach (var name in Tags.Except(existing))
+        {
+            await dispatcher.SendAsync(new CreateTag(name), cancellationToken).OrThrow();
+        }
+    }
+}
+```
+
+`coworkee seed add StandardTags --module Sales` schreibt so eine Klasse (siehe [CLI](../getting-started/cli.md)). `[RegisterAs]` wirkt in den Modulen und im Migrationsprojekt (`AddCoworkeeMigrations` durchsucht es mit); `services.AddTransient<ISeedContributor, StandardTagsSeed>()` geht überall.
+
+| Member | Standard | |
+|---|---|---|
+| `SeedAsync(SeedContext, CancellationToken)` | | `context.TenantId` (null bei `Host`), `context.IsDevelopment`, `context.IsNew` |
+| `Order` | 0 | kleiner läuft zuerst; bei Gleichstand nach Typname. Jeder Contributor läuft für alle Mandanten, bevor der nächste beginnt |
+| `Environments` | `Always` | `Development` (ein Lauf, der die Demo-Benutzer seedet; auch ohne Development-Seed, wenn die Development-Umgebung oder `options.DevelopmentUsers` es so sagt) oder `Deployment` |
+| `Target` | `EachTenant` | einmal je Mandant mit gesetztem Mandanten (auch inaktive), oder `Host`: einmal je Lauf ohne Mandant |
+| `Required` | true | false: ein Fehler wird als Warnung geloggt und der Lauf geht weiter |
+
+So läuft ein Aufruf: in einem eigenen DI-Scope und einer eigenen Datenbank-Transaktion, als das System mit allen Berechtigungen (`SystemActor`), im Mandanten des Aufrufs. Requests mit `[RequiresPermission]` gehen durch, `IMultiTenant`-Zeilen bekommen den Mandanten, das Audit-Protokoll zeigt "system", `CreatedBy` bleibt leer. `UserManager`, die Commands des Dispatchers und was der Contributor ungespeichert lässt, landen in der Transaktion; der Runner speichert am Ende. Ein Seed, der eine Person als Besitzer braucht, öffnet um diesen Teil `CurrentUserScope.Begin(new ImpersonatedUser(userId, tenantId))`. Das System ist in keiner Gruppe: Gruppen-IDs ausdrücklich übergeben oder mit `IgnoreQueryFilters()` lesen. Andere Datenbanken (externe DbContexts) und der Blob-Speicher sind nicht in der Transaktion; Schreibvorgänge dort müssen für sich idempotent sein.
+
+**Jeder Lauf, also idempotent.** Ein Contributor läuft bei jedem Migrationslauf: lesen, was da ist, dann nur das Fehlende ergänzen oder ändern. Änderungen an einem Seed (ein neuer Tag, eine neue Berechtigung) erreichen jede Datenbank mit dem nächsten Lauf. Was Benutzern gehört (Beispieldatensätze), steht unter `if (!context.IsNew) return;`: `IsNew` ist wahr in dem Lauf, dessen Identity-Seed das System eingerichtet hat, und für einen gerade eingerichteten Mandanten; solche Datensätze kommen nach dem Löschen also nicht zurück. Welche Seeds gelaufen sind, wird nicht festgehalten.
+
+**Fehler.** Ein fehlschlagender Pflicht-Contributor rollt seine Transaktion zurück, das Log nennt Contributor und Mandant, und der Lauf endet mit Exit-Code 1, damit die Dienste eines Deployments nicht gegen eine halb befüllte Datenbank starten. Spätere Contributors laufen nicht, weil sie auf ihm aufbauen können.
+
+**Wo sie laufen.**
+
+| Contributor | Migrationslauf (jeder Lauf) | Setup-Assistent, neuer Mandant (`POST /api/v1/tenants`) |
+|---|---|---|
+| in einem Modul, `EachTenant` | für jeden Mandanten | in der API, für den neuen Mandanten, im Hintergrund nach dem Commit (`IsNew` wahr) |
+| in einem Modul, `Host` | einmal | nein |
+| im Migrationsprojekt | ja | nein, die API lädt dieses Projekt nicht |
+| `SyncRolesInDeployments` | Deployments | nein |
+
+Für einen zur Laufzeit eingerichteten Mandanten startet die API sie über die Outbox (`TenantSeedRequested`, auch über `tenant.RequestSeed()`): Der Outbox-Prozessor der API führt sie aus, sobald das Setup oder der neue Mandant committet ist, mit `IsDevelopment` aus der Development-Umgebung der API. Ein Fehler dort wird als Fehler geloggt und nicht wiederholt (eine Wiederholung würde wiederholen, was `IsNew` schützt); der nächste Migrationslauf (ein Deployment, *Re-run migrations* im Aspire-Dashboard, `coworkee db seed`) ist der Rückfall für alles außer `IsNew`. Contributors im Migrationsprojekt erreichen solche Mandanten erst mit diesem nächsten Lauf.
+
+Schreibvorgänge eines Seeds senden Realtime-Nachrichten und Outbox-Events wie jedes Speichern: Der Outbox-Prozessor der API stellt sie zu, sobald sie läuft. Zwei Migrationsläufe gleichzeitig (eine überlappende Wiederholung des Jobs) führen jeden Seed zweimal aus; idempotente Seeds und eindeutige Indizes machen den zweiten zu einem No-op oder einem zurückgerollten Fehler.
+
+**Testen.** `services.RunSeedContributorAsync<T>(new SeedContext(tenantId, IsDevelopment: true, IsNew: true))` führt einen Contributor so aus wie die Migrationen, auch einen, den der Host nicht registriert (siehe [Testen](../testing.md)).

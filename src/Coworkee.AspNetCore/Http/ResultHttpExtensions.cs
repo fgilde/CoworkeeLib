@@ -40,7 +40,10 @@ public static class ResultHttpExtensions
     private static ProblemHttpResult Problem(Error error) =>
         TypedResults.Problem(title: error.Message, statusCode: StatusCodeOf(error.Kind), extensions: Extensions(error));
 
-    private static Dictionary<string, object?> Extensions(Error error) => new(StringComparer.Ordinal) { ["code"] = error.Code };
+    // template and arguments let clients translate a message with variable parts (the title is it filled in, in English)
+    private static Dictionary<string, object?> Extensions(Error error) => error.Template is null
+        ? new(StringComparer.Ordinal) { ["code"] = error.Code }
+        : new(StringComparer.Ordinal) { ["code"] = error.Code, ["template"] = error.Template, ["arguments"] = error.Arguments };
 
     private static int StatusCodeOf(ErrorKind kind) => kind switch
     {

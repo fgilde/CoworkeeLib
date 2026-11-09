@@ -28,8 +28,8 @@
             <MudText Typo="Typo.caption" Class="cw-ce-status">@Describe(set)</MudText>
             <MudMenuItem OnClick="() => ChooseAsync(ClientEntityMode.Client)" Disabled="@(!set.Status.IsLocal)" data-choice="Client">
                 <span class="cw-ce-item">
-                    <MudIcon Icon="@Icons.Material.Outlined.Computer" Size="Size.Small" />@L["Search in the browser"]
-                    @if (set.Mode == ClientEntityMode.Client)
+                    <MudIcon Icon="@Icons.Material.Outlined.Computer" Size="Size.Small" />@L[Pending(set) ? "Search in the browser (loading…)" : "Search in the browser"]
+                    @if (SearchesLocally(set))
                     {
                         <MudIcon Class="cw-ce-check" Icon="@Icons.Material.Filled.Check" Size="Size.Small" Color="Color.Primary" />
                     }
@@ -38,7 +38,7 @@
             <MudMenuItem OnClick="() => ChooseAsync(ClientEntityMode.Server)" data-choice="Server">
                 <span class="cw-ce-item">
                     <MudIcon Icon="@Icons.Material.Outlined.Cloud" Size="Size.Small" />@L["Search on the server"]
-                    @if (set.Mode == ClientEntityMode.Server)
+                    @if (!SearchesLocally(set))
                     {
                         <MudIcon Class="cw-ce-check" Icon="@Icons.Material.Filled.Check" Size="Size.Small" Color="Color.Primary" />
                     }

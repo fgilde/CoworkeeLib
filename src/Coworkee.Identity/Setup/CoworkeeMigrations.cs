@@ -1,6 +1,11 @@
+using System.Reflection;
+using Coworkee.Application.Setup;
+using Coworkee.Core.Modularity;
+using Coworkee.Identity.Domain;
 using Coworkee.Identity.Groups;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -8,7 +13,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Coworkee.Identity.Setup;
 
-/// <summary>The migrations host of an app: migrate the database, seed it (development users or the first administrator), reconcile Keycloak.</summary>
+/// <summary>The migrations host of an app: migrate the database, seed it (development users or the first administrator, then the seed contributors), reconcile Keycloak.</summary>
 public static class CoworkeeMigrations
 {
     public static IHostApplicationBuilder AddCoworkeeMigrations<TDbContext>(this IHostApplicationBuilder builder, Action<CoworkeeMigrationsOptions>? configure = null)
@@ -31,7 +36,25 @@ public static class CoworkeeMigrations
             builder.Services.AddCoworkeeIdentitySeed(options.DevelopmentSeed!);
         }
 
-        builder.Services.AddSingleton(new MigrationsPlan(typeof(TDbContext), admin is not null || developmentUsers, developmentUsers, Math.Max(1, options.Attempts), options.AfterSeed));
+        // seed contributors follow the demo users, also in apps without a development seed
+        var development = admin is null && (options.DevelopmentUsers ?? builder.Environment.IsDevelopment());
+        if (options.SyncRolesInDeployments && !development)
+        {
+            // a deployment set up in the browser has no administrator to seed: the deployment seed is called for its roles only
+            var seed = new IdentitySeedOptions();
+            (options.DeploymentSeed ?? AddAdmin)(seed, admin ?? new SeedUser("admin@localhost", string.Empty, IsAdmin: true));
+            var roles = seed.Roles.ToList();
+            builder.Services.AddTransient<ISeedContributor>(provider => new DeploymentRolesSeed(provider.GetRequiredService<IdentitySeeder>(), roles));
+        }
+
+        // [RegisterAs] works in the migrations project too (AddCoworkeeModules scans the module assemblies only)
+        if (Assembly.GetEntryAssembly() is { } entry)
+        {
+            builder.Services.AddRegisterAsServices(entry);
+        }
+
+        builder.Services.AddSingleton(new MigrationsPlan(
+            typeof(TDbContext), admin is not null || developmentUsers, developmentUsers, development, Math.Max(1, options.Attempts), options.AfterSeed));
         return builder;
     }
 
@@ -50,6 +73,7 @@ public static class CoworkeeMigrations
                 await GroupCodes.FillMissingAsync(coworkeeDb, cancellationToken);
             }
 
+            var isNew = plan.Seed && db is CoworkeeDbContext setUp && !await setUp.Set<SystemState>().AnyAsync(s => s.IsInitialized, cancellationToken);
             if (plan.Seed)
             {
                 await host.Services.SeedCoworkeeIdentityAsync(cancellationToken);
@@ -60,12 +84,14 @@ public static class CoworkeeMigrations
                 }
             }
 
+            await ActivatorUtilities.GetServiceOrCreateInstance<SeedRunner>(host.Services).RunAsync(plan.Development, isNew, cancellationToken);
             if (plan.AfterSeed is not null)
             {
                 await plan.AfterSeed(scope.ServiceProvider, cancellationToken);
             }
 
             await scope.ServiceProvider.ReconcileKeycloakRealmAsync(cancellationToken: cancellationToken);
+            await InvalidateCachesAsync(host.Services, cancellationToken);
             return 0;
         }
         catch (Exception exception)
@@ -93,7 +119,19 @@ public static class CoworkeeMigrations
         }
     }
 
+    // running services (a re-run against a running app, a rolling deployment) see grants, roles and settings written past their interceptors (SQL of a
+    // migration, ExecuteUpdate, AfterSeed) at once: with Redis the removal reaches every instance (RedisHybridCache)
+    private static async Task InvalidateCachesAsync(IServiceProvider services, CancellationToken cancellationToken)
+    {
+        if (services.GetService<HybridCache>() is { } cache)
+        {
+            // the tags of SettingProvider and FeatureChecker, whose packages this one does not reference
+            await cache.RemoveByTagAsync([Permissions.PermissionCache.Tag, "coworkee:settings", "coworkee:features"], cancellationToken);
+        }
+    }
+
     private static void AddAdmin(IdentitySeedOptions seed, SeedUser admin) => seed.Users.Add(admin);
 
-    private sealed record MigrationsPlan(Type DbContext, bool Seed, bool DevelopmentUsers, int Attempts, Func<IServiceProvider, CancellationToken, Task>? AfterSeed);
+    private sealed record MigrationsPlan(
+        Type DbContext, bool Seed, bool DevelopmentUsers, bool Development, int Attempts, Func<IServiceProvider, CancellationToken, Task>? AfterSeed);
 }

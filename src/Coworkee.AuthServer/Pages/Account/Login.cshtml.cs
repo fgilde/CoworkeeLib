@@ -1,4 +1,6 @@
+using Coworkee.Application.Auditing;
 using Coworkee.AuthServer.Registration;
+using Coworkee.Contracts.Auditing;
 using Coworkee.Contracts.Configuration;
 using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
@@ -15,7 +17,7 @@ namespace Coworkee.AuthServer.Pages.Account;
 
 public sealed class LoginModel(
     SignInManager<User> signIn, UserManager<User> users, CoworkeeDbContext db, ISettingProvider settings,
-    ISettingDefinitionManager definitions, IOptions<AuthServerOptions> options) : PageModel
+    ISettingDefinitionManager definitions, IOptions<AuthServerOptions> options, ISecurityLog securityLog) : PageModel
 {
     [BindProperty]
     public LoginInput Input { get; set; } = new();
@@ -72,12 +74,14 @@ public sealed class LoginModel(
         var user = await users.FindByEmailAsync(Input.Email) ?? (AllowUserName ? await users.FindByNameAsync(Input.Email) : null);
         if (user is null || !MaySignIn(user))
         {
+            await securityLog.WriteAsync(new SecurityLogEntry(SecurityActions.SignIn, user?.Id, user?.TenantId, false, user is null ? "UnknownUser" : "NotAllowed",
+                new { login = Input.Email, method = "password" }));
             ErrorMessage = T("Email or password is not correct.");
             return Page();
         }
 
         var result = await signIn.PasswordSignInAsync(user, Input.Password, Input.RememberMe, lockoutOnFailure: true);
-        return await FinishAsync(user, result, returnUrl, "Email or password is not correct.");
+        return await FinishAsync(user, result, returnUrl, "Email or password is not correct.", "password");
     }
 
     public async Task<IActionResult> OnPostPasskeyOptionsAsync()
@@ -103,6 +107,8 @@ public sealed class LoginModel(
         var assertion = string.IsNullOrEmpty(credential) ? null : await AssertAsync(credential);
         if (assertion is not { Succeeded: true, User: { } user, Passkey: { IsUserVerified: true } passkey } || !MaySignIn(user))
         {
+            await securityLog.WriteAsync(new SecurityLogEntry(SecurityActions.SignIn, assertion?.User?.Id, assertion?.User?.TenantId, false, "PasskeyNotAccepted",
+                new { method = "passkey" }));
             ErrorMessage = T("The passkey was not accepted.");
             return Page();
         }
@@ -111,7 +117,7 @@ public sealed class LoginModel(
             : await users.IsLockedOutAsync(user) ? SignInResult.LockedOut
             : !(await users.AddOrUpdatePasskeyAsync(user, passkey)).Succeeded ? SignInResult.Failed
             : await SignInAsync(user);
-        return await FinishAsync(user, result, returnUrl, "The passkey was not accepted.");
+        return await FinishAsync(user, result, returnUrl, "The passkey was not accepted.", "passkey");
     }
 
     private async Task<bool> PrepareAsync()
@@ -143,9 +149,16 @@ public sealed class LoginModel(
         return SignInResult.Success;
     }
 
-    private async Task<IActionResult> FinishAsync(User user, SignInResult result, string? returnUrl, string failed)
+    private async Task<IActionResult> FinishAsync(User user, SignInResult result, string? returnUrl, string failed, string method)
     {
         await db.SaveChangesAsync();
+        // the second step logs the sign-in once it is done
+        if (!result.RequiresTwoFactor)
+        {
+            var refused = result.Succeeded && AuthSessions.Refused(HttpContext);
+            await securityLog.WriteAsync(new SecurityLogEntry(SecurityActions.SignIn, user.Id, user.TenantId, result.Succeeded && !refused, refused ? "SessionLimit" : SignInFailure(result), new { method }));
+        }
+
         if (result.RequiresTwoFactor)
         {
             return RedirectToPage("LoginWith2fa", new { ReturnUrl = returnUrl, Input.RememberMe });
@@ -172,11 +185,21 @@ public sealed class LoginModel(
             return Page();
         }
 
+        if (AuthSessions.Refused(HttpContext))
+        {
+            ErrorMessage = T("You are signed in on too many devices. Sign out on one of them first or ask an administrator to end a session.");
+            return Page();
+        }
+
         user.LastLoginAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync();
 
         return LocalRedirect(Url.IsLocalUrl(returnUrl) ? returnUrl : "/");
     }
+
+    /// <summary>Why a sign-in failed, for the security log.</summary>
+    internal static string? SignInFailure(SignInResult result) =>
+        result.Succeeded ? null : result.IsLockedOut ? "LockedOut" : result.IsNotAllowed ? "NotAllowed" : "InvalidCredentials";
 
     public sealed class LoginInput
     {

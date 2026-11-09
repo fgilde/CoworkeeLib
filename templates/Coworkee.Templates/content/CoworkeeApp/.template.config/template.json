@@ -49,7 +49,7 @@
       "type": "parameter",
       "datatype": "bool",
       "defaultValue": "true",
-      "description": "Audit log pages (Coworkee.Auditing)."
+      "description": "Audit log, security log and request log pages (Coworkee.Auditing)."
     },
     "notifications": {
       "type": "parameter",
@@ -1094,7 +1094,7 @@
     },
     "defaultModel": {
       "type": "computed",
-      "value": "(database == \"postgres\" && ai && chat && reports && backup && notifications && retention && !files && !features && !social && !workflows && !webhooks && eventBus == \"none\" && (samples || !extendedAttributes))"
+      "value": "(database == \"postgres\" && auditing && ai && chat && reports && backup && notifications && retention && !files && !features && !social && !workflows && !webhooks && eventBus == \"none\" && (samples || !extendedAttributes))"
     }
   },
   "sources": [

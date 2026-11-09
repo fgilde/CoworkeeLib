@@ -16618,7 +16618,7 @@ export interface components {
         /** @enum {unknown} */
         SettingScope: "Global" | "Tenant" | "User";
         /** @enum {unknown} */
-        SettingType: "String" | "Text" | "Bool" | "Int" | "Secret" | "Choice" | "Language";
+        SettingType: "String" | "Text" | "Bool" | "Int" | "Secret" | "Choice" | "Language" | "MultiChoice";
         SettingValueDto: {
             name: string;
             value: null | string;

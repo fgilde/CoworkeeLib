@@ -5,7 +5,7 @@ The app host that runs the app on your machine also describes its deployment. `c
 | Target | Command | Status |
 |---|---|---|
 | Docker Compose | `coworkee deploy compose` | verified: a generated app with Keycloak, Grafana, WebDataStudio and LibreTranslate runs from the published files behind an HTTPS proxy; the seeded administrator signs in with the password and through Keycloak, Grafana shows the app's data, WebDataStudio opens the database, machine translation works. Ollama and AspireUI are published and checked in the files, not started |
-| Azure Container Apps | `coworkee deploy azure` | Bicep generated with the tools, every file compiles with `az bicep build`; not deployed to Azure |
+| Azure Container Apps | `coworkee deploy azure` (`--apply` deploys, `--github` writes a deploy workflow) | Bicep generated with the tools, every file compiles with `az bicep build`; not deployed to Azure |
 | Kubernetes | `coworkee deploy k8s` | Helm chart generated with the tools, `helm lint` and `kubeconform -strict` pass; not installed on a cluster |
 
 ## What changes in a deployment
@@ -57,6 +57,8 @@ Each tool with a web interface sits behind your reverse proxy like the services;
 When the database is empty, the migrations create the administrator of `<app>-admin-email` and `<app>-admin-password` with the organisation and the settings of the template, and the realm of a deployed Keycloak gets the same user. `coworkee deploy compose` asks for the email (or takes `--admin-email`, an environment variable `SHOP_ADMIN_EMAIL`, or `admin@<app>.local`), generates the password and prints both at the end of its output, nowhere else. The same email and password sign you in to the app, Keycloak, Grafana, WebDataStudio, Open WebUI, AspireUI and Mailpit.
 
 Leave both values empty and nothing is created: the app shows its setup page, where `<app>-setup-token` lets you set up the organisation and the administrator yourself. A database that is set up stays as it is; a changed password in `.env` reaches Keycloak and the tools, not the app's own account.
+
+Every run of the migrations (every `docker compose up`, the Container Apps job after each deployment, the Helm hook) also runs the app's [seed contributors](../fundamentals/persistence.md#seed-contributors), so data added to a seed reaches the deployed database; a failing one stops the run with exit code 1 and the services do not start. Roles and grants added to `DeploymentSeed` later reach a deployed database with `options.SyncRolesInDeployments = true`.
 
 ## Mail
 
@@ -225,6 +227,67 @@ var app = builder.AddCoworkeeApp("myapp", options => options.UseDatabase(databas
 ```
 
 Files need a storage that every replica shares: generate the app with `--storage azureBlob`. Deploy with `azd init` and `azd up`, and set the parameters there (public addresses of the services and tools, the administrator, the mail server, the two certificates, the setup token; `coworkee deploy compose` shows how to generate them). The images of the tools that carry files of the app come from Dockerfiles below `src/<App>.AppHost/observability/.generated/publish`, which azd builds. The migrations job runs when you start it: `az containerapp job start -n shop-migrations -g <resource group>`, after every deployment. **Not verified:** the Bicep compiles, a real deployment has not been made.
+
+### Deploying from your machine
+
+```bash
+az login
+coworkee deploy azure --resource-group shop-test --location germanywestcentral --apply
+```
+
+publishes the app host, checks the account the Azure CLI is signed in with, and lets Aspire build, push and deploy into exactly that resource group (made when missing; nothing is created at the subscription). Then it runs the migrations job and writes `.coworkee/deployments/<name>.json` with the addresses. The parameters it generates (administrator, passwords, certificates, push keys) are kept in `.coworkee/deployments/<name>.secrets.json`, which is git ignored; the next deployment with the same name takes them again, so the database password and the token certificates stay. `--name` names the deployment (default: the resource group), `--subscription` picks another subscription than the Azure CLI's, `--yes` skips the question, `--admin-email` sets the administrator (default: the signed-in account). Values set as environment variables named like the `.env` keys of Docker Compose (`SHOP_ADMIN_EMAIL`, `SHOP_ADMIN_PASSWORD`, `SHOP_SMTP_HOST`, ...) are taken when nothing is kept yet.
+
+### Deploying every branch with GitHub Actions
+
+```bash
+coworkee deploy azure --github --location germanywestcentral --branches main develop 'release/*'
+```
+
+writes `.github/workflows/deploy-azure.yml`: every push to one of the branches deploys that branch with `coworkee deploy azure --apply` into a resource group of its own. The same workflow comes from the option `deployWorkflow` when the app is created (`coworkee new --deploy-workflow azure`, the spec, the Tooling options in the Studio) or later (`coworkee add deployWorkflow azure deployBranches main,develop`). Its settings:
+
+| Setting | `deploy azure --github` | Option | Default |
+|---|---|---|---|
+| Resource group prefix | `--resource-group-prefix` | `deployResourceGroupPrefix` | the app's name in lower case |
+| Azure region | `--location` | `deployLocation` | `germanywestcentral` |
+| Branches (`*` as in GitHub) | `--branches` | `deployBranches` (comma separated) | `main` |
+| Delete with the branch | `--teardown-on-delete true` | `deployTeardown` | `false` |
+
+They are kept in `.coworkee/app.json` like every option: `coworkee deploy azure --github` without switches writes the workflow anew from them (after a `coworkee update`, for example), and the Studio shows them in the deploy card under *GitHub deploy workflow…*, where you change them and write the workflow again. The first line of the file holds a hash of what coworkee wrote. When you change the file by hand, coworkee notices it: the CLI refuses to overwrite it unless you pass `--force`, the Studio asks whether to overwrite your changes or keep your file, `coworkee add` leaves it alone with a warning, and `coworkee remove deployWorkflow` deletes it only when it is unchanged.
+
+What a run does:
+
+- **Triggers:** a push to a listed branch, and *Run workflow* (`workflow_dispatch`) for the branch you pick; with teardown also the deletion of a branch.
+- **One environment per branch:** a GitHub environment named like the branch (GitHub makes it on the first run) and the resource group `<prefix>-<branch>`. The branch is written in lower case, every run of characters other than `a-z`, `0-9` and `-` becomes one `-`, and the name is cut to the 90 characters Azure allows: `feature/Login_Page` becomes `shop-feature-login-page`. The deployment name in `.coworkee/deployments` is the same branch name.
+- **Steps:** checkout; .NET from `global.json`; Node.js 22 when the app has the AirWorks client; the `wasm-tools` workload when a project links native WebAssembly (`WasmBuildNative`, `RunAOTCompilation`, the client entities in SQLite); the Coworkee CLI as a dotnet tool in the `CoworkeeVersion` of `Directory.Packages.props` (from nuget.org: a local development feed does not reach the runner); `azure/login` with OIDC; `coworkee deploy azure --resource-group <group> --location <region> --name <branch> --apply --yes`.
+- **One run per branch at a time:** a second push waits until the first deployment is through.
+
+#### Values that stay from run to run
+
+The runner starts empty, but a deployment must not get new values every time: Postgres keeps the password of the first run in its volume, and new token certificates would sign everyone out. So the workflow keeps the generated parameters of each environment in its GitHub environment secret `COWORKEE_DEPLOY_SECRETS` (the content of `<name>.secrets.json`). Before the deployment it puts them back where `coworkee deploy` looks for them; after it, also after a failed run, it saves them when they changed (the first run, or a newer Coworkee with new parameters). Writing a secret needs a token: the repository secret `COWORKEE_SECRETS_TOKEN`. A run without that token and without kept values stops before it deploys anything.
+
+Values you want to choose yourself come from GitHub variables and secrets with the names of the Docker Compose keys, for every environment (repository level) or for one (environment level): the variable `SHOP_ADMIN_EMAIL` and the secret `SHOP_ADMIN_PASSWORD` for the first administrator, the variables `SHOP_SMTP_HOST`, `SHOP_SMTP_PORT`, `SHOP_SMTP_USERNAME`, `SHOP_SMTP_FROM` and the secret `SHOP_SMTP_PASSWORD` for the mail server (`SHOP` is the app's name in upper case). They are taken on the first run of an environment; afterwards the kept value wins. Set the administrator's password yourself: a generated one sits only in `COWORKEE_DEPLOY_SECRETS`, and GitHub shows no secret.
+
+!!! warning "Delete with the branch"
+    With `deployTeardown` (`--teardown-on-delete true`) deleting a branch deletes its resource group **with everything in it**: the database, the files, the secrets. There is no undo and no backup. The workflow never does it for the default branch and only for branches of the list, but deleting a branch by mistake or merging a pull request with *Delete branch* is enough. Leave it off for every environment whose data matters, and keep the role assignments of the next section narrow so the identity cannot delete more than these groups.
+
+#### One-time setup in Azure and GitHub
+
+coworkee writes the workflow, it never touches Azure or GitHub. You set up the identity once:
+
+1. **An app registration** for the workflow: `az ad app create --display-name shop-github-deploy`, then `az ad sp create --id <appId>`. It gets no client secret.
+2. **A federated credential per branch environment**, so a run of that branch may sign in as the app registration: issuer `https://token.actions.githubusercontent.com`, audience `api://AzureADTokenExchange`, subject `repo:<owner>/<repo>:environment:<branch>`:
+
+    ```bash
+    az ad app federated-credential create --id <appId> --parameters '{"name":"shop-main","issuer":"https://token.actions.githubusercontent.com","subject":"repo:acme/shop:environment:main","audiences":["api://AzureADTokenExchange"]}'
+    ```
+
+    An app registration takes at most 20 federated credentials, and the subject names one environment: a pattern like `release/*` needs a credential per branch that matches it (or Entra's flexible federated identity credentials, which match subjects by pattern).
+3. **Role assignments, as narrow as possible.** The deployment creates resources in the resource group and gives the container apps' managed identity pull rights on the registry, so the identity needs *Contributor* and *Role Based Access Control Administrator* (with the condition that it may assign only the roles Aspire gives, AcrPull and those of Azure resources your app host adds). Where you assign them decides what the identity can do:
+    - **Least privilege (recommended):** create the resource group of each environment yourself (`az group create -n shop-main -l germanywestcentral`) and assign both roles on that group only. The identity can change nothing outside the groups of your environments, and the teardown can delete nothing else. A new branch needs its group, its role assignments and its federated credential first.
+    - **Groups made by the workflow:** a resource group that does not exist yet can only be made with rights on the subscription, so both roles are assigned there. Then every branch deploys without preparation, but the identity can change everything in the subscription: give these environments a subscription of their own. Never assign *Owner*.
+4. **In GitHub** (Settings, Secrets and variables, Actions): the secrets `AZURE_CLIENT_ID` (the app registration's application id), `AZURE_TENANT_ID` and `AZURE_SUBSCRIPTION_ID`, on the repository or per environment (then each branch can use another subscription); `COWORKEE_SECRETS_TOKEN`, a fine-grained personal access token for this repository only with the permission *Environments: Read and write*; the administrator and mail values above. Protection rules of an environment (required reviewers for `main`, for example) apply to its deployments.
+
+**Not verified:** the workflow is generated and tested as text; a run against Azure has not been made.
 
 ## Kubernetes
 

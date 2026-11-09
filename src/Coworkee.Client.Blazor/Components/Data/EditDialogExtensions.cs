@@ -107,7 +107,7 @@ public static class EditDialogExtensions
         }
         catch (ApiException exception)
         {
-            return exception.Errors is { Count: > 0 } errors ? string.Join(Environment.NewLine, errors.SelectMany(e => e.Value)) : exception.Message;
+            return exception.Errors is { Count: > 0 } errors ? string.Join(Environment.NewLine, errors.SelectMany(e => e.Value)) : exception.Title ?? exception.Message;
         }
     }
 }

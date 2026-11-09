@@ -19,7 +19,8 @@ public static class CoworkeeClientExtensions
         MudBlazor.Extensions.Components.ObjectEdit.Options.ObjectEditPropertyMetaSettings.DefaultLabelResolverFn = Localization.PropertyLabels.For;
         Components.Editors.CoworkeeEditors.Register();
         services.AddTransient<Localization.CultureHeaderHandler>();
-        services.ConfigureHttpClientDefaults(client => client.AddHttpMessageHandler<Localization.CultureHeaderHandler>());
+        services.AddTransient<Localization.ProblemTextHandler>();
+        services.ConfigureHttpClientDefaults(client => client.AddHttpMessageHandler<Localization.CultureHeaderHandler>().AddHttpMessageHandler<Localization.ProblemTextHandler>());
         services.AddHttpClient<ICoworkeeApi, CoworkeeApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Data.IODataClient, Data.ODataClient>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Data.IDataTransferApi, Data.DataTransferApi>(client => client.BaseAddress = baseAddress);
@@ -35,10 +36,13 @@ public static class CoworkeeClientExtensions
         services.AddHttpClient<Features.IFeaturesApi, Features.FeaturesApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Security.IClientsApi, Security.ClientsApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Security.IApiKeysApi, Security.ApiKeysApi>(client => client.BaseAddress = baseAddress);
+        services.AddHttpClient<Security.ISessionsApi, Security.SessionsApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<History.IEntityHistoryApi, History.EntityHistoryApi>(client => client.BaseAddress = baseAddress);
         CommandPalette.CommandPaletteServiceCollectionExtensions.AddCommandPalette(services);
         services.AddHttpClient<Webhooks.IWebhooksApi, Webhooks.WebhooksApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Retention.IRetentionApi, Retention.RetentionApi>(client => client.BaseAddress = baseAddress);
+        services.AddHttpClient<Auditing.IAuditApi, Auditing.AuditApi>(client => client.BaseAddress = baseAddress);
+        services.AddScoped<Auditing.TraceViewer>();
         services.AddSingleton(new Pages.ProfileTab("API keys", "api-keys", typeof(Pages.ProfileApiKeys), Coworkee.Contracts.Identity.ApiKeyPermissions.Create,
             MudBlazor.Icons.Material.Outlined.Key, Order: 100));
         services.AddHttpClient<Backup.IBackupApi, Backup.BackupApi>(client =>

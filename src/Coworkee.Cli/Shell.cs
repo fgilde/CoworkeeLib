@@ -6,7 +6,8 @@ namespace Coworkee.Cli;
 internal static class Shell
 {
     /// <summary>Runs a command with the console's output; the environment is never printed (it may hold passwords).</summary>
-    public static async Task<int> RunAsync(IReadOnlyList<string> args, string? workingDirectory = null, CancellationToken cancellationToken = default, IReadOnlyDictionary<string, string>? environment = null)
+    public static async Task<int> RunAsync(IReadOnlyList<string> args, string? workingDirectory = null, CancellationToken cancellationToken = default, IReadOnlyDictionary<string, string>? environment = null,
+        Action<string>? onLine = null)
     {
         Console.WriteLine($"> {string.Join(' ', args)}");
         var start = Start(args, workingDirectory);
@@ -15,7 +16,26 @@ internal static class Shell
             start.Environment[name] = value;
         }
 
+        // with onLine the output still reaches the console, line by line, and the caller reads it too
+        start.RedirectStandardOutput = start.RedirectStandardError = onLine is not null;
         using var process = Process.Start(start)!;
+        if (onLine is not null)
+        {
+            void Echo(object _, DataReceivedEventArgs e)
+            {
+                if (e.Data is { } line)
+                {
+                    Console.WriteLine(line);
+                    onLine(line);
+                }
+            }
+
+            process.OutputDataReceived += Echo;
+            process.ErrorDataReceived += Echo;
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+        }
+
         await process.WaitForExitAsync(cancellationToken);
         return process.ExitCode;
     }

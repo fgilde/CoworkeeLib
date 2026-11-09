@@ -112,6 +112,92 @@ public sealed class CopyRoundTripTests : IDisposable
         restored.Count.ShouldBe(Rows.Length);
     }
 
+    [Fact]
+    public async Task A_disposed_store_opens_no_connection_again_and_its_copy_stays_for_the_next_visit()
+    {
+        var store = Store("disposed");
+        await store.ReplaceAsync(Rows, Version, TestContext.Current.CancellationToken);
+
+        await store.DisposeAsync();
+
+        // an InvalidOperationException, which the set takes as a query the copy cannot answer: it goes to the server
+        await Should.ThrowAsync<ObjectDisposedException>(() => store.QueryAsync(new ODataQuery(), NoFacets, TestContext.Current.CancellationToken));
+        await using var next = Store("disposed");
+        (await next.RestoreAsync(TestContext.Current.CancellationToken)).ShouldBe(Version);
+    }
+
+    [Fact]
+    public async Task Rows_applied_again_unchanged_are_no_change_and_the_file_is_not_kept_again()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var store = Store("again");
+        await store.ReplaceAsync(Rows, Version, ct);
+        var saves = _storage.Saves;
+
+        (await store.ApplyAsync(Rows, [], Version.AddMinutes(1), ct)).ShouldBeFalse();
+        (await store.ApplyAsync([], [Guid.NewGuid()], Version.AddMinutes(2), ct)).ShouldBeFalse("a delete of a row the copy no longer has");
+
+        _storage.Saves.ShouldBe(saves);
+        ShouldMatch(await AllAsync(store), Rows);
+        var added = Clone(Rows[2]);
+        added.Id = Guid.NewGuid();
+        (await store.ApplyAsync([added], [], Version.AddMinutes(3), ct)).ShouldBeTrue();
+        (await store.ApplyAsync([], [Rows[5].Id], Version.AddMinutes(4), ct)).ShouldBeTrue();
+        _storage.Saves.ShouldBe(saves + 2);
+        ShouldMatch(await AllAsync(store), [.. Rows.Where(r => r.Id != Rows[5].Id), added]);
+    }
+
+    // the server writes JSON columns with its own names (and its types' members), so its rows count as changed once, then they are in the browser's format
+    [Fact]
+    public async Task Rows_of_a_server_snapshot_count_as_changed_at_most_once()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var store = await SnapshotAsync();
+
+        await store.ApplyAsync(Rows, [], Version.AddMinutes(1), ct);
+
+        (await store.ApplyAsync(Rows, [], Version.AddMinutes(2), ct)).ShouldBeFalse();
+        ShouldMatch(await AllAsync(store), Rows);
+    }
+
+    public static TheoryData<string> Changes() =>
+        ["Tags", "Inner", "Name to null", "null to Name", "MaybeWhen to null", "Offset", "MaybeDay", "Price", "Level", "Time", "At", "Letter", "Flag", "Other"];
+
+    [Theory]
+    [MemberData(nameof(Changes))]
+    public async Task A_change_of_any_kept_value_is_written_and_kept(string change)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var store = Store("change");
+        await store.ReplaceAsync(Rows, Version, ct);
+        var saves = _storage.Saves;
+        var row = Clone(Rows[change == "null to Name" ? 0 : 1]);
+        switch (change)
+        {
+            case "Tags": row.Tags = [.. row.Tags, "new"]; break;
+            case "Inner": row.Inner = row.Inner! with { Size = row.Inner.Size + 1 }; break;
+            case "Name to null": row.Name = null; break;
+            case "null to Name": row.Name = "named"; break;
+            case "MaybeWhen to null": row.MaybeWhen = null; break;
+            case "Offset": row.When = row.When.ToOffset(row.When.Offset + TimeSpan.FromHours(1)); break;
+            case "MaybeDay": row.MaybeDay = row.MaybeDay!.Value.AddDays(1); break;
+            case "Price": row.Price += 0.01m; break;
+            case "Level": row.Level = Level.High; break;
+            case "Time": row.Time = row.Time.Add(TimeSpan.FromTicks(1)); break;
+            case "At": row.At = row.At.AddTicks(1); break;
+            case "Letter": row.Letter = 'z'; break;
+            case "Flag": row.Flag = !row.Flag; break;
+            default: row.Other = null; break;
+        }
+
+        (await store.ApplyAsync([row], [], Version.AddMinutes(1), ct)).ShouldBeTrue(change);
+
+        _storage.Saves.ShouldBe(saves + 1);
+        ShouldMatch(await AllAsync(store), [.. Rows.Select(r => r.Id == row.Id ? row : r)]);
+    }
+
+    private static Row Clone(Row row) => System.Text.Json.JsonSerializer.Deserialize<Row>(System.Text.Json.JsonSerializer.Serialize(row))!;
+
     public static TheoryData<string> Filters() =>
     [
         "Day ge 2026-03-01",
@@ -296,8 +382,11 @@ public sealed class CopyRoundTripTests : IDisposable
 
         public Task<byte[]?> LoadAsync(string key) => Task.FromResult(_data.GetValueOrDefault(key));
 
+        public int Saves { get; private set; }
+
         public Task SaveAsync(string key, byte[] data)
         {
+            Saves++;
             _data[key] = data;
             return Task.CompletedTask;
         }

@@ -21,6 +21,8 @@ Every kind of data is deleted across all organisations. The library never delete
 | `snapshots` | Retention | older revisions of versioned entities (`cw.EntitySnapshots`), the newest of each entity stays | `CreatedAt` | never |
 | `outbox` | Retention | processed outbox messages, pending ones stay | `ProcessedAt` | never |
 | `access-tokens` | Retention | expired anonymous tokens: temporary file links, export downloads | `ExpiresAt` | 1 day |
+| `security-events` | Retention | the [security log](auditing.md#security-log) (`cw.SecurityEvents`) | `At` | 365 days |
+| `request-log` | Auditing | the [request log](auditing.md#request-log) (`cw.RequestLog`) | `At` | 30 days |
 | `soft-deleted` | Retention | every soft deleted type of the model, except files | `DeletedAt` | never |
 | `inbox` | EventBus | processed integration events (`cw.InboxMessages`) | `ProcessedAt` | never |
 | `ai-tool-calls` | Ai | tool call audit | `At` | never |

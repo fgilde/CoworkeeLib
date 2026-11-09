@@ -36,6 +36,33 @@ public partial class Roles
         }
     }
 
+    private async Task EditAsync(RoleDto role)
+    {
+        // shared by every organisation and found by name; the API refuses it as well
+        if (role.IsSystem)
+        {
+            Snackbar.Add(L["System roles cannot be changed."], Severity.Warning);
+        }
+        else if (await RoleForm.EditAsync(Dialogs, Api, L["Edit role"], role))
+        {
+            Snackbar.Add(L["Role saved"], Severity.Success);
+        }
+    }
+
+    private async Task TransferAsync(RoleDto role)
+    {
+        if (await RoleUsersDialog.ShowAsync(Dialogs, L["Move or copy the users of {0}", role.Name], role) is not { } request)
+        {
+            return;
+        }
+
+        var count = 0;
+        if (await Snackbar.RunAsync(async () => count = await Api.TransferRoleUsersAsync(role.Id, request)))
+        {
+            Snackbar.Add(L[request.Move ? "{0} users moved" : "{0} users copied", count], Severity.Success);
+        }
+    }
+
     private async Task DeleteAsync(IReadOnlyCollection<RoleDto> roles)
     {
         foreach (var role in roles.Where(r => !r.IsSystem))

@@ -64,6 +64,14 @@ internal sealed class ApiKeyAuthenticationHandler(
                 .ExecuteUpdateAsync(s => s.SetProperty(k => k.LastUsedAt, now).SetProperty(k => k.LastUsedIp, ip), Context.RequestAborted);
         }
 
+        // the first use of a day is enough for the security log; every request is in the request log
+        if (found.LastUsedAt is not { } last || last.UtcDateTime.Date != now.UtcDateTime.Date)
+        {
+            await Context.RequestServices.GetRequiredService<Application.Auditing.ISecurityLog>().WriteAsync(
+                new Application.Auditing.SecurityLogEntry(Contracts.Auditing.SecurityActions.ApiKeyUsed, found.UserId, found.TenantId, Details: new { apiKeyId = found.Id }),
+                Context.RequestAborted);
+        }
+
         List<Claim> claims =
         [
             new("sub", found.UserId.ToString()),

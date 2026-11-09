@@ -11,8 +11,5 @@ builder.AddCoworkeeMigrations<MyAppDbContext>(options =>
     options.DevelopmentSeed = DemoSeed.Configure;
     options.DeploymentSeed = DemoSeed.ConfigureDeployment;
 });
-#if (samples)
-builder.Services.AddScoped<Coworkee.Application.Setup.ISetupStep, DemoData>();
-#endif
 using var host = builder.Build();
 return await host.RunCoworkeeMigrationsAsync();

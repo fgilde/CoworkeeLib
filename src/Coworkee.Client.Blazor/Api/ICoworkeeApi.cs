@@ -107,6 +107,12 @@ public interface ICoworkeeApi
 
     Task DeleteRoleAsync(Guid id, CancellationToken cancellationToken = default);
 
+    /// <summary>The users who have the role directly, a page at a time.</summary>
+    Task<PagedResult<UserDto>> GetRoleUsersAsync(Guid roleId, PageRequest page, CancellationToken cancellationToken = default);
+
+    /// <summary>Copies or moves the users of a role into other roles; the number of users it took.</summary>
+    Task<int> TransferRoleUsersAsync(Guid roleId, TransferRoleUsersRequest request, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<PermissionGroupDto>> GetPermissionDefinitionsAsync(CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<CustomPermissionDto>> GetCustomPermissionsAsync(CancellationToken cancellationToken = default);

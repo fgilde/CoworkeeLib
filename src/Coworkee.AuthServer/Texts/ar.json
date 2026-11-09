@@ -169,5 +169,6 @@
   "Sign in as another user": "تسجيل الدخول كمستخدم آخر",
   "You may not sign in as this user.": "لا يُسمح لك بتسجيل الدخول باسم هذا المستخدم.",
   "Back to my account": "العودة إلى حسابي",
-  "{0} is signed in as {1}.": "{0} مسجّل الدخول باسم {1}."
+  "{0} is signed in as {1}.": "{0} مسجّل الدخول باسم {1}.",
+  "You are signed in on too many devices. Sign out on one of them first or ask an administrator to end a session.": "لقد سجلت الدخول على عدد كبير جداً من الأجهزة. سجّل الخروج من أحدها أولاً أو اطلب من مسؤول إنهاء جلسة."
 }

@@ -17,6 +17,12 @@ public static class Processes
         process.OutputDataReceived += (_, e) => Forward(e.Data, false);
         process.ErrorDataReceived += (_, e) => Forward(e.Data, true);
         process.Start();
+        if (start.RedirectStandardInput)
+        {
+            // nobody answers: a program that asks reads the end of its input and takes its default
+            process.StandardInput.Close();
+        }
+
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
 

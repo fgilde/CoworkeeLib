@@ -38,6 +38,7 @@ public sealed class IdentityApp : DatabaseFixture
         builder.Configuration["Coworkee:Jobs:ConnectionStringName"] = "test";
         builder.Configuration["Coworkee:Jobs:RunServer"] = "false";
         builder.Configuration["Coworkee:Database:Provider"] = Provider;
+        builder.Configuration[$"Coworkee:Identity:FixedRoleNames:{RoleAdministrationTests.FixedName}"] = RoleAdministrationTests.UsedBy;
         builder.AddCoworkee<TestAppModule>();
         builder.Services.AddTestAuthentication();
         builder.Services.AddCoworkeeIdentitySeed(seed =>
@@ -49,6 +50,9 @@ public sealed class IdentityApp : DatabaseFixture
             seed.Settings["Theme.Mode"] = "dark";
         });
         builder.Services.AddScoped<Coworkee.Application.Setup.ISetupStep, RecordingSetupStep>();
+        builder.Services.AddTransient<Coworkee.Application.Setup.ISeedContributor, EarlySeed>();
+        builder.Services.AddTransient<Coworkee.Application.Setup.ISeedContributor, DevelopmentSeed>();
+        builder.Services.AddTransient<Coworkee.Application.Setup.ISeedContributor, HostSeed>();
         builder.Services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, RaceInjector>();
         builder.Services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, CommandGate>();
         builder.Services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, SelectionGate>();

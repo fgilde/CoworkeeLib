@@ -14,6 +14,10 @@ namespace Coworkee.Client.Blazor.ClientEntities;
 public sealed class ClientEntitySet<T> : ClientEntitySet
 {
     private const int FetchChunk = 50;
+
+    // a copy in a store takes more changed rows than this many chunks as a snapshot: each chunk costs the server a read of the visible keys, so beyond
+    // about ten chunks one snapshot of the whole set is faster (CoShipee, 23,000 shipments: a snapshot about 12 s)
+    private const int SnapshotAfterChunks = 10;
     private const int MaxViews = 16;
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
@@ -236,9 +240,18 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
             await _running;
         }
 
+        _storeLocal = false;
         _table = null;
         _kept = null;
         _download = null;
+
+        // whoever still shows this set (the table's switch) sees the server until the set of the new scope is local; the revision stays, so no reload
+        Publish(ClientEntityStatus.Initial with { Revision = Status.Revision });
+        if (_store is not null)
+        {
+            await _store.DisposeAsync();
+        }
+
         _stop.Dispose();
     }
 
@@ -247,8 +260,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         try
         {
             await Task.Delay(300, _stop.Token);
-            Interlocked.Exchange(ref _nudged, 0);
-            await SyncAsync(_stop.Token);
+            await SyncAsync(_stop.Token, nudged: true);
         }
         catch (OperationCanceledException)
         {
@@ -355,9 +367,15 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         }
     }
 
-    private async Task SyncAsync(CancellationToken cancellationToken)
+    private async Task SyncAsync(CancellationToken cancellationToken, bool nudged = false)
     {
         await _gate.WaitAsync(cancellationToken);
+        if (nudged)
+        {
+            // only now: nudges while a sync runs or this one waited for it are covered by this sync, at most one more waits behind it
+            Interlocked.Exchange(ref _nudged, 0);
+        }
+
         try
         {
             if (!_restored)
@@ -432,28 +450,10 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
 
         if (_store?.Snapshot(Expand) is { } snapshot && !_snapshotRejected)
         {
-            try
+            Publish(Status with { State = ClientEntitySyncState.Downloading, Loaded = 0, Total = start.Count, Error = null });
+            if (await ReplaceWithSnapshotAsync(snapshot, cancellationToken))
             {
-                var watch = System.Diagnostics.Stopwatch.StartNew();
-                Publish(Status with { State = ClientEntitySyncState.Downloading, Loaded = 0, Total = start.Count, Error = null });
-                if (await _api.SnapshotAsync(EntitySet, snapshot, cancellationToken) is { } file)
-                {
-                    var received = watch.ElapsedMilliseconds;
-                    await _store.ReplaceWithFileAsync(file.File, file.Version, cancellationToken);
-                    _logger.LogDebug("Snapshot of {EntitySet} ({Bytes} bytes) received in {Received} ms, opened in {Opened} ms",
-                        EntitySet, file.File.Length, received, watch.ElapsedMilliseconds - received);
-                    _download = null;
-                    CommitStore(file.Version, changed: true);
-                    return;
-                }
-
-                _snapshotRejected = true;
-            }
-            catch (Exception exception) when (exception is Api.ApiException or HttpRequestException or InvalidOperationException or FormatException)
-            {
-                // the pages of a download still work
-                _logger.LogWarning(exception, "The snapshot of {EntitySet} failed, it comes in pages", EntitySet);
-                _snapshotRejected = true;
+                return;
             }
         }
 
@@ -513,6 +513,34 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         await DropPagesAsync();
     }
 
+    // the whole copy as one file of the server; false when the server takes no snapshots or it failed: the rows then come from the OData set
+    private async Task<bool> ReplaceWithSnapshotAsync(ClientEntitySnapshotRequest snapshot, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            if (await _api.SnapshotAsync(EntitySet, snapshot, cancellationToken) is { } file)
+            {
+                var received = watch.ElapsedMilliseconds;
+                await _store!.ReplaceWithFileAsync(file.File, file.Version, cancellationToken);
+                _logger.LogDebug("Snapshot of {EntitySet} ({Bytes} bytes) received in {Received} ms, opened in {Opened} ms",
+                    EntitySet, file.File.Length, received, watch.ElapsedMilliseconds - received);
+                _download = null;
+                CommitStore(file.Version, changed: true);
+                return true;
+            }
+
+            _snapshotRejected = true;
+        }
+        catch (Exception exception) when (exception is Api.ApiException or HttpRequestException or InvalidOperationException or FormatException)
+        {
+            _logger.LogWarning(exception, "The snapshot of {EntitySet} failed, its rows come from the OData set", EntitySet);
+            _snapshotRejected = true;
+        }
+
+        return false;
+    }
+
     private async Task UpdateAsync(CancellationToken cancellationToken)
     {
         Publish(Status with { State = ClientEntitySyncState.Updating, Error = null });
@@ -533,6 +561,13 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
 
         if (_store is not null)
         {
+            // the copy keeps answering from the store until the file replaces it, and the file drops vanished rows too: no ids to compare
+            if ((changedIds.Count + FetchChunk - 1) / FetchChunk > SnapshotAfterChunks && changes.Count <= _info.MaxRows
+                && _store.Snapshot(Expand) is { } snapshot && !_snapshotRejected && await ReplaceWithSnapshotAsync(snapshot, cancellationToken))
+            {
+                return;
+            }
+
             await UpdateStoreAsync(changes, changedIds, cancellationToken);
             return;
         }
@@ -577,18 +612,23 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
 
         var rows = new Dictionary<Guid, T>();
         await FetchIntoAsync(rows, changedIds, cancellationToken);
-        List<Guid> deleted = [.. changes.Deleted];
-        if (store.Count - deleted.Count + rows.Count != changes.Count)
+        var changed = await store.ApplyAsync(rows.Values, changes.Deleted, changes.Version, cancellationToken);
+
+        // counted after the changes: an updated row the store had already, or a delete the feed reports again (its overlap), is no row more or less
+        if (store.Count != changes.Count)
         {
             // rows vanished unseen or are missing: compare all ids once
             var visible = (await _api.IdsAsync(EntitySet, cancellationToken)).ToHashSet();
             var kept = (await store.IdsAsync(cancellationToken)).ToHashSet();
-            deleted.AddRange(kept.Where(id => !visible.Contains(id)));
-            await FetchIntoAsync(rows, [.. visible.Where(id => !kept.Contains(id) && !rows.ContainsKey(id))], cancellationToken);
+            List<Guid> gone = [.. kept.Where(id => !visible.Contains(id))];
+            var missing = new Dictionary<Guid, T>();
+            await FetchIntoAsync(missing, [.. visible.Where(id => !kept.Contains(id))], cancellationToken);
+            if (gone.Count > 0 || missing.Count > 0)
+            {
+                changed |= await store.ApplyAsync(missing.Values, gone, changes.Version, cancellationToken);
+            }
         }
 
-        var changed = rows.Count > 0 || deleted.Count > 0;
-        await store.ApplyAsync(rows.Values, deleted, changes.Version, cancellationToken);
         CommitStore(changes.Version, changed);
     }
 
@@ -640,20 +680,28 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         }
     }
 
+    // true when a row was added or differs from the one held: a row fetched again unchanged (the change feed's overlap) neither rebuilds nor reloads the copy
     private async Task<bool> FetchIntoAsync(Dictionary<Guid, T> rows, IReadOnlyList<Guid> ids, CancellationToken cancellationToken)
     {
+        var changed = false;
         foreach (var round in ids.Chunk(FetchChunk).Chunk(Math.Max(1, _info.ParallelPages)))
         {
             var pages = await Task.WhenAll(round.Select(chunk =>
                 RowsAsync(new ODataQuery { Filter = $"Id in ({string.Join(",", chunk)})", Top = chunk.Length, Count = false }, cancellationToken)));
             foreach (var item in pages.SelectMany(p => p.Items))
             {
-                rows[IdOf!(item)] = item;
+                var id = IdOf!(item);
+                changed |= !rows.TryGetValue(id, out var held) || !Same(held, item);
+                rows[id] = item;
             }
         }
 
-        return ids.Count > 0;
+        return changed;
     }
+
+    // every property, lists and expanded navigations included, as JSON: a value the copy keeps differently (another offset, a decimal's scale) counts as a change
+    private static bool Same(T held, T fetched) =>
+        JsonSerializer.SerializeToUtf8Bytes(held, Json).AsSpan().SequenceEqual(JsonSerializer.SerializeToUtf8Bytes(fetched, Json));
 
     // only the properties of the row type travel; a server that rejects them sends whole rows
     private async Task<ODataPage<T>> RowsAsync(ODataQuery query, CancellationToken cancellationToken)

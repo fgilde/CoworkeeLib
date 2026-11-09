@@ -5,7 +5,7 @@ Der App-Host, der die App auf deinem Rechner startet, beschreibt auch ihr Deploy
 | Ziel | Befehl | Stand |
 |---|---|---|
 | Docker Compose | `coworkee deploy compose` | geprüft: eine generierte App mit Keycloak, Grafana, WebDataStudio und LibreTranslate läuft aus den veröffentlichten Dateien hinter einem HTTPS-Proxy; der angelegte Administrator meldet sich mit Passwort und über Keycloak an, Grafana zeigt die Daten der App, WebDataStudio öffnet die Datenbank, die maschinelle Übersetzung funktioniert. Ollama und AspireUI werden veröffentlicht und in den Dateien geprüft, aber nicht gestartet |
-| Azure Container Apps | `coworkee deploy azure` | Bicep mit den Tools erzeugt, jede Datei kompiliert mit `az bicep build`; nicht nach Azure deployt |
+| Azure Container Apps | `coworkee deploy azure` (`--apply` deployt, `--github` schreibt einen Deploy-Workflow) | Bicep mit den Tools erzeugt, jede Datei kompiliert mit `az bicep build`; nicht nach Azure deployt |
 | Kubernetes | `coworkee deploy k8s` | Helm-Chart mit den Tools erzeugt, `helm lint` und `kubeconform -strict` laufen durch; auf keinem Cluster installiert |
 
 ## Was sich im Deployment ändert
@@ -57,6 +57,8 @@ Jedes Tool mit Weboberfläche steht wie die Dienste hinter deinem Reverse Proxy;
 Ist die Datenbank leer, legen die Migrationen den Administrator aus `<app>-admin-email` und `<app>-admin-password` an, mit der Organisation und den Einstellungen des Templates, und der Realm eines mitdeployten Keycloak bekommt denselben Benutzer. `coworkee deploy compose` fragt nach der E-Mail (oder nimmt `--admin-email`, eine Umgebungsvariable `SHOP_ADMIN_EMAIL` oder `admin@<app>.local`), erzeugt das Passwort und gibt beides am Ende seiner Ausgabe aus, sonst nirgends. Mit derselben E-Mail und demselben Passwort meldest du dich an der App, an Keycloak, Grafana, WebDataStudio, Open WebUI, AspireUI und Mailpit an.
 
 Lässt du beide Werte leer, wird nichts angelegt: Die App zeigt ihre Setup-Seite, auf der du mit `<app>-setup-token` Organisation und Administrator selbst einrichtest. Eine eingerichtete Datenbank bleibt, wie sie ist; ein geändertes Passwort in `.env` erreicht Keycloak und die Tools, nicht das Konto in der App.
+
+Jeder Lauf der Migrationen (jedes `docker compose up`, der Container-Apps-Job nach jedem Deployment, der Helm-Hook) führt auch die [Seed-Contributors](../fundamentals/persistence.md#seed-contributors) der App aus, so erreichen Daten, die ein Seed neu bekommt, die deployte Datenbank; ein fehlschlagender beendet den Lauf mit Exit-Code 1, und die Dienste starten nicht. Rollen und Berechtigungen, die später in `DeploymentSeed` dazukommen, erreichen eine deployte Datenbank mit `options.SyncRolesInDeployments = true`.
 
 ## Mail
 
@@ -225,6 +227,67 @@ var app = builder.AddCoworkeeApp("myapp", options => options.UseDatabase(databas
 ```
 
 Dateien brauchen einen Speicher, den alle Replikate teilen: Erzeuge die App mit `--storage azureBlob`. Deployt wird mit `azd init` und `azd up`; dort setzt du die Parameter (öffentliche Adressen der Dienste und Tools, den Administrator, den Mailserver, die beiden Zertifikate, das Setup-Token; wie man sie erzeugt, zeigt `coworkee deploy compose`). Die Images der Tools, die Dateien der App mitbringen, entstehen aus Dockerfiles unter `src/<App>.AppHost/observability/.generated/publish`, die azd baut. Der Migrations-Job läuft, wenn du ihn startest: `az containerapp job start -n shop-migrations -g <ressourcengruppe>`, nach jedem Deployment. **Nicht geprüft:** Das Bicep kompiliert, ein echtes Deployment gab es noch nicht.
+
+### Von deinem Rechner deployen
+
+```bash
+az login
+coworkee deploy azure --resource-group shop-test --location germanywestcentral --apply
+```
+
+veröffentlicht den App-Host, prüft das Konto, mit dem die Azure CLI angemeldet ist, und lässt Aspire genau in diese Ressourcengruppe bauen, pushen und deployen (sie wird angelegt, wenn sie fehlt; im Abonnement selbst entsteht nichts). Danach startet es den Migrations-Job und schreibt `.coworkee/deployments/<name>.json` mit den Adressen. Die Parameter, die es erzeugt (Administrator, Passwörter, Zertifikate, Push-Schlüssel), liegen in `.coworkee/deployments/<name>.secrets.json`, die Git ignoriert; das nächste Deployment mit demselben Namen nimmt sie wieder, damit Datenbankpasswort und Token-Zertifikate bleiben. `--name` benennt das Deployment (Standard: die Ressourcengruppe), `--subscription` wählt ein anderes Abonnement als das der Azure CLI, `--yes` überspringt die Rückfrage, `--admin-email` setzt den Administrator (Standard: das angemeldete Konto). Umgebungsvariablen mit den Namen der `.env`-Schlüssel von Docker Compose (`SHOP_ADMIN_EMAIL`, `SHOP_ADMIN_PASSWORD`, `SHOP_SMTP_HOST`, ...) werden genommen, solange noch nichts gespeichert ist.
+
+### Jeden Branch mit GitHub Actions deployen
+
+```bash
+coworkee deploy azure --github --location germanywestcentral --branches main develop 'release/*'
+```
+
+schreibt `.github/workflows/deploy-azure.yml`: Jeder Push auf einen der Branches deployt diesen Branch mit `coworkee deploy azure --apply` in eine eigene Ressourcengruppe. Denselben Workflow liefert die Option `deployWorkflow` beim Anlegen der App (`coworkee new --deploy-workflow azure`, die Spezifikation, die Tooling-Optionen im Studio) oder später (`coworkee add deployWorkflow azure deployBranches main,develop`). Seine Einstellungen:
+
+| Einstellung | `deploy azure --github` | Option | Standard |
+|---|---|---|---|
+| Präfix der Ressourcengruppen | `--resource-group-prefix` | `deployResourceGroupPrefix` | der Name der App in Kleinbuchstaben |
+| Azure-Region | `--location` | `deployLocation` | `germanywestcentral` |
+| Branches (`*` wie in GitHub) | `--branches` | `deployBranches` (durch Kommas getrennt) | `main` |
+| Mit dem Branch löschen | `--teardown-on-delete true` | `deployTeardown` | `false` |
+
+Sie liegen wie jede Option in `.coworkee/app.json`: `coworkee deploy azure --github` ohne Schalter schreibt den Workflow daraus neu (etwa nach einem `coworkee update`), und das Studio zeigt sie in der Deploy-Karte unter *GitHub-Deploy-Workflow …*, wo du sie änderst und den Workflow neu schreibst. Die erste Zeile der Datei enthält einen Hash dessen, was coworkee geschrieben hat. Änderst du die Datei von Hand, merkt coworkee das: Die CLI überschreibt sie nur mit `--force`, das Studio fragt, ob es deine Änderungen überschreiben oder deine Datei behalten soll, `coworkee add` lässt sie mit einer Warnung stehen, und `coworkee remove deployWorkflow` löscht sie nur, wenn sie unverändert ist.
+
+Was ein Lauf tut:
+
+- **Auslöser:** ein Push auf einen genannten Branch und *Run workflow* (`workflow_dispatch`) für den gewählten Branch; mit Teardown auch das Löschen eines Branches.
+- **Eine Umgebung je Branch:** eine GitHub-Umgebung mit dem Namen des Branches (GitHub legt sie beim ersten Lauf an) und die Ressourcengruppe `<präfix>-<branch>`. Der Branch wird kleingeschrieben, jede Folge anderer Zeichen als `a-z`, `0-9` und `-` wird zu einem `-`, und der Name wird auf die 90 Zeichen gekürzt, die Azure erlaubt: Aus `feature/Login_Page` wird `shop-feature-login-page`. Der Deployment-Name in `.coworkee/deployments` ist derselbe Branch-Name.
+- **Schritte:** Checkout; .NET aus `global.json`; Node.js 22, wenn die App den AirWorks-Client hat; der Workload `wasm-tools`, wenn ein Projekt natives WebAssembly linkt (`WasmBuildNative`, `RunAOTCompilation`, die Client-Entities in SQLite); die Coworkee CLI als dotnet-Tool in der `CoworkeeVersion` aus `Directory.Packages.props` (von nuget.org: ein lokaler Entwicklungs-Feed erreicht den Runner nicht); `azure/login` mit OIDC; `coworkee deploy azure --resource-group <gruppe> --location <region> --name <branch> --apply --yes`.
+- **Ein Lauf je Branch zur Zeit:** Ein zweiter Push wartet, bis das erste Deployment durch ist.
+
+#### Werte, die von Lauf zu Lauf bleiben
+
+Der Runner startet leer, ein Deployment darf aber nicht jedes Mal neue Werte bekommen: Postgres behält das Passwort des ersten Laufs in seinem Volume, und neue Token-Zertifikate würden alle abmelden. Deshalb hält der Workflow die erzeugten Parameter jeder Umgebung in ihrem GitHub-Umgebungs-Secret `COWORKEE_DEPLOY_SECRETS` (der Inhalt von `<name>.secrets.json`). Vor dem Deployment legt er sie dorthin zurück, wo `coworkee deploy` sie sucht; danach, auch nach einem fehlgeschlagenen Lauf, speichert er sie, wenn sie sich geändert haben (beim ersten Lauf oder mit einem neueren Coworkee mit neuen Parametern). Ein Secret zu schreiben braucht ein Token: das Repository-Secret `COWORKEE_SECRETS_TOKEN`. Ein Lauf ohne dieses Token und ohne gespeicherte Werte bricht ab, bevor er etwas deployt.
+
+Werte, die du selbst wählen willst, kommen aus GitHub-Variablen und -Secrets mit den Namen der Docker-Compose-Schlüssel, für alle Umgebungen (auf Repository-Ebene) oder für eine (auf Umgebungs-Ebene): die Variable `SHOP_ADMIN_EMAIL` und das Secret `SHOP_ADMIN_PASSWORD` für den ersten Administrator, die Variablen `SHOP_SMTP_HOST`, `SHOP_SMTP_PORT`, `SHOP_SMTP_USERNAME`, `SHOP_SMTP_FROM` und das Secret `SHOP_SMTP_PASSWORD` für den Mailserver (`SHOP` ist der Name der App in Großbuchstaben). Sie gelten beim ersten Lauf einer Umgebung; danach gewinnt der gespeicherte Wert. Setz das Passwort des Administrators selbst: Ein erzeugtes steht nur in `COWORKEE_DEPLOY_SECRETS`, und GitHub zeigt kein Secret an.
+
+!!! warning "Mit dem Branch löschen"
+    Mit `deployTeardown` (`--teardown-on-delete true`) löscht das Löschen eines Branches seine Ressourcengruppe **mit allem darin**: die Datenbank, die Dateien, die Secrets. Es gibt kein Zurück und kein Backup. Der Workflow tut das nie für den Standard-Branch und nur für Branches der Liste, aber ein versehentlich gelöschter Branch oder ein Pull Request, der mit *Delete branch* gemergt wird, genügt. Lass es für jede Umgebung aus, deren Daten zählen, und halte die Rollenzuweisungen aus dem nächsten Abschnitt eng, damit die Identität nicht mehr löschen kann als diese Gruppen.
+
+#### Einmalige Einrichtung in Azure und GitHub
+
+coworkee schreibt den Workflow, Azure und GitHub fasst es nie an. Die Identität richtest du einmal selbst ein:
+
+1. **Eine App-Registrierung** für den Workflow: `az ad app create --display-name shop-github-deploy`, dann `az ad sp create --id <appId>`. Sie bekommt kein Client-Secret.
+2. **Eine Verbundanmeldeinformation (federated credential) je Branch-Umgebung**, damit sich ein Lauf dieses Branches als App-Registrierung anmelden darf: Aussteller `https://token.actions.githubusercontent.com`, Zielgruppe `api://AzureADTokenExchange`, Subjekt `repo:<owner>/<repo>:environment:<branch>`:
+
+    ```bash
+    az ad app federated-credential create --id <appId> --parameters '{"name":"shop-main","issuer":"https://token.actions.githubusercontent.com","subject":"repo:acme/shop:environment:main","audiences":["api://AzureADTokenExchange"]}'
+    ```
+
+    Eine App-Registrierung nimmt höchstens 20 Verbundanmeldeinformationen, und das Subjekt nennt genau eine Umgebung: Ein Muster wie `release/*` braucht eine pro passendem Branch (oder die flexiblen Verbundanmeldeinformationen von Entra, die Subjekte per Muster vergleichen).
+3. **Rollenzuweisungen, so eng wie möglich.** Das Deployment legt Ressourcen in der Ressourcengruppe an und gibt der verwalteten Identität der Container-Apps Pull-Rechte auf die Registry, also braucht die Identität *Contributor* (Mitwirkender) und *Role Based Access Control Administrator* (mit der Bedingung, dass sie nur die Rollen vergeben darf, die Aspire vergibt: AcrPull und die der Azure-Ressourcen, die dein App-Host hinzufügt). Wo du sie zuweist, entscheidet, was die Identität darf:
+    - **Minimale Rechte (empfohlen):** Leg die Ressourcengruppe jeder Umgebung selbst an (`az group create -n shop-main -l germanywestcentral`) und weise beide Rollen nur auf dieser Gruppe zu. Die Identität kann außerhalb der Gruppen deiner Umgebungen nichts ändern, und der Teardown kann nichts anderes löschen. Ein neuer Branch braucht vorher seine Gruppe, seine Rollenzuweisungen und seine Verbundanmeldeinformation.
+    - **Gruppen, die der Workflow anlegt:** Eine Ressourcengruppe, die es noch nicht gibt, lässt sich nur mit Rechten auf dem Abonnement anlegen, also werden beide Rollen dort zugewiesen. Dann deployt jeder Branch ohne Vorbereitung, aber die Identität kann alles im Abonnement ändern: Gib diesen Umgebungen ein eigenes Abonnement. Weise nie *Owner* (Besitzer) zu.
+4. **In GitHub** (Settings, Secrets and variables, Actions): die Secrets `AZURE_CLIENT_ID` (die Anwendungs-ID der App-Registrierung), `AZURE_TENANT_ID` und `AZURE_SUBSCRIPTION_ID`, auf dem Repository oder je Umgebung (dann kann jeder Branch ein anderes Abonnement nutzen); `COWORKEE_SECRETS_TOKEN`, ein Fine-grained Personal Access Token nur für dieses Repository mit der Berechtigung *Environments: Read and write*; die Werte für Administrator und Mail von oben. Schutzregeln einer Umgebung (etwa erforderliche Reviewer für `main`) gelten für ihre Deployments.
+
+**Nicht geprüft:** Der Workflow wird erzeugt und als Text getestet; ein Lauf gegen Azure wurde noch nicht gemacht.
 
 ## Kubernetes
 

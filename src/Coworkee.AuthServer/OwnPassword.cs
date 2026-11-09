@@ -2,7 +2,6 @@ using Coworkee.Identity.Domain;
 using Coworkee.Identity.Users;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 
@@ -14,13 +13,8 @@ namespace Coworkee.AuthServer;
 /// </summary>
 internal static class OwnPassword
 {
+    /// <summary>Item of the cookie's sign-in: its session id, set when it starts (<see cref="AuthSessions.StartAsync"/>).</summary>
     public const string SessionItem = "coworkee_sid";
-
-    public static Task NameSession(CookieSigningInContext context)
-    {
-        context.Properties.Items.TryAdd(SessionItem, Guid.NewGuid().ToString("N"));
-        return Task.CompletedTask;
-    }
 
     public static async Task<IdentityResult> ChangeAsync(
         HttpContext context, UserManager<User> users, SignInManager<User> signIn, CoworkeeDbContext db, User user, string current, string next)

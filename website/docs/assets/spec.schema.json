@@ -68,7 +68,7 @@
           "type": "string"
         },
         "auditing": {
-          "description": "Pages for the audit trail, entity history and restore. The trail itself is always written.",
+          "description": "Pages for the audit trail, entity history and restore, the security log and the request log of the API. The trail and the security log are always written.",
           "type": "boolean",
           "default": true
         },
@@ -466,6 +466,34 @@
         },
         "githubActions": {
           "description": "A workflow (.github/workflows/ci.yml) that builds the solution and runs its tests on every push and pull request.",
+          "type": "boolean",
+          "default": false
+        },
+        "deployWorkflow": {
+          "description": "A GitHub Actions workflow (.github/workflows/deploy-azure.yml) that deploys every push to the listed branches to Azure Container Apps: one GitHub environment and one resource group per branch, signed in with OIDC. The one-time setup in Azure and GitHub is in the deployment docs.",
+          "type": "string",
+          "enum": [
+            "none",
+            "azure"
+          ],
+          "default": "none"
+        },
+        "deployResourceGroupPrefix": {
+          "description": "The deploy workflow puts each branch into the resource group <prefix>-<branch>; empty takes the app's name. Only used with deployWorkflow = azure.",
+          "type": "string"
+        },
+        "deployLocation": {
+          "description": "The Azure region of the deployed environments, e.g. germanywestcentral or westeurope. Only used with deployWorkflow = azure.",
+          "type": "string",
+          "default": "germanywestcentral"
+        },
+        "deployBranches": {
+          "description": "The branches whose pushes the deploy workflow deploys, separated by commas; * matches as in GitHub (release/*). Only used with deployWorkflow = azure.",
+          "type": "string",
+          "default": "main"
+        },
+        "deployTeardown": {
+          "description": "When a deployed branch is deleted, the workflow deletes its resource group with everything in it: database, files, secrets. Never for the default branch. Only used with deployWorkflow = azure.",
           "type": "boolean",
           "default": false
         },

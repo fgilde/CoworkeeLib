@@ -25,7 +25,7 @@ internal sealed class SupportSettingDefinitions : ISettingDefinitionContributor
 context.Services.AddSingleton<ISettingDefinitionContributor, SupportSettingDefinitions>();
 ```
 
-Types are `String`, `Text`, `Bool`, `Int`, `Secret`, `Choice` and `Language`; scopes are `Global`, `Tenant` and `User`. The most specific value wins. Secrets are encrypted with ASP.NET Core data protection and never sent to the client; settings with `visibleToClient: true` are. A name is defined once in the whole app: two contributors adding the same name stop the start. Groups may be shared, the first contributor names them.
+Types are `String`, `Text`, `Bool`, `Int`, `Secret`, `Choice`, `MultiChoice` and `Language`; scopes are `Global`, `Tenant` and `User`. The most specific value wins. Secrets are encrypted with ASP.NET Core data protection and never sent to the client; settings with `visibleToClient: true` are. A name is defined once in the whole app: two contributors adding the same name stop the start. Groups may be shared, the first contributor names them.
 
 ```csharp
 var allowed = await settings.GetAsync<bool>(AccountSettings.AllowRegistration, ct);
@@ -62,6 +62,7 @@ context.Services.AddSingleton<ISettingDefinitionContributor, BillingSettingDefin
 | `Text` | a text field with four lines |
 | `Bool` | a check box, showing the stored value or the default |
 | `Choice` | a select of the `choices`; each value is shown translated when the translations have an entry for it, else as is |
+| `MultiChoice` | a select of the `choices` with several values, stored comma separated (`Reading,Writing`); nothing chosen is stored as an empty value, which unlike no value does not fall back to the default. Read it with `SettingDefinition.SplitChoices(value)` |
 | `Language` | a select of the app's languages; empty means inherit, shown as *Configured default* in the System tab and *Inherited* in Organisation and My settings (labelled *Language* in My settings) |
 | `Secret` | a password field that stays empty; the help text says whether a value is stored, and only a typed value is sent |
 | `enabledWhen` | the field is disabled while the other setting's value is not in the condition's values |

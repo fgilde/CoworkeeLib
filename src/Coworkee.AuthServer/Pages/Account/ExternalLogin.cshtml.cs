@@ -1,4 +1,6 @@
+using Coworkee.Application.Auditing;
 using Coworkee.AuthServer.External;
+using Coworkee.Contracts.Auditing;
 using Coworkee.Contracts.Configuration;
 using Coworkee.Identity.Domain;
 using Coworkee.Infrastructure.Persistence;
@@ -13,7 +15,7 @@ namespace Coworkee.AuthServer.Pages.Account;
 
 public sealed class ExternalLoginModel(
     SignInManager<User> signIn, ExternalSignIn external, CoworkeeDbContext db, ISettingProvider settings, ISettingDefinitionManager definitions,
-    IOptions<AuthServerOptions> options) : PageModel
+    IOptions<AuthServerOptions> options, ISecurityLog securityLog) : PageModel
 {
     public string? ErrorMessage { get; private set; }
 
@@ -45,13 +47,22 @@ public sealed class ExternalLoginModel(
 
         if (!user.IsSuccess)
         {
+            await securityLog.WriteAsync(new SecurityLogEntry(SecurityActions.SignIn, null, null, false, user.Error!.Code, new { method = login.LoginProvider }));
             ErrorMessage = user.Error!.Message;
             return Page();
         }
 
         await signIn.SignInAsync(user.Value, isPersistent: false, login.LoginProvider);
+        if (AuthSessions.Refused(HttpContext))
+        {
+            await securityLog.WriteAsync(new SecurityLogEntry(SecurityActions.SignIn, user.Value.Id, user.Value.TenantId, false, "SessionLimit", new { method = login.LoginProvider }));
+            ErrorMessage = AuthTexts.T("You are signed in on too many devices. Sign out on one of them first or ask an administrator to end a session.");
+            return Page();
+        }
+
         user.Value.LastLoginAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(HttpContext.RequestAborted);
+        await securityLog.WriteAsync(new SecurityLogEntry(SecurityActions.SignIn, user.Value.Id, user.Value.TenantId, Details: new { method = login.LoginProvider }));
         return LocalRedirect(Url.IsLocalUrl(returnUrl) ? returnUrl : "/");
     }
 }

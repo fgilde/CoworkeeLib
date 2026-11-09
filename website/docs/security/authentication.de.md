@@ -140,13 +140,15 @@ public static void Configure(IdentitySeedOptions seed)
 }
 ```
 
+Nach dem Seed und bei jedem späteren Lauf führen die Migrationen die [Seed-Contributors](../fundamentals/persistence.md#seed-contributors) der App aus. Ein im Assistenten eingerichtetes System bekommt die Contributors der Module je Mandant sofort, von der API im Hintergrund nach dem Commit; Contributors des Migrationsprojekts und der Rollenabgleich von `SyncRolesInDeployments` erreichen es mit dem nächsten Migrationslauf.
+
 ## Kontofunktionen
 
 Registrierung ist standardmäßig aus; die Einstellung `Account.AllowRegistration` schaltet sie ein, und Apps aus der Vorlage legen sie eingeschaltet an (`--registration false` lässt sie aus). Assistent, Freischaltung, erlaubte Adressen, Dokumente und Anmelderegeln beschreibt [Registrierung und Anmelderegeln](registration.md), Layout, Theme und Medien der Kontoseiten [Anmeldeseiten und Designs](sign-in-pages.md). Passwort, Bestätigung in zwei Schritten und [Passkeys](passkeys.md) ändern Benutzer auf der Kontoseite des Auth-Servers, verlinkt aus dem Benutzermenü; das Passwort auch über die API ([Das eigene Passwort ändern](clients.md#das-eigene-passwort-andern)). Die E-Mail-Adresse ändern sie in der App unter *Mein Profil › Sicherheit*: nach dem aktuellen Passwort bekommt die neue Adresse einen Bestätigungslink und die alte einen Hinweis; die alte Adresse gilt, bis der Link geöffnet wird. Eine Adresse, die ein anderes Konto nutzt, bekommt keinen Link, und die Antwort bleibt gleich, so erfährt niemand, welche Adressen es gibt.
 
 Auf der Seite eines Benutzers bearbeiten Administratoren alles: Benutzername, Namen, Telefon, Adresse, Sprache, aktiv, E-Mail bestätigt, die Adresse selbst (sofort, bestätigt oder mit Bestätigungsmail; die alte Adresse bekommt einen Hinweis), das Passwort (setzen oder Link zum Zurücksetzen senden), eine Einladung für Benutzer ohne Passwort, Sperre, Zurücksetzen der Bestätigung in zwei Schritten, externe Anmeldungen, Rollen, Gruppen und das Bild. Neue Benutzer entstehen in einem Dialog, entweder per Mail eingeladen, ein Passwort zu wählen, oder mit einem Startpasswort.
 
-Administratoren verwalten weitere Clients und Scopes in der App, beenden Sitzungen sofort und legen Passwortregeln fest: siehe [Clients, Sitzungen und Passwortregeln](clients.md).
+Administratoren verwalten weitere Clients und Scopes in der App, beenden Sitzungen sofort und legen Passwortregeln fest: siehe [Clients, Sitzungen und Passwortregeln](clients.md). Jede Anmeldung (auch eine fehlgeschlagene, mit Grund), Abmeldung, Sperre und Änderung an Passwort, Adresse, Bestätigung in zwei Schritten, Passkeys, Schlüsseln, Rollen und Berechtigungen landet im [Sicherheitsprotokoll](../modules/auditing.md#sicherheitsprotokoll); die Benutzerseite verlinkt auf die Einträge des Benutzers.
 
 ## Sicherheits-Header der Web-App
 

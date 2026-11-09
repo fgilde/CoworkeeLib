@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261031232824_Initial")]
+    [Migration("20261109142052_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -22,7 +22,7 @@ namespace MyApp.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.13")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -143,6 +143,100 @@ namespace MyApp.Infrastructure.Migrations
                     b.HasIndex("TenantId", "UserId", "UpdatedAt");
 
                     b.ToTable("AiChatSessions", "cw");
+                });
+
+            modelBuilder.Entity("Coworkee.Auditing.Requests.RequestLogEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ApiKeyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ClientId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("DurationMs")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Exception")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid?>("ImpersonatorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Ip")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<string>("QueryString")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("RequestBody")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RequestHeaders")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RequestType")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ResponseBody")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResponseHeaders")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Route")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("StatusCode")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TraceId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("At");
+
+                    b.HasIndex("Path");
+
+                    b.HasIndex("TenantId", "At");
+
+                    b.HasIndex("UserId", "At");
+
+                    b.ToTable("RequestLog", "cw");
                 });
 
             modelBuilder.Entity("Coworkee.Backup.DatabaseBackup", b =>
@@ -547,6 +641,51 @@ namespace MyApp.Infrastructure.Migrations
                     b.ToTable("ApiKeys", "cw");
                 });
 
+            modelBuilder.Entity("Coworkee.Identity.Domain.CustomPermission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Group")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("CustomPermissions", "cw");
+                });
+
             modelBuilder.Entity("Coworkee.Identity.Domain.GroupSelection", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -844,6 +983,9 @@ namespace MyApp.Infrastructure.Migrations
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("MaxSessions")
+                        .HasColumnType("integer");
+
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1004,6 +1146,68 @@ namespace MyApp.Infrastructure.Migrations
                     b.ToTable("GroupRoles", "cw");
                 });
 
+            modelBuilder.Entity("Coworkee.Identity.Sessions.UserSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Browser")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ClientId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Device")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("EndReason")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTimeOffset?>("EndedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("EndedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ImpersonatorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset>("LastSeenAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("TenantId", "UserId");
+
+                    b.ToTable("UserSessions", "cw");
+                });
+
             modelBuilder.Entity("Coworkee.Infrastructure.Auditing.AuditEntry", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1046,6 +1250,70 @@ namespace MyApp.Infrastructure.Migrations
                     b.HasIndex("EntityType", "EntityId");
 
                     b.ToTable("AuditEntries", "cw");
+                });
+
+            modelBuilder.Entity("Coworkee.Infrastructure.Auditing.SecurityEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("ActorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ClientId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<Guid?>("ImpersonatorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Ip")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("Succeeded")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TraceId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("At");
+
+                    b.HasIndex("TenantId", "At");
+
+                    b.HasIndex("UserId", "At");
+
+                    b.ToTable("SecurityEvents", "cw");
                 });
 
             modelBuilder.Entity("Coworkee.Infrastructure.DataProtection.DataProtectionKey", b =>
@@ -2377,6 +2645,9 @@ namespace MyApp.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("BuiltInId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -2385,6 +2656,9 @@ namespace MyApp.Infrastructure.Migrations
 
                     b.Property<string>("CustomCss")
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsCustomized")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsDefault")
                         .HasColumnType("boolean");
@@ -2437,6 +2711,10 @@ namespace MyApp.Infrastructure.Migrations
                     b.HasIndex("Name")
                         .IsUnique()
                         .HasFilter("\"TenantId\" IS NULL");
+
+                    b.HasIndex("TenantId", "BuiltInId")
+                        .IsUnique()
+                        .HasFilter("\"BuiltInId\" IS NOT NULL");
 
                     b.HasIndex("TenantId", "Name")
                         .IsUnique();
@@ -3073,6 +3351,15 @@ namespace MyApp.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Coworkee.Identity.Sessions.UserSession", b =>
+                {
+                    b.HasOne("Coworkee.Identity.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Coworkee.Infrastructure.Auditing.AuditEntry", b =>
                 {
                     b.OwnsMany("Coworkee.Infrastructure.Auditing.AuditChange", "Changes", b1 =>
@@ -3347,7 +3634,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261031232824_Initial")]
+    [Migration("20261109142052_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -3355,7 +3642,7 @@ namespace MyApp.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.13")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -3476,6 +3763,100 @@ namespace MyApp.Infrastructure.Migrations
                     b.HasIndex("TenantId", "UserId", "UpdatedAt");
 
                     b.ToTable("AiChatSessions", "cw");
+                });
+
+            modelBuilder.Entity("Coworkee.Auditing.Requests.RequestLogEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ApiKeyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ClientId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("DurationMs")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Exception")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid?>("ImpersonatorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Ip")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<string>("QueryString")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("RequestBody")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RequestHeaders")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RequestType")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ResponseBody")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResponseHeaders")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Route")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("StatusCode")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TraceId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("At");
+
+                    b.HasIndex("Path");
+
+                    b.HasIndex("TenantId", "At");
+
+                    b.HasIndex("UserId", "At");
+
+                    b.ToTable("RequestLog", "cw");
                 });
 
             modelBuilder.Entity("Coworkee.Backup.DatabaseBackup", b =>
@@ -3806,6 +4187,51 @@ namespace MyApp.Infrastructure.Migrations
                     b.ToTable("ApiKeys", "cw");
                 });
 
+            modelBuilder.Entity("Coworkee.Identity.Domain.CustomPermission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Group")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("CustomPermissions", "cw");
+                });
+
             modelBuilder.Entity("Coworkee.Identity.Domain.GroupSelection", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -4103,6 +4529,9 @@ namespace MyApp.Infrastructure.Migrations
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("MaxSessions")
+                        .HasColumnType("integer");
+
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -4263,6 +4692,68 @@ namespace MyApp.Infrastructure.Migrations
                     b.ToTable("GroupRoles", "cw");
                 });
 
+            modelBuilder.Entity("Coworkee.Identity.Sessions.UserSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Browser")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ClientId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Device")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("EndReason")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTimeOffset?>("EndedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("EndedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ImpersonatorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset>("LastSeenAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("TenantId", "UserId");
+
+                    b.ToTable("UserSessions", "cw");
+                });
+
             modelBuilder.Entity("Coworkee.Infrastructure.Auditing.AuditEntry", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4305,6 +4796,70 @@ namespace MyApp.Infrastructure.Migrations
                     b.HasIndex("EntityType", "EntityId");
 
                     b.ToTable("AuditEntries", "cw");
+                });
+
+            modelBuilder.Entity("Coworkee.Infrastructure.Auditing.SecurityEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("ActorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ClientId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<Guid?>("ImpersonatorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Ip")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("Succeeded")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TraceId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("At");
+
+                    b.HasIndex("TenantId", "At");
+
+                    b.HasIndex("UserId", "At");
+
+                    b.ToTable("SecurityEvents", "cw");
                 });
 
             modelBuilder.Entity("Coworkee.Infrastructure.DataProtection.DataProtectionKey", b =>
@@ -5636,6 +6191,9 @@ namespace MyApp.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("BuiltInId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -5644,6 +6202,9 @@ namespace MyApp.Infrastructure.Migrations
 
                     b.Property<string>("CustomCss")
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsCustomized")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsDefault")
                         .HasColumnType("boolean");
@@ -5696,6 +6257,10 @@ namespace MyApp.Infrastructure.Migrations
                     b.HasIndex("Name")
                         .IsUnique()
                         .HasFilter("\"TenantId\" IS NULL");
+
+                    b.HasIndex("TenantId", "BuiltInId")
+                        .IsUnique()
+                        .HasFilter("\"BuiltInId\" IS NOT NULL");
 
                     b.HasIndex("TenantId", "Name")
                         .IsUnique();
@@ -6122,6 +6687,15 @@ namespace MyApp.Infrastructure.Migrations
                     b.HasOne("Coworkee.Identity.Domain.Role", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Coworkee.Identity.Sessions.UserSession", b =>
+                {
+                    b.HasOne("Coworkee.Identity.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

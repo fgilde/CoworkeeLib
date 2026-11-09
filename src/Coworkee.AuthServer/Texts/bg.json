@@ -169,5 +169,6 @@
   "Sign in as another user": "Вход като друг потребител",
   "You may not sign in as this user.": "Нямате право да влезете като този потребител.",
   "Back to my account": "Обратно към моя акаунт",
-  "{0} is signed in as {1}.": "{0} е влязъл като {1}."
+  "{0} is signed in as {1}.": "{0} е влязъл като {1}.",
+  "You are signed in on too many devices. Sign out on one of them first or ask an administrator to end a session.": "Влезли сте от твърде много устройства. Първо излезте от едно от тях или помолете администратор да прекрати сесия."
 }

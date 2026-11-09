@@ -108,6 +108,110 @@ public sealed class SyncStateTests
         set.Items.Count.ShouldBe(5);
     }
 
+    [Fact]
+    public async Task Nudges_while_a_sync_runs_bring_one_more_sync_not_one_each()
+    {
+        await using var set = _server.Set();
+        await set.RefreshAsync(Ct);
+        var feed = new TaskCompletionSource();
+        _server.Feed = feed.Task;
+        _server.ChangeRequests.Clear();
+        var running = set.RefreshAsync(Ct);
+
+        // each past the debounce: every one of them waited for a sync of its own
+        for (var i = 0; i < 4; i++)
+        {
+            set.Nudge();
+            await Task.Delay(400, Ct);
+        }
+
+        feed.SetResult();
+        await running;
+        await WaitAsync(() => _server.ChangeRequests.Count >= 2);
+        await Task.Delay(1000, Ct);
+
+        _server.ChangeRequests.Count.ShouldBe(2, "the running sync and one after it");
+    }
+
+    [Fact]
+    public async Task A_nudge_of_an_idle_copy_syncs_once_after_the_debounce()
+    {
+        await using var set = _server.Set();
+        await set.RefreshAsync(Ct);
+        _server.ChangeRequests.Clear();
+
+        set.Nudge();
+        set.Nudge();
+        await WaitAsync(() => _server.ChangeRequests.Count >= 1);
+        await Task.Delay(600, Ct);
+        set.Nudge();
+        await WaitAsync(() => _server.ChangeRequests.Count >= 2);
+        await Task.Delay(600, Ct);
+
+        _server.ChangeRequests.Count.ShouldBe(2);
+    }
+
+    private async Task<ClientEntitySet<Gadget>> KeptAsync()
+    {
+        _server.Rows[0] = _server.Rows[0] with { Brand = new Brand(Guid.NewGuid(), "Bosch"), Created = DateTimeOffset.Parse("2026-10-01T08:00:00+02:00"), Note = "n" };
+        var set = _server.Set(_storage);
+        await set.RefreshAsync(Ct);
+
+        // the column sorts after a download keep the copy once more in the background
+        for (byte[]? last = null; !ReferenceEquals(last, _storage.Saved[Key]);)
+        {
+            last = _storage.Saved[Key];
+            await Task.Delay(300, Ct);
+        }
+
+        return set;
+    }
+
+    private ClientEntityChanges Again(int minutes) => new(_server.Now.AddMinutes(minutes), _server.Rows.Count, [.. _server.Rows.Select(r => r.Id)], [], false);
+
+    [Fact]
+    public async Task Rows_fetched_again_unchanged_neither_keep_nor_reload_the_copy()
+    {
+        await using var set = await KeptAsync();
+        var kept = _storage.Saved[Key];
+        var revision = set.Status.Revision;
+        _server.NextChanges = Again(1);
+
+        await set.RefreshAsync(Ct);
+
+        set.Status.ShouldSatisfyAllConditions(s => s.Revision.ShouldBe(revision), s => s.Version.ShouldBe(_server.Now.AddMinutes(1)));
+        _storage.Saved[Key].ShouldBeSameAs(kept);
+    }
+
+    [Theory]
+    [InlineData("null to value")]
+    [InlineData("value to null")]
+    [InlineData("expanded navigation")]
+    [InlineData("offset")]
+    [InlineData("enum")]
+    public async Task One_changed_value_among_rows_fetched_again_keeps_and_reloads_the_copy(string change)
+    {
+        await using var set = await KeptAsync();
+        var kept = _storage.Saved[Key];
+        var revision = set.Status.Revision;
+        var row = _server.Rows[change == "null to value" ? 1 : 0];
+        _server.Rows[_server.Rows.IndexOf(row)] = row = change switch
+        {
+            "null to value" => row with { Note = "new" },
+            "value to null" => row with { Note = null },
+            "expanded navigation" => row with { Brand = row.Brand! with { Name = "Makita" } },
+            "offset" => row with { Created = row.Created.ToOffset(TimeSpan.FromHours(5)) },
+            _ => row with { Kind = Kind.Power },
+        };
+        _server.NextChanges = Again(1);
+
+        await set.RefreshAsync(Ct);
+
+        set.Status.Revision.ShouldBe(revision + 1);
+        _storage.Saved[Key].ShouldNotBeSameAs(kept);
+        set.Items.Single(r => r.Id == row.Id).ShouldBe(row);
+    }
+
     private static async Task WaitAsync(Func<bool> done)
     {
         for (var i = 0; i < 100 && !done(); i++)

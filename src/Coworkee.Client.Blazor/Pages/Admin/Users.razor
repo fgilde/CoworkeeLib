@@ -1,6 +1,7 @@
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + IdentityPermissions.Users.View)]
 
 <PageHeader Title="Users" Description="Accounts of this organisation, their roles and whether they may sign in." />
+<RealtimeSubscription Topic="@Coworkee.Contracts.Realtime.RealtimeTopics.Type("Role")" OnEvent="_ => ReloadRolesAsync()" />
 @if (_permissionsOf is not null)
 {
     <MudPaper Outlined="true" Class="pa-4 mb-4">

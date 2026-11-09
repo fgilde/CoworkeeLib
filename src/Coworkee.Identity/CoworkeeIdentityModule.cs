@@ -44,6 +44,10 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
         services.AddSingleton<IStoredPermissionDefinitions>(provider => provider.GetRequiredService<CustomPermissionDefinitions>());
         services.AddScoped<IInterceptor, PermissionCacheInterceptor>();
         services.AddScoped<IInterceptor, AccessChangeInterceptor>();
+        services.AddScoped<Security.SecurityLog>();
+        services.AddScoped<Application.Auditing.ISecurityLog>(provider => provider.GetRequiredService<Security.SecurityLog>());
+        services.AddScoped<IInterceptor, Security.SecurityEventInterceptor>();
+        services.AddScoped<Application.Privacy.IPersonalDataContributor, Security.SecurityEventPersonalData>();
         services.AddScoped<IResourceAccessReader, ResourceAccessReader>();
         services.AddScoped<IUserDirectory, Users.UserDirectory>();
         services.AddScoped<ImpersonationRules>();
@@ -56,6 +60,7 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
         services.AddSingleton<IModelContributor, ApiKeys.ApiKeyModel>();
         services.Configure<ApiKeys.ApiKeyOptions>(context.Configuration.GetSection(ApiKeys.ApiKeyOptions.Section));
         services.AddScoped<Application.Privacy.IPersonalDataContributor, ApiKeys.ApiKeyPersonalData>();
+        services.AddScoped<Application.Privacy.IPersonalDataContributor, Sessions.UserSessionPersonalData>();
         services.AddAuthentication()
             .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, ApiKeys.ApiKeyAuthenticationHandler>(Contracts.Identity.ApiKeyDefaults.Scheme, null);
         services.AddScoped<ITenantDirectory, Users.TenantDirectory>();
@@ -66,6 +71,7 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
         services.AddIdentityODataSets();
         services.AddScoped<SystemInitializer>();
         services.AddScoped<IdentitySeeder>();
+        services.AddSingleton<SeedRunner>();
         services.AddHostedService<SetupTokenAnnouncer>();
         services.AddOptions<SetupGateOptions>();
 

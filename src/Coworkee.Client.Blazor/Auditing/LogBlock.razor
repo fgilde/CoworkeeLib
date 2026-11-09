@@ -1,0 +1,8 @@
+@if (Hidden)
+{
+    <MudText Typo="Typo.caption" Class="mud-text-secondary d-block my-1">@L["Bodies need the permission to view request and response bodies."]</MudText>
+}
+else if (!string.IsNullOrEmpty(Text))
+{
+    <pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:400px;overflow:auto;margin:4px 0;font-size:12px">@Text</pre>
+}

@@ -63,7 +63,7 @@ public static class Extensions
 
         var telemetry = builder.Services.AddOpenTelemetry()
             .WithMetrics(metrics => metrics.AddAspNetCoreInstrumentation().AddHttpClientInstrumentation().AddRuntimeInstrumentation()
-                .AddMeter("Microsoft.EntityFrameworkCore", "Npgsql"))
+                .AddMeter("Microsoft.EntityFrameworkCore", "Npgsql", "Coworkee.Auditing"))
             .WithTracing(tracing => tracing
                 .AddSource(builder.Environment.ApplicationName)
                 .AddAspNetCoreInstrumentation(o => o.Filter = ctx =>

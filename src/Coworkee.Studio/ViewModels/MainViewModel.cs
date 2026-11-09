@@ -156,7 +156,10 @@ public sealed partial class MainViewModel : ObservableObject
 
     public bool HasSpecPath => SpecPath is not null;
 
-    public string Version { get; } = typeof(MainViewModel).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0] ?? "0.1.0";
+    /// <summary>The informational version without the git hash; static, so the splash shows it before the view model exists.</summary>
+    public static string StudioVersion { get; } = typeof(MainViewModel).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0] ?? "0.1.0";
+
+    public string Version => StudioVersion;
 
     public string ThemeMode => Settings.Theme is { Length: > 0 } theme ? theme : "System";
 
@@ -186,6 +189,12 @@ public sealed partial class MainViewModel : ObservableObject
     {
         get => Settings.PackageFeed;
         set => UpdateSetting(() => Settings.PackageFeed = Blank(value));
+    }
+
+    public bool ReduceMotion
+    {
+        get => Settings.ReduceMotion;
+        set => UpdateSetting(() => Settings.ReduceMotion = value);
     }
 
     public OptionViewModel Option(string id) => Options[id];
@@ -311,8 +320,25 @@ public sealed partial class MainViewModel : ObservableObject
     {
         if (await Dialogs.PickFolder(L.Get("Open an existing app")) is { } folder)
         {
-            OpenApp(folder);
+            ShowApp(folder);
         }
+    }
+
+    /// <summary>
+    /// The overview of the app in <paramref name="folder"/>: run it, its deployments, deploy or update; the wizard stays as it is until
+    /// "Edit in the wizard" (<see cref="OpenApp"/>).
+    /// </summary>
+    public void ShowApp(string folder)
+    {
+        if (Coworkee.Cli.Spec.ExistingApp.Root(folder) is not { } root)
+        {
+            Status = L.Format("No Coworkee app in {0}", folder);
+            return;
+        }
+
+        Apps.Opened(root, Coworkee.Cli.Spec.ExistingApp.Read(root).Spec);
+        Welcome.Refresh();
+        Page = new AppOverviewViewModel(this, Apps.Apps.First(a => string.Equals(a.Path, root, StringComparison.OrdinalIgnoreCase)));
     }
 
     /// <summary>
@@ -346,13 +372,13 @@ public sealed partial class MainViewModel : ObservableObject
         GoTo(Review);
     }
 
-    /// <summary>A spec or an app of the start page.</summary>
+    /// <summary>A spec (into the wizard) or an app (its overview) of the start page.</summary>
     [RelayCommand]
     public void OpenRecent(RecentItem item)
     {
         if (item.IsApp)
         {
-            OpenApp(item.Path);
+            ShowApp(item.Path);
         }
         else
         {
@@ -401,11 +427,14 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(ThemeModeText));
     }
 
-    public void ApplyTheme()
+    public void ApplyTheme() => ApplyTheme(Settings.Theme);
+
+    /// <summary>Light, Dark or anything else for the system; static, so the splash shows in the theme before the view model exists.</summary>
+    public static void ApplyTheme(string? theme)
     {
         if (Application.Current is { } app)
         {
-            app.RequestedThemeVariant = ThemeMode switch { "Light" => ThemeVariant.Light, "Dark" => ThemeVariant.Dark, _ => ThemeVariant.Default };
+            app.RequestedThemeVariant = theme switch { "Light" => ThemeVariant.Light, "Dark" => ThemeVariant.Dark, _ => ThemeVariant.Default };
         }
     }
 

@@ -4,7 +4,15 @@
 <EntityWatch EntityType="Role" EntityId="Id" ReturnHref="@Links.Href("/admin/roles")" OnChanged="OnParametersSetAsync" />
 @if (_role is not null)
 {
-    <MudText Typo="Typo.h4">@_role.Name</MudText>
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+        <MudText Typo="Typo.h4">@_role.Name</MudText>
+        @if (!_role.IsSystem)
+        {
+            <PermissionView Permission="@IdentityPermissions.Roles.Manage">
+                <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" aria-label="@L["Edit role"]" OnClick="EditAsync" data-testid="role-edit" />
+            </PermissionView>
+        }
+    </MudStack>
     <MudText Typo="Typo.body2" Class="mb-4">@_role.Description</MudText>
     @if (!_role.IsSystem)
     {

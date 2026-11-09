@@ -36,6 +36,9 @@ public sealed class User : IdentityUser<Guid>, IAuditable
     /// <summary>The session that changed its own password keeps its tokens until their next refresh (<see cref="Users.SessionStamp.Keep"/>).</summary>
     public string? KeptSession { get; set; }
 
+    /// <summary>The sessions the user may have at once: null takes the organisation's setting, 0 is unlimited.</summary>
+    public int? MaxSessions { get; set; }
+
     /// <summary>Profile picture as data URL.</summary>
     public string? AvatarUrl { get; set; }
 

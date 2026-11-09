@@ -61,6 +61,88 @@ public sealed class ClientEntitySwitchTests : BunitContext
     }
 
     [Fact]
+    public async Task Rows_fetched_again_unchanged_reload_no_table_a_changed_value_does()
+    {
+        var (control, _, set) = await LocalAsync();
+        control.WaitForAssertion(() => _table.Reloads.ShouldBe(1));
+        _server.NextChanges = new Contracts.Data.ClientEntityChanges(_server.Now.AddMinutes(1), 2, [.. _server.Rows.Select(r => r.Id)], [], false);
+
+        await set.RefreshAsync(Ct);
+        await Task.Delay(200, Ct);
+
+        _table.Reloads.ShouldBe(1);
+        _server.Rows[0] = _server.Rows[0] with { Price = 1 };
+        _server.NextChanges = new Contracts.Data.ClientEntityChanges(_server.Now.AddMinutes(2), 2, [.. _server.Rows.Select(r => r.Id)], [], false);
+
+        await set.RefreshAsync(Ct);
+
+        control.WaitForAssertion(() => _table.Reloads.ShouldBe(2));
+    }
+
+    [Fact]
+    public async Task While_the_copy_loads_the_menu_checks_the_server_and_shows_the_browser_as_pending()
+    {
+        var popovers = Render<MudPopoverProvider>();
+        var control = Render<ClientEntitySwitch>(p => p.Add(c => c.Table, _table));
+        var rows = new TaskCompletionSource();
+        _server.RowsGate = rows.Task;
+        var set = (await _entities.SetAsync<Gadget>("Gadgets", cancellationToken: Ct))!;
+        control.WaitForAssertion(() => control.Find("[data-testid='client-entity-state']").GetAttribute("data-state").ShouldBe("downloading"));
+
+        await control.Find("[data-testid='client-entity-state']").ClickAsync(new());
+
+        popovers.WaitForAssertion(() => Checked(popovers).ShouldBe(("Search in the browser (loading…)", false, true)));
+        set.Mode.ShouldBe(ClientEntityMode.Client, "the choice stays the browser");
+        rows.SetResult();
+        await set.WhenLocalAsync(Ct);
+        popovers.WaitForAssertion(() => Checked(popovers).ShouldBe(("Search in the browser", true, false)));
+    }
+
+    [Fact]
+    public async Task A_set_too_large_to_mirror_checks_the_server_and_shows_nothing_pending()
+    {
+        _server.MaxRows = 1;
+        var popovers = Render<MudPopoverProvider>();
+        var control = Render<ClientEntitySwitch>(p => p.Add(c => c.Table, _table));
+        await _entities.SetAsync<Gadget>("Gadgets", cancellationToken: Ct);
+        control.WaitForAssertion(() => control.Find("[data-testid='client-entity-state']").GetAttribute("data-state").ShouldBe("too-large"));
+
+        await control.Find("[data-testid='client-entity-state']").ClickAsync(new());
+
+        popovers.WaitForAssertion(() => Checked(popovers).ShouldBe(("Search in the browser", false, true)));
+    }
+
+    // the browser item's text and which of the two items carries the check
+    private static (string Browser, bool BrowserChecked, bool ServerChecked) Checked(IRenderedComponent<MudPopoverProvider> popovers) =>
+        (popovers.Find("[data-choice='Client']").TextContent.Trim(), popovers.FindAll("[data-choice='Client'] .cw-ce-check").Count == 1,
+            popovers.FindAll("[data-choice='Server'] .cw-ce-check").Count == 1);
+
+    [Fact]
+    public async Task After_a_new_group_selection_the_switch_shows_the_server_until_the_new_set_is_local()
+    {
+        var (control, _, old) = await LocalAsync();
+        string? State() => control.Find("[data-testid='client-entity-state']").GetAttribute("data-state");
+
+        _server.Partition = "p2";
+        await _entities.ScopeChangedAsync();
+
+        control.WaitForAssertion(() => State().ShouldBe("idle"));
+        control.Find("[data-testid='client-entity-state']").ClassList.ShouldContain("server");
+        var feed = new TaskCompletionSource();
+        _server.Feed = feed.Task;
+        var next = _entities.SetAsync<Gadget>("Gadgets", cancellationToken: Ct);
+        await Task.Delay(100, Ct);
+        control.Find("[data-testid='client-entity-state']").ClassList.ShouldContain("server");
+        feed.SetResult();
+        var set = (await next)!;
+        await set.WhenLocalAsync(Ct);
+
+        set.ShouldNotBeSameAs(old);
+        control.WaitForAssertion(() => State().ShouldBe("synced"));
+        control.Find("[data-testid='client-entity-state']").ClassList.ShouldContain("local");
+    }
+
+    [Fact]
     public async Task The_menu_pauses_and_resumes_the_sync()
     {
         var (control, popovers, set) = await LocalAsync();
