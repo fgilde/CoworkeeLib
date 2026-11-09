@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixed
+
+- Coworkee Studio: the tiles of the start page grow with their text instead of cutting it off (*Run, deploy or extend an app you made.*); the deploy card of the create page puts its buttons under the status text, which they squeezed to a few letters per line.
+
 ## 0.0.1.70 (2026-11-09)
 
 ### Added

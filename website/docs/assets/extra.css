@@ -319,6 +319,7 @@
 
 .cw-tour { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 2.4rem; align-items: center; margin: 0 0 3.6rem; }
 .cw-tour:last-child { margin-bottom: 0; }
+.cw-deploy { margin-top: 3.6rem; }
 .cw-tour--flip { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); }
 .cw-tour--flip .cw-tour__shots { order: 2; }
 .cw-tour__shots { position: relative; padding: 0 0 12% 0; }

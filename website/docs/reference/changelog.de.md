@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Behoben
+
+- Coworkee Studio: Die Kacheln der Startseite wachsen mit ihrem Text, statt ihn abzuschneiden (*Eine deiner Apps starten, deployen oder erweitern.*); die Deploy-Karte der Anlegen-Seite setzt ihre Schaltflächen unter den Statustext, den sie auf wenige Buchstaben pro Zeile gedrückt hatten.
+
 ## 0.0.1.70 (2026-11-09)
 
 ### Neu

@@ -5,7 +5,7 @@ The app host that runs the app on your machine also describes its deployment. `c
 | Target | Command | Status |
 |---|---|---|
 | Docker Compose | `coworkee deploy compose` | verified: a generated app with Keycloak, Grafana, WebDataStudio and LibreTranslate runs from the published files behind an HTTPS proxy; the seeded administrator signs in with the password and through Keycloak, Grafana shows the app's data, WebDataStudio opens the database, machine translation works. Ollama and AspireUI are published and checked in the files, not started |
-| Azure Container Apps | `coworkee deploy azure` (`--apply` deploys, `--github` writes a deploy workflow) | Bicep generated with the tools, every file compiles with `az bicep build`; not deployed to Azure |
+| Azure Container Apps | `coworkee deploy azure` (`--apply` deploys, `--github` writes a deploy workflow) | Bicep generated with the tools, every file compiles with `az bicep build`; `--apply` deployed a real app with all tools (services, SQL Server, Keycloak, Grafana, WebDataStudio) to Azure Container Apps |
 | Kubernetes | `coworkee deploy k8s` | Helm chart generated with the tools, `helm lint` and `kubeconform -strict` pass; not installed on a cluster |
 
 ## What changes in a deployment
@@ -226,7 +226,7 @@ var database = builder.AddAzurePostgresFlexibleServer("postgres").RunAsContainer
 var app = builder.AddCoworkeeApp("myapp", options => options.UseDatabase(database));
 ```
 
-Files need a storage that every replica shares: generate the app with `--storage azureBlob`. Deploy with `azd init` and `azd up`, and set the parameters there (public addresses of the services and tools, the administrator, the mail server, the two certificates, the setup token; `coworkee deploy compose` shows how to generate them). The images of the tools that carry files of the app come from Dockerfiles below `src/<App>.AppHost/observability/.generated/publish`, which azd builds. The migrations job runs when you start it: `az containerapp job start -n shop-migrations -g <resource group>`, after every deployment. **Not verified:** the Bicep compiles, a real deployment has not been made.
+Files need a storage that every replica shares: generate the app with `--storage azureBlob`. Deploy with `azd init` and `azd up`, and set the parameters there (public addresses of the services and tools, the administrator, the mail server, the two certificates, the setup token; `coworkee deploy compose` shows how to generate them). The images of the tools that carry files of the app come from Dockerfiles below `src/<App>.AppHost/observability/.generated/publish`, which azd builds. The migrations job runs when you start it: `az containerapp job start -n shop-migrations -g <resource group>`, after every deployment. **Not verified:** this azd path; the Bicep compiles. `coworkee deploy azure --apply` (above) deployed a real app.
 
 ### Deploying from your machine
 
@@ -236,6 +236,10 @@ coworkee deploy azure --resource-group shop-test --location germanywestcentral -
 ```
 
 publishes the app host, checks the account the Azure CLI is signed in with, and lets Aspire build, push and deploy into exactly that resource group (made when missing; nothing is created at the subscription). Then it runs the migrations job and writes `.coworkee/deployments/<name>.json` with the addresses. The parameters it generates (administrator, passwords, certificates, push keys) are kept in `.coworkee/deployments/<name>.secrets.json`, which is git ignored; the next deployment with the same name takes them again, so the database password and the token certificates stay. `--name` names the deployment (default: the resource group), `--subscription` picks another subscription than the Azure CLI's, `--yes` skips the question, `--admin-email` sets the administrator (default: the signed-in account). Values set as environment variables named like the `.env` keys of Docker Compose (`SHOP_ADMIN_EMAIL`, `SHOP_ADMIN_PASSWORD`, `SHOP_SMTP_HOST`, ...) are taken when nothing is kept yet.
+
+In [Coworkee Studio](../getting-started/studio.md#deploy), **Deploy…** on the overview of an app runs the same command as a wizard: it checks the Azure CLI sign-in, then you pick the subscription, the resource group (new or one of yours), the region, the administrator and the tools, and the summary shows that everything goes into that one resource group. **Deploy** runs `coworkee deploy azure --apply --yes` with those values and shows its output live; **Update** on a recorded deployment runs it again with the values of its record.
+
+![The deploy wizard of Coworkee Studio, summary](../assets/screenshots/studio-deploy-light.webp)
 
 ### Deploying every branch with GitHub Actions
 
@@ -252,7 +256,9 @@ writes `.github/workflows/deploy-azure.yml`: every push to one of the branches d
 | Branches (`*` as in GitHub) | `--branches` | `deployBranches` (comma separated) | `main` |
 | Delete with the branch | `--teardown-on-delete true` | `deployTeardown` | `false` |
 
-They are kept in `.coworkee/app.json` like every option: `coworkee deploy azure --github` without switches writes the workflow anew from them (after a `coworkee update`, for example), and the Studio shows them in the deploy card under *GitHub deploy workflow…*, where you change them and write the workflow again. The first line of the file holds a hash of what coworkee wrote. When you change the file by hand, coworkee notices it: the CLI refuses to overwrite it unless you pass `--force`, the Studio asks whether to overwrite your changes or keep your file, `coworkee add` leaves it alone with a warning, and `coworkee remove deployWorkflow` deletes it only when it is unchanged.
+They are kept in `.coworkee/app.json` like every option: `coworkee deploy azure --github` without switches writes the workflow anew from them (after a `coworkee update`, for example), and the Studio shows them in the deploy card under *GitHub deploy workflow…*, where you change them and write the workflow again (shown below). The first line of the file holds a hash of what coworkee wrote. When you change the file by hand, coworkee notices it: the CLI refuses to overwrite it unless you pass `--force`, the Studio asks whether to overwrite your changes or keep your file, `coworkee add` leaves it alone with a warning, and `coworkee remove deployWorkflow` deletes it only when it is unchanged.
+
+![The GitHub deploy workflow in Coworkee Studio](../assets/screenshots/studio-deploy-workflow-light.webp)
 
 What a run does:
 

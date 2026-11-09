@@ -10,7 +10,7 @@ public sealed class ScreenshotTests
     public static TheoryData<string, bool, string> Pages()
     {
         var data = new TheoryData<string, bool, string>();
-        foreach (var page in new[] { "welcome", "basics", "branding", "signin", "architecture", "ai", "languages", "entities", "entities-diagram", "entities-import", "users", "review", "generate", "run", "help", "gallery", "apps", "overview", "deploy" })
+        foreach (var page in new[] { "welcome", "basics", "branding", "signin", "architecture", "ai", "languages", "entities", "entities-diagram", "entities-import", "users", "review", "generate", "run", "help", "gallery", "apps", "overview", "deploy", "deploy-workflow" })
         {
             data.Add(page, false, "en");
             data.Add(page, true, "en");
@@ -88,9 +88,11 @@ public sealed class ScreenshotTests
         {
             var root = Directory.CreateDirectory(folder.File("apps/Shop")).FullName;
             File.WriteAllText(Path.Combine(root, "Shop.slnx"), "<Solution />");
+            Directory.CreateDirectory(Path.Combine(root, ".coworkee"));
+            File.WriteAllText(Coworkee.Cli.Spec.ExistingApp.StatePath(root), Coworkee.Cli.Spec.SpecJson.Write(main.ToSpec()));
             // off the UI thread: the awaits inside would wait for the thread this test blocks
             Task.Run(() => Coworkee.Cli.Spec.Deployments.WriteAsync(root, new Coworkee.Cli.Spec.DeploymentRecord("rg-shop", "azure", "00000000-0000-0000-0000-000000000000", "tenant", "rg-shop",
-                "germanywestcentral", "me@example.com", new DateTimeOffset(2026, 11, 8, 10, 15, 0, TimeSpan.FromHours(1)),
+                "germanywestcentral", "ada@example.com", new DateTimeOffset(2026, 11, 8, 10, 15, 0, TimeSpan.FromHours(1)),
                 new Dictionary<string, string> { ["shop-api"] = "https://shop-api.example.azurecontainerapps.io", ["shop-web"] = "https://shop-web.example.azurecontainerapps.io" }),
                 CancellationToken.None)).GetAwaiter().GetResult();
             main.ShowApp(root);
@@ -99,16 +101,30 @@ public sealed class ScreenshotTests
                 var wizard = new AzureDeployViewModel((AppOverviewViewModel)main.Page!)
                 {
                     SignIn = AzureSignIn.SignedIn,
-                    Account = "me@example.com",
+                    Account = "ada@example.com",
                     ResourceGroup = "rg-shop-test",
-                    AdminEmail = "me@example.com",
+                    AdminEmail = "ada@example.com",
                 };
-                wizard.Subscriptions.Add(new AzureSubscription("00000000-0000-0000-0000-000000000000", "Pay-As-You-Go", "tenant", true));
+                wizard.Subscriptions.Add(new AzureSubscription("00000000-0000-0000-0000-000000000000", "Contoso Subscription", "tenant", true));
                 wizard.Subscription = wizard.Subscriptions[0];
                 wizard.Tools.Single(t => t.Name == "grafana").IsOn = false;
                 wizard.Step = AzureStep.Summary;
                 main.Page = wizard;
             }
+        }
+
+        if (page == "deploy-workflow")
+        {
+            Scenario.Generated(main.Generate, main.Basics.Output!);
+            main.Generate.SignIn = null; // no passwords in the frame
+            main.Generate.Deploy.Target = "azure";
+            main.Generate.Deploy.IsOpen = true;
+            var workflow = main.Generate.DeployWorkflow;
+            workflow.Prefix = "shop";
+            workflow.Location = "germanywestcentral";
+            workflow.Branches = "main, release/*";
+            workflow.Teardown = true;
+            workflow.IsOpen = true;
         }
 
         if (page == "entities-diagram")
@@ -162,7 +178,7 @@ public sealed class ScreenshotTests
 
         StepViewModel step = page switch
         {
-            "welcome" => main.Welcome,
+            "welcome" or "overview" or "deploy" => main.Welcome,
             "basics" => main.Basics,
             "branding" => main.Branding,
             "signin" => main.SignIn,
@@ -171,7 +187,7 @@ public sealed class ScreenshotTests
             "entities" or "entities-diagram" or "entities-import" => main.Entities,
             "users" => main.Users,
             "review" => main.Review,
-            "generate" or "run" => main.Generate,
+            "generate" or "run" or "deploy-workflow" => main.Generate,
             _ => main.Architecture,
         };
 
@@ -180,6 +196,7 @@ public sealed class ScreenshotTests
         {
             "ai" => window => ScrollTo(window, "AiSection"),
             "run" => window => ScrollTo(window, "RunCard"),
+            "deploy-workflow" => window => ScrollTo(window, "DeployCard"),
             _ => null,
         });
         frame.PixelSize.Width.ShouldBe(1400);

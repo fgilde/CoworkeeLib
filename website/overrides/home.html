@@ -42,7 +42,10 @@
   "cli_doc": ("Alle Befehle" if de else "All commands"),
   "gallery_doc": ("Startvorlagen und Mini-Assistent" if de else "Starter specs and a mini wizard"),
   "studio": ("Lieber mit Oberfläche? Coworkee Studio" if de else "Prefer a UI? Coworkee Studio"),
-  "studio_t": ("<code>coworkee ui</code> installiert und startet Coworkee Studio, die Desktop-App zum CLI (Tool-Befehl <code>coworkee-ui</code>). Ein Assistent führt durch Name, Logo und Theme, Anmeldung, Module und Infrastruktur und deine Entities, zeigt Vor- und Nachteile jeder Wahl, legt die App an und startet sie." if de else "<code>coworkee ui</code> installs and starts Coworkee Studio, the desktop app for the CLI (tool command <code>coworkee-ui</code>). A wizard walks through name, logo and theme, sign-in, modules, infrastructure and your entities, shows what each choice brings and costs, creates the app and runs it."),
+  "studio_t": ("<code>coworkee ui</code> installiert und startet Coworkee Studio, die Desktop-App zum CLI (Tool-Befehl <code>coworkee-ui</code>). Ein Assistent führt durch Name, Logo und Theme, Anmeldung, Module und Infrastruktur und deine Entities, zeigt Vor- und Nachteile jeder Wahl, legt die App an und startet sie. Bestehende Apps öffnet es mit Übersicht, Laufstatus und Deployments. Auf Deutsch, Englisch, Französisch, Spanisch, Italienisch, Niederländisch, Polnisch und Portugiesisch." if de else "<code>coworkee ui</code> installs and starts Coworkee Studio, the desktop app for the CLI (tool command <code>coworkee-ui</code>). A wizard walks through name, logo and theme, sign-in, modules, infrastructure and your entities, shows what each choice brings and costs, creates the app and runs it. Existing apps open with an overview, their run status and deployments. In English, German, French, Spanish, Italian, Dutch, Polish and Portuguese."),
+  "deploy": ("Mit einem Schritt nach Azure" if de else "Deploy to Azure in one step"),
+  "deploy_t": ("Der Deploy-Assistent im Studio meldet über die Azure CLI an, fragt Abonnement, Ressourcengruppe und Region und deployt die App mit ihren Tools nach Azure Container Apps, alles in diese eine Ressourcengruppe. Auf der Kommandozeile macht das <code>coworkee deploy azure --apply</code>, und <code>--github</code> schreibt einen GitHub-Workflow, der jeden Branch in eine eigene Ressourcengruppe deployt." if de else "The deploy wizard in the Studio signs in through the Azure CLI, asks for subscription, resource group and region, and deploys the app with its tools to Azure Container Apps, all into that one resource group. On the command line <code>coworkee deploy azure --apply</code> does the same, and <code>--github</code> writes a GitHub workflow that deploys every branch into a resource group of its own."),
+  "deploy_more": ("Deployment" if de else "Deployment"),
   "mcp": ("Für KI-Assistenten" if de else "For AI assistants"),
   "mcp_t": ("<code>coworkee mcp</code> startet einen MCP-Server: Claude, Copilot und andere Assistenten legen Apps, Module und Migrationen über dieselben Befehle an." if de else "<code>coworkee mcp</code> starts an MCP server: Claude, Copilot and other assistants create apps, modules and migrations through the same commands."),
   "tour": ("Ein Rundgang durch die Demo-App" if de else "A tour of the demo app"),
@@ -489,6 +492,18 @@
             <p>{{ t.mcp_t }}</p>
             {{ code("coworkee mcp") }}
           </div>
+        </div>
+      </div>
+      <div class="cw-tour cw-deploy" id="deploy">
+        <div class="cw-tour__shots">
+          <a class="cw-zoom cw-tour__main" href="{{ shot('studio-deploy-light') }}" data-caption="{{ t.deploy }}"><img src="{{ shot('studio-deploy-light') }}" alt="{{ t.deploy }}" loading="lazy"></a>
+          <a class="cw-zoom cw-tour__side" href="{{ shot('studio-overview-light') }}" data-caption="{{ t.deploy }}"><img src="{{ shot('studio-overview-light') }}" alt="" loading="lazy"></a>
+        </div>
+        <div class="cw-tour__text">
+          <h3>{{ t.deploy }}</h3>
+          <p>{{ t.deploy_t }}</p>
+          {{ code("coworkee deploy azure --apply") }}
+          <p><a href="{{ (base ~ 'hosting/deployment/#deploying-from-your-machine' if not de else base ~ 'hosting/deployment/#von-deinem-rechner-deployen') | url }}">{{ t.deploy_more }} {% include ".icons/material/arrow-right.svg" %}</a></p>
         </div>
       </div>
     </div>
