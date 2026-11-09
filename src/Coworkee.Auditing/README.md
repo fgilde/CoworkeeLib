@@ -1,6 +1,6 @@
 # Coworkee.Auditing
 
-Audit trail queries, entity history and restore.
+Audit trail queries, entity history and restore, the security log and the request log of the API.
 
 Part of [Coworkee](https://framework.coworkee.de/), a modular application framework for .NET 10, Blazor and Aspire. Start a new app with the CLI:
 

@@ -40,8 +40,16 @@ internal sealed class SecurityEventInterceptor(SecurityLog log, TimeProvider clo
 
     private async Task<List<SecurityEvent>> Collect(DbContext context, Func<List<Guid>, Task<List<RoleName>>> loadRoles)
     {
-        var changed = context.ChangeTracker.Entries().Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted).ToList();
+        var changed = context.ChangeTracker.Entries()
+            .Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted
+                && e.Entity is User or IdentityUserPasskey<Guid> or IdentityUserRole<Guid> or PermissionGrant or ApiKey)
+            .ToList();
         var events = new List<SecurityEvent>();
+        if (changed.Count == 0)
+        {
+            return events;
+        }
+
         var users = context.ChangeTracker.Entries<User>().ToDictionary(e => e.Entity.Id, e => (Guid?)e.Entity.TenantId);
         var roleIds = changed.Select(e => e.Entity).OfType<IdentityUserRole<Guid>>().Select(r => r.RoleId).Distinct().ToList();
         var roles = roleIds.Count == 0 ? [] : (await loadRoles(roleIds)).ToDictionary(r => r.Id);
