@@ -27,7 +27,12 @@ public sealed class WindowTests
         main.LanguageIndex.ShouldBe(2);
         main.LanguageCode.ShouldBe("DE");
 
-        // the switch in the title bar
+        // the switch in the title bar goes to the next language and from the last back to English
+        main.ToggleLanguageCommand.Execute(null);
+        main.Settings.Language.ShouldBe("fr");
+        main.LanguageCode.ShouldBe("FR");
+        main.LanguageIndex.ShouldBe(3);
+        main.SetLanguage("pt");
         main.ToggleLanguageCommand.Execute(null);
         main.Settings.Language.ShouldBe("en");
         main.LanguageCode.ShouldBe("EN");

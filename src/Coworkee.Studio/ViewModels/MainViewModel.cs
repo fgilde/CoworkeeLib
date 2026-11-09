@@ -167,11 +167,11 @@ public sealed partial class MainViewModel : ObservableObject
 
     public int LanguageIndex
     {
-        get => Settings.Language switch { "en" => 1, "de" => 2, _ => 0 };
-        set => SetLanguage(value switch { 1 => "en", 2 => "de", _ => null });
+        get => L.Languages.Select(l => l.Code).ToList().IndexOf(Settings.Language ?? "") + 1;
+        set => SetLanguage(value > 0 && value <= L.Languages.Count ? L.Languages[value - 1].Code : null);
     }
 
-    public string LanguageCode => L.IsGerman ? "DE" : "EN";
+    public string LanguageCode => L.Language.ToUpperInvariant();
 
     public string? CliPath
     {
@@ -439,7 +439,11 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    public void ToggleLanguage() => SetLanguage(L.IsGerman ? "en" : "de");
+    public void ToggleLanguage()
+    {
+        var index = L.Languages.Select(l => l.Code).ToList().IndexOf(L.Language);
+        SetLanguage(L.Languages[(index + 1) % L.Languages.Count].Code);
+    }
 
     [RelayCommand]
     public void ShowHelp(string? tab)

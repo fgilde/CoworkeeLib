@@ -61,6 +61,19 @@ public sealed partial class LocalizationTests
     public void Texts_without_a_translation_stay_english() =>
         German.Texts.ContainsKey("Coworkee Studio").ShouldBeFalse();
 
+    // on the UI thread like the other tests that switch the language
+    [Fact]
+    public Task French_translates_and_falls_back_to_english() => TestApp.Ui(() =>
+    {
+        L.Use("fr");
+        L.Language.ShouldBe("fr");
+        L.Get("Next").ShouldBe("Suivant");
+        L.Get("Coworkee Studio").ShouldBe("Coworkee Studio");
+        L.Use("xx");
+        L.Language.ShouldBe("en");
+        L.Use("en");
+    });
+
     [Fact]
     public void German_texts_say_du() =>
         German.Texts.Values.Where(t => Formal().IsMatch(t)).ShouldBeEmpty();

@@ -1,6 +1,6 @@
 namespace Coworkee.Studio;
 
-/// <summary>coworkee-ui [--spec app.json] [--output folder] [--theme light|dark] [--lang en|de]; coworkee ui passes its other arguments here.</summary>
+/// <summary>coworkee-ui [--spec app.json] [--output folder] [--theme light|dark] [--lang en|de|fr|es|it|nl|pl|pt]; coworkee ui passes its other arguments here.</summary>
 public sealed record StudioArguments(string? Spec, string? Output, string? Theme, string? Language)
 {
     public static StudioArguments Parse(IReadOnlyList<string> args)

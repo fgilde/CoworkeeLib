@@ -18,7 +18,7 @@ Mehr braucht es nicht: `coworkee ui` installiert das Studio (globales Tool `Cowo
 | `--spec <datei>` | Öffnet eine [App-Spezifikation](cli.md#app-spezifikationen) |
 | `--output <ordner>` | Ordner, in dem der Ordner der App angelegt wird |
 | `--theme light` oder `dark` | Farbmodus (Standard: der des Systems) |
-| `--lang en` oder `de` | Sprache (Standard: die des Systems) |
+| `--lang en`, `de`, `fr`, `es`, `it`, `nl`, `pl` oder `pt` | Sprache (Standard: die des Systems, sonst Englisch) |
 
 ```bash
 coworkee ui --spec shop.json
@@ -183,8 +183,8 @@ Die Hilfe (`F1` oder das Fragezeichen) erklärt den Assistenten, die Befehle der
 
 ## Sprache und Updates
 
-`DE`/`EN` in der Titelleiste wechselt die Sprache sofort und merkt sie sich in den Einstellungen. Hat nuget.org ein neueres Coworkee Studio (Vorabversionen nur, wenn das laufende Studio selbst eine ist), zeigt die Titelleiste **Update verfügbar: x.y.z**. Ein Klick speichert eine geöffnete Spezifikation, schließt das Studio, führt `dotnet tool update -g Coworkee.Cli` und `dotnet tool update -g Coworkee.Studio` auf diese Version aus (unter Windows in einem eigenen Fenster, weil ein laufendes Tool seine Dateien nicht ersetzen kann) und startet das Studio mit der Spezifikation neu. Von der Kommandozeile: [`coworkee self-update`](cli.md#weitere-befehle).
+Das Sprachkürzel in der Titelleiste (`EN`, `DE`, `FR`, ...) wechselt sofort zur nächsten Sprache und merkt sie sich in den Einstellungen; das Studio spricht Englisch, Deutsch, Französisch, Spanisch, Italienisch, Niederländisch, Polnisch und Portugiesisch. Hat nuget.org ein neueres Coworkee Studio (Vorabversionen nur, wenn das laufende Studio selbst eine ist), zeigt die Titelleiste **Update verfügbar: x.y.z**. Ein Klick speichert eine geöffnete Spezifikation, schließt das Studio, führt `dotnet tool update -g Coworkee.Cli` und `dotnet tool update -g Coworkee.Studio` auf diese Version aus (unter Windows in einem eigenen Fenster, weil ein laufendes Tool seine Dateien nicht ersetzen kann) und startet das Studio mit der Spezifikation neu. Von der Kommandozeile: [`coworkee self-update`](cli.md#weitere-befehle).
 
 ## Einstellungen
 
-Die Einstellungen in der Hilfe: Sprache (System, Englisch, Deutsch), Farbmodus, weniger Bewegung (einfaches Einblenden statt des animierten Startbildschirms), die zu verwendende CLI (leer für das globale Tool, eine Programmdatei oder `Coworkee.Cli.dll`), eine Quelle der Vorlage (`.nupkg` oder Ordner, als `--template-source` übergeben) und ein lokaler Paket-Feed, den das Restore der neuen App neben nuget.org nutzt. Sie liegen pro Benutzer zusammen mit den zuletzt geöffneten Spezifikationen, der Liste *Meine Apps* und ihren Ordnern im Anwendungsdatenordner unter `Coworkee/Studio/settings.json`.
+Die Einstellungen in der Hilfe: Sprache (die des Systems oder eine der acht), Farbmodus, weniger Bewegung (einfaches Einblenden statt des animierten Startbildschirms), die zu verwendende CLI (leer für das globale Tool, eine Programmdatei oder `Coworkee.Cli.dll`), eine Quelle der Vorlage (`.nupkg` oder Ordner, als `--template-source` übergeben) und ein lokaler Paket-Feed, den das Restore der neuen App neben nuget.org nutzt. Sie liegen pro Benutzer zusammen mit den zuletzt geöffneten Spezifikationen, der Liste *Meine Apps* und ihren Ordnern im Anwendungsdatenordner unter `Coworkee/Studio/settings.json`.

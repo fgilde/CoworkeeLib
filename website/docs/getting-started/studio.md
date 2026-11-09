@@ -18,7 +18,7 @@ That is all: `coworkee ui` installs the Studio (global tool `Coworkee.Studio`, c
 | `--spec <file>` | Opens an [app spec](cli.md#app-specs) |
 | `--output <folder>` | Folder in which the app folder is created |
 | `--theme light` or `dark` | Color mode (default: the system's) |
-| `--lang en` or `de` | Language (default: the system's) |
+| `--lang en`, `de`, `fr`, `es`, `it`, `nl`, `pl` or `pt` | Language (default: the system's, else English) |
 
 ```bash
 coworkee ui --spec shop.json
@@ -183,8 +183,8 @@ The help (`F1` or the question mark) explains the wizard, the CLI commands and t
 
 ## Language and updates
 
-`DE`/`EN` in the title bar switches the language at once and keeps it in the settings. When nuget.org has a newer Coworkee Studio (prereleases only when the running Studio is one), the title bar shows **Update available x.y.z**. A click saves an opened spec, closes the Studio, runs `dotnet tool update -g Coworkee.Cli` and `dotnet tool update -g Coworkee.Studio` to that version (in a window of its own on Windows, because a running tool cannot replace its files) and starts the Studio again with the spec. From the command line: [`coworkee self-update`](cli.md#other-commands).
+The language code in the title bar (`EN`, `DE`, `FR`, ...) switches to the next language at once and keeps it in the settings; the Studio speaks English, German, French, Spanish, Italian, Dutch, Polish and Portuguese. When nuget.org has a newer Coworkee Studio (prereleases only when the running Studio is one), the title bar shows **Update available x.y.z**. A click saves an opened spec, closes the Studio, runs `dotnet tool update -g Coworkee.Cli` and `dotnet tool update -g Coworkee.Studio` to that version (in a window of its own on Windows, because a running tool cannot replace its files) and starts the Studio again with the spec. From the command line: [`coworkee self-update`](cli.md#other-commands).
 
 ## Settings
 
-The settings in the help drawer: language (system, English, German), color mode, reduce motion (a plain fade instead of the animated splash), the CLI to use (empty for the global tool, an executable or `Coworkee.Cli.dll`), a template source (`.nupkg` or folder, passed as `--template-source`) and a local package feed that the restore of the new app uses next to nuget.org. They are kept per user with the recent specs, the list of *My apps* and its folders in the application data folder under `Coworkee/Studio/settings.json`.
+The settings in the help drawer: language (the system's or one of the eight), color mode, reduce motion (a plain fade instead of the animated splash), the CLI to use (empty for the global tool, an executable or `Coworkee.Cli.dll`), a template source (`.nupkg` or folder, passed as `--template-source`) and a local package feed that the restore of the new app uses next to nuget.org. They are kept per user with the recent specs, the list of *My apps* and its folders in the application data folder under `Coworkee/Studio/settings.json`.

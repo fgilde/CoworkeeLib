@@ -29,7 +29,8 @@
 
         <!-- the brand mark (assets/icon.svg) in four parts that assemble; LogoHost flies into the title bar, LogoFloat hovers while loading -->
         <Panel x:Name="LogoHost">
-          <Viewbox x:Name="LogoFloat">
+          <!-- a Viewbox clips by default; the parts fly in from outside the mark and overshoot, so they must stay visible -->
+          <Viewbox x:Name="LogoFloat" ClipToBounds="False">
             <Grid Width="108.11" Height="108.11">
               <Canvas x:Name="BottomWing">
                 <Path Data="M74.42,73.38a28,28,0,0,1-20.25,8.75h28A25.87,25.87,0,0,1,97,86.83a53.82,53.82,0,0,0,8.65-16.74,26,26,0,0,0-31.27,3.29Z">

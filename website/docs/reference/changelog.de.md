@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Neu
+
+- Coworkee Studio spricht neben Englisch und Deutsch auch Französisch, Spanisch, Italienisch, Niederländisch, Polnisch und Portugiesisch: Das Sprachfeld in den Einstellungen listet alle, das Sprachkürzel in der Titelleiste wechselt zur nächsten, `--lang` nimmt ihre Kürzel ([Sprache und Updates](../getting-started/studio.md#sprache-und-updates)).
+
 ## 0.0.1.69 (2026-11-09)
 
 ### Neu

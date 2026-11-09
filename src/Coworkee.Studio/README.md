@@ -26,7 +26,7 @@ The help (F1) explains the wizard, the CLI commands and the MCP server `coworkee
 | `--spec <file>` | Open an app spec |
 | `--output <folder>` | Folder in which the app folder is created |
 | `--theme light\|dark` | Color mode (default: the system's) |
-| `--lang en\|de` | Language (default: the system's) |
+| `--lang en\|de\|fr\|es\|it\|nl\|pl\|pt` | Language (default: the system's, else English) |
 
 Settings (recent specs, CLI path, template source, local package feed, language) are kept per user in the application data folder under `Coworkee/Studio`.
 
