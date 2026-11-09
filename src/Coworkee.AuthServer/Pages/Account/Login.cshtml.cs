@@ -172,6 +172,12 @@ public sealed class LoginModel(
             return Page();
         }
 
+        if (AuthSessions.Refused(HttpContext))
+        {
+            ErrorMessage = T("You are signed in on too many devices. Sign out on one of them first or ask an administrator to end a session.");
+            return Page();
+        }
+
         user.LastLoginAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync();
 

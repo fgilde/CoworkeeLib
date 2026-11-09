@@ -1,0 +1,19 @@
+<MudPaper Outlined="true" Class="pa-4 mb-4" data-testid="user-sessions">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-2">
+        <MudText Typo="Typo.h6" Class="flex-grow-1">@L["Sessions"] (@(_sessions?.Sessions.Count ?? 0))</MudText>
+        @if (_canManage)
+        {
+            <MudButton Size="Size.Small" Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Devices" OnClick="EditLimitAsync" Disabled="_sessions is null" data-testid="session-limit">@L["Session limit"]</MudButton>
+            <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Outlined.Logout" OnClick="EndAllAsync" Disabled="_sessions is not { Sessions.Count: > 0 }" data-testid="sessions-end-all">@L["End all sessions"]</MudButton>
+        }
+    </MudStack>
+    @if (_sessions is null)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else
+    {
+        <MudText Typo="Typo.caption" Class="d-block mb-2 mud-text-secondary" data-testid="session-limit-text">@L["Session limit: {0}", SessionLimits.Describe(L, _sessions.MaxSessions, ThemeService.ClientSettings)]</MudText>
+        <SessionTable Sessions="_sessions.Sessions" CanEnd="_canManage" OnEnd="EndAsync" />
+    }
+</MudPaper>

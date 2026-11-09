@@ -1,0 +1,48 @@
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + IdentityPermissions.Sessions.View)]
+
+<PageHeader Title="Sessions" Description="Who is signed in where. Ending a session signs that browser out at once; the limit per user is a setting under Sign-in security." />
+<CoworkeeDataTable @ref="_table" T="UserSessionDto" EntitySet="UserSessions" RealtimeTopic="type:UserSession" Filter="@Filter" SearchFields="SearchFields"
+                   ExportFileName="sessions" OnLoaded="LoadUsersAsync">
+    <ToolBarContent>
+        <MudSwitch T="bool" Value="_ended" ValueChanged="ShowEndedAsync" Color="Color.Primary" Label="@L["Show ended"]" data-testid="sessions-ended" />
+        <MudText Typo="Typo.caption" Class="mud-text-secondary ml-2">@L["Session limit: {0}", SessionLimits.Describe(L, null, ThemeService.ClientSettings)]</MudText>
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Property="s => s.UserId" Title="@L["User"]">
+            <CellTemplate>
+                <MudLink Href="@Links.Href($"/admin/users/{context.Item.UserId}")">@Name(context.Item.UserId)</MudLink>
+                <MudTooltip Text="@L["Active sessions of the user"]">
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" data-testid="@($"session-count-{context.Item.Id}")">@_counts.GetValueOrDefault(context.Item.UserId)</MudChip>
+                </MudTooltip>
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="s => s.Device" Title="@L["Device"]">
+            <CellTemplate>
+                @context.Item.Device <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Item.Browser</MudText>
+                @if (context.Item.ImpersonatorId is { } by)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" data-testid="session-impersonated">@L["Log in as"]: @Name(by)</MudChip>
+                }
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="s => s.IpAddress" Title="@L["IP address"]" />
+        <PropertyColumn Property="s => s.ClientId" Title="@L["App"]" />
+        <PropertyColumn Property="s => s.CreatedAt" Title="@L["Started"]" Format="g" />
+        <PropertyColumn Property="s => s.LastSeenAt" Title="@L["Last activity"]" Format="g" />
+        <PropertyColumn Property="s => s.EndedAt" Title="@L["Ended"]" Format="g" Hidden="!_ended" />
+        <PropertyColumn Property="s => s.EndReason" Title="@L["Reason"]" Hidden="!_ended" />
+        <TemplateColumn T="UserSessionDto" Sortable="false">
+            <CellTemplate>
+                @if (_canManage && context.Item.EndedAt is null)
+                {
+                    <MudIconButton Icon="@Icons.Material.Outlined.Logout" Size="Size.Small" Color="Color.Error" aria-label="@L["End session"]" title="@L["End session"]"
+                                   OnClick="() => EndAsync(context.Item)" data-testid="@($"session-end-{context.Item.Id}")" />
+                    <MudIconButton Icon="@Icons.Material.Outlined.PhonelinkErase" Size="Size.Small" aria-label="@L["End all sessions"]" title="@L["End all sessions"]"
+                                   OnClick="() => EndAllAsync(context.Item.UserId)" data-testid="@($"sessions-end-all-{context.Item.Id}")" />
+                    <MudIconButton Icon="@Icons.Material.Outlined.Devices" Size="Size.Small" aria-label="@L["Session limit"]" title="@L["Session limit"]"
+                                   OnClick="() => EditLimitAsync(context.Item.UserId)" data-testid="@($"session-limit-{context.Item.Id}")" />
+                }
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+</CoworkeeDataTable>

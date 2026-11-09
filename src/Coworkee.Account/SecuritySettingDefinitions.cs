@@ -30,7 +30,11 @@ internal sealed class SecuritySettingDefinitions(IOptions<IdentityOptions> ident
             .Add(SecuritySettings.PasswordHistory, "Password history", SettingType.Int, [SettingScope.Global], "0",
                 description: "A new password may not be one of the last so many; 0 allows any.")
             .Add(AuthSettings.PasskeysEnabled, "Passkeys", SettingType.Bool, [SettingScope.Global], "true", visibleToClient: true,
-                description: "Users add passkeys to their account and sign in with them. Off hides them; stored passkeys stay.");
+                description: "Users add passkeys to their account and sign in with them. Off hides them; stored passkeys stay.")
+            .Add(AuthSettings.MaxSessionsPerUser, "Sessions per user", SettingType.Int, [SettingScope.Global, SettingScope.Tenant], "0", visibleToClient: true,
+                description: "How many sessions (browsers, devices) a user may have at once; 0 is unlimited. A user's own limit wins.")
+            .Add(AuthSettings.SessionLimitMode, "Beyond the session limit", SettingType.Choice, [SettingScope.Global, SettingScope.Tenant], SessionLimitModes.EndOldest,
+                choices: SessionLimitModes.All, description: "EndOldest: a new sign-in ends the oldest sessions. Refuse: a new sign-in is refused until a session ends.");
     }
 
     private static string Flag(bool value) => value ? "true" : "false";

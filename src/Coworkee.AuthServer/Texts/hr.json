@@ -169,5 +169,6 @@
   "Sign in as another user": "Prijava kao drugi korisnik",
   "You may not sign in as this user.": "Ne smijete se prijaviti kao ovaj korisnik.",
   "Back to my account": "Natrag na moj korisnički račun",
-  "{0} is signed in as {1}.": "{0} je prijavljen kao {1}."
+  "{0} is signed in as {1}.": "{0} je prijavljen kao {1}.",
+  "You are signed in on too many devices. Sign out on one of them first or ask an administrator to end a session.": "Prijavljeni ste na previše uređaja. Najprije se odjavite na jednom od njih ili zamolite administratora da završi sesiju."
 }

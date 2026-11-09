@@ -50,6 +50,7 @@ The trail answers *what happened to which record, when, and done by a person or 
 | Section | Module | Exported | Erase |
 |---|---|---|---|
 | `profile` | Identity | name, e-mail, phone, address, picture, two-step verification on or off, roles, groups, external logins, passkeys (name, date, backup state), `claims`, own `permissionGrants`, `resourcePermissions` (type, id, role), `selectedGroups` | user deleted with roles, claims, logins, tokens, passkeys, memberships and group selections (cascade); own permission and resource grants deleted |
+| `sessions` | Identity | [sessions](clients.md#sessions) (app, device, browser, user agent, IP address, start, last activity, end and reason) | his sessions deleted; sessions of others he signed in as or ended keep that with the tombstone |
 | `apiKeys` | Identity | [API keys](api-keys.md) (name, prefix, permissions, dates, last use), never the hash | his keys deleted; keys of others he revoked keep the revocation with the tombstone |
 | `signIns` | Auth server | granted clients | grants and tokens deleted, every session ends |
 | `settings` | Settings | values with user scope (secrets as `***`) | deleted |

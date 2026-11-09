@@ -2,6 +2,17 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Changed
+
+- Identity: sessions are tracked in the new table `cw.UserSessions`, and `cw.Users` gets the column `MaxSessions`; apps need a migration. `RealtimeConnections.EndAsync` and `SessionRevokedPayload` take an ended session id (`EndedSessionId`), `IUserSessionListener` gets `SessionEndedAsync` (implemented by default). The auth server names every authorization it creates after its session (`coworkee_sid`), also outside "Log in as".
+
+### Added
+
+- Active sessions: every sign-in at the auth server is a session with device, browser, IP address, app and last activity. **Administration › Monitoring › Sessions** lists them live with the number per user and ends one or all of a user, the user page shows the user's, and users end their other sessions on the account page (*Security › Sessions*). Ending one revokes exactly its tokens, refuses its sign-in and signs that browser out at once (`SessionRevoked` with `EndedSessionId`); permissions `Identity.Sessions.View` and `Identity.Sessions.Manage`, requests and endpoints under `/api/v1/identity/sessions` and `/users/{id}/sessions`, the OData set `UserSessions`, `ISessionsApi` in Blazor, page key `sessions`. Each end writes `UserSessionEnded` to the outbox for a security log ([sessions](../security/clients.md#sessions)).
+- Session limit: the settings `Account.Sessions.MaxPerUser` (default 0, unlimited) and `Account.Sessions.LimitMode` (`EndOldest`, the default, or `Refuse`) and a limit per user (`User.MaxSessions`, `PUT /api/v1/identity/users/{id}/session-limit`). A sign-in beyond it ends the oldest sessions or is refused ([session limit](../security/clients.md#session-limit)).
+
 ## 0.0.1.68 (2026-11-08)
 
 ### Added

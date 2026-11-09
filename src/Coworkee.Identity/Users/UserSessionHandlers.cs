@@ -15,12 +15,15 @@ namespace Coworkee.Identity.Users;
 /// </summary>
 internal sealed class UserSessionHandlers(
     CoworkeeDbContext db, ICurrentUser currentUser, IEnumerable<IUserSessionListener> listeners, TimeProvider clock, AccountGuard guard)
-    : IHandler<SignOutUser, Result>, IHandler<LockUser, Result>
+    : IHandler<SignOutUser, Result>, IHandler<Sessions.EndUserSessions, Result>, IHandler<LockUser, Result>
 {
     private static readonly Error Self = Error.Conflict("identity.own_session", "Use the sign-out of the user menu for your own session.");
 
     public async Task<Result> HandleAsync(SignOutUser command, CancellationToken cancellationToken) =>
         await EndAsync(command.Id, _ => { }, cancellationToken);
+
+    public async Task<Result> HandleAsync(Sessions.EndUserSessions command, CancellationToken cancellationToken) =>
+        await EndAsync(command.UserId, _ => { }, cancellationToken);
 
     public async Task<Result> HandleAsync(LockUser command, CancellationToken cancellationToken)
     {

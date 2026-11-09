@@ -40,12 +40,13 @@ public sealed class LoginWith2faModel(SignInManager<User> signIn, CoworkeeDbCont
             ? await signIn.TwoFactorRecoveryCodeSignInAsync(code)
             : await signIn.TwoFactorAuthenticatorSignInAsync(code.Replace("-", string.Empty, StringComparison.Ordinal), RememberMe, rememberClient: false);
         await db.SaveChangesAsync(HttpContext.RequestAborted);
-        if (result.Succeeded)
+        if (result.Succeeded && !AuthSessions.Refused(HttpContext))
         {
             return LocalRedirect(Url.IsLocalUrl(ReturnUrl) ? ReturnUrl : "/");
         }
 
-        ErrorMessage = AuthTexts.T(result.IsLockedOut ? "Too many attempts. Try again later." : "The code is not valid.");
+        ErrorMessage = AuthTexts.T(result.Succeeded ? "You are signed in on too many devices. Sign out on one of them first or ask an administrator to end a session."
+            : result.IsLockedOut ? "Too many attempts. Try again later." : "The code is not valid.");
         return Page();
     }
 

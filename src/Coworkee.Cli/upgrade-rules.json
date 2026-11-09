@@ -762,6 +762,30 @@
         "Client entities: AddCoworkeeClientEntitiesSqlite() keeps only row types in SQLite that the in-memory copy keeps as JSON (a list among their properties); AddCoworkeeClientEntitiesSqlite(o => o.AllRowTypes = true) keeps every copy there as 0.0.1.65 did (0.0.1.66 was not published)."
       ],
       "needsMigration": false
+    },
+    {
+      "version": "0.0.1.69",
+      "breaking": [
+        "Identity: sessions are tracked in the new table cw.UserSessions and cw.Users gets the column MaxSessions (session limit per user).",
+        "RealtimeConnections.EndAsync and SessionRevokedPayload take an ended session id (EndedSessionId); IUserSessionListener gets SessionEndedAsync with a default implementation. A decorator of IRealtimePublisher that ends connections on SessionRevoked ends only those whose token carries EndedSessionId when it is set."
+      ],
+      "needsMigration": true,
+      "manual": [
+        {
+          "text": "Add a migration for the new table cw.UserSessions and the column cw.Users.MaxSessions (coworkee migrations add CoworkeeLib069). Both are new and nullable or empty, so no data is needed; sessions signed in before have no row and go on.",
+          "find": "class \\w+DbContext\\b",
+          "files": [
+            "src/**/*.cs"
+          ]
+        },
+        {
+          "text": "Give the demo roles that watch sign-ins Identity.Sessions.View and those that end them Identity.Sessions.Manage (administrators hold both).",
+          "find": "Identity\\.Users\\.Manage",
+          "files": [
+            "src/**/DemoSeed.cs"
+          ]
+        }
+      ]
     }
   ]
 }

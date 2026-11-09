@@ -35,6 +35,7 @@ public static class CoworkeeClientExtensions
         services.AddHttpClient<Features.IFeaturesApi, Features.FeaturesApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Security.IClientsApi, Security.ClientsApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Security.IApiKeysApi, Security.ApiKeysApi>(client => client.BaseAddress = baseAddress);
+        services.AddHttpClient<Security.ISessionsApi, Security.SessionsApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<History.IEntityHistoryApi, History.EntityHistoryApi>(client => client.BaseAddress = baseAddress);
         CommandPalette.CommandPaletteServiceCollectionExtensions.AddCommandPalette(services);
         services.AddHttpClient<Webhooks.IWebhooksApi, Webhooks.WebhooksApi>(client => client.BaseAddress = baseAddress);

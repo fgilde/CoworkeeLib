@@ -107,7 +107,44 @@ Ein neues Passwort ändert den Stamp ebenfalls, eine Passwortänderung beendet a
 
 Apps ohne die Kontoseiten ändern es über die API, mit denselben Regeln: `PUT /api/v1/identity/me/password` mit `{ currentPassword, newPassword }` antwortet `204`. Ein falsches aktuelles Passwort antwortet `400` (Feld `CurrentPassword`) und zählt zur Sperre, Passwortregeln und Historie antworten `400` (Feld `NewPassword`), ein Konto ohne Passwort `409` (`account.no_password`). Abgelehnt wird es, während jemand als anderer Benutzer angemeldet ist (`auth.impersonating`), und mit einem API-Schlüssel (`account.own_sign_in_required`); es ist begrenzt wie die Anmeldung (Rate-Limit-Policy `auth`). Die aufrufende Sitzung behält ihre Tokens über die `sid` ihres Access Tokens; ein Token ohne sie endet mit den anderen. Das Anmeldecookie des Auth-Servers in diesem Browser zählt nicht mehr, die nächste Anmeldung dort fragt nach dem neuen Passwort.
 
-Andere Module klinken sich mit `IUserSessionListener` ein (aufgerufen, nachdem ein Administrator die Sitzungen eines Benutzers beendet hat).
+Andere Module klinken sich mit `IUserSessionListener` ein: `SessionsEndedAsync`, nachdem ein Administrator alle Sitzungen eines Benutzers beendet hat, `SessionEndedAsync(userId, sid)`, nachdem eine Sitzung endete (der Auth-Store widerruft dort ihre Autorisierungen und Tokens).
+
+## Sitzungen
+
+Jede Anmeldung am Auth-Server ist eine Sitzung: ein Browser oder Gerät, egal welche Apps der Installation es danach öffnet (die Web-App, Single-Page-Apps; sie teilen sich die Anmeldung und ihre `sid`). API-Schlüssel und Dienst-Clients haben keine. Die Tabelle `cw.UserSessions` hält eine Zeile je Sitzung: Benutzer, Organisation, die App, für die sie sich angemeldet hat (`ClientId`), Gerät und Browser aus dem User-Agent (der vollständige bleibt auch), IP-Adresse, Beginn, letzte Aktivität (eine Anmeldung oder Token-Erneuerung, höchstens alle fünf Minuten geschrieben), Ablauf (letzte Aktivität plus Lebensdauer des Cookies des Auth-Servers, standardmäßig 14 Tage) und wann, warum und durch wen sie endete. Eine Sitzung von [Anmelden als](../features/identity.md#als-anderer-benutzer-anmelden) nennt den Anmeldenden (`ImpersonatorId`). Sitzungen, die sich vor dieser Tabelle angemeldet haben, haben keine Zeile und laufen weiter wie bisher.
+
+Eine beendete Sitzung verliert genau ihre Tokens und ihre Anmeldung, sofort:
+
+- Die Zeile endet (`UserSession.End`); nach dem Speichern widerruft der Auth-Store die Autorisierungen dieser Sitzung mit ihren Tokens (jede Autorisierung des Auth-Servers nennt ihre Sitzung, Eigenschaft `coworkee_sid`), und die Sitzungsänderung geht an jede Instanz wie eine Stempeländerung.
+- Die API lehnt Access-Tokens einer beendeten Sitzung ab (der zwischengespeicherte Stempel nennt die beendeten Sitzungen, deren Tokens noch unterwegs sein können), der Token-Endpunkt ihre Refresh-Tokens, und das Cookie des Auth-Servers in diesem Browser meldet nicht mehr an (geprüft bei jeder Anfrage an den Auth-Server).
+- `SessionRevoked` geht nur an die Realtime-Verbindungen dieser Sitzung, mit `SessionRevokedPayload.EndedSessionId` = ihre `sid`; `SessionGuard` meldet diesen Browser ab und sagt warum (Grund `ended` durch einen Administrator, `ended-by-user` aus einer anderen Sitzung des Benutzers, `limit`). Hubs der App hören es über `IRealtimePublisher` auf `user:{id}` wie die anderen Sitzungsänderungen; ein Decorator beendet nur die Verbindungen, deren Token diese `sid` trägt, und eine Single-Page-App ignoriert ein `SessionRevoked`, dessen `EndedSessionId` nicht die `sid` ihres eigenen Tokens ist.
+- Abmelden im Browser beendet die Sitzung (`logged-out`) und widerruft ihre Tokens; eine neue Anmeldung im selben Browser beendet die vorige (`replaced`), außer *Anmelden als*, das die eigene Sitzung des Anmeldenden mit ihren Tokens für *Zurück zu meinem Konto* lässt. Ein neuer Sicherheitsstempel (überall abmelden, sperren, neues Passwort) beendet die Zeilen aller Sitzungen, die er beendet hat, ausgenommen die weiterlaufende einer Passwortänderung und den Browser, dessen Kontoseite die Änderung gemacht und ihn neu angemeldet hat (etwa die Einrichtung der Zwei-Schritt-Verifizierung).
+- Jedes Ende schreibt `UserSessionEnded(SessionId, UserId, TenantId, Reason, EndedBy, ImpersonatorId)` mit der Zeile in die Outbox. Ein Sicherheitsprotokoll oder eine App verarbeitet es mit einem `IDomainEventHandler<UserSessionEnded>`; `EndedBy` ist null, wenn die Anmeldung selbst die Sitzung beendet hat (Limit, Abmelden).
+
+### Seiten und API
+
+**Administration › Überwachung › Sitzungen** (`/admin/sessions`, Seitenschlüssel `sessions`) listet die aktiven Sitzungen der Organisation (*Beendete anzeigen* nimmt die beendeten mit Grund dazu): Benutzer mit der Zahl seiner aktiven Sitzungen, Gerät, Browser, IP-Adresse, App, Beginn und letzte Aktivität; die Liste aktualisiert sich live. Ihr Menü je Zeile beendet die Sitzung, alle Sitzungen des Benutzers oder setzt sein eigenes Limit. Die Detailseite eines Benutzers zeigt seine Sitzungen mit denselben Aktionen. Benutzer sehen ihre eigenen auf der Kontoseite (*Sicherheit › Sitzungen*) und beenden jede außer der, in der sie gerade sind.
+
+| Request | Endpunkt | Berechtigung |
+|---|---|---|
+| `GetMySessions` | `GET /api/v1/identity/sessions/me` | angemeldet (markiert die eigene Sitzung, `Current`) |
+| `EndSession(id)` | `POST /api/v1/identity/sessions/{id}/end` | eigene Sitzung: keine; fremde: `Identity.Sessions.Manage` |
+| `GetUserSessions(userId)` | `GET /api/v1/identity/users/{id}/sessions` | `Identity.Sessions.View` |
+| `GetSessionCounts(userIds)` | `POST /api/v1/identity/sessions/counts` | `Identity.Sessions.View` |
+| `EndUserSessions(userId)` | `POST /api/v1/identity/users/{id}/sessions/end` | `Identity.Sessions.Manage` |
+| `SetSessionLimit(userId, maxSessions)` | `PUT /api/v1/identity/users/{id}/session-limit` | `Identity.Sessions.Manage` |
+| OData-Set `UserSessions` | `GET /odata/UserSessions` | `Identity.Sessions.View` |
+
+`Identity.Sessions.View` schließt `Identity.Users.View` ein, `Identity.Sessions.Manage` schließt `Identity.Sessions.View` ein. Es gelten die Regeln für [andere Konten](permissions.md#andere-konten-und-berechtigungen-weitergeben): Ein Administrator sieht und beendet Sitzungen von Benutzern seiner Organisation in seiner Reichweite, keine eines Benutzers mit einer Berechtigung, die ihm fehlt, und keine eines anderen Administrators, außer er ist selbst einer. Niemand beendet die Sitzung, in der er ist (`409 identity.own_session`, das Benutzermenü meldet ab), API-Schlüssel beenden keine (`403 identity.sessions_from_key`), und niemand beendet Sitzungen, während er als anderer Benutzer angemeldet ist. `EndUserSessions` ist *Überall abmelden* für Inhaber der Sitzungsberechtigung. In Blazor ruft `ISessionsApi` diese Endpunkte.
+
+### Sitzungslimit
+
+Wie viele Sitzungen ein Benutzer gleichzeitig haben darf, ist die Einstellung `Account.Sessions.MaxPerUser` (**Administration › Einstellungen › Anmeldesicherheit › Sitzungen pro Benutzer**, Bereich Global oder die Organisation, Standard `0` = unbegrenzt). Das eigene Limit eines Benutzers geht vor (`User.MaxSessions`: leer nimmt die Einstellung, `0` ist unbegrenzt, eine Zahl sein Limit), gesetzt auf der Benutzerseite oder der Sitzungsseite. `Account.Sessions.LimitMode` entscheidet, was eine Anmeldung über dem Limit tut:
+
+- `EndOldest` (Standard): Die Anmeldung läuft weiter, die ältesten Sitzungen enden (Grund `limit`) und ihre Browser werden sofort abgemeldet. Ein Benutzer mit Limit 1 beendet seine ältere Sitzung immer, wenn er sich anderswo anmeldet.
+- `Refuse`: Die Anmeldung wird mit *Sie sind auf zu vielen Geräten angemeldet* abgelehnt, bis eine Sitzung endet (der Benutzer meldet sich dort ab, die Sitzung läuft ab, oder ein Administrator beendet sie). Ein Browser, der ohne Abmelden geschlossen wird, behält seine Sitzung bis zu ihrem Ablauf.
+
+Es zählen nur aktive Sitzungen (nicht beendet, nicht abgelaufen); Sitzungen von jemandem, der als der Benutzer angemeldet ist, zählen nicht und enden nicht. Das Limit greift bei der Anmeldung: Ein niedrigeres Limit lässt die Sitzungen eines Benutzers bestehen, bis er sich erneut anmeldet. Einstellungen wirken wie alle Einstellungen sofort auf jeder Instanz.
 
 ## Aufrufe von anderen Origins (CORS)
 

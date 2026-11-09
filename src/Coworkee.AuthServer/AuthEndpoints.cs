@@ -98,14 +98,10 @@ internal static class AuthEndpoints
 
         var sid = SessionOf(cookie);
         var principal = await CreatePrincipalAsync(context.RequestServices, user, request.GetScopes(), options.Value, sid, cookie.Principal);
-        if (impersonating)
-        {
-            principal.SetAuthorizationId(await AuthImpersonation.CreateAuthorizationAsync(context.RequestServices, request, principal, sid, clock.GetUtcNow()));
-        }
-        else if (consent.AuthorizationId is { } authorizationId)
-        {
-            principal.SetAuthorizationId(authorizationId);
-        }
+        // a permanent consent is shared by every session of the user; otherwise the tokens hang on an authorization of this session
+        principal.SetAuthorizationId(!impersonating && consent.AuthorizationId is { } granted ? granted
+            : await AuthSessions.CreateAuthorizationAsync(context.RequestServices, request, principal, sid, clock.GetUtcNow(), impersonating));
+        await AuthSessions.TouchAsync(context.RequestServices, sid, request.ClientId, context.RequestAborted);
 
         return Results.SignIn(principal, null, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
     }
@@ -186,7 +182,8 @@ internal static class AuthEndpoints
         // a new security stamp (signed out everywhere, locked, new password) ends the refresh tokens issued before
         var stamp = result.Principal?.GetClaim(SessionStamp.ClaimType);
         var sid = result.Principal?.GetClaim(SessionStamp.SessionClaimType);
-        if (user is null || (stamp is not null && !SessionStamp.IsCurrent(new UserStamp(user.SecurityStamp, user.KeptSession), stamp, sid)))
+        if (user is null || (stamp is not null && !SessionStamp.IsCurrent(new UserStamp(user.SecurityStamp, user.KeptSession), stamp, sid))
+            || await AuthSessions.IsEndedAsync(db, sid, context.RequestAborted))
         {
             return Results.Forbid(Error(Errors.InvalidGrant, "The account is no longer allowed to sign in."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
         }
@@ -198,6 +195,7 @@ internal static class AuthEndpoints
             return Results.Forbid(Error(Errors.InvalidGrant, "The account is no longer allowed to sign in."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
         }
 
+        await AuthSessions.TouchAsync(context.RequestServices, sid, null, context.RequestAborted);
         var principal = await CreatePrincipalAsync(context.RequestServices, user, result.Principal!.GetScopes(), options.Value, sid, result.Principal!);
         if (result.Principal!.GetAuthorizationId() is { } authorizationId)
         {
@@ -234,6 +232,7 @@ internal static class AuthEndpoints
             await AuthImpersonation.RevokeAsync(context.RequestServices, cookie.Principal!, cookie.Principal!.FindFirstValue(ClaimTypes.NameIdentifier)!, SessionOf(cookie), context.RequestAborted);
         }
 
+        await AuthSessions.EndAsync(context.RequestServices, SessionOf(cookie), context.RequestAborted);
         await context.SignOutAsync(IdentityConstants.ApplicationScheme);
         return Results.SignOut(new AuthenticationProperties { RedirectUri = "/" }, [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
     }

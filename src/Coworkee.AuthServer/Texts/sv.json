@@ -169,5 +169,6 @@
   "Sign in as another user": "Logga in som en annan användare",
   "You may not sign in as this user.": "Du får inte logga in som den här användaren.",
   "Back to my account": "Tillbaka till mitt konto",
-  "{0} is signed in as {1}.": "{0} är inloggad som {1}."
+  "{0} is signed in as {1}.": "{0} är inloggad som {1}.",
+  "You are signed in on too many devices. Sign out on one of them first or ask an administrator to end a session.": "Du är inloggad på för många enheter. Logga först ut på en av dem eller be en administratör att avsluta en session."
 }

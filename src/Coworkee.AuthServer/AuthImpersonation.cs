@@ -126,25 +126,6 @@ internal static class AuthImpersonation
                       && Uri.Compare(registered, target, UriComponents.SchemeAndServer, UriFormat.Unescaped, StringComparison.OrdinalIgnoreCase) == 0);
     }
 
-    public static async Task<string> CreateAuthorizationAsync(IServiceProvider services, OpenIddictRequest request, ClaimsPrincipal principal, string? sid, DateTimeOffset now)
-    {
-        var applications = services.GetRequiredService<IOpenIddictApplicationManager>();
-        var authorizations = services.GetRequiredService<IOpenIddictAuthorizationManager>();
-        var application = await applications.FindByClientIdAsync(request.ClientId!) ?? throw new InvalidOperationException("The client is not known.");
-        var descriptor = new OpenIddictAuthorizationDescriptor
-        {
-            ApplicationId = await applications.GetIdAsync(application),
-            CreationDate = now,
-            Principal = principal,
-            Status = Statuses.Valid,
-            Subject = principal.GetClaim(Claims.Subject),
-            Type = AuthorizationTypes.AdHoc,
-        };
-        descriptor.Scopes.UnionWith(request.GetScopes());
-        descriptor.Properties[SessionProperty] = JsonSerializer.SerializeToElement(sid ?? string.Empty);
-        return (await authorizations.GetIdAsync(await authorizations.CreateAsync(descriptor)))!;
-    }
-
     /// <summary>
     /// Revokes the authorizations and tokens the sign-in <paramref name="sid"/> got while impersonating <paramref name="userId"/> and announces the end
     /// (<see cref="ImpersonationEnded"/> through the outbox) to the clients of that sign-in; returns how many authorizations it revoked.
@@ -157,8 +138,7 @@ internal static class AuthImpersonation
         var revoked = 0;
         foreach (var authorization in await authorizations.FindBySubjectAsync(userId, cancellationToken).ToListAsync(cancellationToken))
         {
-            if ((await authorizations.GetPropertiesAsync(authorization, cancellationToken)).TryGetValue(SessionProperty, out var value)
-                && value.ValueKind == JsonValueKind.String && value.GetString() == (sid ?? string.Empty))
+            if (AuthSessions.Names(await authorizations.GetPropertiesAsync(authorization, cancellationToken), SessionProperty, sid ?? string.Empty))
             {
                 await tokens.RevokeByAuthorizationIdAsync((await authorizations.GetIdAsync(authorization, cancellationToken))!, cancellationToken);
                 await authorizations.TryRevokeAsync(authorization, cancellationToken);

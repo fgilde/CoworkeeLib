@@ -2,6 +2,17 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Geändert
+
+- Identity: Sitzungen stehen in der neuen Tabelle `cw.UserSessions`, und `cw.Users` bekommt die Spalte `MaxSessions`; Apps brauchen eine Migration. `RealtimeConnections.EndAsync` und `SessionRevokedPayload` nehmen eine beendete Sitzung (`EndedSessionId`), `IUserSessionListener` bekommt `SessionEndedAsync` (mit Standardimplementierung). Der Auth-Server benennt jede Autorisierung, die er anlegt, nach ihrer Sitzung (`coworkee_sid`), auch außerhalb von „Anmelden als“.
+
+### Neu
+
+- Aktive Sitzungen: Jede Anmeldung am Auth-Server ist eine Sitzung mit Gerät, Browser, IP-Adresse, App und letzter Aktivität. **Administration › Überwachung › Sitzungen** listet sie live mit der Zahl je Benutzer und beendet eine oder alle eines Benutzers, die Benutzerseite zeigt die des Benutzers, und Benutzer beenden ihre anderen Sitzungen auf der Kontoseite (*Sicherheit › Sitzungen*). Eine beendete Sitzung verliert genau ihre Tokens und ihre Anmeldung, ihr Browser wird sofort abgemeldet (`SessionRevoked` mit `EndedSessionId`); Berechtigungen `Identity.Sessions.View` und `Identity.Sessions.Manage`, Requests und Endpunkte unter `/api/v1/identity/sessions` und `/users/{id}/sessions`, das OData-Set `UserSessions`, `ISessionsApi` in Blazor, Seitenschlüssel `sessions`. Jedes Ende schreibt `UserSessionEnded` in die Outbox, für ein Sicherheitsprotokoll ([Sitzungen](../security/clients.md#sitzungen)).
+- Sitzungslimit: die Einstellungen `Account.Sessions.MaxPerUser` (Standard 0, unbegrenzt) und `Account.Sessions.LimitMode` (`EndOldest`, der Standard, oder `Refuse`) und ein Limit je Benutzer (`User.MaxSessions`, `PUT /api/v1/identity/users/{id}/session-limit`). Eine Anmeldung darüber beendet die ältesten Sitzungen oder wird abgelehnt ([Sitzungslimit](../security/clients.md#sitzungslimit)).
+
 ## 0.0.1.68 (2026-11-08)
 
 ### Neu

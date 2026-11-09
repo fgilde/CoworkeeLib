@@ -17,6 +17,9 @@ public static class SessionStamp
 
     public const string SessionClaimType = "sid";
 
+    /// <summary>HttpContext item of the auth server: the session of the request's own sign-in, which a stamp change on its account pages keeps.</summary>
+    public const string RequestSessionItem = "coworkee:request-sid";
+
     public static string Hash(string? securityStamp) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(securityStamp ?? string.Empty)))[..16];
 
@@ -24,7 +27,11 @@ public static class SessionStamp
     public static string Keep(string sid, string previousHash, string? securityStamp) => $"{sid} {previousHash} {Hash(securityStamp)}";
 
     public static bool IsCurrent(UserStamp user, string stamp, string? sid) =>
-        Hash(user.SecurityStamp) == stamp || (sid is { Length: > 0 } && user.KeptSession == Keep(sid, stamp, user.SecurityStamp));
+        !IsEnded(user, sid) && (Hash(user.SecurityStamp) == stamp || (sid is { Length: > 0 } && user.KeptSession == Keep(sid, stamp, user.SecurityStamp)));
+
+    /// <summary>Whether the session <paramref name="sid"/> was ended on its own (<see cref="Sessions.UserSession"/>).</summary>
+    public static bool IsEnded(UserStamp user, string? sid) =>
+        sid is { Length: > 0 } && user.EndedSessions?.Split(' ').Contains(sid, StringComparer.Ordinal) == true;
 
     internal static void ValidateBearerTokens(this IServiceCollection services) =>
         services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, jwt =>

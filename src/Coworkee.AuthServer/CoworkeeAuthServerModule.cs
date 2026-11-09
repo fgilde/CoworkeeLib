@@ -57,7 +57,16 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
             cookie.Events.OnSigningIn = async signIn =>
             {
                 await signingIn(signIn);
-                await OwnPassword.NameSession(signIn);
+                await AuthSessions.StartAsync(signIn);
+            };
+            // the sign-in on the login page sends the browser on by itself; a refused one stays on the page with its message
+            var redirecting = cookie.Events.OnRedirectToReturnUrl;
+            cookie.Events.OnRedirectToReturnUrl = redirect => AuthSessions.Refused(redirect.HttpContext) ? Task.CompletedTask : redirecting(redirect);
+            var validating = cookie.Events.OnValidatePrincipal;
+            cookie.Events.OnValidatePrincipal = async validate =>
+            {
+                await validating(validate);
+                await AuthSessions.ValidateAsync(validate);
             };
         });
         services.Configure<SecurityStampValidatorOptions>(stamps => stamps.OnRefreshingPrincipal = AuthImpersonation.KeepClaims);

@@ -88,6 +88,9 @@ else
         </MudItem>
         <MudItem xs="12" md="5">
             <UserSignIn User="_user" CanManage="_canManage" Changed="LoadAsync" />
+            <PermissionView Permission="@IdentityPermissions.Sessions.View">
+                <UserSessions UserId="Id" UserName="@DisplayName(_user)" />
+            </PermissionView>
             <MudPaper Outlined="true" Class="pa-4 mb-4">
                 <MudText Typo="Typo.h6" Class="mb-2">@L["Roles"]</MudText>
                 @if (_canManage)
