@@ -241,19 +241,16 @@ internal sealed class MemoryStore : IClientEntityEngine, IClientEntityStore<Gadg
         return Task.CompletedTask;
     }
 
-    public Task ApplyAsync(IReadOnlyCollection<Gadget> changed, IReadOnlyCollection<Guid> deleted, DateTimeOffset version, CancellationToken cancellationToken)
+    public Task<bool> ApplyAsync(IReadOnlyCollection<Gadget> changed, IReadOnlyCollection<Guid> deleted, DateTimeOffset version, CancellationToken cancellationToken)
     {
-        foreach (var id in deleted)
-        {
-            Rows.Remove(id);
-        }
-
+        var touched = deleted.Count(Rows.Remove) > 0;
         foreach (var row in changed)
         {
+            touched |= !Rows.TryGetValue(row.Id, out var held) || held != row;
             Rows[row.Id] = row;
         }
 
-        return Task.CompletedTask;
+        return Task.FromResult(touched);
     }
 
     public Task<IReadOnlyList<Guid>> IdsAsync(CancellationToken cancellationToken)

@@ -38,6 +38,25 @@ public sealed class StoreSyncTests
     }
 
     [Fact]
+    public async Task Rows_the_store_has_unchanged_bring_no_new_revision()
+    {
+        await using var set = await LocalAsync();
+        var revision = set.Status.Revision;
+        _server.NextChanges = new ClientEntityChanges(_server.Now.AddMinutes(1), 5, [.. _server.Rows.Select(r => r.Id)], [], false);
+
+        await set.RefreshAsync(Ct);
+
+        set.Status.ShouldSatisfyAllConditions(s => s.Revision.ShouldBe(revision), s => s.Version.ShouldBe(_server.Now.AddMinutes(1)));
+        _server.Rows[3] = _server.Rows[3] with { Note = "new" };
+        _server.NextChanges = new ClientEntityChanges(_server.Now.AddMinutes(2), 5, [.. _server.Rows.Select(r => r.Id)], [], false);
+
+        await set.RefreshAsync(Ct);
+
+        set.Status.Revision.ShouldBe(revision + 1);
+        _store.Rows[_server.Rows[3].Id].Note.ShouldBe("new");
+    }
+
+    [Fact]
     public async Task A_delete_the_feed_reports_again_asks_for_no_ids()
     {
         await using var set = await LocalAsync();

@@ -612,8 +612,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
 
         var rows = new Dictionary<Guid, T>();
         await FetchIntoAsync(rows, changedIds, cancellationToken);
-        await store.ApplyAsync(rows.Values, changes.Deleted, changes.Version, cancellationToken);
-        var changed = rows.Count > 0 || changes.Deleted.Count > 0;
+        var changed = await store.ApplyAsync(rows.Values, changes.Deleted, changes.Version, cancellationToken);
 
         // counted after the changes: an updated row the store had already, or a delete the feed reports again (its overlap), is no row more or less
         if (store.Count != changes.Count)
@@ -626,8 +625,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
             await FetchIntoAsync(missing, [.. visible.Where(id => !kept.Contains(id))], cancellationToken);
             if (gone.Count > 0 || missing.Count > 0)
             {
-                await store.ApplyAsync(missing.Values, gone, changes.Version, cancellationToken);
-                changed = true;
+                changed |= await store.ApplyAsync(missing.Values, gone, changes.Version, cancellationToken);
             }
         }
 
@@ -682,20 +680,28 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         }
     }
 
+    // true when a row was added or differs from the one held: a row fetched again unchanged (the change feed's overlap) neither rebuilds nor reloads the copy
     private async Task<bool> FetchIntoAsync(Dictionary<Guid, T> rows, IReadOnlyList<Guid> ids, CancellationToken cancellationToken)
     {
+        var changed = false;
         foreach (var round in ids.Chunk(FetchChunk).Chunk(Math.Max(1, _info.ParallelPages)))
         {
             var pages = await Task.WhenAll(round.Select(chunk =>
                 RowsAsync(new ODataQuery { Filter = $"Id in ({string.Join(",", chunk)})", Top = chunk.Length, Count = false }, cancellationToken)));
             foreach (var item in pages.SelectMany(p => p.Items))
             {
-                rows[IdOf!(item)] = item;
+                var id = IdOf!(item);
+                changed |= !rows.TryGetValue(id, out var held) || !Same(held, item);
+                rows[id] = item;
             }
         }
 
-        return ids.Count > 0;
+        return changed;
     }
+
+    // every property, lists and expanded navigations included, as JSON: a value the copy keeps differently (another offset, a decimal's scale) counts as a change
+    private static bool Same(T held, T fetched) =>
+        JsonSerializer.SerializeToUtf8Bytes(held, Json).AsSpan().SequenceEqual(JsonSerializer.SerializeToUtf8Bytes(fetched, Json));
 
     // only the properties of the row type travel; a server that rejects them sends whole rows
     private async Task<ODataPage<T>> RowsAsync(ODataQuery query, CancellationToken cancellationToken)
