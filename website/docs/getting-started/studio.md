@@ -138,6 +138,8 @@ The Studio writes the spec, runs `coworkee spec validate` and `coworkee new --sp
 
 **Deploy** is the optional last step: pick a target (`compose`, `azure` or `k8s`) and the Studio runs `coworkee deploy` in the app's folder with its output live, ending with the addresses of the services and tools and the administrator's sign-in. See [Deployment](../hosting/deployment.md).
 
+**GitHub deploy workflow…** in the deploy card shows the settings of the app's deploy workflow (resource group prefix, Azure region, branches, delete with the branch) from `.coworkee/app.json` and writes `.github/workflows/deploy-azure.yml` with `coworkee deploy azure --github`. When the file was changed by hand, the Studio asks whether to overwrite your changes or keep your file. A new app gets the workflow from the option *Deploy workflow* in the Tooling group. See [Deploying every branch with GitHub Actions](../hosting/deployment.md#deploying-every-branch-with-github-actions).
+
 ![Running app](../assets/screenshots/studio-run-dark.webp)
 
 ### Open existing app

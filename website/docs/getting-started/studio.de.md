@@ -138,6 +138,8 @@ Das Studio schreibt die Spezifikation, ruft `coworkee spec validate` und `cowork
 
 **Deployen** ist der optionale letzte Schritt: Wähl ein Ziel (`compose`, `azure` oder `k8s`), und das Studio startet `coworkee deploy` im Ordner der App und zeigt die Ausgabe live, am Ende mit den Adressen der Dienste und Tools und der Anmeldung des Administrators. Siehe [Deployment](../hosting/deployment.md).
 
+**GitHub-Deploy-Workflow …** in der Deploy-Karte zeigt die Einstellungen des Deploy-Workflows der App (Präfix der Ressourcengruppen, Azure-Region, Branches, mit dem Branch löschen) aus `.coworkee/app.json` und schreibt `.github/workflows/deploy-azure.yml` mit `coworkee deploy azure --github`. Wurde die Datei von Hand geändert, fragt das Studio, ob es deine Änderungen überschreiben oder deine Datei behalten soll. Eine neue App bekommt den Workflow über die Option *Deploy-Workflow* in der Gruppe Tooling. Siehe [Jeden Branch mit GitHub Actions deployen](../hosting/deployment.md#jeden-branch-mit-github-actions-deployen).
+
 ![Laufende App](../assets/screenshots/studio-run-light-de.webp)
 
 ### Bestehende App öffnen

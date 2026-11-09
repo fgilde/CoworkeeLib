@@ -99,6 +99,11 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--color-mode` | `colorMode` | `system`, `light`, `dark` | `system` | Standard-Farbmodus, angelegt als systemweite Einstellung `Theme.Mode` |
 | `--registration` | `registration` | bool | `true` | Selbstregistrierung auf der Anmeldeseite, angelegt als Einstellung `Account.AllowRegistration` |
 | `--github-actions` | `githubActions` | bool | `false` | `.github/workflows/ci.yml`: Build und Tests bei jedem Push und Pull Request |
+| `--deploy-workflow` | `deployWorkflow` | `none`, `azure` | `none` | `.github/workflows/deploy-azure.yml`: Jeder Push auf `deployBranches` deployt den Branch nach Azure Container Apps, eine Ressourcengruppe je Branch, siehe [Deployment](../hosting/deployment.md#jeden-branch-mit-github-actions-deployen) |
+| `--deploy-resource-group-prefix` | `deployResourceGroupPrefix` | Text | der Name der App | Die Ressourcengruppen heißen `<präfix>-<branch>` |
+| `--deploy-location` | `deployLocation` | Text | `germanywestcentral` | Azure-Region der Umgebungen |
+| `--deploy-branches` | `deployBranches` | Text, durch Kommas getrennt | `main` | Branches, die der Workflow deployt; `*` passt wie in GitHub |
+| `--deploy-teardown` | `deployTeardown` | bool | `false` | Das Löschen eines Branches löscht seine Ressourcengruppe mit allem darin (nie den Standard-Branch) |
 | `--devcontainer` | `devcontainer` | bool | `false` | `.devcontainer/devcontainer.json` mit dem .NET SDK und Docker in Docker (Codespaces, VS Code) |
 
 Ein bool-Schalter ohne Wert bedeutet `true` (`--files`), `--chat false` schaltet aus.
@@ -344,6 +349,8 @@ coworkee ui --spec shop.json
 | `coworkee update [--version <version>] [--prerelease] [--dry-run]` | Setzt `<CoworkeeVersion>` in `Directory.Packages.props`, standardmäßig auf die neueste Version auf nuget.org, und wendet die Upgrade-Regeln an, siehe unten |
 | `coworkee self-update [--version <version>] [--prerelease]` | Aktualisiert diese CLI und, falls installiert, Coworkee Studio auf dieselbe Version, siehe unten |
 | `coworkee deploy [compose\|azure\|k8s] [-o <ordner>] [--no-build] [--without <tool>] [--with mailpit] [--admin-email <email>]` | Veröffentlicht den App-Host mit seinen Tools für Docker Compose (mit ausgefüllter `.env`, den Images und einer Liste der Adressen und der Anmeldung), Azure Container Apps oder Kubernetes, siehe [Deployment](../hosting/deployment.md) |
+| `coworkee deploy azure --resource-group <gruppe> --location <region> --apply [--subscription <id>] [--name <name>] [--yes]` | Deployt nach Azure Container Apps in genau diese Ressourcengruppe (Azure CLI angemeldet), startet die Migrationen und hält die erzeugten Parameter in `.coworkee/deployments`, siehe [Deployment](../hosting/deployment.md#von-deinem-rechner-deployen) |
+| `coworkee deploy azure --github [--resource-group-prefix <präfix>] [--location <region>] [--branches <branch>...] [--teardown-on-delete true\|false] [--force]` | Schreibt `.github/workflows/deploy-azure.yml` aus den `deploy*`-Optionen der App und den angegebenen Schaltern und hält sie in `.coworkee/app.json`; ein von Hand geänderter Workflow wird nur mit `--force` überschrieben, siehe [Deployment](../hosting/deployment.md#jeden-branch-mit-github-actions-deployen) |
 | `coworkee doctor` | Prüft die Werkzeuge, siehe oben |
 | `coworkee ui` | Coworkee Studio |
 | `coworkee mcp` | [MCP-Server](mcp.md) über stdio |

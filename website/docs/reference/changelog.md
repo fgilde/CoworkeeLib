@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- GitHub deploy workflow: `coworkee deploy azure --github` writes `.github/workflows/deploy-azure.yml`, which deploys every push to the listed branches to Azure Container Apps, one GitHub environment and one resource group (`<prefix>-<branch>`) per branch, signed in with OIDC; the generated parameters of an environment stay in its secret `COWORKEE_DEPLOY_SECRETS`, a deleted branch can take its resource group along. The options `deployWorkflow`, `deployResourceGroupPrefix`, `deployLocation`, `deployBranches` and `deployTeardown` write it from `coworkee new`, a spec or `coworkee add`; Coworkee Studio edits the settings in the deploy card (*GitHub deploy workflow…*). A workflow changed by hand is overwritten only when asked to ([Deployment](../hosting/deployment.md#deploying-every-branch-with-github-actions)). The one-time setup in Azure and GitHub is yours.
+
 ## 0.0.1.68 (2026-11-08)
 
 ### Added
