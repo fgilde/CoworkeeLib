@@ -26,6 +26,8 @@ coworkee ui --spec shop.json
 
 Für lokale Builds von Coworkee: `coworkee ui --add-source <ordner> --studio-version <version>`.
 
+Das Fenster öffnet sich sofort mit einem Startbildschirm: Das Coworkee-Logo setzt sich zusammen, darunter stehen die Version und was gerade lädt, während das Studio deine Apps liest und seine Seiten aufbaut. Ist es bereit, fliegt das Logo in die Titelleiste und der Startbildschirm geht in das Studio über. Ein Klick oder `Esc` überspringt die Animation; **Weniger Bewegung** in den Einstellungen (siehe [Einstellungen](#einstellungen)) ersetzt sie durch ein einfaches Einblenden. Kann das Studio nicht starten, zeigt der Startbildschirm den Grund und einen Knopf **Schließen**.
+
 ## Die Seiten
 
 Das Panel links zeigt, wo du bist; jede Seite, die du schon gesehen hast, ist einen Klick entfernt. `Alt+→` und `Alt+←` blättern vor und zurück, `Strg+N` beginnt eine neue App, `Strg+O` und `Strg+S` öffnen und speichern eine Spezifikation, `F1` öffnet die Hilfe. Das Abzeichen oben zeigt, ob die Spezifikation gültig ist; Probleme erscheinen auf der Seite, zu der sie gehören.
@@ -183,4 +185,4 @@ Die Hilfe (`F1` oder das Fragezeichen) erklärt den Assistenten, die Befehle der
 
 ## Einstellungen
 
-Die Einstellungen in der Hilfe: Sprache (System, Englisch, Deutsch), Farbmodus, die zu verwendende CLI (leer für das globale Tool, eine Programmdatei oder `Coworkee.Cli.dll`), eine Quelle der Vorlage (`.nupkg` oder Ordner, als `--template-source` übergeben) und ein lokaler Paket-Feed, den das Restore der neuen App neben nuget.org nutzt. Sie liegen pro Benutzer zusammen mit den zuletzt geöffneten Spezifikationen, der Liste *Meine Apps* und ihren Ordnern im Anwendungsdatenordner unter `Coworkee/Studio/settings.json`.
+Die Einstellungen in der Hilfe: Sprache (System, Englisch, Deutsch), Farbmodus, weniger Bewegung (einfaches Einblenden statt des animierten Startbildschirms), die zu verwendende CLI (leer für das globale Tool, eine Programmdatei oder `Coworkee.Cli.dll`), eine Quelle der Vorlage (`.nupkg` oder Ordner, als `--template-source` übergeben) und ein lokaler Paket-Feed, den das Restore der neuen App neben nuget.org nutzt. Sie liegen pro Benutzer zusammen mit den zuletzt geöffneten Spezifikationen, der Liste *Meine Apps* und ihren Ordnern im Anwendungsdatenordner unter `Coworkee/Studio/settings.json`.

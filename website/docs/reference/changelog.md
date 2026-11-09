@@ -8,6 +8,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 - Coworkee Studio: an existing app (*Open existing app*, *Recent*, *My apps*) opens its overview instead of the wizard: run status with **Start**/**Stop** and links, its deployments from `.coworkee/deployments` with their addresses, folder, solution and VS Code; **Edit in the wizard** leads to the changes ([Open existing app](../getting-started/studio.md#open-existing-app)). **Deploy…** is a wizard for Azure: Azure CLI installed and signed in (with the fix for the Windows broker problem), subscription, resource group and region, a summary, then `coworkee deploy azure --apply` with its output live; **Update** deploys a recorded deployment again ([Deploy](../getting-started/studio.md#deploy)).
 - `coworkee deploy azure --apply`: the deployment record keeps the tool switches (`tools`), so an update deploys the same tools.
+- Coworkee Studio: a splash right at start (the window shows in about a second instead of 2.5): the animated Coworkee mark, the version and what is loading; once the Studio is built behind it, the mark flies into the title bar. A click or `Esc` skips it, **Reduce motion** in the settings fades instead ([Install and start](../getting-started/studio.md#install-and-start)).
 
 ## 0.0.1.68 (2026-11-08)
 
