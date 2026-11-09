@@ -32,7 +32,7 @@ The panel on the left shows where you are; every page you have seen is one click
 
 ### Welcome
 
-Start a new app, open a spec (`.json` from the CLI, the [MCP server](mcp.md) or an earlier session), open an existing app or pick one of the recent specs and apps; an app opens in the wizard, ready to extend (see [Open existing app](#open-existing-app)). Below those: **Start from a template** and **My apps**.
+Start a new app, open a spec (`.json` from the CLI, the [MCP server](mcp.md) or an earlier session), open an existing app or pick one of the recent specs and apps. A spec opens in the wizard; an app opens its overview, where you start it, see where it is deployed and deploy it (see [Open existing app](#open-existing-app)). Below those: **Start from a template** and **My apps**.
 
 ![Welcome](../assets/screenshots/studio-welcome-light.webp)
 
@@ -46,7 +46,7 @@ The [starter specs](gallery.md) (ERP, HR self-service, repair shop, recruiting, 
 
 Every app the Studio created lands in this list, with its folder, the day it was made and the options that differ from the template. **Add a folder** points the Studio at the place where your apps live; it looks up to three levels down for `.coworkee/app.json` (written by the CLI) or a solution with an `*.AppHost` project, so apps made with `coworkee new` show up too.
 
-For each app you see whether it runs. The Studio checks for the app host process (`Shop.AppHost`), so an app started from Visual Studio or `coworkee run` counts as well, and it warns when another program sits on the dashboard port. **Start** and **Stop** use the same runner as the *Create* page. While it runs, the links open the Aspire dashboard (with the login token when the Studio started it), the web app and API, and Grafana and WebDataStudio. Those two get their ports from Aspire at start-up, so their links open the dashboard, where the address is listed next to the resource. Below that sit the last line of the output and links: **Edit in the Studio** opens the app in the wizard (see [Open existing app](#open-existing-app)), then the folder, the solution and VS Code.
+For each app you see whether it runs. The Studio checks for the app host process (`Shop.AppHost`), so an app started from Visual Studio or `coworkee run` counts as well, and it warns when another program sits on the dashboard port. **Start** and **Stop** use the same runner as the *Create* page. While it runs, the links open the Aspire dashboard (with the login token when the Studio started it), the web app and API, and Grafana and WebDataStudio. Those two get their ports from Aspire at start-up, so their links open the dashboard, where the address is listed next to the resource. Below that sit the last line of the output and links: **Overview and deployments** opens the app's overview (see [Open existing app](#open-existing-app)), **Edit in the Studio** opens it in the wizard, then the folder, the solution and VS Code.
 
 ### Basics
 
@@ -136,15 +136,40 @@ The Studio writes the spec, runs `coworkee spec validate` and `coworkee new --sp
 
 **Run the app** starts `dotnet run --project <app host>` inside the Studio. The card shows whether the app host is starting, running or has failed, and on failure the line that explains it (a port in use, a build error). Once it is up it links the Aspire dashboard (the login address with its token, read from the output) and the addresses of the web app, the API and the auth server (from their launch settings). While the app is not set up yet, the card shows the [setup token](../security/authentication.md#setup-wizard-or-seed) with a copy button, as *My apps* does. The output of the app host is one click away; **Stop** ends the app host and what it started, and so does closing the Studio.
 
-**Deploy** is the optional last step: pick a target (`compose`, `azure` or `k8s`) and the Studio runs `coworkee deploy` in the app's folder with its output live, ending with the addresses of the services and tools and the administrator's sign-in. See [Deployment](../hosting/deployment.md).
+**Deploy** is the optional last step: pick a target (`compose`, `azure` or `k8s`) and the Studio runs `coworkee deploy` in the app's folder with its output live, ending with the addresses of the services and tools and the administrator's sign-in. This writes the deployment files; to deploy to Azure with sign-in and resource group, use **Deploy…** on the app's overview (see [Deploy](#deploy)). See [Deployment](../hosting/deployment.md).
 
 ![Running app](../assets/screenshots/studio-run-dark.webp)
 
 ### Open existing app
 
-*Open existing app* on the welcome page takes the folder of an app created with Coworkee; an app under *Recent* or **Edit in the Studio** in *My apps* opens the same way, and an app opened here joins *My apps*. The wizard opens on *Review* with the app's state: its `.coworkee/app.json`, or for older apps the options its files show. Switch modules and options on, add languages, modules and entities, then **Show the changes**: the Studio runs `coworkee add --spec ... --dry-run` in the app's folder and shows the plan (options, files to add, update, merge or delete, conflicts, modules and entities to generate). **Apply the changes** runs it for real, with the same live log as *Create*; files whose changes did not merge are listed as `.rej` files afterwards, see [Changing an existing app](cli.md#changing-an-existing-app).
+*Open existing app* on the welcome page takes the folder of an app created with Coworkee (or any folder inside it). An app under *Recent* and **Overview and deployments** in *My apps* open the same way, and an app opened here joins *My apps*. Nothing changes in the app and the wizard stays as it was: you see the app's overview.
+
+- the name, the folder and the options that differ from the template; **Refresh** reads everything again
+- **On this machine**: whether it runs, **Start** and **Stop** (the runner of *My apps*), the links to the dashboard and the app, the setup token while the app is not set up yet
+- **Deployments**: every record in `.coworkee/deployments/*.json` of the app folder with target, resource group, region, the Azure account, when it was last deployed and the public addresses as links; **Update** deploys it again, **Deploy…** starts a new one (see [Deploy](#deploy))
+- open the folder, the solution or VS Code
+- **Edit in the wizard** for changes to the app
+
+**Edit in the wizard** (in *My apps* also **Edit in the Studio**) opens the wizard on *Review* with the app's state: its `.coworkee/app.json`, or for older apps the options its files show. Switch modules and options on, add languages, modules and entities, then **Show the changes**: the Studio runs `coworkee add --spec ... --dry-run` in the app's folder and shows the plan (options, files to add, update, merge or delete, conflicts, modules and entities to generate). **Apply the changes** runs it for real, with the same live log as *Create*; files whose changes did not merge are listed as `.rej` files afterwards, see [Changing an existing app](cli.md#changing-an-existing-app).
 
 When the CLI is not installed, the Studio offers to run `dotnet tool install -g Coworkee.Cli` or to use a local CLI (`coworkee.exe` or `Coworkee.Cli.dll`).
+
+### Deploy
+
+**Deploy…** on the overview of an app deploys it to Azure Container Apps in four steps; nothing is created before the last one.
+
+1. **Sign in to Azure.** The Studio checks that the [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) is installed (otherwise it links the installation) and signed in. Like `coworkee deploy`, it asks for a token (`az account get-access-token`), because `az account show` also answers from an expired cache. **Sign in** runs `az login`, which opens the browser, and checks again. When `az account show` works but no token comes (*Can't find token from MSAL cache*), the Azure CLI signed in through the Windows broker; the Studio shows the fix, `az config set core.enable_broker_on_windows=false` and `az login`, and **Run both and sign in** does it.
+2. **Subscription.** The signed-in account in large letters and its subscriptions (`az account list`), the default one selected.
+3. **Where.** The resource group: type a new name (it is created) or pick one of yours (`az group list`), which also takes its region. The region (germanywestcentral, westeurope, northeurope, swedencentral, … eastus). The deployment name, the resource group unless you change it. The administrator's email, the signed-in account by default. The tools of the app host: a tool that is on goes along when the app uses it, off passes `--without`, Mailpit (a test mail server) only goes along when switched on (`--with mailpit`).
+4. **Summary.** Everything you chose and the sentence *Everything is created in resource group X only*. **Deploy** runs
+
+```bash
+coworkee deploy azure --apply --yes --resource-group <rg> --location <region> --subscription <id> --name <name> [--admin-email <email>] [--without <tool>] [--with mailpit]
+```
+
+in the app's folder with its output live, as on *Create*. The CLI asks nothing (it gets no input) and builds, pushes and deploys (several minutes), runs the migrations job and writes the record `.coworkee/deployments/<name>.json`: target, subscription, tenant, resource group, region, account, time, the public addresses of the container apps and the tool switches. On success the Studio shows the addresses as links and where the administrator's password is: `.coworkee/deployments/<name>.secrets.json`, which the CLI keeps out of git. The Studio never shows the password itself. Back on the overview, the deployment is in the list.
+
+**Update** on a deployment opens the same wizard with the values of its record (subscription, resource group, region, name, tools). After the sign-in check it goes straight to the summary; **Deploy** runs the same command again, and the kept parameters (administrator, passwords, certificates) stay as they were. **Back** goes to the steps before, to change something first. See [Deployment](../hosting/deployment.md) for what the CLI deploys.
 
 ## Help and the MCP server
 
