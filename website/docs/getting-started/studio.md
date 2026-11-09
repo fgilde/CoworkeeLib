@@ -26,6 +26,8 @@ coworkee ui --spec shop.json
 
 For local builds of Coworkee: `coworkee ui --add-source <folder> --studio-version <version>`.
 
+The window opens at once with a splash: the Coworkee mark assembles, with the version and what is loading below it, while the Studio reads your apps and builds its pages. Once it is ready, the mark flies into the title bar and the splash dissolves into the Studio. A click or `Esc` skips the animation; **Reduce motion** in the settings (see [Settings](#settings)) replaces it with a plain fade. If the Studio cannot start, the splash shows the reason and a **Close** button.
+
 ## The pages
 
 The panel on the left shows where you are; every page you have seen is one click away. `Alt+→` and `Alt+←` go forward and back, `Ctrl+N` starts a new app, `Ctrl+O` and `Ctrl+S` open and save a spec, `F1` opens the help. The badge at the top shows whether the spec is valid; problems appear on the page they belong to.
@@ -185,4 +187,4 @@ The help (`F1` or the question mark) explains the wizard, the CLI commands and t
 
 ## Settings
 
-The settings in the help drawer: language (system, English, German), color mode, the CLI to use (empty for the global tool, an executable or `Coworkee.Cli.dll`), a template source (`.nupkg` or folder, passed as `--template-source`) and a local package feed that the restore of the new app uses next to nuget.org. They are kept per user with the recent specs, the list of *My apps* and its folders in the application data folder under `Coworkee/Studio/settings.json`.
+The settings in the help drawer: language (system, English, German), color mode, reduce motion (a plain fade instead of the animated splash), the CLI to use (empty for the global tool, an executable or `Coworkee.Cli.dll`), a template source (`.nupkg` or folder, passed as `--template-source`) and a local package feed that the restore of the new app uses next to nuget.org. They are kept per user with the recent specs, the list of *My apps* and its folders in the application data folder under `Coworkee/Studio/settings.json`.

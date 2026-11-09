@@ -30,6 +30,9 @@ public sealed class StudioSettings
     /// <summary>Light, Dark or empty to follow the system.</summary>
     public string? Theme { get; set; }
 
+    /// <summary>A plain fade instead of the animated splash; Avalonia does not report the reduced motion setting of the system.</summary>
+    public bool ReduceMotion { get; set; }
+
     /// <summary>Apps created with the Studio or found in <see cref="AppFolders"/>, for My apps.</summary>
     public List<KnownApp> Apps { get; set; } = [];
 
