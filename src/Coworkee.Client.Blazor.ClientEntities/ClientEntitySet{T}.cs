@@ -577,18 +577,25 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
 
         var rows = new Dictionary<Guid, T>();
         await FetchIntoAsync(rows, changedIds, cancellationToken);
-        List<Guid> deleted = [.. changes.Deleted];
-        if (store.Count - deleted.Count + rows.Count != changes.Count)
+        await store.ApplyAsync(rows.Values, changes.Deleted, changes.Version, cancellationToken);
+        var changed = rows.Count > 0 || changes.Deleted.Count > 0;
+
+        // counted after the changes: an updated row the store had already, or a delete the feed reports again (its overlap), is no row more or less
+        if (store.Count != changes.Count)
         {
             // rows vanished unseen or are missing: compare all ids once
             var visible = (await _api.IdsAsync(EntitySet, cancellationToken)).ToHashSet();
             var kept = (await store.IdsAsync(cancellationToken)).ToHashSet();
-            deleted.AddRange(kept.Where(id => !visible.Contains(id)));
-            await FetchIntoAsync(rows, [.. visible.Where(id => !kept.Contains(id) && !rows.ContainsKey(id))], cancellationToken);
+            List<Guid> gone = [.. kept.Where(id => !visible.Contains(id))];
+            var missing = new Dictionary<Guid, T>();
+            await FetchIntoAsync(missing, [.. visible.Where(id => !kept.Contains(id))], cancellationToken);
+            if (gone.Count > 0 || missing.Count > 0)
+            {
+                await store.ApplyAsync(missing.Values, gone, changes.Version, cancellationToken);
+                changed = true;
+            }
         }
 
-        var changed = rows.Count > 0 || deleted.Count > 0;
-        await store.ApplyAsync(rows.Values, deleted, changes.Version, cancellationToken);
         CommitStore(changes.Version, changed);
     }
 
