@@ -33,16 +33,48 @@ internal static class DeployCommand
         Description = "Deploy a tool that stays out by default: --with mailpit for a test deployment without a real mail server.", AllowMultipleArgumentsPerToken = true,
     }.AcceptOnlyFromAmong(Tools);
 
-    private static readonly Option<string?> AdminEmail = new("--admin-email") { Description = "Email of the first administrator (compose; asked for, or admin@<app>.local)." };
+    private static readonly Option<string?> AdminEmail = new("--admin-email")
+    {
+        Description = "Email of the first administrator (compose: asked for, or admin@<app>.local; azure --apply: the signed-in Azure account).",
+    };
+
+    private static readonly Option<bool> Apply = new("--apply") { Description = "azure: deploy into --resource-group as well (Azure CLI signed in; Aspire builds, pushes and deploys)." };
+
+    private static readonly Option<string?> ResourceGroup = new("--resource-group", "-g") { Description = "azure --apply: the resource group, made when missing; nothing is created outside it." };
+
+    private static readonly Option<string?> Location = new("--location", "-l") { Description = "azure --apply: the Azure region, e.g. germanywestcentral." };
+
+    private static readonly Option<string?> Subscription = new("--subscription") { Description = "azure --apply: the subscription (default: the Azure CLI's)." };
+
+    private static readonly Option<string?> Name = new("--name") { Description = "azure --apply: the name of the deployment in .coworkee/deployments (default: the resource group)." };
+
+    private static readonly Option<bool> Yes = new("--yes", "-y") { Description = "azure --apply: do not ask before deploying." };
 
     public static Command Create() =>
         new Command("deploy", "Write the deployment artifacts of the app and its tools: Docker Compose, Azure Container Apps (Bicep) or Kubernetes (Helm).")
         {
-            Target, Output, NoBuild, Without, With, AdminEmail,
+            Target, Output, NoBuild, Without, With, AdminEmail, Apply, ResourceGroup, Location, Subscription, Name, Yes,
         }
         .Handle((result, cancellationToken) => RunAsync(
             result.GetValue(Target)!, result.GetValue(Output), result.GetValue(NoBuild), ToolSwitches(result.GetValue(Without), result.GetValue(With)), result.GetValue(AdminEmail),
-            cancellationToken));
+            AzureTarget(result), result.GetValue(Yes), cancellationToken));
+
+    private static AzureDeploy.Target? AzureTarget(ParseResult result)
+    {
+        if (!result.GetValue(Apply))
+        {
+            return null;
+        }
+
+        if (result.GetValue(Target) != "azure")
+        {
+            throw new CliException("--apply deploys to Azure only: coworkee deploy azure --resource-group <name> --location <region> --apply");
+        }
+
+        var group = result.GetValue(ResourceGroup) ?? throw new CliException("--apply needs --resource-group.");
+        var location = result.GetValue(Location) ?? throw new CliException("--apply needs --location, e.g. germanywestcentral.");
+        return new AzureDeploy.Target(group, location, result.GetValue(Subscription), result.GetValue(Name) ?? group);
+    }
 
     public static string OutputFolder(Solution solution, string target, string? output) =>
         Path.GetFullPath(output ?? Path.Combine(solution.Root, "deploy", target));
@@ -81,7 +113,7 @@ internal static class DeployCommand
             : null;
 
     private static async Task<int> RunAsync(string target, string? output, bool noBuild, IReadOnlyDictionary<string, bool> tools, string? adminEmail,
-        CancellationToken cancellationToken)
+        AzureDeploy.Target? azure, bool yes, CancellationToken cancellationToken)
     {
         var solution = Solution.Find(Environment.CurrentDirectory);
         var folder = OutputFolder(solution, target, output);
@@ -101,10 +133,10 @@ internal static class DeployCommand
         return target switch
         {
             "compose" => await ComposeAsync(solution, folder, envPath, previous, build, adminEmail, cancellationToken),
+            "azure" when azure is not null => await AzureDeploy.ApplyAsync(solution, folder, azure, yes, adminEmail, tools, cancellationToken),
             "azure" => NextSteps(folder, "Azure Container Apps (Bicep)", DeploySummary.PublicAddresses(folder),
                 "az bicep build --file main.bicep  (checks the templates)",
-                "azd init, then azd up (asks for the public addresses, the administrator, the mail server, certificates and secrets)",
-                "after each deployment start the migrations: az containerapp job start -n <app>-migrations -g <resource group>"),
+                "deploy: coworkee deploy azure --resource-group <name> --location <region> --apply  (Azure CLI signed in)"),
             _ => Kubernetes(folder),
         };
     }
