@@ -3,6 +3,7 @@ using Aspire.Hosting.Azure;
 using Aspire.Hosting.Azure.AppContainers;
 using Azure.Provisioning;
 using Azure.Provisioning.AppContainers;
+using Azure.Provisioning.Expressions;
 using Microsoft.Extensions.Configuration;
 
 namespace Aspire.Hosting;
@@ -112,17 +113,36 @@ public sealed partial class CoworkeeApp
     // Aspire gives every service its own share for a volume; the files of the app (WithFileVolume) are one store the services share
     private void ShareFileVolume(AzureResourceInfrastructure infrastructure)
     {
-        var services = Builder.Resources.OfType<ProjectResource>()
+        var volumes = Builder.Resources.OfType<ProjectResource>()
             .Select(r => (Resource: r, Index: r.Annotations.OfType<ContainerMountAnnotation>().Where(m => m.Type == ContainerMountType.Volume).ToList().FindIndex(m => m.Source == FilesVolume)))
             .Where(s => s.Index >= 0)
-            .Select(s => $"managedStorage_volumes_{s.Resource.Name.Replace('-', '_')}_{s.Index}")
+            .Select(s => $"volumes_{s.Resource.Name.Replace('-', '_')}_{s.Index}")
             .ToList();
-        var storages = infrastructure.GetProvisionableResources().OfType<ContainerAppManagedEnvironmentStorage>()
-            .Where(s => services.Contains(s.BicepIdentifier)).OrderBy(s => services.IndexOf(s.BicepIdentifier)).ToList();
+        var resources = infrastructure.GetProvisionableResources().ToList();
+        var storages = resources.OfType<ContainerAppManagedEnvironmentStorage>()
+            .Where(s => volumes.Any(v => s.BicepIdentifier == $"managedStorage_{v}")).OrderBy(s => volumes.FindIndex(v => s.BicepIdentifier == $"managedStorage_{v}")).ToList();
+        var account = resources.OfType<global::Azure.Provisioning.Storage.StorageAccount>().FirstOrDefault();
+        var share = resources.OfType<global::Azure.Provisioning.Storage.FileShare>().FirstOrDefault(r => r.BicepIdentifier == $"shares_{volumes.FirstOrDefault()}");
+        if (storages.Count < 2 || account is null || share is null)
+        {
+            return;
+        }
+
+        // the whole azureFile block from the account and the first service's share, as Aspire writes it (the key of another storage cannot be read back)
         foreach (var storage in storages.Skip(1))
         {
-            storage.Properties.AzureFile.ShareName = storages[0].Properties.AzureFile.ShareName;
+            storage.Properties.AzureFile = new ContainerAppAzureFileProperties
+            {
+                AccountName = account.Name, AccountKey = AccountKey(account), AccessMode = ContainerAppAccessMode.ReadWrite, ShareName = share.Name,
+            };
         }
+    }
+
+    // {account}.listKeys().keys[0].value: the expression Aspire writes for its own storages
+    private static BicepValue<string> AccountKey(global::Azure.Provisioning.Storage.StorageAccount account)
+    {
+        var keys = new MemberExpression(new FunctionCallExpression(new MemberExpression(new IdentifierExpression(account.BicepIdentifier), "listKeys")), "keys");
+        return new BicepValue<string>(new MemberExpression(new IndexExpression(keys, new IntLiteralExpression(0)), "value"));
     }
 
     private string FilesVolume => $"{Name}-files";
