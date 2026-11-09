@@ -116,6 +116,9 @@ public sealed class FeatureTests(FeaturesApp app) : IAsyncLifetime
 
         details!.Single().UserCount.ShouldBe(1);
         (await app.InDbAsync(db => db.Set<Coworkee.Identity.Domain.Tenant>().SingleAsync(t => t.Id == id, Ct))).Identifier.ShouldBe("beta");
+        // the api runs the tenant's seed contributors once this commit is processed from the outbox
+        (await app.InDbAsync(db => db.Set<Coworkee.Infrastructure.Outbox.OutboxMessage>().Where(m => m.Type.StartsWith("Coworkee.Identity.Setup.TenantSeedRequested,"))
+            .Select(m => m.Payload).ToListAsync(Ct))).ShouldContain(p => p.Contains(id.ToString()));
         (await Host.PostAsJsonAsync("/api/v1/tenants", new CreateTenantRequest("Beta 2", "beta", true, false, null, null), Ct))
             .StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
