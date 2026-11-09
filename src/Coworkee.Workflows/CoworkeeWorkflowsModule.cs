@@ -36,7 +36,7 @@ public sealed class CoworkeeWorkflowsModule : CoworkeeModule, IWebModule
         {
             foreach (var group in w.Workflows.Values.SelectMany(x => x.RoleNames.Select(role => (Role: role, x.EntityType))).GroupBy(r => r.Role, StringComparer.OrdinalIgnoreCase))
             {
-                o.FixedRoleNames[group.Key] = $"The workflow of {string.Join(", ", group.Select(r => r.EntityType))}";
+                o.FixedRoleNames[group.Key] = $"Workflows: {string.Join(", ", group.Select(r => r.EntityType))}";
             }
         });
         services.AddScoped<Application.Privacy.IPersonalDataContributor, WorkflowPersonalData>();

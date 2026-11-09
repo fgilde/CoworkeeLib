@@ -40,7 +40,7 @@ On *Administration → Identity → Roles* the pencil of a row (and the one next
 Two kinds of roles keep their name:
 
 - **System roles** (`admin`, `user`) belong to every organisation and are found by name: `409 identity.role_system`.
-- **Roles whose name code looks up** are neither renamed nor deleted: `409 identity.role_name_fixed`, with the code that relies on the role in the message ("The workflow of Invoices finds this role by its name; it cannot be deleted."), which the roles page shows. The description stays editable. The Files module adds its role *Registration documents*, Coworkee.Workflows every role its declared workflows name (`Role`, `EscalateTo`, `RequiresRole`, `NotifyRole`). Add the names your own code uses, each with what relies on it:
+- **Roles whose name code looks up** are neither renamed nor deleted: `409 identity.role_name_fixed`, with the code that relies on the role in the message ("Code finds this role by its name (Workflows: Invoices); it cannot be deleted."), which the roles page shows in the user's language ([server messages](../modules/localization.md#in-the-client)). The description stays editable. The Files module adds its role *Registration documents*, Coworkee.Workflows every role its declared workflows name (`Role`, `EscalateTo`, `RequiresRole`, `NotifyRole`). Add the names your own code uses, each with what relies on it:
 
 ```json
 { "Coworkee": { "Identity": { "FixedRoleNames": { "Dispatchers": "The dispatch board" } } } }

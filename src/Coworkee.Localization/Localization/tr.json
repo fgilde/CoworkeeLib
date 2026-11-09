@@ -2017,5 +2017,18 @@
   "{0} users copied": "{0} kullanıcı kopyalandı",
   "System roles cannot be changed.": "Sistem rolleri değiştirilemez.",
   "Edit role": "Rolü düzenle",
-  "Role saved": "Rol kaydedildi"
+  "Role saved": "Rol kaydedildi",
+  "Code finds this role by its name ({0}); it cannot be renamed.": "Kod bu rolü adıyla buluyor ({0}); rolün adı değiştirilemez.",
+  "Code finds this role by its name ({0}); it cannot be deleted.": "Kod bu rolü adıyla buluyor ({0}); rol silinemez.",
+  "System roles cannot be deleted.": "Sistem rolleri silinemez.",
+  "Role not found.": "Rol bulunamadı.",
+  "A role with this name already exists.": "Bu adda bir rol zaten var.",
+  "Choose roles other than the role the users come from.": "Kullanıcıların geldiği rolden farklı roller seçin.",
+  "Choose at least one user.": "En az bir kullanıcı seçin.",
+  "Unknown user or the user does not have the role.": "Bilinmeyen kullanıcı veya kullanıcının bu rolü yok.",
+  "The last active administrator cannot be removed or deactivated.": "Son etkin yönetici kaldırılamaz veya devre dışı bırakılamaz.",
+  "The user holds permissions you do not have.": "Kullanıcının sizde olmayan izinleri var.",
+  "You can only grant or revoke permissions you hold yourself.": "Yalnızca kendinizde olan izinleri verebilir veya geri alabilirsiniz.",
+  "Only administrators can change the account of an administrator.": "Bir yöneticinin hesabını yalnızca yöneticiler değiştirebilir.",
+  "Only administrators can grant or revoke the administrator role.": "Yönetici rolünü yalnızca yöneticiler verebilir veya geri alabilir."
 }

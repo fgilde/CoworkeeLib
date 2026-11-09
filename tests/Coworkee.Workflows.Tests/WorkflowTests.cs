@@ -281,7 +281,7 @@ public sealed class WorkflowTests(WorkflowApp app) : IAsyncLifetime
         (await renamed.Content.ReadAsStringAsync(Ct)).ShouldContain("identity.role_name_fixed");
         var deleted = await Admin.DeleteAsync($"/api/v1/identity/roles/{finance}", Ct);
         deleted.StatusCode.ShouldBe(HttpStatusCode.Conflict);
-        (await deleted.Content.ReadAsStringAsync(Ct)).ShouldContain("The workflow of Invoices finds this role by its name; it cannot be deleted.");
+        (await deleted.Content.ReadAsStringAsync(Ct)).ShouldContain("Code finds this role by its name (Workflows: Invoices); it cannot be deleted.");
         (await Admin.PutAsJsonAsync($"/api/v1/identity/roles/{finance}", new RoleRequest("Finance", "Approves large invoices"), Ct)).EnsureSuccessStatusCode();
         (await Admin.PutAsJsonAsync($"/api/v1/identity/roles/{clerks}", new RoleRequest("Office", null), Ct)).EnsureSuccessStatusCode();
     }

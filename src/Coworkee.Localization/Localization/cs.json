@@ -2017,5 +2017,18 @@
   "{0} users copied": "Zkopírováno uživatelů: {0}",
   "System roles cannot be changed.": "Systémové role nelze měnit.",
   "Edit role": "Upravit roli",
-  "Role saved": "Role uložena"
+  "Role saved": "Role uložena",
+  "Code finds this role by its name ({0}); it cannot be renamed.": "Kód hledá tuto roli podle názvu ({0}); nelze ji přejmenovat.",
+  "Code finds this role by its name ({0}); it cannot be deleted.": "Kód hledá tuto roli podle názvu ({0}); nelze ji smazat.",
+  "System roles cannot be deleted.": "Systémové role nelze smazat.",
+  "Role not found.": "Role nenalezena.",
+  "A role with this name already exists.": "Role s tímto názvem již existuje.",
+  "Choose roles other than the role the users come from.": "Vyberte jiné role než tu, ze které uživatelé pocházejí.",
+  "Choose at least one user.": "Vyberte alespoň jednoho uživatele.",
+  "Unknown user or the user does not have the role.": "Neznámý uživatel, nebo uživatel tuto roli nemá.",
+  "The last active administrator cannot be removed or deactivated.": "Posledního aktivního správce nelze odebrat ani deaktivovat.",
+  "The user holds permissions you do not have.": "Uživatel má oprávnění, která vy nemáte.",
+  "You can only grant or revoke permissions you hold yourself.": "Můžete udělit nebo odebrat jen oprávnění, která sami máte.",
+  "Only administrators can change the account of an administrator.": "Účet správce mohou měnit jen správci.",
+  "Only administrators can grant or revoke the administrator role.": "Roli správce mohou udělit nebo odebrat jen správci."
 }

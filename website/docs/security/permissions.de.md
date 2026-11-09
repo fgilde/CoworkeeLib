@@ -40,7 +40,7 @@ Unter *Administration → Identität → Rollen* ändert der Stift einer Zeile (
 Zwei Arten von Rollen behalten ihren Namen:
 
 - **Systemrollen** (`admin`, `user`) gehören allen Organisationen und werden über den Namen gefunden: `409 identity.role_system`.
-- **Rollen, die Code über ihren Namen sucht**, werden weder umbenannt noch gelöscht: `409 identity.role_name_fixed`, mit dem Code, der sich auf die Rolle verlässt, in der Meldung ("The workflow of Invoices finds this role by its name; it cannot be deleted."), die die Rollenseite anzeigt. Die Beschreibung bleibt änderbar. Das Files-Modul trägt seine Rolle *Registration documents* ein, Coworkee.Workflows jede Rolle, die seine deklarierten Workflows nennen (`Role`, `EscalateTo`, `RequiresRole`, `NotifyRole`). Trage die Namen ein, die dein eigener Code benutzt, jeweils mit dem, was sich auf sie verlässt:
+- **Rollen, die Code über ihren Namen sucht**, werden weder umbenannt noch gelöscht: `409 identity.role_name_fixed`, mit dem Code, der sich auf die Rolle verlässt, in der Meldung ("Code findet diese Rolle über ihren Namen (Workflows: Invoices); sie kann nicht gelöscht werden."), die die Rollenseite in der Sprache des Benutzers anzeigt ([Meldungen des Servers](../modules/localization.md#im-client)). Die Beschreibung bleibt änderbar. Das Files-Modul trägt seine Rolle *Registration documents* ein, Coworkee.Workflows jede Rolle, die seine deklarierten Workflows nennen (`Role`, `EscalateTo`, `RequiresRole`, `NotifyRole`). Trage die Namen ein, die dein eigener Code benutzt, jeweils mit dem, was sich auf sie verlässt:
 
 ```json
 { "Coworkee": { "Identity": { "FixedRoleNames": { "Dispatchers": "The dispatch board" } } } }

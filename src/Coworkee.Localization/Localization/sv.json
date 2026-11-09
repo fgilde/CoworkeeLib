@@ -2017,5 +2017,18 @@
   "{0} users copied": "{0} användare kopierade",
   "System roles cannot be changed.": "Systemroller kan inte ändras.",
   "Edit role": "Redigera roll",
-  "Role saved": "Roll sparad"
+  "Role saved": "Roll sparad",
+  "Code finds this role by its name ({0}); it cannot be renamed.": "Kod hittar den här rollen via dess namn ({0}); den kan inte byta namn.",
+  "Code finds this role by its name ({0}); it cannot be deleted.": "Kod hittar den här rollen via dess namn ({0}); den kan inte tas bort.",
+  "System roles cannot be deleted.": "Systemroller kan inte tas bort.",
+  "Role not found.": "Rollen hittades inte.",
+  "A role with this name already exists.": "Det finns redan en roll med det här namnet.",
+  "Choose roles other than the role the users come from.": "Välj andra roller än den användarna kommer från.",
+  "Choose at least one user.": "Välj minst en användare.",
+  "Unknown user or the user does not have the role.": "Okänd användare, eller så har användaren inte rollen.",
+  "The last active administrator cannot be removed or deactivated.": "Den sista aktiva administratören kan inte tas bort eller inaktiveras.",
+  "The user holds permissions you do not have.": "Användaren har behörigheter som du inte har.",
+  "You can only grant or revoke permissions you hold yourself.": "Du kan bara ge eller ta bort behörigheter som du själv har.",
+  "Only administrators can change the account of an administrator.": "Endast administratörer kan ändra en administratörs konto.",
+  "Only administrators can grant or revoke the administrator role.": "Endast administratörer kan ge eller ta bort administratörsrollen."
 }

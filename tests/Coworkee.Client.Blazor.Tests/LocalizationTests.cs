@@ -207,4 +207,58 @@ public sealed class LocalizationTests : ClientTestBase
         await editor.InvokeAsync(() => editor.Find(input).InputAsync(text));
         await editor.InvokeAsync(() => editor.Find(input).KeyDownAsync(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Key = "Enter" }));
     }
+
+    [Fact]
+    public async Task Server_messages_are_translated_from_their_template_and_those_without_translation_stay_English()
+    {
+        const string template = "Code finds this role by its name ({0}); it cannot be deleted.";
+        var german = ShippedText("de", template);
+        Localization.GetTextsAsync("de", Arg.Any<CancellationToken>()).Returns(new TextsDto("de", new Dictionary<string, string> { [template] = german }));
+        await Services.GetRequiredService<Blazor.Localization.CoworkeeLocalizer>().UseAsync("de");
+        var client = new ProblemClient(new HttpClient(new Blazor.Localization.ProblemTextHandler(Services) { InnerHandler = new Problems() }) { BaseAddress = new Uri("http://test/") });
+
+        var fixedRole = await Should.ThrowAsync<Api.ApiException>(() => client.DeleteAsync("fixed"));
+        var other = await Should.ThrowAsync<Api.ApiException>(() => client.DeleteAsync("other"));
+
+        (fixedRole.Code, fixedRole.Title).ShouldBe(("identity.role_name_fixed", string.Format(german, "Workflows: Invoices")));
+        fixedRole.Title.ShouldStartWith("Code findet diese Rolle");
+        other.Title.ShouldBe("Only English knows this.");
+    }
+
+    private static string ShippedText(string culture, string key)
+    {
+        var root = new DirectoryInfo(AppContext.BaseDirectory);
+        while (!File.Exists(Path.Combine(root.FullName, "Coworkee.slnx")))
+        {
+            root = root.Parent!;
+        }
+
+        var texts = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(
+            File.ReadAllText(Path.Combine(root.FullName, "src", "Coworkee.Localization", "Localization", culture + ".json")))!;
+        return texts[key];
+    }
+
+    private sealed class ProblemClient(HttpClient http) : Api.ApiClientBase(http)
+    {
+        public Task DeleteAsync(string path) => SendAsync(HttpMethod.Delete, path, null, CancellationToken.None);
+    }
+
+    // a 409 as ToProblem writes it: the English title, and for a message with variable parts its template and arguments
+    private sealed class Problems : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            object problem = request.RequestUri!.AbsolutePath.EndsWith("fixed", StringComparison.Ordinal)
+                ? new
+                {
+                    title = "Code finds this role by its name (Workflows: Invoices); it cannot be deleted.", status = 409, code = "identity.role_name_fixed",
+                    template = "Code finds this role by its name ({0}); it cannot be deleted.", arguments = new[] { "Workflows: Invoices" },
+                }
+                : new { title = "Only English knows this.", status = 409, code = "app.other" };
+            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.Conflict)
+            {
+                Content = new StringContent(System.Text.Json.JsonSerializer.Serialize(problem), System.Text.Encoding.UTF8, "application/problem+json"),
+            });
+        }
+    }
 }

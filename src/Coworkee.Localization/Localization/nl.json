@@ -2017,5 +2017,18 @@
   "{0} users copied": "{0} gebruikers gekopieerd",
   "System roles cannot be changed.": "Systeemrollen kunnen niet worden gewijzigd.",
   "Edit role": "Rol bewerken",
-  "Role saved": "Rol opgeslagen"
+  "Role saved": "Rol opgeslagen",
+  "Code finds this role by its name ({0}); it cannot be renamed.": "Code vindt deze rol via de naam ({0}); hij kan niet worden hernoemd.",
+  "Code finds this role by its name ({0}); it cannot be deleted.": "Code vindt deze rol via de naam ({0}); hij kan niet worden verwijderd.",
+  "System roles cannot be deleted.": "Systeemrollen kunnen niet worden verwijderd.",
+  "Role not found.": "Rol niet gevonden.",
+  "A role with this name already exists.": "Er bestaat al een rol met deze naam.",
+  "Choose roles other than the role the users come from.": "Kies andere rollen dan de rol waar de gebruikers vandaan komen.",
+  "Choose at least one user.": "Kies ten minste één gebruiker.",
+  "Unknown user or the user does not have the role.": "Onbekende gebruiker of de gebruiker heeft de rol niet.",
+  "The last active administrator cannot be removed or deactivated.": "De laatste actieve beheerder kan niet worden verwijderd of gedeactiveerd.",
+  "The user holds permissions you do not have.": "De gebruiker heeft rechten die jij niet hebt.",
+  "You can only grant or revoke permissions you hold yourself.": "Je kunt alleen rechten toekennen of intrekken die je zelf hebt.",
+  "Only administrators can change the account of an administrator.": "Alleen beheerders kunnen het account van een beheerder wijzigen.",
+  "Only administrators can grant or revoke the administrator role.": "Alleen beheerders kunnen de beheerdersrol toekennen of intrekken."
 }

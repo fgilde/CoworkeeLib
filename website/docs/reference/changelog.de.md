@@ -13,7 +13,7 @@
 
 - `PUT /api/v1/identity/roles/{id}` antwortet für eine Systemrolle mit `409 identity.role_system` statt 404.
 - Die Benutzerliste, die Benutzerseite und der Rollen-Reiter einer Gruppe zeigen umbenannte und neue Rollen sofort.
-- Client: Ein fehlgeschlagener API-Aufruf zeigt in Snackbars und Bearbeitungsdialogen die Meldung des Problems (`ApiException.Title`) statt seines Codes.
+- Client: Ein fehlgeschlagener API-Aufruf zeigt in Snackbars und Bearbeitungsdialogen die Meldung des Problems (`ApiException.Title`) statt seines Codes, übersetzt wie die Texte der App (ohne Übersetzung auf Englisch). `Error.Conflict(code, template, arguments)` schickt eine Meldung mit variablen Teilen übersetzbar (`template`, `arguments` im Problem) ([Meldungen des Servers](../modules/localization.md#im-client)); die Meldungen der Rollen gibt es in allen Sprachen.
 
 ## 0.0.1.68 (2026-11-08)
 

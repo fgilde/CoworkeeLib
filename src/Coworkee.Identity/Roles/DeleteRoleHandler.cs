@@ -30,7 +30,7 @@ internal sealed class DeleteRoleHandler(
         // the code would create it again or lose the people it finds through it
         if (options.Value.FixedRoleNames.TryGetValue(role.Name!, out var usedBy))
         {
-            return RoleNames.Fixed(usedBy, "deleted");
+            return RoleNames.Fixed(usedBy, deleting: true);
         }
 
         // its members lose what it grants, wherever they work

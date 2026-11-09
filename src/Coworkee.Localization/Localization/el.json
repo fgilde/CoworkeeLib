@@ -2017,5 +2017,18 @@
   "{0} users copied": "Αντιγράφηκαν {0} χρήστες",
   "System roles cannot be changed.": "Οι ρόλοι συστήματος δεν μπορούν να αλλάξουν.",
   "Edit role": "Επεξεργασία ρόλου",
-  "Role saved": "Ο ρόλος αποθηκεύτηκε"
+  "Role saved": "Ο ρόλος αποθηκεύτηκε",
+  "Code finds this role by its name ({0}); it cannot be renamed.": "Ο κώδικας βρίσκει αυτόν τον ρόλο από το όνομά του ({0}); δεν μπορεί να μετονομαστεί.",
+  "Code finds this role by its name ({0}); it cannot be deleted.": "Ο κώδικας βρίσκει αυτόν τον ρόλο από το όνομά του ({0}); δεν μπορεί να διαγραφεί.",
+  "System roles cannot be deleted.": "Οι ρόλοι συστήματος δεν μπορούν να διαγραφούν.",
+  "Role not found.": "Ο ρόλος δεν βρέθηκε.",
+  "A role with this name already exists.": "Υπάρχει ήδη ρόλος με αυτό το όνομα.",
+  "Choose roles other than the role the users come from.": "Επιλέξτε ρόλους διαφορετικούς από τον ρόλο από τον οποίο προέρχονται οι χρήστες.",
+  "Choose at least one user.": "Επιλέξτε τουλάχιστον έναν χρήστη.",
+  "Unknown user or the user does not have the role.": "Άγνωστος χρήστης ή ο χρήστης δεν έχει τον ρόλο.",
+  "The last active administrator cannot be removed or deactivated.": "Ο τελευταίος ενεργός διαχειριστής δεν μπορεί να αφαιρεθεί ή να απενεργοποιηθεί.",
+  "The user holds permissions you do not have.": "Ο χρήστης έχει δικαιώματα που εσείς δεν έχετε.",
+  "You can only grant or revoke permissions you hold yourself.": "Μπορείτε να δίνετε ή να αφαιρείτε μόνο δικαιώματα που έχετε εσείς.",
+  "Only administrators can change the account of an administrator.": "Μόνο διαχειριστές μπορούν να αλλάξουν τον λογαριασμό ενός διαχειριστή.",
+  "Only administrators can grant or revoke the administrator role.": "Μόνο διαχειριστές μπορούν να δώσουν ή να αφαιρέσουν τον ρόλο του διαχειριστή."
 }

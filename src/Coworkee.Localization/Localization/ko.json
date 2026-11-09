@@ -2017,5 +2017,18 @@
   "{0} users copied": "사용자 {0}명을 복사했습니다",
   "System roles cannot be changed.": "시스템 역할은 변경할 수 없습니다.",
   "Edit role": "역할 편집",
-  "Role saved": "역할이 저장되었습니다"
+  "Role saved": "역할이 저장되었습니다",
+  "Code finds this role by its name ({0}); it cannot be renamed.": "코드가 이 역할을 이름으로 찾습니다 ({0}). 이름을 바꿀 수 없습니다.",
+  "Code finds this role by its name ({0}); it cannot be deleted.": "코드가 이 역할을 이름으로 찾습니다 ({0}). 삭제할 수 없습니다.",
+  "System roles cannot be deleted.": "시스템 역할은 삭제할 수 없습니다.",
+  "Role not found.": "역할을 찾을 수 없습니다.",
+  "A role with this name already exists.": "이 이름의 역할이 이미 있습니다.",
+  "Choose roles other than the role the users come from.": "사용자의 원래 역할이 아닌 다른 역할을 선택하세요.",
+  "Choose at least one user.": "사용자를 한 명 이상 선택하세요.",
+  "Unknown user or the user does not have the role.": "알 수 없는 사용자이거나 사용자에게 이 역할이 없습니다.",
+  "The last active administrator cannot be removed or deactivated.": "마지막 활성 관리자는 제거하거나 비활성화할 수 없습니다.",
+  "The user holds permissions you do not have.": "사용자에게 내가 없는 권한이 있습니다.",
+  "You can only grant or revoke permissions you hold yourself.": "내가 가진 권한만 부여하거나 회수할 수 있습니다.",
+  "Only administrators can change the account of an administrator.": "관리자의 계정은 관리자만 변경할 수 있습니다.",
+  "Only administrators can grant or revoke the administrator role.": "관리자 역할은 관리자만 부여하거나 회수할 수 있습니다."
 }

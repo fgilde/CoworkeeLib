@@ -39,7 +39,7 @@ public sealed class CoworkeeFilesModule : CoworkeeModule, IWebModule
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddScoped<Application.Registration.IRegistrationDocumentStore, FileRegistrationDocuments>();
         // found by its name: a renamed one would be created again with the next registration
-        services.Configure<Identity.Users.IdentityAdministrationOptions>(o => o.FixedRoleNames[FileRegistrationDocuments.ReaderRole] = "The registration documents of the Files module");
+        services.Configure<Identity.Users.IdentityAdministrationOptions>(o => o.FixedRoleNames[FileRegistrationDocuments.ReaderRole] = "Files: registration documents");
         services.AddODataEntity<StoredFile>("StoredFiles", FilePermissions.View, f => f.BlobKey);
         services.AddODataEntity<FileFolder>("FileFolders", FilePermissions.View);
         services.AddGlobalSearch<StoredFile>(s => s.Fields(f => f.Name).Name("files").Group("Files").Subtitle(f => f.ContentType).Url(f => $"/files?file={f.Id}").Icon("InsertDriveFile"));

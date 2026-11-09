@@ -57,7 +57,7 @@ public sealed class RolesPageTests : ClientTestBase
     [Fact]
     public async Task A_role_that_code_finds_by_name_stays_and_the_page_says_which_code()
     {
-        const string message = "The workflow of Invoices finds this role by its name; it cannot be deleted.";
+        const string message = "Code finds this role by its name (Workflows: Invoices); it cannot be deleted.";
         Api.DeleteRoleAsync(Clerks.Id, Arg.Any<CancellationToken>()).ThrowsAsync(new ApiException(409, "identity.role_name_fixed", null, message));
         var snackbars = Render<MudSnackbarProvider>();
         var page = Render<Roles>();

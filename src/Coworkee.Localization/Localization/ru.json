@@ -2017,5 +2017,18 @@
   "{0} users copied": "Скопировано пользователей: {0}",
   "System roles cannot be changed.": "Системные роли нельзя изменить.",
   "Edit role": "Изменить роль",
-  "Role saved": "Роль сохранена"
+  "Role saved": "Роль сохранена",
+  "Code finds this role by its name ({0}); it cannot be renamed.": "Код находит эту роль по имени ({0}); её нельзя переименовать.",
+  "Code finds this role by its name ({0}); it cannot be deleted.": "Код находит эту роль по имени ({0}); её нельзя удалить.",
+  "System roles cannot be deleted.": "Системные роли нельзя удалить.",
+  "Role not found.": "Роль не найдена.",
+  "A role with this name already exists.": "Роль с таким именем уже существует.",
+  "Choose roles other than the role the users come from.": "Выберите роли, отличные от роли, из которой приходят пользователи.",
+  "Choose at least one user.": "Выберите хотя бы одного пользователя.",
+  "Unknown user or the user does not have the role.": "Неизвестный пользователь, или у пользователя нет этой роли.",
+  "The last active administrator cannot be removed or deactivated.": "Последнего активного администратора нельзя удалить или деактивировать.",
+  "The user holds permissions you do not have.": "У пользователя есть разрешения, которых нет у вас.",
+  "You can only grant or revoke permissions you hold yourself.": "Вы можете выдавать или отзывать только разрешения, которые есть у вас.",
+  "Only administrators can change the account of an administrator.": "Изменять учётную запись администратора могут только администраторы.",
+  "Only administrators can grant or revoke the administrator role.": "Выдавать или отзывать роль администратора могут только администраторы."
 }

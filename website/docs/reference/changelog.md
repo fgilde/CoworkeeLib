@@ -13,7 +13,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 - `PUT /api/v1/identity/roles/{id}` answers `409 identity.role_system` for a system role instead of 404.
 - The users list, the user page and the roles tab of a group show renamed and new roles at once.
-- Client: a failed API call shows the message of the problem (`ApiException.Title`) in snackbars and edit dialogs instead of its code.
+- Client: a failed API call shows the message of the problem (`ApiException.Title`) in snackbars and edit dialogs instead of its code, translated like the app's texts (English without a translation). `Error.Conflict(code, template, arguments)` sends a message with variable parts translatable (`template`, `arguments` in the problem) ([server messages](../modules/localization.md#in-the-client)); the role messages ship in all languages.
 
 ## 0.0.1.68 (2026-11-08)
 

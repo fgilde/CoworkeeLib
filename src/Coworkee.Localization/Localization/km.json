@@ -2017,5 +2017,18 @@
   "{0} users copied": "បានចម្លងអ្នកប្រើ {0} នាក់",
   "System roles cannot be changed.": "មិនអាចផ្លាស់ប្ដូរតួនាទីប្រព័ន្ធបានទេ។",
   "Edit role": "កែសម្រួលតួនាទី",
-  "Role saved": "បានរក្សាទុកតួនាទី"
+  "Role saved": "បានរក្សាទុកតួនាទី",
+  "Code finds this role by its name ({0}); it cannot be renamed.": "កូដស្វែងរកតួនាទីនេះតាមឈ្មោះរបស់វា ({0}); មិនអាចប្ដូរឈ្មោះបានទេ។",
+  "Code finds this role by its name ({0}); it cannot be deleted.": "កូដស្វែងរកតួនាទីនេះតាមឈ្មោះរបស់វា ({0}); មិនអាចលុបបានទេ។",
+  "System roles cannot be deleted.": "មិនអាចលុបតួនាទីប្រព័ន្ធបានទេ។",
+  "Role not found.": "រកមិនឃើញតួនាទី។",
+  "A role with this name already exists.": "មានតួនាទីដែលមានឈ្មោះនេះរួចហើយ។",
+  "Choose roles other than the role the users come from.": "ជ្រើសតួនាទីផ្សេងពីតួនាទីដែលអ្នកប្រើមកពី។",
+  "Choose at least one user.": "ជ្រើសអ្នកប្រើយ៉ាងហោចណាស់ម្នាក់។",
+  "Unknown user or the user does not have the role.": "អ្នកប្រើមិនស្គាល់ ឬអ្នកប្រើមិនមានតួនាទីនេះ។",
+  "The last active administrator cannot be removed or deactivated.": "មិនអាចដក ឬបិទអ្នកគ្រប់គ្រងសកម្មចុងក្រោយបានទេ។",
+  "The user holds permissions you do not have.": "អ្នកប្រើមានសិទ្ធិដែលអ្នកមិនមាន។",
+  "You can only grant or revoke permissions you hold yourself.": "អ្នកអាចផ្ដល់ ឬដកតែសិទ្ធិដែលអ្នកមានផ្ទាល់ប៉ុណ្ណោះ។",
+  "Only administrators can change the account of an administrator.": "មានតែអ្នកគ្រប់គ្រងទេដែលអាចផ្លាស់ប្ដូរគណនីរបស់អ្នកគ្រប់គ្រង។",
+  "Only administrators can grant or revoke the administrator role.": "មានតែអ្នកគ្រប់គ្រងទេដែលអាចផ្ដល់ ឬដកតួនាទីអ្នកគ្រប់គ្រង។"
 }

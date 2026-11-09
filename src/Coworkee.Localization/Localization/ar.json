@@ -2017,5 +2017,18 @@
   "{0} users copied": "تم نسخ {0} من المستخدمين",
   "System roles cannot be changed.": "لا يمكن تغيير أدوار النظام.",
   "Edit role": "تعديل الدور",
-  "Role saved": "تم حفظ الدور"
+  "Role saved": "تم حفظ الدور",
+  "Code finds this role by its name ({0}); it cannot be renamed.": "تعثر الشيفرة على هذا الدور باسمه ({0})؛ لا يمكن إعادة تسميته.",
+  "Code finds this role by its name ({0}); it cannot be deleted.": "تعثر الشيفرة على هذا الدور باسمه ({0})؛ لا يمكن حذفه.",
+  "System roles cannot be deleted.": "لا يمكن حذف أدوار النظام.",
+  "Role not found.": "الدور غير موجود.",
+  "A role with this name already exists.": "يوجد دور بهذا الاسم بالفعل.",
+  "Choose roles other than the role the users come from.": "اختر أدوارًا غير الدور الذي يأتي منه المستخدمون.",
+  "Choose at least one user.": "اختر مستخدمًا واحدًا على الأقل.",
+  "Unknown user or the user does not have the role.": "مستخدم غير معروف أو أن المستخدم لا يملك الدور.",
+  "The last active administrator cannot be removed or deactivated.": "لا يمكن إزالة آخر مسؤول نشط أو إلغاء تنشيطه.",
+  "The user holds permissions you do not have.": "يملك المستخدم صلاحيات لا تملكها.",
+  "You can only grant or revoke permissions you hold yourself.": "يمكنك منح أو سحب الصلاحيات التي تملكها فقط.",
+  "Only administrators can change the account of an administrator.": "يمكن للمسؤولين فقط تغيير حساب مسؤول.",
+  "Only administrators can grant or revoke the administrator role.": "يمكن للمسؤولين فقط منح دور المسؤول أو سحبه."
 }

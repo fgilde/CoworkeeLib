@@ -2017,5 +2017,18 @@
   "{0} users copied": "{0} потребители са копирани",
   "System roles cannot be changed.": "Системните роли не могат да се променят.",
   "Edit role": "Редактиране на роля",
-  "Role saved": "Ролята е запазена"
+  "Role saved": "Ролята е запазена",
+  "Code finds this role by its name ({0}); it cannot be renamed.": "Кодът намира тази роля по името ѝ ({0}); тя не може да бъде преименувана.",
+  "Code finds this role by its name ({0}); it cannot be deleted.": "Кодът намира тази роля по името ѝ ({0}); тя не може да бъде изтрита.",
+  "System roles cannot be deleted.": "Системните роли не могат да бъдат изтрити.",
+  "Role not found.": "Ролята не е намерена.",
+  "A role with this name already exists.": "Вече съществува роля с това име.",
+  "Choose roles other than the role the users come from.": "Изберете роли, различни от ролята, от която идват потребителите.",
+  "Choose at least one user.": "Изберете поне един потребител.",
+  "Unknown user or the user does not have the role.": "Неизвестен потребител или потребителят няма ролята.",
+  "The last active administrator cannot be removed or deactivated.": "Последният активен администратор не може да бъде премахнат или деактивиран.",
+  "The user holds permissions you do not have.": "Потребителят има права, които вие нямате.",
+  "You can only grant or revoke permissions you hold yourself.": "Можете да давате или отнемате само права, които имате самите вие.",
+  "Only administrators can change the account of an administrator.": "Само администратори могат да променят акаунта на администратор.",
+  "Only administrators can grant or revoke the administrator role.": "Само администратори могат да дават или отнемат администраторската роля."
 }

@@ -2017,5 +2017,18 @@
   "{0} users copied": "已复制 {0} 个用户",
   "System roles cannot be changed.": "系统角色无法更改。",
   "Edit role": "编辑角色",
-  "Role saved": "角色已保存"
+  "Role saved": "角色已保存",
+  "Code finds this role by its name ({0}); it cannot be renamed.": "代码按名称查找此角色（{0}）；无法重命名。",
+  "Code finds this role by its name ({0}); it cannot be deleted.": "代码按名称查找此角色（{0}）；无法删除。",
+  "System roles cannot be deleted.": "系统角色无法删除。",
+  "Role not found.": "未找到角色。",
+  "A role with this name already exists.": "已存在同名角色。",
+  "Choose roles other than the role the users come from.": "请选择用户来源角色以外的角色。",
+  "Choose at least one user.": "请至少选择一个用户。",
+  "Unknown user or the user does not have the role.": "未知用户，或该用户没有此角色。",
+  "The last active administrator cannot be removed or deactivated.": "无法移除或停用最后一个活动的管理员。",
+  "The user holds permissions you do not have.": "该用户拥有你没有的权限。",
+  "You can only grant or revoke permissions you hold yourself.": "你只能授予或撤销自己拥有的权限。",
+  "Only administrators can change the account of an administrator.": "只有管理员可以更改管理员的帐户。",
+  "Only administrators can grant or revoke the administrator role.": "只有管理员可以授予或撤销管理员角色。"
 }

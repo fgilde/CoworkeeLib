@@ -58,7 +58,10 @@ public sealed class RoleAdministrationTests(IdentityApp app) : IAsyncLifetime
         var deleted = await Admin.DeleteAsync($"/api/v1/identity/roles/{fixedRole}", Ct);
         var problem = await deleted.Content.ReadFromJsonAsync<JsonElement>(Ct);
         (deleted.StatusCode, problem.GetProperty("code").GetString()).ShouldBe((HttpStatusCode.Conflict, "identity.role_name_fixed"));
-        problem.GetProperty("title").GetString().ShouldBe($"{UsedBy} finds this role by its name; it cannot be deleted.");
+        problem.GetProperty("title").GetString().ShouldBe($"Code finds this role by its name ({UsedBy}); it cannot be deleted.");
+        // clients translate the template and fill in the arguments
+        problem.GetProperty("template").GetString().ShouldBe("Code finds this role by its name ({0}); it cannot be deleted.");
+        problem.GetProperty("arguments").EnumerateArray().Select(a => a.GetString()).ShouldBe([UsedBy]);
         (await Admin.PutAsJsonAsync($"/api/v1/identity/roles/{fixedRole}", new RoleRequest(FixedName, "Decide on approvals"), Ct)).EnsureSuccessStatusCode();
         (await RolesAsync()).Single(r => r.Id == fixedRole).Description.ShouldBe("Decide on approvals");
 

@@ -2017,5 +2017,18 @@
   "{0} users copied": "{0} brugere kopieret",
   "System roles cannot be changed.": "Systemroller kan ikke ændres.",
   "Edit role": "Rediger rolle",
-  "Role saved": "Rolle gemt"
+  "Role saved": "Rolle gemt",
+  "Code finds this role by its name ({0}); it cannot be renamed.": "Koden finder denne rolle via dens navn ({0}); den kan ikke omdøbes.",
+  "Code finds this role by its name ({0}); it cannot be deleted.": "Koden finder denne rolle via dens navn ({0}); den kan ikke slettes.",
+  "System roles cannot be deleted.": "Systemroller kan ikke slettes.",
+  "Role not found.": "Rollen blev ikke fundet.",
+  "A role with this name already exists.": "Der findes allerede en rolle med dette navn.",
+  "Choose roles other than the role the users come from.": "Vælg andre roller end den, brugerne kommer fra.",
+  "Choose at least one user.": "Vælg mindst én bruger.",
+  "Unknown user or the user does not have the role.": "Ukendt bruger, eller brugeren har ikke rollen.",
+  "The last active administrator cannot be removed or deactivated.": "Den sidste aktive administrator kan ikke fjernes eller deaktiveres.",
+  "The user holds permissions you do not have.": "Brugeren har tilladelser, som du ikke har.",
+  "You can only grant or revoke permissions you hold yourself.": "Du kan kun give eller fjerne tilladelser, som du selv har.",
+  "Only administrators can change the account of an administrator.": "Kun administratorer kan ændre en administrators konto.",
+  "Only administrators can grant or revoke the administrator role.": "Kun administratorer kan give eller fjerne administratorrollen."
 }

@@ -2017,5 +2017,18 @@
   "{0} users copied": "Skopiowano użytkowników: {0}",
   "System roles cannot be changed.": "Ról systemowych nie można zmieniać.",
   "Edit role": "Edytuj rolę",
-  "Role saved": "Rola zapisana"
+  "Role saved": "Rola zapisana",
+  "Code finds this role by its name ({0}); it cannot be renamed.": "Kod odnajduje tę rolę po nazwie ({0}); nie można zmienić jej nazwy.",
+  "Code finds this role by its name ({0}); it cannot be deleted.": "Kod odnajduje tę rolę po nazwie ({0}); nie można jej usunąć.",
+  "System roles cannot be deleted.": "Ról systemowych nie można usuwać.",
+  "Role not found.": "Nie znaleziono roli.",
+  "A role with this name already exists.": "Rola o tej nazwie już istnieje.",
+  "Choose roles other than the role the users come from.": "Wybierz role inne niż ta, z której pochodzą użytkownicy.",
+  "Choose at least one user.": "Wybierz co najmniej jednego użytkownika.",
+  "Unknown user or the user does not have the role.": "Nieznany użytkownik lub użytkownik nie ma tej roli.",
+  "The last active administrator cannot be removed or deactivated.": "Ostatniego aktywnego administratora nie można usunąć ani dezaktywować.",
+  "The user holds permissions you do not have.": "Użytkownik ma uprawnienia, których ty nie masz.",
+  "You can only grant or revoke permissions you hold yourself.": "Możesz nadawać lub odbierać tylko uprawnienia, które sam masz.",
+  "Only administrators can change the account of an administrator.": "Tylko administratorzy mogą zmieniać konto administratora.",
+  "Only administrators can grant or revoke the administrator role.": "Tylko administratorzy mogą nadawać lub odbierać rolę administratora."
 }
