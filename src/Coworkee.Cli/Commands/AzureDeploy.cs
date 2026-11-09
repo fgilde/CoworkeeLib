@@ -42,7 +42,7 @@ internal static partial class AzureDeploy
         }
 
         var parameters = await ParametersAsync(solution, published, target, adminEmail ?? account.User, cancellationToken);
-        await ForgetProvisioningAsync(solution, cancellationToken);
+        await PrepareStateAsync(solution, parameters, cancellationToken);
         var environment = new Dictionary<string, string>
         {
             ["Azure__SubscriptionId"] = account.SubscriptionId,
@@ -95,26 +95,42 @@ internal static partial class AzureDeploy
     /// was emptied, a failed run, or another group, it would use resources that are gone. The provisioning runs again on every deployment (Azure
     /// leaves what matches unchanged); generated parameter values stay, an update must keep the database passwords.
     /// </summary>
-    public static async Task ForgetProvisioningAsync(Solution solution, CancellationToken cancellationToken)
+    public static async Task ForgetProvisioningAsync(Solution solution, CancellationToken cancellationToken) =>
+        await PrepareStateAsync(solution, new Dictionary<string, string>(), cancellationToken);
+
+    /// <summary>
+    /// Writes the deployment's parameter values into Aspire's state, the input its deploy step reads them from (and keeps for the next update), and
+    /// forgets the remembered provisioning. Both files: the flat legacy production.json and, since Aspire 13, production.json.migration whose
+    /// CurrentState (a JSON string, sections nested) the legacy file is restored from.
+    /// </summary>
+    public static async Task PrepareStateAsync(Solution solution, IReadOnlyDictionary<string, string> parameters, CancellationToken cancellationToken)
     {
-        // the flat legacy file (Azure:Deployments:<name>:...) and, since Aspire 13, the state it restores that file from: production.json.migration
-        // keeps CurrentState as a JSON string with Azure.Deployments nested
         var path = StatePath(solution);
-        if (File.Exists(path) && JsonNode.Parse(await File.ReadAllTextAsync(path, cancellationToken)) is JsonObject state)
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var flat = File.Exists(path) && JsonNode.Parse(await File.ReadAllTextAsync(path, cancellationToken)) is JsonObject existing ? existing : new JsonObject();
+        foreach (var key in flat.Select(p => p.Key).Where(k => k.StartsWith("Azure:Deployments:", StringComparison.Ordinal)).ToList())
         {
-            var keys = state.Select(p => p.Key).Where(k => k.StartsWith("Azure:Deployments:", StringComparison.Ordinal)).ToList();
-            keys.ForEach(k => state.Remove(k));
-            if (keys.Count > 0)
-            {
-                await File.WriteAllTextAsync(path, state.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), cancellationToken);
-            }
+            flat.Remove(key);
         }
+
+        foreach (var (name, value) in parameters)
+        {
+            flat[$"Parameters:{name}"] = value;
+        }
+
+        await File.WriteAllTextAsync(path, flat.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), cancellationToken);
 
         var migration = path + ".migration";
         if (File.Exists(migration) && JsonNode.Parse(await File.ReadAllTextAsync(migration, cancellationToken)) is JsonObject wrapper
-            && wrapper["CurrentState"]?.GetValue<string>() is { } text && JsonNode.Parse(text) is JsonObject current
-            && current["Azure"] is JsonObject azure && azure.Remove("Deployments"))
+            && wrapper["CurrentState"]?.GetValue<string>() is { } text && JsonNode.Parse(text) is JsonObject current)
         {
+            (current["Azure"] as JsonObject)?.Remove("Deployments");
+            var section = current["Parameters"] as JsonObject ?? (JsonObject)(current["Parameters"] = new JsonObject());
+            foreach (var (name, value) in parameters)
+            {
+                section[name] = value;
+            }
+
             wrapper["CurrentState"] = current.ToJsonString();
             await File.WriteAllTextAsync(migration, wrapper.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), cancellationToken);
         }
