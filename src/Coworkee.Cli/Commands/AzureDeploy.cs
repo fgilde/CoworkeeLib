@@ -41,7 +41,8 @@ internal static partial class AzureDeploy
             return 1;
         }
 
-        var parameters = await ParametersAsync(solution, published, target, adminEmail ?? account.User, cancellationToken);
+        // a service principal (a GitHub workflow) signs in with its client id, which is no administrator's email
+        var parameters = await ParametersAsync(solution, published, target, adminEmail ?? (account.User.Contains('@') ? account.User : null), cancellationToken);
         var environment = new Dictionary<string, string>
         {
             ["Azure__SubscriptionId"] = account.SubscriptionId,
