@@ -25,7 +25,7 @@ internal sealed class SupportSettingDefinitions : ISettingDefinitionContributor
 context.Services.AddSingleton<ISettingDefinitionContributor, SupportSettingDefinitions>();
 ```
 
-Typen sind `String`, `Text`, `Bool`, `Int`, `Secret`, `Choice` und `Language`; Gültigkeitsbereiche `Global`, `Tenant` und `User`. Der spezifischste Wert gewinnt. Geheimnisse werden mit ASP.NET Core Data Protection verschlüsselt und nie an den Client geschickt; Einstellungen mit `visibleToClient: true` schon. Ein Name wird in der ganzen App nur einmal definiert: Zwei Contributors mit demselben Namen verhindern den Start. Gruppen dürfen geteilt werden, der erste Contributor benennt sie.
+Typen sind `String`, `Text`, `Bool`, `Int`, `Secret`, `Choice`, `MultiChoice` und `Language`; Gültigkeitsbereiche `Global`, `Tenant` und `User`. Der spezifischste Wert gewinnt. Geheimnisse werden mit ASP.NET Core Data Protection verschlüsselt und nie an den Client geschickt; Einstellungen mit `visibleToClient: true` schon. Ein Name wird in der ganzen App nur einmal definiert: Zwei Contributors mit demselben Namen verhindern den Start. Gruppen dürfen geteilt werden, der erste Contributor benennt sie.
 
 ```csharp
 var allowed = await settings.GetAsync<bool>(AccountSettings.AllowRegistration, ct);
@@ -62,6 +62,7 @@ context.Services.AddSingleton<ISettingDefinitionContributor, BillingSettingDefin
 | `Text` | ein Textfeld mit vier Zeilen |
 | `Bool` | ein Kontrollkästchen mit dem gespeicherten Wert oder dem Standard |
 | `Choice` | eine Auswahl der `choices`; jeder Wert erscheint übersetzt, wenn die Übersetzungen einen Eintrag dafür haben, sonst unverändert |
+| `MultiChoice` | eine Auswahl der `choices` mit mehreren Werten, kommagetrennt gespeichert (`Reading,Writing`); nichts gewählt wird als leerer Wert gespeichert, der anders als kein Wert nicht auf den Standard zurückfällt. Gelesen mit `SettingDefinition.SplitChoices(value)` |
 | `Language` | eine Auswahl der Sprachen der App; leer heißt erben, angezeigt als *Configured default* im Tab System und *Inherited* in Organisation und Meine Einstellungen (dort beschriftet mit *Language*) |
 | `Secret` | ein Passwortfeld, das leer bleibt; der Hilfetext sagt, ob ein Wert gespeichert ist, und nur ein eingetippter Wert wird gesendet |
 | `enabledWhen` | das Feld ist deaktiviert, solange der Wert der anderen Einstellung nicht in den Werten der Bedingung liegt |

@@ -2,7 +2,7 @@
 
 The audit trail records every change of the app's entities field by field: who (and who was signed in as him), when, old value, new value. It is written in the same transaction as the change (table `cw.AuditEntries`), so it never lies.
 
-`Coworkee.Auditing` (`CoworkeeAuditingModule`) adds the audit log, its endpoints and the record history; the template has it (option `auditing`, on by default). The trail itself is written by the app's DbContext.
+`Coworkee.Auditing` (`CoworkeeAuditingModule`) adds the audit log, its endpoints, the record history, the pages of the [security log](#security-log) and the [request log](#request-log); the template has it (option `auditing`, on by default). The trail itself is written by the app's DbContext.
 
 ## Audit trail
 
@@ -51,6 +51,56 @@ The audit log (`/cw/admin/audit`) offers the same actions per entry when the ent
 The endpoints live under `/api/v1/history`: `GET /` (the sets the user may read, with `CanRestore`), and per set `/{entitySet}`: `GET /{id}`, `POST /{id}/preview`, `POST /{id}/restore` and `GET /deleted`. The request of preview and restore is `{ entryId, property?, mode, version? }` with `mode` `After` (default, the state right after the entry), `Before` or `Undo`. The preview returns a `version` of the record; the restore sends it back and answers `409` when the record changed in between (a value, the delete or a new history entry). The Blazor dialogs and the AirWorks record window then show the new preview.
 
 Records that were hard deleted are gone from the table, so there is nothing to update; use `ISoftDelete` for anything people might want back.
+
+## Security log
+
+The security log records what happens to accounts: sign-ins (succeeded or failed, with the reason), sign-outs, lockouts, changes of passwords, e-mail addresses, two-step verification and passkeys, *Log in as* (start and end), API keys (created, revoked, the first use of a day) and the roles and own permissions a user gets or loses. It is always on and written by every host with the app database (auth server and API), in table `cw.SecurityEvents`.
+
+Each entry has the time, the organisation, the **user** whose account it concerns, the **actor** when someone else did it (an administrator locking the user), the **impersonator** when someone was signed in as the acting user, the action and result with a reason (`InvalidCredentials`, `UnknownUser`, `LockedOut`, `NotAllowed`, `FailedAttempts`, `Administrator`, ...), the client, the IP address, the browser (user agent), the trace id and details as JSON (the login typed for an unknown account, the sign-in method, the role, the permission, the key).
+
+- Changes of credentials and access are taken from the saves themselves (an EF Core interceptor of Coworkee.Identity), so every way to them counts: own profile, administration, reset links, failed attempts. They are saved in the same transaction as the change.
+- Sign-ins, sign-outs and *Log in as* are written by the sign-in pages and the end session endpoint of the auth server; API keys by the key authentication.
+- Your code writes entries of its own through `ISecurityLog` (Coworkee.Application.Auditing), for example when a session is ended:
+
+```csharp
+await securityLog.WriteAsync(new SecurityLogEntry(SecurityActions.SessionEnded, userId, Reason: "Signed out by an administrator", Details: new { sessionId }));
+```
+
+User, organisation and impersonator default to the current ones (the organisation is looked up from the user when the request has none); address, browser, client and trace come from the request. The entry is saved at once in a scope of its own, so it stays when the caller's unit of work does not. Keep secrets out of the details.
+
+The page **Security log** (*Administration > Monitoring*, `/cw/admin/security-log`, permission `Audit.SecurityLog`) lists the entries of the own organisation (the system organisation also sees entries without one, such as failed sign-ins of unknown accounts) with search, period, facets for action, result and reason, and the details, browser and trace of a row. The user page links to the user's entries (`/cw/admin/security-log?user={id}`). The list is the OData set `SecurityEvents`.
+
+## Request log
+
+The request log records every API request of the API host: time, organisation, user (and who was signed in as him), client or API key, method, path and query string, route template, the request the endpoint dispatched (`IDispatcher`), status, duration, IP address, browser, trace id, a summary of an unhandled exception, the request and response headers and the request and response bodies. Table `cw.RequestLog`, written by `CoworkeeAuditingModule` in the host that has it (the API; the web app's backend for frontend forwards to it, so its calls are in the log once).
+
+What it keeps and hides:
+
+- **Headers**: all, with the values of `Authorization`, `Cookie`, `Set-Cookie`, `X-Api-Key` and every name containing *password*, *secret*, *token*, *apikey* or *credential* replaced by `***`. The same names are hidden in the query string and in bodies, at any depth (`clientSecret`, `refresh_token`, `nested.apiKey`); an object or list under such a name becomes `***` as a whole.
+- **Bodies**: JSON (`application/json`, `*+json`, `text/json`) and forms (`application/x-www-form-urlencoded`, stored as a JSON object) only, each up to the size set (32 KB by default) and cut after it (marked by `…`; a cut body is redacted up to the cut). Files, multipart, NDJSON, server-sent events and binaries are never kept; streamed answers keep streaming.
+- **Left out**: `OPTIONS` requests, health and telemetry (`/health`, `/alive`, `/metrics`), API docs (`/openapi`, `/swagger`), the realtime connection (`/hubs`), static files and endpoints marked with `.SkipRequestLog()` (or `[SkipRequestLog]`, Coworkee.AspNetCore). Unknown addresses under `/api` are logged (scanners, broken clients).
+- **Address**: the connection's address. Behind the backend for frontend or a proxy that is the proxy unless the host applies forwarded headers (`UseForwardedHeaders`); `X-Forwarded-For` is in the headers either way.
+
+Settings (*Settings > Request log*, Global; they apply at once on every instance):
+
+| Setting | Default | |
+|---|---|---|
+| `RequestLog.Requests` (*Log requests*) | Reading, Writing | which requests are logged with headers and bodies: *Reading* (GET, HEAD, OData queries), *Writing* (POST, PUT, PATCH, DELETE); nothing chosen turns the request log off |
+| `RequestLog.MaxBodyKb` (*Body size (KB)*) | 32 | kilobytes kept of each body; 0 keeps no bodies |
+| `RequestLog.RedactedNames` (*Hidden names*) | | more header and field names to hide, comma separated |
+
+**Performance.** The middleware only copies what passes by: the first kilobytes of each body while the endpoint reads or writes it, never the whole body. The request goes into a bounded queue (2000 requests) that a background service saves in batches of 200 with one EF Core save each; redaction happens there, off the request path. A full queue drops the request instead of slowing the app down and counts it in the metric `coworkee.request_log.dropped` of the meter `Coworkee.Auditing` (the template adds the meter to OpenTelemetry). Measured in the library's tests (in-process host, a 2 KB JSON body each way): about 0.1 ms more per request with both bodies kept.
+
+The page **Request log** (*Administration > Monitoring*, `/cw/admin/request-log`, permission `Audit.Requests`) lists the requests of the own organisation (the system organisation also sees anonymous ones) with search, period and facets for method, route and status; the list never loads headers or bodies. Opening a row loads them; the bodies need `Audit.Requests.Bodies` (it implies `Audit.Requests`), since they may hold personal data. **Open trace** jumps to the trace in Grafana (Tempo) or the Aspire dashboard when the app host runs them (`Coworkee:Services:grafana` or `dashboard`).
+
+| Endpoint | |
+|---|---|
+| OData `SecurityEvents` | the security log (`Audit.SecurityLog`) |
+| OData `RequestLog` | the request log without headers and bodies (`Audit.Requests`) |
+| `GET /api/v1/audit/requests/{id}` | one request with headers, and bodies for `Audit.Requests.Bodies` (`RequestLogDetailDto`, `BodiesHidden` otherwise) |
+| `GET /api/v1/audit/trace-viewer` | `{ urlTemplate }` with `{traceId}`, or null without Grafana and dashboard (either log permission) |
+
+The Blazor client has `IAuditApi` for the last two. With the [Retention](retention.md) module the targets `security-events` (365 days) and `request-log` (30 days) delete old entries. The personal data export has the sections `securityLog` and `requests`; erasing a user keeps the entries without him ([rules](../security/privacy.md)).
 
 ## Anonymous records
 

@@ -80,6 +80,14 @@ public sealed partial class SettingsModel
                         };
                     });
                     break;
+                case SettingType.MultiChoice:
+                    property.RenderWith<MudExSelect<string>, IEnumerable<string>?>(s => s.SelectedValues, s =>
+                    {
+                        s.MultiSelection = true;
+                        s.ItemCollection = [.. setting.Choices ?? []];
+                        s.ToStringFunc = choice => choice is null ? string.Empty : l.Find(choice) ?? choice;
+                    });
+                    break;
                 case SettingType.Language:
                 {
                     var empty = l[scope == SettingScope.Global ? "Configured default" : "Inherited"];
@@ -165,7 +173,7 @@ public sealed partial class SettingsModel
         {
             SettingType.Secret => null,
             SettingType.Choice when Inherits(setting) => stored ?? string.Empty, // listed as "Inherited", so the default value can be chosen as well
-            SettingType.Bool or SettingType.Choice => stored ?? setting.DefaultValue, // a box or select cannot show "not set"
+            SettingType.Bool or SettingType.Choice or SettingType.MultiChoice => stored ?? setting.DefaultValue, // a box or select cannot show "not set"
             SettingType.Language => stored ?? string.Empty, // the select lists the empty option as "", not null
             _ => stored,
         };
@@ -191,6 +199,7 @@ public sealed partial class SettingsModel
     {
         SettingType.Bool => typeof(bool),
         SettingType.Int => typeof(int?),
+        SettingType.MultiChoice => typeof(IEnumerable<string>),
         _ => typeof(string),
     };
 
@@ -198,6 +207,9 @@ public sealed partial class SettingsModel
     {
         SettingType.Bool => bool.TryParse(text, out var on) && on,
         SettingType.Int => int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number) ? number : null,
+        // stored comma separated; an exported file holds the list
+        SettingType.MultiChoice when text?.TrimStart().StartsWith('[') == true => JsonSerializer.Deserialize<string[]>(text) ?? [],
+        SettingType.MultiChoice => text?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [],
         _ => text,
     };
 
@@ -205,6 +217,8 @@ public sealed partial class SettingsModel
     {
         bool on => on ? "true" : "false",
         int number => number.ToString(CultureInfo.InvariantCulture),
+        // nothing chosen is a value of its own (""), not the default (null)
+        IEnumerable<string> chosen => string.Join(',', chosen.Order(StringComparer.Ordinal)),
         string { Length: > 0 } text => text,
         _ => null,
     };

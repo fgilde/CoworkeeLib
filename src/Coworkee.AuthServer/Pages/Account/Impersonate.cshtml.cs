@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using static Coworkee.AuthServer.AuthTexts;
 
@@ -47,6 +48,8 @@ public sealed class ImpersonateModel(
         var persistent = (await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme)).Properties?.IsPersistent == true;
         await signIn.SignInWithClaimsAsync(target, isPersistent: false, AuthImpersonation.StartClaims(impersonator, persistent, clock.GetUtcNow()));
         logger.Started(impersonator.Id, target.Id, redeemed.TenantId);
+        await HttpContext.RequestServices.GetRequiredService<Application.Auditing.ISecurityLog>().WriteAsync(new Application.Auditing.SecurityLogEntry(
+            Contracts.Auditing.SecurityActions.ImpersonationStarted, target.Id, target.TenantId, ImpersonatorId: impersonator.Id));
         return Redirect(returnUrl!);
     }
 

@@ -1,0 +1,35 @@
+<div class="px-4 pb-2" data-testid="request-log-detail">
+    @if (_detail is null)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else
+    {
+        var request = _detail.Request;
+        @if (request.Route is { } route)
+        {
+            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">@L["Route"]: <code>@route</code></MudText>
+        }
+        @if (request.Exception is { } exception)
+        {
+            <MudAlert Severity="Severity.Error" Dense="true" Class="my-2">@exception</MudAlert>
+        }
+        @if (request.UserAgent is { } agent)
+        {
+            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">@agent</MudText>
+        }
+        <TraceLink TraceId="@request.TraceId" />
+        <MudGrid Spacing="2" Class="mt-1">
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.subtitle2">@L["Request"]</MudText>
+                <LogBlock Text="@Headers(_detail.RequestHeaders)" />
+                <LogBlock Text="@Body(_detail.RequestBody)" Hidden="_detail.BodiesHidden" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.subtitle2">@L["Response"]</MudText>
+                <LogBlock Text="@Headers(_detail.ResponseHeaders)" />
+                <LogBlock Text="@Body(_detail.ResponseBody)" />
+            </MudItem>
+        </MudGrid>
+    }
+</div>

@@ -2,6 +2,19 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Neu
+
+- Sicherheitsprotokoll: Anmeldungen (erfolgreich oder fehlgeschlagen mit Grund), Abmeldungen, Sperren, Änderungen an Passwörtern, E-Mail-Adressen, Zwei-Faktor-Anmeldung und Passkeys, *Anmelden als*, API-Schlüssel (erstellt, widerrufen, erste Nutzung eines Tages) sowie Rollen und eigene Berechtigungen eines Benutzers, mit Organisation, Benutzer, Handelndem, Angemeldetem, Client, IP-Adresse, Browser, Trace-ID und Details. Immer an, geschrieben von jedem Host mit der App-Datenbank (Tabelle `cw.SecurityEvents`); Änderungen an Zugangsdaten und Zugriffen kommen aus den Speichervorgängen, jeder Code-Pfad zählt also. `ISecurityLog.WriteAsync(new SecurityLogEntry(...))` schreibt eigene Einträge (`SecurityActions.SessionEnded`, ...). Seite *Administration > Überwachung > Sicherheitsprotokoll* (`Audit.SecurityLog`), OData-Set `SecurityEvents`, ein Link auf der Benutzerseite ([Sicherheitsprotokoll](../modules/auditing.md#sicherheitsprotokoll)).
+- Request-Log: jeder API-Aufruf mit Benutzer, Angemeldetem, Client oder API-Schlüssel, Methode, Pfad, Route, geschicktem Request, Status, Dauer, IP-Adresse, Browser, Trace-ID, Exception, Headern und JSON-/Formular-Inhalten (bereinigt: `Authorization`, Cookies, API-Schlüssel und jeder Name mit password, secret, token, apikey oder credential, auch in Query-Strings und verschachtelten Inhalten; gekürzt bei `RequestLog.MaxBodyKb`, 32 KB). Erfasst ohne Puffern, in Paketen gespeichert von einem Hintergrunddienst aus einer begrenzten Warteschlange, die verwirft (Metrik `coworkee.request_log.dropped`, Meter `Coworkee.Auditing`), statt Aufrufe zu bremsen; etwa 0,1 ms pro Aufruf in den Tests. Die Einstellung `RequestLog.Requests` (Lesend, Schreibend, standardmäßig beides; nichts gewählt schaltet es aus) gilt sofort auf jeder Instanz. Seite *Administration > Überwachung > Request-Log* (`Audit.Requests`; Inhalte brauchen `Audit.Requests.Bodies`), OData-Set `RequestLog` (ohne Header und Inhalte), `GET /api/v1/audit/requests/{id}`, *Trace öffnen* in Grafana oder im Aspire-Dashboard (`GET /api/v1/audit/trace-viewer`), `.SkipRequestLog()` für Endpunkte ([Request-Log](../modules/auditing.md#request-log)).
+- Retention-Ziele `security-events` (365 Tage) und `request-log` (30 Tage); Abschnitte `securityLog` und `requests` im Export personenbezogener Daten, das Löschen behält die Einträge ohne den Benutzer.
+- Einstellungen: der Typ `MultiChoice` (mehrere der `choices`, kommagetrennt gespeichert, ein leerer Wert heißt keiner) in den Blazor-Einstellungen und der Einstellungs-App von AirWorks.
+
+### Geändert
+
+- `CoworkeeAuditingModule` hängt von `CoworkeeSettingsModule` ab. Das Template trägt den Meter `Coworkee.Auditing` in OpenTelemetry ein. Apps brauchen eine Migration für die Tabellen `cw.SecurityEvents` und `cw.RequestLog`.
+
 ## 0.0.1.68 (2026-11-08)
 
 ### Neu

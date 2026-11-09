@@ -152,6 +152,12 @@ internal static class AuthImpersonation
     public static async Task<int> RevokeAsync(IServiceProvider services, ClaimsPrincipal principal, string userId, string? sid, CancellationToken cancellationToken)
     {
         await AnnounceEndAsync(services, principal, userId, sid, cancellationToken);
+        if (Guid.TryParse(userId, out var target) && Guid.TryParse(principal.FindFirstValue(ImpersonationClaims.Impersonator), out var by))
+        {
+            await services.GetRequiredService<Application.Auditing.ISecurityLog>().WriteAsync(new Application.Auditing.SecurityLogEntry(
+                Contracts.Auditing.SecurityActions.ImpersonationEnded, target, ImpersonatorId: by), cancellationToken);
+        }
+
         var authorizations = services.GetRequiredService<IOpenIddictAuthorizationManager>();
         var tokens = services.GetRequiredService<IOpenIddictTokenManager>();
         var revoked = 0;

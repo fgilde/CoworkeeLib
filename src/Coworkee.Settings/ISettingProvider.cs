@@ -4,6 +4,9 @@ namespace Coworkee.Settings;
 
 public interface ISettingProvider
 {
+    /// <summary>The hybrid cache tag a saved setting clears (on every instance with Redis); values derived from settings cached under it follow every change.</summary>
+    const string CacheTag = "coworkee:settings";
+
     Task<string?> GetAsync(string name, CancellationToken cancellationToken = default);
 
     Task<T> GetAsync<T>(string name, CancellationToken cancellationToken = default);

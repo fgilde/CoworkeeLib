@@ -72,6 +72,10 @@ else
                                data-testid="impersonate">@L["Log in as"]</MudButton>
                 }
             </PermissionView>
+            <PermissionView Permission="@AuditPermissions.SecurityLog">
+                <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Outlined.Policy" Href="@Links.Href($"/admin/security-log?user={Id}")"
+                           data-testid="user-security-log">@L["Security log"]</MudButton>
+            </PermissionView>
         </MudStack>
         <MudText Typo="Typo.caption" Class="mt-2 d-block mud-text-secondary">@L["Last sign-in: {0}", _user.LastLoginAt?.ToLocalTime().ToString("g") ?? L["never"]]</MudText>
     </MudPaper>

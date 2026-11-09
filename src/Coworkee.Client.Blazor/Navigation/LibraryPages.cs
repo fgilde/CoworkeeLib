@@ -21,6 +21,8 @@ internal static class LibraryPages
         new("ai-settings", typeof(AiConfiguration), "admin/ai-settings"),
         new("ai-tool-calls", typeof(AiToolCalls), "admin/ai-tool-calls"),
         new("audit", typeof(AuditLog), "admin/audit"),
+        new("security-log", typeof(SecurityLog), "admin/security-log"),
+        new("request-log", typeof(RequestLog), "admin/request-log"),
         new("backups", typeof(Backups), "admin/backups"),
         new("data-transfer", typeof(DataTransfer), "admin/data-transfer"),
         new("export-schedules", typeof(ExportSchedules), "data/export-schedules"),

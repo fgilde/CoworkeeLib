@@ -39,6 +39,8 @@ public static class CoworkeeClientExtensions
         CommandPalette.CommandPaletteServiceCollectionExtensions.AddCommandPalette(services);
         services.AddHttpClient<Webhooks.IWebhooksApi, Webhooks.WebhooksApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Retention.IRetentionApi, Retention.RetentionApi>(client => client.BaseAddress = baseAddress);
+        services.AddHttpClient<Auditing.IAuditApi, Auditing.AuditApi>(client => client.BaseAddress = baseAddress);
+        services.AddScoped<Auditing.TraceViewer>();
         services.AddSingleton(new Pages.ProfileTab("API keys", "api-keys", typeof(Pages.ProfileApiKeys), Coworkee.Contracts.Identity.ApiKeyPermissions.Create,
             MudBlazor.Icons.Material.Outlined.Key, Order: 100));
         services.AddHttpClient<Backup.IBackupApi, Backup.BackupApi>(client =>

@@ -2,6 +2,19 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- Security log: sign-ins (succeeded or failed with the reason), sign-outs, lockouts, changes of passwords, e-mail addresses, two-step verification and passkeys, *Log in as*, API keys (created, revoked, first use of a day) and roles and own permissions of a user, with organisation, user, actor, impersonator, client, IP address, browser, trace id and details. Always on, written by every host with the app database (table `cw.SecurityEvents`); credential and access changes are taken from the saves, so every code path counts. `ISecurityLog.WriteAsync(new SecurityLogEntry(...))` writes entries of your own (`SecurityActions.SessionEnded`, ...). Page *Administration > Monitoring > Security log* (`Audit.SecurityLog`), OData set `SecurityEvents`, a link on the user page ([security log](../modules/auditing.md#security-log)).
+- Request log: every API request with user, impersonator, client or API key, method, path, route, dispatched request, status, duration, IP address, browser, trace id, exception, headers and JSON/form bodies (redacted: `Authorization`, cookies, API keys and every name with password, secret, token, apikey or credential, also in query strings and nested bodies; cut at `RequestLog.MaxBodyKb`, 32 KB). Captured without buffering, saved in batches by a background service from a bounded queue that drops (metric `coworkee.request_log.dropped`, meter `Coworkee.Auditing`) instead of slowing requests; about 0.1 ms per request in the tests. The setting `RequestLog.Requests` (Reading, Writing, both by default; nothing chosen turns it off) applies at once on every instance. Page *Administration > Monitoring > Request log* (`Audit.Requests`; bodies need `Audit.Requests.Bodies`), OData set `RequestLog` (without headers and bodies), `GET /api/v1/audit/requests/{id}`, *Open trace* into Grafana or the Aspire dashboard (`GET /api/v1/audit/trace-viewer`), `.SkipRequestLog()` for endpoints ([request log](../modules/auditing.md#request-log)).
+- Retention targets `security-events` (365 days) and `request-log` (30 days); personal data sections `securityLog` and `requests`, erasing keeps the entries without the user.
+- Settings: the type `MultiChoice` (several of the `choices`, stored comma separated, an empty value means none) in the Blazor settings and the AirWorks settings app.
+
+### Changed
+
+- `CoworkeeAuditingModule` depends on `CoworkeeSettingsModule`. The template adds the meter `Coworkee.Auditing` to OpenTelemetry. Apps need a migration for the tables `cw.SecurityEvents` and `cw.RequestLog`.
+
 ## 0.0.1.68 (2026-11-08)
 
 ### Added

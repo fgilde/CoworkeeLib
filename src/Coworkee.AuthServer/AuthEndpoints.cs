@@ -235,8 +235,16 @@ internal static class AuthEndpoints
         }
 
         await context.SignOutAsync(IdentityConstants.ApplicationScheme);
+        await LogSignOutAsync(context, cookie);
         return Results.SignOut(new AuthenticationProperties { RedirectUri = "/" }, [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
     }
+
+    /// <summary>A sign-out of a browser that was signed in; the user and who was signed in as him come from its cookie.</summary>
+    internal static Task LogSignOutAsync(HttpContext context, AuthenticateResult cookie) =>
+        cookie.Principal is { } principal && Guid.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), out var user)
+            ? context.RequestServices.GetRequiredService<Application.Auditing.ISecurityLog>().WriteAsync(new Application.Auditing.SecurityLogEntry(
+                Contracts.Auditing.SecurityActions.SignOut, user, ImpersonatorId: Guid.TryParse(principal.FindFirstValue(ImpersonationClaims.Impersonator), out var impersonator) ? impersonator : null))
+            : Task.CompletedTask;
 
     private static IResult SignInFirst(HttpContext context) =>
         Results.Challenge(new AuthenticationProperties { RedirectUri = ReturnUrl(context) }, [IdentityConstants.ApplicationScheme]);

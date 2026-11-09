@@ -1,3 +1,5 @@
+using Coworkee.Application.Auditing;
+using Coworkee.Contracts.Auditing;
 using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
 using Coworkee.Infrastructure.Persistence;
@@ -7,7 +9,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Coworkee.AuthServer.Pages.Account;
 
-public sealed class LoginWith2faModel(SignInManager<User> signIn, CoworkeeDbContext db) : PageModel
+public sealed class LoginWith2faModel(SignInManager<User> signIn, CoworkeeDbContext db, ISecurityLog securityLog) : PageModel
 {
     [BindProperty(SupportsGet = true)]
     public string? ReturnUrl { get; set; }
@@ -40,6 +42,8 @@ public sealed class LoginWith2faModel(SignInManager<User> signIn, CoworkeeDbCont
             ? await signIn.TwoFactorRecoveryCodeSignInAsync(code)
             : await signIn.TwoFactorAuthenticatorSignInAsync(code.Replace("-", string.Empty, StringComparison.Ordinal), RememberMe, rememberClient: false);
         await db.SaveChangesAsync(HttpContext.RequestAborted);
+        await securityLog.WriteAsync(new SecurityLogEntry(SecurityActions.SignIn, user.Id, user.TenantId, result.Succeeded,
+            result.Succeeded ? null : result.IsLockedOut ? "LockedOut" : "InvalidCode", new { method = Input.UseRecoveryCode ? "recovery-code" : "two-factor" }));
         if (result.Succeeded)
         {
             return LocalRedirect(Url.IsLocalUrl(ReturnUrl) ? ReturnUrl : "/");

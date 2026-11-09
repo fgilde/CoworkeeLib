@@ -44,6 +44,10 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
         services.AddSingleton<IStoredPermissionDefinitions>(provider => provider.GetRequiredService<CustomPermissionDefinitions>());
         services.AddScoped<IInterceptor, PermissionCacheInterceptor>();
         services.AddScoped<IInterceptor, AccessChangeInterceptor>();
+        services.AddScoped<Security.SecurityLog>();
+        services.AddScoped<Application.Auditing.ISecurityLog>(provider => provider.GetRequiredService<Security.SecurityLog>());
+        services.AddScoped<IInterceptor, Security.SecurityEventInterceptor>();
+        services.AddScoped<Application.Privacy.IPersonalDataContributor, Security.SecurityEventPersonalData>();
         services.AddScoped<IResourceAccessReader, ResourceAccessReader>();
         services.AddScoped<IUserDirectory, Users.UserDirectory>();
         services.AddScoped<ImpersonationRules>();

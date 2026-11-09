@@ -68,7 +68,7 @@
           "type": "string"
         },
         "auditing": {
-          "description": "Pages for the audit trail, entity history and restore. The trail itself is always written.",
+          "description": "Pages for the audit trail, entity history and restore, the security log and the request log of the API. The trail and the security log are always written.",
           "type": "boolean",
           "default": true
         },

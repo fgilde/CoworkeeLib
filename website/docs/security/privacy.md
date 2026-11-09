@@ -59,6 +59,8 @@ The trail answers *what happened to which record, when, and done by a person or 
 | `social` | Comments, tags, ratings, reactions | own comments, ratings and reactions | deleted, replies to the comments too |
 | `aiToolCalls`, `aiConversations` | AI | tool calls (tool, channel, input, result), conversations | deleted |
 | `activity` | Auditing | what the user changed, himself or signed in as someone else (`asOtherUser`) | trail kept as described above |
+| `securityLog` | Identity | his entries of the [security log](../modules/auditing.md#security-log): sign-ins, lockouts, changes of password, e-mail, keys and access (time, action, result, reason, address, browser, details) | entries kept with the tombstone for him as user, actor or impersonator; address, browser and details removed |
+| `requests` | Auditing | his latest 1000 requests of the [request log](../modules/auditing.md#request-log) (time, method, path, status, address, browser; no headers or bodies) | rows kept with the tombstone; address, browser, headers and bodies removed |
 | `files` | Files | uploaded files (name, type, size) | kept with the tombstone as uploader; his registration documents (`Registrations/{user}`) deleted with their content and folder |
 | `attachments` | Record attachments | files he attached (record, slot, name, type, size) | kept with the tombstone as uploader |
 | `reports` | Reporting | `reports` he owns, `favorites`, `subscriptions` (schedule, filter), `dashboard` | private reports, favourites, subscriptions and the dashboard choice deleted; shared reports stay for their audience, owned by the tombstone (nobody changes them any more) |

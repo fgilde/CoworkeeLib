@@ -21,6 +21,8 @@ Jede Datenart wird über alle Organisationen hinweg gelöscht. Die Bibliothek l�
 | `snapshots` | Retention | ältere Revisionen versionierter Entities (`cw.EntitySnapshots`), die neueste jeder Entity bleibt | `CreatedAt` | nie |
 | `outbox` | Retention | verarbeitete Outbox-Nachrichten, ausstehende bleiben | `ProcessedAt` | nie |
 | `access-tokens` | Retention | abgelaufene anonyme Tokens: temporäre Dateilinks, Export-Downloads | `ExpiresAt` | 1 Tag |
+| `security-events` | Retention | das [Sicherheitsprotokoll](auditing.md#sicherheitsprotokoll) (`cw.SecurityEvents`) | `At` | 365 Tage |
+| `request-log` | Auditing | das [Request-Log](auditing.md#request-log) (`cw.RequestLog`) | `At` | 30 Tage |
 | `soft-deleted` | Retention | jeder weich gelöschte Typ des Modells außer Dateien | `DeletedAt` | nie |
 | `inbox` | EventBus | verarbeitete Integrations-Events (`cw.InboxMessages`) | `ProcessedAt` | nie |
 | `ai-tool-calls` | Ai | Audit der Werkzeugaufrufe | `At` | nie |
