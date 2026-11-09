@@ -311,8 +311,25 @@ public sealed partial class MainViewModel : ObservableObject
     {
         if (await Dialogs.PickFolder(L.Get("Open an existing app")) is { } folder)
         {
-            OpenApp(folder);
+            ShowApp(folder);
         }
+    }
+
+    /// <summary>
+    /// The overview of the app in <paramref name="folder"/>: run it, its deployments, deploy or update; the wizard stays as it is until
+    /// "Edit in the wizard" (<see cref="OpenApp"/>).
+    /// </summary>
+    public void ShowApp(string folder)
+    {
+        if (Coworkee.Cli.Spec.ExistingApp.Root(folder) is not { } root)
+        {
+            Status = L.Format("No Coworkee app in {0}", folder);
+            return;
+        }
+
+        Apps.Opened(root, Coworkee.Cli.Spec.ExistingApp.Read(root).Spec);
+        Welcome.Refresh();
+        Page = new AppOverviewViewModel(this, Apps.Apps.First(a => string.Equals(a.Path, root, StringComparison.OrdinalIgnoreCase)));
     }
 
     /// <summary>
@@ -346,13 +363,13 @@ public sealed partial class MainViewModel : ObservableObject
         GoTo(Review);
     }
 
-    /// <summary>A spec or an app of the start page.</summary>
+    /// <summary>A spec (into the wizard) or an app (its overview) of the start page.</summary>
     [RelayCommand]
     public void OpenRecent(RecentItem item)
     {
         if (item.IsApp)
         {
-            OpenApp(item.Path);
+            ShowApp(item.Path);
         }
         else
         {

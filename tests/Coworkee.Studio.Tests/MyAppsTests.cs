@@ -31,7 +31,7 @@ public sealed class MyAppsTests
     }
 
     [Fact]
-    public void Apps_are_on_the_start_page_and_open_in_the_wizard_from_there_and_from_my_apps()
+    public void Apps_are_on_the_start_page_and_open_their_overview_from_there_and_the_wizard_from_my_apps()
     {
         using var folder = new TempFolder();
         var crm = App(folder, "Crm");
@@ -45,12 +45,14 @@ public sealed class MyAppsTests
         recent.Select(r => r.Name).ShouldBe(["Shop", "Crm"], ignoreOrder: true);
         main.OpenRecentCommand.Execute(recent.Single(r => r.Name == "Crm"));
 
-        main.ExistingApp.ShouldBe(crm);
-        main.Current.ShouldBe(main.Review);
+        main.Page.ShouldBeOfType<AppOverviewViewModel>().App.Path.ShouldBe(crm);
+        main.ExistingApp.ShouldBeNull();
         main.Welcome.Recent.First().Name.ShouldBe("Crm");
         main.Settings.Apps.First().Opened.ShouldNotBeNull();
 
         main.ShowApps();
+        main.Apps.Apps.Single(a => a.Name == "Shop").ShowCommand.Execute(null);
+        main.Page.ShouldBeOfType<AppOverviewViewModel>().App.Name.ShouldBe("Shop");
         main.Apps.Apps.Single(a => a.Name == "Shop").EditCommand.Execute(null);
 
         main.HasPage.ShouldBeFalse();

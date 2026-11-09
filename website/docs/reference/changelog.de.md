@@ -2,6 +2,13 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Neu
+
+- Coworkee Studio: Eine bestehende App (*Bestehende App öffnen*, *Zuletzt geöffnet*, *Meine Apps*) öffnet ihre Übersicht statt des Assistenten: Laufstatus mit **Starten**/**Stoppen** und Links, ihre Deployments aus `.coworkee/deployments` mit ihren Adressen, Ordner, Solution und VS Code; **Im Assistenten bearbeiten** führt zu den Änderungen ([Bestehende App öffnen](../getting-started/studio.md#bestehende-app-offnen)). **Deployen …** ist ein Assistent für Azure: Azure CLI installiert und angemeldet (mit der Lösung für das Problem mit dem Windows-Broker), Abonnement, Ressourcengruppe und Region, eine Zusammenfassung, dann `coworkee deploy azure --apply` mit der Ausgabe live; **Aktualisieren** deployt ein aufgezeichnetes Deployment erneut ([Deployen](../getting-started/studio.md#deployen)).
+- `coworkee deploy azure --apply`: Der Deployment-Eintrag behält die Tool-Schalter (`tools`), damit ein Update dieselben Tools deployt.
+
 ## 0.0.1.68 (2026-11-08)
 
 ### Neu

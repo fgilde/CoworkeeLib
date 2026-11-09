@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using Coworkee.Cli.Spec;
 
 namespace Coworkee.Cli.Commands;
 
@@ -11,19 +12,15 @@ namespace Coworkee.Cli.Commands;
 /// </summary>
 internal static partial class AzureDeploy
 {
-    // the full path: az.cmd started by name finds its python next to the current folder (%~dp0) and fails
-    public static readonly string Az = OperatingSystem.IsWindows()
-        ? (Environment.GetEnvironmentVariable("PATH") ?? string.Empty).Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
-            .Select(d => Path.Combine(d.Trim('"'), "az.cmd")).FirstOrDefault(File.Exists) ?? "az.cmd"
-        : "az";
+    public static readonly string Az = Deployments.AzureCli;
 
     public sealed record Target(string ResourceGroup, string Location, string? Subscription, string Name);
 
     public sealed record Account(string User, string SubscriptionId, string SubscriptionName, string TenantId);
 
-    public static string RecordPath(Solution solution, string name) => Path.Combine(solution.Root, ".coworkee", "deployments", $"{name}.json");
+    public static string RecordPath(Solution solution, string name) => Deployments.RecordPath(solution.Root, name);
 
-    public static string SecretsPath(Solution solution, string name) => Path.Combine(solution.Root, ".coworkee", "deployments", $"{name}.secrets.json");
+    public static string SecretsPath(Solution solution, string name) => Deployments.SecretsPath(solution.Root, name);
 
     public static async Task<int> ApplyAsync(Solution solution, string published, Target target, bool yes, string? adminEmail, IReadOnlyDictionary<string, bool> tools,
         CancellationToken cancellationToken)
@@ -71,7 +68,12 @@ internal static partial class AzureDeploy
         }
 
         var urls = await AddressesAsync(target, account);
-        await WriteRecordAsync(solution, target, account, urls, cancellationToken);
+        await Deployments.WriteAsync(solution.Root,
+            new DeploymentRecord(target.Name, "azure", account.SubscriptionId, account.TenantId, target.ResourceGroup, target.Location, account.User, DateTimeOffset.Now, urls)
+            {
+                Tools = tools.ToDictionary(),
+            },
+            cancellationToken);
         Console.WriteLine();
         Console.WriteLine($"Deployed {solution.Name} to {target.ResourceGroup}:");
         foreach (var (app, url) in urls)
@@ -205,25 +207,6 @@ internal static partial class AzureDeploy
         }
 
         return urls;
-    }
-
-    private static async Task WriteRecordAsync(Solution solution, Target target, Account account, IReadOnlyDictionary<string, string> urls, CancellationToken cancellationToken)
-    {
-        var record = new JsonObject
-        {
-            ["name"] = target.Name,
-            ["target"] = "azure",
-            ["subscriptionId"] = account.SubscriptionId,
-            ["tenantId"] = account.TenantId,
-            ["resourceGroup"] = target.ResourceGroup,
-            ["location"] = target.Location,
-            ["account"] = account.User,
-            ["deployedAt"] = DateTimeOffset.Now.ToString("O"),
-            ["urls"] = new JsonObject(urls.Select(u => KeyValuePair.Create(u.Key, (JsonNode?)u.Value))),
-        };
-        var path = RecordPath(solution, target.Name);
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        await File.WriteAllTextAsync(path, record.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), cancellationToken);
     }
 
     private static bool Confirm(string question)

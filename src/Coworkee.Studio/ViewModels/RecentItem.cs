@@ -2,7 +2,7 @@ using Coworkee.Studio.Model;
 
 namespace Coworkee.Studio.ViewModels;
 
-/// <summary>A spec file or an app on the start page, newest first; opening an app shows it in the wizard to extend it.</summary>
+/// <summary>A spec file or an app on the start page, newest first; opening an app shows its overview.</summary>
 public sealed record RecentItem(string Path, string Name, bool IsApp, DateTimeOffset When)
 {
     public string Icon => IsApp ? "Icon.Layers" : "Icon.File";
