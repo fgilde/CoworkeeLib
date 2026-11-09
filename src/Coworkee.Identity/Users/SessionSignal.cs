@@ -77,7 +77,8 @@ public sealed partial class SessionSignal(SessionStamps stamps, IServiceProvider
             await stamps.ForgetAsync(change.UserId, cancellationToken);
             if (connections is not null)
             {
-                await connections.EndAsync(change.UserId, principal => KeepsAsync(change.UserId, principal, cancellationToken), change.Reason, cancellationToken, change.KeptSessionId);
+                await connections.EndAsync(change.UserId, principal => KeepsAsync(change.UserId, principal, cancellationToken), change.Reason, cancellationToken, change.KeptSessionId,
+                    change.EndedSessionId);
             }
 
             // for decorators of the publisher (an app's own hub ends its connections of this instance); RealtimePublisher sends it nowhere, the
@@ -85,7 +86,7 @@ public sealed partial class SessionSignal(SessionStamps stamps, IServiceProvider
             try
             {
                 await (publisher?.PublishAsync(null, RealtimeTopics.User(change.UserId), RealtimeEventTypes.SessionRevoked,
-                    new SessionRevokedPayload(change.Reason, change.KeptSessionId), cancellationToken) ?? Task.CompletedTask);
+                    new SessionRevokedPayload(change.Reason, change.KeptSessionId, change.EndedSessionId), cancellationToken) ?? Task.CompletedTask);
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {

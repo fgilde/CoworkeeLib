@@ -50,8 +50,10 @@ public partial class SessionGuard : IAsyncDisposable
         }
     }
 
+    // kept: this session changed the password, or another single session ended (an app's own hub tells every session of the user)
     private static bool IsKept(RealtimeEnvelope envelope, string? sid) =>
-        sid is { Length: > 0 } && envelope.Payload.Deserialize<SessionRevokedPayload>(JsonSerializerOptions.Web)?.KeptSessionId == sid;
+        envelope.Payload.Deserialize<SessionRevokedPayload>(JsonSerializerOptions.Web) is { } payload
+        && ((sid is { Length: > 0 } && payload.KeptSessionId == sid) || (payload.EndedSessionId is { } ended && ended != sid));
 
     private void SignInAgain()
     {
@@ -83,6 +85,8 @@ public partial class SessionGuard : IAsyncDisposable
         {
             "locked" => L["An administrator locked your account."],
             "password-changed" => L["The password of your account was changed. Please sign in again."],
+            "limit" => L["You signed in on another device, and only so many sessions are allowed. This one ended."],
+            "ended-by-user" => L["You ended this session from another device."],
             _ => L["An administrator ended your session."],
         };
         await Dialogs.ShowMessageBoxAsync(L["Signed out"], message);

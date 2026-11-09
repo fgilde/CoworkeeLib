@@ -169,5 +169,6 @@
   "Sign in as another user": "別のユーザーとしてログイン",
   "You may not sign in as this user.": "このユーザーとしてログインすることはできません。",
   "Back to my account": "自分のアカウントに戻る",
-  "{0} is signed in as {1}.": "{0} が {1} としてログインしています。"
+  "{0} is signed in as {1}.": "{0} が {1} としてログインしています。",
+  "You are signed in on too many devices. Sign out on one of them first or ask an administrator to end a session.": "ログインしているデバイスが多すぎます。先にいずれかでログアウトするか、管理者にセッションの終了を依頼してください。"
 }

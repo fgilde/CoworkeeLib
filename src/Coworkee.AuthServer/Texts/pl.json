@@ -169,5 +169,6 @@
   "Sign in as another user": "Zaloguj się jako inny użytkownik",
   "You may not sign in as this user.": "Nie możesz zalogować się jako ten użytkownik.",
   "Back to my account": "Wróć do mojego konta",
-  "{0} is signed in as {1}.": "{0} jest zalogowany jako {1}."
+  "{0} is signed in as {1}.": "{0} jest zalogowany jako {1}.",
+  "You are signed in on too many devices. Sign out on one of them first or ask an administrator to end a session.": "Jesteś zalogowany na zbyt wielu urządzeniach. Najpierw wyloguj się na jednym z nich lub poproś administratora o zakończenie sesji."
 }

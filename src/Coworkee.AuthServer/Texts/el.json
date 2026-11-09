@@ -169,5 +169,6 @@
   "Sign in as another user": "Σύνδεση ως άλλος χρήστης",
   "You may not sign in as this user.": "Δεν επιτρέπεται να συνδεθείτε ως αυτός ο χρήστης.",
   "Back to my account": "Επιστροφή στον λογαριασμό μου",
-  "{0} is signed in as {1}.": "{0}: συνδεδεμένος ως {1}."
+  "{0} is signed in as {1}.": "{0}: συνδεδεμένος ως {1}.",
+  "You are signed in on too many devices. Sign out on one of them first or ask an administrator to end a session.": "Είστε συνδεδεμένοι σε πάρα πολλές συσκευές. Αποσυνδεθείτε πρώτα από μία ή ζητήστε από έναν διαχειριστή να τερματίσει μια συνεδρία."
 }

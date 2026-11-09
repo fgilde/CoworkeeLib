@@ -52,6 +52,20 @@ internal sealed class IdentityModelContributor : IModelContributor
             user.Navigation(u => u.Groups).AutoInclude();
         });
 
+        modelBuilder.Entity<Sessions.UserSession>(session =>
+        {
+            session.ToTable("UserSessions", Schema);
+            session.Property(s => s.Id).ValueGeneratedNever();
+            session.Property(s => s.ClientId).HasMaxLength(100);
+            session.Property(s => s.UserAgent).HasMaxLength(512);
+            session.Property(s => s.Device).HasMaxLength(100);
+            session.Property(s => s.Browser).HasMaxLength(100);
+            session.Property(s => s.IpAddress).HasMaxLength(64);
+            session.Property(s => s.EndReason).HasMaxLength(30);
+            session.HasIndex(s => new { s.TenantId, s.UserId });
+            session.HasOne<User>().WithMany().HasForeignKey(s => s.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
         modelBuilder.Entity<Role>(role =>
         {
             role.ToTable("Roles", Schema);

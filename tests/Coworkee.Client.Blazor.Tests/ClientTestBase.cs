@@ -47,6 +47,7 @@ public abstract class ClientTestBase : BunitContext
         Api.GetOnlineUsersAsync(default).ReturnsForAnyArgs([]);
         Services.AddSingleton(Api);
         Services.AddSingleton(Substitute.For<Files.IFilesApi>());
+        Services.AddSingleton(Substitute.For<Security.ISessionsApi>());
         Services.AddSingleton(Substitute.For<History.IEntityHistoryApi>());
         Services.AddSingleton(new CoworkeeClientOptions());
         Services.AddSingleton<Navigation.CoworkeePages>();

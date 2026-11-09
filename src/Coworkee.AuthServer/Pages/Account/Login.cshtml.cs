@@ -155,7 +155,8 @@ public sealed class LoginModel(
         // the second step logs the sign-in once it is done
         if (!result.RequiresTwoFactor)
         {
-            await securityLog.WriteAsync(new SecurityLogEntry(SecurityActions.SignIn, user.Id, user.TenantId, result.Succeeded, SignInFailure(result), new { method }));
+            var refused = result.Succeeded && AuthSessions.Refused(HttpContext);
+            await securityLog.WriteAsync(new SecurityLogEntry(SecurityActions.SignIn, user.Id, user.TenantId, result.Succeeded && !refused, refused ? "SessionLimit" : SignInFailure(result), new { method }));
         }
 
         if (result.RequiresTwoFactor)
@@ -181,6 +182,12 @@ public sealed class LoginModel(
         if (!result.Succeeded)
         {
             ErrorMessage = T(failed);
+            return Page();
+        }
+
+        if (AuthSessions.Refused(HttpContext))
+        {
+            ErrorMessage = T("You are signed in on too many devices. Sign out on one of them first or ask an administrator to end a session.");
             return Page();
         }
 

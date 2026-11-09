@@ -50,6 +50,7 @@ Der Verlauf beantwortet, *was mit welchem Datensatz wann geschah, und ob eine Pe
 | Abschnitt | Modul | Im Export | Löschen |
 |---|---|---|---|
 | `profile` | Identity | Name, E-Mail, Telefon, Adresse, Bild, Zwei-Faktor an oder aus, Rollen, Gruppen, externe Anmeldungen, Passkeys (Name, Datum, Sicherungsstatus), `claims`, eigene `permissionGrants`, `resourcePermissions` (Typ, ID, Rolle), `selectedGroups` | Benutzer gelöscht samt Rollen, Claims, Anmeldungen, Tokens, Passkeys, Mitgliedschaften und Gruppenauswahl (Kaskade); eigene Berechtigungen und Ressourcen-Berechtigungen gelöscht |
+| `sessions` | Identity | [Sitzungen](clients.md#sitzungen) (App, Gerät, Browser, User-Agent, IP-Adresse, Beginn, letzte Aktivität, Ende und Grund) | seine Sitzungen gelöscht; Sitzungen anderer, als die er angemeldet war oder die er beendet hat, behalten das mit dem Platzhalter |
 | `apiKeys` | Identity | [API-Schlüssel](api-keys.md) (Name, Präfix, Berechtigungen, Daten, letzte Nutzung), nie der Hash | seine Schlüssel gelöscht; Schlüssel anderer, die er widerrufen hat, behalten den Widerruf mit dem Platzhalter |
 | `signIns` | Auth-Server | freigegebene Clients | Freigaben und Tokens gelöscht, jede Sitzung endet |
 | `settings` | Einstellungen | Werte mit Benutzerbereich (Geheimnisse als `***`) | gelöscht |

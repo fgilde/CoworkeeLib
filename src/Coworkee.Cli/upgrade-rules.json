@@ -766,12 +766,14 @@
     {
       "version": "0.0.1.69",
       "breaking": [
-        "Auditing: the security log (table cw.SecurityEvents, written by every host) and the request log of the API (table cw.RequestLog, Coworkee.Auditing) are new. CoworkeeAuditingModule depends on CoworkeeSettingsModule and logs every API request with headers and bodies by default (setting RequestLog.Requests; nothing chosen turns it off)."
+        "Auditing: the security log (table cw.SecurityEvents, written by every host) and the request log of the API (table cw.RequestLog, Coworkee.Auditing) are new. CoworkeeAuditingModule depends on CoworkeeSettingsModule and logs every API request with headers and bodies by default (setting RequestLog.Requests; nothing chosen turns it off).",
+        "Identity: sessions are tracked in the new table cw.UserSessions and cw.Users gets the column MaxSessions (session limit per user). Every ended session is written to the security log (action SessionEnded).",
+        "RealtimeConnections.EndAsync and SessionRevokedPayload take an ended session id (EndedSessionId); IUserSessionListener gets SessionEndedAsync with a default implementation. A decorator of IRealtimePublisher that ends connections on SessionRevoked ends only those whose token carries EndedSessionId when it is set."
       ],
       "needsMigration": true,
       "manual": [
         {
-          "text": "Add a migration for the new tables cw.SecurityEvents and cw.RequestLog (coworkee migrations add CoworkeeLib069). Both tables are new, so no default is needed.",
+          "text": "Add one migration for the new tables cw.SecurityEvents, cw.RequestLog and cw.UserSessions and the column cw.Users.MaxSessions (coworkee migrations add CoworkeeLib069). All of them are new and empty or nullable, so no default or data is needed; sessions signed in before have no row and go on.",
           "find": "class \\w+DbContext\\b",
           "files": [
             "src/**/*.cs"
@@ -782,6 +784,13 @@
           "find": "\\.AddMeter\\(",
           "files": [
             "src/**/*.cs"
+          ]
+        },
+        {
+          "text": "Give the demo roles that watch sign-ins Identity.Sessions.View and those that end them Identity.Sessions.Manage (administrators hold both).",
+          "find": "Identity\\.Users\\.Manage",
+          "files": [
+            "src/**/DemoSeed.cs"
           ]
         }
       ]

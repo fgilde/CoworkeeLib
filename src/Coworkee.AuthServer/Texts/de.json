@@ -169,5 +169,6 @@
   "Sign in as another user": "Als anderer Benutzer anmelden",
   "You may not sign in as this user.": "Sie dürfen sich nicht als dieser Benutzer anmelden.",
   "Back to my account": "Zurück zu meinem Konto",
-  "{0} is signed in as {1}.": "{0} ist als {1} angemeldet."
+  "{0} is signed in as {1}.": "{0} ist als {1} angemeldet.",
+  "You are signed in on too many devices. Sign out on one of them first or ask an administrator to end a session.": "Sie sind auf zu vielen Geräten angemeldet. Melden Sie sich zuerst auf einem davon ab oder bitten Sie einen Administrator, eine Sitzung zu beenden."
 }

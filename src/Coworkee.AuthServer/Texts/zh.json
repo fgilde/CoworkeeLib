@@ -169,5 +169,6 @@
   "Sign in as another user": "以其他用户身份登录",
   "You may not sign in as this user.": "您不能以此用户身份登录。",
   "Back to my account": "返回我的账户",
-  "{0} is signed in as {1}.": "{0} 已以 {1} 的身份登录。"
+  "{0} is signed in as {1}.": "{0} 已以 {1} 的身份登录。",
+  "You are signed in on too many devices. Sign out on one of them first or ask an administrator to end a session.": "您登录的设备过多。请先在其中一台设备上注销，或请管理员结束一个会话。"
 }

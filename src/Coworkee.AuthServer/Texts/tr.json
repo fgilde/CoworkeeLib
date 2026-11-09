@@ -169,5 +169,6 @@
   "Sign in as another user": "Başka bir kullanıcı olarak oturum aç",
   "You may not sign in as this user.": "Bu kullanıcı olarak oturum açamazsınız.",
   "Back to my account": "Hesabıma dön",
-  "{0} is signed in as {1}.": "{0}, {1} olarak oturum açtı."
+  "{0} is signed in as {1}.": "{0}, {1} olarak oturum açtı.",
+  "You are signed in on too many devices. Sign out on one of them first or ask an administrator to end a session.": "Çok fazla cihazda oturum açtınız. Önce bunlardan birinde oturumu kapatın veya bir yöneticiden bir oturumu sonlandırmasını isteyin."
 }

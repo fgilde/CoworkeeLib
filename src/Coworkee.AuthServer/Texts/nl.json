@@ -169,5 +169,6 @@
   "Sign in as another user": "Inloggen als een andere gebruiker",
   "You may not sign in as this user.": "U mag niet inloggen als deze gebruiker.",
   "Back to my account": "Terug naar mijn account",
-  "{0} is signed in as {1}.": "{0} is ingelogd als {1}."
+  "{0} is signed in as {1}.": "{0} is ingelogd als {1}.",
+  "You are signed in on too many devices. Sign out on one of them first or ask an administrator to end a session.": "U bent op te veel apparaten aangemeld. Meld u eerst op een daarvan af of vraag een beheerder een sessie te beëindigen."
 }

@@ -21,6 +21,13 @@ public static class IdentityPermissions
         public const string ScopeAll = "Identity.Groups.ScopeAll";
     }
 
+    /// <summary>The active sign-ins of the organisation's users: see them, end them, limit how many a user may have.</summary>
+    public static class Sessions
+    {
+        public const string View = "Identity.Sessions.View";
+        public const string Manage = "Identity.Sessions.Manage";
+    }
+
     public static class Roles
     {
         public const string View = "Identity.Roles.View";

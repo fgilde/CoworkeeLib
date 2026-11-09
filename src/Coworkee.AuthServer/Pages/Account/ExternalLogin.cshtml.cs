@@ -53,6 +53,13 @@ public sealed class ExternalLoginModel(
         }
 
         await signIn.SignInAsync(user.Value, isPersistent: false, login.LoginProvider);
+        if (AuthSessions.Refused(HttpContext))
+        {
+            await securityLog.WriteAsync(new SecurityLogEntry(SecurityActions.SignIn, user.Value.Id, user.Value.TenantId, false, "SessionLimit", new { method = login.LoginProvider }));
+            ErrorMessage = AuthTexts.T("You are signed in on too many devices. Sign out on one of them first or ask an administrator to end a session.");
+            return Page();
+        }
+
         user.Value.LastLoginAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(HttpContext.RequestAborted);
         await securityLog.WriteAsync(new SecurityLogEntry(SecurityActions.SignIn, user.Value.Id, user.Value.TenantId, Details: new { method = login.LoginProvider }));

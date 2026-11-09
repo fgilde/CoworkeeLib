@@ -1,6 +1,7 @@
 using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
 using Coworkee.Identity.Permissions;
+using Coworkee.Identity.Sessions;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -24,8 +25,14 @@ public sealed class SessionStamps(HybridCache cache, IServiceScopeFactory scopes
         {
             using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
             await using var scope = state.scopes.CreateAsyncScope();
-            return await scope.ServiceProvider.GetRequiredService<CoworkeeDbContext>().Set<User>().Where(u => u.Id == state.userId)
-                .Select(u => new UserStamp(u.SecurityStamp, u.KeptSession)).SingleOrDefaultAsync(ct) ?? new UserStamp(null, null);
+            var db = scope.ServiceProvider.GetRequiredService<CoworkeeDbContext>();
+            var stamp = await db.Set<User>().Where(u => u.Id == state.userId)
+                .Select(u => new UserStamp(u.SecurityStamp, u.KeptSession, null)).SingleOrDefaultAsync(ct) ?? new UserStamp(null, null);
+            // an ended session's tokens live at most as long as its sign-in would have
+            var now = (scope.ServiceProvider.GetService<TimeProvider>() ?? TimeProvider.System).GetUtcNow();
+            var ended = await db.Set<UserSession>().IgnoreQueryFilters([CoworkeeDbContext.TenantFilter])
+                .Where(s => s.UserId == state.userId && s.EndedAt != null && s.ExpiresAt > now).Select(s => s.Id).ToListAsync(ct);
+            return ended.Count == 0 ? stamp : stamp with { EndedSessions = string.Join(' ', ended.Select(id => id.ToString("N"))) };
         }, Entry, [PermissionCache.Tag], cancellationToken);
 
     public async Task ForgetAsync(Guid userId, CancellationToken cancellationToken)

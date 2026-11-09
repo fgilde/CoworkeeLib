@@ -1,0 +1,48 @@
+@* the active sessions of a user; the page decides who may end which *@
+@if (Sessions.Count == 0)
+{
+    <MudText Typo="Typo.body2" Color="Color.Secondary">@L["No active sessions."]</MudText>
+}
+else
+{
+    <MudSimpleTable Dense="true" Hover="true" Outlined="true" data-testid="sessions">
+        <thead>
+            <tr>
+                <th>@L["Device"]</th>
+                <th>@L["IP address"]</th>
+                <th>@L["App"]</th>
+                <th>@L["Started"]</th>
+                <th>@L["Last activity"]</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var session in Sessions)
+            {
+                <tr data-session="@session.Id">
+                    <td>
+                        @(session.Device ?? "–") <MudText Typo="Typo.caption" Color="Color.Secondary">@session.Browser</MudText>
+                        @if (session.Current)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Primary" data-testid="session-current">@L["This session"]</MudChip>
+                        }
+                        @if (session.ImpersonatorId is not null)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" data-testid="session-impersonated">@L["Log in as"]</MudChip>
+                        }
+                    </td>
+                    <td>@session.IpAddress</td>
+                    <td>@session.ClientId</td>
+                    <td>@session.CreatedAt.ToLocalTime().ToString("g")</td>
+                    <td>@session.LastSeenAt.ToLocalTime().ToString("g")</td>
+                    <td>
+                        @if (CanEnd && !session.Current)
+                        {
+                            <MudButton Size="Size.Small" Color="Color.Error" OnClick="() => OnEnd.InvokeAsync(session)" data-testid="session-end">@L["End"]</MudButton>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </MudSimpleTable>
+}
