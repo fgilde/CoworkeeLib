@@ -160,6 +160,12 @@
                   <ComboBoxItem Content="{l:L 'Language of the system'}" />
                   <ComboBoxItem Content="English" />
                   <ComboBoxItem Content="Deutsch" />
+                  <ComboBoxItem Content="Français" />
+                  <ComboBoxItem Content="Español" />
+                  <ComboBoxItem Content="Italiano" />
+                  <ComboBoxItem Content="Nederlands" />
+                  <ComboBoxItem Content="Polski" />
+                  <ComboBoxItem Content="Português" />
                 </ComboBox>
               </StackPanel>
               <StackPanel Spacing="6">

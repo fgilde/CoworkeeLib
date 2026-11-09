@@ -56,6 +56,13 @@ public sealed class SplashTests
         window.Close();
     });
 
+    [Fact]
+    public Task The_mark_is_not_clipped_while_its_parts_fly_in() => TestApp.Ui(() =>
+    {
+        // the parts start outside the mark and overshoot; a clipping Viewbox cut them off
+        new SplashView { Animate = false }.FindControl<Viewbox>("LogoFloat")!.ClipToBounds.ShouldBeFalse();
+    });
+
     [Theory]
     [InlineData(false, "en")]
     [InlineData(true, "en")]

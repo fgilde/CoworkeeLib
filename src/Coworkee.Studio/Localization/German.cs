@@ -368,7 +368,7 @@ public static class German
         ["The MCP server in the documentation"] = "Der MCP-Server in der Dokumentation",
         ["Language"] = "Sprache",
         ["Language of the system"] = "Sprache des Systems",
-        ["Language: Deutsch / English"] = "Sprache: Deutsch / English",
+        ["Switch the language"] = "Sprache wechseln",
         ["Update available {0}"] = "Update verfügbar: {0}",
         ["Closes the Studio, updates the coworkee CLI and the Studio, then starts it again. An opened spec is saved first."] = "Schließt das Studio, aktualisiert die coworkee-CLI und das Studio und startet es neu. Eine geöffnete Spezifikation wird vorher gespeichert.",
         ["The update could not start: {0}"] = "Das Update konnte nicht starten: {0}",
