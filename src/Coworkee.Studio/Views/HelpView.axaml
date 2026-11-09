@@ -165,6 +165,7 @@
               <StackPanel Spacing="6">
                 <TextBlock Classes="h3" Text="{l:L Appearance}" />
                 <Button Command="{Binding ToggleThemeCommand}" Content="{Binding ThemeModeText}" />
+                <CheckBox IsChecked="{Binding ReduceMotion}" Content="{l:L 'Reduce motion: a plain fade instead of the animated start'}" />
               </StackPanel>
               <StackPanel Spacing="6">
                 <TextBlock Classes="h3" Text="{l:L 'coworkee CLI'}" />

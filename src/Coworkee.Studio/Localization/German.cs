@@ -982,5 +982,12 @@ public static class German
         ["Deployed to {0}."] = "Nach {0} deployt.",
         ["The administrator's password is in {0} (not in git)."] = "Das Passwort des Administrators steht in {0} (nicht in git).",
         ["{0} cannot see the subscription {1} of this deployment."] = "{0} sieht das Abonnement {1} dieses Deployments nicht.",
+        ["Starting…"] = "Startet …",
+        ["Version {0}"] = "Version {0}",
+        ["Looking for your apps…"] = "Sucht deine Apps …",
+        ["Preparing the workspace…"] = "Bereitet den Arbeitsbereich vor …",
+        ["The Studio could not start: {0}"] = "Das Studio konnte nicht starten: {0}",
+        ["Close"] = "Schließen",
+        ["Reduce motion: a plain fade instead of the animated start"] = "Weniger Bewegung: ein einfaches Einblenden statt des animierten Starts",
     };
 }

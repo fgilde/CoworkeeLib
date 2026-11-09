@@ -78,7 +78,7 @@
             chrome:WindowDecorationProperties.ElementRole="TitleBar" />
     <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
       <StackPanel Orientation="Horizontal" Spacing="10" Margin="16,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False">
-        <Image Source="/Assets/coworkee.png" Width="22" Height="22" />
+        <Image x:Name="TitleLogo" Source="/Assets/coworkee.png" Width="22" Height="22" />
         <TextBlock Text="Coworkee Studio" FontWeight="SemiBold" FontSize="13.5" VerticalAlignment="Center" />
         <TextBlock Text="/" Classes="muted" VerticalAlignment="Center" />
         <TextBlock Text="{Binding AppTitle}" Classes="muted" FontSize="13.5" VerticalAlignment="Center" />

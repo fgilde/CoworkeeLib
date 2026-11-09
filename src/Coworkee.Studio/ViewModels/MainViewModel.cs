@@ -156,7 +156,10 @@ public sealed partial class MainViewModel : ObservableObject
 
     public bool HasSpecPath => SpecPath is not null;
 
-    public string Version { get; } = typeof(MainViewModel).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0] ?? "0.1.0";
+    /// <summary>The informational version without the git hash; static, so the splash shows it before the view model exists.</summary>
+    public static string StudioVersion { get; } = typeof(MainViewModel).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0] ?? "0.1.0";
+
+    public string Version => StudioVersion;
 
     public string ThemeMode => Settings.Theme is { Length: > 0 } theme ? theme : "System";
 
@@ -186,6 +189,12 @@ public sealed partial class MainViewModel : ObservableObject
     {
         get => Settings.PackageFeed;
         set => UpdateSetting(() => Settings.PackageFeed = Blank(value));
+    }
+
+    public bool ReduceMotion
+    {
+        get => Settings.ReduceMotion;
+        set => UpdateSetting(() => Settings.ReduceMotion = value);
     }
 
     public OptionViewModel Option(string id) => Options[id];
@@ -418,11 +427,14 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(ThemeModeText));
     }
 
-    public void ApplyTheme()
+    public void ApplyTheme() => ApplyTheme(Settings.Theme);
+
+    /// <summary>Light, Dark or anything else for the system; static, so the splash shows in the theme before the view model exists.</summary>
+    public static void ApplyTheme(string? theme)
     {
         if (Application.Current is { } app)
         {
-            app.RequestedThemeVariant = ThemeMode switch { "Light" => ThemeVariant.Light, "Dark" => ThemeVariant.Dark, _ => ThemeVariant.Default };
+            app.RequestedThemeVariant = theme switch { "Light" => ThemeVariant.Light, "Dark" => ThemeVariant.Dark, _ => ThemeVariant.Default };
         }
     }
 

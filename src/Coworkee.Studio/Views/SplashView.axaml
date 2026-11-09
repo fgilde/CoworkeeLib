@@ -1,0 +1,184 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="using:Coworkee.Studio.Localization"
+             xmlns:chrome="using:Avalonia.Controls.Chrome"
+             x:Class="Coworkee.Studio.Views.SplashView"
+             Focusable="True">
+  <Panel>
+    <!-- the backdrop fades away during the transition and uncovers the Studio below -->
+    <Panel x:Name="Backdrop" Background="{DynamicResource Background}">
+      <Border Height="44" VerticalAlignment="Top" Background="Transparent" chrome:WindowDecorationProperties.ElementRole="TitleBar" />
+    </Panel>
+
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,40">
+      <Panel Width="132" Height="132" HorizontalAlignment="Center">
+        <!-- a halo around the mark, clear in its hole: the outer panel fades in, the ellipse breathes -->
+        <Panel x:Name="Glow" Width="300" Height="300" Margin="-84" IsHitTestVisible="False">
+          <Ellipse x:Name="GlowPulse">
+            <Ellipse.Fill>
+              <RadialGradientBrush>
+                <GradientStop Offset="0.24" Color="#00c835f8" />
+                <GradientStop Offset="0.42" Color="#55c835f8" />
+                <GradientStop Offset="0.56" Color="#30ed376a" />
+                <GradientStop Offset="0.78" Color="#0aff9800" />
+                <GradientStop Offset="1" Color="#00ff9800" />
+              </RadialGradientBrush>
+            </Ellipse.Fill>
+          </Ellipse>
+        </Panel>
+
+        <!-- the brand mark (assets/icon.svg) in four parts that assemble; LogoHost flies into the title bar, LogoFloat hovers while loading -->
+        <Panel x:Name="LogoHost">
+          <Viewbox x:Name="LogoFloat">
+            <Grid Width="108.11" Height="108.11">
+              <Canvas x:Name="BottomWing">
+                <Path Data="M74.42,73.38a28,28,0,0,1-20.25,8.75h28A25.87,25.87,0,0,1,97,86.83a53.82,53.82,0,0,0,8.65-16.74,26,26,0,0,0-31.27,3.29Z">
+                  <Path.Fill>
+                    <LinearGradientBrush StartPoint="104.23,53.2" EndPoint="69.44,85.13">
+                      <GradientStop Offset="0" Color="#c835f8" />
+                      <GradientStop Offset="1" Color="#0276db" />
+                    </LinearGradientBrush>
+                  </Path.Fill>
+                </Path>
+                <Path Data="M70.29,77h14a31,31,0,0,1,16.31,4.61A55,55,0,0,1,97,86.83a25.87,25.87,0,0,0-14.91-4.7h-28A28,28,0,0,0,70.29,77">
+                  <Path.Fill>
+                    <LinearGradientBrush StartPoint="-44.67,11.43" EndPoint="109.15,100.24">
+                      <GradientStop Offset="0" Color="#ff01052d" />
+                      <GradientStop Offset="1" Color="#0001052d" />
+                    </LinearGradientBrush>
+                  </Path.Fill>
+                </Path>
+              </Canvas>
+              <Canvas x:Name="TopWing">
+                <Path Data="M74,34.25a26,26,0,0,0,31.76,3.83A54,54,0,0,0,97,21.28,25.87,25.87,0,0,1,82.13,26h-28A28,28,0,0,1,74,34.25Z">
+                  <Path.Fill>
+                    <LinearGradientBrush StartPoint="103.17,55.78" EndPoint="67.72,20.55">
+                      <GradientStop Offset="0" Color="#ffff00" />
+                      <GradientStop Offset="1" Color="#07aba0" />
+                    </LinearGradientBrush>
+                  </Path.Fill>
+                </Path>
+                <Path Data="M70.29,31.15h14a31,31,0,0,0,16.31-4.61A55,55,0,0,0,97,21.28a25.87,25.87,0,0,1-14.87,4.72h-28a28,28,0,0,1,16.12,5.17">
+                  <Path.Fill>
+                    <LinearGradientBrush StartPoint="-16.15,80.22" EndPoint="113.96,5.1">
+                      <GradientStop Offset="0" Color="#ff005b50" />
+                      <GradientStop Offset="1" Color="#00005b50" />
+                    </LinearGradientBrush>
+                  </Path.Fill>
+                </Path>
+              </Canvas>
+              <!-- the masks of the SVG (white to black) become fills that fade from opaque to transparent -->
+              <Canvas x:Name="Outer">
+                <Path Data="M13,67A41,41,0,0,1,54,26H82.13a26,26,0,0,0,26-26h-54a54.06,54.06,0,1,0,0,108.11v-.06A41,41,0,0,1,13,67">
+                  <Path.Fill>
+                    <LinearGradientBrush StartPoint="13.92,94.67" EndPoint="122.91,-15.64">
+                      <GradientStop Offset="0" Color="#ed376a" />
+                      <GradientStop Offset="1" Color="#ffff00" />
+                    </LinearGradientBrush>
+                  </Path.Fill>
+                </Path>
+                <Path Data="M108.11,0h-54a54.06,54.06,0,1,0,0,108.11a47.56,47.56,0,0,1,0-95.12H95.12a13,13,0,0,0,13-13">
+                  <Path.Fill>
+                    <LinearGradientBrush StartPoint="0,-204.87" EndPoint="0,105.15">
+                      <GradientStop Offset="0" Color="#fff9d92e" />
+                      <GradientStop Offset="1" Color="#00f9d92e" />
+                    </LinearGradientBrush>
+                  </Path.Fill>
+                </Path>
+                <Path Data="M54.14,0A54,54,0,0,1,97,21.28A26,26,0,0,0,108.11,0Z">
+                  <Path.Fill>
+                    <LinearGradientBrush StartPoint="0,-1.51" EndPoint="0,26.21">
+                      <GradientStop Offset="0" Color="#fffef163" />
+                      <GradientStop Offset="1" Color="#00fef163" />
+                    </LinearGradientBrush>
+                  </Path.Fill>
+                </Path>
+                <Path Data="M54,24.82A42.2,42.2,0,0,0,11.86,67c0,11.78,6.09,33.85,31.82,39.71A41,41,0,0,1,54,26H82.13A25.87,25.87,0,0,0,97,21.28A26,26,0,0,0,108.11,0c-.38,8.14-5.13,15.7-11.84,20.29a25.23,25.23,0,0,1-14.14,4.53H54">
+                  <Path.Fill>
+                    <LinearGradientBrush StartPoint="152.44,-103.84" EndPoint="10.64,137.26">
+                      <GradientStop Offset="0" Color="#fffef7a2" />
+                      <GradientStop Offset="1" Color="#00fef7a2" />
+                    </LinearGradientBrush>
+                  </Path.Fill>
+                </Path>
+                <Path Data="M108.11,108.11h-54A54.06,54.06,0,1,1,54.06,0a47.56,47.56,0,0,0,0,95.12H95.12a13,13,0,0,1,13,13">
+                  <Path.Fill>
+                    <LinearGradientBrush StartPoint="91.25,54.05" EndPoint="17.2,54.05">
+                      <GradientStop Offset="0" Color="#5e17a9" />
+                      <GradientStop Offset="1" Color="#c40015" />
+                    </LinearGradientBrush>
+                  </Path.Fill>
+                  <Path.OpacityMask>
+                    <LinearGradientBrush StartPoint="0,-204.87" EndPoint="0,105.15">
+                      <GradientStop Offset="0" Color="#ffffffff" />
+                      <GradientStop Offset="1" Color="#00ffffff" />
+                    </LinearGradientBrush>
+                  </Path.OpacityMask>
+                </Path>
+              </Canvas>
+              <Canvas x:Name="Inner">
+                <Path Data="M54.06,82.13A28.08,28.08,0,0,1,54,26a41,41,0,0,0,.11,82.07v.06h54.05a26,26,0,0,0-26-26Z">
+                  <Path.Fill>
+                    <LinearGradientBrush StartPoint="23.08,49.12" EndPoint="115.12,93.15">
+                      <GradientStop Offset="0" Color="#ed376a" />
+                      <GradientStop Offset="1" Color="#c835f8" />
+                    </LinearGradientBrush>
+                  </Path.Fill>
+                </Path>
+                <Path Data="M97,86.83a54,54,0,0,1-42.9,21.28h54A26,26,0,0,0,97,86.83">
+                  <Path.Fill>
+                    <LinearGradientBrush StartPoint="0,108.11" EndPoint="0,81.3">
+                      <GradientStop Offset="0" Color="#fff98afe" />
+                      <GradientStop Offset="1" Color="#00f98afe" />
+                    </LinearGradientBrush>
+                  </Path.Fill>
+                </Path>
+                <Path Data="M18.12,69.63a38.25,38.25,0,0,1,9.63-25.39A28.08,28.08,0,0,1,54,26a41,41,0,0,0,.11,82.07v.06h.08l1.3,0A38.58,38.58,0,0,1,18.12,69.63">
+                  <Path.Fill>
+                    <LinearGradientBrush StartPoint="-69.88,194.21" EndPoint="61.35,33.92">
+                      <GradientStop Offset="0" Color="#ff300c50" />
+                      <GradientStop Offset="1" Color="#00300c50" />
+                    </LinearGradientBrush>
+                  </Path.Fill>
+                </Path>
+                <Path Data="M54.06,82.13a28.08,28.08,0,0,1-5.29-55.65c-18.85,3.13-24,19.55-24,27.58A29.24,29.24,0,0,0,54.06,83.29H82.13c13.32,0,25.15,11.1,26,24.82a26,26,0,0,0-26-26Z">
+                  <Path.Fill>
+                    <LinearGradientBrush StartPoint="209.52,146.59" EndPoint="26.36,45.07">
+                      <GradientStop Offset="0" Color="#fff6dcfd" />
+                      <GradientStop Offset="1" Color="#00f6dcfd" />
+                    </LinearGradientBrush>
+                  </Path.Fill>
+                </Path>
+              </Canvas>
+            </Grid>
+          </Viewbox>
+        </Panel>
+      </Panel>
+
+      <StackPanel x:Name="Texts" Margin="0,30,0,0" Spacing="6" HorizontalAlignment="Center">
+        <TextBlock x:Name="Title" HorizontalAlignment="Center" FontSize="34" LetterSpacing="-0.5">
+          <Run Text="Coworkee" FontWeight="SemiBold" />
+          <Run Text="Studio" FontWeight="Light" Foreground="{DynamicResource Primary}" />
+        </TextBlock>
+        <TextBlock x:Name="VersionText" HorizontalAlignment="Center" Classes="caption" LetterSpacing="0.4" />
+      </StackPanel>
+
+      <StackPanel x:Name="Progress" Margin="0,34,0,0" Spacing="12" HorizontalAlignment="Center" Width="360">
+        <!-- the loader runs on the render thread, so it keeps moving while the UI thread builds the Studio -->
+        <Border x:Name="Track" Width="180" Height="3" CornerRadius="2" Background="{DynamicResource Lines}" ClipToBounds="True">
+          <Border x:Name="Runner" Width="72" HorizontalAlignment="Left" CornerRadius="2">
+            <Border.Background>
+              <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                <GradientStop Offset="0" Color="Transparent" />
+                <GradientStop Offset="0.45" Color="{DynamicResource PrimaryColor}" />
+                <GradientStop Offset="1" Color="{DynamicResource SecondaryColor}" />
+              </LinearGradientBrush>
+            </Border.Background>
+          </Border>
+        </Border>
+        <TextBlock x:Name="StatusText" HorizontalAlignment="Center" TextAlignment="Center" Classes="caption" Text="{l:L 'Starting…'}" />
+        <Button x:Name="CloseButton" Classes="primary" HorizontalAlignment="Center" IsVisible="False" Content="{l:L 'Close'}" Click="CloseWindow" />
+      </StackPanel>
+    </StackPanel>
+  </Panel>
+</UserControl>
