@@ -33,6 +33,8 @@
     <DataTemplate DataType="vm:GenerateStep"><v:GenerateView /></DataTemplate>
     <DataTemplate DataType="vm:MyAppsViewModel"><v:MyAppsView /></DataTemplate>
     <DataTemplate DataType="vm:GalleryViewModel"><v:GalleryView /></DataTemplate>
+    <DataTemplate DataType="vm:AppOverviewViewModel"><v:AppOverviewView /></DataTemplate>
+    <DataTemplate DataType="vm:AzureDeployViewModel"><v:AzureDeployView /></DataTemplate>
   </Application.DataTemplates>
 
   <Application.Styles>

@@ -1,4 +1,5 @@
 using System.CommandLine;
+using Coworkee.Cli.Spec;
 
 namespace Coworkee.Cli.Commands;
 
@@ -10,8 +11,7 @@ internal static class DeployCommand
 {
     public static readonly string[] Targets = ["compose", "azure", "k8s"];
 
-    /// <summary>The tools of the app host (CoworkeeTools); each one is deployed when the app uses it, Mailpit only with <c>--with mailpit</c>.</summary>
-    public static readonly string[] Tools = ["keycloak", "mailpit", "libretranslate", "grafana", "webdatastudio", "ollama", "aspireui", "kibana", "openwebui", "elsastudio"];
+    public static readonly string[] Tools = Deployments.Tools;
 
     private static readonly Argument<string> Target = new Argument<string>("target")
     {

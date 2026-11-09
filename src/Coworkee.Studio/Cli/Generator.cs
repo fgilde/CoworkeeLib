@@ -103,9 +103,33 @@ public sealed class Generator(ProcessRunner run)
         }
     }
 
-    /// <summary>coworkee deploy &lt;target&gt; in the app's folder: the deployment artifacts, the images (compose) and the addresses and sign-in at the end.</summary>
-    public Task<int> DeployAsync(string appRoot, string target, StudioSettings settings, Action<CliLine> onLine, CancellationToken cancellationToken) =>
-        RunCliAsync(CliInvocation.Resolve(settings.CliPath), ["deploy", target], settings, onLine, cancellationToken, appRoot);
+    /// <summary>
+    /// coworkee deploy &lt;target&gt; [options] in the app's folder: the deployment artifacts, the images (compose), the Azure deployment (azure --apply)
+    /// and the addresses and sign-in at the end. Its input is closed, so it asks nothing and takes the defaults.
+    /// </summary>
+    public Task<int> DeployAsync(string appRoot, IReadOnlyList<string> args, StudioSettings settings, Action<CliLine> onLine, CancellationToken cancellationToken) =>
+        RunCliAsync(CliInvocation.Resolve(settings.CliPath), ["deploy", .. args], settings, onLine, cancellationToken, appRoot, closeInput: true);
+
+    /// <summary>A program whose output the Studio reads (the Azure CLI): its exit code, stdout and stderr; throws Win32Exception when it is missing.</summary>
+    public async Task<(int ExitCode, string Output, string Error)> CaptureAsync(string program, IEnumerable<string> args, CancellationToken cancellationToken)
+    {
+        var start = new System.Diagnostics.ProcessStartInfo(program) { RedirectStandardInput = true };
+        foreach (var arg in args)
+        {
+            start.ArgumentList.Add(arg);
+        }
+
+        var output = new System.Text.StringBuilder();
+        var error = new System.Text.StringBuilder();
+        var exit = await run(start, (line, isError) =>
+        {
+            lock (output)
+            {
+                (isError ? error : output).AppendLine(line);
+            }
+        }, cancellationToken);
+        return (exit, output.ToString().Trim(), error.ToString().Trim());
+    }
 
     /// <summary>dotnet run of the app host, with every line of its output; canceling stops the app host and what it started.</summary>
     public Task<int> RunAppAsync(string appHostProject, StudioSettings settings, Action<string, bool> output, CancellationToken cancellationToken)
@@ -119,9 +143,11 @@ public sealed class Generator(ProcessRunner run)
         return run(start, output, cancellationToken);
     }
 
-    private Task<int> RunCliAsync(CliInvocation cli, string[] args, StudioSettings settings, Action<CliLine> onLine, CancellationToken cancellationToken, string? workingDirectory = null)
+    private Task<int> RunCliAsync(CliInvocation cli, string[] args, StudioSettings settings, Action<CliLine> onLine, CancellationToken cancellationToken, string? workingDirectory = null,
+        bool closeInput = false)
     {
         var start = cli.Start(args, workingDirectory);
+        start.RedirectStandardInput = closeInput;
         if (!string.IsNullOrWhiteSpace(settings.PackageFeed))
         {
             // MSBuild reads environment variables as properties: every restore of the new app also uses the feed

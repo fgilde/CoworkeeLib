@@ -10,7 +10,7 @@ public sealed class ScreenshotTests
     public static TheoryData<string, bool, string> Pages()
     {
         var data = new TheoryData<string, bool, string>();
-        foreach (var page in new[] { "welcome", "basics", "branding", "signin", "architecture", "ai", "languages", "entities", "entities-diagram", "entities-import", "users", "review", "generate", "run", "help", "gallery", "apps" })
+        foreach (var page in new[] { "welcome", "basics", "branding", "signin", "architecture", "ai", "languages", "entities", "entities-diagram", "entities-import", "users", "review", "generate", "run", "help", "gallery", "apps", "overview", "deploy" })
         {
             data.Add(page, false, "en");
             data.Add(page, true, "en");
@@ -82,6 +82,33 @@ public sealed class ScreenshotTests
             }
 
             main.Page = main.Apps;
+        }
+
+        if (page is "overview" or "deploy")
+        {
+            var root = Directory.CreateDirectory(folder.File("apps/Shop")).FullName;
+            File.WriteAllText(Path.Combine(root, "Shop.slnx"), "<Solution />");
+            // off the UI thread: the awaits inside would wait for the thread this test blocks
+            Task.Run(() => Coworkee.Cli.Spec.Deployments.WriteAsync(root, new Coworkee.Cli.Spec.DeploymentRecord("rg-shop", "azure", "00000000-0000-0000-0000-000000000000", "tenant", "rg-shop",
+                "germanywestcentral", "me@example.com", new DateTimeOffset(2026, 11, 8, 10, 15, 0, TimeSpan.FromHours(1)),
+                new Dictionary<string, string> { ["shop-api"] = "https://shop-api.example.azurecontainerapps.io", ["shop-web"] = "https://shop-web.example.azurecontainerapps.io" }),
+                CancellationToken.None)).GetAwaiter().GetResult();
+            main.ShowApp(root);
+            if (page == "deploy")
+            {
+                var wizard = new AzureDeployViewModel((AppOverviewViewModel)main.Page!)
+                {
+                    SignIn = AzureSignIn.SignedIn,
+                    Account = "me@example.com",
+                    ResourceGroup = "rg-shop-test",
+                    AdminEmail = "me@example.com",
+                };
+                wizard.Subscriptions.Add(new AzureSubscription("00000000-0000-0000-0000-000000000000", "Pay-As-You-Go", "tenant", true));
+                wizard.Subscription = wizard.Subscriptions[0];
+                wizard.Tools.Single(t => t.Name == "grafana").IsOn = false;
+                wizard.Step = AzureStep.Summary;
+                main.Page = wizard;
+            }
         }
 
         if (page == "entities-diagram")

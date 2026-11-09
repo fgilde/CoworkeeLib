@@ -1,0 +1,191 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Coworkee.Studio.ViewModels"
+             xmlns:cli="using:Coworkee.Studio.Cli"
+             xmlns:l="using:Coworkee.Studio.Localization"
+             x:Class="Coworkee.Studio.Views.AppOverviewView"
+             x:DataType="vm:AppOverviewViewModel">
+  <ScrollViewer>
+    <StackPanel Margin="44,26,44,40" Spacing="18" MaxWidth="980" HorizontalAlignment="Left">
+      <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+        <Button Classes="icon" Command="{Binding Main.ClosePageCommand}" ToolTip.Tip="{l:L Back}" VerticalAlignment="Top">
+          <PathIcon Data="{StaticResource Icon.ChevronLeft}" />
+        </Button>
+        <Border Grid.Column="1" Width="52" Height="52" CornerRadius="14" Background="{DynamicResource Hero}" Margin="8,0,0,0" VerticalAlignment="Top">
+          <PathIcon Classes="large" Foreground="White" Data="{StaticResource Icon.Apps}" />
+        </Border>
+        <StackPanel Grid.Column="2" Margin="14,0,16,0" Spacing="4">
+          <TextBlock Classes="h1" Text="{Binding App.Name}" />
+          <TextBlock Classes="mono caption" Text="{Binding App.Path}" TextTrimming="LeadingCharacterEllipsis" TextWrapping="NoWrap" ToolTip.Tip="{Binding App.Path}" />
+          <TextBlock Classes="caption" Text="{Binding App.OptionsText}" TextWrapping="Wrap" IsVisible="{Binding App.OptionsText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        </StackPanel>
+        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+          <Button Classes="ghost" Command="{Binding RefreshCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <PathIcon Classes="small" Data="{StaticResource Icon.Restart}" />
+              <TextBlock Text="{l:L 'Refresh'}" />
+            </StackPanel>
+          </Button>
+          <Button Command="{Binding EditCommand}" ToolTip.Tip="{l:L 'Add modules, entities and options in the wizard'}" x:Name="EditButton">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <PathIcon Classes="small" Data="{StaticResource Icon.Magic}" />
+              <TextBlock Text="{l:L 'Edit in the wizard'}" />
+            </StackPanel>
+          </Button>
+        </StackPanel>
+      </Grid>
+
+      <WrapPanel ItemSpacing="18">
+        <Button Classes="link" Content="{l:L 'Open folder'}" Command="{Binding App.OpenFolderCommand}" />
+        <Button Classes="link" Content="{l:L 'Open solution'}" Command="{Binding App.OpenSolutionCommand}" />
+        <Button Classes="link" Content="{l:L 'VS Code'}" Command="{Binding App.OpenInCodeCommand}" />
+      </WrapPanel>
+
+      <!-- on this machine -->
+      <Border Classes="card" Padding="20,16" x:Name="RunCard">
+        <StackPanel Spacing="10">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <Panel Width="22" Height="22" Margin="0,0,12,0" VerticalAlignment="Top">
+              <PathIcon Data="{StaticResource Icon.CheckCircle}" Foreground="{DynamicResource Success}" IsVisible="{Binding App.IsRunning}" />
+              <PathIcon Data="{StaticResource Icon.Stop}" Foreground="{DynamicResource TextSecondary}" IsVisible="{Binding App.IsStopped}" />
+            </Panel>
+            <StackPanel Grid.Column="1" Spacing="2">
+              <TextBlock Classes="h3" Text="{l:L 'On this machine'}" />
+              <TextBlock Classes="body" Text="{Binding App.StatusText}" TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+              <Button Classes="primary" Command="{Binding App.StartCommand}" IsVisible="{Binding App.IsStopped}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.Play}" />
+                  <TextBlock Text="{l:L 'Start'}" />
+                </StackPanel>
+              </Button>
+              <Button Command="{Binding App.StopCommand}" IsVisible="{Binding App.IsRunning}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.Stop}" />
+                  <TextBlock Text="{l:L 'Stop'}" />
+                </StackPanel>
+              </Button>
+            </StackPanel>
+          </Grid>
+
+          <ItemsControl ItemsSource="{Binding App.Links}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <WrapPanel ItemSpacing="8" LineSpacing="8" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="cli:AppEndpoint">
+                <Button Classes="ghost" Command="{Binding $parent[UserControl].((vm:AppOverviewViewModel)DataContext).App.OpenCommand}" CommandParameter="{Binding Url}" ToolTip.Tip="{Binding Url}">
+                  <StackPanel Orientation="Horizontal" Spacing="6">
+                    <PathIcon Classes="small" Data="{StaticResource Icon.OpenInNew}" />
+                    <TextBlock Text="{Binding Name}" />
+                  </StackPanel>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <Border Classes="code" CornerRadius="10" Padding="12,8" IsVisible="{Binding App.Run.HasSetupToken}">
+            <StackPanel Spacing="4">
+              <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                <TextBlock Text="{l:L 'Setup token'}" FontWeight="SemiBold" Foreground="{DynamicResource CodeText}" VerticalAlignment="Center" Margin="0,0,10,0" />
+                <TextBlock Grid.Column="1" Text="{Binding App.Run.SetupToken}" FontFamily="{DynamicResource MonoFont}" Foreground="{DynamicResource CodeText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                <Button Grid.Column="2" Classes="icon" Foreground="{DynamicResource CodeText}" Margin="8,0" ToolTip.Tip="{l:L 'Copy setup token'}"
+                        Command="{Binding Main.CopyCommand}" CommandParameter="{Binding App.Run.SetupToken}">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.Copy}" />
+                </Button>
+                <Button Grid.Column="3" Classes="ghost" Content="{l:L 'Open setup'}" IsVisible="{Binding App.Run.HasSetupLink}"
+                        Command="{Binding App.OpenCommand}" CommandParameter="{Binding App.Run.SetupLink}" />
+              </Grid>
+              <TextBlock Classes="caption" TextWrapping="Wrap" Foreground="{DynamicResource CodeText}" Text="{l:L 'The app is not set up yet: its setup page asks for this token.'}" />
+            </StackPanel>
+          </Border>
+
+          <TextBlock Classes="mono caption" Text="{Binding App.LastLog}" IsVisible="{Binding App.LastLog, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                     TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" ToolTip.Tip="{Binding App.LastLog}" />
+        </StackPanel>
+      </Border>
+
+      <!-- deployments -->
+      <Border Classes="card" Padding="20,16" x:Name="DeploymentsCard">
+        <StackPanel Spacing="12">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <PathIcon Data="{StaticResource Icon.Cloud}" Foreground="{DynamicResource Primary}" Margin="0,0,12,0" VerticalAlignment="Top" />
+            <StackPanel Grid.Column="1" Spacing="2">
+              <TextBlock Classes="h3" Text="{l:L 'Deployments'}" />
+              <TextBlock Classes="caption" TextWrapping="Wrap" Text="{l:L 'Where the app runs, as written to .coworkee/deployments in its folder.'}" />
+            </StackPanel>
+            <Button Grid.Column="2" Classes="primary" Command="{Binding DeployCommand}" VerticalAlignment="Top" x:Name="DeployButton">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <PathIcon Classes="small" Data="{StaticResource Icon.Rocket}" />
+                <TextBlock Text="{l:L 'Deploy…'}" />
+              </StackPanel>
+            </Button>
+          </Grid>
+
+          <Border Classes="soft" IsVisible="{Binding !HasDeployments}" Padding="18">
+            <TextBlock Classes="caption" TextWrapping="Wrap"
+                       Text="{l:L 'Not deployed yet. Deploy… signs in to Azure with the Azure CLI and deploys the app with its tools into one resource group as Azure Container Apps.'}" />
+          </Border>
+
+          <ItemsControl ItemsSource="{Binding Deployments}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Spacing="10" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:DeploymentItem">
+                <Border Classes="soft" Padding="16,12">
+                  <StackPanel Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto">
+                      <StackPanel Spacing="2">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                          <TextBlock Classes="h3" Text="{Binding Title}" />
+                          <Border Classes="chip teal" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding TargetText}" />
+                          </Border>
+                        </StackPanel>
+                        <TextBlock Classes="body" Text="{Binding Where}" TextWrapping="Wrap" />
+                        <TextBlock Classes="caption" Text="{Binding Details}" TextWrapping="Wrap" />
+                      </StackPanel>
+                      <Button Grid.Column="1" VerticalAlignment="Top" IsVisible="{Binding CanUpdate}"
+                              Command="{Binding $parent[UserControl].((vm:AppOverviewViewModel)DataContext).UpdateCommand}" CommandParameter="{Binding}"
+                              ToolTip.Tip="{l:L 'Deploys the current state of the app again, with the same subscription, resource group, region and tools'}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                          <PathIcon Classes="small" Data="{StaticResource Icon.Restart}" />
+                          <TextBlock Text="{l:L 'Update'}" />
+                        </StackPanel>
+                      </Button>
+                    </Grid>
+                    <ItemsControl ItemsSource="{Binding Links}">
+                      <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                          <WrapPanel ItemSpacing="8" LineSpacing="8" />
+                        </ItemsPanelTemplate>
+                      </ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="cli:AppEndpoint">
+                          <Button Classes="ghost" Command="{Binding $parent[UserControl].((vm:AppOverviewViewModel)DataContext).App.OpenCommand}" CommandParameter="{Binding Url}"
+                                  ToolTip.Tip="{Binding Url}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                              <PathIcon Classes="small" Data="{StaticResource Icon.OpenInNew}" Foreground="{DynamicResource Primary}" />
+                              <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                              <TextBlock Classes="mono caption" Text="{Binding Url}" VerticalAlignment="Center" />
+                            </StackPanel>
+                          </Button>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
