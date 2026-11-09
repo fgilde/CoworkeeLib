@@ -99,7 +99,7 @@ internal sealed class IdentitySeeder(
             await AddMissingRolesAsync(user.Id, seed);
         }
 
-        await GrantMissingAsync(tenant.Id, cancellationToken);
+        await GrantMissingAsync(tenant.Id, _options.Roles, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
 
         async Task ResolveRolesAsync(SeedUser seed)
@@ -139,9 +139,31 @@ internal sealed class IdentitySeeder(
         }
     }
 
-    private async Task GrantMissingAsync(Guid tenantId, CancellationToken cancellationToken)
+    /// <summary>
+    /// The roles part of <see cref="SyncAsync"/> for any environment: roles of <paramref name="seeds"/> the default tenant lacks are added, existing ones get
+    /// the permissions added since. Users, other roles and grants stay; nothing is removed.
+    /// </summary>
+    public async Task SyncRolesAsync(IReadOnlyList<SeedRole> seeds, CancellationToken cancellationToken)
     {
-        foreach (var seed in _options.Roles)
+        if (await db.Set<Tenant>().IgnoreQueryFilters().Where(t => t.IsDefault).Select(t => (Guid?)t.Id).FirstOrDefaultAsync(cancellationToken) is not { } tenantId)
+        {
+            return;
+        }
+
+        foreach (var seed in seeds)
+        {
+            if (!await db.Set<Role>().IgnoreQueryFilters().AnyAsync(r => r.TenantId == tenantId && r.Name == seed.Name, cancellationToken))
+            {
+                AddRole(seed, tenantId);
+            }
+        }
+
+        await GrantMissingAsync(tenantId, seeds, cancellationToken);
+    }
+
+    private async Task GrantMissingAsync(Guid tenantId, IEnumerable<SeedRole> seeds, CancellationToken cancellationToken)
+    {
+        foreach (var seed in seeds)
         {
             var role = db.Set<Role>().Local.FirstOrDefault(r => r.TenantId == tenantId && r.Name == seed.Name)
                 ?? await db.Set<Role>().IgnoreQueryFilters().FirstOrDefaultAsync(r => r.TenantId == tenantId && r.Name == seed.Name, cancellationToken);

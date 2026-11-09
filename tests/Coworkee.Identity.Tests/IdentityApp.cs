@@ -49,6 +49,9 @@ public sealed class IdentityApp : DatabaseFixture
             seed.Settings["Theme.Mode"] = "dark";
         });
         builder.Services.AddScoped<Coworkee.Application.Setup.ISetupStep, RecordingSetupStep>();
+        builder.Services.AddTransient<Coworkee.Application.Setup.ISeedContributor, EarlySeed>();
+        builder.Services.AddTransient<Coworkee.Application.Setup.ISeedContributor, DevelopmentSeed>();
+        builder.Services.AddTransient<Coworkee.Application.Setup.ISeedContributor, HostSeed>();
         builder.Services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, RaceInjector>();
         builder.Services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, CommandGate>();
         builder.Services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, SelectionGate>();
