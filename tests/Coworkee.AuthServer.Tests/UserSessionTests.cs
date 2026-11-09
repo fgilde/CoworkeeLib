@@ -3,12 +3,15 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Coworkee.Application.Messaging;
+using Coworkee.Contracts.Auditing;
 using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Identity;
 using Coworkee.Core.Results;
 using Coworkee.Identity.Domain;
 using Coworkee.Identity.Sessions;
 using Coworkee.Identity.Users;
+using Coworkee.Infrastructure.Auditing;
+using Coworkee.Infrastructure.Outbox;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using OpenIddict.Abstractions;
@@ -123,6 +126,24 @@ public sealed class UserSessionTests(AuthApp app) : IAsyncLifetime
         (await CallApiAsync(firstTokens)).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await first.RefreshAsync(firstTokens)).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await app.InDbAsync(db => db.Set<UserSession>().IgnoreQueryFilters().CountAsync(Ct))).ShouldBe(1);
+        var signIns = await SecurityEventsAsync(SecurityActions.SignIn);
+        signIns.Select(e => (e.Succeeded, e.Reason)).ShouldBe([(true, null), (false, "SessionLimit")]);
+    }
+
+    [Fact]
+    public async Task Every_ended_session_is_written_to_the_security_log_with_its_reason_and_who_ended_it()
+    {
+        var bob = await CreateUserAsync("bob@acme.test");
+        var tokens = await new OidcFlow(app).SignInAsync("bob@acme.test", Password);
+        (await AsAdminAsync(new EndSession(Guid.Parse(Sid(tokens))))).IsSuccess.ShouldBeTrue();
+
+        await ActivatorUtilities.CreateInstance<OutboxProcessor<AuthTestDbContext>>(app.App.Services).ProcessBatchAsync(50, Ct);
+
+        var ended = (await SecurityEventsAsync(SecurityActions.SessionEnded)).ShouldHaveSingleItem();
+        (ended.UserId, ended.TenantId, ended.ActorId, ended.Succeeded, ended.Reason, ended.ImpersonatorId)
+            .ShouldBe((bob, _setup.TenantId, _setup.AdminUserId, true, SessionEndReasons.Ended, null));
+        ended.Details!.ShouldContain(Guid.Parse(Sid(tokens)).ToString());
+        ended.Details!.ShouldContain(_setup.AdminUserId.ToString());
     }
 
     [Fact]
@@ -195,6 +216,9 @@ public sealed class UserSessionTests(AuthApp app) : IAsyncLifetime
         (await AsAsync(bob, new EndSession(Guid.Parse(Sid(admin))))).Error!.Kind.ShouldBe(ErrorKind.NotFound);
         (await CallApiAsync(admin)).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
+
+    private Task<List<SecurityEvent>> SecurityEventsAsync(string action) =>
+        app.InDbAsync(db => db.Set<SecurityEvent>().IgnoreQueryFilters().AsNoTracking().Where(e => e.Action == action).OrderBy(e => e.At).ThenBy(e => e.Id).ToListAsync(Ct));
 
     private static string Sid(JsonElement tokens) =>
         new JwtSecurityTokenHandler().ReadJwtToken(tokens.GetProperty("access_token").GetString()).Claims.Single(c => c.Type == SessionStamp.SessionClaimType).Value;

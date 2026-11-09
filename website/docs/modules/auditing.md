@@ -54,16 +54,17 @@ Records that were hard deleted are gone from the table, so there is nothing to u
 
 ## Security log
 
-The security log records what happens to accounts: sign-ins (succeeded or failed, with the reason), sign-outs, lockouts, changes of passwords, e-mail addresses, two-step verification and passkeys, *Log in as* (start and end), API keys (created, revoked, the first use of a day) and the roles and own permissions a user gets or loses. It is always on and written by every host with the app database (auth server and API), in table `cw.SecurityEvents`.
+The security log records what happens to accounts: sign-ins (succeeded or failed, with the reason), sign-outs, lockouts, changes of passwords, e-mail addresses, two-step verification and passkeys, *Log in as* (start and end), ended sessions (with why and by whom), API keys (created, revoked, the first use of a day) and the roles and own permissions a user gets or loses. It is always on and written by every host with the app database (auth server and API), in table `cw.SecurityEvents`.
 
-Each entry has the time, the organisation, the **user** whose account it concerns, the **actor** when someone else did it (an administrator locking the user), the **impersonator** when someone was signed in as the acting user, the action and result with a reason (`InvalidCredentials`, `UnknownUser`, `LockedOut`, `NotAllowed`, `FailedAttempts`, `Administrator`, ...), the client, the IP address, the browser (user agent), the trace id and details as JSON (the login typed for an unknown account, the sign-in method, the role, the permission, the key).
+Each entry has the time, the organisation, the **user** whose account it concerns, the **actor** when someone else did it (an administrator locking the user), the **impersonator** when someone was signed in as the acting user, the action and result with a reason (`InvalidCredentials`, `UnknownUser`, `LockedOut`, `NotAllowed`, `FailedAttempts`, `Administrator`, `SessionLimit`, ...), the client, the IP address, the browser (user agent), the trace id and details as JSON (the login typed for an unknown account, the sign-in method, the role, the permission, the key).
 
 - Changes of credentials and access are taken from the saves themselves (an EF Core interceptor of Coworkee.Identity), so every way to them counts: own profile, administration, reset links, failed attempts. They are saved in the same transaction as the change.
-- Sign-ins, sign-outs and *Log in as* are written by the sign-in pages and the end session endpoint of the auth server; API keys by the key authentication.
-- Your code writes entries of its own through `ISecurityLog` (Coworkee.Application.Auditing), for example when a session is ended:
+- Sign-ins, sign-outs and *Log in as* are written by the sign-in pages and the end session endpoint of the auth server; API keys by the key authentication. A sign-in the [session limit](../security/clients.md#session-limit) refuses is a failed sign-in with the reason `SessionLimit`.
+- Every ended session is a `SessionEnded` entry, written from the outbox (`UserSessionEnded`): the reason is the end reason (`ended`, `ended-by-user`, `limit`, `logged-out`, `replaced` or why the security stamp changed), the actor the administrator or user who ended it, the details hold `sessionId` and `endedBy`.
+- Your code writes entries of its own through `ISecurityLog` (Coworkee.Application.Auditing), with an action of their own, for example when someone downloads a confidential report:
 
 ```csharp
-await securityLog.WriteAsync(new SecurityLogEntry(SecurityActions.SessionEnded, userId, Reason: "Signed out by an administrator", Details: new { sessionId }));
+await securityLog.WriteAsync(new SecurityLogEntry("ReportDownloaded", userId, Details: new { reportId }));
 ```
 
 User, organisation and impersonator default to the current ones (the organisation is looked up from the user when the request has none); address, browser, client and trace come from the request. The entry is saved at once in a scope of its own, so it stays when the caller's unit of work does not. Keep secrets out of the details.
