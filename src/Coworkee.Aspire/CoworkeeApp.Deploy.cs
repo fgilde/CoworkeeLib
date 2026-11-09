@@ -207,10 +207,12 @@ public sealed partial class CoworkeeApp
         return service;
     }
 
-    // Compose leaves a parameter without value to the .env; the Azure and Kubernetes publishers would wait for one, so values.yaml and the Bicep parameters start empty
+    // Compose leaves a parameter without value to the .env; the Kubernetes publisher would wait for one, so values.yaml starts empty. On Azure the value
+    // comes from the configuration or Aspire's deployment state (coworkee deploy azure --apply writes it there), and a missing one starts empty
+    // (AddAzureEnvironment): a constant empty value here would ignore both
     private IResourceBuilder<ParameterResource> DeployParameter(string name, bool secret = false) =>
         Builder.Resources.OfType<ParameterResource>().FirstOrDefault(p => p.Name == name) is { } existing ? Builder.CreateResourceBuilder(existing) :
-        _target is "k8s" or "azure" ? Builder.AddParameter(name, string.Empty, secret: secret) : Builder.AddParameter(name, secret: secret);
+        _target is "k8s" ? Builder.AddParameter(name, string.Empty, secret: secret) : Builder.AddParameter(name, secret: secret);
 
     /// <summary>A secret the app host keeps in the user secrets while running; a deployment takes it as parameter (coworkee deploy generates it).</summary>
     private IResourceBuilder<ParameterResource> GeneratedSecret(string name, int length) => Publishing
