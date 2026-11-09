@@ -86,6 +86,7 @@ public sealed class SyncLoadTests
         FacetQueries.ShouldBe(1, "a hub that changes rows every minute must not have its whole set read for the facets every minute");
 
         set.FacetRefresh = TimeSpan.Zero;
+        _server.Rows[2] = _server.Rows[2] with { Price = 36 };
         _server.NextChanges = new ClientEntityChanges(_server.Now.AddMinutes(2), 3, [lamp.Id], [], false);
         await set.RefreshAsync(Ct);
         await set.QueryAsync(new ODataQuery { Facets = true }, Ct);

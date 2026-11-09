@@ -61,6 +61,25 @@ public sealed class ClientEntitySwitchTests : BunitContext
     }
 
     [Fact]
+    public async Task Rows_fetched_again_unchanged_reload_no_table_a_changed_value_does()
+    {
+        var (control, _, set) = await LocalAsync();
+        control.WaitForAssertion(() => _table.Reloads.ShouldBe(1));
+        _server.NextChanges = new Contracts.Data.ClientEntityChanges(_server.Now.AddMinutes(1), 2, [.. _server.Rows.Select(r => r.Id)], [], false);
+
+        await set.RefreshAsync(Ct);
+        await Task.Delay(200, Ct);
+
+        _table.Reloads.ShouldBe(1);
+        _server.Rows[0] = _server.Rows[0] with { Price = 1 };
+        _server.NextChanges = new Contracts.Data.ClientEntityChanges(_server.Now.AddMinutes(2), 2, [.. _server.Rows.Select(r => r.Id)], [], false);
+
+        await set.RefreshAsync(Ct);
+
+        control.WaitForAssertion(() => _table.Reloads.ShouldBe(2));
+    }
+
+    [Fact]
     public async Task While_the_copy_loads_the_menu_checks_the_server_and_shows_the_browser_as_pending()
     {
         var popovers = Render<MudPopoverProvider>();

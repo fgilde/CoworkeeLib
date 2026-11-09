@@ -33,6 +33,7 @@
 - Die Benutzerliste, die Benutzerseite und der Rollen-Reiter einer Gruppe zeigen umbenannte und neue Rollen sofort.
 - Client: Ein fehlgeschlagener API-Aufruf zeigt in Snackbars und Bearbeitungsdialogen die Meldung des Problems (`ApiException.Title`) statt seines Codes, übersetzt wie die Texte der App (ohne Übersetzung auf Englisch). `Error.Conflict(code, template, arguments)` schickt eine Meldung mit variablen Teilen übersetzbar (`template`, `arguments` im Problem) ([Meldungen des Servers](../modules/localization.md#im-client)); die Meldungen der Rollen gibt es in allen Sprachen.
 - Client-Entities (SQLite): Mehr als 500 geänderte Zeilen auf einmal (mehr als zehn Blöcke zu 50) kommen als ein Snapshot des Sets statt als Blöcke per Id, von denen jeder den Server ein Lesen der sichtbaren Schlüssel kostete; die Tabelle sucht in der alten Kopie, bis die Datei sie ersetzt ([wie die Kopie arbeitet](../ui/client-entities.md#wie-die-kopie-arbeitet)). Die Kopien im Speicher bleiben unverändert.
+- Client-Entities: Eine Aktualisierung speichert die Kopie (IndexedDB) und lädt ihre Tabellen und Facettenzahlen nur neu, wenn eine Zeile hinzukam, wegfiel oder sich ein Wert änderte. Zeilen, die der Änderungsfeed unverändert erneut meldet (innerhalb seines `Overlap`), schreiben nicht mehr die ganze SQLite-Datei und bauen die Kopie im Speicher nicht mehr neu; echte Änderungen erscheinen so schnell wie bisher. Ein eigener `IClientEntityStore<T>` gibt aus `ApplyAsync` zurück, ob er eine Zeile geändert hat (`Task<bool>`).
 
 ### Behoben
 

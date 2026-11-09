@@ -31,8 +31,11 @@ public interface IClientEntityStore<T> : IAsyncDisposable
     /// <summary>Replaces every row by a snapshot file of the server.</summary>
     Task ReplaceWithFileAsync(byte[] file, DateTimeOffset version, CancellationToken cancellationToken) => throw new NotSupportedException();
 
-    /// <summary>Writes changed rows and removes deleted ones (an update).</summary>
-    Task ApplyAsync(IReadOnlyCollection<T> changed, IReadOnlyCollection<Guid> deleted, DateTimeOffset version, CancellationToken cancellationToken);
+    /// <summary>
+    /// Writes changed rows and removes deleted ones (an update). True when a row was added, changed or removed; a row equal to the one kept (the change
+    /// feed reports rows again within its overlap) is no change, so the copy is neither kept again nor reloaded.
+    /// </summary>
+    Task<bool> ApplyAsync(IReadOnlyCollection<T> changed, IReadOnlyCollection<Guid> deleted, DateTimeOffset version, CancellationToken cancellationToken);
 
     /// <summary>The ids of every row.</summary>
     Task<IReadOnlyList<Guid>> IdsAsync(CancellationToken cancellationToken);

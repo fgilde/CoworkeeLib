@@ -33,6 +33,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 - The users list, the user page and the roles tab of a group show renamed and new roles at once.
 - Client: a failed API call shows the message of the problem (`ApiException.Title`) in snackbars and edit dialogs instead of its code, translated like the app's texts (English without a translation). `Error.Conflict(code, template, arguments)` sends a message with variable parts translatable (`template`, `arguments` in the problem) ([server messages](../modules/localization.md#in-the-client)); the role messages ship in all languages.
 - Client entities (SQLite): more than 500 changed rows at once (more than ten chunks of 50) come as one snapshot of the set instead of chunks by id, each of which cost the server a read of the visible keys; the table keeps searching the old copy until the file replaces it ([how the copy works](../ui/client-entities.md#how-the-copy-works)). The copies in memory are unchanged.
+- Client entities: a refresh keeps the copy again (IndexedDB) and reloads its tables and facet counts only when a row was added, removed or a value changed. Rows the change feed reports again unchanged (within its `Overlap`) no longer write the whole SQLite file or rebuild the copy in memory; real changes appear as fast as before. A custom `IClientEntityStore<T>` returns from `ApplyAsync` whether it changed a row (`Task<bool>`).
 
 ### Fixed
 

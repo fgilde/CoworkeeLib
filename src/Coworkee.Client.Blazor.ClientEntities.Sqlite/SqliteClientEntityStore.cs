@@ -152,22 +152,25 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
         await _storage.SaveAsync(_key, file);
     }
 
-    public async Task ApplyAsync(IReadOnlyCollection<T> changed, IReadOnlyCollection<Guid> deleted, DateTimeOffset version, CancellationToken cancellationToken)
+    public async Task<bool> ApplyAsync(IReadOnlyCollection<T> changed, IReadOnlyCollection<Guid> deleted, DateTimeOffset version, CancellationToken cancellationToken)
     {
+        bool touched;
         await _gate.WaitAsync(cancellationToken);
         try
         {
-            await WriteAsync(changed, deleted, version, replace: false);
+            touched = await WriteAsync(changed, deleted, version, replace: false);
         }
         finally
         {
             _gate.Release();
         }
 
-        if (changed.Count + deleted.Count > 0)
+        if (touched)
         {
             await PersistAsync();
         }
+
+        return touched;
     }
 
     public async Task<IReadOnlyList<Guid>> IdsAsync(CancellationToken cancellationToken)
@@ -524,8 +527,8 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
         }
     }
 
-    // ADO with EF's column mapping: EF's change tracking would take far longer for thousands of rows in the browser
-    private async Task WriteAsync(IReadOnlyCollection<T> changed, IReadOnlyCollection<Guid> deleted, DateTimeOffset version, bool replace)
+    // ADO with EF's column mapping: EF's change tracking would take far longer for thousands of rows in the browser. True when a row was added, changed or removed.
+    private async Task<bool> WriteAsync(IReadOnlyCollection<T> changed, IReadOnlyCollection<Guid> deleted, DateTimeOffset version, bool replace)
     {
         await using var db = Open();
         var entity = db.Model.FindEntityType(typeof(T))!;
@@ -533,31 +536,44 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
         var idOf = mapped.First(m => m.Column == "Id").Get;
         var connection = Connection();
         await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync();
-        await using (var delete = connection.CreateCommand())
+        var touched = 0;
+        await using var delete = connection.CreateCommand();
+        delete.Transaction = transaction;
+        delete.CommandText = $"DELETE FROM {CopyDb<T>.Table} WHERE Id = $id";
+        var id = delete.Parameters.Add("$id", SqliteType.Text);
+        foreach (var key in deleted)
         {
-            delete.Transaction = transaction;
-            delete.CommandText = $"DELETE FROM {CopyDb<T>.Table} WHERE Id = $id";
-            var id = delete.Parameters.Add("$id", SqliteType.Text);
-            foreach (var key in replace ? deleted : deleted.Concat(changed.Select(row => (Guid)idOf(row)!)))
-            {
-                id.Value = key.ToString().ToUpperInvariant();
-                await delete.ExecuteNonQueryAsync();
-            }
+            id.Value = key.ToString().ToUpperInvariant();
+            touched += await delete.ExecuteNonQueryAsync();
         }
 
         await using (var insert = connection.CreateCommand())
+        await using (var same = connection.CreateCommand())
         {
             insert.Transaction = transaction;
             insert.CommandText = $"INSERT INTO {CopyDb<T>.Table} ({string.Join(",", mapped.Select(m => "\"" + m.Column + "\""))}) VALUES ({string.Join(",", mapped.Select((_, i) => "$p" + i))})";
             var parameters = mapped.Select((_, i) => insert.Parameters.Add(new SqliteParameter("$p" + i, null))).ToList();
+
+            // a row fetched again as the copy keeps it (the change feed's overlap) stays: SQLite compares every column with the values an insert would
+            // store (IS: null equals null, the column's affinity applies to the value), so a change in any of them, JSON columns included, is written
+            same.Transaction = transaction;
+            same.CommandText = $"SELECT 1 FROM {CopyDb<T>.Table} WHERE "
+                + string.Join(" AND ", mapped.Select((m, i) => m.Column == "Id" ? $"\"Id\" = $p{i}" : $"\"{m.Column}\" IS $p{i}"));
+            var probes = mapped.Select((_, i) => same.Parameters.Add(new SqliteParameter("$p" + i, null))).ToList();
             var written = 0;
             foreach (var row in changed)
             {
+                // Microsoft.Data.Sqlite runs synchronously: the page renders between slices
+                if (++written % 500 == 0)
+                {
+                    await Pause();
+                }
+
                 for (var i = 0; i < mapped.Count; i++)
                 {
                     var value = mapped[i].Get(row);
                     value = value is null ? null : mapped[i].Convert is { } converter ? converter.ConvertToProvider(value) : value;
-                    parameters[i].Value = value switch
+                    parameters[i].Value = probes[i].Value = value switch
                     {
                         null => DBNull.Value,
                         Guid guid => guid.ToString().ToUpperInvariant(),
@@ -566,13 +582,19 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
                     };
                 }
 
-                await insert.ExecuteNonQueryAsync();
-
-                // Microsoft.Data.Sqlite runs synchronously: the page renders between slices
-                if (++written % 500 == 0)
+                if (!replace)
                 {
-                    await Pause();
+                    if (await same.ExecuteScalarAsync() is not null)
+                    {
+                        continue;
+                    }
+
+                    id.Value = ((Guid)idOf(row)!).ToString().ToUpperInvariant();
+                    await delete.ExecuteNonQueryAsync();
                 }
+
+                await insert.ExecuteNonQueryAsync();
+                touched++;
             }
         }
 
@@ -586,6 +608,7 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
 
         await transaction.CommitAsync();
         Count = await db.Set<T>().CountAsync();
+        return touched > 0;
     }
 
     // the file's bytes go to the browser storage: a reload opens them instead of downloading or parsing the rows
