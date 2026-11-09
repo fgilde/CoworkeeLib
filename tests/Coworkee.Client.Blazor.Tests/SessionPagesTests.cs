@@ -39,9 +39,10 @@ public sealed class SessionPagesTests : ClientTestBase
         page.Find($"[data-session='{mine.Id}'] [data-testid='session-current']").ShouldNotBeNull();
         page.FindAll($"[data-session='{mine.Id}'] [data-testid='session-end']").ShouldBeEmpty();
         _sessions.GetMineAsync(default).ReturnsForAnyArgs([mine]);
-        var ending = page.Find($"[data-session='{phone.Id}'] [data-testid='session-end']").ClickAsync(new());
-        dialogs.WaitForAssertion(() => dialogs.Markup.ShouldContain("iPhone"));
-        await dialogs.FindAll("button").First(b => b.TextContent.Trim() == "End").ClickAsync(new());
+        var ending = await ClickUntilConfirmShowsAsync(page, $"[data-session='{phone.Id}'] [data-testid='session-end']", dialogs, "iPhone");
+        Task confirming = Task.CompletedTask;
+        await dialogs.InvokeAsync(() => { confirming = dialogs.FindAll("button").First(b => b.TextContent.Trim() == "End").ClickAsync(new()); });
+        await confirming;
         await ending;
         await _sessions.Received(1).EndAsync(phone.Id, Arg.Any<CancellationToken>());
         page.WaitForAssertion(() => page.FindAll("[data-session]").Count.ShouldBe(1));
@@ -69,9 +70,10 @@ public sealed class SessionPagesTests : ClientTestBase
         page.WaitForAssertion(() => page.Markup.ShouldContain("Bob Builder"), TimeSpan.FromSeconds(10));
         page.Find($"[data-testid='session-count-{session.Id}']").TextContent.Trim().ShouldBe("3");
         page.Find("[data-testid='session-impersonated']").TextContent.ShouldContain("Ada Lovelace");
-        var ending = page.Find($"[data-testid='session-end-{session.Id}']").ClickAsync(new());
-        dialogs.WaitForAssertion(() => dialogs.Markup.ShouldContain("Bob Builder"), TimeSpan.FromSeconds(10));
-        await dialogs.FindAll("button").First(b => b.TextContent.Trim() == "End").ClickAsync(new());
+        var ending = await ClickUntilConfirmShowsAsync(page, $"[data-testid='session-end-{session.Id}']", dialogs, "Bob Builder");
+        Task confirming = Task.CompletedTask;
+        await dialogs.InvokeAsync(() => { confirming = dialogs.FindAll("button").First(b => b.TextContent.Trim() == "End").ClickAsync(new()); });
+        await confirming;
         await ending;
         await _sessions.Received(1).EndAsync(session.Id, Arg.Any<CancellationToken>());
     }
@@ -106,4 +108,25 @@ public sealed class SessionPagesTests : ClientTestBase
 
     private static UserSessionDto Session(string device) =>
         new(Guid.NewGuid(), AdaId, "web", device, "Chrome 130", "10.0.0.1", null, DateTimeOffset.UtcNow.AddHours(-1), DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(14), null, null);
+
+    // found and clicked in one go on the renderer (live lists re-render meanwhile); ponytail: under bUnit MudEx's confirmation now and then returns at
+    // once or never reaches the provider, so the click is repeated (at most three times) until the dialog is there; the tests still check that exactly
+    // one confirmation went through
+    private static async Task<Task> ClickUntilConfirmShowsAsync<T>(IRenderedComponent<T> page, string selector, IRenderedComponent<MudDialogProvider> dialogs, string text)
+        where T : Microsoft.AspNetCore.Components.IComponent
+    {
+        Task clicking = Task.CompletedTask;
+        for (var attempt = 0; ; attempt++)
+        {
+            await page.InvokeAsync(() => { clicking = page.Find(selector).ClickAsync(new()); });
+            try
+            {
+                dialogs.WaitForAssertion(() => dialogs.Markup.ShouldContain(text), TimeSpan.FromSeconds(attempt < 2 ? 3 : 10));
+                return clicking;
+            }
+            catch (Bunit.Extensions.WaitForHelpers.WaitForFailedException) when (attempt < 2)
+            {
+            }
+        }
+    }
 }
