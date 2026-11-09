@@ -105,8 +105,11 @@ public sealed class MailTemplatesPageTests : ClientTestBase
         Api.AddMailTemplateLanguageAsync(default!, default!, default!, default).ReturnsForAnyArgs(new MailTemplateLanguageAddedDto("fr", "en", true));
         var page = RenderPage();
 
-        var adding = page.WaitForElement("[data-testid='add-language-Identity.Welcome']").ClickAsync(new());
-        _dialogs.WaitForElement("form");
+        // found and clicked on the renderer: the list re-renders while the languages load, a button found before can be gone (seen in the full suite)
+        page.WaitForElement("[data-testid='add-language-Identity.Welcome']");
+        Task adding = Task.CompletedTask;
+        await page.InvokeAsync(() => { adding = page.Find("[data-testid='add-language-Identity.Welcome']").ClickAsync(new()); });
+        _dialogs.WaitForElement("form", TimeSpan.FromSeconds(10));
         await _dialogs.InvokeAsync(() => _dialogs.Find("form").SubmitAsync());
         await adding;
 
