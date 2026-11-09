@@ -29,6 +29,7 @@ internal static class CliApp
             SpecsCommand.Create(),
             RunCommand.Create(),
             MigrationsCommand.Create(),
+            SeedCommand.Create(),
             DbCommand.Create(),
             AddCommand.CreateAdd(),
             AddCommand.CreateRemove(),

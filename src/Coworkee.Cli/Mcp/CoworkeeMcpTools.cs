@@ -118,6 +118,23 @@ internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
     public async Task<string> AddMigrationAsync([Description("A folder of the app.")] string directory, [Description("Migration name, e.g. AddSales.")] string name, CancellationToken cancellationToken = default) =>
         (await run(["migrations", "add", name], directory, cancellationToken)).ToString();
 
+    [McpServerTool(Name = "add_seed", Title = "Add a seed contributor")]
+    [Description("Writes a seed contributor class: data every database needs (reference data, tags, settings), checked and written on every migrations run. Into the migrations project, or into a module so the api also runs it for tenants set up later. Only generates code; the migrations run it.")]
+    public async Task<string> AddSeedAsync(
+        [Description("A folder of the app.")] string directory,
+        [Description("Seed name, e.g. StandardTags (class StandardTagsSeed).")] string name,
+        [Description("Module to put it into, e.g. Sales (default: the migrations project).")] string? module = null,
+        [Description("Run once per run instead of once per tenant.")] bool host = false,
+        [Description("Development (local runs only), Deployment, or leave out for both.")] string? environment = null,
+        CancellationToken cancellationToken = default) =>
+        (await run(
+        [
+            "seed", "add", name,
+            .. module is null ? [] : new[] { "--module", module },
+            .. host ? new[] { "--host" } : [],
+            .. environment is null ? [] : new[] { "--" + environment.ToLowerInvariant() },
+        ], directory, cancellationToken)).ToString();
+
     [McpServerTool(Name = "add_option", OpenWorld = true, Title = "Turn options of an existing app on or off")]
     [Description("Turns options of an existing app on (or off with remove): modules like reports or chat, infrastructure like redis or keycloak, eventBus rabbitMq, languages fr,it, ai openAI. Merges the template's changes into the app's files (conflicts become .rej files, listed in the answer) and adds a migration when the model changed. Use dryRun first to see the plan.")]
     public async Task<string> AddOptionAsync(
