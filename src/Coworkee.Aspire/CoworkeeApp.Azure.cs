@@ -45,13 +45,13 @@ public sealed partial class CoworkeeApp
         });
     }
 
-    // the app host's own parameters too: without a value in the configuration the publisher waits for one, silently
+    // the app host's own parameters too: without a value in the configuration (an empty one counts as none) the publisher waits for one, silently
     private void StartParametersEmpty()
     {
         foreach (var parameter in Builder.Resources.OfType<ParameterResource>().Where(p => p.Default is null))
         {
             var key = parameter.IsConnectionString ? $"ConnectionStrings:{parameter.Name}" : $"Parameters:{parameter.Name}";
-            if (Builder.Configuration[key] is null)
+            if (string.IsNullOrEmpty(Builder.Configuration[key]))
             {
                 parameter.Default = new EmptyParameterDefault();
             }

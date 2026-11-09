@@ -8,6 +8,10 @@
 
 - Coworkee Studio spricht neben Englisch und Deutsch auch Französisch, Spanisch, Italienisch, Niederländisch, Polnisch und Portugiesisch: Das Sprachfeld in den Einstellungen listet alle, das Sprachkürzel in der Titelleiste wechselt zur nächsten, `--lang` nimmt ihre Kürzel ([Sprache und Updates](../getting-started/studio.md#sprache-und-updates)).
 
+### Behoben
+
+- `coworkee deploy azure --apply` blieb im Publish-Schritt hängen, wenn ein Parameter leer war (SMTP-Host, -Port, -Benutzer und Absender ohne Mailserver): Aspire wertet einen leeren Wert als fehlend und wartet still auf einen. Die CLI schreibt leere Werte nicht mehr in Aspires Deployment-Zustand und entfernt solche, die ein früheres Deployment dort hinterlassen hat; der App-Host startet einen Parameter mit leerem konfiguriertem Wert ebenfalls leer.
+
 ## 0.0.1.69 (2026-11-09)
 
 ### Neu

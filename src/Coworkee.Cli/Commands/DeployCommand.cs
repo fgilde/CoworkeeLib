@@ -158,6 +158,12 @@ internal static class DeployCommand
 
         var envPath = Path.Combine(folder, ".env");
         var previous = File.Exists(envPath) ? ComposeEnv.Values(await File.ReadAllTextAsync(envPath, cancellationToken)) : [];
+        // empty parameters a former deployment left in Aspire's state would make this publish wait for them
+        if (azure is not null)
+        {
+            await AzureDeploy.PrepareStateAsync(solution, new Dictionary<string, string>(), cancellationToken);
+        }
+
         if (await Shell.RunAsync(PublishArgs(solution, target, folder, tools), solution.Root, cancellationToken) != 0)
         {
             return 1;
