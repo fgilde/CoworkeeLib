@@ -40,7 +40,7 @@ internal static partial class AzureDeploy
 
         // a service principal (a GitHub workflow) signs in with its client id, which is no administrator's email
         var parameters = await ParametersAsync(solution, published, target, adminEmail ?? (account.User.Contains('@') ? account.User : null), cancellationToken);
-        await ForgetStaleProvisioningAsync(solution, target, account, cancellationToken);
+        await ForgetProvisioningAsync(solution, cancellationToken);
         var environment = new Dictionary<string, string>
         {
             ["Azure__SubscriptionId"] = account.SubscriptionId,
@@ -94,10 +94,11 @@ internal static partial class AzureDeploy
             "production.json");
 
     /// <summary>
-    /// Aspire remembers what it provisioned (Azure:Deployments:*) and skips it next time; after the resource group was emptied, or for another group or
-    /// subscription, that would point at resources that do not exist. Generated parameter values stay: an update must keep the database passwords.
+    /// Aspire remembers what it provisioned (Azure:Deployments:*) and skips it next time, without checking it still exists: after the resource group
+    /// was emptied, a failed run, or another group, it would use resources that are gone. The provisioning runs again on every deployment (Azure
+    /// leaves what matches unchanged); generated parameter values stay, an update must keep the database passwords.
     /// </summary>
-    public static async Task ForgetStaleProvisioningAsync(Solution solution, Target target, Account account, CancellationToken cancellationToken)
+    public static async Task ForgetProvisioningAsync(Solution solution, CancellationToken cancellationToken)
     {
         var path = StatePath(solution);
         if (!File.Exists(path) || JsonNode.Parse(await File.ReadAllTextAsync(path, cancellationToken)) is not JsonObject state)
@@ -105,21 +106,16 @@ internal static partial class AzureDeploy
             return;
         }
 
-        var (_, count) = await Shell.CaptureAsync(Az, "resource", "list", "-g", target.ResourceGroup, "--subscription", account.SubscriptionId, "--query", "length(@)", "-o", "tsv");
-        var elsewhere = !string.Equals(state["Azure:ResourceGroup"]?.GetValue<string>(), target.ResourceGroup, StringComparison.OrdinalIgnoreCase)
-            || !string.Equals(state["Azure:SubscriptionId"]?.GetValue<string>(), account.SubscriptionId, StringComparison.OrdinalIgnoreCase);
-        if (count is not ("0" or "") && !elsewhere)
-        {
-            return;
-        }
-
-        foreach (var key in state.Select(p => p.Key).Where(k => k.StartsWith("Azure:Deployments:", StringComparison.Ordinal)).ToList())
+        var keys = state.Select(p => p.Key).Where(k => k.StartsWith("Azure:Deployments:", StringComparison.Ordinal)).ToList();
+        foreach (var key in keys)
         {
             state.Remove(key);
         }
 
-        await File.WriteAllTextAsync(path, state.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), cancellationToken);
-        Console.WriteLine("Aspire's remembered provisioning was for another or an empty resource group; everything is provisioned again.");
+        if (keys.Count > 0)
+        {
+            await File.WriteAllTextAsync(path, state.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), cancellationToken);
+        }
     }
 
     public static string[] DeployArgs(Solution solution, IReadOnlyDictionary<string, bool> tools) =>
