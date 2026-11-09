@@ -49,6 +49,7 @@ Other clients take the same command: `coworkee` with the argument `mcp`. `cowork
 | `add_entity` | `coworkee entity add` |
 | `import_entities` | `coworkee entity import` (database, OpenAPI or CSV) |
 | `add_migration` | `coworkee migrations add` |
+| `add_seed` | `coworkee seed add`: a [seed contributor](../fundamentals/persistence.md#seed-contributors) in the migrations project or a module; only the code, the migrations run it |
 | `add_option` | `coworkee add` or, with `remove`, `coworkee remove`: options of an existing app such as `reports`, `eventBus rabbitMq` or `languages=fr,it`; `dryRun` returns the plan |
 | `run_doctor` | `coworkee doctor` |
 | `update_packages` | `coworkee update` |

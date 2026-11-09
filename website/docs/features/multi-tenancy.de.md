@@ -32,6 +32,8 @@ Gecachte Queries teilen sich ihre Einträge standardmäßig pro Mandant (`CacheS
 
 Ein Mandant ist eine Organisation mit Namen, Kennung und Aktiv-Status. Eine davon ist die Systemorganisation, die die Installation verwaltet: Ihre Administratoren legen unter *Administration > Mandanten* Organisationen an, auf Wunsch gleich mit einem ersten Administrator, und deaktivieren sie. Mit einer deaktivierten Organisation sind auch die API-Schlüssel ihrer Benutzer tot.
 
+Eine neue Organisation bekommt die [Seed-Contributors](../fundamentals/persistence.md#seed-contributors) der Module je Mandant gleich nach dem Anlegen (von der API, im Hintergrund nach dem Commit, `context.IsNew` wahr), und jeder spätere Migrationslauf führt sie für jede Organisation aus, inaktive eingeschlossen. Contributors des Migrationsprojekts erreichen eine neue Organisation mit dem nächsten Migrationslauf.
+
 Berechtigungen wie `Features.Tenants` und `Identity.Clients.Manage` gehören dem Host. Jeder Administrator hat sie, nutzen können sie aber nur die Administratoren der Systemorganisation.
 
 ## Einstellungen auf drei Ebenen

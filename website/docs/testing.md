@@ -74,6 +74,16 @@ page.WaitForAssertion(() => page.Markup.ShouldContain("Acme"));
 
 `MyApp.Migrations.Tests` fails while the model has changes without a migration (`HasPendingModelChanges()`, the auth tables included) and checks that the migrations host exits with an error code when the database cannot be reached.
 
+A [seed contributor](fundamentals/persistence.md#seed-contributors) is tested in the API tests: `RunSeedContributorAsync<T>` (`Coworkee.Identity.Setup`) runs it the way the migrations do (own scope and transaction, as the system, in the tenant), also one of the migrations project that the api does not register. Run it twice to prove it is idempotent:
+
+```csharp
+var setup = await api.SetupAsync();
+var context = new SeedContext(setup.TenantId, IsDevelopment: true, IsNew: false);
+await api.Services.RunSeedContributorAsync<StandardTagsSeed>(context, ct);
+await api.Services.RunSeedContributorAsync<StandardTagsSeed>(context, ct);
+(await CountTagsAsync()).ShouldBe(2);
+```
+
 ## The whole system
 
 `Aspire.Hosting.Testing` starts the real app host with ephemeral infrastructure (no data volumes). The template's tests wait until the api is healthy after the migrations and answers `/api/v1/system/info`, and until the web app and the auth server serve (`/bff/user`, `/.well-known/openid-configuration`); they run one at a time. Sharemee runs a browser journey with Playwright on top and keeps screenshots when `SHAREME_E2E_SCREENSHOTS` is set.

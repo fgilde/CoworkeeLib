@@ -74,6 +74,16 @@ page.WaitForAssertion(() => page.Markup.ShouldContain("Acme"));
 
 `MyApp.Migrations.Tests` schlägt fehl, solange das Modell Änderungen ohne Migration hat (`HasPendingModelChanges()`, die Auth-Tabellen eingeschlossen), und prüft, dass der Migrations-Host mit einem Fehlercode endet, wenn die Datenbank nicht erreichbar ist.
 
+Ein [Seed-Contributor](fundamentals/persistence.md#seed-contributors) wird in den API-Tests geprüft: `RunSeedContributorAsync<T>` (`Coworkee.Identity.Setup`) führt ihn so aus wie die Migrationen (eigener Scope und eigene Transaktion, als das System, im Mandanten), auch einen aus dem Migrationsprojekt, den die API nicht registriert. Zweimal ausgeführt zeigt er, dass er idempotent ist:
+
+```csharp
+var setup = await api.SetupAsync();
+var context = new SeedContext(setup.TenantId, IsDevelopment: true, IsNew: false);
+await api.Services.RunSeedContributorAsync<StandardTagsSeed>(context, ct);
+await api.Services.RunSeedContributorAsync<StandardTagsSeed>(context, ct);
+(await CountTagsAsync()).ShouldBe(2);
+```
+
 ## Das ganze System
 
 `Aspire.Hosting.Testing` startet den echten AppHost mit flüchtiger Infrastruktur (ohne Daten-Volumes). Die Tests der Vorlage warten, bis die API nach den Migrationen gesund ist und `/api/v1/system/info` beantwortet und bis Web-App und Auth-Server antworten (`/bff/user`, `/.well-known/openid-configuration`); sie laufen nacheinander. Sharemee spielt darüber hinaus eine Browser-Reise mit Playwright durch und behält Screenshots, wenn `SHAREME_E2E_SCREENSHOTS` gesetzt ist.

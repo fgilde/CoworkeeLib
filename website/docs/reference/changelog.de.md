@@ -2,6 +2,19 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Neu
+
+- Seed-Contributors: `ISeedContributor` (`Coworkee.Application.Setup`) für Daten, die jede Datenbank braucht, in einem Modul oder im Migrationsprojekt mit `[RegisterAs(typeof(ISeedContributor))]`. Die Migrationen führen sie bei jedem Lauf nach dem Identity-Seed und den Development-Benutzern aus, nach `Order`, für jeden Mandanten oder einmal (`Target`), in Development-Läufen und/oder Deployments (`Environments`), jeden Aufruf in eigenem Scope und eigener Transaktion als das System mit allen Berechtigungen; ein fehlschlagender beendet den Lauf mit Exit-Code 1, außer er ist nicht `Required`. Ein im Browser eingerichteter oder später angelegter Mandant bekommt die Contributors der Module je Mandant sofort von der API, nach dem Commit. `RunSeedContributorAsync<T>` führt einen in Tests aus ([Seed-Contributors](../fundamentals/persistence.md#seed-contributors)).
+- `CoworkeeMigrationsOptions.SyncRolesInDeployments`: Die Rollen von `DeploymentSeed` und ihre Berechtigungen erreichen deployte Datenbanken bei jedem Lauf (ergänzt, nie entfernt; Benutzer unberührt). Standardmäßig aus.
+- CLI: `coworkee seed add <Name> [--module <Modul>] [--host] [--development | --deployment]` und das MCP-Tool `add_seed` schreiben einen Seed-Contributor ([CLI](../getting-started/cli.md#seed-contributors)).
+
+### Geändert
+
+- Der Migrationslauf verwirft an seinem Ende die zwischengespeicherten Berechtigungen, Einstellungen und Features laufender Dienste (mit Redis auf jeder Instanz).
+- Template: Der Beispielkatalog (`DemoData`) ist ein Seed-Contributor für lokale Läufe in eine neue Datenbank; Deployments mit Deploy-Parametern bekommen keine Beispieldaten mehr. Bestehende Apps behalten ihre `ISetupStep`-Registrierung und verhalten sich wie bisher. `AfterSeed` bleibt; seine Dokumentation verweist auf Seed-Contributors.
+
 ## 0.0.1.68 (2026-11-08)
 
 ### Neu

@@ -2,6 +2,19 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- Seed contributors: `ISeedContributor` (`Coworkee.Application.Setup`) for data every database needs, in a module or the migrations project with `[RegisterAs(typeof(ISeedContributor))]`. The migrations run them on every run after the identity seed and the development users, by `Order`, for every tenant or once (`Target`), in development runs and/or deployments (`Environments`), each call in its own scope and transaction as the system with every permission; a failing one stops the run with exit code 1 unless it is not `Required`. A tenant set up in the browser or created later gets the per-tenant contributors of the modules from the api right away, after the commit. `RunSeedContributorAsync<T>` runs one in tests ([seed contributors](../fundamentals/persistence.md#seed-contributors)).
+- `CoworkeeMigrationsOptions.SyncRolesInDeployments`: the roles of `DeploymentSeed` and their grants reach deployed databases on every run (added, never removed; users untouched). Off by default.
+- CLI: `coworkee seed add <Name> [--module <Module>] [--host] [--development | --deployment]` and the MCP tool `add_seed` write a seed contributor ([CLI](../getting-started/cli.md#seed-contributors)).
+
+### Changed
+
+- The migrations run drops the cached permissions, settings and features of running services at its end (with Redis on every instance).
+- Template: the sample catalog (`DemoData`) is a seed contributor for local runs into a new database; deployments with deploy parameters no longer get sample data. Existing apps keep their `ISetupStep` registration and behave as before. `AfterSeed` stays; its documentation points to seed contributors.
+
 ## 0.0.1.68 (2026-11-08)
 
 ### Added

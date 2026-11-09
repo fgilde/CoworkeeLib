@@ -387,3 +387,16 @@ Phases:
 6. **Default target:** `EachTenant` as default (recommended, `IMultiTenant` rows get their tenant without thought), or `Host` as in ABP's host-first call?
 7. **Template follow-ups:** move the template's `DemoData` from `ISetupStep` to a contributor (stops sample data in deployments with deploy parameters), and mark `AfterSeed` as "prefer contributors" in its doc comment, or leave both alone?
 8. **CLI name:** `coworkee seed add <Name>` (top level, like `module add`) as proposed, or under `db`?
+
+## 8. Decisions of the owner (2026-11-09) and what was built
+
+1. Every run, idempotent; no `cw.SeedHistory` (the opt-in `Version` stays phase 3).
+2. Setup wizard and `CreateTenant` raise `TenantSeedRequested` (`Tenant.RequestSeed()`); the api's outbox processor runs the `EachTenant` contributors registered there (modules) for that tenant after the commit, `IsNew` true, `IsDevelopment` from the api's environment. A failure is logged, not retried (a retry would repeat `IsNew` seeds); the next migrations run is the fallback.
+3. `CoworkeeMigrationsOptions.SyncRolesInDeployments` (off): internal `DeploymentRolesSeed` (Host, Deployment, `Order = int.MinValue`) calls `IdentitySeeder.SyncRolesAsync` with the roles of `DeploymentSeed` (called with a placeholder admin when the deployment has none); default tenant only, like `SyncAsync`.
+4. Fail fast; `bool Required => true` default member, false = warning and skip.
+5. After a successful migrations run the host's HybridCache drops the tags `coworkee:permissions`, `coworkee:settings`, `coworkee:features` (RedisHybridCache sends that to every instance).
+6. Default target `EachTenant`.
+7. Template `DemoData` is a Development contributor guarded by `IsNew`; `AfterSeed` doc says "prefer contributors".
+8. `coworkee seed add <Name> [--module] [--host] [--development|--deployment]`, MCP `add_seed`; `db seed` unchanged apart from its description.
+
+Simplifications against sections 3.3 to 3.10: no `SeedOrder` constants and no built-ins wrapped as contributors (the identity seed and `SyncDevelopmentUsersAsync` stay as they were, contributors run after them); `SeedContext.IsNewDatabase` is `IsNew` (also true for a new tenant); no `AddSeedContributor<T>` (`[RegisterAs]` or `AddTransient<ISeedContributor, T>()`); no ActivitySource (one log line per call); no execution strategy around the transaction (the library configures none).

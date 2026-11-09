@@ -251,6 +251,21 @@ coworkee migrations add AddSales
 
 `--property` liest `Name[:typ][:required][:maxLänge][:flag][:schlüssel=wert]` (Standard: `Name:string:required:200`). Flags: `required`, `unique`, `display`, `facet`, `searchable`. Schlüssel wie in einer Spezifikation: `enum`, `ref` (oder `reference`), `referenceDisplay`, `onDelete`, `inverse`, `default`, `label`, `precision`, `scale`, `searchable`. `--enum Name=Wert1,Wert2` legt ein Enum in den Contracts an, `--plural` setzt den Plural (Standard: Name + s). Eine Referenz darf auf jede Entity der App mit OData-Set zeigen, erzeugt oder aus den Beispielen (`ref=Catalog.Brand`); das Modul verweist dann auf das Projekt des Ziels. `entity add` braucht ein von der CLI angelegtes Modul.
 
+## Seed-Contributors
+
+`coworkee seed add <Name>` schreibt einen [Seed-Contributor](../fundamentals/persistence.md#seed-contributors): Daten, die jede Datenbank braucht, bei jedem Lauf vom Migrationsprojekt geprüft und geschrieben. Es erzeugt nur die Klasse; ausgeführt wird sie von den Migrationen (`coworkee run`, `coworkee db seed`, ein Deployment).
+
+```bash
+coworkee seed add DemoProfiles --development        # src/<App>.Migrations/Seeds/DemoProfilesSeed.cs
+coworkee seed add StandardTags --module Sales       # src/<App>.Sales/Seeds/StandardTagsSeed.cs
+```
+
+| Option | |
+|---|---|
+| `--module <Modul>` | ins Modul statt ins Migrationsprojekt; dann führt ihn auch die API für einen im Browser eingerichteten oder später angelegten Mandanten aus |
+| `--host` | einmal je Lauf statt einmal je Mandant |
+| `--development`, `--deployment` | nur in lokalen Läufen (mit den Demo-Benutzern) oder nur in Deployments; keins oder beide: immer |
+
 ## Entities importieren
 
 Du hast schon eine Datenbank, eine API oder eine Tabelle? `coworkee entity import` macht daraus ein Modul:
@@ -310,7 +325,7 @@ Mit `--spec` werden Module und Entities der Spezifikation, die die App noch nich
 | Befehl | Was er tut |
 |---|---|
 | `coworkee db reset [--yes]` | Löscht die Datenbank: das Daten-Volume des App-Hosts (`<app>.apphost-<hash>-postgres-data` bzw. `-sqlserver-data`) oder die SQLite-Datei `.data/<name>.db`. Stoppe vorher den App-Host; der nächste Start migriert und befüllt sie neu |
-| `coworkee db seed` | Führt das Migrationsprojekt gegen die laufende Datenbank aus: Migrationen, Demo-Benutzer und Rollen |
+| `coworkee db seed` | Führt das Migrationsprojekt gegen die laufende Datenbank aus: Migrationen, Demo-Benutzer und Rollen sowie die Seed-Contributors |
 | `coworkee db backup [datei]` | `pg_dump` im laufenden Postgres-Container, `BACKUP DATABASE` mit `sqlcmd` im SQL-Server-Container oder eine Kopie der SQLite-Datei; standardmäßig nach `.data/backups/` |
 | `coworkee db restore <datei> [--yes]` | Der umgekehrte Weg: `pg_restore --clean`, `RESTORE DATABASE ... WITH REPLACE` oder die Kopie zurück |
 
