@@ -140,9 +140,22 @@ public sealed class PublishTests
 
         File.Exists(Path.Combine(output, file)).ShouldBeTrue();
         var written = string.Join('\n', Directory.EnumerateFiles(output, "*", SearchOption.AllDirectories).Select(File.ReadAllText));
-        foreach (var tool in new[] { "keycloak", "grafana", "webdatastudio", "demo-translate", "demo_grafana_url", "demo_keycloak_url" })
+        foreach (var tool in new[] { "keycloak", "grafana", "webdatastudio", "demo-translate" })
         {
             written.ShouldContain(tool);
+        }
+
+        // Container Apps gives every app its own address, so only other targets ask for the public addresses
+        foreach (var parameter in new[] { "demo_grafana_url", "demo_keycloak_url" })
+        {
+            if (target == "azure")
+            {
+                written.ShouldNotContain(parameter);
+            }
+            else
+            {
+                written.ShouldContain(parameter);
+            }
         }
     }
 

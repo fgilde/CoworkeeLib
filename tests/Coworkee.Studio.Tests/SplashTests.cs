@@ -24,10 +24,9 @@ public sealed class SplashTests
             created = true;
             return Studio.Create(folder);
         });
-        Dispatcher.UIThread.RunJobs();
-
-        // nothing heavy before the splash was rendered
+        // nothing heavy before the splash was rendered: the start waits for a frame first (running all jobs here raced the headless render timer)
         created.ShouldBeFalse();
+        Dispatcher.UIThread.RunJobs(DispatcherPriority.Loaded);
         window.GetVisualDescendants().OfType<SplashView>().ShouldHaveSingleItem();
         window.GetVisualDescendants().OfType<MainView>().ShouldBeEmpty();
 
