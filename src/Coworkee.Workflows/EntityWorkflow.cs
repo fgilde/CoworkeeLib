@@ -37,6 +37,14 @@ public abstract class EntityWorkflow(string entityType)
             .Distinct(StringComparer.Ordinal),
     ];
 
+    /// <summary>Every role the workflow names: approvers, escalations, transitions and notifications.</summary>
+    public IReadOnlyList<string> RoleNames =>
+    [
+        .. States.SelectMany(s => s.NotifiedRoles.Concat(s.Step?.Roles ?? []).Concat(s.Step?.EscalationRoles ?? []))
+            .Concat(Transitions.SelectMany(t => t.Roles))
+            .Distinct(StringComparer.Ordinal),
+    ];
+
     internal abstract Type ClrType { get; }
 
     internal abstract Task<object?> FindAsync(CoworkeeDbContext db, Guid id, CancellationToken cancellationToken);

@@ -28,7 +28,7 @@ internal static partial class IdentityEndpoints
 
     private static void MapUsers(RouteGroupBuilder api)
     {
-        api.MapGet("/users", ([AsParameters] PageRequest page, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetUsers(page), ct).ToHttpResult());
+        api.MapGet("/users", ([AsParameters] PageRequest page, Guid? roleId, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetUsers(page, roleId), ct).ToHttpResult());
         api.MapGet("/users/granted", (string permission, Guid? groupId, [AsParameters] PageRequest page, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new Users.Lookups.GetUsersGrantedQuery(permission, groupId, page), ct).ToHttpResult());
         api.MapPost("/users", (CreateUserRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new CreateUser(body), ct).ToHttpResult());
@@ -76,6 +76,8 @@ internal static partial class IdentityEndpoints
         api.MapPost("/roles", (RoleRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new CreateRole(body), ct).ToHttpResult());
         api.MapPut("/roles/{id:guid}", (Guid id, RoleRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new UpdateRole(id, body), ct).ToHttpResult());
         api.MapDelete("/roles/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteRole(id), ct).ToHttpResult());
+        api.MapPost("/roles/{id:guid}/users/transfer", (Guid id, TransferRoleUsersRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new TransferRoleUsers(id, body), ct).ToHttpResult());
     }
 
     private static void MapGrants(RouteGroupBuilder api)

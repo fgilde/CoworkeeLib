@@ -38,4 +38,19 @@ public sealed class RoleDetailTests : ClientTestBase
 
         Api.Received().UpdateRoleAsync(_role, new RoleRequest("Customer", "Buys things", null, true), Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public void Managers_rename_a_role_from_its_page_but_not_a_system_role()
+    {
+        var system = Guid.CreateVersion7();
+        Api.GetRolesAsync(Arg.Any<CancellationToken>()).Returns([new RoleDto(_role, "Customer", "Buys things", false), new RoleDto(system, "admin", null, true)]);
+        Api.GetGrantsAsync(PermissionProviderType.Role, system, Arg.Any<CancellationToken>()).Returns([]);
+        AddAuthorization().SetAuthorized("Ada").SetPolicies(Security.PermissionPolicy.For(IdentityPermissions.Roles.Manage));
+
+        Render<RoleDetail>(p => p.Add(r => r.Id, _role)).WaitForElement("[data-testid='role-edit']");
+        var admin = Render<RoleDetail>(p => p.Add(r => r.Id, system));
+
+        admin.WaitForAssertion(() => admin.Markup.ShouldContain("admin"));
+        admin.FindAll("[data-testid='role-edit']").ShouldBeEmpty();
+    }
 }

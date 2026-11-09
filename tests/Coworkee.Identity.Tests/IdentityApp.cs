@@ -38,6 +38,7 @@ public sealed class IdentityApp : DatabaseFixture
         builder.Configuration["Coworkee:Jobs:ConnectionStringName"] = "test";
         builder.Configuration["Coworkee:Jobs:RunServer"] = "false";
         builder.Configuration["Coworkee:Database:Provider"] = Provider;
+        builder.Configuration[$"Coworkee:Identity:FixedRoleNames:{RoleAdministrationTests.FixedName}"] = RoleAdministrationTests.UsedBy;
         builder.AddCoworkee<TestAppModule>();
         builder.Services.AddTestAuthentication();
         builder.Services.AddCoworkeeIdentitySeed(seed =>

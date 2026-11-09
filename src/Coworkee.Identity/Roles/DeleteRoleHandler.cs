@@ -6,10 +6,13 @@ using Coworkee.Identity.Domain;
 using Coworkee.Infrastructure.Persistence;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Coworkee.Identity.Roles;
 
-internal sealed class DeleteRoleHandler(CoworkeeDbContext db, ICurrentUser currentUser, Users.AccountGuard guard, Users.AdminReach reach) : IHandler<DeleteRole, Result>
+internal sealed class DeleteRoleHandler(
+    CoworkeeDbContext db, ICurrentUser currentUser, Users.AccountGuard guard, Users.AdminReach reach, IOptions<Users.IdentityAdministrationOptions> options)
+    : IHandler<DeleteRole, Result>
 {
     public async Task<Result> HandleAsync(DeleteRole command, CancellationToken cancellationToken)
     {
@@ -22,6 +25,12 @@ internal sealed class DeleteRoleHandler(CoworkeeDbContext db, ICurrentUser curre
         if (role.IsSystem)
         {
             return Error.Conflict("identity.role_system", "System roles cannot be deleted.");
+        }
+
+        // the code would create it again or lose the people it finds through it
+        if (options.Value.FixedRoleNames.TryGetValue(role.Name!, out var usedBy))
+        {
+            return RoleNames.Fixed(usedBy, deleting: true);
         }
 
         // its members lose what it grants, wherever they work

@@ -4,6 +4,7 @@
 
 <PageTitle>@(_user?.Email ?? "User")</PageTitle>
 <EntityWatch EntityType="User" EntityId="Id" ReturnHref="@Links.Href("/admin/users")" />
+<RealtimeSubscription Topic="@Coworkee.Contracts.Realtime.RealtimeTopics.Type("Role")" OnEvent="_ => ReloadRolesAsync()" />
 <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" Href="@Links.Href("/admin/users")" Class="mb-2">@L["Users"]</MudButton>
 
 @if (_error is not null)

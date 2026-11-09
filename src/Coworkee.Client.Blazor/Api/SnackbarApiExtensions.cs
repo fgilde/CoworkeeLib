@@ -25,5 +25,5 @@ public static class SnackbarApiExtensions
     }
 
     public static string Describe(ApiException exception) =>
-        exception.Errors is { Count: > 0 } errors ? string.Join(" ", errors.SelectMany(e => e.Value)) : exception.Message;
+        exception.Errors is { Count: > 0 } errors ? string.Join(" ", errors.SelectMany(e => e.Value)) : exception.Title ?? exception.Message;
 }

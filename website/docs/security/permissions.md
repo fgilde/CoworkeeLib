@@ -33,6 +33,27 @@ seed.Roles.Add(new SeedRole("Product Manager", "Maintains products",
 
 `SeedRole(..., SelectableForRegistration: true)` offers the role in the [registration](registration.md#roles-offered-in-the-registration), `{ IsDefault = true }` gives it to every new user ([default roles](../features/identity.md#owners-default-group-and-default-role)). See [Persistence](../fundamentals/persistence.md#migrations-and-seeding).
 
+## Renaming roles and moving their users
+
+On *Administration → Identity → Roles* the pencil of a row (and the one next to the name on the role's page) changes name and description (`PUT /api/v1/identity/roles/{id}`, `Identity.Roles.Manage`; flags left null in `RoleRequest` keep their values). Grants, users, groups, resource grants, report sharing and service clients refer to the role's id and stay with it. Open role lists, user pages and the users' permissions follow at once.
+
+Two kinds of roles keep their name:
+
+- **System roles** (`admin`, `user`) belong to every organisation and are found by name: `409 identity.role_system`.
+- **Roles whose name code looks up** are neither renamed nor deleted: `409 identity.role_name_fixed`, with the code that relies on the role in the message ("Code finds this role by its name (Workflows: Invoices); it cannot be deleted."), which the roles page shows in the user's language ([server messages](../modules/localization.md#in-the-client)). The description stays editable. The Files module adds its role *Registration documents*, Coworkee.Workflows every role its declared workflows name (`Role`, `EscalateTo`, `RequiresRole`, `NotifyRole`). Add the names your own code uses, each with what relies on it:
+
+```json
+{ "Coworkee": { "Identity": { "FixedRoleNames": { "Dispatchers": "The dispatch board" } } } }
+```
+
+or `services.Configure<IdentityAdministrationOptions>(o => o.FixedRoleNames["Dispatchers"] = "The dispatch board")`. What the library cannot see, apps check before a rename or a delete:
+
+- **Seeds** match roles by name (`SeedRole`, `SeedUser.Roles`): rename the role in the seed too, or the development sync creates the old name again for the seed users.
+- **Role names stored as data**: the role of the *Notify* activity in Elsa workflows, names in the app's settings or tables. Add them to `FixedRoleNames` or update them with the rename.
+- **Tokens** issued before the rename carry the old name in their `role` claims until the next refresh. Permission checks use the role's id and follow at once.
+
+**Moving or copying users**: *Move or copy users…* on a role's row (`Identity.Users.Manage`, the permission of assigning roles one by one) gives its users one or more target roles. *Copy* keeps the role, *Move* takes it away, *Only selected users* limits it to the users you pick. `POST /api/v1/identity/roles/{id}/users/transfer` with `TransferRoleUsersRequest(TargetRoleIds, Move, UserIds)` (`UserIds` null: all users of the role; `ICoworkeeApi.TransferRoleUsersAsync`) answers the number of users. The rules of a single role change apply to every user, and one refusal stops the whole request: the account rule for each user (`identity.user_more_permissions`, `identity.admin_role_restricted`), every permission of the target roles and, for a move, of the role itself (`identity.grant_restricted`), and the last active administrator (`409 identity.last_admin`). With [group-scoped administration](#group-scoped-administration) only users in the caller's reach are taken; the others keep their roles. Every changed assignment is an audit entry and a realtime message, and cached permissions are dropped. `GET /api/v1/identity/users?roleId={id}` (`ICoworkeeApi.GetRoleUsersAsync`) lists the users of a role.
+
 ## Custom permissions
 
 Administrators create permissions of their own at runtime, e.g. to show a header button or an app feature only to some people: *Administration → Identity → Custom permissions* (`/admin/permissions`, page key `custom-permissions`, also linked from the roles page). A custom permission has a name, a display name, an optional description and a group (default *Custom*); it shows in the role editor's permission matrix and in `GET /api/v1/identity/permissions/definitions` at once, on every instance, and roles, groups and users get it like any other permission. Check it like one, too: `<PermissionGate Permission="Custom.Reports.Export">`, `IsGrantedAsync("Custom.Reports.Export", ct)`.

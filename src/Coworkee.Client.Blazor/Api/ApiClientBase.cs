@@ -70,17 +70,19 @@ public abstract class ApiClientBase(HttpClient http)
         }
 
         string? code = null;
+        string? title = null;
         Dictionary<string, string[]>? errors = null;
         try
         {
             var problem = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
             code = problem.TryGetProperty("code", out var c) ? c.GetString() : null;
+            title = problem.TryGetProperty("title", out var t) ? t.GetString() : null;
             errors = problem.TryGetProperty("errors", out var e) ? e.Deserialize<Dictionary<string, string[]>>() : null;
         }
         catch (JsonException)
         {
         }
 
-        throw new ApiException((int)response.StatusCode, code, errors);
+        throw new ApiException((int)response.StatusCode, code, errors, title);
     }
 }

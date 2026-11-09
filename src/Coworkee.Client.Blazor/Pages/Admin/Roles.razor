@@ -11,7 +11,7 @@
 </PageHeader>
 <CoworkeeDataTable @ref="_table" T="RoleDto" EntitySet="Roles" SearchFields="SearchFields" ExportFileName="roles" DescribeItem="r => r.Name"
                    CreateText="New role" CreatePermission="@IdentityPermissions.Roles.Manage" DeletePermission="@IdentityPermissions.Roles.Manage"
-                   OnCreate="CreateAsync" OnDelete="DeleteAsync">
+                   EditPermission="@IdentityPermissions.Roles.Manage" OnCreate="CreateAsync" OnEdit="EditAsync" OnDelete="DeleteAsync">
     <Columns>
         <PropertyColumn Property="r => r.Name" Title="@L["Name"]">
             <CellTemplate>
@@ -30,5 +30,15 @@
         <PropertyColumn Property="r => r.SelectableForRegistration" Title="@L["Registration"]">
             <CellTemplate>@(context.Item.SelectableForRegistration ? L["offered"] : "")</CellTemplate>
         </PropertyColumn>
+        <TemplateColumn T="RoleDto" Sortable="false" CellStyle="text-align:right;white-space:nowrap">
+            <CellTemplate>
+                <PermissionView Permission="@IdentityPermissions.Users.Manage">
+                    <MudTooltip Text="@L["Move or copy users…"]">
+                        <MudIconButton Icon="@Icons.Material.Outlined.GroupAdd" Size="Size.Small" aria-label="@L["Move or copy users…"]" OnClick="() => TransferAsync(context.Item)"
+                                       data-testid="@($"role-users-{context.Item.Name}")" />
+                    </MudTooltip>
+                </PermissionView>
+            </CellTemplate>
+        </TemplateColumn>
     </Columns>
 </CoworkeeDataTable>

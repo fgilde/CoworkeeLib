@@ -270,6 +270,22 @@ public sealed class WorkflowTests(WorkflowApp app) : IAsyncLifetime
         await Should.ThrowAsync<HubException>(() => connection.InvokeAsync(RealtimeHubMethods.Subscribe, WorkflowTopics.Entity("Unknown", _expense), Ct));
     }
 
+    [Fact]
+    public async Task Roles_the_workflows_name_keep_their_name_and_stay_while_their_description_can_change()
+    {
+        var finance = await CreateRoleAsync("Finance");
+        var clerks = await CreateRoleAsync("Clerks");
+
+        var renamed = await Admin.PutAsJsonAsync($"/api/v1/identity/roles/{finance}", new RoleRequest("Accounting", null), Ct);
+        renamed.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await renamed.Content.ReadAsStringAsync(Ct)).ShouldContain("identity.role_name_fixed");
+        var deleted = await Admin.DeleteAsync($"/api/v1/identity/roles/{finance}", Ct);
+        deleted.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await deleted.Content.ReadAsStringAsync(Ct)).ShouldContain("Code finds this role by its name (Workflows: Invoices); it cannot be deleted.");
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/roles/{finance}", new RoleRequest("Finance", "Approves large invoices"), Ct)).EnsureSuccessStatusCode();
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/roles/{clerks}", new RoleRequest("Office", null), Ct)).EnsureSuccessStatusCode();
+    }
+
     // the clock stands still otherwise: history steps of separate requests would share one time and come back in any order (SQL Server)
     private async Task<WorkflowStatusDto> Decide(Guid userId, Guid approvalId, bool approve, string? comment)
     {
