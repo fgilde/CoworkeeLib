@@ -97,21 +97,26 @@ internal static partial class AzureDeploy
     /// </summary>
     public static async Task ForgetProvisioningAsync(Solution solution, CancellationToken cancellationToken)
     {
+        // the flat legacy file (Azure:Deployments:<name>:...) and, since Aspire 13, the state it restores that file from: production.json.migration
+        // keeps CurrentState as a JSON string with Azure.Deployments nested
         var path = StatePath(solution);
-        if (!File.Exists(path) || JsonNode.Parse(await File.ReadAllTextAsync(path, cancellationToken)) is not JsonObject state)
+        if (File.Exists(path) && JsonNode.Parse(await File.ReadAllTextAsync(path, cancellationToken)) is JsonObject state)
         {
-            return;
+            var keys = state.Select(p => p.Key).Where(k => k.StartsWith("Azure:Deployments:", StringComparison.Ordinal)).ToList();
+            keys.ForEach(k => state.Remove(k));
+            if (keys.Count > 0)
+            {
+                await File.WriteAllTextAsync(path, state.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), cancellationToken);
+            }
         }
 
-        var keys = state.Select(p => p.Key).Where(k => k.StartsWith("Azure:Deployments:", StringComparison.Ordinal)).ToList();
-        foreach (var key in keys)
+        var migration = path + ".migration";
+        if (File.Exists(migration) && JsonNode.Parse(await File.ReadAllTextAsync(migration, cancellationToken)) is JsonObject wrapper
+            && wrapper["CurrentState"]?.GetValue<string>() is { } text && JsonNode.Parse(text) is JsonObject current
+            && current["Azure"] is JsonObject azure && azure.Remove("Deployments"))
         {
-            state.Remove(key);
-        }
-
-        if (keys.Count > 0)
-        {
-            await File.WriteAllTextAsync(path, state.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), cancellationToken);
+            wrapper["CurrentState"] = current.ToJsonString();
+            await File.WriteAllTextAsync(migration, wrapper.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), cancellationToken);
         }
     }
 
