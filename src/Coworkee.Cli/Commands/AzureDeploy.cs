@@ -50,7 +50,7 @@ internal static partial class AzureDeploy
             ["Azure__CredentialSource"] = "AzureCli",
             ["Azure__AllowResourceGroupCreation"] = "true",
         };
-        foreach (var (name, value) in parameters)
+        foreach (var (name, value) in parameters.Where(p => p.Value.Length > 0))
         {
             environment[$"Parameters__{name}"] = value;
         }
@@ -111,14 +111,23 @@ internal static partial class AzureDeploy
         var path = StatePath(solution);
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         var flat = File.Exists(path) && JsonNode.Parse(await File.ReadAllTextAsync(path, cancellationToken)) is JsonObject existing ? existing : new JsonObject();
-        foreach (var key in flat.Select(p => p.Key).Where(k => k.StartsWith("Azure:Deployments:", StringComparison.Ordinal)).ToList())
+        foreach (var key in flat.Where(p => p.Key.StartsWith("Azure:Deployments:", StringComparison.Ordinal) || (p.Key.StartsWith("Parameters:", StringComparison.Ordinal) && p.Value?.ToString() == ""))
+                     .Select(p => p.Key).ToList())
         {
             flat.Remove(key);
         }
 
+        // an empty value counts as missing for Aspire and the publish would wait for it; without one the parameter starts empty (AddAzureEnvironment)
         foreach (var (name, value) in parameters)
         {
-            flat[$"Parameters:{name}"] = value;
+            if (value.Length == 0)
+            {
+                flat.Remove($"Parameters:{name}");
+            }
+            else
+            {
+                flat[$"Parameters:{name}"] = value;
+            }
         }
 
         await File.WriteAllTextAsync(path, flat.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), cancellationToken);
@@ -129,9 +138,21 @@ internal static partial class AzureDeploy
         {
             (current["Azure"] as JsonObject)?.Remove("Deployments");
             var section = current["Parameters"] as JsonObject ?? (JsonObject)(current["Parameters"] = new JsonObject());
+            foreach (var key in section.Where(p => p.Value?.ToString() == "").Select(p => p.Key).ToList())
+            {
+                section.Remove(key);
+            }
+
             foreach (var (name, value) in parameters)
             {
-                section[name] = value;
+                if (value.Length == 0)
+                {
+                    section.Remove(name);
+                }
+                else
+                {
+                    section[name] = value;
+                }
             }
 
             wrapper["CurrentState"] = current.ToJsonString();

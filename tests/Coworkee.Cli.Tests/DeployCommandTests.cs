@@ -93,6 +93,33 @@ public sealed class DeployCommandTests
     }
 
     [Fact]
+    public async Task Empty_parameters_stay_out_of_the_deployment_state_because_aspire_would_wait_for_them()
+    {
+        using var folder = new TempFolder();
+        folder.File("src/Shop.AppHost/Shop.AppHost.csproj");
+        folder.File("Shop.slnx");
+        var solution = Solution.Find(folder.Path);
+        var state = AzureDeploy.StatePath(solution);
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(state)!);
+            await File.WriteAllTextAsync(state, """{ "Parameters:shop-smtp-host": "", "Parameters:shop-smtp-from": "" }""", TestContext.Current.CancellationToken);
+
+            await AzureDeploy.PrepareStateAsync(solution, new Dictionary<string, string> { ["shop-smtp-host"] = "", ["shop-admin-email"] = "ada@example.com" },
+                TestContext.Current.CancellationToken);
+
+            var text = await File.ReadAllTextAsync(state, TestContext.Current.CancellationToken);
+            text.ShouldContain("\"Parameters:shop-admin-email\": \"ada@example.com\"");
+            text.ShouldNotContain("shop-smtp-host");
+            text.ShouldNotContain("shop-smtp-from");
+        }
+        finally
+        {
+            Directory.Delete(Path.GetDirectoryName(state)!, recursive: true);
+        }
+    }
+
+    [Fact]
     public void The_summary_lists_each_loopback_port_with_its_public_address_and_how_to_sign_in()
     {
         const string compose = """
