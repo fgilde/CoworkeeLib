@@ -42,6 +42,7 @@ internal static partial class AzureDeploy
         }
 
         var parameters = await ParametersAsync(solution, published, target, adminEmail ?? account.User, cancellationToken);
+        await ForgetStaleProvisioningAsync(solution, target, account, cancellationToken);
         var environment = new Dictionary<string, string>
         {
             ["Azure__SubscriptionId"] = account.SubscriptionId,
@@ -81,6 +82,41 @@ internal static partial class AzureDeploy
 
         Console.WriteLine($"Sign in as {parameters.GetValueOrDefault($"{solution.Name.ToLowerInvariant()}-admin-email")}; the password is in {SecretsPath(solution, target.Name)}.");
         return 0;
+    }
+
+    /// <summary>Aspire's deployment state of the app host (environment Production): ~/.aspire/deployments/{SHA-256 of the lower-cased project path}/production.json.</summary>
+    public static string StatePath(Solution solution) =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".aspire", "deployments",
+            Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(Path.GetFullPath(solution.Project("AppHost")).ToLowerInvariant()))),
+            "production.json");
+
+    /// <summary>
+    /// Aspire remembers what it provisioned (Azure:Deployments:*) and skips it next time; after the resource group was emptied, or for another group or
+    /// subscription, that would point at resources that do not exist. Generated parameter values stay: an update must keep the database passwords.
+    /// </summary>
+    public static async Task ForgetStaleProvisioningAsync(Solution solution, Target target, Account account, CancellationToken cancellationToken)
+    {
+        var path = StatePath(solution);
+        if (!File.Exists(path) || JsonNode.Parse(await File.ReadAllTextAsync(path, cancellationToken)) is not JsonObject state)
+        {
+            return;
+        }
+
+        var (_, count) = await Shell.CaptureAsync(Az, "resource", "list", "-g", target.ResourceGroup, "--subscription", account.SubscriptionId, "--query", "length(@)", "-o", "tsv");
+        var elsewhere = !string.Equals(state["Azure:ResourceGroup"]?.GetValue<string>(), target.ResourceGroup, StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(state["Azure:SubscriptionId"]?.GetValue<string>(), account.SubscriptionId, StringComparison.OrdinalIgnoreCase);
+        if (count is not ("0" or "") && !elsewhere)
+        {
+            return;
+        }
+
+        foreach (var key in state.Select(p => p.Key).Where(k => k.StartsWith("Azure:Deployments:", StringComparison.Ordinal)).ToList())
+        {
+            state.Remove(key);
+        }
+
+        await File.WriteAllTextAsync(path, state.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), cancellationToken);
+        Console.WriteLine("Aspire's remembered provisioning was for another or an empty resource group; everything is provisioned again.");
     }
 
     public static string[] DeployArgs(Solution solution, IReadOnlyDictionary<string, bool> tools) =>
