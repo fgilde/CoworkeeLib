@@ -2,6 +2,18 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Neu
+
+- Rollenseite: Der Stift einer Zeile und der auf der Seite der Rolle benennt eine Rolle um und ändert ihre Beschreibung; die API konnte es, die Seite bot keinen Weg. *Benutzer verschieben oder kopieren…* gibt den Benutzern einer Rolle (allen oder den gewählten) andere Rollen und lässt oder nimmt ihnen die Rolle (`POST /api/v1/identity/roles/{id}/users/transfer`, `Identity.Users.Manage`, `ICoworkeeApi.TransferRoleUsersAsync`), mit den Konto-, Rechte- und Letzter-Administrator-Regeln einzelner Änderungen; `GET /api/v1/identity/users?roleId=` listet die Benutzer einer Rolle ([Rollen umbenennen und ihre Benutzer verschieben](../security/permissions.md#rollen-umbenennen-und-ihre-benutzer-verschieben)).
+- `Coworkee:Identity:FixedRoleNames`: Rollen, die Code über den Namen sucht, behalten ihn (`409 identity.role_name_fixed`). Files trägt *Registration documents* ein, Coworkee.Workflows die Rollen, die seine Workflows nennen. Trage die Rollennamen ein, die dein Code oder deine Daten nutzen; prüfe Seeds, Elsa-Aktivitäten *Notify* und gespeicherte Namen, bevor du eine Rolle umbenennst.
+
+### Geändert
+
+- `PUT /api/v1/identity/roles/{id}` antwortet für eine Systemrolle mit `409 identity.role_system` statt 404.
+- Die Benutzerliste, die Benutzerseite und der Rollen-Reiter einer Gruppe zeigen umbenannte und neue Rollen sofort.
+
 ## 0.0.1.68 (2026-11-08)
 
 ### Neu

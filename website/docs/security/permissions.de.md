@@ -33,6 +33,27 @@ seed.Roles.Add(new SeedRole("Product Manager", "Maintains products",
 
 `SeedRole(..., SelectableForRegistration: true)` bietet die Rolle in der [Registrierung](registration.md#rollen-in-der-registrierung) an, `{ IsDefault = true }` gibt sie jedem neuen Benutzer ([Standardrollen](../features/identity.md#besitzer-standardgruppe-und-standardrolle)). Siehe [Persistenz](../fundamentals/persistence.md#migrationen-und-seed).
 
+## Rollen umbenennen und ihre Benutzer verschieben
+
+Unter *Administration → Identität → Rollen* ändert der Stift einer Zeile (und der neben dem Namen auf der Seite der Rolle) Name und Beschreibung (`PUT /api/v1/identity/roles/{id}`, `Identity.Roles.Manage`; Schalter, die in `RoleRequest` null bleiben, behalten ihren Wert). Zuweisungen, Benutzer, Gruppen, Ressourcenrechte, Berichtsfreigaben und Dienst-Clients verweisen auf die Id der Rolle und bleiben bei ihr. Offene Rollenlisten, Benutzerseiten und die Berechtigungen der Benutzer ziehen sofort nach.
+
+Zwei Arten von Rollen behalten ihren Namen:
+
+- **Systemrollen** (`admin`, `user`) gehören allen Organisationen und werden über den Namen gefunden: `409 identity.role_system`.
+- **Rollen, die Code über ihren Namen sucht**: `409 identity.role_name_fixed`, die Beschreibung bleibt änderbar. Das Files-Modul trägt seine Rolle *Registration documents* ein, Coworkee.Workflows jede Rolle, die seine deklarierten Workflows nennen (`Role`, `EscalateTo`, `RequiresRole`, `NotifyRole`). Trage die Namen ein, die dein eigener Code benutzt:
+
+```json
+{ "Coworkee": { "Identity": { "FixedRoleNames": [ "Dispatchers" ] } } }
+```
+
+oder `services.Configure<IdentityAdministrationOptions>(o => o.FixedRoleNames.Add("Dispatchers"))`. Was die Bibliothek nicht sieht, prüfen Apps vor dem Umbenennen:
+
+- **Seeds** finden Rollen über den Namen (`SeedRole`, `SeedUser.Roles`): Benenne die Rolle auch im Seed um, sonst legt der Entwicklungsabgleich den alten Namen für die Seed-Benutzer wieder an.
+- **Als Daten gespeicherte Rollennamen**: die Rolle der Aktivität *Notify* in Elsa-Workflows, Namen in Einstellungen oder Tabellen der App. Trage sie in `FixedRoleNames` ein oder passe sie beim Umbenennen an.
+- **Tokens**, die vor dem Umbenennen ausgestellt wurden, tragen den alten Namen in ihren `role`-Claims bis zur nächsten Erneuerung. Berechtigungsprüfungen nutzen die Id der Rolle und ziehen sofort nach.
+
+**Benutzer verschieben oder kopieren**: *Benutzer verschieben oder kopieren…* in der Zeile einer Rolle (`Identity.Users.Manage`, die Berechtigung für das Zuweisen einzelner Rollen) gibt ihren Benutzern eine oder mehrere Zielrollen. *Kopieren* lässt ihnen die Rolle, *Verschieben* nimmt sie ihnen, *Nur ausgewählte Benutzer* beschränkt es auf die gewählten. `POST /api/v1/identity/roles/{id}/users/transfer` mit `TransferRoleUsersRequest(TargetRoleIds, Move, UserIds)` (`UserIds` null: alle Benutzer der Rolle; `ICoworkeeApi.TransferRoleUsersAsync`) antwortet mit der Zahl der Benutzer. Die Regeln einer einzelnen Rollenänderung gelten für jeden Benutzer, und eine Ablehnung stoppt die ganze Anfrage: die Kontoregel für jeden Benutzer (`identity.user_more_permissions`, `identity.admin_role_restricted`), jede Berechtigung der Zielrollen und beim Verschieben auch der Rolle selbst (`identity.grant_restricted`) sowie der letzte aktive Administrator (`409 identity.last_admin`). Mit [gruppenbezogener Verwaltung](#gruppenbezogene-verwaltung) zählen nur Benutzer in der Reichweite des Aufrufers; die anderen behalten ihre Rollen. Jede geänderte Zuordnung ist ein Eintrag im Audit-Log und eine Realtime-Nachricht, zwischengespeicherte Berechtigungen werden verworfen. `GET /api/v1/identity/users?roleId={id}` (`ICoworkeeApi.GetRoleUsersAsync`) listet die Benutzer einer Rolle.
+
 ## Eigene Berechtigungen
 
 Administratoren legen zur Laufzeit eigene Berechtigungen an, z. B. um eine Schaltfläche der Kopfzeile oder eine Funktion der App nur einem Teil der Leute zu zeigen: *Administration → Identität → Eigene Berechtigungen* (`/admin/permissions`, Seitenschlüssel `custom-permissions`, auch von der Rollenseite verlinkt). Eine eigene Berechtigung hat einen Namen, einen Anzeigenamen, optional eine Beschreibung und eine Gruppe (Standard *Custom*); sie erscheint sofort und auf jeder Instanz in der Berechtigungsmatrix des Rolleneditors und in `GET /api/v1/identity/permissions/definitions`, Rollen, Gruppen und Benutzer erhalten sie wie jede andere Berechtigung. Geprüft wird sie ebenso: `<PermissionGate Permission="Custom.Reports.Export">`, `IsGrantedAsync("Custom.Reports.Export", ct)`.

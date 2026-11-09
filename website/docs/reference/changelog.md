@@ -2,6 +2,18 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- Roles page: the pencil of a row and of the role's page renames a role and changes its description; the API could, the page offered no way. *Move or copy users…* gives the users of a role (all, or the chosen ones) other roles and keeps or takes the role (`POST /api/v1/identity/roles/{id}/users/transfer`, `Identity.Users.Manage`, `ICoworkeeApi.TransferRoleUsersAsync`), with the account, grant and last-administrator rules of single changes; `GET /api/v1/identity/users?roleId=` lists the users of a role ([renaming roles and moving their users](../security/permissions.md#renaming-roles-and-moving-their-users)).
+- `Coworkee:Identity:FixedRoleNames`: roles code looks up by name keep it (`409 identity.role_name_fixed`). Files adds *Registration documents*, Coworkee.Workflows the roles its workflows name. Add the role names your code or data use; check seeds, Elsa *Notify* activities and stored names before renaming a role.
+
+### Changed
+
+- `PUT /api/v1/identity/roles/{id}` answers `409 identity.role_system` for a system role instead of 404.
+- The users list, the user page and the roles tab of a group show renamed and new roles at once.
+
 ## 0.0.1.68 (2026-11-08)
 
 ### Added
