@@ -14,7 +14,7 @@
       </StackPanel>
 
       <UniformGrid Columns="3" ColumnSpacing="16">
-        <Button Classes="tile selected" Command="{Binding Main.NewAppCommand}" Height="132">
+        <Button Classes="tile selected" Command="{Binding Main.NewAppCommand}" MinHeight="132" VerticalAlignment="Stretch">
           <Grid ColumnDefinitions="Auto,*" Margin="22">
             <Border Width="52" Height="52" CornerRadius="14" Background="{DynamicResource Hero}" VerticalAlignment="Top">
               <PathIcon Classes="large" Foreground="White" Data="{StaticResource Icon.Sparkle}" />
@@ -25,7 +25,7 @@
             </StackPanel>
           </Grid>
         </Button>
-        <Button Classes="tile" Command="{Binding Main.OpenSpecCommand}" Height="132">
+        <Button Classes="tile" Command="{Binding Main.OpenSpecCommand}" MinHeight="132" VerticalAlignment="Stretch">
           <Grid ColumnDefinitions="Auto,*" Margin="22">
             <Border Width="52" Height="52" CornerRadius="14" Background="{DynamicResource SecondarySoft}" VerticalAlignment="Top">
               <PathIcon Classes="large" Foreground="{DynamicResource Secondary}" Data="{StaticResource Icon.FolderOpen}" />
@@ -36,7 +36,7 @@
             </StackPanel>
           </Grid>
         </Button>
-        <Button Classes="tile" Command="{Binding Main.OpenAppCommand}" Height="132">
+        <Button Classes="tile" Command="{Binding Main.OpenAppCommand}" MinHeight="132" VerticalAlignment="Stretch">
           <Grid ColumnDefinitions="Auto,*" Margin="22">
             <Border Width="52" Height="52" CornerRadius="14" Background="{DynamicResource SecondarySoft}" VerticalAlignment="Top">
               <PathIcon Classes="large" Foreground="{DynamicResource Secondary}" Data="{StaticResource Icon.Layers}" />

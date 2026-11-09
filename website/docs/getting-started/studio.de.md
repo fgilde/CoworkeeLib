@@ -1,6 +1,6 @@
 # Coworkee Studio
 
-Coworkee Studio ist der Desktop-Assistent der [Kommandozeile](cli.md). Er führt Seite für Seite durch eine neue App, erklärt, was jede Entscheidung bringt und kostet, zeigt Logo, Theme und Anmeldedesign als Vorschau, nimmt deine Entities auf und lässt die CLI die Solution anlegen. Er läuft unter Windows, macOS und Linux.
+Coworkee Studio ist der Desktop-Assistent der [Kommandozeile](cli.md). Er führt Seite für Seite durch eine neue App, erklärt, was jede Entscheidung bringt und kostet, zeigt Logo, Theme und Anmeldedesign als Vorschau, nimmt deine Entities auf und lässt die CLI die Solution anlegen. Bestehende Apps öffnen sich mit einer Übersicht, in der du sie startest und [nach Azure deployst](#deployen). Er läuft unter Windows, macOS und Linux und spricht acht Sprachen.
 
 ![Coworkee Studio](../assets/screenshots/studio-architecture-light-de.webp)
 
@@ -138,11 +138,13 @@ Das Studio schreibt die Spezifikation, ruft `coworkee spec validate` und `cowork
 
 **App starten** führt `dotnet run --project <App-Host>` im Studio aus. Die Karte zeigt, ob der App-Host startet, läuft oder gescheitert ist, und im Fehlerfall die Zeile, die es erklärt (ein belegter Port, ein Build-Fehler). Sobald er läuft, verlinkt sie das Aspire-Dashboard (die Anmeldeadresse mit Token, aus der Ausgabe gelesen) und die Adressen von Web-App, API und Auth-Server (aus ihren Launch Settings). Solange die App noch nicht eingerichtet ist, zeigt die Karte das [Setup-Token](../security/authentication.md#setup-assistent-oder-seed) mit Kopierknopf, wie *Meine Apps* auch. Die Ausgabe des App-Hosts ist einen Klick entfernt; **Stoppen** beendet den App-Host und alles, was er gestartet hat, ebenso das Schließen des Studios.
 
+![Laufende App](../assets/screenshots/studio-run-light-de.webp)
+
 **Deployen** ist der optionale letzte Schritt: Wähl ein Ziel (`compose`, `azure` oder `k8s`), und das Studio startet `coworkee deploy` im Ordner der App und zeigt die Ausgabe live, am Ende mit den Adressen der Dienste und Tools und der Anmeldung des Administrators. Das schreibt die Deployment-Dateien; für ein Deployment nach Azure mit Anmeldung und Ressourcengruppe nimm **Deployen …** in der Übersicht der App (siehe [Deployen](#deployen)). Siehe [Deployment](../hosting/deployment.md).
 
 **GitHub-Deploy-Workflow …** in der Deploy-Karte zeigt die Einstellungen des Deploy-Workflows der App (Präfix der Ressourcengruppen, Azure-Region, Branches, mit dem Branch löschen) aus `.coworkee/app.json` und schreibt `.github/workflows/deploy-azure.yml` mit `coworkee deploy azure --github`. Wurde die Datei von Hand geändert, fragt das Studio, ob es deine Änderungen überschreiben oder deine Datei behalten soll. Eine neue App bekommt den Workflow über die Option *Deploy-Workflow* in der Gruppe Tooling. Siehe [Jeden Branch mit GitHub Actions deployen](../hosting/deployment.md#jeden-branch-mit-github-actions-deployen).
 
-![Laufende App](../assets/screenshots/studio-run-light-de.webp)
+![GitHub-Deploy-Workflow](../assets/screenshots/studio-deploy-workflow-light-de.webp)
 
 ### Bestehende App öffnen
 
@@ -153,6 +155,8 @@ Das Studio schreibt die Spezifikation, ruft `coworkee spec validate` und `cowork
 - **Deployments**: jeder Eintrag in `.coworkee/deployments/*.json` im Ordner der App mit Ziel, Ressourcengruppe, Region, Azure-Konto, letztem Deployment und den öffentlichen Adressen als Links; **Aktualisieren** deployt ihn erneut, **Deployen …** beginnt ein neues (siehe [Deployen](#deployen))
 - Ordner, Solution oder VS Code öffnen
 - **Im Assistenten bearbeiten** für Änderungen an der App
+
+![Übersicht einer App mit einem Deployment](../assets/screenshots/studio-overview-light-de.webp)
 
 **Im Assistenten bearbeiten** (in *Meine Apps* auch **Im Studio bearbeiten**) öffnet den Assistenten auf *Prüfen* mit dem Stand der App: ihrer `.coworkee/app.json` oder, bei älteren Apps, den Optionen, die ihre Dateien zeigen. Schalte Module und Optionen ein, ergänze Sprachen, Module und Entities, dann **Änderungen anzeigen**: Das Studio ruft `coworkee add --spec ... --dry-run` im Ordner der App auf und zeigt den Plan (Optionen, Dateien zum Hinzufügen, Aktualisieren, Zusammenführen oder Löschen, Konflikte, zu erzeugende Module und Entities). **Änderungen übernehmen** führt ihn wirklich aus, mit derselben Live-Ausgabe wie *Anlegen*; Dateien, deren Änderungen sich nicht zusammenführen ließen, stehen danach als `.rej`-Dateien in der Liste, siehe [Eine bestehende App ändern](cli.md#eine-bestehende-app-andern).
 
@@ -172,6 +176,8 @@ coworkee deploy azure --apply --yes --resource-group <rg> --location <region> --
 ```
 
 im Ordner der App aus, mit der Ausgabe live wie bei *Anlegen*. Die CLI fragt nichts (sie bekommt keine Eingabe), baut, pusht und deployt (einige Minuten), startet den Migrations-Job und schreibt den Eintrag `.coworkee/deployments/<name>.json`: Ziel, Abonnement, Tenant, Ressourcengruppe, Region, Konto, Zeitpunkt, die öffentlichen Adressen der Container Apps und die Tool-Schalter. Bei Erfolg zeigt das Studio die Adressen als Links und, wo das Passwort des Administrators steht: `.coworkee/deployments/<name>.secrets.json`, das die CLI aus git heraushält. Das Passwort selbst zeigt das Studio nie. Zurück in der Übersicht steht das Deployment in der Liste.
+
+![Deploy-Assistent, Zusammenfassung](../assets/screenshots/studio-deploy-light-de.webp)
 
 **Aktualisieren** bei einem Deployment öffnet denselben Assistenten mit den Werten seines Eintrags (Abonnement, Ressourcengruppe, Region, Name, Tools). Nach der Anmeldeprüfung geht er direkt zur Zusammenfassung; **Deployen** führt denselben Befehl erneut aus, und die aufbewahrten Parameter (Administrator, Passwörter, Zertifikate) bleiben, wie sie waren. **Zurück** führt zu den Schritten davor, um vorher etwas zu ändern. Was die CLI deployt, steht unter [Deployment](../hosting/deployment.md).
 
