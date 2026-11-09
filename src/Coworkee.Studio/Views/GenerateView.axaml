@@ -289,6 +289,7 @@
               </StackPanel>
               <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
                 <ComboBox ItemsSource="{x:Static vm:DeployViewModel.Targets}" SelectedItem="{Binding Deploy.Target}" IsEnabled="{Binding !Deploy.IsBusy}" MinWidth="120" />
+                <Button Command="{Binding DeployWorkflow.OpenCommand}" Content="{l:L 'GitHub deploy workflow…'}" x:Name="DeployWorkflowButton" />
                 <Button Command="{Binding Deploy.StopCommand}" IsVisible="{Binding Deploy.IsBusy}">
                   <StackPanel Orientation="Horizontal" Spacing="6">
                     <PathIcon Classes="small" Data="{StaticResource Icon.Stop}" />
@@ -303,6 +304,7 @@
                 </Button>
               </StackPanel>
             </Grid>
+            <v:DeployWorkflowPanel DataContext="{Binding DeployWorkflow}" />
             <Border Classes="code" CornerRadius="0,0,14,14" Height="260" IsVisible="{Binding Deploy.Log.Count, Converter={x:Static v:Converters.Positive}}">
               <ListBox ItemsSource="{Binding Deploy.Log}" Background="Transparent" x:Name="DeployLog">
                 <ListBox.Styles>

@@ -22,6 +22,7 @@ public sealed partial class GenerateStep : StepViewModel
     {
         App = new AppRunViewModel(main, () => Output, action => Dispatch(action));
         Deploy = new DeployViewModel(main, () => Output, action => Dispatch(action));
+        DeployWorkflow = new DeployWorkflowViewModel(main, () => Output, action => Dispatch(action));
     }
 
     protected override string TitleText => "Create";
@@ -52,6 +53,9 @@ public sealed partial class GenerateStep : StepViewModel
     public AppRunViewModel App { get; }
 
     public DeployViewModel Deploy { get; }
+
+    /// <summary>The GitHub deploy workflow of the app.</summary>
+    public DeployWorkflowViewModel DeployWorkflow { get; }
 
     public ObservableCollection<ProgressStepViewModel> Progress { get; } = [];
 

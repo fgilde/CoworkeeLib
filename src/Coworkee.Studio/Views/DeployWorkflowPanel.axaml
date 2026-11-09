@@ -1,0 +1,41 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Coworkee.Studio.ViewModels"
+             xmlns:v="using:Coworkee.Studio.Views"
+             xmlns:l="using:Coworkee.Studio.Localization"
+             x:Class="Coworkee.Studio.Views.DeployWorkflowPanel"
+             x:DataType="vm:DeployWorkflowViewModel">
+  <!-- the settings of the GitHub deploy workflow; saving runs coworkee deploy azure with github -->
+  <Border Classes="soft" IsVisible="{Binding IsOpen}" Margin="22,0,22,12">
+    <StackPanel Spacing="8">
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Classes="h3" Text="{l:L 'GitHub deploy workflow'}" />
+        <Button Grid.Column="1" Command="{Binding CloseCommand}" Content="{l:L Close}" />
+      </Grid>
+      <TextBlock Classes="body" TextWrapping="Wrap" Text="{Binding StatusText}" />
+      <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+        <TextBox PlaceholderText="{l:L 'Resource group prefix (empty: the app name)'}" Text="{Binding Prefix}" x:Name="PrefixBox" />
+        <TextBox Grid.Column="1" PlaceholderText="{l:L 'Azure region'}" Text="{Binding Location}" />
+        <TextBox Grid.Column="2" PlaceholderText="{l:L 'Branches, e.g. main, release/*'}" Text="{Binding Branches}" />
+      </Grid>
+      <CheckBox IsChecked="{Binding Teardown}" Content="{l:L 'Delete the resource group with everything in it when its branch is deleted'}" />
+      <Border Classes="banner warn" IsVisible="{Binding IsChangedByHand}">
+        <StackPanel Spacing="8">
+          <TextBlock TextWrapping="Wrap" Text="{l:L 'The workflow file was changed by hand since coworkee wrote it.'}" />
+          <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding AskOverwrite}">
+            <Button Command="{Binding OverwriteCommand}" Content="{l:L 'Overwrite my changes'}" />
+            <Button Classes="primary" Command="{Binding KeepCommand}" Content="{l:L 'Keep my file'}" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+      <Button Classes="primary" Command="{Binding SaveCommand}" Content="{l:L 'Save and write the workflow'}" IsVisible="{Binding !AskOverwrite}" />
+      <ItemsControl ItemsSource="{Binding Log}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="x:String">
+            <SelectableTextBlock Classes="mono caption" Text="{Binding}" TextWrapping="Wrap" />
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </Border>
+</UserControl>
