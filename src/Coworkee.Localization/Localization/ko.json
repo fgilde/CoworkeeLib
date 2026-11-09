@@ -1345,6 +1345,7 @@
   "Grouped rows are shown in pages.": "그룹화된 행은 페이지별로 표시됩니다.",
   "Where searching runs: {0}": "검색 실행 위치: {0}",
   "Search in the browser": "브라우저에서 검색",
+  "Search in the browser (loading…)": "브라우저에서 검색 (로드 중…)",
   "Search on the server": "서버에서 검색",
   "Compare and choose the faster": "비교하여 더 빠른 쪽 선택",
   "Browser {0} ms, server {1} ms.": "브라우저 {0} ms, 서버 {1} ms.",

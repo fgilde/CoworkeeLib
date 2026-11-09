@@ -13,6 +13,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 - Client entities (SQLite): an update of rows the copy already had, or a delete the change feed reported again (its overlap), no longer reads every visible id on the server and in the browser; the copy compares ids only when its row count after the changes differs from the server's.
 - Client entities: realtime nudges that arrived while a sync ran each waited for a sync of their own, so a copy whose sync took longer than the changes came synced back to back; they now bring at most one more sync.
 - Client entities: after another group selection the switch of a table kept showing the disposed set as local, and a copy in SQLite kept its database connection open; a disposed set now reports that it searches on the server (the switch follows the set of the new selection) and closes its store.
+- Client entities: the menu of the table's switch checked *Search in the browser* whenever the browser was chosen, also while the queries still went to the server (the first download, a restored copy before its first update, a set too large, a failed download, a paused sync); the check now sits where the queries go, and a copy on its way reads *Search in the browser (loading…)* ([the switch](../ui/client-entities.md#the-switch-in-the-table)).
 
 ## 0.0.1.68 (2026-11-08)
 

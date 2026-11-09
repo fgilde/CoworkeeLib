@@ -1345,6 +1345,7 @@
   "Grouped rows are shown in pages.": "Οι ομαδοποιημένες γραμμές εμφανίζονται ανά σελίδα.",
   "Where searching runs: {0}": "Πού γίνεται η αναζήτηση: {0}",
   "Search in the browser": "Αναζήτηση στο πρόγραμμα περιήγησης",
+  "Search in the browser (loading…)": "Αναζήτηση στο πρόγραμμα περιήγησης (φόρτωση…)",
   "Search on the server": "Αναζήτηση στον διακομιστή",
   "Compare and choose the faster": "Σύγκριση και επιλογή του ταχύτερου",
   "Browser {0} ms, server {1} ms.": "Πρόγραμμα περιήγησης {0} ms, διακομιστής {1} ms.",

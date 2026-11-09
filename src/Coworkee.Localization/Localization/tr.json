@@ -1345,6 +1345,7 @@
   "Grouped rows are shown in pages.": "Gruplanmış satırlar sayfa sayfa gösterilir.",
   "Where searching runs: {0}": "Aramanın yapıldığı yer: {0}",
   "Search in the browser": "Tarayıcıda ara",
+  "Search in the browser (loading…)": "Tarayıcıda ara (yükleniyor…)",
   "Search on the server": "Sunucuda ara",
   "Compare and choose the faster": "Karşılaştır ve daha hızlı olanı seç",
   "Browser {0} ms, server {1} ms.": "Tarayıcı {0} ms, sunucu {1} ms.",

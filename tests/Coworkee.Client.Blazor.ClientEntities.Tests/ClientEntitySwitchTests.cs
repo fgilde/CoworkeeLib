@@ -61,6 +61,44 @@ public sealed class ClientEntitySwitchTests : BunitContext
     }
 
     [Fact]
+    public async Task While_the_copy_loads_the_menu_checks_the_server_and_shows_the_browser_as_pending()
+    {
+        var popovers = Render<MudPopoverProvider>();
+        var control = Render<ClientEntitySwitch>(p => p.Add(c => c.Table, _table));
+        var rows = new TaskCompletionSource();
+        _server.RowsGate = rows.Task;
+        var set = (await _entities.SetAsync<Gadget>("Gadgets", cancellationToken: Ct))!;
+        control.WaitForAssertion(() => control.Find("[data-testid='client-entity-state']").GetAttribute("data-state").ShouldBe("downloading"));
+
+        await control.Find("[data-testid='client-entity-state']").ClickAsync(new());
+
+        popovers.WaitForAssertion(() => Checked(popovers).ShouldBe(("Search in the browser (loading…)", false, true)));
+        set.Mode.ShouldBe(ClientEntityMode.Client, "the choice stays the browser");
+        rows.SetResult();
+        await set.WhenLocalAsync(Ct);
+        popovers.WaitForAssertion(() => Checked(popovers).ShouldBe(("Search in the browser", true, false)));
+    }
+
+    [Fact]
+    public async Task A_set_too_large_to_mirror_checks_the_server_and_shows_nothing_pending()
+    {
+        _server.MaxRows = 1;
+        var popovers = Render<MudPopoverProvider>();
+        var control = Render<ClientEntitySwitch>(p => p.Add(c => c.Table, _table));
+        await _entities.SetAsync<Gadget>("Gadgets", cancellationToken: Ct);
+        control.WaitForAssertion(() => control.Find("[data-testid='client-entity-state']").GetAttribute("data-state").ShouldBe("too-large"));
+
+        await control.Find("[data-testid='client-entity-state']").ClickAsync(new());
+
+        popovers.WaitForAssertion(() => Checked(popovers).ShouldBe(("Search in the browser", false, true)));
+    }
+
+    // the browser item's text and which of the two items carries the check
+    private static (string Browser, bool BrowserChecked, bool ServerChecked) Checked(IRenderedComponent<MudPopoverProvider> popovers) =>
+        (popovers.Find("[data-choice='Client']").TextContent.Trim(), popovers.FindAll("[data-choice='Client'] .cw-ce-check").Count == 1,
+            popovers.FindAll("[data-choice='Server'] .cw-ce-check").Count == 1);
+
+    [Fact]
     public async Task After_a_new_group_selection_the_switch_shows_the_server_until_the_new_set_is_local()
     {
         var (control, _, old) = await LocalAsync();

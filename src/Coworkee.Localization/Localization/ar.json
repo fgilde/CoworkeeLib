@@ -1345,6 +1345,7 @@
   "Grouped rows are shown in pages.": "تُعرض الصفوف المجمّعة على صفحات.",
   "Where searching runs: {0}": "مكان تشغيل البحث: {0}",
   "Search in the browser": "البحث في المتصفح",
+  "Search in the browser (loading…)": "البحث في المتصفح (جارٍ التحميل…)",
   "Search on the server": "البحث على الخادم",
   "Compare and choose the faster": "المقارنة واختيار الأسرع",
   "Browser {0} ms, server {1} ms.": "المتصفح {0} مللي ثانية، الخادم {1} مللي ثانية.",

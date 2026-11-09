@@ -1345,6 +1345,7 @@
   "Grouped rows are shown in pages.": "Baris yang dikelompokkan ditampilkan per halaman.",
   "Where searching runs: {0}": "Tempat pencarian dijalankan: {0}",
   "Search in the browser": "Cari di peramban",
+  "Search in the browser (loading…)": "Cari di peramban (memuat…)",
   "Search on the server": "Cari di server",
   "Compare and choose the faster": "Bandingkan dan pilih yang lebih cepat",
   "Browser {0} ms, server {1} ms.": "Peramban {0} ms, server {1} ms.",

@@ -1345,6 +1345,7 @@
   "Grouped rows are shown in pages.": "Seskupené řádky se zobrazují po stránkách.",
   "Where searching runs: {0}": "Kde se vyhledává: {0}",
   "Search in the browser": "Hledat v prohlížeči",
+  "Search in the browser (loading…)": "Hledat v prohlížeči (načítání…)",
   "Search on the server": "Hledat na serveru",
   "Compare and choose the faster": "Porovnat a zvolit rychlejší",
   "Browser {0} ms, server {1} ms.": "Prohlížeč {0} ms, server {1} ms.",

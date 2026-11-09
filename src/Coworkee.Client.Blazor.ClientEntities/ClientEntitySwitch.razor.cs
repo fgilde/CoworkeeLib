@@ -151,6 +151,10 @@ public partial class ClientEntitySwitch : IDisposable
 
     private static bool SearchesLocally(ClientEntitySet set) => set.Mode == ClientEntityMode.Client && set.Status.IsLocal;
 
+    // the browser is chosen and the copy is on its way (first download, a restored copy before its first update): the queries go to the server meanwhile
+    private static bool Pending(ClientEntitySet set) =>
+        set.Mode == ClientEntityMode.Client && !set.Status.IsLocal && !set.SyncPaused && set.Status.State is not (ClientEntitySyncState.TooLarge or ClientEntitySyncState.Failed);
+
     private static string State(ClientEntitySet set) => set.SyncPaused ? "paused" : set.Status.State switch
     {
         ClientEntitySyncState.Downloading => "downloading",

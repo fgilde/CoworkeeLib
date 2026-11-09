@@ -1345,6 +1345,7 @@
   "Grouped rows are shown in pages.": "グループ化された行はページごとに表示されます。",
   "Where searching runs: {0}": "検索の実行場所: {0}",
   "Search in the browser": "ブラウザーで検索",
+  "Search in the browser (loading…)": "ブラウザーで検索（読み込み中…）",
   "Search on the server": "サーバーで検索",
   "Compare and choose the faster": "比較して速い方を選ぶ",
   "Browser {0} ms, server {1} ms.": "ブラウザー {0} ms、サーバー {1} ms。",

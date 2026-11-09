@@ -1345,6 +1345,7 @@
   "Grouped rows are shown in pages.": "Групираните редове се показват по страници.",
   "Where searching runs: {0}": "Къде се търси: {0}",
   "Search in the browser": "Търсене в браузъра",
+  "Search in the browser (loading…)": "Търсене в браузъра (зареждане…)",
   "Search on the server": "Търсене на сървъра",
   "Compare and choose the faster": "Сравни и избери по-бързото",
   "Browser {0} ms, server {1} ms.": "Браузър {0} ms, сървър {1} ms.",
