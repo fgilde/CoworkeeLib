@@ -21658,7 +21658,8 @@
           "Int",
           "Secret",
           "Choice",
-          "Language"
+          "Language",
+          "MultiChoice"
         ]
       },
       "SettingValueDto": {

@@ -39,6 +39,12 @@ function field(coworkee: Coworkee, setting: SettingDefinition, value: string, la
     case 'Choice':
       input = `<select id="${id}" data-setting="${name}">${(setting.choices ?? []).map((choice) => option(choice, t(choice))).join('')}</select>`;
       break;
+    case 'MultiChoice': {
+      const chosen = value.split(',').map((v) => v.trim());
+      input = `<select id="${id}" multiple data-setting="${name}">${(setting.choices ?? []).map((choice) =>
+        `<option value="${esc(choice)}" ${chosen.includes(choice) ? 'selected' : ''}>${esc(t(choice))}</option>`).join('')}</select>`;
+      break;
+    }
     case 'Language':
       input = `<select id="${id}" data-setting="${name}">${option('', t('Default'))}${languages.filter((language) => language.isEnabled).map((language) => option(language.culture, language.name)).join('')}</select>`;
       break;
@@ -70,7 +76,8 @@ async function renderScope(coworkee: Coworkee, panel: HTMLElement, scope: Settin
   const form = panel.querySelector('form')!;
   const inputs = [...form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('[data-setting]')];
   const sync = () => {
-    for (const input of inputs) current[input.dataset.setting!] = input instanceof HTMLInputElement && input.type === 'checkbox' ? String(input.checked) : input.value;
+    for (const input of inputs) current[input.dataset.setting!] = input instanceof HTMLInputElement && input.type === 'checkbox' ? String(input.checked)
+      : input instanceof HTMLSelectElement && input.multiple ? [...input.selectedOptions].map((o) => o.value).join(',') : input.value;
     for (const input of inputs) input.disabled = !isEnabled(definitions.find((definition) => definition.name === input.dataset.setting)!, current);
   };
   sync();

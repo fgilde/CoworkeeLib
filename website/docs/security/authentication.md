@@ -148,7 +148,7 @@ Registration is off by default; the setting `Account.AllowRegistration` turns it
 
 On a user's page administrators edit everything about the user: user name, names, phone, address, language, active, email confirmed, the address itself (at once, confirmed or with a confirmation mail; the old address gets a notice), the password (set one or send a reset link), an invitation for users without password, lockout, two-step verification reset, external sign-ins, roles, groups and the picture. New users are created in a dialog, either invited by mail to choose a password or with an initial password.
 
-Administrators manage further clients and scopes in the app, end sessions at once and set password rules: see [Clients, sessions and password rules](clients.md).
+Administrators manage further clients and scopes in the app, end sessions at once and set password rules: see [Clients, sessions and password rules](clients.md). Every sign-in (also a failed one, with its reason), sign-out, lockout and change of password, address, two-step verification, passkeys, keys, roles and permissions lands in the [security log](../modules/auditing.md#security-log); the user page links to the entries of the user.
 
 ## Security headers of the web app
 

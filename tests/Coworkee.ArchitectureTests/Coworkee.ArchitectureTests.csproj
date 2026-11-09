@@ -4,6 +4,7 @@
     <ProjectReference Include="..\..\src\Coworkee.Infrastructure\Coworkee.Infrastructure.csproj" />
     <!-- every module with tables, for the personal data coverage of the whole model -->
     <ProjectReference Include="..\..\src\Coworkee.Ai\Coworkee.Ai.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.Auditing\Coworkee.Auditing.csproj" />
     <ProjectReference Include="..\..\src\Coworkee.AuthServer\Coworkee.AuthServer.csproj" />
     <ProjectReference Include="..\..\src\Coworkee.Backup\Coworkee.Backup.csproj" />
     <ProjectReference Include="..\..\src\Coworkee.Chat\Coworkee.Chat.csproj" />

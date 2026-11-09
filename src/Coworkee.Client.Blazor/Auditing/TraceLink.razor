@@ -1,0 +1,8 @@
+@if (_url is not null)
+{
+    <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.Timeline" Href="@_url" Target="_blank" data-testid="trace-link">@L["Open trace"]</MudButton>
+}
+else if (TraceId is not null)
+{
+    <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["Trace"]: <code>@TraceId</code></MudText>
+}

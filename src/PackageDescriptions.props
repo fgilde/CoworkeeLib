@@ -5,7 +5,7 @@
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Application'"><Description>Dispatcher for commands and queries with logging, validation, permission, caching and unit of work middleware.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.AspNetCore'"><Description>AddCoworkee&lt;TRoot&gt;() for ASP.NET Core hosts: problem details, API groups, bearer authentication, OpenAPI and Swagger UI.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Aspire'"><Description>AddCoworkeeApp() for the Aspire app host: migrations, auth server, APIs, workers and web wired with Postgres (or SQL Server, SQLite), Redis, Mailpit, Elasticsearch and Keycloak.</Description></PropertyGroup>
-  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Auditing'"><Description>Audit trail queries, entity history and restore.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Auditing'"><Description>Audit trail queries, entity history and restore, the security log and the request log of the API.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.AuthServer'"><Description>OpenIddict auth server with login, registration, two factor and external sign-in.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.BackgroundJobs'"><Description>Hangfire jobs with queues, retries and delayed follow-ups.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Backup'"><Description>Database backups and restore from the admin pages.</Description></PropertyGroup>

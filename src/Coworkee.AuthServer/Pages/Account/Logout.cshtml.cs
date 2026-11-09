@@ -19,5 +19,6 @@ public sealed class LogoutModel(SignInManager<User> signIn) : PageModel
         }
 
         await signIn.SignOutAsync();
+        await AuthEndpoints.LogSignOutAsync(HttpContext, cookie);
     }
 }

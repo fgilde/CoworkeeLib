@@ -268,6 +268,45 @@ public sealed class SettingsFormTests : ClientTestBase
             Arg.Is<IReadOnlyDictionary<string, string?>>(v => v.Count == 1 && v["Auth.LoginMode"] == "External"), Arg.Any<CancellationToken>());
     }
 
+    // nothing chosen is a value of its own: it must not fall back to the default (the request log is off, not on for both)
+    [Fact]
+    public async Task A_multi_choice_shows_the_default_choices_and_saves_none_as_an_empty_value()
+    {
+        Api.GetSettingDefinitionsAsync(false, Arg.Any<CancellationToken>()).Returns(
+        [
+            new SettingGroupDto("RequestLog", "Request log",
+                [new SettingDefinitionDto("RequestLog.Requests", "Log requests", null, SettingType.MultiChoice, "Reading,Writing", Global, ["Reading", "Writing"])]),
+        ]);
+        Api.GetSettingsAsync(SettingScope.Global, Arg.Any<CancellationToken>()).Returns([new SettingValueDto("RequestLog.Requests", null, false)]);
+        var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));
+        form.WaitForAssertion(() => SelectedText(form).ShouldBe("Reading, Writing"));
+
+        await form.FindAll(".mud-ex-list-item")[0].ClickAsync(new());
+        await form.InvokeAsync(() => form.Instance.SaveAsync());
+
+        await Api.Received(1).SetSettingsAsync(SettingScope.Global,
+            Arg.Is<IReadOnlyDictionary<string, string?>>(v => v.Count == 1 && v["RequestLog.Requests"] == "Writing"), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task A_multi_choice_without_any_choice_saves_an_empty_value()
+    {
+        Api.GetSettingDefinitionsAsync(false, Arg.Any<CancellationToken>()).Returns(
+        [
+            new SettingGroupDto("RequestLog", "Request log",
+                [new SettingDefinitionDto("RequestLog.Requests", "Log requests", null, SettingType.MultiChoice, "Reading,Writing", Global, ["Reading", "Writing"])]),
+        ]);
+        Api.GetSettingsAsync(SettingScope.Global, Arg.Any<CancellationToken>()).Returns([new SettingValueDto("RequestLog.Requests", "Reading", true)]);
+        var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));
+        form.WaitForAssertion(() => SelectedText(form).ShouldBe("Reading"));
+
+        await form.FindAll(".mud-ex-list-item")[0].ClickAsync(new());
+        await form.InvokeAsync(() => form.Instance.SaveAsync());
+
+        await Api.Received(1).SetSettingsAsync(SettingScope.Global,
+            Arg.Is<IReadOnlyDictionary<string, string?>>(v => v.Count == 1 && v["RequestLog.Requests"] == string.Empty), Arg.Any<CancellationToken>());
+    }
+
     // a user who wants the pager while the system default is endless scrolling must be able to choose the default value itself
     [Fact]
     public async Task A_choice_a_user_inherits_starts_as_inherited_and_any_value_can_be_chosen()

@@ -1,0 +1,46 @@
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + AuditPermissions.Requests)]
+
+<PageHeader Title="Request log" Description="Every API request with user, answer and duration. Open a row for headers and bodies." />
+<CoworkeeDataTable @ref="_table" T="RequestLogDto" EntitySet="RequestLog" SearchFields="SearchFields" Filter="@Filter" ExportFileName="request-log"
+                   NoRecordsText="No requests in this period.">
+    <ToolBarContent>
+        <MudDateRangePicker DateRange="_range" DateRangeChanged="RangeAsync" Label="@L["Period"]" Clearable="true" Variant="Variant.Outlined" Margin="Density.Margin"
+                            Class="mb-2 mr-2" Style="max-width:260px" data-testid="request-log-period" />
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Property="e => e.At" Title="@L["When"]">
+            <CellTemplate><MudText Typo="Typo.body2" Style="white-space:nowrap">@context.Item.At.ToLocalTime().ToString("G")</MudText></CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="e => e.Method" Title="@L["Method"]" />
+        <PropertyColumn Property="e => e.Path" Title="@L["Path"]">
+            <CellTemplate><code style="overflow-wrap:anywhere">@context.Item.Path@context.Item.QueryString</code></CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="e => e.StatusCode" Title="@L["Status"]">
+            <CellTemplate>
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="@StatusColor(context.Item.StatusCode)">@context.Item.StatusCode</MudChip>
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="e => e.DurationMs" Title="ms" />
+        <PropertyColumn Property="e => e.UserId" Title="@L["User"]">
+            <CellTemplate>
+                @if (context.Item.UserId is { } user)
+                {
+                    <UserCard UserId="user" />
+                }
+                else
+                {
+                    @(context.Item.ClientId ?? string.Empty)
+                }
+                @if (context.Item.ImpersonatorId is { } impersonator)
+                {
+                    <div class="d-flex align-center" style="gap:4px"><MudText Typo="Typo.caption" Class="mud-text-secondary">@L["impersonated by"]</MudText><UserCard UserId="impersonator" /></div>
+                }
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="e => e.RequestType" Title="@L["Request"]" />
+        <PropertyColumn Property="e => e.Ip" Title="@L["IP address"]" />
+    </Columns>
+    <ChildRowContent>
+        <RequestLogDetail Id="context.Item.Id" />
+    </ChildRowContent>
+</CoworkeeDataTable>

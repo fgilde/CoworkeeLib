@@ -762,6 +762,29 @@
         "Client entities: AddCoworkeeClientEntitiesSqlite() keeps only row types in SQLite that the in-memory copy keeps as JSON (a list among their properties); AddCoworkeeClientEntitiesSqlite(o => o.AllRowTypes = true) keeps every copy there as 0.0.1.65 did (0.0.1.66 was not published)."
       ],
       "needsMigration": false
+    },
+    {
+      "version": "0.0.1.69",
+      "breaking": [
+        "Auditing: the security log (table cw.SecurityEvents, written by every host) and the request log of the API (table cw.RequestLog, Coworkee.Auditing) are new. CoworkeeAuditingModule depends on CoworkeeSettingsModule and logs every API request with headers and bodies by default (setting RequestLog.Requests; nothing chosen turns it off)."
+      ],
+      "needsMigration": true,
+      "manual": [
+        {
+          "text": "Add a migration for the new tables cw.SecurityEvents and cw.RequestLog (coworkee migrations add CoworkeeLib069). Both tables are new, so no default is needed.",
+          "find": "class \\w+DbContext\\b",
+          "files": [
+            "src/**/*.cs"
+          ]
+        },
+        {
+          "text": "Add the meter Coworkee.Auditing to the OpenTelemetry metrics (.AddMeter(\"Microsoft.EntityFrameworkCore\", \"Npgsql\", \"Coworkee.Auditing\") in the service defaults) to see requests the request log dropped (coworkee.request_log.dropped).",
+          "find": "\\.AddMeter\\(",
+          "files": [
+            "src/**/*.cs"
+          ]
+        }
+      ]
     }
   ]
 }

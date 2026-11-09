@@ -1,0 +1,58 @@
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + AuditPermissions.SecurityLog)]
+
+<PageHeader Title="Security log" Description="Sign-ins, sign-outs, lockouts and changes of passwords, keys and access. Open a row for the details." />
+@if (UserFilter is not null)
+{
+    <MudChip T="string" Size="Size.Small" OnClose="ClearUser" data-testid="security-log-user-filter">@L["One user only"]</MudChip>
+}
+<CoworkeeDataTable @ref="_table" T="SecurityEventDto" EntitySet="SecurityEvents" SearchFields="SearchFields" Filter="@Filter" ExportFileName="security-log"
+                   NoRecordsText="No entries in this period.">
+    <ToolBarContent>
+        <MudDateRangePicker DateRange="_range" DateRangeChanged="RangeAsync" Label="@L["Period"]" Clearable="true" Variant="Variant.Outlined" Margin="Density.Margin"
+                            Class="mb-2 mr-2" Style="max-width:260px" data-testid="security-log-period" />
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Property="e => e.At" Title="@L["When"]">
+            <CellTemplate><MudText Typo="Typo.body2" Style="white-space:nowrap">@context.Item.At.ToLocalTime().ToString("g")</MudText></CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="e => e.Action" Title="@L["Action"]">
+            <CellTemplate>
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="@(context.Item.Succeeded ? Color.Default : Color.Error)">@L[context.Item.Action]</MudChip>
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="e => e.Succeeded" Title="@L["Result"]">
+            <CellTemplate>@(context.Item.Succeeded ? L["OK"] : L["Failed"])@(context.Item.Reason is { } reason ? $" ({L[reason]})" : string.Empty)</CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="e => e.UserId" Title="@L["User"]">
+            <CellTemplate>
+                @if (context.Item.UserId is { } user)
+                {
+                    <UserCard UserId="user" />
+                }
+                @if (context.Item.ActorId is { } actor)
+                {
+                    <div class="d-flex align-center" style="gap:4px"><MudText Typo="Typo.caption" Class="mud-text-secondary">@L["by"]</MudText><UserCard UserId="actor" /></div>
+                }
+                @if (context.Item.ImpersonatorId is { } impersonator)
+                {
+                    <div class="d-flex align-center" style="gap:4px"><MudText Typo="Typo.caption" Class="mud-text-secondary">@L["impersonated by"]</MudText><UserCard UserId="impersonator" /></div>
+                }
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="e => e.Ip" Title="@L["IP address"]" />
+        <PropertyColumn Property="e => e.ClientId" Title="@L["Application"]" />
+    </Columns>
+    <ChildRowContent>
+        <div class="px-4 pb-2" data-testid="security-log-detail">
+            @if (context.Item.UserAgent is { } agent)
+            {
+                <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">@agent</MudText>
+            }
+            @if (context.Item.Details is { } details)
+            {
+                <pre style="white-space:pre-wrap;overflow-wrap:anywhere;margin:4px 0">@LogJson.Pretty(details)</pre>
+            }
+            <TraceLink TraceId="@context.Item.TraceId" />
+        </div>
+    </ChildRowContent>
+</CoworkeeDataTable>

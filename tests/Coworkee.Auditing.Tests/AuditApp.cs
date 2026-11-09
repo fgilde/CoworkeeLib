@@ -11,6 +11,7 @@ using Coworkee.Domain;
 using Coworkee.Identity;
 using Coworkee.Identity.Domain;
 using Coworkee.Identity.Setup;
+using Coworkee.Infrastructure.Auditing;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Infrastructure.Versioning;
 using Coworkee.Testing;
@@ -39,6 +40,8 @@ public sealed class AuditApp : DatabaseFixture
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
         builder.Configuration["Coworkee:Database:Provider"] = Provider;
+        builder.Configuration["Coworkee:Jobs:ConnectionStringName"] = "test";
+        builder.Configuration["Coworkee:Jobs:RunServer"] = "false";
         builder.AddCoworkee<TestAuditModule>();
         builder.Services.AddTestAuthentication();
         App = builder.Build();
@@ -60,6 +63,8 @@ public sealed class AuditApp : DatabaseFixture
     public async Task<SetupResultDto> SetupAsync()
     {
         await ResetAsync();
+        // values derived from settings (the request log policy) must not outlive the reset rows
+        await App.Services.GetRequiredService<Microsoft.Extensions.Caching.Hybrid.HybridCache>().RemoveByTagAsync(Coworkee.Settings.ISettingProvider.CacheTag);
         App.Services.GetRequiredService<SystemStateCache>().Reset();
         var response = await App.GetTestClient().PostAsJsonAsync("/api/v1/setup/complete",
             new CompleteSetupRequest("token", "Acme", "admin@acme.test", "Admin#12345", "Ada", "Admin"));
@@ -113,6 +118,47 @@ public sealed class AuditApp : DatabaseFixture
         return await db.SaveChangesAsync();
     });
 
+    /// <summary>A user of the tenant with exactly these permissions.</summary>
+    public Task<Guid> CreateUserAsync(Guid tenantId, params string[] permissions) => AsActorAsync(null, null, async db =>
+    {
+        var email = $"user-{Guid.NewGuid():N}@acme.test";
+        var user = new User { TenantId = tenantId, UserName = email, NormalizedUserName = email.ToUpperInvariant(), Email = email, NormalizedEmail = email.ToUpperInvariant() };
+        db.Add(user);
+        db.AddRange(permissions.Select(p => new PermissionGrant { TenantId = tenantId, Name = p, ProviderType = PermissionProviderType.User, ProviderKey = user.Id }));
+        await db.SaveChangesAsync();
+        return user.Id;
+    });
+
+    /// <summary>Stores a global setting; the save clears the cached settings like an administrator's would.</summary>
+    public Task SetSettingAsync(string name, string? value) => AsActorAsync(null, null, async db =>
+    {
+        var writer = new Coworkee.Settings.SettingWriter(db, App.Services.GetRequiredService<Coworkee.Settings.ISettingDefinitionManager>(),
+            App.Services.GetRequiredService<Coworkee.Settings.SettingProtector>());
+        (await writer.WriteAsync(Coworkee.Contracts.Settings.SettingScope.Global, null, new Dictionary<string, string?> { [name] = value }, CancellationToken.None)).ShouldBeNull();
+        return await db.SaveChangesAsync();
+    });
+
+    /// <summary>The logged request that matches, once the background writer saved it.</summary>
+    public async Task<Requests.RequestLogEntry> LoggedAsync(Func<Requests.RequestLogEntry, bool> match)
+    {
+        for (var attempt = 0; attempt < 100; attempt++)
+        {
+            var rows = await AsActorAsync(null, null, db => db.Set<Requests.RequestLogEntry>().AsNoTracking().ToListAsync());
+            if (rows.FirstOrDefault(match) is { } row)
+            {
+                return row;
+            }
+
+            await Task.Delay(100);
+        }
+
+        throw new ShouldAssertException("The request was not logged.");
+    }
+
+    public Task<List<Requests.RequestLogEntry>> RequestsAsync() => AsActorAsync(null, null, db => db.Set<Requests.RequestLogEntry>().AsNoTracking().ToListAsync());
+
+    public Task<List<SecurityEvent>> SecurityEventsAsync() => AsActorAsync(null, null, db => db.Set<SecurityEvent>().AsNoTracking().OrderBy(e => e.At).ToListAsync());
+
     public Task<(Guid UserId, Guid TenantId)> CreateTenantAdminAsync() => AsActorAsync(null, null, async db =>
     {
         var tenant = new Tenant { Name = "Other", Identifier = "other-" + Guid.NewGuid().ToString("N")[..8] };
@@ -153,9 +199,11 @@ internal sealed class NotesModel : IModelContributor, IVersionedTypeContributor,
     public void Define(PermissionDefinitionContext context) => context.Group("Test", "Test").Add(Manage, "Manage notes").Add(Priorities, "See priorities");
 }
 
-[DependsOn(typeof(CoworkeeAuditingModule), typeof(CoworkeeIdentityModule))]
-public sealed class TestAuditModule : CoworkeeModule
+[DependsOn(typeof(CoworkeeAuditingModule), typeof(CoworkeeIdentityModule), typeof(CoworkeeODataModule))]
+public sealed class TestAuditModule : CoworkeeModule, IWebModule
 {
+    public void ConfigureApplication(WebApplication app) => LogTestApi.Map(app);
+
     public override void ConfigureServices(ModuleServiceContext context)
     {
         context.Services.AddSingleton<NotesModel>();

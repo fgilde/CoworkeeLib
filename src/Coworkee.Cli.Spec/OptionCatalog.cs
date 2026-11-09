@@ -64,8 +64,8 @@ public static class OptionCatalog
         new("repository", General, "GitHub repository", "GitHub repository of the app as owner/repo, e.g. acme/shop: the README gets a QuickRun badge that starts the app from there with one click.", OptionKind.Text, null,
             "When the app lives on GitHub and others should try it.", ["One click from the README to the running app"], ["GitHub only"], InfoUrl: "https://github.com/"),
 
-        new("auditing", Modules, "Audit log", "Pages for the audit trail, entity history and restore. The trail itself is always written.", OptionKind.Bool, "true",
-            "Whenever someone needs to see who changed what.", ["History and restore per entity"], ["More admin pages"], Package: "Coworkee.Auditing"),
+        new("auditing", Modules, "Audit log", "Pages for the audit trail, entity history and restore, the security log and the request log of the API. The trail and the security log are always written.", OptionKind.Bool, "true",
+            "Whenever someone needs to see who changed what.", ["History and restore per entity", "Requests with headers and bodies"], ["More admin pages", "The request log grows fast (30 days by default)"], Package: "Coworkee.Auditing"),
         new("notifications", Modules, "Notifications", "In-app notifications with mail digests.", OptionKind.Bool, "true",
             "When users should hear about changes (comments, chat, own events).", ["Bell with live updates", "Digest mails"], ["Tables and a background job"], Package: "Coworkee.Notifications"),
         new("chat", Modules, "Chat", "Direct and group chat with realtime delivery.", OptionKind.Bool, "true",

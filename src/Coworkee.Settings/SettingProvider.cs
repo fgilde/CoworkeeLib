@@ -16,7 +16,7 @@ internal sealed class SettingProvider(
     SettingProtector protector,
     IServiceProvider services) : ISettingProvider
 {
-    internal const string CacheTag = "coworkee:settings";
+    internal const string CacheTag = ISettingProvider.CacheTag;
 
     public async Task<string?> GetAsync(string name, CancellationToken cancellationToken = default)
     {
