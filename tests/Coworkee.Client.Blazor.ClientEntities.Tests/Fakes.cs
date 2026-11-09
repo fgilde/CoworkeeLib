@@ -52,8 +52,8 @@ internal sealed class FakeServer : HttpMessageHandler, IODataClient
 
     public ClientEntityApi Api => new(new HttpClient(this) { BaseAddress = new Uri("http://app/") });
 
-    public ClientEntities Entities(IClientEntityStorage? storage = null) =>
-        new(Api, this, storage ?? new NoClientEntityStorage(), null, new ClientEntitySignal(), NullLogger<ClientEntities>.Instance);
+    public ClientEntities Entities(IClientEntityStorage? storage = null, IClientEntityEngine? engine = null) =>
+        new(Api, this, storage ?? new NoClientEntityStorage(), null, new ClientEntitySignal(), NullLogger<ClientEntities>.Instance, engine: engine);
 
     public async Task<ODataPage<T>> QueryAsync<T>(string entitySet, ODataQuery query, CancellationToken cancellationToken = default)
     {

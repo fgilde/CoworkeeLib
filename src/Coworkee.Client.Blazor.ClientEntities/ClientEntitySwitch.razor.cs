@@ -63,6 +63,8 @@ public partial class ClientEntitySwitch : IDisposable
             return;
         }
 
+        // a set of an earlier scope still reports while it is disposed: the set of the current one wins once it exists
+        set = Entities?.Find(Table.EntitySet) ?? set;
         var reload = _set is not null && (set.Status.Revision != _revision || set.Mode != _mode);
         Track(set);
         _ = InvokeAsync(async () =>

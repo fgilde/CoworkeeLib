@@ -40,6 +40,7 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
     private readonly SemaphoreSlim _gate = new(1, 1);
     private SqliteConnection? _connection;
     private DbContextOptions<CopyDb<T>>? _options;
+    private bool _disposed;
 
     // directory: the browser's in-memory file system; tests pass a temporary folder
     public SqliteClientEntityStore(string key, IClientEntityStorage storage, ILogger logger, string? directory)
@@ -217,11 +218,19 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
         await _storage.SaveAsync(_key, []);
     }
 
-    public ValueTask DisposeAsync()
+    // a statement in progress ends first; afterwards no connection opens again, so a late query fails (and goes to the server) instead of leaking one
+    public async ValueTask DisposeAsync()
     {
-        Close();
-        _gate.Dispose();
-        return ValueTask.CompletedTask;
+        await _gate.WaitAsync();
+        try
+        {
+            _disposed = true;
+            Close();
+        }
+        finally
+        {
+            _gate.Release();
+        }
     }
 
     private static IQueryable<T> Filtered(IQueryable<T> rows, string? filter) =>
@@ -606,6 +615,7 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
 
     private SqliteConnection Connection()
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         if (_connection is null)
         {
             _connection = new SqliteConnection($"Data Source={_path};Pooling=False");

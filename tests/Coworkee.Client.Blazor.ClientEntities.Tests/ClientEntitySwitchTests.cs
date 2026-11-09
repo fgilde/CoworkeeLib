@@ -61,6 +61,31 @@ public sealed class ClientEntitySwitchTests : BunitContext
     }
 
     [Fact]
+    public async Task After_a_new_group_selection_the_switch_shows_the_server_until_the_new_set_is_local()
+    {
+        var (control, _, old) = await LocalAsync();
+        string? State() => control.Find("[data-testid='client-entity-state']").GetAttribute("data-state");
+
+        _server.Partition = "p2";
+        await _entities.ScopeChangedAsync();
+
+        control.WaitForAssertion(() => State().ShouldBe("idle"));
+        control.Find("[data-testid='client-entity-state']").ClassList.ShouldContain("server");
+        var feed = new TaskCompletionSource();
+        _server.Feed = feed.Task;
+        var next = _entities.SetAsync<Gadget>("Gadgets", cancellationToken: Ct);
+        await Task.Delay(100, Ct);
+        control.Find("[data-testid='client-entity-state']").ClassList.ShouldContain("server");
+        feed.SetResult();
+        var set = (await next)!;
+        await set.WhenLocalAsync(Ct);
+
+        set.ShouldNotBeSameAs(old);
+        control.WaitForAssertion(() => State().ShouldBe("synced"));
+        control.Find("[data-testid='client-entity-state']").ClassList.ShouldContain("local");
+    }
+
+    [Fact]
     public async Task The_menu_pauses_and_resumes_the_sync()
     {
         var (control, popovers, set) = await LocalAsync();

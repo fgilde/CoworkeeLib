@@ -240,9 +240,18 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
             await _running;
         }
 
+        _storeLocal = false;
         _table = null;
         _kept = null;
         _download = null;
+
+        // whoever still shows this set (the table's switch) sees the server until the set of the new scope is local; the revision stays, so no reload
+        Publish(ClientEntityStatus.Initial with { Revision = Status.Revision });
+        if (_store is not null)
+        {
+            await _store.DisposeAsync();
+        }
+
         _stop.Dispose();
     }
 

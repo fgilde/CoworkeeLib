@@ -97,6 +97,25 @@ public sealed class StoreSyncTests
     }
 
     [Fact]
+    public async Task A_new_group_selection_disposes_the_store_and_the_old_set_searches_nowhere_locally()
+    {
+        await using var entities = _server.Entities(engine: _store);
+        var set = (await entities.SetAsync<Gadget>("Gadgets", cancellationToken: Ct))!;
+        await set.WhenLocalAsync(Ct);
+        var revision = set.Status.Revision;
+        ClientEntityStatus? published = null;
+        set.Changed += s => published = s.Status;
+
+        _server.Partition = "p2";
+        await entities.ScopeChangedAsync();
+
+        _store.Disposed.ShouldBeTrue();
+        set.IsLocal.ShouldBeFalse();
+        published.ShouldBe(ClientEntityStatus.Initial with { Revision = revision }, "the revision stays: no table reloads for it");
+        entities.Find("Gadgets").ShouldBeNull();
+    }
+
+    [Fact]
     public async Task A_refresh_without_changes_asks_only_the_feed()
     {
         await using var set = await LocalAsync();
