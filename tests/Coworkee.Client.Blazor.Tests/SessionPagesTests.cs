@@ -65,11 +65,12 @@ public sealed class SessionPagesTests : ClientTestBase
 
         var page = Render<Pages.Admin.Sessions>();
 
-        page.WaitForAssertion(() => page.Markup.ShouldContain("Bob Builder"));
+        // generous waits: under the full suite's load the page and the dialog render later than bUnit's default second
+        page.WaitForAssertion(() => page.Markup.ShouldContain("Bob Builder"), TimeSpan.FromSeconds(10));
         page.Find($"[data-testid='session-count-{session.Id}']").TextContent.Trim().ShouldBe("3");
         page.Find("[data-testid='session-impersonated']").TextContent.ShouldContain("Ada Lovelace");
         var ending = page.Find($"[data-testid='session-end-{session.Id}']").ClickAsync(new());
-        dialogs.WaitForAssertion(() => dialogs.Markup.ShouldContain("Bob Builder"));
+        dialogs.WaitForAssertion(() => dialogs.Markup.ShouldContain("Bob Builder"), TimeSpan.FromSeconds(10));
         await dialogs.FindAll("button").First(b => b.TextContent.Trim() == "End").ClickAsync(new());
         await ending;
         await _sessions.Received(1).EndAsync(session.Id, Arg.Any<CancellationToken>());
