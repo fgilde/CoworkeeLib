@@ -146,7 +146,7 @@ Registrierung ist standardmäßig aus; die Einstellung `Account.AllowRegistratio
 
 Auf der Seite eines Benutzers bearbeiten Administratoren alles: Benutzername, Namen, Telefon, Adresse, Sprache, aktiv, E-Mail bestätigt, die Adresse selbst (sofort, bestätigt oder mit Bestätigungsmail; die alte Adresse bekommt einen Hinweis), das Passwort (setzen oder Link zum Zurücksetzen senden), eine Einladung für Benutzer ohne Passwort, Sperre, Zurücksetzen der Bestätigung in zwei Schritten, externe Anmeldungen, Rollen, Gruppen und das Bild. Neue Benutzer entstehen in einem Dialog, entweder per Mail eingeladen, ein Passwort zu wählen, oder mit einem Startpasswort.
 
-Administratoren verwalten weitere Clients und Scopes in der App, beenden Sitzungen sofort und legen Passwortregeln fest: siehe [Clients, Sitzungen und Passwortregeln](clients.md).
+Administratoren verwalten weitere Clients und Scopes in der App, beenden Sitzungen sofort und legen Passwortregeln fest: siehe [Clients, Sitzungen und Passwortregeln](clients.md). Jede Anmeldung (auch eine fehlgeschlagene, mit Grund), Abmeldung, Sperre und Änderung an Passwort, Adresse, Bestätigung in zwei Schritten, Passkeys, Schlüsseln, Rollen und Berechtigungen landet im [Sicherheitsprotokoll](../modules/auditing.md#sicherheitsprotokoll); die Benutzerseite verlinkt auf die Einträge des Benutzers.
 
 ## Sicherheits-Header der Web-App
 
