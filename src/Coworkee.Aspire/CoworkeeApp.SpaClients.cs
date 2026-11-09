@@ -19,7 +19,7 @@ public sealed partial class CoworkeeApp
     /// plus <paramref name="redirectPath"/>), the scope of the app's api plus <paramref name="scopes"/>, each of <paramref name="apiScopeAliases"/> as another
     /// name of the api's audience (not a standard scope, not a name taken already), and the origin allowed in the CORS policy of the auth server and of every api
     /// (<c>Coworkee:Cors:Origins</c>, also of apis added later). <paramref name="allowImpersonation"/>: "Log in as" works there. In a deployment the address is
-    /// the parameter <c>{app}-{resource}-url</c>. Add it after the api.
+    /// the parameter <c>{app}-{resource}-url</c> (on Azure Container Apps the app's address). Add it after the api.
     /// </summary>
     public IResourceBuilder<T> AddSpaClient<T>(
         string clientId,
@@ -33,7 +33,8 @@ public sealed partial class CoworkeeApp
     {
         var auth = Require(AuthServer, nameof(AddAuthServer), nameof(AddSpaClient));
         Require(_apis.FirstOrDefault(), nameof(AddApi), nameof(AddSpaClient));
-        var url = Publishing
+        // on Azure Container Apps the app's own address (https://{app}.{environment domain}), elsewhere the reverse proxy's
+        var url = Publishing && _target != "azure"
             ? ReferenceExpression.Create($"{DeployParameter($"{Name}-{resource.Resource.Name}-url").WithDescription($"The public address of {resource.Resource.Name}, e.g. https://{resource.Resource.Name}.example.com")}")
             : ReferenceExpression.Create($"{resource.GetEndpoint(endpointName)}");
         var redirect = ReferenceExpression.Create($"{url}{redirectPath}");

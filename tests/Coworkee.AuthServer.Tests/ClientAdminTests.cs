@@ -120,6 +120,42 @@ public sealed class ClientAdminTests(AuthApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_seed_that_fails_at_start_is_tried_again_until_the_clients_exist()
+    {
+        var services = app.App.Services;
+        await using (var scope = services.CreateAsyncScope())
+        {
+            var manager = scope.ServiceProvider.GetRequiredService<OpenIddict.Abstractions.IOpenIddictApplicationManager>();
+            await manager.DeleteAsync((await manager.FindByClientIdAsync(AuthApp.SpaClientId, Ct))!, Ct);
+        }
+
+        // the first scope fails as a database still migrating does; the retry finds it ready
+        using var seeder = new AuthClientSeeder(new FlakyScopes(services.GetRequiredService<IServiceScopeFactory>()),
+            services.GetRequiredService<Microsoft.Extensions.Options.IOptions<Coworkee.Contracts.Configuration.AuthServerOptions>>(),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<AuthClientSeeder>.Instance) { RetryDelay = TimeSpan.FromMilliseconds(50) };
+
+        await seeder.StartAsync(Ct);
+        object? client = null;
+        for (var i = 0; i < 100 && client is null; i++)
+        {
+            await Task.Delay(50, Ct);
+            await using var scope = services.CreateAsyncScope();
+            client = await scope.ServiceProvider.GetRequiredService<OpenIddict.Abstractions.IOpenIddictApplicationManager>().FindByClientIdAsync(AuthApp.SpaClientId, Ct);
+        }
+
+        await seeder.StopAsync(Ct);
+        client.ShouldNotBeNull();
+    }
+
+    private sealed class FlakyScopes(IServiceScopeFactory inner) : IServiceScopeFactory
+    {
+        private int _calls;
+
+        public IServiceScope CreateScope() =>
+            Interlocked.Increment(ref _calls) == 1 ? throw new InvalidOperationException("Invalid object name 'OpenIddictApplications'.") : inner.CreateScope();
+    }
+
+    [Fact]
     public async Task Clients_and_scopes_the_configuration_dropped_are_removed_at_startup_admin_created_ones_stay()
     {
         await SendAsync(new CreateClient(Request("partner", "public", "implicit")));

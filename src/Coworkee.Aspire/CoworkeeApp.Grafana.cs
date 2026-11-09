@@ -48,8 +48,18 @@ public sealed partial class CoworkeeApp
     // users, metrics, logs and traces outlive a redeployment; the browser reaches Grafana behind the proxy
     private void PublishGrafana(IResourceBuilder<GrafanaResource> grafana)
     {
-        grafana.WithDataVolume(DataVolume("grafana"))
-            .WithEnvironment("GF_SERVER_ROOT_URL", ToolUrl(grafana, GrafanaResource.HttpEndpointName));
+        // Azure Files starts empty and would hide the dashboards the image keeps in /var/lib/grafana/dashboards (Docker fills a new volume from the image);
+        // Docker Compose keeps the volume where existing deployments have their data
+        if (_target == "azure")
+        {
+            grafana.WithVolume(DataVolume("grafana"), "/var/lib/grafana-data").WithEnvironment("GF_PATHS_DATA", "/var/lib/grafana-data");
+        }
+        else
+        {
+            grafana.WithDataVolume(DataVolume("grafana"));
+        }
+
+        grafana.WithEnvironment("GF_SERVER_ROOT_URL", ToolUrl(grafana, GrafanaResource.HttpEndpointName));
         foreach (var prometheus in Builder.Resources.OfType<PrometheusResource>())
         {
             Builder.CreateResourceBuilder(prometheus).WithDataVolume(DataVolume("prometheus"));

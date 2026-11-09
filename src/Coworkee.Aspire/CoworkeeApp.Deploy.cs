@@ -43,7 +43,7 @@ public sealed partial class CoworkeeApp
                 (Options.DockerCompose ?? (_ => { }))(Builder.AddDockerComposeEnvironment("compose"));
                 break;
             case "azure":
-                Builder.AddAzureContainerAppEnvironment("aca");
+                AddAzureEnvironment();
                 break;
             case "k8s":
                 Builder.AddKubernetesEnvironment("k8s");
@@ -61,13 +61,19 @@ public sealed partial class CoworkeeApp
 
     /// <summary>
     /// The address browsers use for a service: its https endpoint when the app host runs, a parameter <c>{service}-url</c> when it publishes
-    /// (e.g. <c>https://auth.example.com</c>, the address of the reverse proxy in front of it).
+    /// (e.g. <c>https://auth.example.com</c>, the address of the reverse proxy in front of it), on Azure Container Apps the address of its app.
     /// </summary>
     public ReferenceExpression PublicUrl(IResourceBuilder<ProjectResource> service)
     {
         if (!Publishing)
         {
             return ReferenceExpression.Create($"{service.GetEndpoint("https")}");
+        }
+
+        // Container Apps gives every external app https://{app}.{environment domain}: no address to look up and enter beforehand
+        if (_target == "azure")
+        {
+            return ReferenceExpression.Create($"{service.GetEndpoint("http")}");
         }
 
         if (!_publicUrls.TryGetValue(service.Resource, out var url))
@@ -104,6 +110,12 @@ public sealed partial class CoworkeeApp
     {
         if (!Publishing)
         {
+            return ReferenceExpression.Create($"{tool.GetEndpoint(endpointName)}");
+        }
+
+        if (_target == "azure")
+        {
+            tool.WithEndpoint(endpointName, e => e.IsExternal = true).WithEnvironment("ASPNETCORE_FORWARDEDHEADERS_ENABLED", "true");
             return ReferenceExpression.Create($"{tool.GetEndpoint(endpointName)}");
         }
 
@@ -158,7 +170,7 @@ public sealed partial class CoworkeeApp
     // /home/app belongs to the app user of the .NET images, so a new volume mounted there is writable for it
     private void WithFileVolume(IResourceBuilder<ProjectResource> service)
     {
-        service.WithAnnotation(new ContainerMountAnnotation($"{Name}-files", "/home/app", ContainerMountType.Volume, isReadOnly: false))
+        service.WithAnnotation(new ContainerMountAnnotation(FilesVolume, "/home/app", ContainerMountType.Volume, isReadOnly: false))
             .WithSetting(s => s.Coworkee.Storage.FileSystem.Root, "/home/app/blobs");
     }
 

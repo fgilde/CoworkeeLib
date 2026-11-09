@@ -13,7 +13,7 @@ namespace Coworkee.AuthServer;
 /// Writes the clients and API scopes of the configuration to the OpenIddict stores at startup. They carry <see cref="ManagedProperty"/>:
 /// the admin pages show them read-only, the configuration stays their source, and those it no longer names are removed.
 /// </summary>
-public sealed partial class AuthClientSeeder(IServiceScopeFactory scopes, IOptions<AuthServerOptions> options, ILogger<AuthClientSeeder> logger) : IHostedService
+public sealed partial class AuthClientSeeder(IServiceScopeFactory scopes, IOptions<AuthServerOptions> options, ILogger<AuthClientSeeder> logger) : IHostedService, IDisposable
 {
     public const string ManagedProperty = "coworkee_managed";
 
@@ -78,19 +78,63 @@ public sealed partial class AuthClientSeeder(IServiceScopeFactory scopes, IOptio
         }
     }
 
+    private readonly CancellationTokenSource _stopping = new();
+    private Task _retry = Task.CompletedTask;
+
+    /// <summary>How long a failed seed waits before the next try; the database may still be migrating (Container Apps start every service at once).</summary>
+    public TimeSpan RetryDelay { get; init; } = TimeSpan.FromSeconds(15);
+
     public async Task StartAsync(CancellationToken cancellationToken)
+    {
+        if (!await TrySeedAsync(cancellationToken))
+        {
+            _retry = RetryAsync(_stopping.Token);
+        }
+    }
+
+    public async Task StopAsync(CancellationToken cancellationToken)
+    {
+        await _stopping.CancelAsync();
+        await _retry.WaitAsync(cancellationToken).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+    }
+
+    public void Dispose() => _stopping.Dispose();
+
+    // until the schema exists: the clients are the sign-in of every app, a single failed try at start would leave them out until the next restart
+    private async Task RetryAsync(CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                await Task.Delay(RetryDelay, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+
+            if (await TrySeedAsync(cancellationToken))
+            {
+                LogSeedRecovered();
+                return;
+            }
+        }
+    }
+
+    private async Task<bool> TrySeedAsync(CancellationToken cancellationToken)
     {
         try
         {
             await SeedAsync(cancellationToken);
+            return true;
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             LogSeedFailed(exception);
+            return false;
         }
     }
-
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     private static OpenIddictApplicationDescriptor Describe(AuthClientOptions client)
     {
@@ -146,6 +190,9 @@ public sealed partial class AuthClientSeeder(IServiceScopeFactory scopes, IOptio
         return descriptor;
     }
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Seeding OpenID Connect clients failed")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Seeding OpenID Connect clients failed; trying again shortly")]
     private partial void LogSeedFailed(Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "OpenID Connect clients seeded after an earlier failure")]
+    private partial void LogSeedRecovered();
 }
