@@ -4,6 +4,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Changed
+
+- Client entities (SQLite): more than 500 changed rows at once (more than ten chunks of 50) come as one snapshot of the set instead of chunks by id, each of which cost the server a read of the visible keys; the table keeps searching the old copy until the file replaces it ([how the copy works](../ui/client-entities.md#how-the-copy-works)). The copies in memory are unchanged.
+
 ### Fixed
 
 - Client entities (SQLite): an update of rows the copy already had, or a delete the change feed reported again (its overlap), no longer reads every visible id on the server and in the browser; the copy compares ids only when its row count after the changes differs from the server's.

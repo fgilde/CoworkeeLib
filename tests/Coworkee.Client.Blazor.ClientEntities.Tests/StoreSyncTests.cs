@@ -109,4 +109,119 @@ public sealed class StoreSyncTests
         _server.IdsRequests.ShouldBe(0);
         set.Status.Revision.ShouldBe(revision);
     }
+
+    // 50 changed rows a chunk, a snapshot beyond ten chunks
+    private void ManyRows(int count)
+    {
+        _server.Rows.Clear();
+        _server.Rows.AddRange(Enumerable.Range(0, count).Select(i => new Gadget(Guid.NewGuid(), $"Gadget {i}", "Tools", i)));
+        _server.BatchSize = 100;
+    }
+
+    private ClientEntityChanges Change(int count)
+    {
+        for (var i = 0; i < count; i++)
+        {
+            _server.Rows[i] = _server.Rows[i] with { Price = 1000 + i };
+        }
+
+        _server.Now = _server.Now.AddMinutes(1);
+        return new ClientEntityChanges(_server.Now, _server.Rows.Count, [.. _server.Rows.Take(count).Select(r => r.Id)], [], false);
+    }
+
+    private int Chunks => _server.Queries.Count(q => q.Filter?.StartsWith("Id in (", StringComparison.Ordinal) == true);
+
+    [Fact]
+    public async Task Changes_beyond_ten_chunks_come_as_one_snapshot()
+    {
+        ManyRows(520);
+        _store.TakesSnapshots = true;
+        await using var set = _server.Set(engine: _store);
+        await set.RefreshAsync(Ct);
+        _server.SnapshotRequests.ShouldBe(1, "the first download");
+        _server.NextChanges = Change(501);
+
+        await set.RefreshAsync(Ct);
+
+        (_server.SnapshotRequests, Chunks, _server.IdsRequests).ShouldBe((2, 0, 0));
+        _store.Rows.Values.Count(r => r.Price >= 1000).ShouldBe(501);
+        set.Status.ShouldSatisfyAllConditions(s => s.Version.ShouldBe(_server.Now), s => s.IsLocal.ShouldBeTrue(), s => s.State.ShouldBe(ClientEntitySyncState.Idle));
+    }
+
+    [Fact]
+    public async Task Changes_up_to_ten_chunks_are_fetched_by_id_as_before()
+    {
+        ManyRows(520);
+        _store.TakesSnapshots = true;
+        await using var set = _server.Set(engine: _store);
+        await set.RefreshAsync(Ct);
+        _server.NextChanges = Change(500);
+
+        await set.RefreshAsync(Ct);
+
+        (_server.SnapshotRequests, Chunks, _server.IdsRequests).ShouldBe((1, 10, 0));
+        _store.Rows.Values.Count(r => r.Price >= 1000).ShouldBe(500);
+    }
+
+    [Fact]
+    public async Task A_server_without_snapshots_is_not_asked_again_and_large_changes_come_in_chunks()
+    {
+        ManyRows(520);
+        _server.Snapshots = false;
+        _store.TakesSnapshots = true;
+        await using var set = _server.Set(engine: _store);
+        await set.RefreshAsync(Ct);
+        set.IsLocal.ShouldBeTrue("the download came in pages");
+        _server.NextChanges = Change(520);
+
+        await set.RefreshAsync(Ct);
+
+        (_server.SnapshotRequests, Chunks).ShouldBe((1, 11));
+        _store.Rows.Values.ShouldAllBe(r => r.Price >= 1000);
+    }
+
+    [Fact]
+    public async Task The_copy_in_memory_takes_large_changes_in_chunks()
+    {
+        ManyRows(520);
+        await using var set = _server.Set();
+        await set.RefreshAsync(Ct);
+        _server.NextChanges = Change(520);
+
+        await set.RefreshAsync(Ct);
+
+        (_server.SnapshotRequests, Chunks).ShouldBe((0, 11));
+        set.Items.ShouldAllBe(r => r.Price >= 1000);
+    }
+
+    [Fact]
+    public async Task The_table_keeps_answering_from_the_copy_while_the_snapshot_loads()
+    {
+        ManyRows(520);
+        _store.TakesSnapshots = true;
+        await using var set = _server.Set(engine: _store);
+        await set.RefreshAsync(Ct);
+        var held = new TaskCompletionSource();
+        _server.SnapshotGate = held.Task;
+        _server.NextChanges = Change(520);
+        var cheap = new ODataQuery { Filter = "Price lt 1000", Top = 0 };
+
+        var refresh = set.RefreshAsync(Ct);
+        for (var i = 0; i < 100 && _server.SnapshotRequests < 2; i++)
+        {
+            await Task.Delay(20, Ct);
+        }
+
+        _server.SnapshotRequests.ShouldBe(2);
+        var queries = _server.Queries.Count;
+        (await set.QueryAsync(cheap, Ct)).Count.ShouldBe(520, "the rows before the snapshot");
+        set.IsLocal.ShouldBeTrue();
+        _server.Queries.Count.ShouldBe(queries, "answered locally");
+
+        held.SetResult();
+        await refresh;
+
+        (await set.QueryAsync(cheap, Ct)).Count.ShouldBe(0);
+        _server.Queries.Count.ShouldBe(queries);
+    }
 }

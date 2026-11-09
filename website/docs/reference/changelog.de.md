@@ -4,6 +4,10 @@
 
 ## Unveröffentlicht
 
+### Geändert
+
+- Client-Entities (SQLite): Mehr als 500 geänderte Zeilen auf einmal (mehr als zehn Blöcke zu 50) kommen als ein Snapshot des Sets statt als Blöcke per Id, von denen jeder den Server ein Lesen der sichtbaren Schlüssel kostete; die Tabelle sucht in der alten Kopie, bis die Datei sie ersetzt ([wie die Kopie arbeitet](../ui/client-entities.md#wie-die-kopie-arbeitet)). Die Kopien im Speicher bleiben unverändert.
+
 ### Behoben
 
 - Client-Entities (SQLite): Eine Änderung an Zeilen, die die Kopie schon hatte, oder eine Löschung, die der Änderungsfeed erneut meldet (seine Überlappung), liest nicht mehr alle sichtbaren IDs auf dem Server und im Browser; die Kopie vergleicht IDs nur, wenn ihre Zeilenzahl nach den Änderungen von der des Servers abweicht.

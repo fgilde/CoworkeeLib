@@ -98,6 +98,14 @@ internal sealed class FakeServer : HttpMessageHandler, IODataClient
     /// <summary>The changes pages the client asked for, with their skip.</summary>
     public List<string> ChangeRequests { get; } = [];
 
+    /// <summary>The server builds snapshots (SQLite in the browser); without, it answers 404.</summary>
+    public bool Snapshots { get; set; } = true;
+
+    /// <summary>Holds the snapshots back.</summary>
+    public Task SnapshotGate { get; set; } = Task.CompletedTask;
+
+    public int SnapshotRequests { get; private set; }
+
     /// <summary>How often the client asked for all visible ids.</summary>
     public int IdsRequests { get; private set; }
 
@@ -135,6 +143,21 @@ internal sealed class FakeServer : HttpMessageHandler, IODataClient
         if (path.EndsWith("/ids", StringComparison.Ordinal))
         {
             IdsRequests++;
+        }
+
+        if (path.EndsWith("/snapshot", StringComparison.Ordinal))
+        {
+            SnapshotRequests++;
+            await SnapshotGate;
+            if (!Snapshots)
+            {
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            }
+
+            // the file of a MemoryStore: the rows as JSON
+            var file = new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(JsonSerializer.SerializeToUtf8Bytes(Rows, JsonSerializerOptions.Web)) };
+            file.Headers.Add(ClientEntitySnapshotKinds.VersionHeader, Now.ToString("O"));
+            return file;
         }
 
         object body = path switch
@@ -197,7 +220,18 @@ internal sealed class MemoryStore : IClientEntityEngine, IClientEntityStore<Gadg
 
     public int Count => Rows.Count;
 
+    /// <summary>Asks the server for snapshots, as SQLite does.</summary>
+    public bool TakesSnapshots { get; set; }
+
     public IClientEntityStore<T>? Open<T>(string key) => this as IClientEntityStore<T>;
+
+    public ClientEntitySnapshotRequest? Snapshot(string? expand) => TakesSnapshots ? new ClientEntitySnapshotRequest([], expand) : null;
+
+    public Task ReplaceWithFileAsync(byte[] file, DateTimeOffset version, CancellationToken cancellationToken)
+    {
+        Rows = JsonSerializer.Deserialize<Gadget[]>(file, JsonSerializerOptions.Web)!.ToDictionary(r => r.Id);
+        return Task.CompletedTask;
+    }
 
     public Task<DateTimeOffset?> RestoreAsync(CancellationToken cancellationToken) => Task.FromResult<DateTimeOffset?>(null);
 

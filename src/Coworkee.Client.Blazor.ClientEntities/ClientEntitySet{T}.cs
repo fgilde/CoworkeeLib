@@ -14,6 +14,10 @@ namespace Coworkee.Client.Blazor.ClientEntities;
 public sealed class ClientEntitySet<T> : ClientEntitySet
 {
     private const int FetchChunk = 50;
+
+    // a copy in a store takes more changed rows than this many chunks as a snapshot: each chunk costs the server a read of the visible keys, so beyond
+    // about ten chunks one snapshot of the whole set is faster (CoShipee, 23,000 shipments: a snapshot about 12 s)
+    private const int SnapshotAfterChunks = 10;
     private const int MaxViews = 16;
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
@@ -432,28 +436,10 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
 
         if (_store?.Snapshot(Expand) is { } snapshot && !_snapshotRejected)
         {
-            try
+            Publish(Status with { State = ClientEntitySyncState.Downloading, Loaded = 0, Total = start.Count, Error = null });
+            if (await ReplaceWithSnapshotAsync(snapshot, cancellationToken))
             {
-                var watch = System.Diagnostics.Stopwatch.StartNew();
-                Publish(Status with { State = ClientEntitySyncState.Downloading, Loaded = 0, Total = start.Count, Error = null });
-                if (await _api.SnapshotAsync(EntitySet, snapshot, cancellationToken) is { } file)
-                {
-                    var received = watch.ElapsedMilliseconds;
-                    await _store.ReplaceWithFileAsync(file.File, file.Version, cancellationToken);
-                    _logger.LogDebug("Snapshot of {EntitySet} ({Bytes} bytes) received in {Received} ms, opened in {Opened} ms",
-                        EntitySet, file.File.Length, received, watch.ElapsedMilliseconds - received);
-                    _download = null;
-                    CommitStore(file.Version, changed: true);
-                    return;
-                }
-
-                _snapshotRejected = true;
-            }
-            catch (Exception exception) when (exception is Api.ApiException or HttpRequestException or InvalidOperationException or FormatException)
-            {
-                // the pages of a download still work
-                _logger.LogWarning(exception, "The snapshot of {EntitySet} failed, it comes in pages", EntitySet);
-                _snapshotRejected = true;
+                return;
             }
         }
 
@@ -513,6 +499,34 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         await DropPagesAsync();
     }
 
+    // the whole copy as one file of the server; false when the server takes no snapshots or it failed: the rows then come from the OData set
+    private async Task<bool> ReplaceWithSnapshotAsync(ClientEntitySnapshotRequest snapshot, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            if (await _api.SnapshotAsync(EntitySet, snapshot, cancellationToken) is { } file)
+            {
+                var received = watch.ElapsedMilliseconds;
+                await _store!.ReplaceWithFileAsync(file.File, file.Version, cancellationToken);
+                _logger.LogDebug("Snapshot of {EntitySet} ({Bytes} bytes) received in {Received} ms, opened in {Opened} ms",
+                    EntitySet, file.File.Length, received, watch.ElapsedMilliseconds - received);
+                _download = null;
+                CommitStore(file.Version, changed: true);
+                return true;
+            }
+
+            _snapshotRejected = true;
+        }
+        catch (Exception exception) when (exception is Api.ApiException or HttpRequestException or InvalidOperationException or FormatException)
+        {
+            _logger.LogWarning(exception, "The snapshot of {EntitySet} failed, its rows come from the OData set", EntitySet);
+            _snapshotRejected = true;
+        }
+
+        return false;
+    }
+
     private async Task UpdateAsync(CancellationToken cancellationToken)
     {
         Publish(Status with { State = ClientEntitySyncState.Updating, Error = null });
@@ -533,6 +547,13 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
 
         if (_store is not null)
         {
+            // the copy keeps answering from the store until the file replaces it, and the file drops vanished rows too: no ids to compare
+            if ((changedIds.Count + FetchChunk - 1) / FetchChunk > SnapshotAfterChunks && changes.Count <= _info.MaxRows
+                && _store.Snapshot(Expand) is { } snapshot && !_snapshotRejected && await ReplaceWithSnapshotAsync(snapshot, cancellationToken))
+            {
+                return;
+            }
+
             await UpdateStoreAsync(changes, changedIds, cancellationToken);
             return;
         }
