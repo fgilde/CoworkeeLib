@@ -301,6 +301,26 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CustomPermissions",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    DisplayName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    Group = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    ModifiedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ModifiedBy = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CustomPermissions", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "DatabaseBackups",
                 schema: "cw",
                 columns: table => new
@@ -972,6 +992,8 @@ namespace MyApp.Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     TenantId = table.Column<Guid>(type: "uuid", nullable: true),
+                    BuiltInId = table.Column<Guid>(type: "uuid", nullable: true),
+                    IsCustomized = table.Column<bool>(type: "boolean", nullable: false),
                     IsDefault = table.Column<bool>(type: "boolean", nullable: false),
                     PaletteLight = table.Column<string>(type: "jsonb", nullable: false),
                     PaletteDark = table.Column<string>(type: "jsonb", nullable: false),
@@ -1324,6 +1346,7 @@ namespace MyApp.Infrastructure.Migrations
                     PasswordChangedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     PasswordHistory = table.Column<string>(type: "text", nullable: true),
                     KeptSession = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    MaxSessions = table.Column<int>(type: "integer", nullable: true),
                     AvatarUrl = table.Column<string>(type: "text", nullable: true),
                     AvatarChangedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     Street = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
@@ -1566,6 +1589,39 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserSessions",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ClientId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    UserAgent = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true),
+                    Device = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Browser = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    IpAddress = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    ImpersonatorId = table.Column<Guid>(type: "uuid", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastSeenAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    ExpiresAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    EndedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    EndReason = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: true),
+                    EndedBy = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserSessions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserSessions_Users_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "cw",
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserTokens",
                 schema: "cw",
                 columns: table => new
@@ -1714,6 +1770,13 @@ namespace MyApp.Infrastructure.Migrations
                 columns: new[] { "TenantId", "Name" },
                 unique: true)
                 .Annotation("Npgsql:NullsDistinct", false);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CustomPermissions_Name",
+                schema: "cw",
+                table: "CustomPermissions",
+                column: "Name",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_DashboardReports_ReportId",
@@ -2128,6 +2191,14 @@ namespace MyApp.Infrastructure.Migrations
                 filter: "\"TenantId\" IS NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Themes_TenantId_BuiltInId",
+                schema: "cw",
+                table: "Themes",
+                columns: new[] { "TenantId", "BuiltInId" },
+                unique: true,
+                filter: "\"BuiltInId\" IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Themes_TenantId_Name",
                 schema: "cw",
                 table: "Themes",
@@ -2184,6 +2255,18 @@ namespace MyApp.Infrastructure.Migrations
                 schema: "cw",
                 table: "Users",
                 column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserSessions_TenantId_UserId",
+                schema: "cw",
+                table: "UserSessions",
+                columns: new[] { "TenantId", "UserId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserSessions_UserId",
+                schema: "cw",
+                table: "UserSessions",
+                column: "UserId");
         }
 
         /// <inheritdoc />
@@ -2239,6 +2322,10 @@ namespace MyApp.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "CustomMailTemplates",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "CustomPermissions",
                 schema: "cw");
 
             migrationBuilder.DropTable(
@@ -2407,6 +2494,10 @@ namespace MyApp.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "UserRoles",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "UserSessions",
                 schema: "cw");
 
             migrationBuilder.DropTable(
@@ -2740,6 +2831,26 @@ namespace MyApp.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_CustomMailTemplates", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CustomPermissions",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    DisplayName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    Group = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    ModifiedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ModifiedBy = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CustomPermissions", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -3366,6 +3477,8 @@ namespace MyApp.Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     TenantId = table.Column<Guid>(type: "uuid", nullable: true),
+                    BuiltInId = table.Column<Guid>(type: "uuid", nullable: true),
+                    IsCustomized = table.Column<bool>(type: "boolean", nullable: false),
                     IsDefault = table.Column<bool>(type: "boolean", nullable: false),
                     PaletteLight = table.Column<string>(type: "jsonb", nullable: false),
                     PaletteDark = table.Column<string>(type: "jsonb", nullable: false),
@@ -3652,6 +3765,7 @@ namespace MyApp.Infrastructure.Migrations
                     PasswordChangedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     PasswordHistory = table.Column<string>(type: "text", nullable: true),
                     KeptSession = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    MaxSessions = table.Column<int>(type: "integer", nullable: true),
                     AvatarUrl = table.Column<string>(type: "text", nullable: true),
                     AvatarChangedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     Street = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
@@ -3894,6 +4008,39 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserSessions",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ClientId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    UserAgent = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true),
+                    Device = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Browser = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    IpAddress = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    ImpersonatorId = table.Column<Guid>(type: "uuid", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastSeenAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    ExpiresAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    EndedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    EndReason = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: true),
+                    EndedBy = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserSessions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserSessions_Users_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "cw",
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserTokens",
                 schema: "cw",
                 columns: table => new
@@ -4035,6 +4182,13 @@ namespace MyApp.Infrastructure.Migrations
                 columns: new[] { "TenantId", "Name" },
                 unique: true)
                 .Annotation("Npgsql:NullsDistinct", false);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CustomPermissions_Name",
+                schema: "cw",
+                table: "CustomPermissions",
+                column: "Name",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_DashboardReports_ReportId",
@@ -4417,6 +4571,14 @@ namespace MyApp.Infrastructure.Migrations
                 filter: "\"TenantId\" IS NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Themes_TenantId_BuiltInId",
+                schema: "cw",
+                table: "Themes",
+                columns: new[] { "TenantId", "BuiltInId" },
+                unique: true,
+                filter: "\"BuiltInId\" IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Themes_TenantId_Name",
                 schema: "cw",
                 table: "Themes",
@@ -4473,6 +4635,18 @@ namespace MyApp.Infrastructure.Migrations
                 schema: "cw",
                 table: "Users",
                 column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserSessions_TenantId_UserId",
+                schema: "cw",
+                table: "UserSessions",
+                columns: new[] { "TenantId", "UserId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserSessions_UserId",
+                schema: "cw",
+                table: "UserSessions",
+                column: "UserId");
         }
 
         /// <inheritdoc />
@@ -4528,6 +4702,10 @@ namespace MyApp.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "CustomMailTemplates",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "CustomPermissions",
                 schema: "cw");
 
             migrationBuilder.DropTable(
@@ -4684,6 +4862,10 @@ namespace MyApp.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "UserRoles",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "UserSessions",
                 schema: "cw");
 
             migrationBuilder.DropTable(
