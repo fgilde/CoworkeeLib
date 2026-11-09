@@ -11,6 +11,7 @@
 ### Behoben
 
 - Client-Entities (SQLite): Eine Änderung an Zeilen, die die Kopie schon hatte, oder eine Löschung, die der Änderungsfeed erneut meldet (seine Überlappung), liest nicht mehr alle sichtbaren IDs auf dem Server und im Browser; die Kopie vergleicht IDs nur, wenn ihre Zeilenzahl nach den Änderungen von der des Servers abweicht.
+- Client-Entities: Realtime-Anstöße, die während einer Synchronisierung kamen, warteten jeder auf eine eigene Synchronisierung, sodass eine Kopie, deren Synchronisierung länger dauerte als die Änderungen kamen, ohne Pause synchronisierte; jetzt bringen sie höchstens eine weitere Synchronisierung.
 
 ## 0.0.1.68 (2026-11-08)
 

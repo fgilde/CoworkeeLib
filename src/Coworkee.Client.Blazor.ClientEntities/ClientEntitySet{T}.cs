@@ -251,8 +251,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         try
         {
             await Task.Delay(300, _stop.Token);
-            Interlocked.Exchange(ref _nudged, 0);
-            await SyncAsync(_stop.Token);
+            await SyncAsync(_stop.Token, nudged: true);
         }
         catch (OperationCanceledException)
         {
@@ -359,9 +358,15 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         }
     }
 
-    private async Task SyncAsync(CancellationToken cancellationToken)
+    private async Task SyncAsync(CancellationToken cancellationToken, bool nudged = false)
     {
         await _gate.WaitAsync(cancellationToken);
+        if (nudged)
+        {
+            // only now: nudges while a sync runs or this one waited for it are covered by this sync, at most one more waits behind it
+            Interlocked.Exchange(ref _nudged, 0);
+        }
+
         try
         {
             if (!_restored)

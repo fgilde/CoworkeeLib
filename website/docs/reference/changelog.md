@@ -11,6 +11,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 ### Fixed
 
 - Client entities (SQLite): an update of rows the copy already had, or a delete the change feed reported again (its overlap), no longer reads every visible id on the server and in the browser; the copy compares ids only when its row count after the changes differs from the server's.
+- Client entities: realtime nudges that arrived while a sync ran each waited for a sync of their own, so a copy whose sync took longer than the changes came synced back to back; they now bring at most one more sync.
 
 ## 0.0.1.68 (2026-11-08)
 
