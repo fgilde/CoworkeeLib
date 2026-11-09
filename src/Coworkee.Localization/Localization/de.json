@@ -2006,5 +2006,16 @@
   "Spacer": "Abstandhalter",
   "Add spacer": "Abstandhalter hinzufügen",
   "Pushes the items after it to the other end of the bar.": "Schiebt die Elemente danach ans andere Ende der Leiste.",
-  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Ohne Abstandhalter stehen die Elemente einer Leiste quer über das Fenster an ihrem Ende, die einer Leiste an der Seite oben."
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Ohne Abstandhalter stehen die Elemente einer Leiste quer über das Fenster an ihrem Ende, die einer Leiste an der Seite oben.",
+  "Move or copy users…": "Benutzer verschieben oder kopieren…",
+  "Move or copy the users of {0}": "Benutzer von {0} verschieben oder kopieren",
+  "Target roles": "Zielrollen",
+  "Copy: the users keep {0}": "Kopieren: die Benutzer behalten {0}",
+  "Move: the users leave {0}": "Verschieben: die Benutzer verlassen {0}",
+  "Only selected users": "Nur ausgewählte Benutzer",
+  "{0} users moved": "{0} Benutzer verschoben",
+  "{0} users copied": "{0} Benutzer kopiert",
+  "System roles cannot be changed.": "Systemrollen können nicht geändert werden.",
+  "Edit role": "Rolle bearbeiten",
+  "Role saved": "Rolle gespeichert"
 }

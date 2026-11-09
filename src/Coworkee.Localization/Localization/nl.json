@@ -2006,5 +2006,16 @@
   "Spacer": "Opvulling",
   "Add spacer": "Opvulling toevoegen",
   "Pushes the items after it to the other end of the bar.": "Duwt de items erna naar het andere uiteinde van de balk.",
-  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Zonder opvulling staan de items van een horizontale balk aan het einde en die van een zijbalk bovenaan."
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Zonder opvulling staan de items van een horizontale balk aan het einde en die van een zijbalk bovenaan.",
+  "Move or copy users…": "Gebruikers verplaatsen of kopiëren…",
+  "Move or copy the users of {0}": "De gebruikers van {0} verplaatsen of kopiëren",
+  "Target roles": "Doelrollen",
+  "Copy: the users keep {0}": "Kopiëren: de gebruikers houden {0}",
+  "Move: the users leave {0}": "Verplaatsen: de gebruikers verlaten {0}",
+  "Only selected users": "Alleen geselecteerde gebruikers",
+  "{0} users moved": "{0} gebruikers verplaatst",
+  "{0} users copied": "{0} gebruikers gekopieerd",
+  "System roles cannot be changed.": "Systeemrollen kunnen niet worden gewijzigd.",
+  "Edit role": "Rol bewerken",
+  "Role saved": "Rol opgeslagen"
 }

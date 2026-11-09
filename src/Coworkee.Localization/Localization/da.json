@@ -2006,5 +2006,16 @@
   "Spacer": "Afstandsholder",
   "Add spacer": "Tilføj afstandsholder",
   "Pushes the items after it to the other end of the bar.": "Skubber elementerne efter den til den anden ende af bjælken.",
-  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Uden afstandsholder står elementerne i en vandret bjælke i dens ende og elementerne i en sidebjælke øverst."
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Uden afstandsholder står elementerne i en vandret bjælke i dens ende og elementerne i en sidebjælke øverst.",
+  "Move or copy users…": "Flyt eller kopiér brugere…",
+  "Move or copy the users of {0}": "Flyt eller kopiér brugerne af {0}",
+  "Target roles": "Målroller",
+  "Copy: the users keep {0}": "Kopiér: brugerne beholder {0}",
+  "Move: the users leave {0}": "Flyt: brugerne forlader {0}",
+  "Only selected users": "Kun valgte brugere",
+  "{0} users moved": "{0} brugere flyttet",
+  "{0} users copied": "{0} brugere kopieret",
+  "System roles cannot be changed.": "Systemroller kan ikke ændres.",
+  "Edit role": "Rediger rolle",
+  "Role saved": "Rolle gemt"
 }

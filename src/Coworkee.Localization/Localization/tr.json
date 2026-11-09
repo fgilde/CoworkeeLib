@@ -2006,5 +2006,16 @@
   "Spacer": "Boşluk",
   "Add spacer": "Boşluk ekle",
   "Pushes the items after it to the other end of the bar.": "Sonrasındaki öğeleri çubuğun diğer ucuna iter.",
-  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Boşluk olmadan yatay çubuğun öğeleri sonunda, yan çubuğun öğeleri üstte durur."
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Boşluk olmadan yatay çubuğun öğeleri sonunda, yan çubuğun öğeleri üstte durur.",
+  "Move or copy users…": "Kullanıcıları taşı veya kopyala…",
+  "Move or copy the users of {0}": "{0} kullanıcılarını taşı veya kopyala",
+  "Target roles": "Hedef roller",
+  "Copy: the users keep {0}": "Kopyala: kullanıcılar {0} rolünü korur",
+  "Move: the users leave {0}": "Taşı: kullanıcılar {0} rolünden çıkar",
+  "Only selected users": "Yalnızca seçili kullanıcılar",
+  "{0} users moved": "{0} kullanıcı taşındı",
+  "{0} users copied": "{0} kullanıcı kopyalandı",
+  "System roles cannot be changed.": "Sistem rolleri değiştirilemez.",
+  "Edit role": "Rolü düzenle",
+  "Role saved": "Rol kaydedildi"
 }

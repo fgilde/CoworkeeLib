@@ -2006,5 +2006,16 @@
   "Spacer": "Роздільник",
   "Add spacer": "Додати роздільник",
   "Pushes the items after it to the other end of the bar.": "Зсуває елементи після нього до іншого краю панелі.",
-  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Без роздільника елементи горизонтальної панелі стоять у її кінці, а бічної панелі — вгорі."
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Без роздільника елементи горизонтальної панелі стоять у її кінці, а бічної панелі — вгорі.",
+  "Move or copy users…": "Перемістити або скопіювати користувачів…",
+  "Move or copy the users of {0}": "Перемістити або скопіювати користувачів ролі {0}",
+  "Target roles": "Цільові ролі",
+  "Copy: the users keep {0}": "Копіювати: користувачі зберігають {0}",
+  "Move: the users leave {0}": "Перемістити: користувачі залишають {0}",
+  "Only selected users": "Лише вибрані користувачі",
+  "{0} users moved": "Переміщено користувачів: {0}",
+  "{0} users copied": "Скопійовано користувачів: {0}",
+  "System roles cannot be changed.": "Системні ролі не можна змінити.",
+  "Edit role": "Редагувати роль",
+  "Role saved": "Роль збережено"
 }

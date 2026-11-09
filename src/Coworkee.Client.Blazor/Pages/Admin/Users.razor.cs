@@ -49,6 +49,9 @@ public partial class Users
 
     private IReadOnlyCollection<Guid> RolesOf(UserRow user) => [.. _userRoles.GetValueOrDefault(user.Id)?.Select(r => r.Id) ?? []];
 
+    // a renamed or new role shows at once
+    private Task ReloadRolesAsync() => Snackbar.RunAsync(async () => _roles = await Api.GetRolesAsync());
+
     private string RoleName(Guid id) => _roles.FirstOrDefault(r => r.Id == id)?.Name ?? string.Empty;
 
     private async Task CreateAsync()

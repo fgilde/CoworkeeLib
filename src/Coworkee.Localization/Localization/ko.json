@@ -2006,5 +2006,16 @@
   "Spacer": "간격",
   "Add spacer": "간격 추가",
   "Pushes the items after it to the other end of the bar.": "뒤에 오는 항목을 바의 반대쪽 끝으로 밉니다.",
-  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "간격이 없으면 가로 바의 항목은 끝에, 측면 바의 항목은 위쪽에 놓입니다."
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "간격이 없으면 가로 바의 항목은 끝에, 측면 바의 항목은 위쪽에 놓입니다.",
+  "Move or copy users…": "사용자 이동 또는 복사…",
+  "Move or copy the users of {0}": "{0}의 사용자 이동 또는 복사",
+  "Target roles": "대상 역할",
+  "Copy: the users keep {0}": "복사: 사용자가 {0} 역할을 유지합니다",
+  "Move: the users leave {0}": "이동: 사용자가 {0} 역할에서 빠집니다",
+  "Only selected users": "선택한 사용자만",
+  "{0} users moved": "사용자 {0}명을 이동했습니다",
+  "{0} users copied": "사용자 {0}명을 복사했습니다",
+  "System roles cannot be changed.": "시스템 역할은 변경할 수 없습니다.",
+  "Edit role": "역할 편집",
+  "Role saved": "역할이 저장되었습니다"
 }

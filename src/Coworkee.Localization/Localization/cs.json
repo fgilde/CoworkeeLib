@@ -2006,5 +2006,16 @@
   "Spacer": "Mezera",
   "Add spacer": "Přidat mezeru",
   "Pushes the items after it to the other end of the bar.": "Posune položky za ní na druhý konec lišty.",
-  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Bez mezery jsou položky vodorovné lišty na jejím konci, položky boční lišty nahoře."
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Bez mezery jsou položky vodorovné lišty na jejím konci, položky boční lišty nahoře.",
+  "Move or copy users…": "Přesunout nebo zkopírovat uživatele…",
+  "Move or copy the users of {0}": "Přesunout nebo zkopírovat uživatele role {0}",
+  "Target roles": "Cílové role",
+  "Copy: the users keep {0}": "Kopírovat: uživatelé si ponechají {0}",
+  "Move: the users leave {0}": "Přesunout: uživatelé opustí {0}",
+  "Only selected users": "Jen vybraní uživatelé",
+  "{0} users moved": "Přesunuto uživatelů: {0}",
+  "{0} users copied": "Zkopírováno uživatelů: {0}",
+  "System roles cannot be changed.": "Systémové role nelze měnit.",
+  "Edit role": "Upravit roli",
+  "Role saved": "Role uložena"
 }

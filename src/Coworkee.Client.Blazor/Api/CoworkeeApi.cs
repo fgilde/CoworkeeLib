@@ -120,6 +120,9 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public Task<PagedResult<UserDto>> GetUsersAsync(PageRequest page, CancellationToken cancellationToken = default) =>
         GetAsync<PagedResult<UserDto>>($"{Identity}/users?page={page.Page}&pageSize={page.PageSize}&search={Uri.EscapeDataString(page.Search ?? string.Empty)}", cancellationToken);
 
+    public Task<PagedResult<UserDto>> GetRoleUsersAsync(Guid roleId, PageRequest page, CancellationToken cancellationToken = default) =>
+        GetAsync<PagedResult<UserDto>>($"{Identity}/users?roleId={roleId}&page={page.Page}&pageSize={page.PageSize}&search={Uri.EscapeDataString(page.Search ?? string.Empty)}", cancellationToken);
+
     public Task<UserDto> CreateUserAsync(CreateUserRequest request, CancellationToken cancellationToken = default) =>
         SendAsync<UserDto>(HttpMethod.Post, $"{Identity}/users", request, cancellationToken);
 
@@ -146,6 +149,9 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
 
     public Task DeleteRoleAsync(Guid id, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Delete, $"{Identity}/roles/{id}", null, cancellationToken);
+
+    public Task<int> TransferRoleUsersAsync(Guid roleId, TransferRoleUsersRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync<int>(HttpMethod.Post, $"{Identity}/roles/{roleId}/users/transfer", request, cancellationToken);
 
     public async Task<IReadOnlyList<PermissionGroupDto>> GetPermissionDefinitionsAsync(CancellationToken cancellationToken = default) =>
         await GetAsync<PermissionGroupDto[]>($"{Identity}/permissions/definitions", cancellationToken);

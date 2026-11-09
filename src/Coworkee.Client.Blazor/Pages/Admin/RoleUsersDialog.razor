@@ -1,0 +1,30 @@
+<MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial" data-testid="role-users-dialog">
+    <DialogContent>
+        <MudSelect T="Guid" MultiSelection="true" Dense="Density.Dense" Margin="Density.Margin" Label="@L["Target roles"]" SelectedValues="_targets"
+                   SelectedValuesChanged="ids => _targets = [.. ids]" ToStringFunc="RoleName" data-testid="role-users-targets">
+            @foreach (var role in _roles.Where(r => r.Id != Role.Id))
+            {
+                <MudSelectItem T="Guid" Value="@role.Id">@role.Name</MudSelectItem>
+            }
+        </MudSelect>
+        <MudRadioGroup T="bool" @bind-Value="_move" Class="mt-2" data-testid="role-users-mode">
+            <MudRadio T="bool" Value="false" Color="Color.Primary">@L["Copy: the users keep {0}", Role.Name]</MudRadio>
+            <MudRadio T="bool" Value="true" Color="Color.Primary">@L["Move: the users leave {0}", Role.Name]</MudRadio>
+        </MudRadioGroup>
+        <MudSwitch T="bool" @bind-Value="_some" Color="Color.Primary" Label="@L["Only selected users"]" data-testid="role-users-some" />
+        @if (_some)
+        {
+            <MudAutocomplete T="UserDto" Dense="Density.Dense" Margin="Density.Margin" Label="@L["User"]" SearchFunc="SearchAsync" ToStringFunc="Describe"
+                             Value="null" ValueChanged="Add" DebounceInterval="250" MaxItems="50" ResetValueOnEmptyText="true" data-testid="role-users-pick" />
+            @foreach (var user in _users)
+            {
+                <MudChip T="string" Size="Size.Small" OnClose="_ => _users.Remove(user)" data-testid="@($"role-user-{user.Email}")">@Describe(user)</MudChip>
+            }
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()">@L["Cancel"]</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(_targets.Count == 0 || (_some && _users.Count == 0))" OnClick="Ok"
+                   data-testid="role-users-ok">@L["OK"]</MudButton>
+    </DialogActions>
+</MudDialog>

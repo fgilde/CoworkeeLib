@@ -66,6 +66,12 @@ public sealed class AccountGuard(
 
     internal async Task<Error?> CheckUsersAsync(IEnumerable<Guid> userIds, bool joining, CancellationToken cancellationToken)
     {
+        // the answer for each user is yes then: no permission load per user when an administrator moves thousands
+        if (await HoldsEverythingAsync(cancellationToken))
+        {
+            return null;
+        }
+
         foreach (var userId in userIds.Distinct())
         {
             if (await CheckUserAsync(userId, joining, cancellationToken) is { } error)
@@ -196,6 +202,23 @@ public sealed class AccountGuard(
 
     private async Task<HashSet<string>> MineAsync(CancellationToken cancellationToken) =>
         IsSystem ? [.. definitions.All.Select(d => d.Name)] : [.. await checker.GetGrantedAsync(cancellationToken)];
+
+    // an administrator of the whole organisation who holds every permission right now (no narrower active role or key scopes)
+    private async Task<bool> HoldsEverythingAsync(CancellationToken cancellationToken)
+    {
+        if (IsSystem)
+        {
+            return true;
+        }
+
+        if (!await CallerIsAdminAsync(cancellationToken) || !await services.GetRequiredService<AdminReach>().AllAsync(cancellationToken))
+        {
+            return false;
+        }
+
+        var mine = await MineAsync(cancellationToken);
+        return definitions.All.All(d => mine.Contains(d.Name));
+    }
 
     private async Task<bool> CallerIsAdminAsync(CancellationToken cancellationToken) =>
         IsSystem || (currentUser.UserId is { } me && await AdminGuard.IsAdminAsync(db, me, cancellationToken));

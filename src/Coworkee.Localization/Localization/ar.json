@@ -2006,5 +2006,16 @@
   "Spacer": "فاصل",
   "Add spacer": "إضافة فاصل",
   "Pushes the items after it to the other end of the bar.": "يدفع العناصر التي تليه إلى الطرف الآخر من الشريط.",
-  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "بدون فاصل تظهر عناصر الشريط الأفقي في نهايته، وعناصر الشريط الجانبي في أعلاه."
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "بدون فاصل تظهر عناصر الشريط الأفقي في نهايته، وعناصر الشريط الجانبي في أعلاه.",
+  "Move or copy users…": "نقل المستخدمين أو نسخهم…",
+  "Move or copy the users of {0}": "نقل مستخدمي {0} أو نسخهم",
+  "Target roles": "الأدوار الهدف",
+  "Copy: the users keep {0}": "نسخ: يحتفظ المستخدمون بـ {0}",
+  "Move: the users leave {0}": "نقل: يغادر المستخدمون {0}",
+  "Only selected users": "المستخدمون المحددون فقط",
+  "{0} users moved": "تم نقل {0} من المستخدمين",
+  "{0} users copied": "تم نسخ {0} من المستخدمين",
+  "System roles cannot be changed.": "لا يمكن تغيير أدوار النظام.",
+  "Edit role": "تعديل الدور",
+  "Role saved": "تم حفظ الدور"
 }

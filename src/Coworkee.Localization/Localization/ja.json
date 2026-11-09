@@ -2006,5 +2006,16 @@
   "Spacer": "スペーサー",
   "Add spacer": "スペーサーを追加",
   "Pushes the items after it to the other end of the bar.": "後ろの項目をバーの反対側の端へ寄せます。",
-  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "スペーサーがない場合、横のバーの項目は末尾に、サイドバーの項目は上部に並びます。"
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "スペーサーがない場合、横のバーの項目は末尾に、サイドバーの項目は上部に並びます。",
+  "Move or copy users…": "ユーザーを移動またはコピー…",
+  "Move or copy the users of {0}": "{0} のユーザーを移動またはコピー",
+  "Target roles": "移動先のロール",
+  "Copy: the users keep {0}": "コピー: ユーザーは {0} を保持します",
+  "Move: the users leave {0}": "移動: ユーザーは {0} から外れます",
+  "Only selected users": "選択したユーザーのみ",
+  "{0} users moved": "{0} 人のユーザーを移動しました",
+  "{0} users copied": "{0} 人のユーザーをコピーしました",
+  "System roles cannot be changed.": "システムロールは変更できません。",
+  "Edit role": "ロールを編集",
+  "Role saved": "ロールを保存しました"
 }

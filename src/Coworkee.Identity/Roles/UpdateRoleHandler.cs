@@ -4,17 +4,25 @@ using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Coworkee.Identity.Roles;
 
-internal sealed class UpdateRoleHandler(CoworkeeDbContext db, ICurrentUser currentUser, RoleOffer offer, Users.AdminReach reach) : IHandler<UpdateRole, Result>
+internal sealed class UpdateRoleHandler(
+    CoworkeeDbContext db, ICurrentUser currentUser, RoleOffer offer, Users.AdminReach reach, IOptions<Users.IdentityAdministrationOptions> options) : IHandler<UpdateRole, Result>
 {
     public async Task<Result> HandleAsync(UpdateRole command, CancellationToken cancellationToken)
     {
-        var role = await db.Set<Role>().SingleOrDefaultAsync(r => r.Id == command.Id && r.TenantId == currentUser.TenantId, cancellationToken);
+        var role = await db.Set<Role>().SingleOrDefaultAsync(r => r.Id == command.Id && (r.TenantId == null || r.TenantId == currentUser.TenantId), cancellationToken);
         if (role is null)
         {
             return RoleNames.NotFound;
+        }
+
+        // system roles are shared by every organisation and found by their name
+        if (role.IsSystem)
+        {
+            return RoleNames.SystemRole;
         }
 
         if (await reach.CheckAllAsync(cancellationToken) is { } restricted)
@@ -22,7 +30,13 @@ internal sealed class UpdateRoleHandler(CoworkeeDbContext db, ICurrentUser curre
             return restricted;
         }
 
-        var normalized = command.Role.Name.Trim().ToUpperInvariant();
+        var name = command.Role.Name.Trim();
+        if (name != role.Name && options.Value.FixedRoleNames.Contains(role.Name!))
+        {
+            return RoleNames.Fixed;
+        }
+
+        var normalized = name.ToUpperInvariant();
         if (await RoleNames.TakenAsync(db, normalized, currentUser.TenantId, role.Id, cancellationToken))
         {
             return RoleNames.Taken;
@@ -34,7 +48,7 @@ internal sealed class UpdateRoleHandler(CoworkeeDbContext db, ICurrentUser curre
             return refused;
         }
 
-        role.Name = command.Role.Name.Trim();
+        role.Name = name;
         role.NormalizedName = normalized;
         role.Description = command.Role.Description;
         role.SelectableForRegistration = command.Role.SelectableForRegistration ?? role.SelectableForRegistration;

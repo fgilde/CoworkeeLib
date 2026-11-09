@@ -44,6 +44,20 @@ public sealed class WorkflowDefinitionTests
     }
 
     [Fact]
+    public void A_workflow_lists_the_roles_it_names_so_they_keep_their_names()
+    {
+        var workflow = new WorkflowOptions().Entity<Expense>("Expenses", e =>
+        {
+            e.Initial("Draft");
+            e.Transition("Reopen", "Approved", "Draft").RequiresRole("Auditor");
+            e.State("Review").Approval("Approved", "Rejected", a => a.Role("Manager").EscalateTo("Head"));
+            e.State("Approved").NotifyRole("Accounting");
+        }).For("Expenses")!;
+
+        workflow.RoleNames.ShouldBe(["Auditor", "Manager", "Head", "Accounting"], ignoreOrder: true);
+    }
+
+    [Fact]
     public void Targets_chosen_from_the_entity_are_listed_checked_and_counted_as_states()
     {
         Should.Throw<InvalidOperationException>(() => new WorkflowOptions().Entity<Expense>("Expenses", e =>

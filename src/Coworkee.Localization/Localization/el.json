@@ -2006,5 +2006,16 @@
   "Spacer": "Διάστημα",
   "Add spacer": "Προσθήκη διαστήματος",
   "Pushes the items after it to the other end of the bar.": "Μετακινεί τα στοιχεία μετά από αυτό στο άλλο άκρο της γραμμής.",
-  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Χωρίς διάστημα τα στοιχεία μιας οριζόντιας γραμμής βρίσκονται στο τέλος της και μιας πλευρικής στην κορυφή της."
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Χωρίς διάστημα τα στοιχεία μιας οριζόντιας γραμμής βρίσκονται στο τέλος της και μιας πλευρικής στην κορυφή της.",
+  "Move or copy users…": "Μετακίνηση ή αντιγραφή χρηστών…",
+  "Move or copy the users of {0}": "Μετακίνηση ή αντιγραφή των χρηστών του {0}",
+  "Target roles": "Ρόλοι προορισμού",
+  "Copy: the users keep {0}": "Αντιγραφή: οι χρήστες διατηρούν το {0}",
+  "Move: the users leave {0}": "Μετακίνηση: οι χρήστες αφήνουν το {0}",
+  "Only selected users": "Μόνο επιλεγμένοι χρήστες",
+  "{0} users moved": "Μετακινήθηκαν {0} χρήστες",
+  "{0} users copied": "Αντιγράφηκαν {0} χρήστες",
+  "System roles cannot be changed.": "Οι ρόλοι συστήματος δεν μπορούν να αλλάξουν.",
+  "Edit role": "Επεξεργασία ρόλου",
+  "Role saved": "Ο ρόλος αποθηκεύτηκε"
 }

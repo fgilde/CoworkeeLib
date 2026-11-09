@@ -14,11 +14,22 @@ public partial class RoleDetail
 
     [Inject] private MudBlazor.ISnackbar Snackbar { get; set; } = null!;
 
+    [Inject] private MudBlazor.IDialogService Dialogs { get; set; } = null!;
+
     private RoleDto? _role;
 
     [Parameter] public Guid Id { get; set; }
 
     protected override async Task OnParametersSetAsync() => _role = (await Api.GetRolesAsync()).FirstOrDefault(r => r.Id == Id);
+
+    private async Task EditAsync()
+    {
+        if (_role is { } role && await RoleForm.EditAsync(Dialogs, Api, L["Edit role"], role))
+        {
+            Snackbar.Add(L["Role saved"], MudBlazor.Severity.Success);
+            await OnParametersSetAsync();
+        }
+    }
 
     private async Task SetSelectableAsync(bool selectable)
     {

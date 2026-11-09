@@ -105,6 +105,9 @@ public partial class UserDetail
     private static string DisplayName(UserDetailDto user) =>
         $"{user.FirstName} {user.LastName}".Trim() is { Length: > 0 } name ? name : user.Email;
 
+    // a renamed or new role shows at once
+    private Task ReloadRolesAsync() => Snackbar.RunAsync(async () => _roles = await Api.GetRolesAsync());
+
     private string RoleName(Guid id) => _roles.FirstOrDefault(r => r.Id == id)?.Name ?? string.Empty;
 
     /// <summary>"Customer A / Hamburg": the user's groups from their ancestors, the choices of managers from the loaded groups.</summary>

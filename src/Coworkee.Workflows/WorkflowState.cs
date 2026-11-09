@@ -12,4 +12,6 @@ public class WorkflowState(string name)
     internal List<Func<WorkflowContext, Task>> OnExitActions { get; } = [];
 
     internal ApprovalStep? Step { get; set; }
+
+    internal List<string> NotifiedRoles { get; } = [];
 }

@@ -2006,5 +2006,16 @@
   "Spacer": "Espaciador",
   "Add spacer": "Añadir espaciador",
   "Pushes the items after it to the other end of the bar.": "Empuja los elementos que le siguen al otro extremo de la barra.",
-  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Sin espaciador, los elementos de una barra horizontal quedan al final y los de una barra lateral, arriba."
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Sin espaciador, los elementos de una barra horizontal quedan al final y los de una barra lateral, arriba.",
+  "Move or copy users…": "Mover o copiar usuarios…",
+  "Move or copy the users of {0}": "Mover o copiar los usuarios de {0}",
+  "Target roles": "Roles de destino",
+  "Copy: the users keep {0}": "Copiar: los usuarios conservan {0}",
+  "Move: the users leave {0}": "Mover: los usuarios dejan {0}",
+  "Only selected users": "Solo los usuarios seleccionados",
+  "{0} users moved": "{0} usuarios movidos",
+  "{0} users copied": "{0} usuarios copiados",
+  "System roles cannot be changed.": "Los roles del sistema no se pueden cambiar.",
+  "Edit role": "Editar rol",
+  "Role saved": "Rol guardado"
 }

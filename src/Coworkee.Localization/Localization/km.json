@@ -2006,5 +2006,16 @@
   "Spacer": "ចន្លោះ",
   "Add spacer": "បន្ថែមចន្លោះ",
   "Pushes the items after it to the other end of the bar.": "រុញធាតុបន្ទាប់ពីវាទៅចុងម្ខាងទៀតនៃរបារ។",
-  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "បើគ្មានចន្លោះ ធាតុនៃរបារផ្ដេកនៅចុងរបារ ហើយធាតុនៃរបារចំហៀងនៅខាងលើ។"
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "បើគ្មានចន្លោះ ធាតុនៃរបារផ្ដេកនៅចុងរបារ ហើយធាតុនៃរបារចំហៀងនៅខាងលើ។",
+  "Move or copy users…": "ផ្លាស់ទី ឬចម្លងអ្នកប្រើ…",
+  "Move or copy the users of {0}": "ផ្លាស់ទី ឬចម្លងអ្នកប្រើនៃ {0}",
+  "Target roles": "តួនាទីគោលដៅ",
+  "Copy: the users keep {0}": "ចម្លង៖ អ្នកប្រើរក្សា {0}",
+  "Move: the users leave {0}": "ផ្លាស់ទី៖ អ្នកប្រើចាកចេញពី {0}",
+  "Only selected users": "តែអ្នកប្រើដែលបានជ្រើស",
+  "{0} users moved": "បានផ្លាស់ទីអ្នកប្រើ {0} នាក់",
+  "{0} users copied": "បានចម្លងអ្នកប្រើ {0} នាក់",
+  "System roles cannot be changed.": "មិនអាចផ្លាស់ប្ដូរតួនាទីប្រព័ន្ធបានទេ។",
+  "Edit role": "កែសម្រួលតួនាទី",
+  "Role saved": "បានរក្សាទុកតួនាទី"
 }

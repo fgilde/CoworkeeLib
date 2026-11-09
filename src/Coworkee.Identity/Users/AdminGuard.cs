@@ -22,12 +22,16 @@ internal static class AdminGuard
         return await db.Set<IdentityUserRole<Guid>>().AnyAsync(r => r.UserId == userId && r.RoleId == adminRoleId, cancellationToken);
     }
 
-    public static async Task<bool> OtherActiveAdminExistsAsync(CoworkeeDbContext db, Guid? tenantId, Guid userId, CancellationToken cancellationToken)
+    public static Task<bool> OtherActiveAdminExistsAsync(CoworkeeDbContext db, Guid? tenantId, Guid userId, CancellationToken cancellationToken) =>
+        OtherActiveAdminExistsAsync(db, tenantId, [userId], cancellationToken);
+
+    /// <summary>Whether an active administrator of the tenant other than <paramref name="userIds"/> exists.</summary>
+    public static async Task<bool> OtherActiveAdminExistsAsync(CoworkeeDbContext db, Guid? tenantId, IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken)
     {
         var adminRoleId = await AdminRoleIdAsync(db, cancellationToken);
         return await (from userRole in db.Set<IdentityUserRole<Guid>>()
                       join user in db.Set<User>() on userRole.UserId equals user.Id
-                      where userRole.RoleId == adminRoleId && user.Id != userId && user.TenantId == tenantId && user.IsActive
+                      where userRole.RoleId == adminRoleId && !userIds.Contains(user.Id) && user.TenantId == tenantId && user.IsActive
                       select user.Id).AnyAsync(cancellationToken);
     }
 }

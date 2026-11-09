@@ -2006,5 +2006,16 @@
   "Spacer": "Pemisah",
   "Add spacer": "Tambah pemisah",
   "Pushes the items after it to the other end of the bar.": "Mendorong item setelahnya ke ujung lain bilah.",
-  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Tanpa pemisah, item bilah horizontal berada di ujungnya dan item bilah samping di atasnya."
+  "Without a spacer the items of a bar across the window sit at its end, those of a bar at the side at its top.": "Tanpa pemisah, item bilah horizontal berada di ujungnya dan item bilah samping di atasnya.",
+  "Move or copy users…": "Pindahkan atau salin pengguna…",
+  "Move or copy the users of {0}": "Pindahkan atau salin pengguna {0}",
+  "Target roles": "Peran tujuan",
+  "Copy: the users keep {0}": "Salin: pengguna tetap memiliki {0}",
+  "Move: the users leave {0}": "Pindahkan: pengguna meninggalkan {0}",
+  "Only selected users": "Hanya pengguna yang dipilih",
+  "{0} users moved": "{0} pengguna dipindahkan",
+  "{0} users copied": "{0} pengguna disalin",
+  "System roles cannot be changed.": "Peran sistem tidak dapat diubah.",
+  "Edit role": "Ubah peran",
+  "Role saved": "Peran disimpan"
 }
