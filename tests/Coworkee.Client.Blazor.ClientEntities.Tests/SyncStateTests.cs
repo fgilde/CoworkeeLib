@@ -108,6 +108,49 @@ public sealed class SyncStateTests
         set.Items.Count.ShouldBe(5);
     }
 
+    [Fact]
+    public async Task Nudges_while_a_sync_runs_bring_one_more_sync_not_one_each()
+    {
+        await using var set = _server.Set();
+        await set.RefreshAsync(Ct);
+        var feed = new TaskCompletionSource();
+        _server.Feed = feed.Task;
+        _server.ChangeRequests.Clear();
+        var running = set.RefreshAsync(Ct);
+
+        // each past the debounce: every one of them waited for a sync of its own
+        for (var i = 0; i < 4; i++)
+        {
+            set.Nudge();
+            await Task.Delay(400, Ct);
+        }
+
+        feed.SetResult();
+        await running;
+        await WaitAsync(() => _server.ChangeRequests.Count >= 2);
+        await Task.Delay(1000, Ct);
+
+        _server.ChangeRequests.Count.ShouldBe(2, "the running sync and one after it");
+    }
+
+    [Fact]
+    public async Task A_nudge_of_an_idle_copy_syncs_once_after_the_debounce()
+    {
+        await using var set = _server.Set();
+        await set.RefreshAsync(Ct);
+        _server.ChangeRequests.Clear();
+
+        set.Nudge();
+        set.Nudge();
+        await WaitAsync(() => _server.ChangeRequests.Count >= 1);
+        await Task.Delay(600, Ct);
+        set.Nudge();
+        await WaitAsync(() => _server.ChangeRequests.Count >= 2);
+        await Task.Delay(600, Ct);
+
+        _server.ChangeRequests.Count.ShouldBe(2);
+    }
+
     private static async Task WaitAsync(Func<bool> done)
     {
         for (var i = 0; i < 100 && !done(); i++)

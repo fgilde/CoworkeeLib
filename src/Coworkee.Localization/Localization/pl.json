@@ -1345,6 +1345,7 @@
   "Grouped rows are shown in pages.": "Zgrupowane wiersze są wyświetlane na stronach.",
   "Where searching runs: {0}": "Gdzie odbywa się wyszukiwanie: {0}",
   "Search in the browser": "Szukaj w przeglądarce",
+  "Search in the browser (loading…)": "Szukaj w przeglądarce (ładowanie…)",
   "Search on the server": "Szukaj na serwerze",
   "Compare and choose the faster": "Porównaj i wybierz szybszy",
   "Browser {0} ms, server {1} ms.": "Przeglądarka {0} ms, serwer {1} ms.",

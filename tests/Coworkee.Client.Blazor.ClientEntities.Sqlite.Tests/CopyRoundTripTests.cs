@@ -112,6 +112,20 @@ public sealed class CopyRoundTripTests : IDisposable
         restored.Count.ShouldBe(Rows.Length);
     }
 
+    [Fact]
+    public async Task A_disposed_store_opens_no_connection_again_and_its_copy_stays_for_the_next_visit()
+    {
+        var store = Store("disposed");
+        await store.ReplaceAsync(Rows, Version, TestContext.Current.CancellationToken);
+
+        await store.DisposeAsync();
+
+        // an InvalidOperationException, which the set takes as a query the copy cannot answer: it goes to the server
+        await Should.ThrowAsync<ObjectDisposedException>(() => store.QueryAsync(new ODataQuery(), NoFacets, TestContext.Current.CancellationToken));
+        await using var next = Store("disposed");
+        (await next.RestoreAsync(TestContext.Current.CancellationToken)).ShouldBe(Version);
+    }
+
     public static TheoryData<string> Filters() =>
     [
         "Day ge 2026-03-01",

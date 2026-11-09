@@ -1345,6 +1345,7 @@
   "Grouped rows are shown in pages.": "Grupperade rader visas sida för sida.",
   "Where searching runs: {0}": "Här söks det: {0}",
   "Search in the browser": "Sök i webbläsaren",
+  "Search in the browser (loading…)": "Sök i webbläsaren (läser in…)",
   "Search on the server": "Sök på servern",
   "Compare and choose the faster": "Jämför och välj den snabbaste",
   "Browser {0} ms, server {1} ms.": "Webbläsare {0} ms, server {1} ms.",

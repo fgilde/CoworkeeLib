@@ -1345,6 +1345,7 @@
   "Grouped rows are shown in pages.": "分组的行按页显示。",
   "Where searching runs: {0}": "搜索运行位置：{0}",
   "Search in the browser": "在浏览器中搜索",
+  "Search in the browser (loading…)": "在浏览器中搜索（正在加载…）",
   "Search on the server": "在服务器上搜索",
   "Compare and choose the faster": "比较并选择更快的一方",
   "Browser {0} ms, server {1} ms.": "浏览器 {0} 毫秒，服务器 {1} 毫秒。",

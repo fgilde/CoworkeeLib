@@ -63,6 +63,8 @@ public partial class ClientEntitySwitch : IDisposable
             return;
         }
 
+        // a set of an earlier scope still reports while it is disposed: the set of the current one wins once it exists
+        set = Entities?.Find(Table.EntitySet) ?? set;
         var reload = _set is not null && (set.Status.Revision != _revision || set.Mode != _mode);
         Track(set);
         _ = InvokeAsync(async () =>
@@ -148,6 +150,10 @@ public partial class ClientEntitySwitch : IDisposable
     private static long Median(List<TimeSpan> times) => (long)times.Order().ElementAt(times.Count / 2).TotalMilliseconds;
 
     private static bool SearchesLocally(ClientEntitySet set) => set.Mode == ClientEntityMode.Client && set.Status.IsLocal;
+
+    // the browser is chosen and the copy is on its way (first download, a restored copy before its first update): the queries go to the server meanwhile
+    private static bool Pending(ClientEntitySet set) =>
+        set.Mode == ClientEntityMode.Client && !set.Status.IsLocal && !set.SyncPaused && set.Status.State is not (ClientEntitySyncState.TooLarge or ClientEntitySyncState.Failed);
 
     private static string State(ClientEntitySet set) => set.SyncPaused ? "paused" : set.Status.State switch
     {

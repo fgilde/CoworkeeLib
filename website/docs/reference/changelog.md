@@ -32,6 +32,14 @@ Changes that need action in apps built on Coworkee. Newest first.
 - `PUT /api/v1/identity/roles/{id}` answers `409 identity.role_system` for a system role instead of 404.
 - The users list, the user page and the roles tab of a group show renamed and new roles at once.
 - Client: a failed API call shows the message of the problem (`ApiException.Title`) in snackbars and edit dialogs instead of its code, translated like the app's texts (English without a translation). `Error.Conflict(code, template, arguments)` sends a message with variable parts translatable (`template`, `arguments` in the problem) ([server messages](../modules/localization.md#in-the-client)); the role messages ship in all languages.
+- Client entities (SQLite): more than 500 changed rows at once (more than ten chunks of 50) come as one snapshot of the set instead of chunks by id, each of which cost the server a read of the visible keys; the table keeps searching the old copy until the file replaces it ([how the copy works](../ui/client-entities.md#how-the-copy-works)). The copies in memory are unchanged.
+
+### Fixed
+
+- Client entities (SQLite): an update of rows the copy already had, or a delete the change feed reported again (its overlap), no longer reads every visible id on the server and in the browser; the copy compares ids only when its row count after the changes differs from the server's.
+- Client entities: realtime nudges that arrived while a sync ran each waited for a sync of their own, so a copy whose sync took longer than the changes came synced back to back; they now bring at most one more sync.
+- Client entities: after another group selection the switch of a table kept showing the disposed set as local, and a copy in SQLite kept its database connection open; a disposed set now reports that it searches on the server (the switch follows the set of the new selection) and closes its store.
+- Client entities: the menu of the table's switch checked *Search in the browser* whenever the browser was chosen, also while the queries still went to the server (the first download, a restored copy before its first update, a set too large, a failed download, a paused sync); the check now sits where the queries go, and a copy on its way reads *Search in the browser (loading…)* ([the switch](../ui/client-entities.md#the-switch-in-the-table)).
 
 ## 0.0.1.68 (2026-11-08)
 

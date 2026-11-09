@@ -32,6 +32,14 @@
 - `PUT /api/v1/identity/roles/{id}` antwortet für eine Systemrolle mit `409 identity.role_system` statt 404.
 - Die Benutzerliste, die Benutzerseite und der Rollen-Reiter einer Gruppe zeigen umbenannte und neue Rollen sofort.
 - Client: Ein fehlgeschlagener API-Aufruf zeigt in Snackbars und Bearbeitungsdialogen die Meldung des Problems (`ApiException.Title`) statt seines Codes, übersetzt wie die Texte der App (ohne Übersetzung auf Englisch). `Error.Conflict(code, template, arguments)` schickt eine Meldung mit variablen Teilen übersetzbar (`template`, `arguments` im Problem) ([Meldungen des Servers](../modules/localization.md#im-client)); die Meldungen der Rollen gibt es in allen Sprachen.
+- Client-Entities (SQLite): Mehr als 500 geänderte Zeilen auf einmal (mehr als zehn Blöcke zu 50) kommen als ein Snapshot des Sets statt als Blöcke per Id, von denen jeder den Server ein Lesen der sichtbaren Schlüssel kostete; die Tabelle sucht in der alten Kopie, bis die Datei sie ersetzt ([wie die Kopie arbeitet](../ui/client-entities.md#wie-die-kopie-arbeitet)). Die Kopien im Speicher bleiben unverändert.
+
+### Behoben
+
+- Client-Entities (SQLite): Eine Änderung an Zeilen, die die Kopie schon hatte, oder eine Löschung, die der Änderungsfeed erneut meldet (seine Überlappung), liest nicht mehr alle sichtbaren IDs auf dem Server und im Browser; die Kopie vergleicht IDs nur, wenn ihre Zeilenzahl nach den Änderungen von der des Servers abweicht.
+- Client-Entities: Realtime-Anstöße, die während einer Synchronisierung kamen, warteten jeder auf eine eigene Synchronisierung, sodass eine Kopie, deren Synchronisierung länger dauerte als die Änderungen kamen, ohne Pause synchronisierte; jetzt bringen sie höchstens eine weitere Synchronisierung.
+- Client-Entities: Nach einer anderen Gruppenauswahl zeigte der Schalter einer Tabelle das verworfene Set weiter als lokal, und eine Kopie in SQLite hielt ihre Datenbankverbindung offen; ein verworfenes Set meldet jetzt, dass auf dem Server gesucht wird (der Schalter folgt dem Set der neuen Auswahl), und schließt seinen Speicher.
+- Client-Entities: Das Menü des Schalters einer Tabelle hakte *Im Browser suchen* ab, sobald der Browser gewählt war, auch während die Abfragen noch an den Server gingen (der erste Download, eine wiederhergestellte Kopie vor ihrer ersten Aktualisierung, ein zu großes Set, ein fehlgeschlagener Download, eine pausierte Synchronisierung); das Häkchen steht jetzt dort, wohin die Abfragen gehen, und eine Kopie auf dem Weg heißt *Im Browser suchen (wird geladen…)* ([der Schalter](../ui/client-entities.md#der-schalter-in-der-tabelle)).
 
 ## 0.0.1.68 (2026-11-08)
 

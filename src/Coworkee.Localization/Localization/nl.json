@@ -1345,6 +1345,7 @@
   "Grouped rows are shown in pages.": "Gegroepeerde rijen worden per pagina getoond.",
   "Where searching runs: {0}": "Waar gezocht wordt: {0}",
   "Search in the browser": "Zoeken in de browser",
+  "Search in the browser (loading…)": "Zoeken in de browser (laden…)",
   "Search on the server": "Zoeken op de server",
   "Compare and choose the faster": "Vergelijken en de snelste kiezen",
   "Browser {0} ms, server {1} ms.": "Browser {0} ms, server {1} ms.",
