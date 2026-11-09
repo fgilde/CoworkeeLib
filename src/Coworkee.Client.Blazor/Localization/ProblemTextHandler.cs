@@ -28,10 +28,10 @@ internal sealed class ProblemTextHandler(IServiceProvider services) : Delegating
             return response;
         }
 
-        if (problem is JsonObject body)
+        // resolved here: the localizer loads its texts through an API client that runs this handler; a client without one, or outside the browser
+        // where the localizer cannot be made (it needs IJSRuntime: server-side callers, tests), passes the problem on as it came
+        if (problem is JsonObject body && Localizer() is { } l)
         {
-            // resolved here: the localizer loads its texts through an API client that runs this handler
-            var l = services.GetRequiredService<CoworkeeLocalizer>();
             if (body["title"]?.GetValue<string>() is { } title)
             {
                 body["title"] = body["template"]?.GetValue<string>() is { } template && body["arguments"] is JsonArray arguments
@@ -56,5 +56,17 @@ internal sealed class ProblemTextHandler(IServiceProvider services) : Delegating
         }
 
         return response;
+    }
+
+    private CoworkeeLocalizer? Localizer()
+    {
+        try
+        {
+            return services.GetService<CoworkeeLocalizer>();
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
     }
 }
