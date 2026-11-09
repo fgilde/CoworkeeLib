@@ -77,7 +77,16 @@ internal static class AddCommand
         }
 
         ApplyResult? applied = null;
-        if (changed.Count > 0)
+        var after = SpecOptions.Resolve(target);
+        // options the template knows nothing of (git, the deploy workflow) need no template run
+        if (changed.Count > 0 && after.Where(v => before[v.Key] != v.Value).All(v => OptionCatalog.Find(v.Key) is { TemplateSymbol: false }))
+        {
+            if (!options.DryRun)
+            {
+                AppState.Write(solution.Root, target);
+            }
+        }
+        else if (changed.Count > 0)
         {
             NewCommand.Progress("Merging the template's changes");
             applied = await OptionApplier.RunAsync(solution, current, target, migration, options with { Migration = options.Migration && additions.Count == 0 }, cancellationToken);
@@ -100,6 +109,7 @@ internal static class AddCommand
         }
 
         await GenerateAsync(solution, target, additions, migration, options, cancellationToken);
+        await DeployWorkflowAsync(solution, before, after, cancellationToken);
         foreach (var reject in applied?.Rejects ?? [])
         {
             Console.WriteLine($"conflict {reject}");
@@ -109,6 +119,34 @@ internal static class AddCommand
             ? "Done with conflicts: merge each .rej into the file next to it by hand, then delete it."
             : "Done.");
         return 0;
+    }
+
+    /// <summary>The deploy workflow follows its options: written when switched on or changed, removed when switched off; hand-made changes stay.</summary>
+    private static async Task DeployWorkflowAsync(Solution solution, IReadOnlyDictionary<string, string?> before, IReadOnlyDictionary<string, string?> after, CancellationToken cancellationToken)
+    {
+        if (DeployWorkflowSettings.OptionIds.All(id => before[id] == after[id]))
+        {
+            return;
+        }
+
+        if (DeployWorkflowSettings.From(after) is not { IsOn: true } settings)
+        {
+            if (GitHubDeployWorkflow.Remove(solution) is { } removed)
+            {
+                Console.WriteLine(removed);
+            }
+
+            return;
+        }
+
+        try
+        {
+            Console.WriteLine($"write    {await GitHubDeployWorkflow.WriteAsync(solution, settings, force: false, cancellationToken)}");
+        }
+        catch (CliException exception)
+        {
+            Console.WriteLine($"warn  {exception.Message} coworkee deploy azure --github --force writes it anew.");
+        }
     }
 
     /// <summary>A spec of Studio or the person, named like the app; modules the app has keep theirs.</summary>

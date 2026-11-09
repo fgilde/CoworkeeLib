@@ -131,6 +131,12 @@ internal static class NewCommand
         Assets.Copy(settings, values);
         DemoUsersWriter.Write(solution, settings.Spec);
         Apps.AppState.Write(settings.Output, settings.Spec);
+        if (DeployWorkflowSettings.From(values) is { IsOn: true } deploy)
+        {
+            Progress("Writing the GitHub deploy workflow");
+            await GitHubDeployWorkflow.WriteAsync(solution, deploy, force: true, cancellationToken);
+        }
+
         var index = new SpecIndex(settings.Spec);
         IReadOnlyList<EnumSpec> enums = settings.Spec.Enums;
         foreach (var module in settings.Spec.Modules)

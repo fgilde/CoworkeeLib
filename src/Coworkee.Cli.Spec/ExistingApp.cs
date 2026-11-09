@@ -41,6 +41,7 @@ public static class ExistingApp
         var appHost = Text(Path.Combine(src, $"{name}.AppHost", "AppHost.cs"));
         var infrastructure = Text(Path.Combine(src, $"{name}.Infrastructure", $"{name}InfrastructureModule.cs"));
         var seed = Text(Path.Combine(src, $"{name}.Migrations", "DemoSeed.cs"));
+        var deployWorkflow = Text(Path.Combine(root, DeployWorkflowSettings.RelativePath));
         var projects = Directory.Exists(src)
             ? string.Concat(Directory.EnumerateFiles(src, "*.csproj", SearchOption.AllDirectories).Select(File.ReadAllText))
             : string.Empty;
@@ -85,6 +86,11 @@ public static class ExistingApp
             ["colorMode"] = Match(seed, @"Settings\[""Theme\.Mode""\] = ""(\w+)"";"),
             ["registration"] = Flag(seed.Contains("Account.AllowRegistration", StringComparison.Ordinal)),
             ["repository"] = Match(Text(Path.Combine(root, "README.md")), @"quickrun\.org/run\?repo=([^)\s]+)\)"),
+            ["deployWorkflow"] = File.Exists(Path.Combine(root, DeployWorkflowSettings.RelativePath)) ? "azure" : "none",
+            ["deployResourceGroupPrefix"] = Match(deployWorkflow, @"RESOURCE_GROUP_PREFIX: (\S+)"),
+            ["deployLocation"] = Match(deployWorkflow, @"(?m)^  LOCATION: (\S+)"),
+            ["deployBranches"] = Match(deployWorkflow, @"branches: \[([^\]]*)\]")?.Replace("'", "", StringComparison.Ordinal).Replace(" ", "", StringComparison.Ordinal),
+            ["deployTeardown"] = Flag(Match(deployWorkflow, @"(?m)^  (teardown):") is not null),
         };
 
         foreach (var option in OptionCatalog.All.Where(o => o is { Kind: OptionKind.Bool, Package: not null } && !values.ContainsKey(o.Id)))

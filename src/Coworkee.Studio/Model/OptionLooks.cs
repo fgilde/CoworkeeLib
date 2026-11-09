@@ -60,6 +60,11 @@ public static class OptionLooks
         ["colorMode"] = "Icon.ThemeLightDark",
         ["registration"] = "Icon.AccountPlus",
         ["githubActions"] = "Icon.CogPlay",
+        ["deployWorkflow"] = "Icon.Rocket",
+        ["deployResourceGroupPrefix"] = "Icon.Package",
+        ["deployLocation"] = "Icon.Web",
+        ["deployBranches"] = "Icon.Git",
+        ["deployTeardown"] = "Icon.Delete",
         ["devcontainer"] = "Icon.Container",
     };
 
