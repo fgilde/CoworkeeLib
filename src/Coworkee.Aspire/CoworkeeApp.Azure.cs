@@ -38,10 +38,11 @@ public sealed partial class CoworkeeApp
             return Task.CompletedTask;
         });
 
-        // compact names keep the unique suffix of the managed storages, which the 24 characters cut otherwise (two services' volumes got one name)
-#pragma warning disable ASPIREACANAMING001
-        Builder.AddAzureContainerAppEnvironment("aca").WithCompactResourceNaming().ConfigureInfrastructure(ShareFileVolume);
-#pragma warning restore ASPIREACANAMING001
+        Builder.AddAzureContainerAppEnvironment("aca").ConfigureInfrastructure(infrastructure =>
+        {
+            NameManagedStorages(infrastructure);
+            ShareFileVolume(infrastructure);
+        });
     }
 
     // the app host's own parameters too: without a value in the configuration the publisher waits for one, silently
@@ -107,6 +108,19 @@ public sealed partial class CoworkeeApp
             {
                 volume.MountOptions = "nobrl";
             }
+        }
+    }
+
+    // Aspire names them take('managedstoragevolumes{resource}{hash}', 24), which cuts the hash and gave two services' volumes one name; its compact naming
+    // (experimental) ends some names with '-'. ms + a hash of the resource group and the volume: unique, at most 15 characters, the same on every deployment
+    private static void NameManagedStorages(AzureResourceInfrastructure infrastructure)
+    {
+        foreach (var storage in infrastructure.GetProvisionableResources().OfType<ContainerAppManagedEnvironmentStorage>())
+        {
+            var volume = storage.BicepIdentifier["managedStorage_volumes_".Length..];
+            var index = volume[(volume.LastIndexOf('_') + 1)..];
+            var key = volume[..volume.LastIndexOf('_')].Replace("_", string.Empty, StringComparison.Ordinal).ToLowerInvariant() + (index == "0" ? string.Empty : index);
+            storage.Name = BicepFunction.Interpolate($"ms{BicepFunction.GetUniqueString(BicepFunction.GetResourceGroup().Id, key)}");
         }
     }
 
