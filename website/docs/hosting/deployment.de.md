@@ -58,6 +58,8 @@ Ist die Datenbank leer, legen die Migrationen den Administrator aus `<app>-admin
 
 Lässt du beide Werte leer, wird nichts angelegt: Die App zeigt ihre Setup-Seite, auf der du mit `<app>-setup-token` Organisation und Administrator selbst einrichtest. Eine eingerichtete Datenbank bleibt, wie sie ist; ein geändertes Passwort in `.env` erreicht Keycloak und die Tools, nicht das Konto in der App.
 
+Jeder Lauf der Migrationen (jedes `docker compose up`, der Container-Apps-Job nach jedem Deployment, der Helm-Hook) führt auch die [Seed-Contributors](../fundamentals/persistence.md#seed-contributors) der App aus, so erreichen Daten, die ein Seed neu bekommt, die deployte Datenbank; ein fehlschlagender beendet den Lauf mit Exit-Code 1, und die Dienste starten nicht. Rollen und Berechtigungen, die später in `DeploymentSeed` dazukommen, erreichen eine deployte Datenbank mit `options.SyncRolesInDeployments = true`.
+
 ## Mail
 
 Ein Deployment verschickt über deinen Mailserver. `coworkee deploy compose` fragt nach Host, Port, Benutzer, Passwort und Absender (oder liest `SHOP_SMTP_HOST`, ... aus der Umgebung) und schreibt sie in `.env`; was du leer lässt, trägst du später ein. Sie werden die Vorgaben der Mail-Einstellungen, die Administratoren auf der Seite der Mail-Einstellungen ändern. `UseMail(endpoint)` im App-Host nimmt stattdessen eine andere SMTP-Ressource, `--with mailpit` nimmt Mailpit.

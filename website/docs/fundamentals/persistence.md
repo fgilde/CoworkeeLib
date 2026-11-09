@@ -113,7 +113,6 @@ builder.AddCoworkeeMigrations<MyAppDbContext>(options =>
     options.DevelopmentSeed = DemoSeed.Configure;
     options.DeploymentSeed = DemoSeed.ConfigureDeployment;
 });
-builder.Services.AddScoped<ISetupStep, DemoData>();
 using var host = builder.Build();
 return await host.RunCoworkeeMigrationsAsync();
 ```
@@ -122,9 +121,65 @@ return await host.RunCoworkeeMigrationsAsync();
 
 1. migrate the database, retried every 3 seconds while its server does not accept connections yet (`Migrations:Attempts`, default 20, or `options.Attempts`), and give groups without a `Code` path theirs;
 2. seed: with a first administrator from the deploy parameters (`Coworkee:InitialAdmin`, see [Setup wizard or seed](../security/authentication.md#setup-wizard-or-seed)) `DeploymentSeed` with it; otherwise `DevelopmentSeed` in the Development environment (`options.DevelopmentUsers` decides elsewhere), followed by `SyncDevelopmentUsersAsync`; otherwise nothing, and the setup page with its token sets the system up;
-3. run `options.AfterSeed`, the app's own data steps, if set;
-4. bring a deployed Keycloak in line (`ReconcileKeycloakRealmAsync`).
+3. run the [seed contributors](#seed-contributors) of the app and its modules, also when step 2 did nothing;
+4. run `options.AfterSeed`, if set (prefer seed contributors);
+5. bring a deployed Keycloak in line (`ReconcileKeycloakRealmAsync`);
+6. drop the cached permissions, settings and features of running services (with Redis on every instance), so a re-run against a running app or a rolling deployment takes effect at once.
 
 It also builds the container with the production defaults: a local run is Development, whose scope checks fail on the MVC services of OData in a host without a web environment.
 
-`AddCoworkeeIdentitySeed` replaces the setup wizard: it creates the default tenant, the administrator, roles with their permission grants, further users and system wide settings (`seed.Settings["Theme.Mode"] = "dark"`), once. `ISetupStep` implementations run inside the same setup, as the administrator, and are the place for sample data. `SyncDevelopmentUsersAsync` runs in the Development environment only (or with `Coworkee:Identity:SyncDevelopmentUsers`, which the Aspire app host sets for the migrations of a local run) and keeps an existing database in step with the seed: users and roles it lacks are added, seed users get the roles and seeded roles the permissions added to the seed since, seed users whose password differs get the seeded one again; other users, roles and grants stay as they are, nothing is removed. See [Authentication](../security/authentication.md#setup-wizard-or-seed).
+`AddCoworkeeIdentitySeed` replaces the setup wizard: it creates the default tenant, the administrator, roles with their permission grants, further users and system wide settings (`seed.Settings["Theme.Mode"] = "dark"`), once. `ISetupStep` implementations run inside the same setup (here or in the setup wizard), as the administrator; for app data prefer seed contributors. `SyncDevelopmentUsersAsync` runs in the Development environment only (or with `Coworkee:Identity:SyncDevelopmentUsers`, which the Aspire app host sets for the migrations of a local run) and keeps an existing database in step with the seed: users and roles it lacks are added, seed users get the roles and seeded roles the permissions added to the seed since, seed users whose password differs get the seeded one again; other users, roles and grants stay as they are, nothing is removed. See [Authentication](../security/authentication.md#setup-wizard-or-seed).
+
+`options.SyncRolesInDeployments = true` does the roles part of that for deployments: on every run the roles of `DeploymentSeed` and their grants reach the default tenant, also of a database set up earlier or in the browser (`DeploymentSeed` is then called with a placeholder administrator, for its roles only). Missing roles and grants are added, nothing is removed, users and passwords stay untouched. Off by default; it runs before the other seed contributors.
+
+### Seed contributors
+
+Data every database needs (reference data, tags, settings of a module) and edits of the seeded accounts go into an `ISeedContributor` (`Coworkee.Application.Setup`), a class with injected services like any other:
+
+```csharp title="MyApp.Sales/Seeds/StandardTagsSeed.cs"
+[RegisterAs(typeof(ISeedContributor))]
+internal sealed class StandardTagsSeed(SalesDbContext db, IDispatcher dispatcher) : ISeedContributor
+{
+    private static readonly string[] Tags = ["Urgent", "Customs hold"];
+
+    public async Task SeedAsync(SeedContext context, CancellationToken cancellationToken)
+    {
+        var existing = await db.Tags.Select(t => t.Name).ToListAsync(cancellationToken);
+        foreach (var name in Tags.Except(existing))
+        {
+            await dispatcher.SendAsync(new CreateTag(name), cancellationToken).OrThrow();
+        }
+    }
+}
+```
+
+`coworkee seed add StandardTags --module Sales` writes such a class (see [CLI](../getting-started/cli.md)). `[RegisterAs]` works in the modules and in the migrations project (`AddCoworkeeMigrations` scans it too); `services.AddTransient<ISeedContributor, StandardTagsSeed>()` works anywhere.
+
+| Member | Default | |
+|---|---|---|
+| `SeedAsync(SeedContext, CancellationToken)` | | `context.TenantId` (null for `Host`), `context.IsDevelopment`, `context.IsNew` |
+| `Order` | 0 | lower runs first; ties by type name. Each contributor runs for every tenant before the next one starts |
+| `Environments` | `Always` | `Development` (a run that seeds the demo users; also without a development seed when the Development environment or `options.DevelopmentUsers` says so) or `Deployment` |
+| `Target` | `EachTenant` | once per tenant with the tenant set (inactive ones too), or `Host`: once per run without a tenant |
+| `Required` | true | false: a failure is logged as a warning and the run goes on |
+
+How a call runs: in a DI scope and a database transaction of its own, as the system with every permission (`SystemActor`), in the tenant of the call. Requests with `[RequiresPermission]` pass, `IMultiTenant` rows get the tenant, the audit trail shows "system", `CreatedBy` stays empty. `UserManager`, the dispatcher's commands and what the contributor leaves unsaved are written in the transaction; the runner saves at the end. A seed that wants a person as owner opens `CurrentUserScope.Begin(new ImpersonatedUser(userId, tenantId))` around that part. The system is a member of no group: pass group ids explicitly or read with `IgnoreQueryFilters()`. Other databases (external DbContexts) and blob storage are not in the transaction; writes there must be idempotent on their own.
+
+**Every run, so idempotent.** A contributor runs on every migrations run: read what exists, then add or change only what is missing. Changes to a seed (a new tag, a new grant) reach every database with the next run. What users own (sample records) belongs under `if (!context.IsNew) return;`: `IsNew` is true in the run whose identity seed set the system up and for a tenant just set up, so such records do not come back after a delete. There is no record of which seeds ran.
+
+**Errors.** A failing required contributor rolls its transaction back, the log names contributor and tenant, and the run stops with exit code 1, so the services of a deployment do not start against a half-seeded database. Contributors after it do not run, since they may build on it.
+
+**Where they run.**
+
+| Contributor | Migrations run (every run) | Setup wizard, new tenant (`POST /api/v1/tenants`) |
+|---|---|---|
+| in a module, `EachTenant` | for every tenant | in the api, for the new tenant, in the background after the commit (`IsNew` true) |
+| in a module, `Host` | once | no |
+| in the migrations project | yes | no, the api does not load that project |
+| `SyncRolesInDeployments` | deployments | no |
+
+The api runs them for a tenant set up at run time through the outbox (`TenantSeedRequested`, also raised by `tenant.RequestSeed()`): the outbox processor of the api starts them once the setup or the new tenant is committed, with `IsDevelopment` from the Development environment of the api. A failure there is logged as an error and not retried (a retry would repeat what `IsNew` guards); the next migrations run (a deployment, *Re-run migrations* in the Aspire dashboard, `coworkee db seed`) is the fallback for everything but `IsNew`. Contributors in the migrations project reach such tenants only with that next run.
+
+Writes of a seed send realtime messages and outbox events like any save: the outbox processor of the api delivers them once it runs. Two migrations runs at the same time (an overlapping job retry) run every seed twice; idempotent seeds and unique indexes make the second one a no-op or a rolled-back failure.
+
+**Testing.** `services.RunSeedContributorAsync<T>(new SeedContext(tenantId, IsDevelopment: true, IsNew: true))` runs one contributor the way the migrations do, also one the host does not register (see [Testing](../testing.md)).

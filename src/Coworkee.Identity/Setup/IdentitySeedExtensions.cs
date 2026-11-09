@@ -1,3 +1,4 @@
+using Coworkee.Application.Setup;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -35,4 +36,12 @@ public static class IdentitySeedExtensions
         await using var scope = services.CreateAsyncScope();
         await scope.ServiceProvider.GetRequiredService<IdentitySeeder>().SyncAsync(cancellationToken);
     }
+
+    /// <summary>
+    /// Runs one seed contributor the way the migrations do: own scope and transaction, as the system with every permission, in the tenant of
+    /// <paramref name="context"/>. For tests and code that seeds elsewhere; <typeparamref name="T"/> need not be registered.
+    /// </summary>
+    public static Task RunSeedContributorAsync<T>(this IServiceProvider services, SeedContext context, CancellationToken cancellationToken = default)
+        where T : ISeedContributor =>
+        SeedRunner.RunOneAsync(services, provider => ActivatorUtilities.CreateInstance<T>(provider), context, cancellationToken);
 }

@@ -43,7 +43,7 @@ public sealed class McpTests : IAsyncLifetime
         var tools = await _client.ListToolsAsync(cancellationToken: Ct);
 
         tools.Select(t => t.Name).ShouldBe(
-            ["list_options", "get_spec_schema", "get_spec_example", "validate_spec", "create_app", "add_module", "add_entity", "import_entities", "add_migration", "add_option", "run_doctor", "update_packages", "search_docs"],
+            ["list_options", "get_spec_schema", "get_spec_example", "validate_spec", "create_app", "add_module", "add_entity", "import_entities", "add_migration", "add_seed", "add_option", "run_doctor", "update_packages", "search_docs"],
             ignoreOrder: true);
         tools.ShouldAllBe(t => !string.IsNullOrWhiteSpace(t.Description));
         // coworkee mcp --help names every tool, and list_options every group it may filter by
@@ -101,6 +101,7 @@ public sealed class McpTests : IAsyncLifetime
         await CallAsync("add_entity", new() { ["directory"] = "app", ["module"] = "Sales", ["entity"] = "Invoice", ["plural"] = "Invoices" });
         await CallAsync("import_entities", new() { ["directory"] = "app", ["from"] = "db", ["source"] = "shop.db", ["module"] = "Legacy", ["tables"] = new[] { "orders", "customers" }, ["dryRun"] = true });
         await CallAsync("add_migration", new() { ["directory"] = "app", ["name"] = "AddSales" });
+        await CallAsync("add_seed", new() { ["directory"] = "app", ["name"] = "StandardTags", ["module"] = "Sales", ["host"] = true, ["environment"] = "Deployment" });
         await CallAsync("add_option", new() { ["directory"] = "app", ["options"] = new[] { "eventBus", "rabbitMq" }, ["dryRun"] = true });
         await CallAsync("add_option", new() { ["directory"] = "app", ["options"] = new[] { "chat" }, ["remove"] = true });
         await CallAsync("update_packages", new() { ["directory"] = "app", ["prerelease"] = true });
@@ -113,6 +114,7 @@ public sealed class McpTests : IAsyncLifetime
             "entity add Sales Invoice --plural Invoices",
             "entity import shop.db --from db --module Legacy --tables orders,customers --dry-run",
             "migrations add AddSales",
+            "seed add StandardTags --module Sales --host --deployment",
             "add eventBus rabbitMq --dry-run",
             "remove chat",
             "update --prerelease",

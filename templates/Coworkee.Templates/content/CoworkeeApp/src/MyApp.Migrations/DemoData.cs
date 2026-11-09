@@ -1,24 +1,25 @@
 using Coworkee.Application.Setup;
-using Coworkee.Contracts.Identity;
 #if (reports)
+using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Reporting;
-using Coworkee.Core.Security;
+using Coworkee.Identity.Domain;
 using Coworkee.Reporting;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 #endif
-using Coworkee.Core.Results;
 using MyApp.Catalog.Domain;
 using MyApp.Documents.Domain;
 using MyApp.Infrastructure;
+using Nextended.Core.Attributes;
 
 namespace MyApp.Migrations;
 
-/// <summary>Sample catalog and document types, so a fresh demo shows filled tables, facets and charts.</summary>
+/// <summary>Sample catalog and document types, so a fresh demo shows filled tables, facets and charts. Local runs only, into a new database.</summary>
 #if (reports)
 /// <remarks>The catalog report of the administrator is the organisation's dashboard.</remarks>
-internal sealed class DemoData(MyAppDbContext db, ICurrentUser currentUser) : ISetupStep
-#else
-internal sealed class DemoData(MyAppDbContext db) : ISetupStep
 #endif
+[RegisterAs(typeof(ISeedContributor))]
+internal sealed class DemoData(MyAppDbContext db) : ISeedContributor
 {
     private static readonly (string Name, string Description, decimal Tax, (string Name, string Barcode, decimal Rate)[] Products)[] Catalog =
     [
@@ -35,8 +36,17 @@ internal sealed class DemoData(MyAppDbContext db) : ISetupStep
         ("Data sheet", "Product data sheets"),
     ];
 
-    public Task<Error?> ApplyAsync(CompleteSetupRequest request, Guid tenantId, CancellationToken cancellationToken)
+    public SeedEnvironments Environments => SeedEnvironments.Development;
+
+    public Task SeedAsync(SeedContext context, CancellationToken cancellationToken)
     {
+        // sample records belong to the users: seeded with the database, they do not come back after a delete
+        if (!context.IsNew)
+        {
+            return Task.CompletedTask;
+        }
+
+        var tenantId = context.TenantId!.Value;
         foreach (var (name, description, tax, products) in Catalog)
         {
             var brand = new Brand { Name = name, Description = description, Tax = tax, TenantId = tenantId };
@@ -46,10 +56,22 @@ internal sealed class DemoData(MyAppDbContext db) : ISetupStep
 
         db.AddRange(DocumentTypes.Select(t => new DocumentType { Name = t.Name, Description = t.Description, TenantId = tenantId }));
 #if (reports)
+        return AddDashboardAsync(tenantId, cancellationToken);
+#else
+        return Task.CompletedTask;
+#endif
+    }
+#if (reports)
+
+    // the seed runs as the system: the report belongs to the administrator of the tenant
+    private async Task AddDashboardAsync(Guid tenantId, CancellationToken cancellationToken)
+    {
+        var adminRole = await db.Set<Role>().Where(r => r.IsSystem && r.Name == SystemRoles.Admin).Select(r => r.Id).SingleAsync(cancellationToken);
         var report = new Report
         {
             TenantId = tenantId,
-            OwnerId = currentUser.UserId ?? throw new InvalidOperationException("The setup runs as its administrator."),
+            OwnerId = await db.Set<User>().Where(u => u.TenantId == tenantId && db.Set<IdentityUserRole<Guid>>().Any(r => r.UserId == u.Id && r.RoleId == adminRole))
+                .Select(u => u.Id).FirstAsync(cancellationToken),
             Name = "Catalog overview",
             Description = "Products and brands at a glance.",
             Visibility = ReportVisibility.Organisation,
@@ -57,10 +79,7 @@ internal sealed class DemoData(MyAppDbContext db) : ISetupStep
         };
         db.Add(report);
         db.Add(new DashboardReport { TenantId = tenantId, ReportId = report.Id });
-#endif
-        return Task.FromResult<Error?>(null);
     }
-#if (reports)
 
     private static ReportDefinition CatalogOverview() => new()
     {

@@ -1,5 +1,7 @@
+using Coworkee.Application.Setup;
 using Coworkee.Identity.Setup;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -39,6 +41,8 @@ public sealed class MigrationsHostTests
     {
         var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { EnvironmentName = "Production" });
         builder.Services.AddDbContext<BrokenDb>(o => o.UseSqlite($"Data Source={Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".db")}"));
+        var cache = new RecordingCache();
+        builder.Services.AddSingleton<HybridCache>(cache);
         var ran = false;
         builder.AddCoworkeeMigrations<BrokenDb>(o => o.AfterSeed = (services, _) =>
         {
@@ -49,6 +53,25 @@ public sealed class MigrationsHostTests
 
         (await host.RunCoworkeeMigrationsAsync(TestContext.Current.CancellationToken)).ShouldBe(0);
         ran.ShouldBeTrue();
+        // running services drop what the run may have changed past their interceptors
+        cache.Tags.ShouldBe(["coworkee:permissions", "coworkee:settings", "coworkee:features"]);
+    }
+
+    [Theory]
+    [InlineData("Production", true, true)]
+    [InlineData("Production", false, false)]
+    [InlineData("Development", true, false)]
+    public void Deployments_reconcile_the_seed_roles_only_when_asked(string environment, bool sync, bool registered)
+    {
+        var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { EnvironmentName = environment });
+        builder.AddCoworkeeMigrations<BrokenDb>(o =>
+        {
+            o.DevelopmentSeed = seed => seed.Users.Add(new SeedUser("dev@seed.test", "Dev#12345", "Dev"));
+            o.DeploymentSeed = (seed, admin) => seed.Roles.Add(new SeedRole("Dispatcher", null, []));
+            o.SyncRolesInDeployments = sync;
+        });
+
+        builder.Services.Any(d => d.ServiceType == typeof(ISeedContributor)).ShouldBe(registered);
     }
 
     private static string[] SeededUsers(string environment, Dictionary<string, string?> settings, Action<CoworkeeMigrationsOptions>? configure = null)
@@ -66,4 +89,24 @@ public sealed class MigrationsHostTests
     }
 
     private sealed class BrokenDb(DbContextOptions<BrokenDb> options) : DbContext(options);
+
+    private sealed class RecordingCache : HybridCache
+    {
+        public List<string> Tags { get; } = [];
+
+        public override ValueTask<T> GetOrCreateAsync<TState, T>(
+            string key, TState state, Func<TState, CancellationToken, ValueTask<T>> factory, HybridCacheEntryOptions? options = null, IEnumerable<string>? tags = null,
+            CancellationToken cancellationToken = default) => factory(state, cancellationToken);
+
+        public override ValueTask SetAsync<T>(string key, T value, HybridCacheEntryOptions? options = null, IEnumerable<string>? tags = null, CancellationToken cancellationToken = default) =>
+            ValueTask.CompletedTask;
+
+        public override ValueTask RemoveAsync(string key, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+
+        public override ValueTask RemoveByTagAsync(string tag, CancellationToken cancellationToken = default)
+        {
+            Tags.Add(tag);
+            return ValueTask.CompletedTask;
+        }
+    }
 }

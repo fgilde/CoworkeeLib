@@ -256,6 +256,21 @@ coworkee migrations add AddSales
 
 `--property` reads `Name[:type][:required][:maxLength][:flag][:key=value]` (default: `Name:string:required:200`). Flags: `required`, `unique`, `display`, `facet`, `searchable`. Keys like in a spec: `enum`, `ref` (or `reference`), `referenceDisplay`, `onDelete`, `inverse`, `default`, `label`, `precision`, `scale`, `searchable`. `--enum Name=Value1,Value2` adds an enum to the contracts, `--plural` sets the plural (default: name + s). A reference may point to every entity of the app with an OData set, generated or sample (`ref=Catalog.Brand`); the module then references the target's project. `entity add` needs a module created by the CLI.
 
+## Seed contributors
+
+`coworkee seed add <Name>` writes a [seed contributor](../fundamentals/persistence.md#seed-contributors): data every database needs, checked and written by the migrations project on every run. It only generates the class; the migrations run it (`coworkee run`, `coworkee db seed`, a deployment).
+
+```bash
+coworkee seed add DemoProfiles --development        # src/<App>.Migrations/Seeds/DemoProfilesSeed.cs
+coworkee seed add StandardTags --module Sales       # src/<App>.Sales/Seeds/StandardTagsSeed.cs
+```
+
+| Option | |
+|---|---|
+| `--module <Module>` | into the module instead of the migrations project; the api then also runs it for a tenant set up in the browser or created later |
+| `--host` | once per run instead of once per tenant |
+| `--development`, `--deployment` | only in local runs (with the demo users) or only in deployments; neither or both: always |
+
 ## Import entities
 
 You have a database, an API or a spreadsheet already? `coworkee entity import` turns it into a module:
@@ -315,7 +330,7 @@ With `--spec`, modules and entities of the spec that the app does not have yet a
 | Command | What it does |
 |---|---|
 | `coworkee db reset [--yes]` | Deletes the database: the data volume of the app host (`<app>.apphost-<hash>-postgres-data` or `-sqlserver-data`) or the SQLite file `.data/<name>.db`. Stop the app host first; the next start migrates and seeds again |
-| `coworkee db seed` | Runs the migrations project against the running database: migrations, demo users and roles |
+| `coworkee db seed` | Runs the migrations project against the running database: migrations, demo users and roles, and the seed contributors |
 | `coworkee db backup [file]` | `pg_dump` in the running Postgres container, `BACKUP DATABASE` with `sqlcmd` in the SQL Server container, or a copy of the SQLite file; by default into `.data/backups/` |
 | `coworkee db restore <file> [--yes]` | The other way round: `pg_restore --clean`, `RESTORE DATABASE ... WITH REPLACE` or the copy back |
 

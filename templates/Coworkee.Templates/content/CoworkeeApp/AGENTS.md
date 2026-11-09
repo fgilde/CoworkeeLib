@@ -50,6 +50,7 @@ coworkee migrations add AddSales
 - Theme: own look settings are properties of `MyAppTheme` (theme editor, saved with the theme, `ThemeService.Theme`), their editors go into `ObjectEdit/MyAppThemeEditMeta.cs`.
 - Forms: a form configuration used in several places is a class implementing `IObjectMetaConfiguration<T>` in `ObjectEdit/` (applies to every object form of `T`); one used by a single page stays in its `Configure` method.
 - Show files with MudBlazor.Extensions' `MudExFileDisplay` (absolute URL); do not build own previews or viewers.
+- Data every database needs (reference data, tags, settings): an `ISeedContributor` with `[RegisterAs(typeof(ISeedContributor))]` in the module or `src/MyApp.Migrations/Seeds/` (`coworkee seed add <Name>`). It runs on every migrations run, so it checks before it writes; sample records only when `context.IsNew`. Not code in `Program.cs` of the migrations project or `AfterSeed`.
 
 ## Pitfalls
 
@@ -95,10 +96,11 @@ API tests use `ApiFixture` (a real database per run, `ResetAllAsync()` between t
 | `coworkee run` | the app host |
 | `coworkee module add`, `coworkee entity add`, `coworkee entity import` | modules and entities |
 | `coworkee migrations add <Name>` | a migration |
+| `coworkee seed add <Name> [--module <Module>]` | a seed contributor (the migrator runs it) |
 | `coworkee add <option>`, `coworkee remove <option>` | turn template options on or off (`coworkee options` lists them) |
 | `coworkee texts export --lang <code>` | library texts to translate |
 | `coworkee db reset`, `seed`, `backup`, `restore` | the local database |
 | `coworkee update [--dry-run]` | newer Coworkee packages, with the upgrade rules and manual steps |
 | `coworkee doctor` | checks the tools |
 
-`coworkee mcp` serves the same commands as MCP tools (`add_module`, `add_entity`, `add_migration`, `add_option`, `update_packages`, `search_docs`, ...): `claude mcp add coworkee -- coworkee mcp`. The running app is an MCP server itself under `/mcp`, authenticated with a personal API key.
+`coworkee mcp` serves the same commands as MCP tools (`add_module`, `add_entity`, `add_migration`, `add_seed`, `add_option`, `update_packages`, `search_docs`, ...): `claude mcp add coworkee -- coworkee mcp`. The running app is an MCP server itself under `/mcp`, authenticated with a personal API key.

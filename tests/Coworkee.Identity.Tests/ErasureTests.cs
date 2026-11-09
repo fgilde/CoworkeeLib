@@ -133,7 +133,8 @@ public sealed class ErasureTests(IdentityApp app) : IAsyncLifetime
         var snapshot = snapshots.Single(s => s.EntityId == kept.ToString());
         snapshot.CreatedBy.ShouldBe(Erased);
         JsonDocument.Parse(snapshot.Payload).RootElement.GetProperty("ModifiedBy").GetGuid().ShouldBe(Erased);
-        var outbox = await app.InDbAsync(null, db => db.Set<OutboxMessage>().OrderBy(m => m.Type).ToListAsync(Ct));
+        // the setup wrote one of its own (TenantSeedRequested)
+        var outbox = await app.InDbAsync(null, db => db.Set<OutboxMessage>().Where(m => m.Type == "x" || m.Type == "y").OrderBy(m => m.Type).ToListAsync(Ct));
         outbox.Select(m => (m.ActorId, m.ImpersonatorId)).ShouldBe([(Erased, Erased), (_carl, null)]);
         (await app.InDbAsync(null, db => db.Set<AccessToken>().Select(t => t.Hash).ToListAsync(Ct))).ShouldBe(["carl"]);
     }

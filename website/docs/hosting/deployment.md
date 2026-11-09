@@ -58,6 +58,8 @@ When the database is empty, the migrations create the administrator of `<app>-ad
 
 Leave both values empty and nothing is created: the app shows its setup page, where `<app>-setup-token` lets you set up the organisation and the administrator yourself. A database that is set up stays as it is; a changed password in `.env` reaches Keycloak and the tools, not the app's own account.
 
+Every run of the migrations (every `docker compose up`, the Container Apps job after each deployment, the Helm hook) also runs the app's [seed contributors](../fundamentals/persistence.md#seed-contributors), so data added to a seed reaches the deployed database; a failing one stops the run with exit code 1 and the services do not start. Roles and grants added to `DeploymentSeed` later reach a deployed database with `options.SyncRolesInDeployments = true`.
+
 ## Mail
 
 A deployment sends through your mail server. `coworkee deploy compose` asks for host, port, user, password and sender (or reads `SHOP_SMTP_HOST`, ... from the environment) and writes them into `.env`; what you leave empty you fill in later. They become the defaults of the mail settings, which administrators change on the mail settings page. `UseMail(endpoint)` in the app host takes another SMTP resource instead, `--with mailpit` takes Mailpit.

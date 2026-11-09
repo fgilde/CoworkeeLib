@@ -18,7 +18,7 @@ internal static class DbCommand
     public static Command Create() => new("db", "The app's local development database: reset, seed, backup and restore.")
     {
         new Command("reset", "Delete the database: the app host's data volume or the SQLite file. The next start migrates and seeds it again.") { Yes, Volume }.Handle(ResetAsync),
-        new Command("seed", "Migrate the database and seed the demo users and roles (runs the migrations project against the running database).") { Volume }.Handle(SeedAsync),
+        new Command("seed", "Migrate the database and seed it: the demo users and roles and the seed contributors (runs the migrations project against the running database).") { Volume }.Handle(SeedAsync),
         new Command("backup", "Back the database up: pg_dump or BACKUP DATABASE in the running container, or a copy of the SQLite file.") { BackupFile, Volume }
             .Handle((result, cancellationToken) => BackupAsync(Current(), result.GetValue(BackupFile), result.GetValue(Volume), cancellationToken)),
         new Command("restore", "Restore a backup of coworkee db backup; stop the app first for SQLite and SQL Server.") { RestoreFile, Yes, Volume }

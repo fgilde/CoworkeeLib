@@ -40,6 +40,7 @@ public sealed class CommandTests
     [InlineData("module add Order-Lines")]
     [InlineData("entity add Sales 1Order")]
     [InlineData("migrations add")]
+    [InlineData("seed add Standard-Tags")]
     [InlineData("new Shop --theme Pink")]
     [InlineData("new Shop --event-bus kafka")]
     public void Invalid_input_is_rejected(string args) => CliApp.Build().Parse(args).Errors.ShouldNotBeEmpty();
@@ -58,6 +59,31 @@ public sealed class CommandTests
         RunCommand.Args(solution).ShouldBe(["dotnet", "run", "--project", appHost]);
         MigrationsCommand.AddArgs(solution, "AddOrders")
             .ShouldBe(["dotnet", "ef", "migrations", "add", "AddOrders", "--project", infrastructure, "--startup-project", infrastructure]);
+    }
+
+    [Fact]
+    public void Seed_add_writes_a_contributor_into_the_migrations_project_or_a_module()
+    {
+        using var folder = new TempFolder();
+        folder.File("Shop.slnx");
+        folder.File("src/Shop.Migrations/Shop.Migrations.csproj");
+        folder.File("src/Shop.Sales/Shop.Sales.csproj");
+        var solution = Solution.Find(folder.Path);
+
+        var plain = SeedCommand.File(solution, "DemoProfiles", null, host: false, development: false, deployment: false);
+        var module = SeedCommand.File(solution, "StandardTagsSeed", "Sales", host: true, development: true, deployment: false);
+
+        plain.Path.ShouldBe(Path.Combine(solution.Src, "Shop.Migrations", "Seeds", "DemoProfilesSeed.cs"));
+        plain.Content.ShouldContain("namespace Shop.Migrations.Seeds;");
+        plain.Content.ShouldContain("[RegisterAs(typeof(ISeedContributor))]\ninternal sealed class DemoProfilesSeed : ISeedContributor\n{\n    public Task SeedAsync(");
+        plain.Content.ShouldNotContain("Environments");
+        module.Path.ShouldBe(Path.Combine(solution.Src, "Shop.Sales", "Seeds", "StandardTagsSeed.cs"));
+        module.Content.ShouldContain("namespace Shop.Sales.Seeds;");
+        module.Content.ShouldContain("    public SeedTarget Target => SeedTarget.Host;\n\n    public SeedEnvironments Environments => SeedEnvironments.Development;\n\n    public Task SeedAsync(");
+        SeedCommand.File(solution, "X", null, false, true, true).Content.ShouldNotContain("Environments");
+        Should.Throw<CliException>(() => SeedCommand.File(solution, "X", "Crm", false, false, false));
+        CliApp.Build().Parse("seed add StandardTags --module Sales --host --deployment").Errors.ShouldBeEmpty();
+        CliApp.Build().Parse("db seed").Errors.ShouldBeEmpty();
     }
 
     [Fact]
