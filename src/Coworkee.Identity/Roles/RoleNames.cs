@@ -13,7 +13,9 @@ internal static class RoleNames
 
     public static readonly Error SystemRole = Error.Conflict("identity.role_system", "System roles cannot be changed.");
 
-    public static readonly Error Fixed = Error.Conflict("identity.role_name_fixed", "Code refers to this role by its name; it cannot be renamed.");
+    /// <summary>The role is in <see cref="Users.IdentityAdministrationOptions.FixedRoleNames"/>: <paramref name="usedBy"/> finds it by its name.</summary>
+    public static Error Fixed(string usedBy, string change) =>
+        Error.Conflict("identity.role_name_fixed", $"{usedBy} finds this role by its name; it cannot be {change}.");
 
     public static Task<bool> TakenAsync(CoworkeeDbContext db, string normalized, Guid? tenantId, Guid? except, CancellationToken cancellationToken) =>
         db.Set<Role>().AnyAsync(r => r.NormalizedName == normalized && (r.TenantId == null || r.TenantId == tenantId) && r.Id != except, cancellationToken);

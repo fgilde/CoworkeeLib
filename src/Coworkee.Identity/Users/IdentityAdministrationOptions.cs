@@ -13,8 +13,9 @@ public sealed class IdentityAdministrationOptions
     public bool GroupScopedAdministration { get; set; }
 
     /// <summary>
-    /// Role names code looks roles up by (approvers of workflows, a module's own role): renaming such a role is refused, its description stays editable.
-    /// The Files module adds its registration documents role, the Workflows module the roles its declared workflows name; apps add theirs.
+    /// Role names code looks roles up by (approvers of workflows, a module's own role), each with the code that relies on it: renaming or deleting
+    /// such a role is refused with that code in the message, its description stays editable. The Files module adds its registration documents role,
+    /// the Workflows module the roles its declared workflows name; apps add theirs (<c>"Dispatchers": "Dispatch board"</c>).
     /// </summary>
-    public HashSet<string> FixedRoleNames { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, string> FixedRoleNames { get; } = new(StringComparer.OrdinalIgnoreCase);
 }

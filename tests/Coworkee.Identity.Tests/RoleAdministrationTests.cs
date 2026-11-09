@@ -15,6 +15,8 @@ public sealed class RoleAdministrationTests(IdentityApp app) : IAsyncLifetime
     /// <summary>Set in <c>Coworkee:Identity:FixedRoleNames</c> of the test app: code looks the role up by this name.</summary>
     public const string FixedName = "Approvers";
 
+    public const string UsedBy = "The approval board";
+
     private SetupResultDto _setup = null!;
 
     public async ValueTask InitializeAsync()
@@ -45,7 +47,7 @@ public sealed class RoleAdministrationTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Fixed_and_system_roles_keep_their_names_and_renames_need_Roles_Manage()
+    public async Task Fixed_and_system_roles_keep_their_names_are_not_deleted_and_renames_need_Roles_Manage()
     {
         var fixedRole = await RoleAsync(FixedName);
         var admin = (await RolesAsync()).Single(r => r.Name == SystemRoles.Admin).Id;
@@ -53,6 +55,10 @@ public sealed class RoleAdministrationTests(IdentityApp app) : IAsyncLifetime
 
         var renamed = await Admin.PutAsJsonAsync($"/api/v1/identity/roles/{fixedRole}", new RoleRequest("Deciders", null), Ct);
         (renamed.StatusCode, await CodeAsync(renamed)).ShouldBe((HttpStatusCode.Conflict, "identity.role_name_fixed"));
+        var deleted = await Admin.DeleteAsync($"/api/v1/identity/roles/{fixedRole}", Ct);
+        var problem = await deleted.Content.ReadFromJsonAsync<JsonElement>(Ct);
+        (deleted.StatusCode, problem.GetProperty("code").GetString()).ShouldBe((HttpStatusCode.Conflict, "identity.role_name_fixed"));
+        problem.GetProperty("title").GetString().ShouldBe($"{UsedBy} finds this role by its name; it cannot be deleted.");
         (await Admin.PutAsJsonAsync($"/api/v1/identity/roles/{fixedRole}", new RoleRequest(FixedName, "Decide on approvals"), Ct)).EnsureSuccessStatusCode();
         (await RolesAsync()).Single(r => r.Id == fixedRole).Description.ShouldBe("Decide on approvals");
 

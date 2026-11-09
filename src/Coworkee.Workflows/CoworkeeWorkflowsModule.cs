@@ -32,7 +32,13 @@ public sealed class CoworkeeWorkflowsModule : CoworkeeModule, IWebModule
         services.AddScoped<WorkflowEngine>();
         services.AddScoped<ApproverDirectory>();
         // workflows find approvers and notified users by role name: those roles keep their names
-        services.AddOptions<Identity.Users.IdentityAdministrationOptions>().PostConfigure<WorkflowOptions>((o, w) => o.FixedRoleNames.UnionWith(w.Workflows.Values.SelectMany(x => x.RoleNames)));
+        services.AddOptions<Identity.Users.IdentityAdministrationOptions>().PostConfigure<WorkflowOptions>((o, w) =>
+        {
+            foreach (var group in w.Workflows.Values.SelectMany(x => x.RoleNames.Select(role => (Role: role, x.EntityType))).GroupBy(r => r.Role, StringComparer.OrdinalIgnoreCase))
+            {
+                o.FixedRoleNames[group.Key] = $"The workflow of {string.Join(", ", group.Select(r => r.EntityType))}";
+            }
+        });
         services.AddScoped<Application.Privacy.IPersonalDataContributor, WorkflowPersonalData>();
         services.AddHttpContextAccessor();
         services.AddSingleton<WorkflowUser>();

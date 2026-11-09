@@ -40,13 +40,13 @@ Unter *Administration → Identität → Rollen* ändert der Stift einer Zeile (
 Zwei Arten von Rollen behalten ihren Namen:
 
 - **Systemrollen** (`admin`, `user`) gehören allen Organisationen und werden über den Namen gefunden: `409 identity.role_system`.
-- **Rollen, die Code über ihren Namen sucht**: `409 identity.role_name_fixed`, die Beschreibung bleibt änderbar. Das Files-Modul trägt seine Rolle *Registration documents* ein, Coworkee.Workflows jede Rolle, die seine deklarierten Workflows nennen (`Role`, `EscalateTo`, `RequiresRole`, `NotifyRole`). Trage die Namen ein, die dein eigener Code benutzt:
+- **Rollen, die Code über ihren Namen sucht**, werden weder umbenannt noch gelöscht: `409 identity.role_name_fixed`, mit dem Code, der sich auf die Rolle verlässt, in der Meldung ("The workflow of Invoices finds this role by its name; it cannot be deleted."), die die Rollenseite anzeigt. Die Beschreibung bleibt änderbar. Das Files-Modul trägt seine Rolle *Registration documents* ein, Coworkee.Workflows jede Rolle, die seine deklarierten Workflows nennen (`Role`, `EscalateTo`, `RequiresRole`, `NotifyRole`). Trage die Namen ein, die dein eigener Code benutzt, jeweils mit dem, was sich auf sie verlässt:
 
 ```json
-{ "Coworkee": { "Identity": { "FixedRoleNames": [ "Dispatchers" ] } } }
+{ "Coworkee": { "Identity": { "FixedRoleNames": { "Dispatchers": "The dispatch board" } } } }
 ```
 
-oder `services.Configure<IdentityAdministrationOptions>(o => o.FixedRoleNames.Add("Dispatchers"))`. Was die Bibliothek nicht sieht, prüfen Apps vor dem Umbenennen:
+oder `services.Configure<IdentityAdministrationOptions>(o => o.FixedRoleNames["Dispatchers"] = "The dispatch board")`. Was die Bibliothek nicht sieht, prüfen Apps vor dem Umbenennen oder Löschen:
 
 - **Seeds** finden Rollen über den Namen (`SeedRole`, `SeedUser.Roles`): Benenne die Rolle auch im Seed um, sonst legt der Entwicklungsabgleich den alten Namen für die Seed-Benutzer wieder an.
 - **Als Daten gespeicherte Rollennamen**: die Rolle der Aktivität *Notify* in Elsa-Workflows, Namen in Einstellungen oder Tabellen der App. Trage sie in `FixedRoleNames` ein oder passe sie beim Umbenennen an.

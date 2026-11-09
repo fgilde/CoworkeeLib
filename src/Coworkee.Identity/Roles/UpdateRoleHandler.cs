@@ -31,9 +31,9 @@ internal sealed class UpdateRoleHandler(
         }
 
         var name = command.Role.Name.Trim();
-        if (name != role.Name && options.Value.FixedRoleNames.Contains(role.Name!))
+        if (name != role.Name && options.Value.FixedRoleNames.TryGetValue(role.Name!, out var usedBy))
         {
-            return RoleNames.Fixed;
+            return RoleNames.Fixed(usedBy, "renamed");
         }
 
         var normalized = name.ToUpperInvariant();

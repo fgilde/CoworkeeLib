@@ -1,4 +1,5 @@
 using Bunit;
+using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Pages.Admin;
 using Coworkee.Contracts;
@@ -6,6 +7,7 @@ using Coworkee.Contracts.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 
 namespace Coworkee.Client.Blazor.Tests;
 
@@ -50,6 +52,24 @@ public sealed class RolesPageTests : ClientTestBase
         await Api.Received(1).TransferRoleUsersAsync(Clerks.Id,
             Arg.Is<TransferRoleUsersRequest>(r => r.Move && r.TargetRoleIds.SequenceEqual(new[] { Office.Id }) && r.UserIds!.SequenceEqual(new[] { Bob.Id })), Arg.Any<CancellationToken>());
         await Api.Received().GetRoleUsersAsync(Clerks.Id, Arg.Is<PageRequest>(p => p.Search == "bo"), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task A_role_that_code_finds_by_name_stays_and_the_page_says_which_code()
+    {
+        const string message = "The workflow of Invoices finds this role by its name; it cannot be deleted.";
+        Api.DeleteRoleAsync(Clerks.Id, Arg.Any<CancellationToken>()).ThrowsAsync(new ApiException(409, "identity.role_name_fixed", null, message));
+        var snackbars = Render<MudSnackbarProvider>();
+        var page = Render<Roles>();
+        page.WaitForAssertion(() => page.FindAll("[data-testid='delete-row']").Count.ShouldBe(3));
+
+        var deleting = page.InvokeAsync(() => page.FindAll("[data-testid='delete-row']")[0].ClickAsync(new()));
+        _dialogs.WaitForAssertion(() => _dialogs.FindAll("button").Any(b => b.TextContent.Trim() == "Delete").ShouldBeTrue());
+        await _dialogs.InvokeAsync(() => _dialogs.FindAll("button").First(b => b.TextContent.Trim() == "Delete").ClickAsync(new()));
+        await deleting;
+
+        snackbars.WaitForAssertion(() => snackbars.Markup.ShouldContain(message));
+        await Api.Received(1).DeleteRoleAsync(Clerks.Id, Arg.Any<CancellationToken>());
     }
 
     [Fact]
