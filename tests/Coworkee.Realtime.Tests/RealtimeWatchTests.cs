@@ -80,7 +80,9 @@ public sealed class RealtimeWatchTests(RealtimeApp app) : IAsyncLifetime
     [Fact]
     public async Task Rows_sent_already_neither_come_again_nor_count_against_the_most_events_of_a_look()
     {
-        // written before anyone follows, within the look back: not sent when someone starts following
+        // written before anyone follows, within the look back: not sent when someone starts following. The connection of the test before may still
+        // follow for a moment, and the watch then reads on from its last look and sends the row as new: wait until nobody follows
+        await UnfollowedAsync();
         await WriteAsync(new Parcel { Code = "Before", CreatedUtc = DateTimeOffset.UtcNow });
         await using var admin = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
         await admin.SubscribeAsync("type:Parcel");
@@ -182,6 +184,18 @@ public sealed class RealtimeWatchTests(RealtimeApp app) : IAsyncLifetime
         {
             await Task.Delay(50, Ct);
         }
+    }
+
+    // nobody follows the set: the watch dropped its watermark, its next look starts at the newest date
+    private async Task UnfollowedAsync()
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        while (Watches.Find(nameof(Parcel))?.Watermark is not null && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(50, Ct);
+        }
+
+        Watches.Find(nameof(Parcel))?.Watermark.ShouldBeNull();
     }
 
     private Task<Guid> WriteAsync(Parcel parcel) => app.AsActorAsync(null, null, async db =>
