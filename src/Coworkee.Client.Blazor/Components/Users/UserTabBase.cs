@@ -12,9 +12,11 @@ namespace Coworkee.Client.Blazor.Components.Users;
 /// A part of the admin user page that stands alone (<see cref="UserId"/> is all it needs), so the users list shows the same component in a dialog.
 /// Loads when the user changes and again when someone changes roles, groups or grants of the organisation.
 /// </summary>
-public abstract class UserTabBase : CoworkeeComponentBase
+public abstract class UserTabBase : CoworkeeComponentBase, IDisposable
 {
+    private static readonly TimeSpan Settle = TimeSpan.FromMilliseconds(250);
     private Guid _loaded;
+    private CancellationTokenSource? _pending;
 
     [Parameter, EditorRequired] public Guid UserId { get; set; }
 
@@ -51,9 +53,30 @@ public abstract class UserTabBase : CoworkeeComponentBase
     /// <summary>Reads the saved state of the user; toggles that are not saved yet stay shown on top of it.</summary>
     protected abstract Task LoadAsync();
 
-    // the topic of every role, group, membership and grant change of the organisation (IdentityRealtimeTopics)
-    // ponytail: one load per event, also for the own saves; debounce when bursts of many changes make it noticeable
-    protected async Task ReloadAsync() => Loaded = await Snackbar.RunAsync(LoadAsync) || Loaded;
+    // the topic of every role, group, membership and grant change of the organisation (IdentityRealtimeTopics); a save touches several rows and an
+    // administrator ticking ten groups sends ten: one load for the burst
+    protected async Task ReloadAsync()
+    {
+        _pending?.Cancel();
+        var pending = _pending = new CancellationTokenSource();
+        try
+        {
+            await Task.Delay(Settle, pending.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        Loaded = await Snackbar.RunAsync(LoadAsync) || Loaded;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        _pending?.Cancel();
+        GC.SuppressFinalize(this);
+    }
 
     /// <summary>The snackbar of a save that failed; the item already shows its saved state again.</summary>
     protected async Task SettledAsync(string? failure, string item, Action saved)

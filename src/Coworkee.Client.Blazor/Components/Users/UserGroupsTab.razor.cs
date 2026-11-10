@@ -35,7 +35,6 @@ public partial class UserGroupsTab
         _saved = groups.ToDictionary(g => g.Id, g => paths.GetValueOrDefault(g.Id) ?? g.Name);
     }
 
-    // ponytail: the paths come from one OData query by id; a user in many hundreds of groups makes a long URL, page the ids then
     // the paths only label the rows: without them the names stay
     private async Task<Dictionary<Guid, string>> PathsAsync(IReadOnlyCollection<Guid> ids)
     {
