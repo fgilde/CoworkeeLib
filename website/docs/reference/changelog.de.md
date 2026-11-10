@@ -11,6 +11,7 @@
 ### Behoben
 
 - `Coworkee.CodeGen`: Projekte mit `codegen.json` kompilieren in einem eigenen Compiler-Prozess (`UseSharedCompilation` `false`). Nextended.CodeGen teilt seinen Generator zwischen den Kompilierungen eines Compiler-Servers; zwei parallel gebaute Module mit generierten DTOs schrieben deshalb DTOs in die Ordner des jeweils anderen und brachen den Build der Contracts. Apps mit eigenem Workaround können ihn entfernen.
+- Azure Container Apps: SQL Server lief mit den Standardwerten 0,5 CPU und 1 GiB, ging unter Last der Speicher aus („insufficient system memory in resource pool 'internal'“), er lehnte Verbindungen schon beim Pre-Login-Handshake ab, und jede Anmeldung und jedes Laden einer Seite schlug fehl. Der SQL-Server-Container bekommt jetzt 1 CPU und 2 GiB; erneut deployen.
 
 ## 0.0.1.74 (2026-11-10)
 

@@ -11,6 +11,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 ### Fixed
 
 - `Coworkee.CodeGen`: projects with a `codegen.json` compile in a compiler process of their own (`UseSharedCompilation` `false`). Nextended.CodeGen shares its generator between the compilations of one compiler server, so two modules with generated DTOs built in parallel wrote DTOs into each other's folders and broke the contracts build. Apps that worked around it can drop their own setting.
+- Azure Container Apps: SQL Server ran with the default 0.5 CPU and 1 GiB, ran out of memory under load ("insufficient system memory in resource pool 'internal'"), refused connections in the pre-login handshake, and every sign-in and page load failed. The SQL Server container gets 1 CPU and 2 GiB now; deploy again.
 
 ## 0.0.1.74 (2026-11-10)
 

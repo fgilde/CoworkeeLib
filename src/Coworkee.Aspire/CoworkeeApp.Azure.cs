@@ -28,7 +28,8 @@ public sealed partial class CoworkeeApp
             // the annotations PublishAsAzureContainerApp(Job) would add: the infrastructure is registered already and the services are read-only by now
             foreach (var resource in Builder.Resources.OfType<ContainerResource>())
             {
-                resource.Annotations.Add(new AzureContainerAppCustomizationAnnotation((_, app) => ConfigureContainerApp(app, stateful: true)));
+                var size = SizeOf(resource);
+                resource.Annotations.Add(new AzureContainerAppCustomizationAnnotation((_, app) => ConfigureContainerApp(app, stateful: true, size)));
             }
 
             foreach (var resource in Builder.Resources.OfType<ProjectResource>())
@@ -84,10 +85,27 @@ public sealed partial class CoworkeeApp
         }
     }
 
-    internal static void ConfigureContainerApp(ContainerApp app, bool stateful)
+    /// <summary>
+    /// Container Apps give every container 0.5 CPU and 1 GiB by default. SQL Server needs 2 GB at least: with 1 GiB it ran out of memory under load
+    /// ("insufficient system memory in resource pool 'internal'"), refused connections in the pre-login handshake and every sign-in failed.
+    /// </summary>
+    internal static (double Cpu, string Memory)? SizeOf(IResource resource) => resource switch
+    {
+        SqlServerServerResource => (1.0, "2Gi"),
+        _ => null,
+    };
+
+    internal static void ConfigureContainerApp(ContainerApp app, bool stateful, (double Cpu, string Memory)? size = null)
     {
         RenameSecrets(app.Configuration.Secrets, app.Template.Containers);
         SkipLocks(app.Template.Volumes);
+        if (size is { } wanted)
+        {
+            foreach (var container in app.Template.Containers.Select(c => c.Value).OfType<ContainerAppContainer>())
+            {
+                container.Resources = new AppContainerResources { Cpu = wanted.Cpu, Memory = wanted.Memory };
+            }
+        }
 
         // a database, cache, broker or tool keeps its data on one volume: a second replica would corrupt it
         if (stateful)
