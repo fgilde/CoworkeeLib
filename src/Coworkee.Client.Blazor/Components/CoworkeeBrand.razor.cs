@@ -7,6 +7,9 @@ public partial class CoworkeeBrand : IDisposable
 {
     [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
 
+    /// <summary>At the head of the navigation: <see cref="Theming.CoworkeeTheme.ShowAppNameInNav"/> decides about the name instead of the app bar's option.</summary>
+    [Parameter] public bool InNav { get; set; }
+
     [Inject] private ThemeService ThemeService { get; set; } = null!;
 
     protected override void OnInitialized() => ThemeService.Changed += Refresh;

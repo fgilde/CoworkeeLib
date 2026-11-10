@@ -214,6 +214,44 @@ public sealed class HeaderTests : ClientTestBase
     }
 
     [Fact]
+    public async Task A_bar_at_the_right_edge_alone_opens_an_unpinned_navigation_with_its_own_menu_button()
+    {
+        Configure(null, "Right");
+        var layout = RenderLayout();
+        layout.WaitForAssertion(() => layout.Find("[data-testid='drawer-head'] [data-testid='drawer-toggle']"));
+        await layout.Find("[data-testid='drawer-toggle']").ClickAsync(new());
+        layout.WaitForAssertion(() => layout.Find("[data-testid='nav-pin'] button, button[data-testid='nav-pin']"));
+
+        // the overlay hides when closed: the button in its head went with it
+        await layout.Find("[data-testid='nav-pin'] button, button[data-testid='nav-pin']").ClickAsync(new());
+
+        layout.WaitForAssertion(() => layout.FindAll("[data-testid='drawer-head']").ShouldBeEmpty());
+        var menu = layout.Find("[data-testid='app-bar'] [data-testid='app-bar-menu']");
+        var open = layout.Find(".mud-drawer").ClassList.Contains("mud-drawer--open");
+        await menu.ClickAsync(new());
+        layout.WaitForAssertion(() => layout.Find(".mud-drawer").ClassList.Contains("mud-drawer--open").ShouldBe(!open));
+    }
+
+    [Fact]
+    public async Task The_theme_decides_whether_the_app_name_shows_in_the_app_bar_and_at_the_head_of_the_navigation()
+    {
+        Services.AddSingleton(new CoworkeeClientOptions { AppTitle = "Demo" });
+        Configure(null);
+        var layout = RenderLayout();
+        layout.WaitForAssertion(() => layout.Find("[data-testid='app-bar']").TextContent.ShouldContain("Demo"));
+
+        await layout.InvokeAsync(() => Services.GetRequiredService<ThemeService>().Preview(new CoworkeeTheme { ShowAppNameInAppBar = false }));
+        layout.WaitForAssertion(() => layout.Find("[data-testid='app-bar']").TextContent.ShouldNotContain("Demo"));
+
+        await layout.InvokeAsync(() => Services.GetRequiredService<ThemeService>().Preview(new CoworkeeTheme { ShowAppNameInAppBar = false, NavBesideAppBar = true }));
+        await layout.Find("[data-testid='drawer-toggle']").ClickAsync(new());
+        layout.WaitForAssertion(() => layout.Find("[data-testid='drawer-head']").TextContent.ShouldContain("Demo"));
+
+        await layout.InvokeAsync(() => Services.GetRequiredService<ThemeService>().Preview(new CoworkeeTheme { NavBesideAppBar = true, ShowAppNameInNav = false }));
+        layout.WaitForAssertion(() => layout.Find("[data-testid='drawer-head']").TextContent.ShouldNotContain("Demo"));
+    }
+
+    [Fact]
     public async Task A_theme_puts_the_navigation_beside_the_app_bar_with_the_menu_button_in_its_head()
     {
         Configure(null);

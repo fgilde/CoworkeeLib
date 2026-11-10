@@ -28,11 +28,11 @@
         @* ?embed=1: only the page, for windows of another client (AirWorks) *@
         @if (!_embedded)
         {
-            <CoworkeeAppBar Dark="_dark" Compact="_phone" Position="Bars.Position" ShowBrand="@(Bars.BrandBar == 0)" ShowMenuButton="@(!DrawerHead)"
+            <CoworkeeAppBar Dark="_dark" Compact="_phone" Position="Bars.Position" ShowBrand="@(Bars.BrandBar == 0)" ShowMenuButton="@(!DrawerHead && Bars.BrandBar != 1)"
                             ToggleDrawer="ToggleDrawer" ToggleDark="ToggleDarkAsync" />
             @if (Bars.Second is { } second)
             {
-                <CoworkeeAppBar Second="true" Dark="_dark" Position="second" ShowBrand="@(Bars.BrandBar == 1)" ShowMenuButton="@(!DrawerHead)"
+                <CoworkeeAppBar Second="true" Dark="_dark" Position="second" ShowBrand="@(Bars.BrandBar == 1)" ShowMenuButton="@(!DrawerHead && Bars.BrandBar == 1)"
                                 ToggleDrawer="ToggleDrawer" ToggleDark="ToggleDarkAsync" />
             }
             @* pinned: a mini icon strip under the app bar (or beside it) that the toggle widens; unpinned and on phones: an overlay that hides when closed *@
@@ -43,7 +43,7 @@
                     <div class="cw-drawer-head" data-testid="drawer-head">
                         @if (_drawer)
                         {
-                            <div class="cw-drawer-brand"><CoworkeeBrand /></div>
+                            <div class="cw-drawer-brand"><CoworkeeBrand InNav="true" /></div>
                         }
                         <MudIconButton Icon="@(_drawer ? Icons.Material.Filled.MenuOpen : Icons.Material.Filled.Menu)" OnClick="ToggleDrawer" aria-label="@L["Navigation"]"
                                        data-testid="drawer-toggle" />

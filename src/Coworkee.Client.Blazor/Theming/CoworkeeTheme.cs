@@ -40,6 +40,12 @@ public class CoworkeeTheme : MudTheme
 
     public bool ShowLogoInAppBar { get; set; } = true;
 
+    /// <summary>The app's name next to the logo in the app bar.</summary>
+    public bool ShowAppNameInAppBar { get; set; } = true;
+
+    /// <summary>The app's name at the head of the navigation (navigation beside the app bar, or a side app bar).</summary>
+    public bool ShowAppNameInNav { get; set; } = true;
+
     public bool ShowNavFilter { get; set; } = true;
 
     public bool CanPinNav { get; set; } = true;
