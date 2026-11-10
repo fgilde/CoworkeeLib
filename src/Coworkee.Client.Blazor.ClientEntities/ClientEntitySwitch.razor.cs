@@ -172,6 +172,11 @@ public partial class ClientEntitySwitch : IDisposable
         _ => Color.Primary,
     };
 
+    // an update, or a download with no row in yet: a copy that comes as one file (SQLite: the server's snapshot) reports no rows until it is there,
+    // and a ring by rows would stay empty, i.e. invisible, for the whole download
+    private static bool RingRuns(ClientEntityStatus status) =>
+        status.State == ClientEntitySyncState.Updating || status is { State: ClientEntitySyncState.Downloading, Loaded: 0 };
+
     private static double RingValue(ClientEntityStatus status) => status.State switch
     {
         ClientEntitySyncState.Downloading => status.Progress * 100,

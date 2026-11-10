@@ -2,6 +2,14 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Behoben
+
+- Seite Sitzungen (*Administration › Überwachung › Sitzungen*): Sie lud wieder und wieder. Ihr Filter der aktiven Sitzungen enthielt die aktuelle Zeit, jedes Rendern war also ein neuer Filter, und die Tabelle lud neu, samt Benutzernamen und Zählern, solange ein Laden länger als eine Sekunde dauerte. Der Filter wird jetzt beim Wechsel des Modus gesetzt. *Beendete anzeigen* lädt einmal mit dem Filter des neuen Modus (es lud auch mit dem des eben verlassenen, und beide Ladevorgänge liefen um die Wette: Zeilen beider Modi, Spalten des einen). Die Seite kennzeichnet die eigene Sitzung (*Diese Sitzung*) und eine ohne Ende abgelaufene (*Abgelaufen*, ohne Aktionen), so lesen sich zwei Zeilen eines Benutzers als zwei Sitzungen.
+- Client-Entitäten: Der Sync-Ring in der Werkzeugleiste der Tabelle zeigte nichts, während eine Kopie in SQLite lud. SQLite holt die ganze Kopie als eine Snapshot-Datei, es kamen also keine Zeilen einzeln an, und der Ring nach Zeilen blieb bei null. Ein Download ohne angekommene Zeile zeigt einen laufenden Ring, ohne den Sync zu bremsen; Downloads Seite für Seite behalten ihren Ring nach Zeilen.
+- Erweiterter Filter und Enums: In einer SQLite-Kopie traf `has` (die Regeln eines `[Flags]`-Enums) nichts, weil die Kopie Enums als Namen ablegt und die Bits aus dem Text 0 lasen; es vergleicht jetzt die Namen aller Werte mit dem Flag. Der Query-Builder einer Server-Tabelle nimmt ein `[Flags]`-Enum des Clients als einfaches Enum, wenn die Facette des Servers zur Eigenschaft das sagt: Seine Regeln vergleichen mit `eq` statt `has`, das ein Server mit einfachem Enum (als Text gespeichert) nicht beantworten konnte, und der Wert null ist wieder wählbar.
+
 ## 0.0.1.71 (2026-11-10)
 
 ### Behoben

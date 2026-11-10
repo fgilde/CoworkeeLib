@@ -40,10 +40,24 @@ public partial class Sessions
 
     [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; } = null!;
 
-    private string? Filter => _ended ? null : $"EndedAt eq null and ExpiresAt gt {DateTimeOffset.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}";
+    // set when the mode changes, not computed per render: a cut-off that moves with the clock is a new filter at every render, and the table reloads on a
+    // new filter (it reloaded endlessly while a load took longer than a second). ponytail: the cut-off stays at the time the mode was chosen; a session
+    // running out later stays listed, marked as expired, until the next visit or toggle
+    private string? _filter = ActiveFilter();
+    private string? _sid;
 
-    protected override async Task OnInitializedAsync() =>
-        _canManage = (await Authorization.AuthorizeAsync((await AuthenticationState).User, PermissionPolicy.For(IdentityPermissions.Sessions.Manage))).Succeeded;
+    private static string ActiveFilter() => $"EndedAt eq null and ExpiresAt gt {DateTimeOffset.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await AuthenticationState).User;
+        _sid = user.FindFirst("sid")?.Value;
+        _canManage = (await Authorization.AuthorizeAsync(user, PermissionPolicy.For(IdentityPermissions.Sessions.Manage))).Succeeded;
+    }
+
+    private bool IsCurrent(UserSessionDto session) => _sid is not null && session.Id.ToString("N") == _sid;
+
+    private static bool IsExpired(UserSessionDto session) => session.EndedAt is null && session.ExpiresAt <= DateTimeOffset.UtcNow;
 
     private string Name(Guid userId) => _names.GetValueOrDefault(userId, userId.ToString());
 
@@ -60,10 +74,11 @@ public partial class Sessions
         }
     }
 
-    private async Task ShowEndedAsync(bool ended)
+    // the new filter reloads the table once it reaches it; reloading here as well loaded with the filter of the mode just left, and both loads raced
+    private void ShowEnded(bool ended)
     {
         _ended = ended;
-        await ReloadAsync();
+        _filter = ended ? null : ActiveFilter();
     }
 
     private async Task EndAsync(UserSessionDto session)

@@ -16,12 +16,14 @@ public sealed class SessionPagesTests : ClientTestBase
     private static readonly Guid AdaId = Guid.CreateVersion7();
     private readonly ISessionsApi _sessions = Substitute.For<ISessionsApi>();
     private readonly FakeODataClient _odata = new();
+    private readonly Bunit.TestDoubles.BunitAuthorizationContext _auth;
 
     public SessionPagesTests()
     {
         Services.AddSingleton(_sessions);
         Services.AddSingleton<IODataClient>(_odata);
-        AddAuthorization().SetAuthorized("Ada").SetClaims(new System.Security.Claims.Claim("sub", AdaId.ToString()), new System.Security.Claims.Claim("sid", "mine"))
+        _auth = AddAuthorization();
+        _auth.SetAuthorized("Ada").SetClaims(new System.Security.Claims.Claim("sub", AdaId.ToString()), new System.Security.Claims.Claim("sid", "mine"))
             .SetPolicies(PermissionPolicy.For(IdentityPermissions.Sessions.View), PermissionPolicy.For(IdentityPermissions.Sessions.Manage));
         Render<MudPopoverProvider>();
     }
@@ -76,6 +78,82 @@ public sealed class SessionPagesTests : ClientTestBase
         await confirming;
         await ending;
         await _sessions.Received(1).EndAsync(session.Id, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task The_sessions_page_loads_once_and_does_not_reload_itself()
+    {
+        // the names take longer than a second: the active filter's cut-off moved on with every render and each move reloaded the rows (and the names)
+        var queries = 0;
+        _odata.Queried += (_, q) =>
+        {
+            if (!q.Facets)
+            {
+                Interlocked.Increment(ref queries);
+            }
+        };
+        _odata.With("UserSessions", Session("Linux"));
+        Api.GetUserNamesAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>()).Returns(async _ =>
+        {
+            await Task.Delay(1100);
+            return (IReadOnlyDictionary<Guid, string>)new Dictionary<Guid, string> { [AdaId] = "Ada Lovelace" };
+        });
+
+        var page = Render<Pages.Admin.Sessions>();
+        page.WaitForAssertion(() => page.Markup.ShouldContain("Ada Lovelace"), TimeSpan.FromSeconds(10));
+        await Task.Delay(1500);
+
+        queries.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Showing_the_ended_sessions_loads_once_with_the_mode_s_filter_and_columns_and_marks_this_session()
+    {
+        var filters = new List<string?>();
+        // the rows' queries; the facets' count query follows each of them
+        _odata.Queried += (_, q) =>
+        {
+            if (!q.Facets)
+            {
+                lock (filters)
+                {
+                    filters.Add(q.Filter);
+                }
+            }
+        };
+        var current = Session("Windows");
+        var ended = Session("Windows") with { EndedAt = DateTimeOffset.UtcNow.AddMinutes(-5), EndReason = "logged-out" };
+        var expired = Session("Linux") with { ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(-5) };
+        _auth.SetClaims(new System.Security.Claims.Claim("sub", AdaId.ToString()), new System.Security.Claims.Claim("sid", current.Id.ToString("N")));
+        _odata.With("UserSessions", current);
+        Api.GetUserNamesAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>()).Returns(new Dictionary<Guid, string> { [AdaId] = "Ada Lovelace" });
+        var page = Render<Pages.Admin.Sessions>();
+        page.WaitForAssertion(() => page.Markup.ShouldContain("Ada Lovelace"));
+        page.Find($"[data-testid='session-current-{current.Id}']").ShouldNotBeNull();
+        page.FindAll("th").Select(h => h.TextContent).ShouldNotContain(t => t.Contains("Ended"));
+
+        _odata.With("UserSessions", current, ended, expired);
+        await page.InvokeAsync(() => page.Find("input[data-testid='sessions-ended'], [data-testid='sessions-ended'] input").Change(true));
+        page.WaitForAssertion(() => page.FindAll("tbody tr").Count.ShouldBe(3));
+        page.FindAll("th").Select(h => h.TextContent).ShouldContain(t => t.Contains("Ended"));
+        // run out without an end: not active, no actions, the reason says so
+        page.Find($"[data-testid='session-expired-{expired.Id}']").ShouldNotBeNull();
+        page.FindAll($"[data-testid='session-end-{expired.Id}']").ShouldBeEmpty();
+
+        _odata.With("UserSessions", current);
+        await page.InvokeAsync(() => page.Find("input[data-testid='sessions-ended'], [data-testid='sessions-ended'] input").Change(false));
+        page.WaitForAssertion(() => page.FindAll("tbody tr").Count.ShouldBe(1));
+        page.FindAll("th").Select(h => h.TextContent).ShouldNotContain(t => t.Contains("Ended"));
+
+        // one load per mode, each with its own filter: no load with the filter of the mode just left
+        await Task.Delay(300);
+        lock (filters)
+        {
+            filters.Count.ShouldBe(3);
+            filters[0].ShouldContain("EndedAt eq null");
+            filters[1].ShouldBeNull();
+            filters[2].ShouldContain("EndedAt eq null");
+        }
     }
 
     [Fact]

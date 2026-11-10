@@ -123,7 +123,7 @@ Ending a session refuses exactly its tokens and its sign-in, at once:
 
 ### Pages and API
 
-**Administration › Monitoring › Sessions** (`/admin/sessions`, page key `sessions`) lists the active sessions of the organisation (*Show ended* adds the ended ones with their reason): user with the number of his active sessions, device, browser, IP address, app, start and last activity; it updates live. Its menu per row ends the session, all sessions of the user, or sets his own limit. The user detail page shows the user's sessions with the same actions. Users see their own on the account page (*Security › Sessions*) and end any but the one they are in.
+**Administration › Monitoring › Sessions** (`/admin/sessions`, page key `sessions`) lists the active sessions of the organisation (*Show ended* adds the ended ones with their reason): user with the number of his active sessions, device, browser, IP address, app, start and last activity; *This session* marks the one you are in, *Expired* one that ran out without being ended (shown with the ended ones). It updates live. Its menu per row ends the session, all sessions of the user, or sets his own limit. The user detail page shows the user's sessions with the same actions. Users see their own on the account page (*Security › Sessions*) and end any but the one they are in.
 
 | Request | Endpoint | Permission |
 |---|---|---|

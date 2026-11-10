@@ -123,7 +123,7 @@ Eine beendete Sitzung verliert genau ihre Tokens und ihre Anmeldung, sofort:
 
 ### Seiten und API
 
-**Administration › Überwachung › Sitzungen** (`/admin/sessions`, Seitenschlüssel `sessions`) listet die aktiven Sitzungen der Organisation (*Beendete anzeigen* nimmt die beendeten mit Grund dazu): Benutzer mit der Zahl seiner aktiven Sitzungen, Gerät, Browser, IP-Adresse, App, Beginn und letzte Aktivität; die Liste aktualisiert sich live. Ihr Menü je Zeile beendet die Sitzung, alle Sitzungen des Benutzers oder setzt sein eigenes Limit. Die Detailseite eines Benutzers zeigt seine Sitzungen mit denselben Aktionen. Benutzer sehen ihre eigenen auf der Kontoseite (*Sicherheit › Sitzungen*) und beenden jede außer der, in der sie gerade sind.
+**Administration › Überwachung › Sitzungen** (`/admin/sessions`, Seitenschlüssel `sessions`) listet die aktiven Sitzungen der Organisation (*Beendete anzeigen* nimmt die beendeten mit Grund dazu): Benutzer mit der Zahl seiner aktiven Sitzungen, Gerät, Browser, IP-Adresse, App, Beginn und letzte Aktivität; *Diese Sitzung* kennzeichnet die, in der du gerade bist, *Abgelaufen* eine, die ohne Ende ausgelaufen ist (mit den beendeten gezeigt). Die Liste aktualisiert sich live. Ihr Menü je Zeile beendet die Sitzung, alle Sitzungen des Benutzers oder setzt sein eigenes Limit. Die Detailseite eines Benutzers zeigt seine Sitzungen mit denselben Aktionen. Benutzer sehen ihre eigenen auf der Kontoseite (*Sicherheit › Sitzungen*) und beenden jede außer der, in der sie gerade sind.
 
 | Request | Endpunkt | Berechtigung |
 |---|---|---|

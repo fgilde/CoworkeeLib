@@ -51,7 +51,7 @@ A `QueryField` has a name (the property path, `Customer.Name` or `Customer/Name`
 | `Enum` | is any of, is none of, is, is not | choice of the `Options` |
 | `Guid` | is, is not, is any of, is none of | choice of `Options`, search through `Lookup`, else text |
 
-`Options` turn any field into a choice, `Lookup` searches choices as the user types (`Func<string?, CancellationToken, Task<IReadOnlyList<QueryOption>>>`); a rule remembers the labels of looked up values. `Flags = true` marks a `[Flags]` enum: *is* and *is any of* test single flags (`Options has 'Express'`). `Nullable = true` adds *is empty* and *is not empty*, `Operators` narrows the list, `Category` groups the field picker.
+`Options` turn any field into a choice, `Lookup` searches choices as the user types (`Func<string?, CancellationToken, Task<IReadOnlyList<QueryOption>>>`); a rule remembers the labels of looked up values. `Flags = true` marks a `[Flags]` enum: *is* and *is any of* test single flags (`Options has 'Express'`). In a data table the fields come from the columns, and an enum follows the server's facet of the property when there is one: a client type marked `[Flags]` for a plain enum of the server compares with `eq`. `Nullable = true` adds *is empty* and *is not empty*, `Operators` narrows the list, `Category` groups the field picker.
 
 ## Translating
 
