@@ -2142,5 +2142,6 @@
   "Sessions…": "Сесии…",
   "Tick a permission to grant it to this user directly, besides what his roles and groups give.": "Отметнете право, за да го предоставите пряко на този потребител, освен това, което му дават неговите роли и групи.",
   "{0} permissions held": "Налични права: {0}",
-  "{0} was not saved: {1}": "{0} не е запазено: {1}"
+  "{0} was not saved: {1}": "{0} не е запазено: {1}",
+  "The server does not answer right now. Trying again…": "Сървърът не отговаря в момента. Нов опит…"
 }

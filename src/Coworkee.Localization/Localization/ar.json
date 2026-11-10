@@ -2142,5 +2142,6 @@
   "Sessions…": "الجلسات…",
   "Tick a permission to grant it to this user directly, besides what his roles and groups give.": "حدد صلاحية لمنحها لهذا المستخدم مباشرة، إضافة إلى ما تمنحه له أدواره ومجموعاته.",
   "{0} permissions held": "الصلاحيات الممنوحة: {0}",
-  "{0} was not saved: {1}": "لم يتم حفظ {0}: {1}"
+  "{0} was not saved: {1}": "لم يتم حفظ {0}: {1}",
+  "The server does not answer right now. Trying again…": "الخادم لا يستجيب حاليًا. جارٍ المحاولة مرة أخرى…"
 }

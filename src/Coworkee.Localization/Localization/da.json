@@ -2142,5 +2142,6 @@
   "Sessions…": "Sessioner…",
   "Tick a permission to grant it to this user directly, besides what his roles and groups give.": "Sæt kryds ved en tilladelse for at give den direkte til denne bruger ud over det, hans roller og grupper giver.",
   "{0} permissions held": "{0} tilladelser",
-  "{0} was not saved: {1}": "{0} blev ikke gemt: {1}"
+  "{0} was not saved: {1}": "{0} blev ikke gemt: {1}",
+  "The server does not answer right now. Trying again…": "Serveren svarer ikke lige nu. Prøver igen…"
 }

@@ -2142,5 +2142,6 @@
   "Sessions…": "Συνεδρίες…",
   "Tick a permission to grant it to this user directly, besides what his roles and groups give.": "Επιλέξτε ένα δικαίωμα για να το χορηγήσετε απευθείας σε αυτόν τον χρήστη, πέρα από όσα του δίνουν οι ρόλοι και οι ομάδες του.",
   "{0} permissions held": "Δικαιώματα που έχει: {0}",
-  "{0} was not saved: {1}": "Το {0} δεν αποθηκεύτηκε: {1}"
+  "{0} was not saved: {1}": "Το {0} δεν αποθηκεύτηκε: {1}",
+  "The server does not answer right now. Trying again…": "Ο διακομιστής δεν απαντά αυτή τη στιγμή. Νέα προσπάθεια…"
 }

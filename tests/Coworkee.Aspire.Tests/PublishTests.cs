@@ -171,6 +171,16 @@ public sealed class PublishTests
     }
 
     [Fact]
+    public async Task On_azure_sql_server_gets_the_two_gigabytes_it_needs()
+    {
+        var output = await PublishFolderAsync("azure", o => o.UseSqlServer());
+
+        var bicep = await File.ReadAllTextAsync(Directory.EnumerateFiles(output, "sqlserver*.bicep", SearchOption.AllDirectories).Single(), TestContext.Current.CancellationToken);
+        bicep.ShouldContain("memory: '2Gi'");
+        bicep.ShouldMatch(@"cpu: 1\s");
+    }
+
+    [Fact]
     public void Runs_without_compose_environment_unless_asked()
     {
         var builder = DistributedApplication.CreateBuilder();

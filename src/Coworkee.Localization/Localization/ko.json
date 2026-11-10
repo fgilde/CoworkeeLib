@@ -2142,5 +2142,6 @@
   "Sessions…": "세션…",
   "Tick a permission to grant it to this user directly, besides what his roles and groups give.": "권한을 선택하면 역할과 그룹이 주는 권한 외에 이 사용자에게 직접 부여됩니다.",
   "{0} permissions held": "보유 권한 {0}개",
-  "{0} was not saved: {1}": "{0}을(를) 저장하지 못했습니다: {1}"
+  "{0} was not saved: {1}": "{0}을(를) 저장하지 못했습니다: {1}",
+  "The server does not answer right now. Trying again…": "서버가 지금 응답하지 않습니다. 다시 시도하는 중…"
 }

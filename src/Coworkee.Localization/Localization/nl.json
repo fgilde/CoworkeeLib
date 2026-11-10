@@ -2142,5 +2142,6 @@
   "Sessions…": "Sessies…",
   "Tick a permission to grant it to this user directly, besides what his roles and groups give.": "Vink een recht aan om het deze gebruiker direct te geven, naast wat zijn rollen en groepen geven.",
   "{0} permissions held": "{0} rechten aanwezig",
-  "{0} was not saved: {1}": "{0} is niet opgeslagen: {1}"
+  "{0} was not saved: {1}": "{0} is niet opgeslagen: {1}",
+  "The server does not answer right now. Trying again…": "De server reageert op dit moment niet. Opnieuw proberen…"
 }

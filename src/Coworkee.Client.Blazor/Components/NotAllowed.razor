@@ -1,3 +1,10 @@
+@if (Permissions.Unavailable)
+{
+    @* the server did not answer: no verdict about permissions, the store asks again and the page appears once it does *@
+    <MudAlert Severity="Severity.Info" Class="mb-3" data-testid="server-unavailable">@L["The server does not answer right now. Trying again…"]</MudAlert>
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    return;
+}
 <MudAlert Severity="Severity.Warning" Class="mb-3" data-testid="not-allowed">
     @(_signedIn ? L["You lack the permission for this page."] : L["You need to sign in, or you lack the permission for this page."])
 </MudAlert>

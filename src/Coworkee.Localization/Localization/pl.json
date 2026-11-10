@@ -2142,5 +2142,6 @@
   "Sessions…": "Sesje…",
   "Tick a permission to grant it to this user directly, besides what his roles and groups give.": "Zaznacz uprawnienie, aby nadać je temu użytkownikowi bezpośrednio, oprócz tego, co dają mu jego role i grupy.",
   "{0} permissions held": "Posiadane uprawnienia: {0}",
-  "{0} was not saved: {1}": "Nie zapisano {0}: {1}"
+  "{0} was not saved: {1}": "Nie zapisano {0}: {1}",
+  "The server does not answer right now. Trying again…": "Serwer w tej chwili nie odpowiada. Ponawianie próby…"
 }

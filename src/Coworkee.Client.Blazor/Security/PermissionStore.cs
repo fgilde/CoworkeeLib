@@ -6,17 +6,27 @@ namespace Coworkee.Client.Blazor.Security;
 
 /// <summary>
 /// The signed-in user's permissions, loaded once and reloaded when the server reports a change of roles, grants, memberships or
-/// the active role; <see cref="Changed"/> lets navigation and page guards evaluate again.
+/// the active role; <see cref="Changed"/> lets navigation and page guards evaluate again. Only a refusal (401, 403) means no permissions: when the
+/// server does not answer (5xx, no connection) the last known permissions stay, <see cref="Unavailable"/> says so and the load is tried again, so a
+/// short outage neither empties the navigation nor sends the user to "you lack the permission".
 /// </summary>
 public sealed class PermissionStore(ICoworkeeApi api, RealtimeClient realtime) : IAsyncDisposable
 {
     private static readonly TimeSpan Settle = TimeSpan.FromMilliseconds(250);
+
+    /// <summary>How long the store waits before asking again after the server did not answer.</summary>
+    internal static TimeSpan RetryAfter { get; set; } = TimeSpan.FromSeconds(5);
+
+    private HashSet<string>? _known;
     private readonly List<IAsyncDisposable> _subscriptions = [];
     private Task<HashSet<string>>? _permissions;
     private Task? _subscribed;
     private CancellationTokenSource? _pending;
 
     public event Action? Changed;
+
+    /// <summary>The last load found the server unreachable; the permissions shown are the last known ones (or none before the first answer).</summary>
+    public bool Unavailable { get; private set; }
 
     public async Task<bool> HasAsync(string permission) => (await (_permissions ??= LoadAsync())).Contains(permission);
 
@@ -52,12 +62,39 @@ public sealed class PermissionStore(ICoworkeeApi api, RealtimeClient realtime) :
         await (_subscribed ??= SubscribeAsync());
         try
         {
-            return new HashSet<string>(await api.GetMyPermissionsAsync(), StringComparer.Ordinal);
+            var loaded = new HashSet<string>(await api.GetMyPermissionsAsync(), StringComparer.Ordinal);
+            _known = loaded;
+            Unavailable = false;
+            return loaded;
         }
-        catch (ApiException)
+        catch (ApiException exception) when (exception.Status is 401 or 403)
         {
+            _known = null;
+            Unavailable = false;
             return new HashSet<string>(StringComparer.Ordinal);
         }
+        catch (Exception exception) when (exception is ApiException or HttpRequestException)
+        {
+            Unavailable = true;
+            _ = RetryAsync();
+            return _known ?? new HashSet<string>(StringComparer.Ordinal);
+        }
+    }
+
+    private async Task RetryAsync()
+    {
+        _pending?.Cancel();
+        var pending = _pending = new CancellationTokenSource();
+        try
+        {
+            await Task.Delay(RetryAfter, pending.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        Reset();
     }
 
     private async Task SubscribeAsync()

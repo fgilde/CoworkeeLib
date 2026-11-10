@@ -2142,5 +2142,6 @@
   "Sessions…": "Сеансы…",
   "Tick a permission to grant it to this user directly, besides what his roles and groups give.": "Отметьте разрешение, чтобы выдать его этому пользователю напрямую, помимо того, что дают его роли и группы.",
   "{0} permissions held": "Имеющиеся разрешения: {0}",
-  "{0} was not saved: {1}": "{0} не сохранено: {1}"
+  "{0} was not saved: {1}": "{0} не сохранено: {1}",
+  "The server does not answer right now. Trying again…": "Сервер сейчас не отвечает. Повторная попытка…"
 }
