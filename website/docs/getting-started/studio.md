@@ -26,7 +26,7 @@ coworkee ui --spec shop.json
 
 For local builds of Coworkee: `coworkee ui --add-source <folder> --studio-version <version>`.
 
-The window opens at once with a splash: the Coworkee mark assembles, with the version and what is loading below it, while the Studio reads your apps and builds its pages. Once it is ready, the mark flies into the title bar and the splash dissolves into the Studio. A click or `Esc` skips the animation; **Reduce motion** in the settings (see [Settings](#settings)) replaces it with a plain fade. If the Studio cannot start, the splash shows the reason and a **Close** button.
+The window opens at once with a splash: the Coworkee mark assembles, with the version and what is loading below it, while the Studio reads your apps and builds its pages. Once it is ready, the mark flies into the title bar, takes the place of its logo and the splash dissolves into the Studio. A click or `Esc` skips the animation; **Reduce motion** in the settings (see [Settings](#settings)) replaces it with a plain fade. If the Studio cannot start, the splash shows the reason and a **Close** button.
 
 ## The pages
 
@@ -189,7 +189,7 @@ The help (`F1` or the question mark) explains the wizard, the CLI commands and t
 
 ## Language and updates
 
-The language code in the title bar (`EN`, `DE`, `FR`, ...) switches to the next language at once and keeps it in the settings; the Studio speaks English, German, French, Spanish, Italian, Dutch, Polish and Portuguese. When nuget.org has a newer Coworkee Studio (prereleases only when the running Studio is one), the title bar shows **Update available x.y.z**. A click saves an opened spec, closes the Studio, runs `dotnet tool update -g Coworkee.Cli` and `dotnet tool update -g Coworkee.Studio` to that version (in a window of its own on Windows, because a running tool cannot replace its files) and starts the Studio again with the spec. From the command line: [`coworkee self-update`](cli.md#other-commands).
+The language code in the title bar (`EN`, `DE`, `FR`, ...) opens a menu with the language of the system and the eight languages, the current one checked; a choice switches the Studio at once and is kept in the settings; the Studio speaks English, German, French, Spanish, Italian, Dutch, Polish and Portuguese. When nuget.org has a newer Coworkee Studio (prereleases only when the running Studio is one), the title bar shows **Update available x.y.z**. A click saves an opened spec, closes the Studio, runs `dotnet tool update -g Coworkee.Cli` and `dotnet tool update -g Coworkee.Studio` to that version (in a window of its own on Windows, because a running tool cannot replace its files) and starts the Studio again with the spec. From the command line: [`coworkee self-update`](cli.md#other-commands).
 
 ## Settings
 

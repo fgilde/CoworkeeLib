@@ -90,7 +90,8 @@ public sealed partial class SplashView : UserControl
         Center(studio);
         Vector(studio, "Scale", TransitionMs, 0, false, Out, (0, new Vector3D(1.03, 1.03, 1)), (0.25f, new Vector3D(1.03, 1.03, 1)), (1, new Vector3D(1, 1, 1)));
 
-        // the mark swells a little, then flies to the logo of the title bar and shrinks to its size
+        // the mark swells a little, then flies to the logo of the title bar and shrinks to its size;
+        // the logo of the title bar stays hidden until the mark has landed on it, so only one mark is seen
         if (TopLevel.GetTopLevel(this) is { } top && titleLogo is not null
             && LogoHost.TranslatePoint(default, top) is { } from && titleLogo.TranslatePoint(default, top) is { } to)
         {
@@ -99,10 +100,22 @@ public sealed partial class SplashView : UserControl
             var target = new Vector3D(to.X - from.X - center.X * (1 - scale), to.Y - from.Y - center.Y * (1 - scale), 0);
             Vector(LogoHost, "Scale", TransitionMs, 0, false, InOut, (0, new Vector3D(1, 1, 1)), (0.2f, new Vector3D(1.08, 1.08, 1)), (1, new Vector3D(scale, scale, 1)));
             Vector(LogoHost, "Translation", TransitionMs, 0, false, InOut, (0, default), (0.2f, default), (1, target));
+            titleLogo.Opacity = 0;
         }
 
-        await Task.WhenAny(Task.Delay(TransitionMs), _skip.Task);
-        ElementComposition.GetElementVisual(studio)?.StopAnimation("Scale");
+        try
+        {
+            await Task.WhenAny(Task.Delay(TransitionMs), _skip.Task);
+            ElementComposition.GetElementVisual(studio)?.StopAnimation("Scale");
+        }
+        finally
+        {
+            // in the same frame in which the caller removes the splash
+            if (titleLogo is not null)
+            {
+                titleLogo.Opacity = 1;
+            }
+        }
     }
 
     protected override void OnLoaded(RoutedEventArgs e)

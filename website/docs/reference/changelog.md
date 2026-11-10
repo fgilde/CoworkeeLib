@@ -2,6 +2,16 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Changed
+
+- Coworkee Studio: the language code in the title bar opens a menu with the language of the system and the eight languages, the current one checked, instead of switching to the next language on every click.
+
+### Fixed
+
+- Coworkee Studio: the logo of the title bar stays hidden while the mark of the splash flies onto it, so only one logo is seen; it appears when the mark lands, also when the animation is skipped.
+
 ## 0.0.1.71 (2026-11-10)
 
 ### Fixed
