@@ -44,8 +44,11 @@ public sealed partial class DeployViewModel(MainViewModel main, Func<string?> ou
     [RelayCommand(CanExecute = nameof(CanStart))]
     public Task StartAsync() => RunAsync([Target]);
 
-    /// <summary>coworkee deploy with <paramref name="args"/> (target and options), its output in <see cref="Log"/>; the exit code, null when it did not run to the end.</summary>
-    public async Task<int?> RunAsync(IReadOnlyList<string> args)
+    /// <summary>
+    /// coworkee deploy with <paramref name="args"/> (target and options) and <paramref name="environment"/> (not logged), its output in <see cref="Log"/>; the exit
+    /// code, null when it did not run to the end.
+    /// </summary>
+    public async Task<int?> RunAsync(IReadOnlyList<string> args, IReadOnlyDictionary<string, string>? environment = null)
     {
         if (output() is not { } folder)
         {
@@ -58,7 +61,7 @@ public sealed partial class DeployViewModel(MainViewModel main, Func<string?> ou
         _cancel = new CancellationTokenSource();
         try
         {
-            var exit = await main.Generator.DeployAsync(folder, args, main.Settings, line => dispatch(() => Log.Add(line.Text)), _cancel.Token);
+            var exit = await main.Generator.DeployAsync(folder, args, main.Settings, line => dispatch(() => Log.Add(line.Text)), _cancel.Token, environment);
             dispatch(() => ExitCode = exit);
             return exit;
         }

@@ -46,6 +46,11 @@ internal static class DeployCommand
 
     private static readonly Option<string?> Subscription = new("--subscription") { Description = "azure --apply: the subscription (default: the Azure CLI's)." };
 
+    private static readonly Option<bool?> OwnSignIn = new("--own-azure-sign-in")
+    {
+        Description = "azure --apply: use the app's own Azure CLI sign-in (AZURE_CONFIG_DIR in ~/.coworkee/azure), not the global one; kept in the record, false turns it off.",
+    };
+
     private static readonly Option<string?> Name = new("--name") { Description = "azure --apply: the name of the deployment in .coworkee/deployments (default: the resource group)." };
 
     private static readonly Option<bool> Yes = new("--yes", "-y") { Description = "azure --apply: do not ask before deploying." };
@@ -63,7 +68,7 @@ internal static class DeployCommand
     public static Command Create() =>
         new Command("deploy", "Write the deployment artifacts of the app and its tools: Docker Compose, Azure Container Apps (Bicep) or Kubernetes (Helm).")
         {
-            Target, Output, NoBuild, Without, With, AdminEmail, Apply, ResourceGroup, Location, Subscription, Name, Yes, GitHub, ResourceGroupPrefix, Branches, Teardown, Force,
+            Target, Output, NoBuild, Without, With, AdminEmail, Apply, ResourceGroup, Location, Subscription, OwnSignIn, Name, Yes, GitHub, ResourceGroupPrefix, Branches, Teardown, Force,
         }
         .Handle((result, cancellationToken) => result.GetValue(GitHub) ? GitHubWorkflowAsync(result, cancellationToken) : RunAsync(
             result.GetValue(Target)!, result.GetValue(Output), result.GetValue(NoBuild), ToolSwitches(result.GetValue(Without), result.GetValue(With)), result.GetValue(AdminEmail),
@@ -83,7 +88,7 @@ internal static class DeployCommand
 
         var group = result.GetValue(ResourceGroup) ?? throw new CliException("--apply needs --resource-group.");
         var location = result.GetValue(Location) ?? throw new CliException("--apply needs --location, e.g. germanywestcentral.");
-        return new AzureDeploy.Target(group, location, result.GetValue(Subscription), result.GetValue(Name) ?? group);
+        return new AzureDeploy.Target(group, location, result.GetValue(Subscription), result.GetValue(Name) ?? group, result.GetValue(OwnSignIn));
     }
 
     /// <summary>The settings of the app (.coworkee/app.json) with the given switches over them: the workflow is written and the settings are kept.</summary>
@@ -161,6 +166,7 @@ internal static class DeployCommand
         // empty parameters a former deployment left in Aspire's state would make this publish wait for them
         if (azure is not null)
         {
+            azure = AzureDeploy.UseSignIn(solution, azure);
             await AzureDeploy.PrepareStateAsync(solution, new Dictionary<string, string>(), cancellationToken);
         }
 

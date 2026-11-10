@@ -24,6 +24,13 @@
       <Border Classes="card" IsVisible="{Binding IsSignInStep}" x:Name="SignInCard">
         <StackPanel Spacing="12">
           <TextBlock Classes="h3" Text="{l:L 'Sign in to Azure'}" />
+          <StackPanel Spacing="4">
+            <ToggleSwitch IsChecked="{Binding OwnSignIn}" Command="{Binding CheckCommand}" x:Name="OwnSignInSwitch"
+                          OnContent="{l:L 'Own Azure sign-in for this app'}" OffContent="{l:L 'Own Azure sign-in for this app'}" />
+            <TextBlock Classes="caption" TextWrapping="Wrap" Text="{Binding ConfigDirText}" IsVisible="{Binding OwnSignIn}" />
+            <TextBlock Classes="caption" TextWrapping="Wrap" IsVisible="{Binding !OwnSignIn}"
+                       Text="{l:L 'Off: the global sign-in of the Azure CLI. On: the app keeps a sign-in of its own, e.g. another account for a customer.'}" />
+          </StackPanel>
           <StackPanel Orientation="Horizontal" Spacing="10" IsVisible="{Binding IsChecking}">
             <PathIcon Classes="small spin" Data="{StaticResource Icon.Restart}" Foreground="{DynamicResource Primary}" />
             <TextBlock Classes="body" Text="{l:L 'Checking the Azure CLI…'}" />
@@ -43,12 +50,15 @@
 
           <StackPanel Spacing="10" IsVisible="{Binding IsSignedOut}">
             <TextBlock Classes="body" TextWrapping="Wrap" Text="{l:L 'The Azure CLI is not signed in, or its sign-in expired. Sign in opens the browser; the Studio checks again when you are done.'}" />
-            <Button Classes="primary" HorizontalAlignment="Left" Command="{Binding SignInCommand}" x:Name="SignInButton">
-              <StackPanel Orientation="Horizontal" Spacing="6">
-                <PathIcon Classes="small" Data="{StaticResource Icon.Login}" />
-                <TextBlock Text="{l:L 'Sign in'}" />
-              </StackPanel>
-            </Button>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Classes="primary" Command="{Binding SignInCommand}" x:Name="SignInButton">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.Login}" />
+                  <TextBlock Text="{l:L 'Sign in'}" />
+                </StackPanel>
+              </Button>
+              <TextBox Text="{Binding SignInTenant}" PlaceholderText="{l:L 'Tenant (optional)'}" MinWidth="260" />
+            </StackPanel>
           </StackPanel>
 
           <StackPanel Spacing="10" IsVisible="{Binding IsBrokerProblem}">
@@ -96,18 +106,44 @@
             <TextBlock Classes="h2" Text="{Binding Account}" VerticalAlignment="Center" />
           </StackPanel>
           <TextBlock Classes="h3" Text="{l:L 'Subscription'}" Margin="0,6,0,0" />
-          <ComboBox ItemsSource="{Binding Subscriptions}" SelectedItem="{Binding Subscription}" MinWidth="420">
-            <ComboBox.ItemTemplate>
-              <DataTemplate x:DataType="vm:AzureSubscription">
-                <StackPanel>
-                  <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
-                  <TextBlock Classes="mono caption" Text="{Binding Id}" />
+          <ItemsControl ItemsSource="{Binding Accounts}" x:Name="AccountList">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:AzureAccount">
+                <StackPanel Spacing="4" Margin="0,0,0,10">
+                  <TextBlock>
+                    <Run Text="{Binding User}" FontWeight="SemiBold" />
+                    <Run Text="{Binding TenantId}" FontSize="11.5" />
+                  </TextBlock>
+                  <ItemsControl ItemsSource="{Binding Subscriptions}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:AzureSubscriptionPick">
+                        <RadioButton GroupName="subscription" IsChecked="{Binding IsPicked, Mode=OneWay}" Margin="12,0,0,0"
+                                     Command="{Binding $parent[UserControl].((vm:AzureDeployViewModel)DataContext).PickSubscriptionCommand}" CommandParameter="{Binding Subscription}">
+                          <StackPanel>
+                            <TextBlock Text="{Binding Subscription.Name}" FontWeight="SemiBold" />
+                            <TextBlock Classes="mono caption" Text="{Binding Subscription.Id}" />
+                          </StackPanel>
+                        </RadioButton>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
                 </StackPanel>
               </DataTemplate>
-            </ComboBox.ItemTemplate>
-          </ComboBox>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
           <TextBlock Classes="caption" TextWrapping="Wrap" Text="{l:L 'The Azure resources of the app are billed to this subscription.'}" />
           <TextBlock Classes="error" Text="{Binding Problem}" IsVisible="{Binding HasProblem}" TextWrapping="Wrap" />
+          <TextBlock Classes="caption" TextWrapping="Wrap" Margin="0,6,0,0"
+                     Text="{l:L 'Another account, or a tenant where you are a guest: sign in with it; the accounts signed in already stay signed in.'}" />
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Command="{Binding SignInCommand}" x:Name="AnotherAccountButton">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <PathIcon Classes="small" Data="{StaticResource Icon.AccountPlus}" />
+                <TextBlock Text="{l:L 'Sign in with another account'}" />
+              </StackPanel>
+            </Button>
+            <TextBox Text="{Binding SignInTenant}" PlaceholderText="{l:L 'Tenant (optional)'}" MinWidth="260" x:Name="TenantBox" />
+          </StackPanel>
         </StackPanel>
       </Border>
 
@@ -179,7 +215,7 @@
       <Border Classes="card" IsVisible="{Binding ShowSummary}" x:Name="SummaryCard">
         <StackPanel Spacing="12">
           <TextBlock Classes="h3" Text="{l:L 'Summary'}" />
-          <Grid ColumnDefinitions="160,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="6">
+          <Grid ColumnDefinitions="160,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="6">
             <TextBlock Classes="caption" Text="{l:L 'Account'}" />
             <TextBlock Grid.Column="1" Text="{Binding Account}" FontWeight="SemiBold" />
             <TextBlock Grid.Row="1" Classes="caption" Text="{l:L 'Subscription'}" />
@@ -197,6 +233,8 @@
             <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding AdminText}" />
             <TextBlock Grid.Row="6" Classes="caption" Text="{l:L 'Tools'}" />
             <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding ToolsText}" TextWrapping="Wrap" />
+            <TextBlock Grid.Row="7" Classes="caption" Text="{l:L 'Azure sign-in'}" />
+            <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding SignInText}" />
           </Grid>
           <Border Classes="banner info">
             <StackPanel Orientation="Horizontal" Spacing="8">

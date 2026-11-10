@@ -1,10 +1,14 @@
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Azure;
 using Aspire.Hosting.Azure.AppContainers;
+using Azure.Core;
+using Azure.Identity;
 using Azure.Provisioning;
 using Azure.Provisioning.AppContainers;
 using Azure.Provisioning.Expressions;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Aspire.Hosting;
 
@@ -43,6 +47,28 @@ public sealed partial class CoworkeeApp
             NameManagedStorages(infrastructure);
             ShareFileVolume(infrastructure);
         });
+        UseCliCredentialOfSubscription(Builder);
+    }
+
+    /// <summary>
+    /// Aspire's Azure CLI credential asks az for a token of the tenant (<c>az account get-access-token --tenant</c>), and az answers with the account of its
+    /// default subscription. With several accounts signed in (or a guest tenant) that is not the account of <c>Azure:SubscriptionId</c>: the token is asked
+    /// for that subscription instead (<c>--subscription</c>, az takes its account and tenant). Only with <c>Azure:CredentialSource=AzureCli</c>, as coworkee
+    /// deploy sets it.
+    /// </summary>
+    internal static void UseCliCredentialOfSubscription(IDistributedApplicationBuilder builder)
+    {
+        if (string.Equals(builder.Configuration["Azure:CredentialSource"], "AzureCli", StringComparison.OrdinalIgnoreCase)
+            && builder.Configuration["Azure:SubscriptionId"] is { Length: > 0 } subscription)
+        {
+            builder.Services.Replace(ServiceDescriptor.Singleton<ITokenCredentialProvider>(new CliCredentialOfSubscription(subscription)));
+        }
+    }
+
+    private sealed class CliCredentialOfSubscription(string subscription) : ITokenCredentialProvider
+    {
+        // az refuses --tenant together with --subscription, so no tenant here
+        public TokenCredential TokenCredential { get; } = new AzureCliCredential(new AzureCliCredentialOptions { Subscription = subscription, AdditionallyAllowedTenants = { "*" } });
     }
 
     // the app host's own parameters too: without a value in the configuration (an empty one counts as none) the publisher waits for one, silently

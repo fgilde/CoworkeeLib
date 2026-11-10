@@ -111,6 +111,7 @@ public sealed class AppOverviewTests
         wizard.Step.ShouldBe(AzureStep.SignIn);
         await wizard.NextAsync();
         wizard.Subscriptions.Select(s => s.Name).ShouldBe(["Test", "Production"]);
+        az.Calls.ShouldContain("account list --all -o json");
         wizard.Subscription!.Id.ShouldBe("sub-2");
         await wizard.NextAsync();
         wizard.Step.ShouldBe(AzureStep.Target);
@@ -273,6 +274,150 @@ public sealed class AppOverviewTests
         window.Close();
     });
 
+    [Fact]
+    public async Task The_subscriptions_of_every_signed_in_account_are_grouped_and_the_account_follows_the_pick()
+    {
+        using var folder = new TempFolder();
+        var az = new FakeAzure { SignedIn = true, Guest = true };
+        var main = Studio.Create(folder, az.Run);
+        main.ShowApp(App(folder));
+        await ((AppOverviewViewModel)main.Page!).DeployAsync();
+        var wizard = (AzureDeployViewModel)main.Page!;
+        await wizard.NextAsync();
+
+        // the disabled subscription of the guest account is left out
+        wizard.Accounts.Select(a => (a.User, a.TenantId, string.Join(",", a.Subscriptions.Select(s => s.Subscription.Name)))).ShouldBe(
+            [("me@example.com", "tenant-1", "Test,Production"), ("guest@customer.com", "tenant-2", "Customer")]);
+        wizard.Accounts.SelectMany(a => a.Subscriptions).Single(s => s.IsPicked).Subscription.Id.ShouldBe("sub-2");
+
+        wizard.PickSubscription(wizard.Accounts[1].Subscriptions[0].Subscription);
+
+        wizard.Account.ShouldBe("guest@customer.com");
+        wizard.Accounts[1].Subscriptions[0].IsPicked.ShouldBeTrue();
+        wizard.Accounts[0].Subscriptions.ShouldAllBe(s => !s.IsPicked);
+        await wizard.NextAsync();
+        az.Calls.ShouldContain("group list --subscription sub-3 -o json");
+        wizard.ResourceGroup = "rg-customer";
+        wizard.Arguments().ShouldContain("sub-3");
+        wizard.Arguments().ShouldNotContain("--own-azure-sign-in");
+    }
+
+    [Fact]
+    public async Task Sign_in_with_another_account_runs_az_login_for_the_tenant_and_keeps_the_accounts_signed_in()
+    {
+        using var folder = new TempFolder();
+        var az = new FakeAzure { SignedIn = true };
+        var main = Studio.Create(folder, az.Run);
+        main.ShowApp(App(folder));
+        await ((AppOverviewViewModel)main.Page!).DeployAsync();
+        var wizard = (AzureDeployViewModel)main.Page!;
+        await wizard.NextAsync();
+        wizard.Subscriptions.Count.ShouldBe(2);
+
+        wizard.SignInTenant = " customer.onmicrosoft.com ";
+        await wizard.SignInAsync();
+
+        az.Calls.ShouldContain("login --tenant customer.onmicrosoft.com -o none");
+        az.Calls.ShouldNotContain(c => c.Contains("logout") || c.Contains("account clear"));
+        // az login made the guest account the default; the default from before is set back
+        az.Calls.Last(c => c.StartsWith("account set", StringComparison.Ordinal)).ShouldBe("account set --subscription sub-2 -o none");
+        az.Calls.IndexOf("account set --subscription sub-2 -o none").ShouldBeGreaterThan(az.Calls.IndexOf("login --tenant customer.onmicrosoft.com -o none"));
+        wizard.Step.ShouldBe(AzureStep.Subscription);
+        wizard.Subscriptions.Select(s => s.User).Distinct().ShouldBe(["me@example.com", "guest@customer.com"]);
+        wizard.Subscription!.Id.ShouldBe("sub-2");
+    }
+
+    [Fact]
+    public async Task The_own_sign_in_of_the_app_goes_to_every_az_call_and_to_coworkee_deploy_and_updates_keep_it()
+    {
+        using var folder = new TempFolder();
+        var root = App(folder);
+        var az = new FakeAzure { SignedIn = true };
+        ProcessStartInfo? deploy = null;
+        var main = Studio.Create(folder, (start, output, cancellationToken) =>
+        {
+            if (!start.ArgumentList.Contains("deploy"))
+            {
+                return az.Run(start, output, cancellationToken);
+            }
+
+            deploy = start;
+            var record = new DeploymentRecord("rg-own", "azure", "sub-2", "tenant-1", "rg-own", "germanywestcentral", "me@example.com", DateTimeOffset.Now,
+                new Dictionary<string, string>()) { OwnAzureSignIn = true };
+            return Deployments.WriteAsync(root, record, cancellationToken).ContinueWith(_ => 0, TaskScheduler.Default);
+        });
+        main.Apps.Dispatch = action => action();
+        main.ShowApp(root);
+        var overview = (AppOverviewViewModel)main.Page!;
+        await overview.DeployAsync();
+        var wizard = (AzureDeployViewModel)main.Page!;
+        wizard.IsSignedIn.ShouldBeTrue();
+        az.Environments.ShouldAllBe(e => e == null);
+        var dir = Deployments.AzureConfigDir(root);
+        wizard.ConfigDir.ShouldBe(dir);
+        dir.ShouldStartWith(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".coworkee", "azure"));
+        dir.ShouldNotStartWith(root);
+
+        // the app's folder has no sign-in yet; signing in there leaves the global one alone
+        var before = az.Calls.Count;
+        wizard.OwnSignIn = true;
+        await wizard.CheckAsync();
+        wizard.IsSignedOut.ShouldBeTrue();
+        await wizard.SignInAsync();
+        az.OwnSignedIn.ShouldBeTrue();
+        wizard.IsSignedIn.ShouldBeTrue();
+        await wizard.NextAsync();
+        await wizard.NextAsync();
+        wizard.ResourceGroup = "rg-own";
+        await wizard.NextAsync();
+        wizard.SignInText.ShouldBe("own sign-in of this app");
+        await wizard.DeployAsync();
+
+        az.Calls.Skip(before).ShouldContain("login -o none");
+        az.Environments.Skip(before).ShouldAllBe(e => e == dir);
+        deploy!.Environment[Deployments.AzureConfigDirVariable].ShouldBe(dir);
+        deploy.ArgumentList.ShouldContain("--own-azure-sign-in");
+        wizard.IsDone.ShouldBeTrue();
+
+        // an update takes the record's own sign-in; switched off it tells the CLI so
+        before = az.Calls.Count;
+        await overview.UpdateAsync(overview.Deployments.Single());
+        var update = (AzureDeployViewModel)main.Page!;
+        update.OwnSignIn.ShouldBeTrue();
+        update.Step.ShouldBe(AzureStep.Summary);
+        az.Environments.Skip(before).ShouldAllBe(e => e == dir);
+        update.Arguments().ShouldContain("--own-azure-sign-in");
+        update.OwnSignIn = false;
+        update.Arguments().SkipWhile(a => a != "--own-azure-sign-in").Take(2).ShouldBe(["--own-azure-sign-in", "false"]);
+    }
+
+    [Fact]
+    public async Task An_update_picks_its_subscription_of_the_second_account_or_says_that_no_account_sees_it()
+    {
+        using var folder = new TempFolder();
+        var root = App(folder);
+        await Deployments.WriteAsync(root, new DeploymentRecord("customer", "azure", "sub-3", "tenant-2", "rg-customer", "westeurope", "guest@customer.com", DateTimeOffset.Now,
+            new Dictionary<string, string>()), TestContext.Current.CancellationToken);
+        await Deployments.WriteAsync(root, new DeploymentRecord("lost", "azure", "sub-9", "tenant-9", "rg-lost", "westeurope", "old@example.com", DateTimeOffset.Now.AddDays(-1),
+            new Dictionary<string, string>()), TestContext.Current.CancellationToken);
+        var az = new FakeAzure { SignedIn = true, Guest = true };
+        var main = Studio.Create(folder, az.Run);
+        main.ShowApp(root);
+        var overview = (AppOverviewViewModel)main.Page!;
+
+        await overview.UpdateAsync(overview.Deployments.Single(d => d.Record.Name == "customer"));
+        var wizard = (AzureDeployViewModel)main.Page!;
+        wizard.Step.ShouldBe(AzureStep.Summary);
+        wizard.Subscription!.Id.ShouldBe("sub-3");
+        wizard.Account.ShouldBe("guest@customer.com");
+
+        await overview.UpdateAsync(overview.Deployments.Single(d => d.Record.Name == "lost"));
+        wizard = (AzureDeployViewModel)main.Page!;
+        wizard.Step.ShouldBe(AzureStep.Subscription);
+        wizard.Problem.ShouldBe("No signed-in account sees the subscription sub-9 of this deployment (tenant tenant-9): sign in with an account that has access.");
+        wizard.SignInTenant.ShouldBe("tenant-9");
+    }
+
     private static string App(TempFolder folder)
     {
         var root = Directory.CreateDirectory(Path.Combine(folder.Path, "Shop")).FullName;
@@ -289,22 +434,48 @@ public sealed class AppOverviewTests
 
         public bool Broker { get; set; }
 
+        /// <summary>A second account is signed in: a guest in tenant-2.</summary>
+        public bool Guest { get; set; }
+
+        /// <summary>The app's own folder (AZURE_CONFIG_DIR) is signed in.</summary>
+        public bool OwnSignedIn { get; set; }
+
         public List<string> Calls { get; } = [];
+
+        /// <summary>AZURE_CONFIG_DIR of every call, null without one.</summary>
+        public List<string?> Environments { get; } = [];
 
         public Task<int> Run(ProcessStartInfo start, Action<string, bool> output, CancellationToken cancellationToken)
         {
             start.FileName.ShouldBe(Deployments.AzureCli);
             var call = string.Join(' ', start.ArgumentList);
             Calls.Add(call);
+            var own = start.Environment.TryGetValue(Deployments.AzureConfigDirVariable, out var dir) ? dir : null;
+            Environments.Add(own);
+            var signedIn = own is null ? SignedIn : OwnSignedIn;
             switch (call)
             {
+                case "login -o none" when own is not null:
+                    OwnSignedIn = true;
+                    return Task.FromResult(0);
                 case "login -o none":
                     SignedIn = true;
+                    return Task.FromResult(0);
+                case "login --tenant customer.onmicrosoft.com -o none":
+                    Guest = true;
                     return Task.FromResult(0);
                 case "config set core.enable_broker_on_windows=false":
                     Broker = false;
                     return Task.FromResult(0);
-                case "account show -o json" when SignedIn:
+                case "account show --query id -o tsv" when signedIn:
+                    output("sub-2", false);
+                    return Task.FromResult(0);
+                case "account show --query id -o tsv":
+                    output("Please run 'az login' to setup account.", true);
+                    return Task.FromResult(1);
+                case "account set --subscription sub-2 -o none":
+                    return Task.FromResult(0);
+                case "account show -o json" when signedIn:
                     output("""{ "id": "sub-2", "name": "Production", "tenantId": "tenant-1", "user": { "name": "me@example.com", "type": "user" } }""", false);
                     return Task.FromResult(0);
                 case "account show -o json":
@@ -316,8 +487,14 @@ public sealed class AppOverviewTests
                 case "account get-access-token --subscription sub-2 --query expiresOn -o tsv":
                     output("2026-11-09 12:00:00.000000", false);
                     return Task.FromResult(0);
-                case "account list -o json":
-                    output("""[{ "id": "sub-1", "name": "Test", "tenantId": "tenant-1", "isDefault": false }, { "id": "sub-2", "name": "Production", "tenantId": "tenant-1", "isDefault": true }]""", false);
+                case "account list --all -o json":
+                    var guest = Guest
+                        ? """, { "id": "sub-3", "name": "Customer", "tenantId": "tenant-2", "isDefault": false, "state": "Enabled", "user": { "name": "guest@customer.com" } }, { "id": "sub-4", "name": "Old", "tenantId": "tenant-2", "isDefault": false, "state": "Disabled", "user": { "name": "guest@customer.com" } }"""
+                        : string.Empty;
+                    output($$"""[{ "id": "sub-1", "name": "Test", "tenantId": "tenant-1", "isDefault": false, "state": "Enabled", "user": { "name": "me@example.com" } }, { "id": "sub-2", "name": "Production", "tenantId": "tenant-1", "isDefault": true, "state": "Enabled", "user": { "name": "me@example.com" } }{{guest}}]""", false);
+                    return Task.FromResult(0);
+                case "group list --subscription sub-3 -o json":
+                    output("[]", false);
                     return Task.FromResult(0);
                 case "group list --subscription sub-2 -o json":
                     output("""[{ "name": "rg-old", "location": "westus3" }]""", false);

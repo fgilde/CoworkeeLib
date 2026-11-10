@@ -107,16 +107,26 @@ public sealed class Generator(ProcessRunner run)
     /// coworkee deploy &lt;target&gt; [options] in the app's folder: the deployment artifacts, the images (compose), the Azure deployment (azure --apply)
     /// and the addresses and sign-in at the end. Its input is closed, so it asks nothing and takes the defaults.
     /// </summary>
-    public Task<int> DeployAsync(string appRoot, IReadOnlyList<string> args, StudioSettings settings, Action<CliLine> onLine, CancellationToken cancellationToken) =>
-        RunCliAsync(CliInvocation.Resolve(settings.CliPath), ["deploy", .. args], settings, onLine, cancellationToken, appRoot, closeInput: true);
+    public Task<int> DeployAsync(string appRoot, IReadOnlyList<string> args, StudioSettings settings, Action<CliLine> onLine, CancellationToken cancellationToken,
+        IReadOnlyDictionary<string, string>? environment = null) =>
+        RunCliAsync(CliInvocation.Resolve(settings.CliPath), ["deploy", .. args], settings, onLine, cancellationToken, appRoot, closeInput: true, environment);
 
-    /// <summary>A program whose output the Studio reads (the Azure CLI): its exit code, stdout and stderr; throws Win32Exception when it is missing.</summary>
-    public async Task<(int ExitCode, string Output, string Error)> CaptureAsync(string program, IEnumerable<string> args, CancellationToken cancellationToken)
+    /// <summary>
+    /// A program whose output the Studio reads (the Azure CLI): its exit code, stdout and stderr; throws Win32Exception when it is missing.
+    /// <paramref name="environment"/> goes to the process only (AZURE_CONFIG_DIR of an app's own sign-in), never into a log.
+    /// </summary>
+    public async Task<(int ExitCode, string Output, string Error)> CaptureAsync(string program, IEnumerable<string> args, CancellationToken cancellationToken,
+        IReadOnlyDictionary<string, string>? environment = null)
     {
         var start = new System.Diagnostics.ProcessStartInfo(program) { RedirectStandardInput = true };
         foreach (var arg in args)
         {
             start.ArgumentList.Add(arg);
+        }
+
+        foreach (var (name, value) in environment ?? new Dictionary<string, string>())
+        {
+            start.Environment[name] = value;
         }
 
         var output = new System.Text.StringBuilder();
@@ -148,10 +158,15 @@ public sealed class Generator(ProcessRunner run)
     }
 
     private Task<int> RunCliAsync(CliInvocation cli, string[] args, StudioSettings settings, Action<CliLine> onLine, CancellationToken cancellationToken, string? workingDirectory = null,
-        bool closeInput = false)
+        bool closeInput = false, IReadOnlyDictionary<string, string>? environment = null)
     {
         var start = cli.Start(args, workingDirectory);
         start.RedirectStandardInput = closeInput;
+        foreach (var (name, value) in environment ?? new Dictionary<string, string>())
+        {
+            start.Environment[name] = value;
+        }
+
         if (!string.IsNullOrWhiteSpace(settings.PackageFeed))
         {
             // MSBuild reads environment variables as properties: every restore of the new app also uses the feed

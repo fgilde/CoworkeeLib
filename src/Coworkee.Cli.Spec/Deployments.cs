@@ -16,6 +16,9 @@ public sealed record DeploymentRecord(
 {
     /// <summary>The tool switches of the deployment (<c>--without grafana</c> is grafana: false), so an update deploys the same tools.</summary>
     public IReadOnlyDictionary<string, bool> Tools { get; init; } = new Dictionary<string, bool>();
+
+    /// <summary>The app signs in to Azure on its own (<see cref="Deployments.AzureConfigDir"/>), so an update uses that sign-in again.</summary>
+    public bool OwnAzureSignIn { get; init; }
 }
 
 /// <summary>The deployment records of an app and the files next to them; shared by the CLI that writes them and the Studio that reads them.</summary>
@@ -34,6 +37,20 @@ public static class Deployments
         ? (Environment.GetEnvironmentVariable("PATH") ?? string.Empty).Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
             .Select(d => Path.Combine(d.Trim('"'), "az.cmd")).FirstOrDefault(File.Exists) ?? "az.cmd"
         : "az";
+
+    /// <summary>The environment variable that points the Azure CLI (and everything that runs it) at another folder for its sign-in and settings.</summary>
+    public const string AzureConfigDirVariable = "AZURE_CONFIG_DIR";
+
+    /// <summary>
+    /// The app's own Azure CLI folder: ~/.coworkee/azure/{folder name}-{SHA-256 of the lower-cased app folder}. It holds tokens, so it is never inside the
+    /// repository; the deployment record only notes that the app uses it.
+    /// </summary>
+    public static string AzureConfigDir(string root)
+    {
+        var full = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(full.ToLowerInvariant())))[..16].ToLowerInvariant();
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".coworkee", "azure", $"{Path.GetFileName(full)}-{hash}");
+    }
 
     public static string Folder(string root) => Path.Combine(root, ".coworkee", "deployments");
 

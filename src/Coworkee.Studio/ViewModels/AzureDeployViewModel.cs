@@ -31,7 +31,13 @@ public enum AzureSignIn
     SignedIn,
 }
 
-public sealed record AzureSubscription(string Id, string Name, string TenantId, bool IsDefault);
+/// <summary>A subscription the Azure CLI sees, with the account (<c>user.name</c>) it is signed in with; several accounts can be signed in at once.</summary>
+public sealed record AzureSubscription(string Id, string Name, string TenantId, bool IsDefault, string User = "");
+
+/// <summary>The subscriptions of one signed-in account in one tenant, as the wizard groups them.</summary>
+public sealed record AzureAccount(string User, string TenantId, IReadOnlyList<AzureSubscriptionPick> Subscriptions);
+
+public sealed record AzureSubscriptionPick(AzureSubscription Subscription, bool IsPicked);
 
 public sealed record AzureResourceGroup(string Name, string Location);
 
@@ -78,6 +84,7 @@ public sealed partial class AzureDeployViewModel : ObservableObject
             ResourceGroup = update.ResourceGroup;
             Location = update.Location;
             Name = update.Name;
+            OwnSignIn = update.OwnAzureSignIn;
         }
     }
 
@@ -104,7 +111,7 @@ public sealed partial class AzureDeployViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsChecking), nameof(IsNotInstalled), nameof(IsSignedOut), nameof(IsBrokerProblem), nameof(IsSignedIn), nameof(CanGoNext))]
     public partial AzureSignIn SignIn { get; set; }
 
-    /// <summary>The account the Azure CLI is signed in with.</summary>
+    /// <summary>The account the Azure CLI is signed in with; follows the picked subscription.</summary>
     [ObservableProperty]
     public partial string? Account { get; set; }
 
@@ -117,10 +124,36 @@ public sealed partial class AzureDeployViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(SignInCommand), nameof(FixBrokerCommand), nameof(CheckCommand))]
     public partial bool IsWorking { get; set; }
 
+    /// <summary>The tenant (id or domain) the next sign-in goes to, for guest access to another tenant; empty: the account's home tenant.</summary>
+    [ObservableProperty]
+    public partial string SignInTenant { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The app signs in to Azure on its own: every az call and coworkee deploy get <c>AZURE_CONFIG_DIR</c> = <see cref="ConfigDir"/>, the global sign-in of
+    /// the Azure CLI stays untouched.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SignInText))]
+    public partial bool OwnSignIn { get; set; }
+
+    /// <summary>The app's own Azure CLI folder under the user profile, never in the repository: it holds tokens.</summary>
+    public string ConfigDir => Deployments.AzureConfigDir(Overview.App.Path);
+
+    public string ConfigDirText => L.Format("The app's own sign-in is kept in {0}; the global sign-in of the Azure CLI stays as it is.", ConfigDir);
+
+    public string SignInText => L.Get(OwnSignIn ? "own sign-in of this app" : "the Azure CLI's sign-in");
+
     public ObservableCollection<AzureSubscription> Subscriptions { get; } = [];
 
+    /// <summary>The subscriptions grouped by account and tenant, in the order the Azure CLI lists them.</summary>
+    public IReadOnlyList<AzureAccount> Accounts =>
+    [
+        .. Subscriptions.GroupBy(s => (s.User, s.TenantId))
+            .Select(g => new AzureAccount(g.Key.User, g.Key.TenantId, [.. g.Select(s => new AzureSubscriptionPick(s, s == Subscription))])),
+    ];
+
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanGoNext))]
+    [NotifyPropertyChangedFor(nameof(CanGoNext), nameof(Accounts))]
     public partial AzureSubscription? Subscription { get; set; }
 
     public ObservableCollection<AzureResourceGroup> Groups { get; } = [];
@@ -224,6 +257,7 @@ public sealed partial class AzureDeployViewModel : ObservableObject
     public IReadOnlyList<string> Arguments() =>
     [
         "azure", "--apply", "--yes", "--resource-group", ResourceGroup.Trim(), "--location", Location!, "--subscription", Subscription!.Id, "--name", Name.Trim(),
+        .. OwnSignIn ? ["--own-azure-sign-in"] : _update?.OwnAzureSignIn == true ? ["--own-azure-sign-in", "false"] : Array.Empty<string>(),
         .. AdminEmail.Trim() is { Length: > 0 } email ? ["--admin-email", email] : Array.Empty<string>(),
         .. Tools.Where(t => t.IsOn != t.Default).SelectMany(t => new[] { t.IsOn ? "--with" : "--without", t.Name }),
     ];
@@ -246,10 +280,12 @@ public sealed partial class AzureDeployViewModel : ObservableObject
                 await LoadSubscriptionsAsync();
                 if (_update is not null)
                 {
-                    Subscription = Subscriptions.FirstOrDefault(s => s.Id == _update.SubscriptionId);
+                    Subscription = Subscriptions.Where(s => s.Id == _update.SubscriptionId).OrderBy(s => s.User == _update.Account ? 0 : 1).FirstOrDefault();
                     if (Subscription is null)
                     {
-                        Problem = L.Format("{0} cannot see the subscription {1} of this deployment.", Account, _update.SubscriptionId);
+                        Problem = L.Format("No signed-in account sees the subscription {0} of this deployment (tenant {1}): sign in with an account that has access.",
+                            _update.SubscriptionId, _update.TenantId);
+                        SignInTenant = _update.TenantId;
                         Step = AzureStep.Subscription;
                     }
                     else
@@ -270,16 +306,25 @@ public sealed partial class AzureDeployViewModel : ObservableObject
         }
     }
 
-    /// <summary>az login opens the browser; the check runs again when it returns.</summary>
+    /// <summary>
+    /// az login (to <see cref="SignInTenant"/> when given) opens the browser; the check runs again when it returns. The accounts signed in already stay
+    /// signed in and the default subscription stays the one from before; with <see cref="OwnSignIn"/> only the app's own folder is signed in.
+    /// </summary>
     [RelayCommand(CanExecute = nameof(CanWork))]
     public async Task SignInAsync()
     {
         IsWorking = true;
         try
         {
-            if (await AzAsync("login", "-o", "none") is { ExitCode: not 0 } failed)
+            // az login makes the new account the default of every terminal and tool using this sign-in; the default from before comes back
+            var before = await AzAsync("account", "show", "--query", "id", "-o", "tsv") is { ExitCode: 0, Output: var id } && id.Trim().Length > 0 ? id.Trim() : null;
+            if (await AzAsync(["login", .. SignInTenant.Trim() is { Length: > 0 } tenant ? ["--tenant", tenant] : Array.Empty<string>(), "-o", "none"]) is { ExitCode: not 0 } failed)
             {
                 Problem = failed.Error;
+            }
+            else if (before is not null)
+            {
+                await AzAsync("account", "set", "--subscription", before, "-o", "none");
             }
         }
         catch (Win32Exception)
@@ -356,6 +401,9 @@ public sealed partial class AzureDeployViewModel : ObservableObject
     }
 
     [RelayCommand]
+    public void PickSubscription(AzureSubscription subscription) => Subscription = subscription;
+
+    [RelayCommand]
     public void PickGroup(AzureResourceGroup group)
     {
         ResourceGroup = group.Name;
@@ -373,7 +421,7 @@ public sealed partial class AzureDeployViewModel : ObservableObject
 
         Result = null;
         Step = AzureStep.Deploy;
-        var exit = await Run.RunAsync(Arguments());
+        var exit = await Run.RunAsync(Arguments(), Environment());
         if (exit == 0)
         {
             Result = Deployments.Read(Deployments.RecordPath(Overview.App.Path, Name.Trim()));
@@ -401,6 +449,14 @@ public sealed partial class AzureDeployViewModel : ObservableObject
             OnPropertyChanged(nameof(GroupText));
             OnPropertyChanged(nameof(AdminText));
             OnPropertyChanged(nameof(ToolsText));
+        }
+    }
+
+    partial void OnSubscriptionChanged(AzureSubscription? value)
+    {
+        if (value is { User.Length: > 0 })
+        {
+            Account = value.User;
         }
     }
 
@@ -446,15 +502,19 @@ public sealed partial class AzureDeployViewModel : ObservableObject
 
     private async Task LoadSubscriptionsAsync()
     {
-        var (exit, output, _) = await AzAsync("account", "list", "-o", "json");
+        // --all: the subscriptions of every signed-in account and tenant; disabled ones cannot take a deployment
+        var (exit, output, _) = await AzAsync("account", "list", "--all", "-o", "json");
+        var previous = Subscription;
         Subscriptions.Clear();
-        foreach (var item in Items(exit == 0 ? output : "[]"))
+        foreach (var item in Items(exit == 0 ? output : "[]").Where(i => i["state"]?.GetValue<string>() is null or "Enabled"))
         {
             Subscriptions.Add(new AzureSubscription(item["id"]!.GetValue<string>(), item["name"]?.GetValue<string>() ?? "?", item["tenantId"]?.GetValue<string>() ?? string.Empty,
-                item["isDefault"]?.GetValue<bool>() == true));
+                item["isDefault"]?.GetValue<bool>() == true, item["user"]?["name"]?.GetValue<string>() ?? string.Empty));
         }
 
-        Subscription = Subscriptions.FirstOrDefault(s => s.Id == Subscription?.Id) ?? Subscriptions.FirstOrDefault(s => s.IsDefault) ?? Subscriptions.FirstOrDefault();
+        Subscription = Subscriptions.FirstOrDefault(s => s.Id == previous?.Id && s.User == previous.User) ?? Subscriptions.FirstOrDefault(s => s.IsDefault)
+            ?? Subscriptions.FirstOrDefault();
+        OnPropertyChanged(nameof(Accounts));
     }
 
     private async Task LoadGroupsAsync()
@@ -481,7 +541,10 @@ public sealed partial class AzureDeployViewModel : ObservableObject
     }
 
     private Task<(int ExitCode, string Output, string Error)> AzAsync(params string[] args) =>
-        Main.Generator.CaptureAsync(Deployments.AzureCli, args, CancellationToken.None);
+        Main.Generator.CaptureAsync(Deployments.AzureCli, args, CancellationToken.None, Environment());
+
+    // the folder of the app's own sign-in for az and coworkee deploy (and through it the app host and its Azure CLI credential)
+    private Dictionary<string, string>? Environment() => OwnSignIn ? new() { [Deployments.AzureConfigDirVariable] = ConfigDir } : null;
 
     private static IEnumerable<JsonNode> Items(string json)
     {
