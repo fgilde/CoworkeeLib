@@ -57,7 +57,10 @@ internal static partial class IdentityEndpoints
         api.MapPost("/users/{id:guid}/impersonation", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new StartImpersonation(id), ct).ToHttpResult());
         api.MapPut("/users/{id:guid}", (Guid id, UpdateUserRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new UpdateUser(id, body), ct).ToHttpResult());
         api.MapGet("/users/{id:guid}/permissions", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetEffectivePermissions(id), ct).ToHttpResult());
+        api.MapGet("/users/{id:guid}/permissions/sources", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetUserPermissions(id), ct).ToHttpResult());
         api.MapPut("/users/{id:guid}/roles", (Guid id, IdListRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetUserRoles(id, body.Ids), ct).ToHttpResult());
+        api.MapPost("/users/{id:guid}/roles/{roleId:guid}", (Guid id, Guid roleId, IDispatcher d, CancellationToken ct) => d.SendAsync(new AddUserRole(id, roleId), ct).ToHttpResult());
+        api.MapDelete("/users/{id:guid}/roles/{roleId:guid}", (Guid id, Guid roleId, IDispatcher d, CancellationToken ct) => d.SendAsync(new RemoveUserRole(id, roleId), ct).ToHttpResult());
         api.MapPut("/users/{id:guid}/groups", (Guid id, IdListRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetUserGroups(id, body.Ids), ct).ToHttpResult());
         api.MapPut("/users/{id:guid}/avatar", (Guid id, SetAvatarRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetUserAvatar(id, body.DataUrl), ct).ToHttpResult());
         api.MapPut("/users/{id:guid}/password", (Guid id, SetPasswordRequest body, IDispatcher d, CancellationToken ct) =>
@@ -94,6 +97,10 @@ internal static partial class IdentityEndpoints
             d.SendAsync(new GetGrants(providerType, providerKey), ct).ToHttpResult());
         api.MapPut("/permissions/grants/{providerType}/{providerKey:guid}", (PermissionProviderType providerType, Guid providerKey, NameListRequest body, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new SetGrants(providerType, providerKey, body.Names), ct).ToHttpResult());
+        api.MapPost("/permissions/grants/{providerType}/{providerKey:guid}/{name}", (PermissionProviderType providerType, Guid providerKey, string name, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new AddGrant(providerType, providerKey, name), ct).ToHttpResult());
+        api.MapDelete("/permissions/grants/{providerType}/{providerKey:guid}/{name}", (PermissionProviderType providerType, Guid providerKey, string name, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new RemoveGrant(providerType, providerKey, name), ct).ToHttpResult());
     }
 
     static partial void MapGroups(RouteGroupBuilder api);

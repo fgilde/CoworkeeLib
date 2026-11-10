@@ -102,6 +102,9 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public async Task<IReadOnlyList<string>> GetEffectivePermissionsAsync(Guid userId, CancellationToken cancellationToken = default) =>
         await GetAsync<string[]>($"{Identity}/users/{userId}/permissions", cancellationToken);
 
+    public Task<UserPermissionsDto> GetUserPermissionsAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        GetAsync<UserPermissionsDto>($"{Identity}/users/{userId}/permissions/sources", cancellationToken);
+
     public Task<SetupResultDto> CompleteSetupAsync(CompleteSetupRequest request, CancellationToken cancellationToken = default) =>
         SendAsync<SetupResultDto>(HttpMethod.Post, "api/v1/setup/complete", request, cancellationToken);
 
@@ -131,6 +134,12 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
 
     public Task SetUserRolesAsync(Guid id, IReadOnlyList<Guid> roleIds, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Put, $"{Identity}/users/{id}/roles", new IdListRequest(roleIds), cancellationToken);
+
+    public Task AddUserRoleAsync(Guid id, Guid roleId, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, $"{Identity}/users/{id}/roles/{roleId}", null, cancellationToken);
+
+    public Task RemoveUserRoleAsync(Guid id, Guid roleId, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Delete, $"{Identity}/users/{id}/roles/{roleId}", null, cancellationToken);
 
     public async Task<IReadOnlyDictionary<Guid, IReadOnlyList<RoleRefDto>>> GetUsersRolesAsync(IReadOnlyList<Guid> userIds, CancellationToken cancellationToken = default) =>
         await SendAsync<Dictionary<Guid, IReadOnlyList<RoleRefDto>>>(HttpMethod.Post, $"{Identity}/users/roles", new IdListRequest(userIds), cancellationToken);
@@ -176,6 +185,12 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
 
     public Task SetGrantsAsync(PermissionProviderType providerType, Guid providerKey, IReadOnlyList<string> names, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Put, $"{Identity}/permissions/grants/{providerType}/{providerKey}", new NameListRequest(names), cancellationToken);
+
+    public Task AddGrantAsync(PermissionProviderType providerType, Guid providerKey, string name, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, $"{Identity}/permissions/grants/{providerType}/{providerKey}/{Uri.EscapeDataString(name)}", null, cancellationToken);
+
+    public Task RemoveGrantAsync(PermissionProviderType providerType, Guid providerKey, string name, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Delete, $"{Identity}/permissions/grants/{providerType}/{providerKey}/{Uri.EscapeDataString(name)}", null, cancellationToken);
 
     public Task<PagedResult<GroupDto>> GetGroupsAsync(PageRequest page, CancellationToken cancellationToken = default) =>
         GetAsync<PagedResult<GroupDto>>($"{Identity}/groups?page={page.Page}&pageSize={page.PageSize}&search={Uri.EscapeDataString(page.Search ?? string.Empty)}", cancellationToken);

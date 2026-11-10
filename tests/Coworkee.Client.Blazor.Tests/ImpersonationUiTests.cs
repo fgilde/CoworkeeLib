@@ -29,34 +29,39 @@ public sealed class ImpersonationUiTests : ClientTestBase
     [Fact]
     public void Log_in_as_is_offered_with_the_permission_and_never_for_the_own_account()
     {
-        SignIn(IdentityPermissions.Users.Impersonate);
+        var popovers = SignIn(IdentityPermissions.Users.Impersonate);
 
         var page = Render<Users>();
 
-        page.WaitForAssertion(() => page.FindAll("[data-testid='impersonate-bob@acme.test']").Count.ShouldBe(1));
-        page.FindAll("[data-testid='impersonate-ada@acme.test']").ShouldBeEmpty();
+        OpenMenu(page, "bob@acme.test");
+        popovers.WaitForAssertion(() => popovers.FindAll("[data-testid='impersonate-bob@acme.test']").Count.ShouldBe(1));
+        OpenMenu(page, "ada@acme.test");
+        popovers.WaitForAssertion(() => popovers.FindAll("[data-testid='user-roles-ada@acme.test']").Count.ShouldBe(1));
+        popovers.FindAll("[data-testid='impersonate-ada@acme.test']").ShouldBeEmpty();
     }
 
     [Fact]
     public void Without_the_permission_nobody_is_offered()
     {
-        SignIn();
+        var popovers = SignIn();
 
         var page = Render<Users>();
 
-        page.WaitForAssertion(() => page.Find("[data-user='bob@acme.test']"));
-        page.FindAll("[data-testid^='impersonate-']").ShouldBeEmpty();
+        OpenMenu(page, "bob@acme.test");
+        popovers.WaitForAssertion(() => popovers.Find("[data-testid='user-roles-bob@acme.test']"));
+        popovers.FindAll("[data-testid^='impersonate-']").ShouldBeEmpty();
     }
 
     [Fact]
     public async Task Log_in_as_hands_the_ticket_to_the_bff()
     {
-        SignIn(IdentityPermissions.Users.Impersonate);
+        var popovers = SignIn(IdentityPermissions.Users.Impersonate);
         Api.StartImpersonationAsync(Bob, Arg.Any<CancellationToken>()).Returns(new ImpersonationTicketDto("t+1"));
         var dialogs = Render<MudDialogProvider>();
         var page = Render<Users>();
 
-        var starting = page.WaitForElement("[data-testid='impersonate-bob@acme.test']").ClickAsync(new());
+        OpenMenu(page, "bob@acme.test");
+        var starting = popovers.WaitForElement("[data-testid='impersonate-bob@acme.test']").ClickAsync(new());
         dialogs.WaitForAssertion(() => dialogs.Markup.ShouldContain("You see and do what bob@acme.test can"));
         await dialogs.FindAll("button").Single(b => b.TextContent.Trim() == "Log in as").ClickAsync(new());
         await starting;
@@ -120,10 +125,14 @@ public sealed class ImpersonationUiTests : ClientTestBase
             t => t.ShouldContain("impersonated by"), t => t.ShouldContain("Bob Builder")));
     }
 
-    private void SignIn(params string[] permissions)
+    private IRenderedComponent<MudPopoverProvider> SignIn(params string[] permissions)
     {
         AddAuthorization().SetAuthorized("Ada").SetClaims(new Claim("sub", Ada.ToString()))
             .SetPolicies([Security.PermissionPolicy.For(IdentityPermissions.Users.View), .. permissions.Select(Security.PermissionPolicy.For)]);
-        Render<MudPopoverProvider>();
+        return Render<MudPopoverProvider>();
     }
+
+    // Log in as sits in the action menu of the row
+    private static void OpenMenu(IRenderedComponent<Users> page, string email) =>
+        page.WaitForElement($"[data-testid='user-actions-{email}'] button").Click();
 }

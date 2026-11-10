@@ -23,6 +23,32 @@ Administrators edit everything about a user on one page, from the email address 
 
 Every sign-in is a [session](../security/clients.md#sessions): *Administration › Monitoring › Sessions* lists who is signed in where (device, browser, IP address, app, last activity, the number per user) and ends one session or all of a user, the user page shows his, and users end their other sessions on the account page; the browser of an ended session is signed out at once. The setting *Sessions per user* (default unlimited) and a user's own limit decide how many he may have; a sign-in beyond it ends the oldest sessions or is refused.
 
+## User administration
+
+*Administration › Users* lists the accounts. The menu at the end of a row holds what can be done with one user, each entry only with its permission: *Roles…*, *Groups…*, *Permissions…* and *Sessions…* open the same parts as the user's page in a side sheet; *Send password reset*, *Sign out everywhere*, *Lock* or *Unlock*, *Log in as* and *Delete user* act on the account. The roles column shows the roles; they change through *Roles…*.
+
+The user's page has the status and the account actions on top and tabs below:
+
+- **General**: the profile form, language, picture, the ways to sign in, *Delete user*.
+- **Roles**: the roles he has directly, as a filterable table. *Add role* opens a filterable list of the organisation's roles to tick, the button at the end of a row removes one. Changing roles needs `Identity.Users.Manage`.
+- **Groups**: the groups he is a direct member of, by their path (*Customer A / Hamburg*). *Add group* opens the group tree, which loads level by level and searches on the server, so it works with thousands of groups. Changing memberships needs `Identity.Groups.ManageMembers`.
+- **Permissions**: everything he holds through all his roles, with where it comes from: *Role X*, *Role X through group Y*, *Group Y* (a grant to the group), *Granted directly* or *Computed* ([computed permissions](../security/permissions.md#computed-permissions)). A permission another one implies shows the source of that one. With `Identity.Permissions.Manage` a checkbox per permission grants it to the user directly; *Held only* switches between what he holds and all permissions. The tab only grants: what roles and groups give changes on the role or group.
+- **Sessions**: his sessions, live, with his session limit (`Identity.Sessions.View`).
+
+Every tick and every remove saves on its own at once. The change shows before the server answers, the saves run one after another in the background and the page stays usable, so an administrator can tick ten groups in a row. A save the server refuses takes back only its own item and the snackbar says why. Each click sends one change, not the whole list: `POST`/`DELETE /api/v1/identity/users/{id}/roles/{roleId}`, `POST /api/v1/identity/groups/{id}/members/add` and `remove`, `POST`/`DELETE /api/v1/identity/permissions/grants/User/{id}/{name}`. Two administrators editing the same user therefore never undo each other, and the open tabs reload when anyone changes roles, groups or grants (`RealtimeTopics.TenantPermissions`). `GET /api/v1/identity/users/{id}/permissions/sources` returns the permissions with their sources (`UserPermissionsDto`, `Identity.Users.View`); `ICoworkeeApi` has `AddUserRoleAsync`, `RemoveUserRoleAsync`, `AddGrantAsync`, `RemoveGrantAsync` and `GetUserPermissionsAsync`.
+
+The tabs are components of their own in `Coworkee.Client.Blazor.Components.Users` that need only the user's id, so an app can place them anywhere, on a page or in a dialog:
+
+```razor
+<UserRolesTab UserId="userId" />
+<UserGroupsTab UserId="userId" />
+<UserPermissionsTab UserId="userId" />
+```
+
+```csharp
+await dialogs.ShowComponentInDialogAsync<UserGroupsTab>("Groups", string.Empty, t => t.UserId = userId, await EditDialogExtensions.SideSheetAsync());
+```
+
 ## Log in as another user
 
 Support staff see what a user sees without knowing the password: *Log in as* on the users list and on the user's page needs `Identity.Users.Impersonate` ("Sign in as other users", implies `Users.View`, not part of `Users.Manage`). The target is another active, unlocked user of the same organisation, and nobody impersonates while impersonating already. The target holds **no permission the caller lacks**: effective permissions of all roles on both sides, whatever role either has picked as active role. A permission on a single resource (`ResourcePermission`) counts unless the caller holds it globally or on the same resource. Every group the target is a direct member of must lie in the caller's groups or their subtrees, as `IGroupScope` computes them; `Identity.Groups.ScopeAll` waives that. A support user of one customer group therefore cannot sign in as a user of another, a member of a parent group can sign in as members of its sub-groups. The API checks this when it issues the ticket (`POST /api/v1/identity/users/{id}/impersonation`, `ICoworkeeApi.StartImpersonationAsync`), the auth server again when it redeems it and on every authorization and token refresh of the impersonation.

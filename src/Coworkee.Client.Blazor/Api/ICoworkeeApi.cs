@@ -75,6 +75,9 @@ public interface ICoworkeeApi
 
     Task<IReadOnlyList<string>> GetEffectivePermissionsAsync(Guid userId, CancellationToken cancellationToken = default);
 
+    /// <summary>The user's permissions with their sources (roles, roles of his groups, group grants, direct grants) and his direct grants.</summary>
+    Task<UserPermissionsDto> GetUserPermissionsAsync(Guid userId, CancellationToken cancellationToken = default);
+
     Task<SetupResultDto> CompleteSetupAsync(CompleteSetupRequest request, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyCollection<string>> GetMyPermissionsAsync(CancellationToken cancellationToken = default);
@@ -94,6 +97,12 @@ public interface ICoworkeeApi
     Task UpdateUserAsync(Guid id, UpdateUserRequest request, CancellationToken cancellationToken = default);
 
     Task SetUserRolesAsync(Guid id, IReadOnlyList<Guid> roleIds, CancellationToken cancellationToken = default);
+
+    /// <summary>Gives the user one role; his other roles stay.</summary>
+    Task AddUserRoleAsync(Guid id, Guid roleId, CancellationToken cancellationToken = default);
+
+    /// <summary>Takes one role from the user; his other roles stay.</summary>
+    Task RemoveUserRoleAsync(Guid id, Guid roleId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyDictionary<Guid, IReadOnlyList<RoleRefDto>>> GetUsersRolesAsync(IReadOnlyList<Guid> userIds, CancellationToken cancellationToken = default);
 
@@ -130,6 +139,12 @@ public interface ICoworkeeApi
     Task<IReadOnlyList<string>> GetGrantsAsync(PermissionProviderType providerType, Guid providerKey, CancellationToken cancellationToken = default);
 
     Task SetGrantsAsync(PermissionProviderType providerType, Guid providerKey, IReadOnlyList<string> names, CancellationToken cancellationToken = default);
+
+    /// <summary>Grants one permission; the other grants stay.</summary>
+    Task AddGrantAsync(PermissionProviderType providerType, Guid providerKey, string name, CancellationToken cancellationToken = default);
+
+    /// <summary>Revokes one granted permission; the other grants stay.</summary>
+    Task RemoveGrantAsync(PermissionProviderType providerType, Guid providerKey, string name, CancellationToken cancellationToken = default);
 
     Task<PagedResult<GroupDto>> GetGroupsAsync(PageRequest page, CancellationToken cancellationToken = default);
 

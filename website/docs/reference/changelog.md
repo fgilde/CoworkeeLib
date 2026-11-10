@@ -4,6 +4,16 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Added
+
+- User page (*Administration › Users › a user*): tabs *General*, *Roles*, *Groups*, *Permissions* and *Sessions*. Roles and groups are filterable, virtualized tables; *Add role* opens a filterable list, *Add group* the lazy group tree with its search (no more list of the first 200 groups, so organisations with thousands of groups work). Every tick and every remove saves on its own at once: the change shows before the server answers, saves run one after another in the background without locking the page, and a failed one takes back only its item and says why in a snackbar. The tabs reload when another administrator changes roles, groups or grants (`RealtimeTopics.TenantPermissions`). *Permissions* lists what the user holds with its source (role, role through a group, group, granted directly, computed) and grants permissions to him directly (`Identity.Permissions.Manage`). The tabs are components of their own (`UserRolesTab`, `UserGroupsTab`, `UserPermissionsTab` in `Coworkee.Client.Blazor.Components.Users`, parameter `UserId`) ([user administration](../features/identity.md#user-administration)).
+- Users list: an action menu per row with *Roles…*, *Groups…*, *Permissions…* and *Sessions…* (the same components in a side sheet), *Send password reset*, *Sign out everywhere*, *Lock*/*Unlock*, *Log in as* and *Delete user*, each with its permission. `UserRow` has the new optional member `LockoutEnd`.
+- Single changes instead of whole sets, so two administrators editing the same user do not undo each other: `POST`/`DELETE /api/v1/identity/users/{id}/roles/{roleId}` (`AddUserRole`, `RemoveUserRole`, `Identity.Users.Manage`), `POST`/`DELETE /api/v1/identity/permissions/grants/{providerType}/{providerKey}/{name}` (`AddGrant`, `RemoveGrant`, `Identity.Permissions.Manage`); memberships use the existing `groups/{id}/members/add` and `remove`. `GET /api/v1/identity/users/{id}/permissions/sources` (`GetUserPermissions`, `Identity.Users.View`) returns `UserPermissionsDto`. `ICoworkeeApi` has the new members `AddUserRoleAsync`, `RemoveUserRoleAsync`, `AddGrantAsync`, `RemoveGrantAsync` and `GetUserPermissionsAsync`: hand-written implementations and test fakes add them.
+
+### Changed
+
+- Users list: the roles column only shows the roles; they change through *Roles…* of the row's menu, one role at a time. The inline effective-permissions panel and the icons of the row are gone (*Permissions…* and the menu replace them). `GroupTree` takes `NodeChecked` to report one checkbox click at a time.
+
 ### Fixed
 
 - Group picker: an administrator adding or removing a membership (or moving or deleting a group) reached the member only after a reload; the picker kept the lost group and the browser copies (client entities) kept its rows. `GroupScopeState` now follows `RealtimeTopics.TenantPermissions`, reloads the user's groups once per burst and, when they or the selection changed, drops the copies of the old scope and raises `Changed`, so tables reload at once.
