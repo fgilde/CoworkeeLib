@@ -1,6 +1,7 @@
 using System.Buffers.Text;
 using System.Security.Cryptography.X509Certificates;
 using Coworkee.Cli.Commands;
+using Coworkee.Cli.Spec;
 
 namespace Coworkee.Cli.Tests;
 
@@ -170,7 +171,64 @@ public sealed class DeployCommandTests
     [InlineData("deploy compose -o out --no-build")]
     [InlineData("deploy azure")]
     [InlineData("deploy k8s")]
+    [InlineData("deploy azure --apply -g rg-shop -l westeurope --subscription sub-3 --own-azure-sign-in")]
+    [InlineData("deploy azure --apply -g rg-shop -l westeurope --own-azure-sign-in false")]
     public void Deploy_accepts_the_targets(string args) => CliApp.Build().Parse(args).Errors.ShouldBeEmpty();
+
+    [Fact]
+    public void The_own_azure_sign_in_of_an_app_lives_under_the_user_profile_one_folder_per_app()
+    {
+        using var folder = new TempFolder();
+        var shop = Directory.CreateDirectory(Path.Combine(folder.Path, "Shop")).FullName;
+        var other = Directory.CreateDirectory(Path.Combine(folder.Path, "Other", "Shop")).FullName;
+
+        var dir = Deployments.AzureConfigDir(shop);
+
+        dir.ShouldStartWith(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".coworkee", "azure", "Shop-"));
+        dir.ShouldNotStartWith(shop);
+        Deployments.AzureConfigDir(shop + Path.DirectorySeparatorChar).ShouldBe(dir);
+        Deployments.AzureConfigDir(other).ShouldNotBe(dir);
+    }
+
+    [Fact]
+    public async Task The_record_keeps_the_own_sign_in_and_an_update_without_the_switch_uses_it_again()
+    {
+        using var folder = new TempFolder();
+        folder.File("src/Shop.AppHost/Shop.AppHost.csproj");
+        folder.File("Shop.slnx");
+        var solution = Solution.Find(folder.Path);
+        await Deployments.WriteAsync(solution.Root, new DeploymentRecord("prod", "azure", "sub-3", "tenant-2", "rg-shop", "westeurope", "guest@customer.com", DateTimeOffset.Now,
+            new Dictionary<string, string>()) { OwnAzureSignIn = true }, TestContext.Current.CancellationToken);
+        File.ReadAllText(Deployments.RecordPath(solution.Root, "prod")).ShouldContain("\"ownAzureSignIn\": true");
+        File.ReadAllText(Deployments.RecordPath(solution.Root, "prod")).ShouldNotContain(".coworkee");
+        var before = Environment.GetEnvironmentVariable(Deployments.AzureConfigDirVariable);
+        try
+        {
+            Environment.SetEnvironmentVariable(Deployments.AzureConfigDirVariable, null);
+            AzureDeploy.UseSignIn(solution, new AzureDeploy.Target("rg-shop", "westeurope", "sub-3", "prod", OwnSignIn: false)).OwnSignIn.ShouldBe(false);
+            Environment.GetEnvironmentVariable(Deployments.AzureConfigDirVariable).ShouldBeNull();
+            AzureDeploy.UseSignIn(solution, new AzureDeploy.Target("rg-shop", "westeurope", "sub-3", "other")).OwnSignIn.ShouldBe(false);
+            Environment.GetEnvironmentVariable(Deployments.AzureConfigDirVariable).ShouldBeNull();
+
+            // every process the CLI starts (az, the app host and its Azure CLI credential) inherits the folder
+            AzureDeploy.UseSignIn(solution, new AzureDeploy.Target("rg-shop", "westeurope", "sub-3", "prod")).OwnSignIn.ShouldBe(true);
+            Environment.GetEnvironmentVariable(Deployments.AzureConfigDirVariable).ShouldBe(Deployments.AzureConfigDir(solution.Root));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(Deployments.AzureConfigDirVariable, before);
+        }
+    }
+
+    [Fact]
+    public void A_record_written_before_the_own_sign_in_uses_the_global_one()
+    {
+        using var folder = new TempFolder();
+        var file = folder.File("prod.json");
+        File.WriteAllText(file, """{ "name": "prod", "target": "azure", "subscriptionId": "sub-1", "tenantId": "t", "resourceGroup": "rg", "location": "l", "account": "a", "deployedAt": "2026-11-08T10:15:00+01:00", "urls": {} }""");
+
+        Deployments.Read(file)!.OwnAzureSignIn.ShouldBeFalse();
+    }
 
     [Fact]
     public void Deploy_rejects_unknown_targets() => CliApp.Build().Parse("deploy heroku").Errors.ShouldNotBeEmpty();

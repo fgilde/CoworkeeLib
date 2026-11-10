@@ -14,7 +14,8 @@ internal static partial class AzureDeploy
 {
     public static readonly string Az = Deployments.AzureCli;
 
-    public sealed record Target(string ResourceGroup, string Location, string? Subscription, string Name);
+    /// <param name="OwnSignIn">The app's own Azure CLI sign-in (true), the global one (false), or what the record of the deployment says (null).</param>
+    public sealed record Target(string ResourceGroup, string Location, string? Subscription, string Name, bool? OwnSignIn = null);
 
     public sealed record Account(string User, string SubscriptionId, string SubscriptionName, string TenantId);
 
@@ -27,7 +28,9 @@ internal static partial class AzureDeploy
     {
         if (await SignedInAsync(target.Subscription) is not { } account)
         {
-            throw new CliException("The Azure CLI is not signed in (or the subscription is unknown): run az login, then try again.");
+            throw new CliException(target.OwnSignIn == true
+                ? $"The app's own Azure CLI sign-in is not signed in (or does not see the subscription): run az login with {Deployments.AzureConfigDirVariable}={Deployments.AzureConfigDir(solution.Root)}, or sign in from the Studio, then try again."
+                : "The Azure CLI is not signed in (or the subscription is unknown): run az login, then try again.");
         }
 
         Console.WriteLine($"Azure: {account.User}, subscription {account.SubscriptionName} ({account.SubscriptionId}), resource group {target.ResourceGroup} in {target.Location}");
@@ -74,6 +77,7 @@ internal static partial class AzureDeploy
             new DeploymentRecord(target.Name, "azure", account.SubscriptionId, account.TenantId, target.ResourceGroup, target.Location, account.User, DateTimeOffset.Now, urls)
             {
                 Tools = tools.ToDictionary(),
+                OwnAzureSignIn = target.OwnSignIn == true,
             },
             cancellationToken);
         Console.WriteLine();
@@ -85,6 +89,21 @@ internal static partial class AzureDeploy
 
         Console.WriteLine($"Sign in as {parameters.GetValueOrDefault($"{solution.Name.ToLowerInvariant()}-admin-email")}; the password is in {SecretsPath(solution, target.Name)}.");
         return 0;
+    }
+
+    /// <summary>
+    /// The sign-in of the deployment: <c>--own-azure-sign-in</c>, else the record of an earlier deployment of that name. With the app's own sign-in this process
+    /// points <c>AZURE_CONFIG_DIR</c> at the app's folder, and every process it starts inherits it: az, the app host and Aspire's AzureCliCredential.
+    /// </summary>
+    public static Target UseSignIn(Solution solution, Target target)
+    {
+        var own = target.OwnSignIn ?? Deployments.Read(RecordPath(solution, target.Name))?.OwnAzureSignIn == true;
+        if (own)
+        {
+            Environment.SetEnvironmentVariable(Deployments.AzureConfigDirVariable, Deployments.AzureConfigDir(solution.Root));
+        }
+
+        return target with { OwnSignIn = own };
     }
 
     /// <summary>Aspire's deployment state of the app host (environment Production): ~/.aspire/deployments/{SHA-256 of the lower-cased project path}/production.json.</summary>

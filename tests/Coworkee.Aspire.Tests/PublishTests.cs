@@ -1,4 +1,5 @@
 using Aspire.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Aspire.Tests;
 
@@ -183,6 +184,24 @@ public sealed class PublishTests
     {
         var output = await PublishFolderAsync(target, configure, args);
         return (await File.ReadAllTextAsync(Path.Combine(output, "docker-compose.yaml")), await File.ReadAllTextAsync(Path.Combine(output, ".env")));
+    }
+
+    [Theory]
+    [InlineData("AzureCli", "sub-2")]
+    [InlineData(null, null)]
+    public void The_azure_cli_credential_of_a_deployment_takes_the_account_of_its_subscription(string? source, string? subscription)
+    {
+        var builder = DistributedApplication.CreateBuilder(["--operation", "publish", "--step", "publish", $"--{CoworkeeApp.DeployTargetSetting}=azure",
+            "--Azure:SubscriptionId=sub-2", "--Azure:TenantId=tenant-1", .. source is null ? Array.Empty<string>() : [$"--Azure:CredentialSource={source}"]]);
+        builder.AddCoworkeeApp("demo", _ => { });
+
+        using var host = builder.Build();
+        var credential = host.Services.GetRequiredService<global::Aspire.Hosting.Azure.ITokenCredentialProvider>().TokenCredential
+            .ShouldBeOfType<global::Azure.Identity.AzureCliCredential>();
+
+        // az account get-access-token --subscription: the account az keeps for that subscription, not the one of its default subscription
+        typeof(global::Azure.Identity.AzureCliCredential).GetProperty("Subscription", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .GetValue(credential).ShouldBe(subscription);
     }
 
     private static async Task<string> PublishFolderAsync(string target, Action<CoworkeeAppOptions> configure, params string[] args)
