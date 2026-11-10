@@ -2142,5 +2142,6 @@
   "Sessions…": "Сеанси…",
   "Tick a permission to grant it to this user directly, besides what his roles and groups give.": "Позначте дозвіл, щоб надати його цьому користувачеві напряму, окрім того, що дають його ролі та групи.",
   "{0} permissions held": "Наявні дозволи: {0}",
-  "{0} was not saved: {1}": "{0} не збережено: {1}"
+  "{0} was not saved: {1}": "{0} не збережено: {1}",
+  "The server does not answer right now. Trying again…": "Сервер зараз не відповідає. Повторна спроба…"
 }

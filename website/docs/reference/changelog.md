@@ -7,6 +7,8 @@ Changes that need action in apps built on Coworkee. Newest first.
 ### Fixed
 
 - Azure Container Apps: SQL Server ran with the default 0.5 CPU and 1 GiB, ran out of memory under load ("insufficient system memory in resource pool 'internal'"), refused connections in the pre-login handshake, and every sign-in and page load failed. The SQL Server container gets 1 CPU and 2 GiB now; deploy again.
+- Permissions in the browser: a server that did not answer (5xx, no connection) counted as "no permissions": the navigation emptied and pages said *You lack the permission for this page* although the user was signed in. Only a refusal (401, 403) means no permissions now; otherwise the last known permissions stay, `PermissionStore.Unavailable` is set, the page shows *The server does not answer right now. Trying again…* and the store asks again after a few seconds.
+- Realtime: behind several instances (Container Apps scales out) the negotiate request and the WebSocket after it landed on different instances; the second answered 404 and the connection stood only after a few attempts. The client opens the WebSocket directly (no negotiate) and falls back to the negotiated connection where WebSockets do not get through.
 
 ## 0.0.1.75 (2026-11-10)
 

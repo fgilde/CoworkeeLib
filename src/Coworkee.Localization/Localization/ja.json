@@ -2142,5 +2142,6 @@
   "Sessions…": "セッション…",
   "Tick a permission to grant it to this user directly, besides what his roles and groups give.": "権限にチェックを入れると、ロールやグループによる権限に加えて、このユーザーに直接付与されます。",
   "{0} permissions held": "保有権限 {0} 件",
-  "{0} was not saved: {1}": "{0} を保存できませんでした: {1}"
+  "{0} was not saved: {1}": "{0} を保存できませんでした: {1}",
+  "The server does not answer right now. Trying again…": "サーバーが現在応答していません。再試行しています…"
 }

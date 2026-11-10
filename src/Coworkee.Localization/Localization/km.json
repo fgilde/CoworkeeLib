@@ -2142,5 +2142,6 @@
   "Sessions…": "វគ្គ…",
   "Tick a permission to grant it to this user directly, besides what his roles and groups give.": "គូសធីកសិទ្ធិមួយ ដើម្បីផ្តល់វាដល់អ្នកប្រើនេះដោយផ្ទាល់ បន្ថែមលើអ្វីដែលតួនាទី និងក្រុមរបស់គាត់ផ្តល់ឱ្យ។",
   "{0} permissions held": "មានសិទ្ធិ {0}",
-  "{0} was not saved: {1}": "{0} មិនត្រូវបានរក្សាទុកទេ៖ {1}"
+  "{0} was not saved: {1}": "{0} មិនត្រូវបានរក្សាទុកទេ៖ {1}",
+  "The server does not answer right now. Trying again…": "ម៉ាស៊ីនមេមិនឆ្លើយតបនៅពេលនេះទេ។ កំពុងព្យាយាមម្តងទៀត…"
 }

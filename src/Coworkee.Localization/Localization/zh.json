@@ -2142,5 +2142,6 @@
   "Sessions…": "会话…",
   "Tick a permission to grant it to this user directly, besides what his roles and groups give.": "勾选权限即可直接授予此用户，作为其角色和组所授予权限之外的补充。",
   "{0} permissions held": "已拥有 {0} 项权限",
-  "{0} was not saved: {1}": "{0} 未保存：{1}"
+  "{0} was not saved: {1}": "{0} 未保存：{1}",
+  "The server does not answer right now. Trying again…": "服务器暂时没有响应。正在重试…"
 }

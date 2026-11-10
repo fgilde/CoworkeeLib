@@ -2142,5 +2142,6 @@
   "Sessions…": "Sessioni…",
   "Tick a permission to grant it to this user directly, besides what his roles and groups give.": "Spunta un permesso per concederlo direttamente a questo utente, oltre a quanto gli danno i suoi ruoli e gruppi.",
   "{0} permissions held": "{0} permessi posseduti",
-  "{0} was not saved: {1}": "{0} non è stato salvato: {1}"
+  "{0} was not saved: {1}": "{0} non è stato salvato: {1}",
+  "The server does not answer right now. Trying again…": "Il server non risponde al momento. Nuovo tentativo…"
 }

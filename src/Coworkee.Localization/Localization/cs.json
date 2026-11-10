@@ -2142,5 +2142,6 @@
   "Sessions…": "Relace…",
   "Tick a permission to grant it to this user directly, besides what his roles and groups give.": "Zaškrtnutím udělíte oprávnění tomuto uživateli přímo, navíc k tomu, co mu dávají jeho role a skupiny.",
   "{0} permissions held": "Držená oprávnění: {0}",
-  "{0} was not saved: {1}": "{0} se neuložilo: {1}"
+  "{0} was not saved: {1}": "{0} se neuložilo: {1}",
+  "The server does not answer right now. Trying again…": "Server momentálně neodpovídá. Zkouším znovu…"
 }

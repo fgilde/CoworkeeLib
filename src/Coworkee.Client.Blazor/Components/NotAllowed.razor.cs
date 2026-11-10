@@ -40,7 +40,8 @@ public partial class NotAllowed
     protected override async Task OnParametersSetAsync()
     {
         _signedIn = AuthenticationState is not null && (await AuthenticationState).User.Identity?.IsAuthenticated == true;
-        _granting = _signedIn ? await GrantingAsync() : [];
+        // the server did not answer: no roles to offer either, the hint waits for the next answer
+        _granting = _signedIn && !Permissions.Unavailable ? await GrantingAsync() : [];
     }
 
     private async Task<IReadOnlyList<MyRoleDto>> GrantingAsync()

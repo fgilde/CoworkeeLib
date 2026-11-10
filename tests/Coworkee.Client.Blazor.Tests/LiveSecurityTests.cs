@@ -90,6 +90,18 @@ public sealed class LiveSecurityTests : ClientTestBase
         page.FindAll($"[data-switch-role='{Products.Id}']").ShouldBeEmpty();
     }
 
+    [Fact]
+    public async Task A_server_that_does_not_answer_is_not_shown_as_a_missing_permission()
+    {
+        Api.GetMyPermissionsAsync(Arg.Any<CancellationToken>()).Returns<IReadOnlyCollection<string>>(_ => throw new Coworkee.Client.Blazor.Api.ApiException(503, null, null));
+        await Services.GetRequiredService<PermissionStore>().HasAsync("Catalog.Brands.View");
+
+        var page = Render<CascadingAuthenticationState>(p => p.AddChildContent<NotAllowed>(n => n.Add(c => c.PageType, typeof(BrandsPage))));
+
+        page.WaitForAssertion(() => page.Find("[data-testid='server-unavailable']"));
+        page.FindAll("[data-testid='not-allowed']").ShouldBeEmpty();
+    }
+
     [Authorize(Policy = PermissionPolicy.Prefix + "Catalog.Brands.View")]
     private sealed class BrandsPage;
 }

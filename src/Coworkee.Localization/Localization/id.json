@@ -2142,5 +2142,6 @@
   "Sessions…": "Sesi…",
   "Tick a permission to grant it to this user directly, besides what his roles and groups give.": "Centang izin untuk memberikannya langsung kepada pengguna ini, selain yang diberikan oleh peran dan grupnya.",
   "{0} permissions held": "{0} izin dimiliki",
-  "{0} was not saved: {1}": "{0} tidak tersimpan: {1}"
+  "{0} was not saved: {1}": "{0} tidak tersimpan: {1}",
+  "The server does not answer right now. Trying again…": "Server sedang tidak merespons. Mencoba lagi…"
 }

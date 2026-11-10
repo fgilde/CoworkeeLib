@@ -2142,5 +2142,6 @@
   "Sessions…": "Sesije…",
   "Tick a permission to grant it to this user directly, besides what his roles and groups give.": "Označite dopuštenje da ga izravno dodijelite ovom korisniku, uz ono što mu daju njegove uloge i grupe.",
   "{0} permissions held": "Dopuštenja: {0}",
-  "{0} was not saved: {1}": "{0} nije spremljeno: {1}"
+  "{0} was not saved: {1}": "{0} nije spremljeno: {1}",
+  "The server does not answer right now. Trying again…": "Poslužitelj trenutačno ne odgovara. Pokušavam ponovno…"
 }
