@@ -10,6 +10,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixed
 
+- Azure Container Apps: the Grafana dashboards of a deployment stayed empty because the services could not resolve the collector (`Name or service not known (otel-collector:4318)`): Container Apps gives an app named `otel-collector` no name inside the environment. The collector is named `telemetry` in an Azure deployment; deploy again, then delete the old `otel-collector` container app.
 - Coworkee Studio: the logo of the title bar stays hidden while the mark of the splash flies onto it, so only one logo is seen; it appears when the mark lands, also when the animation is skipped.
 
 ## 0.0.1.71 (2026-11-10)

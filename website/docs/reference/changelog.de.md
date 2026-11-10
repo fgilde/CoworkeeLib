@@ -10,6 +10,7 @@
 
 ### Behoben
 
+- Azure Container Apps: Die Grafana-Dashboards eines Deployments blieben leer, weil die Dienste den Collector nicht auflösen konnten (`Name or service not known (otel-collector:4318)`): Container Apps gibt einer App namens `otel-collector` keinen Namen in der Umgebung. Der Collector heißt in einem Azure-Deployment `telemetry`; deploye erneut und lösche danach die alte Container-App `otel-collector`.
 - Coworkee Studio: Das Logo der Titelleiste bleibt verborgen, während das Logo des Startbildschirms darauf zufliegt, sodass nur ein Logo zu sehen ist; es erscheint, wenn das Logo landet, auch wenn die Animation übersprungen wird.
 
 ## 0.0.1.71 (2026-11-10)
