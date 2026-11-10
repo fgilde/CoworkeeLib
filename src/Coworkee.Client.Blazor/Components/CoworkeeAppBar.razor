@@ -2,6 +2,11 @@
 {
     @* a narrow column of icons at the left or right edge; its overflow menu at the bottom *@
     <nav class="cw-side-bar cw-side-bar-@Position.ToString().ToLowerInvariant()" data-testid="@TestId" data-position="@Position" aria-label="@L["App bar"]">
+        @* without a horizontal bar and with the navigation as an overlay, this is the only way to open it *@
+        @if (ShowMenuButton)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" OnClick="ToggleDrawer" aria-label="@L["Navigation"]" data-testid="app-bar-menu" />
+        }
         @Content(vertical: true)
     </nav>
 }
