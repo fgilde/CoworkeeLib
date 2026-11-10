@@ -114,9 +114,32 @@
             <TextBlock Text="{Binding Update.Text}" FontSize="12.5" FontWeight="SemiBold" VerticalAlignment="Center" />
           </StackPanel>
         </Button>
-        <Button Classes="icon" Command="{Binding ToggleLanguageCommand}" ToolTip.Tip="{l:L 'Switch the language'}" chrome:WindowDecorationProperties.ElementRole="User"
+        <Button x:Name="LanguageButton" Classes="icon" ToolTip.Tip="{l:L 'Switch the language'}" chrome:WindowDecorationProperties.ElementRole="User"
                 AutomationProperties.Name="{l:L 'Switch the language'}">
           <TextBlock Text="{Binding LanguageCode}" FontWeight="SemiBold" FontSize="12" />
+          <Button.Flyout>
+            <MenuFlyout Placement="BottomEdgeAlignedRight">
+              <MenuItem Header="{l:L 'Language of the system'}" ToggleType="Radio" Command="{Binding SetLanguageCommand}"
+                        IsChecked="{Binding LanguageSetting, Mode=OneWay, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=system}" />
+              <Separator />
+              <MenuItem Header="English" ToggleType="Radio" Command="{Binding SetLanguageCommand}" CommandParameter="en"
+                        IsChecked="{Binding LanguageSetting, Mode=OneWay, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=en}" />
+              <MenuItem Header="Deutsch" ToggleType="Radio" Command="{Binding SetLanguageCommand}" CommandParameter="de"
+                        IsChecked="{Binding LanguageSetting, Mode=OneWay, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=de}" />
+              <MenuItem Header="Français" ToggleType="Radio" Command="{Binding SetLanguageCommand}" CommandParameter="fr"
+                        IsChecked="{Binding LanguageSetting, Mode=OneWay, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=fr}" />
+              <MenuItem Header="Español" ToggleType="Radio" Command="{Binding SetLanguageCommand}" CommandParameter="es"
+                        IsChecked="{Binding LanguageSetting, Mode=OneWay, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=es}" />
+              <MenuItem Header="Italiano" ToggleType="Radio" Command="{Binding SetLanguageCommand}" CommandParameter="it"
+                        IsChecked="{Binding LanguageSetting, Mode=OneWay, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=it}" />
+              <MenuItem Header="Nederlands" ToggleType="Radio" Command="{Binding SetLanguageCommand}" CommandParameter="nl"
+                        IsChecked="{Binding LanguageSetting, Mode=OneWay, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=nl}" />
+              <MenuItem Header="Polski" ToggleType="Radio" Command="{Binding SetLanguageCommand}" CommandParameter="pl"
+                        IsChecked="{Binding LanguageSetting, Mode=OneWay, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=pl}" />
+              <MenuItem Header="Português" ToggleType="Radio" Command="{Binding SetLanguageCommand}" CommandParameter="pt"
+                        IsChecked="{Binding LanguageSetting, Mode=OneWay, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=pt}" />
+            </MenuFlyout>
+          </Button.Flyout>
         </Button>
         <Button Classes="icon" Command="{Binding ToggleHelpCommand}" ToolTip.Tip="{l:L 'Help, CLI and MCP (F1)'}" chrome:WindowDecorationProperties.ElementRole="User">
           <PathIcon Data="{StaticResource Icon.Help}" />

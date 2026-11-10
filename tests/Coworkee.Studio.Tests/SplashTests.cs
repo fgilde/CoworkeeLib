@@ -34,7 +34,32 @@ public sealed class SplashTests
         created.ShouldBeTrue();
         window.DataContext.ShouldBeSameAs(start.Result);
         window.GetVisualDescendants().OfType<SplashView>().ShouldBeEmpty();
-        window.GetVisualDescendants().OfType<MainView>().ShouldHaveSingleItem();
+        window.GetVisualDescendants().OfType<MainView>().ShouldHaveSingleItem().TitleLogo.Opacity.ShouldBe(1);
+        window.Close();
+    });
+
+    [Fact]
+    public Task The_title_logo_is_hidden_while_the_mark_flies_to_it_and_shown_when_skipped() => TestApp.Ui(() =>
+    {
+        using var folder = new TempFolder();
+        var window = new MainWindow(new SplashView()) { Width = 1400, Height = 900 };
+        window.Show();
+        Dispatcher.UIThread.RunJobs(DispatcherPriority.Loaded);
+        Thread.Sleep(1200); // past the entrance, so the reveal flies at once
+        var start = window.StartAsync(() => Studio.Create(folder));
+        Image? logo = null;
+        for (var i = 0; i < 100 && logo is not { Opacity: 0 } && !start.IsCompleted; i++)
+        {
+            AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+            Dispatcher.UIThread.RunJobs();
+            logo = window.GetVisualDescendants().OfType<MainView>().SingleOrDefault()?.TitleLogo;
+        }
+
+        logo.ShouldNotBeNull().Opacity.ShouldBe(0);
+        window.KeyPress(Avalonia.Input.Key.Escape, Avalonia.Input.RawInputModifiers.None, Avalonia.Input.PhysicalKey.Escape, null);
+        Pump(start);
+        logo.Opacity.ShouldBe(1);
+        window.GetVisualDescendants().OfType<SplashView>().ShouldBeEmpty();
         window.Close();
     });
 

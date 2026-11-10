@@ -173,6 +173,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     public string LanguageCode => L.Language.ToUpperInvariant();
 
+    /// <summary>The chosen language for the menu of the title bar: its code, or "system".</summary>
+    public string LanguageSetting => Settings.Language is { Length: > 0 } code ? code : "system";
+
     public string? CliPath
     {
         get => Settings.CliPath;
@@ -439,13 +442,6 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    public void ToggleLanguage()
-    {
-        var index = L.Languages.Select(l => l.Code).ToList().IndexOf(L.Language);
-        SetLanguage(L.Languages[(index + 1) % L.Languages.Count].Code);
-    }
-
-    [RelayCommand]
     public void ShowHelp(string? tab)
     {
         HelpTab = int.TryParse(tab, out var index) ? index : HelpTab;
@@ -628,6 +624,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
+    [RelayCommand]
     public void SetLanguage(string? language)
     {
         Settings.Language = language;

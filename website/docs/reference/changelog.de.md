@@ -2,6 +2,16 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Geändert
+
+- Coworkee Studio: Das Sprachkürzel in der Titelleiste öffnet ein Menü mit der Sprache des Systems und den acht Sprachen, die aktuelle abgehakt, statt bei jedem Klick zur nächsten Sprache zu wechseln.
+
+### Behoben
+
+- Coworkee Studio: Das Logo der Titelleiste bleibt verborgen, während das Logo des Startbildschirms darauf zufliegt, sodass nur ein Logo zu sehen ist; es erscheint, wenn das Logo landet, auch wenn die Animation übersprungen wird.
+
 ## 0.0.1.71 (2026-11-10)
 
 ### Behoben
