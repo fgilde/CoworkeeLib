@@ -2,6 +2,13 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Behoben
+
+- Gruppenauswahl: Fügte ein Administrator eine Mitgliedschaft hinzu oder entfernte sie (oder verschob oder löschte eine Gruppe), erfuhr das Mitglied es erst nach einem Neuladen; die Auswahl behielt die verlorene Gruppe und die Kopien im Browser (Client-Entitäten) ihre Zeilen. `GroupScopeState` folgt jetzt `RealtimeTopics.TenantPermissions`, lädt die Gruppen des Benutzers einmal pro Schub neu und verwirft, wenn sie oder die Auswahl sich geändert haben, die Kopien des alten Bereichs und löst `Changed` aus, Tabellen laden also sofort neu.
+- Azure Container Apps: Die Seite *Dienste* eines Deployments listete nichts. Die öffentlichen Adressen der Tools fehlten auf Azure in `Coworkee:Services`; sie werden wieder geschrieben. Erneut deployen.
+
 ## 0.0.1.73 (2026-11-10)
 
 ### Behoben

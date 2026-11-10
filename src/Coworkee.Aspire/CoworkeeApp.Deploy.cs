@@ -115,8 +115,14 @@ public sealed partial class CoworkeeApp
 
         if (_target == "azure")
         {
-            tool.WithEndpoint(endpointName, e => e.IsExternal = true).WithEnvironment("ASPNETCORE_FORWARDEDHEADERS_ENABLED", "true");
-            return ReferenceExpression.Create($"{tool.GetEndpoint(endpointName)}");
+            // listed like the parameters below: the services page of a deployment shows the tools with this address (WireServices)
+            if (!_toolUrls.TryGetValue(tool.Resource, out var external))
+            {
+                tool.WithEndpoint(endpointName, e => e.IsExternal = true).WithEnvironment("ASPNETCORE_FORWARDEDHEADERS_ENABLED", "true");
+                _toolUrls[tool.Resource] = external = ReferenceExpression.Create($"{tool.GetEndpoint(endpointName)}");
+            }
+
+            return external;
         }
 
         if (!_toolUrls.TryGetValue(tool.Resource, out var url))

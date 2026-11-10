@@ -2,6 +2,13 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixed
+
+- Group picker: an administrator adding or removing a membership (or moving or deleting a group) reached the member only after a reload; the picker kept the lost group and the browser copies (client entities) kept its rows. `GroupScopeState` now follows `RealtimeTopics.TenantPermissions`, reloads the user's groups once per burst and, when they or the selection changed, drops the copies of the old scope and raises `Changed`, so tables reload at once.
+- Azure Container Apps: the *Services* page of a deployment listed nothing. The tools' public addresses were left out of `Coworkee:Services` on Azure; they are written again. Deploy again.
+
 ## 0.0.1.73 (2026-11-10)
 
 ### Fixed
