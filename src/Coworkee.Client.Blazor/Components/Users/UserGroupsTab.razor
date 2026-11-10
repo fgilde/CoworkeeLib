@@ -14,8 +14,11 @@
         <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
     }
     @{ var members = Members(); }
+    @* one scroll area for both parts: a capped "Member of" box cut its last rows while the space below stayed empty; the other groups below are
+       virtualized against this area *@
+    <div style="max-height:65vh;overflow:auto" data-testid="user-groups-scroll">
     <MudText Typo="Typo.overline" Class="d-block mud-text-secondary" data-testid="user-groups-count">@L["Member of"] (@Shown().Count())</MudText>
-    <div style="max-height:30vh;overflow:auto" data-testid="user-groups-members">
+    <div data-testid="user-groups-members">
         @foreach (var (id, path) in members)
         {
             @Item(id, path, path, null)
@@ -30,7 +33,7 @@
         var others = Others();
         <MudText Typo="Typo.overline" Class="d-block mud-text-secondary mt-3">@L["Other groups"]</MudText>
         @* loaded from the server level by level, or as search matches: organisations with thousands of groups never load them all *@
-        <div style="height:40vh;overflow:auto" data-testid="user-groups-others">
+        <div data-testid="user-groups-others">
             <MudVirtualize T="Row" Enabled="true" Items="others" ItemSize="36" OverscanCount="10" Context="row">
                 @Item(row.Node.Id, _searching ? row.Path : row.Node.Name, row.Path, row)
             </MudVirtualize>
@@ -44,6 +47,7 @@
             <MudText Typo="Typo.caption" Class="d-block mt-1 mud-text-secondary" data-testid="user-groups-truncated">@L["Showing the first {0} matches. Type more to narrow them down.", MaxMatches]</MudText>
         }
     }
+    </div>
 </div>
 
 @code {
