@@ -308,7 +308,7 @@ public sealed partial class AzureDeployViewModel : ObservableObject
 
     /// <summary>
     /// az login (to <see cref="SignInTenant"/> when given) opens the browser; the check runs again when it returns. The accounts signed in already stay
-    /// signed in; with <see cref="OwnSignIn"/> only the app's own folder is signed in.
+    /// signed in and the default subscription stays the one from before; with <see cref="OwnSignIn"/> only the app's own folder is signed in.
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanWork))]
     public async Task SignInAsync()
@@ -316,9 +316,15 @@ public sealed partial class AzureDeployViewModel : ObservableObject
         IsWorking = true;
         try
         {
+            // az login makes the new account the default of every terminal and tool using this sign-in; the default from before comes back
+            var before = await AzAsync("account", "show", "--query", "id", "-o", "tsv") is { ExitCode: 0, Output: var id } && id.Trim().Length > 0 ? id.Trim() : null;
             if (await AzAsync(["login", .. SignInTenant.Trim() is { Length: > 0 } tenant ? ["--tenant", tenant] : Array.Empty<string>(), "-o", "none"]) is { ExitCode: not 0 } failed)
             {
                 Problem = failed.Error;
+            }
+            else if (before is not null)
+            {
+                await AzAsync("account", "set", "--subscription", before, "-o", "none");
             }
         }
         catch (Win32Exception)

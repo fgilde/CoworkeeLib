@@ -318,7 +318,10 @@ public sealed class AppOverviewTests
         await wizard.SignInAsync();
 
         az.Calls.ShouldContain("login --tenant customer.onmicrosoft.com -o none");
-        az.Calls.ShouldNotContain(c => c.Contains("logout") || c.Contains("account set") || c.Contains("account clear"));
+        az.Calls.ShouldNotContain(c => c.Contains("logout") || c.Contains("account clear"));
+        // az login made the guest account the default; the default from before is set back
+        az.Calls.Last(c => c.StartsWith("account set", StringComparison.Ordinal)).ShouldBe("account set --subscription sub-2 -o none");
+        az.Calls.IndexOf("account set --subscription sub-2 -o none").ShouldBeGreaterThan(az.Calls.IndexOf("login --tenant customer.onmicrosoft.com -o none"));
         wizard.Step.ShouldBe(AzureStep.Subscription);
         wizard.Subscriptions.Select(s => s.User).Distinct().ShouldBe(["me@example.com", "guest@customer.com"]);
         wizard.Subscription!.Id.ShouldBe("sub-2");
@@ -463,6 +466,14 @@ public sealed class AppOverviewTests
                     return Task.FromResult(0);
                 case "config set core.enable_broker_on_windows=false":
                     Broker = false;
+                    return Task.FromResult(0);
+                case "account show --query id -o tsv" when signedIn:
+                    output("sub-2", false);
+                    return Task.FromResult(0);
+                case "account show --query id -o tsv":
+                    output("Please run 'az login' to setup account.", true);
+                    return Task.FromResult(1);
+                case "account set --subscription sub-2 -o none":
                     return Task.FromResult(0);
                 case "account show -o json" when signedIn:
                     output("""{ "id": "sub-2", "name": "Production", "tenantId": "tenant-1", "user": { "name": "me@example.com", "type": "user" } }""", false);
