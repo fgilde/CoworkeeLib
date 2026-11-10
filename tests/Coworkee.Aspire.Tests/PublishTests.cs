@@ -145,6 +145,13 @@ public sealed class PublishTests
             written.ShouldContain(tool);
         }
 
+        // Container Apps resolves no app named otel-collector inside the environment; the services send to the collector by its name
+        if (target == "azure")
+        {
+            written.ShouldNotContain("otel-collector");
+            written.ShouldContain($"http://{CoworkeeApp.AzureCollectorName}:4318");
+        }
+
         // Container Apps gives every app its own address, so only other targets ask for the public addresses
         foreach (var parameter in new[] { "demo_grafana_url", "demo_keycloak_url" })
         {

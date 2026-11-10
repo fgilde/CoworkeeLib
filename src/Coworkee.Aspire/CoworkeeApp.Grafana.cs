@@ -10,6 +10,9 @@ public sealed partial class CoworkeeApp
     /// <summary>Setting with the OTLP address of the Grafana stack; the service defaults send metrics, logs and traces there as well as to the Aspire dashboard.</summary>
     public const string GrafanaOtlpEndpoint = "GRAFANA_OTLP_ENDPOINT";
 
+    /// <summary>The name of the OpenTelemetry collector in an Azure Container Apps deployment.</summary>
+    public const string AzureCollectorName = "telemetry";
+
     private const string DatabaseDatasource = "App database";
 
     /// <summary>Grafana of <see cref="CoworkeeAppOptions.UseGrafana"/>; in a deployment unless <see cref="CoworkeeTools.Grafana"/> is switched off.</summary>
@@ -33,8 +36,9 @@ public sealed partial class CoworkeeApp
             .WithPrometheus(configure: p => p.WithRetention("7d"))
             .WithLoki()
             .WithTempo()
-            // the services send to the Aspire dashboard themselves
-            .WithOtelCollector(aspireDashboardOtlpEndpoint: "")
+            // the services send to the Aspire dashboard themselves. Container Apps gives an app named otel-collector no
+            // service name inside the environment (Name or service not known), so the services could not reach it there
+            .WithOtelCollector(_target == "azure" && Publishing ? AzureCollectorName : "otel-collector", aspireDashboardOtlpEndpoint: "")
             .WithDashboards(dashboards, Options.DisplayName ?? Name);
         AddDatabaseDatasource(Grafana);
         if (Publishing)
