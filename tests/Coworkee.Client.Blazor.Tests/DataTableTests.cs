@@ -122,6 +122,20 @@ public sealed class DataTableTests : ClientTestBase
     }
 
     [Fact]
+    public void A_refused_query_says_so_and_leaves_no_rows_of_the_last_load()
+    {
+        var snackbars = Render<MudSnackbarProvider>();
+        var table = Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.Filter, "Category eq 'Tools'").Add(t => t.Columns, Columns()));
+        table.WaitForAssertion(() => table.FindAll("tbody tr").Count.ShouldBe(2));
+
+        _odata.Refuse = true;
+        table.Render(p => p.Add(t => t.Filter, "Unknown eq null"));
+
+        table.WaitForAssertion(() => snackbars.Markup.ShouldContain("The data could not be loaded."));
+        table.WaitForAssertion(() => table.FindAll("tbody tr td").Count.ShouldBeLessThanOrEqualTo(1));
+    }
+
+    [Fact]
     public async Task The_table_loads_pages_shows_facets_and_reloads_with_the_chosen_ones()
     {
         var popovers = Render<MudPopoverProvider>();
@@ -394,8 +408,16 @@ public sealed class DataTableTests : ClientTestBase
 
         public int FacetLoads { get; private set; }
 
+        /// <summary>The server refuses every query, as it does a filter on a property it does not know.</summary>
+        public bool Refuse { get; set; }
+
         public Task<ODataPage<T>> QueryAsync<T>(string entitySet, ODataQuery query, CancellationToken cancellationToken = default)
         {
+            if (Refuse)
+            {
+                throw new Api.ApiException(400, "odata.failed", null);
+            }
+
             LastSet = entitySet;
             if (query.Top == 0)
             {

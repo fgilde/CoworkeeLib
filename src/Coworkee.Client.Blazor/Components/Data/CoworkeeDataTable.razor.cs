@@ -449,6 +449,12 @@ public partial class CoworkeeDataTable<T> : IDisposable
         {
             return _shownData ?? new GridData<T> { Items = [], TotalItems = 0 };
         }
+        // a refused query (a filter the server does not know) said nothing: the bar kept running over the rows of the last load
+        catch (Exception exception) when (exception is ApiException or HttpRequestException)
+        {
+            Snackbar.Add(L["The data could not be loaded."], Severity.Error);
+            return _shownData = new GridData<T> { Items = [], TotalItems = 0 };
+        }
     }
 
     private async Task<GridData<T>> LoadRowsAsync(GridState<T> state, CancellationToken cancellationToken)
