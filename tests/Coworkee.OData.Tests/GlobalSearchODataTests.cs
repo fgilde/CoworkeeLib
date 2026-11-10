@@ -123,4 +123,84 @@ public sealed class GlobalSearchODataTests(ODataApp app) : IAsyncLifetime
 
         Should.Throw<InvalidOperationException>(() => services.GetServices<IGlobalSearchProvider>().ToList()).Message.ShouldContain("SerialCode");
     }
+
+    [Fact]
+    public async Task The_search_fields_of_the_sets_the_user_may_read_are_listed_for_the_data_tables()
+    {
+        var email = $"fields-{Guid.NewGuid():N}@acme.test";
+        var user = await (await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest(email, "Passw0rd!x", null, null), Ct)).Content.ReadFromJsonAsync<UserDto>(Ct);
+
+        var fields = await Admin.GetFromJsonAsync<Dictionary<string, List<string>>>("/api/v1/search/fields", Ct);
+        var others = await app.As(user!.Id, _setup.TenantId).GetFromJsonAsync<Dictionary<string, List<string>>>("/api/v1/search/fields", Ct);
+
+        fields!["Gadgets"].ShouldBe(["Name", "Category"]);
+        fields["Crates"].ShouldBe(["Name"]);
+        fields.ShouldNotContainKey("Widgets", "no declared fields: every string property is $search's default, not the table's");
+        others!.ShouldNotContainKey("Gadgets");
+    }
+
+    [Fact]
+    public async Task The_providers_tell_how_to_search_a_local_copy()
+    {
+        var providers = await Admin.GetFromJsonAsync<List<GlobalSearchProviderDto>>("/api/v1/search/providers", Ct);
+
+        var gadgets = providers!.Single(p => p.Name == "gadgets").Local.ShouldNotBeNull();
+        (gadgets.EntitySet, string.Join(",", gadgets.Fields), gadgets.TitleField, gadgets.SubtitleField, gadgets.Url, gadgets.Page).ShouldBe(("Gadgets", "Name,Category", "Name", "Category", null, "/gadgets"));
+        providers.Single(p => p.Name == "users").Local.ShouldBeNull("its title joins two names");
+    }
+
+    public static TheoryData<string> Rebuildable() => ["link", "page", "title", "navigation"];
+
+    [Theory]
+    [MemberData(nameof(Rebuildable))]
+    public void A_client_rebuilds_hits_whose_title_subtitle_and_link_read_properties(string kind)
+    {
+        var local = Provider<Tray>(kind switch
+        {
+            "link" => s => s.Fields(t => t.Name).Subtitle(t => t.Name).Url(t => $"/trays/{t.Id}?bin={t.BinId}"),
+            "page" => s => s.Fields(t => t.Name).Page("/trays"),
+            "title" => s => s.Fields(t => t.Name).Title(t => t.Name).Url(t => "/trays/" + t.Id),
+            _ => s => s.Fields(t => t.Bin!.Name, t => t.Name),
+        }).Local.ShouldNotBeNull();
+
+        local.EntitySet.ShouldBe("Trays");
+        $"{string.Join(",", local.Fields)}|{local.TitleField}|{local.SubtitleField}|{local.Url}|{local.Page}".ShouldBe(kind switch
+        {
+            "link" => "Name|Name|Name|/trays/{Id}?bin={BinId}|",
+            "page" => "Name|Name|||/trays",
+            "title" => "Name|Name||/trays/{Id}|",
+            _ => "Bin/Name,Name|Bin/Name|||",
+        });
+    }
+
+    public static TheoryData<string> NotRebuildable() => ["joined title", "computed field", "escaped link", "navigation in the link", "formatted id"];
+
+    [Theory]
+    [MemberData(nameof(NotRebuildable))]
+    public void Hits_a_client_cannot_rebuild_stay_with_the_server(string kind) =>
+        Provider<Tray>(kind switch
+        {
+            "joined title" => s => s.Fields(t => t.Name).Title(t => t.Name + "!"),
+            "computed field" => s => s.Fields(t => t.Name + t.Name),
+            "escaped link" => s => s.Fields(t => t.Name).Url(t => "/trays?q=" + Uri.EscapeDataString(t.Name)),
+            "navigation in the link" => s => s.Fields(t => t.Name).Url(t => $"/bins/{t.Bin!.Id}"),
+            _ => s => s.Fields(t => t.Name).Url(t => $"/trays/{t.Id:N}"),
+        }).Local.ShouldBeNull();
+
+    [Fact]
+    public void A_global_search_without_fields_searches_those_the_set_declares()
+    {
+        var services = new ServiceCollection()
+            .AddGlobalSearch<Gadget>(s => s.Page("/gadgets"))
+            .AddODataEntity<Gadget>("Gadgets", null, o => o.SearchFields(g => g.Name, g => g.SerialCode))
+            .BuildServiceProvider();
+
+        services.GetServices<IGlobalSearchProvider>().Single().Local!.Fields.ShouldBe(["Name", "SerialCode"]);
+        Should.Throw<InvalidOperationException>(() => new ServiceCollection().AddODataEntity<Gadget>("Gadgets").AddGlobalSearch<Gadget>(s => s.Page("/g"))
+            .BuildServiceProvider().GetServices<IGlobalSearchProvider>().ToList()).Message.ShouldContain("SearchFields");
+    }
+
+    private static IGlobalSearchProvider Provider<T>(Action<ODataSearchOptions<T>> configure)
+        where T : class =>
+        new ServiceCollection().AddODataEntity<T>(typeof(T).Name + "s").AddGlobalSearch(configure).BuildServiceProvider().GetServices<IGlobalSearchProvider>().Single();
 }

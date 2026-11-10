@@ -22,6 +22,9 @@ public interface IGlobalSearchProvider
     /// <summary>Multiplies the scores, e.g. 0.8 to rank a noisy source below the others.</summary>
     double Weight => 1;
 
+    /// <summary>How a client finds the same hits in its local copy of an OData set (client entities); null: only the server searches.</summary>
+    GlobalSearchLocalDto? Local => null;
+
     /// <summary>Hits as they are found, best first per batch; scores from 0 to 1 (<see cref="SearchMatch"/>). The searcher stops at the limit.</summary>
     IAsyncEnumerable<GlobalSearchHit> SearchAsync(GlobalSearchQuery query, GlobalSearchContext context, CancellationToken cancellationToken);
 }

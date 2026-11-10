@@ -24,6 +24,7 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
     private readonly ODataEntityRegistry _registry;
     private readonly ODataSearchOptions<T> _options;
     private readonly PropertyInfo _id;
+    private readonly Lazy<GlobalSearchLocalDto?> _local;
 
     public ODataSearchProvider(ODataEntityRegistry registry, ODataSearchOptions<T> options)
     {
@@ -35,6 +36,19 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
         {
             throw new InvalidOperationException($"The global search of {Registration.EntitySet} searches the hidden properties {string.Join(", ", hidden)}.");
         }
+
+        // a made-up row an entity refuses (a setter that checks, a type without an uninitialized state) leaves the set to the server
+        _local = new Lazy<GlobalSearchLocalDto?>(() =>
+        {
+            try
+            {
+                return Describe();
+            }
+            catch (Exception exception) when (exception is not OutOfMemoryException)
+            {
+                return null;
+            }
+        });
     }
 
     public string Name => _options.ProviderName ?? Registration.EntitySet.ToLowerInvariant();
@@ -46,6 +60,8 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
     public string? Permission => Registration.Permission;
 
     public double Weight => _options.Boost;
+
+    public GlobalSearchLocalDto? Local => _local.Value;
 
     private ODataEntityRegistration Registration =>
         _registry.Find(typeof(T)) ?? throw new InvalidOperationException($"{typeof(T).Name} is searched globally but not registered with AddODataEntity.");
@@ -127,6 +143,78 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
         var state = JsonSerializer.SerializeToUtf8Bytes(new { search = title, facets = Array.Empty<object>(), hiddenColumns = Array.Empty<string>() });
         var encoded = Convert.ToBase64String(state).TrimEnd('=').Replace('+', '-').Replace('/', '_');
         return $"{page}{(page.Contains('?') ? '&' : '?')}{entitySet.ToLowerInvariant()}={encoded}";
+    }
+
+    // what a client needs to find the same hits in its local copy: the fields as OData paths, title and subtitle as one property each and the link as a
+    // template, found by calling the functions on two made-up rows whose texts, ids and numbers differ. A function that reads anything else (a navigation,
+    // a date, a computed property, an escaped text) rebuilds neither row, and the client leaves the set to the server.
+    // ponytail: texts, Guids, ints and longs only; other values a link reads stay equal in both rows and would pass as constants, so none is set
+    private GlobalSearchLocalDto? Describe()
+    {
+        var fields = _options.SearchFields.Select(ODataEntityAccess.PathOf).ToList();
+        if (fields.Any(f => f is null))
+        {
+            return null;
+        }
+
+        var probes = new[] { Probe(0), Probe(1) };
+        string? Rebuild(Func<T, string?> of)
+        {
+            var templates = new string?[probes.Length];
+            for (var k = 0; k < probes.Length; k++)
+            {
+                try
+                {
+                    templates[k] = of(probes[k].Row);
+                }
+                catch (Exception)
+                {
+                    return null;
+                }
+
+                foreach (var (value, path) in probes[k].Markers.OrderByDescending(m => m.Value.Length))
+                {
+                    templates[k] = templates[k]?.Replace(value, "{" + path + "}", StringComparison.Ordinal);
+                }
+            }
+
+            return templates[0] is { } template && template == templates[1] && !template.Contains(ProbeText, StringComparison.Ordinal) ? template : null;
+        }
+
+        string? Field(Func<T, string?> of) => Rebuild(of) is ['{', .. var path, '}'] && !path.Contains('{') ? path : null;
+
+        var title = _options.TitleOf is { } titleOf ? Field(titleOf) : fields[0];
+        var subtitle = _options.SubtitleOf is { } subtitleOf ? Field(subtitleOf) : null;
+        var url = _options.UrlOf is { } urlOf ? Rebuild(urlOf) : null;
+        return title is null || (_options.SubtitleOf is not null && subtitle is null) || (_options.UrlOf is not null && url is null)
+            ? null
+            : new GlobalSearchLocalDto(Registration.EntitySet, fields!, title) { SubtitleField = subtitle, Url = url, Page = url is null ? _options.ListPage : null };
+    }
+
+    private const string ProbeText = "cw probe";
+
+    private static (T Row, (string Value, string Path)[] Markers) Probe(int k)
+    {
+        var row = (T)RuntimeHelpers.GetUninitializedObject(typeof(T));
+        var markers = new List<(string, string)>();
+        var i = 0;
+        foreach (var property in typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            i++;
+            var type = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+            object? value = type == typeof(string) ? $"{ProbeText}{k}x{i}z"
+                : type == typeof(Guid) ? new Guid(i, (short)k, 0x7c3, [1, 2, 3, 4, 5, 6, 7, 8])
+                : type == typeof(int) ? 7_100_000 + (i * 10) + k
+                : type == typeof(long) ? 7_100_000_000L + (i * 10) + k
+                : null;
+            if (value is not null && property.GetIndexParameters().Length == 0 && property.GetSetMethod(true) is { } setter)
+            {
+                setter.Invoke(row, [value]);
+                markers.Add((Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture)!, property.Name));
+            }
+        }
+
+        return (row, [.. markers]);
     }
 
     private Expression<Func<T, bool>> AnyField(List<int> fields, Func<Expression, Expression> test)

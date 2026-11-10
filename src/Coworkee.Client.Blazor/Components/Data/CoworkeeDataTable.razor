@@ -56,9 +56,9 @@
 <FacetStyles />
 
 <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-1">
-    @if (SearchFields.Count > 0)
+    @if (Searched.Count > 0)
     {
-        <MudTextField T="string" Value="_search" ValueChanged="SearchAsync" Immediate="true" DebounceInterval="300" Placeholder="@L[SearchPlaceholder]"
+        <MudTextField T="string" Value="_search" ValueChanged="SearchAsync" Immediate="true" DebounceInterval="SearchDebounce" Placeholder="@L[SearchPlaceholder]"
                       Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" Clearable="true" Variant="Variant.Outlined" Margin="Density.Margin"
                       Class="mr-2 mb-2 cw-table-search" Style="max-width:320px" data-testid="table-search" />
     }

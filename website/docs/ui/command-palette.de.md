@@ -2,10 +2,12 @@
 
 **Strg+K** (**Cmd+K** auf dem Mac) oder der Suchknopf in der App-Leiste öffnet die Befehlspalette: ein Feld für Seiten, Datensätze, Aktionen und den Assistenten. Du brauchst keine Maus: tippen, mit den Pfeiltasten wählen, mit **Enter** öffnen, mit **Esc** schließen. Auf dem Handy öffnet sie sich als Blatt am oberen Rand.
 
+**Enter** direkt nach dem Tippen öffnet den gewählten Eintrag nur, wenn er genau dem Getippten entspricht (ohne Groß-/Kleinschreibung: eine vollständige Sendungsnummer, der Name eines Befehls); sonst, auch solange die Suche noch läuft oder nichts gefunden wurde, öffnet es alle Ergebnisse (`/search?q=`). Hast du einen Eintrag mit den Pfeiltasten oder der Maus gewählt, öffnet **Enter** ihn. **Strg+Enter** (**Cmd+Enter**) öffnet immer alle Ergebnisse; die Fußzeile zeigt das Kürzel.
+
 Was sie findet:
 
 - **Seiten** der Navigation, die der Benutzer öffnen darf (dieselben Regeln für Berechtigung, Feature und Organisation wie im Menü).
-- **Datensätze** aus der [globalen Suche](../web/global-search.md) des Servers, sobald zwei Buchstaben dastehen: Benutzer, Dateien, Berichte und die Sets, die deine Module mit `AddGlobalSearch` registrieren. Sie erscheinen Gruppe für Gruppe, sobald die Provider sie finden, der gewählte Eintrag bleibt gewählt, und *Alle Ergebnisse* öffnet `/search?q=` mit einem Filter pro Typ.
+- **Datensätze** aus der [globalen Suche](../web/global-search.md) des Servers, sobald zwei Buchstaben dastehen: Benutzer, Dateien, Berichte und die Sets, die deine Module mit `AddGlobalSearch` registrieren. Sie erscheinen Gruppe für Gruppe, sobald die Provider sie finden, der gewählte Eintrag bleibt gewählt, und *Alle Ergebnisse* öffnet `/search?q=` mit einem Filter pro Typ. Datensätze einer [Client-Entity](client-entities.md), deren Kopie im Browser liegt, erscheinen sofort, bevor der Server antwortet, siehe [zuerst die lokalen Kopien](../web/global-search.md#zuerst-die-lokalen-kopien).
 - **Aktionen**: dunkler oder heller Modus, ein anderes Theme, eine andere Sprache, eine andere aktive Rolle und deine eigenen Befehle wie *Neues Produkt*.
 - **Chat**: *Chatten mit…* wählt eine Person und öffnet einen [Mini-Chat](../modules/chat.md#mini-chats); `@name` listet passende Personen, mit denen du sofort chatten kannst (mit dem Chat-Modul und seiner Berechtigung).
 - **Den Assistenten fragen: …** als letzter Eintrag, wenn der [Assistent](../modules/ai.md) eingerichtet ist und der Benutzer chatten darf. Er öffnet das Assistentenfenster mit dem Text im Eingabefeld.

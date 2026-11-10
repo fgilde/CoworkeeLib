@@ -28,7 +28,8 @@ public sealed class ODataSearchOptions<T>
 
     /// <summary>
     /// The text columns searched: exact and prefix first, then anywhere. The first one is the title unless <see cref="Title"/> says otherwise.
-    /// <c>$search</c> on the OData set looks in these fields only (unless the entity names its own with ISearchable).
+    /// <c>$search</c> on the OData set and its data tables look in these fields only (unless the entity names its own with ISearchable or the set declares
+    /// them with SearchFields in AddODataEntity). Without a call the global search takes the fields the set declares.
     /// </summary>
     public ODataSearchOptions<T> Fields(params Expression<Func<T, string?>>[] fields)
     {

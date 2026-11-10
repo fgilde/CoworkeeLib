@@ -154,6 +154,74 @@ public sealed class CommandPaletteTests : ClientTestBase
         Services.GetRequiredService<NavigationManager>().Uri.ShouldEndWith("/search?q=flux");
     }
 
+    public static TheoryData<string, bool, string> EnterCases() => new()
+    {
+        // typed, Ctrl held, where Enter leads
+        { "prod", false, "/search?q=prod" },
+        { "zzqx", false, "/search?q=zzqx" },
+        { "new product", false, "/catalog/products?new=1" },
+        { "New product", true, "/search?q=New%20product" },
+    };
+
+    [Theory]
+    [MemberData(nameof(EnterCases))]
+    public async Task Enter_after_typing_opens_the_exact_hit_else_all_results(string typed, bool ctrl, string expected)
+    {
+        var palette = Open();
+        var input = palette.Find("[data-testid='palette-input']");
+        input.Input(typed);
+        palette.WaitForAssertion(() => palette.FindAll("[data-testid='palette-empty']").Count.ShouldBe(typed == "zzqx" ? 1 : 0));
+        palette.WaitForAssertion(() => palette.Find("[data-testid='palette-streaming']"));
+
+        await palette.Find("[data-testid='palette-input']").KeyDownAsync(new KeyboardEventArgs { Key = "Enter", CtrlKey = ctrl });
+
+        palette.FindAll("[data-testid='palette']").ShouldBeEmpty();
+        Services.GetRequiredService<NavigationManager>().Uri.ShouldEndWith(expected);
+    }
+
+    [Fact]
+    public async Task Enter_runs_the_entry_chosen_with_the_mouse_and_cmd_enter_shows_all_results()
+    {
+        var palette = Open();
+        palette.Find("[data-testid='palette-input']").Input("prod");
+        palette.WaitForAssertion(() => Titles(palette).Take(2).ShouldBe(["Products", "New product"], ignoreOrder: true));
+        var second = Titles(palette)[1];
+
+        await palette.InvokeAsync(() => palette.FindAll("[data-testid='palette-item']")[1].MouseMove());
+        await palette.Find("[data-testid='palette-input']").KeyDownAsync(new KeyboardEventArgs { Key = "Enter" });
+
+        Services.GetRequiredService<NavigationManager>().Uri.ShouldEndWith(second == "Products" ? "/catalog/products" : "/catalog/products?new=1");
+        palette.Find("[data-testid='palette-button']").Click();
+        palette.Find("[data-testid='palette-input']").Input("prod");
+        await palette.Find("[data-testid='palette-input']").KeyDownAsync(new KeyboardEventArgs { Key = "Enter", MetaKey = true });
+        Services.GetRequiredService<NavigationManager>().Uri.ShouldEndWith("/search?q=prod");
+    }
+
+    // a local copy (client entities) found the record first: the server's hit of it does not show twice
+    [Fact]
+    public void Server_hits_of_records_found_locally_show_once()
+    {
+        Services.AddSingleton<ICommandPaletteProvider>(new LocalRecords(
+            new CommandPaletteItem("Gadgets", "Flux capacitor") { Href = "/gadgets/1", Matched = true, Order = 10 },
+            new CommandPaletteItem("Gadgets", "Flux") { Subtitle = "Lab", Matched = true, Order = 10 }));
+        var palette = Open();
+
+        palette.Find("[data-testid='palette-input']").Input("flux");
+        palette.WaitForAssertion(() => palette.FindAll("[data-group='Gadgets']").Count.ShouldBe(2));
+        _search.Push(new GlobalSearchHit("gadgets", "Gadgets", "Flux capacitor") { Url = "/gadgets/1", Score = 0.8 });
+        _search.Push(new GlobalSearchHit("gadgets", "Gadgets", "Flux") { Subtitle = "Lab", Url = "/gadgets?gadgets=x", Score = 1 });
+        _search.Push(new GlobalSearchHit("gadgets", "Gadgets", "Flux drive") { Url = "/gadgets/3", Score = 0.5 });
+
+        palette.WaitForAssertion(() => palette.FindAll("[data-group='Gadgets']").Count.ShouldBe(3));
+        palette.FindAll("[data-group='Gadgets'] .cw-palette-title").Select(t => t.TextContent).ShouldBe(["Flux capacitor", "Flux", "Flux drive"], ignoreOrder: true);
+    }
+
+    private sealed class LocalRecords(params CommandPaletteItem[] items) : ICommandPaletteProvider
+    {
+        public Task<IEnumerable<CommandPaletteItem>> GetItemsAsync(string query, CancellationToken cancellationToken) =>
+            Task.FromResult<IEnumerable<CommandPaletteItem>>(query.Length > 0 ? items : []);
+    }
+
     [Fact]
     public void One_letter_does_not_ask_the_server()
     {

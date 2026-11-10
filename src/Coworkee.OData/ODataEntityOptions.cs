@@ -16,6 +16,19 @@ public sealed class ODataEntityOptions<TEntity>
 
     internal int? FacetRows { get; private set; }
 
+    internal List<Expression<Func<TEntity, string?>>> Searched { get; } = [];
+
+    /// <summary>
+    /// The text fields searched in this set, e.g. <c>o =&gt; o.SearchFields(p =&gt; p.Name, p =&gt; p.Barcode)</c>: <c>$search</c>, the search box of every data table of
+    /// the set that names no own SearchFields, and the global search of the set when AddGlobalSearch names no fields. Fields may read through navigations
+    /// (<c>p =&gt; p.Brand!.Name</c>). An entity implementing ISearchable keeps its own.
+    /// </summary>
+    public ODataEntityOptions<TEntity> SearchFields(params Expression<Func<TEntity, string?>>[] fields)
+    {
+        Searched.AddRange(fields);
+        return this;
+    }
+
     /// <summary>
     /// The facet cap of this set instead of <c>Coworkee:OData:MaxFacetRows</c>: a filtered set of more rows counts its facets on its first
     /// <paramref name="rows"/> rows (by key) instead of all, and says so (<c>FacetGroupDto.SampleRows</c>), so a large list still shows its filters.

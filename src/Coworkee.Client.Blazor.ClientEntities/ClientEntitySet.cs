@@ -65,6 +65,12 @@ public abstract class ClientEntitySet : IAsyncDisposable
 
     public abstract ValueTask DisposeAsync();
 
+    /// <summary>
+    /// The values of <paramref name="paths"/> (OData paths) of the local rows matching <paramref name="filter"/>, as text, without asking the server: null
+    /// while the copy is not local or switched to the server, for a filter it cannot answer and for a path through a navigation the copy does not carry.
+    /// </summary>
+    internal abstract Task<IReadOnlyList<string?[]>?> LocalValuesAsync(string filter, string? orderBy, int top, IReadOnlyList<string> paths, CancellationToken cancellationToken);
+
     /// <summary>Something changed on the server: refresh soon, several nudges in a row refresh once.</summary>
     internal abstract void Nudge();
 

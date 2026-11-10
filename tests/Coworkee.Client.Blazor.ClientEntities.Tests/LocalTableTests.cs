@@ -57,6 +57,21 @@ public sealed class LocalTableTests
         table.Find(filter, "Name").Select(i => table.Row(i).Name).ShouldBe(expected.Split(','));
     }
 
+    public sealed record Labelled(Guid Id, string Name, Brand? Brand)
+    {
+        public string Label => $"{Name} by {Brand?.Name}";
+    }
+
+    // a property the row computes itself is searched like a stored one
+    [Fact]
+    public void Searches_computed_properties_and_nested_paths()
+    {
+        var table = LocalTable<Labelled>.Of([new(Guid.NewGuid(), "Drill", new Brand(Guid.NewGuid(), "Acme")), new(Guid.NewGuid(), "Saw", null)]);
+
+        table.Find(Data.ODataFilter.Search("by acme", ["Name", "Label", "Brand/Name"]), null).Select(i => table.Row(i).Name).ShouldBe(["Drill"]);
+        table.Find(Data.ODataFilter.Search("saw", ["Label", "Brand/Name"]), null).Select(i => table.Row(i).Name).ShouldBe(["Saw"]);
+    }
+
     [Fact]
     public void Orders_by_one_or_several_columns_with_nulls_first()
     {

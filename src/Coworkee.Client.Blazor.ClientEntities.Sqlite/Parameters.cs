@@ -10,6 +10,10 @@ namespace Coworkee.Client.Blazor.ClientEntities.Sqlite;
 /// Also "Flags has 'Gift'": the copy keeps enums by name ("Express, Gift"), so the bits ODataLinq compares (<c>((long)Flags &amp; 2) == 2</c>) read 0 from
 /// the text and matched nothing. It becomes "Flags in (every value with that flag)", which compares names.
 /// </para>
+/// <para>
+/// And tolower/toupper: ODataLinq calls ToLowerInvariant, which EF Core does not translate, so every search of a data table went to the server. They become
+/// ToLower/ToUpper, SQL's lower()/upper().
+/// </para>
 /// </summary>
 internal static class Parameters
 {
@@ -63,6 +67,12 @@ internal static class Parameters
 
             return base.VisitBinary(node);
         }
+
+        // ponytail: SQLite's lower() folds A-Z only, so "Ü" in a value does not match "ü" typed; an own lower() function if that matters
+        protected override Expression VisitMethodCall(MethodCallExpression node) =>
+            node.Method.DeclaringType == typeof(string) && node.Method.Name is nameof(string.ToLowerInvariant) or nameof(string.ToUpperInvariant) && node.Object is { } text
+                ? Expression.Call(Visit(text), node.Method.Name == nameof(string.ToLowerInvariant) ? nameof(string.ToLower) : nameof(string.ToUpper), null)
+                : base.VisitMethodCall(node);
 
         protected override Expression VisitConstant(ConstantExpression node)
         {

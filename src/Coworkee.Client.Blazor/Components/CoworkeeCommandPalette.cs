@@ -33,6 +33,9 @@ public partial class CoworkeeCommandPalette : IAsyncDisposable
     private bool _open;
     private bool _focus;
     private bool _searching;
+
+    // the user picked an entry with the arrows or the mouse since he last typed: Enter runs it
+    private bool _moved;
     private ElementReference _input;
     private CancellationTokenSource? _search;
     private RecentPaletteItems? _recent;
@@ -113,6 +116,7 @@ public partial class CoworkeeCommandPalette : IAsyncDisposable
     private Task QueryChangedAsync(ChangeEventArgs args)
     {
         _query = args.Value?.ToString() ?? string.Empty;
+        _moved = false;
         return SearchAsync(debounce: true);
     }
 
@@ -126,6 +130,11 @@ public partial class CoworkeeCommandPalette : IAsyncDisposable
             case "ArrowUp":
                 await MoveAsync(-1);
                 break;
+            case "Enter" when GoesToResults(args):
+                Close();
+                var results = ResultsHref(_query.Trim());
+                Nav.NavigateTo(Links.Href(results) ?? results);
+                break;
             case "Enter" when _hits.Count > 0:
                 await RunAsync(_hits[Math.Clamp(_active, 0, _hits.Count - 1)].Item);
                 break;
@@ -135,6 +144,30 @@ public partial class CoworkeeCommandPalette : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Ctrl+Enter (Cmd+Enter) always; Enter after typing unless the entry it would run is what was typed (a full number, a command's name). While the
+    /// search runs, without hits or with a merely similar first hit the results page shows everything; an exact hit runs at once, also one a local copy
+    /// found before the server answered.
+    /// </summary>
+    private bool GoesToResults(KeyboardEventArgs args)
+    {
+        var query = _query.Trim();
+        if (query.Length == 0)
+        {
+            return false;
+        }
+
+        if (args.CtrlKey || args.MetaKey)
+        {
+            return true;
+        }
+
+        return !_moved && (_hits.Count == 0
+            || !string.Equals(_hits[Math.Clamp(_active, 0, _hits.Count - 1)].Item.Title.Trim(), query, StringComparison.CurrentCultureIgnoreCase));
+    }
+
+    private static string ResultsHref(string query) => $"/search?q={Uri.EscapeDataString(query)}";
+
     private async Task MoveAsync(int step)
     {
         if (_hits.Count == 0)
@@ -142,6 +175,7 @@ public partial class CoworkeeCommandPalette : IAsyncDisposable
             return;
         }
 
+        _moved = true;
         _active = (_active + step + _hits.Count) % _hits.Count;
         try
         {
@@ -152,7 +186,11 @@ public partial class CoworkeeCommandPalette : IAsyncDisposable
         }
     }
 
-    private void Hover(int index) => _active = index;
+    private void Hover(int index)
+    {
+        _moved |= index != _active;
+        _active = index;
+    }
 
     private async Task RunAsync(CommandPaletteItem item)
     {
@@ -239,7 +277,8 @@ public partial class CoworkeeCommandPalette : IAsyncDisposable
         {
             await foreach (var found in api.StreamAsync(query, cancellationToken: cancellationToken))
             {
-                if (found.Hit is { } hit && remote == _remote)
+                // a record a local copy found already (client entities) shows once
+                if (found.Hit is { } hit && remote == _remote && !_local.Any(l => Same(l.Item, hit)))
                 {
                     remote.Add(ToPaletteHit(hit));
                     Show(query);
@@ -269,7 +308,7 @@ public partial class CoworkeeCommandPalette : IAsyncDisposable
             all = all.Append(new PaletteHit(new CommandPaletteItem("Search", L["Show all results for “{0}”", query])
             {
                 Icon = Icons.Material.Outlined.ManageSearch,
-                Href = $"/search?q={Uri.EscapeDataString(query)}",
+                Href = ResultsHref(query),
                 Matched = true,
                 Order = AllResultsOrder,
             }, 0, []));
@@ -278,6 +317,9 @@ public partial class CoworkeeCommandPalette : IAsyncDisposable
         _hits = Rank(all);
         _active = selected is null ? 0 : Math.Max(0, _hits.FindIndex(h => h.Item == selected));
     }
+
+    internal static bool Same(CommandPaletteItem item, GlobalSearchHit hit) =>
+        item.Group == hit.Group && (item.Href is not null && item.Href == hit.Url || (item.Title == hit.Title && item.Subtitle == hit.Subtitle));
 
     internal static PaletteHit ToPaletteHit(GlobalSearchHit hit) =>
         new(new CommandPaletteItem(hit.Group, hit.Title)

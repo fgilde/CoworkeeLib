@@ -13,4 +13,7 @@ internal sealed class GlobalSearchApi(HttpClient http) : Api.ApiClientBase(http)
 
     public Task<IReadOnlyList<GlobalSearchProviderDto>> GetProvidersAsync(CancellationToken cancellationToken = default) =>
         GetAsync<IReadOnlyList<GlobalSearchProviderDto>>($"{Root}/providers", cancellationToken);
+
+    public async Task<IReadOnlyDictionary<string, IReadOnlyList<string>>> GetSearchFieldsAsync(CancellationToken cancellationToken = default) =>
+        new Dictionary<string, IReadOnlyList<string>>(await GetAsync<Dictionary<string, IReadOnlyList<string>>>($"{Root}/fields", cancellationToken), StringComparer.OrdinalIgnoreCase);
 }

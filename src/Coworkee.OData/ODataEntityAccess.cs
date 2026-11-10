@@ -100,6 +100,45 @@ public static class ODataEntityAccess
             return rows;
         }
 
+        var fields = await ReadableAsync(services, services.GetRequiredService<ODataEntityRegistry>().SearchFields<TEntity>(), denied, scope, cancellationToken);
+        return Nextended.EF.QueryableExtensions.WhereContains(rows, text, [.. fields]);
+    }
+
+    /// <summary>
+    /// The declared search fields of the set (<see cref="ODataEntityRegistry.DeclaredSearchFields{TEntity}"/>) the user may read, as OData paths for the
+    /// filter of a data table's search box (<c>Brand/Name</c>); a field that is no property path (a concatenation, a method call) is left out.
+    /// </summary>
+    internal static async Task<IReadOnlyList<string>> SearchPathsAsync<TEntity>(IServiceProvider services, CancellationToken cancellationToken)
+        where TEntity : class
+    {
+        if (services.GetRequiredService<ODataEntityRegistry>().DeclaredSearchFields<TEntity>() is not { } declared)
+        {
+            return [];
+        }
+
+        var readable = await ReadableAsync(services, declared, await DeniedByTypeAsync(services, cancellationToken), ODataNavigationScope.For(services, typeof(TEntity)), cancellationToken);
+        return [.. readable.Select(PathOf).OfType<string>()];
+    }
+
+    /// <summary>The OData path of a field that reads properties only (<c>p =&gt; p.Brand!.Name</c> is <c>Brand/Name</c>), else null.</summary>
+    internal static string? PathOf(System.Linq.Expressions.LambdaExpression field)
+    {
+        var names = new List<string>();
+        var node = field.Body;
+        while (node is System.Linq.Expressions.MemberExpression { Member: System.Reflection.PropertyInfo } member)
+        {
+            names.Insert(0, member.Member.Name);
+            node = member.Expression;
+        }
+
+        return node == field.Parameters[0] && names.Count > 0 ? string.Join('/', names) : null;
+    }
+
+    private static async Task<List<System.Linq.Expressions.Expression<Func<TEntity, string?>>>> ReadableAsync<TEntity>(IServiceProvider services,
+        IEnumerable<System.Linq.Expressions.Expression<Func<TEntity, string?>>> candidates, IReadOnlyDictionary<string, IReadOnlySet<string>> denied, ODataNavigationScope scope,
+        CancellationToken cancellationToken)
+        where TEntity : class
+    {
         var registry = services.GetRequiredService<ODataEntityRegistry>();
 
         // a member read from a type: hidden or denied on any set of that type, its bases or derived types (the row may be one of them)
@@ -108,7 +147,7 @@ public static class ODataEntityAccess
             .Any(e => e.HiddenProperties.Contains(name) || (denied.TryGetValue(e.EntityType.FullName!, out var names) && names.Contains(name)));
 
         var fields = new List<System.Linq.Expressions.Expression<Func<TEntity, string?>>>();
-        foreach (var field in registry.SearchFields<TEntity>())
+        foreach (var field in candidates)
         {
             var members = new Members();
             members.Visit(field.Body);
@@ -124,7 +163,7 @@ public static class ODataEntityAccess
             }
         }
 
-        return Nextended.EF.QueryableExtensions.WhereContains(rows, text, [.. fields]);
+        return fields;
     }
 
     // every member a search field reads: concatenations, method calls and coalesces included

@@ -6,6 +6,7 @@ public sealed class ODataEntityRegistry
     private readonly List<Transfer.ODataImportRegistration> _imports = [];
     private readonly Dictionary<(Type, string), Contracts.Data.FacetBehaviorAttribute> _facets = [];
     private readonly Dictionary<Type, System.Linq.Expressions.LambdaExpression[]> _searchFields = [];
+    private readonly Dictionary<Type, System.Linq.Expressions.LambdaExpression[]> _globalSearchFields = [];
 
     public IReadOnlyList<ODataEntityRegistration> Entities => _entities;
 
@@ -34,14 +35,26 @@ public sealed class ODataEntityRegistry
 
     internal void SearchFields(Type entityType, System.Linq.Expressions.LambdaExpression[] fields) => _searchFields[entityType] = fields;
 
+    internal void GlobalSearchFields(Type entityType, System.Linq.Expressions.LambdaExpression[] fields) => _globalSearchFields[entityType] = fields;
+
     /// <summary>
-    /// The fields <c>$search</c> looks in: the entity's own (ISearchable), else the fields of its global search (AddGlobalSearch), else every string property.
+    /// The fields declared for searching the set: the entity's own (ISearchable), else those of AddODataEntity (<see cref="ODataEntityOptions{TEntity}.SearchFields"/>),
+    /// else those of its global search (AddGlobalSearch); null when none are declared.
     /// </summary>
+    internal System.Linq.Expressions.Expression<Func<TEntity, string?>>[]? DeclaredSearchFields<TEntity>()
+        where TEntity : class =>
+        typeof(Nextended.Core.Contracts.ISearchable<TEntity>).IsAssignableFrom(typeof(TEntity)) ? Nextended.Core.Contracts.ISearchable<TEntity>.GetSearchProperties()
+        : (_searchFields.GetValueOrDefault(typeof(TEntity)) ?? _globalSearchFields.GetValueOrDefault(typeof(TEntity))) is { } fields
+            ? [.. fields.Cast<System.Linq.Expressions.Expression<Func<TEntity, string?>>>()]
+            : null;
+
+    /// <summary>The fields <c>$search</c> looks in: the <see cref="DeclaredSearchFields{TEntity}"/>, else every string property.</summary>
     internal System.Linq.Expressions.Expression<Func<TEntity, string?>>[] SearchFields<TEntity>()
         where TEntity : class =>
-        !typeof(Nextended.Core.Contracts.ISearchable<TEntity>).IsAssignableFrom(typeof(TEntity)) && _searchFields.TryGetValue(typeof(TEntity), out var fields)
-            ? [.. fields.Cast<System.Linq.Expressions.Expression<Func<TEntity, string?>>>()]
-            : Nextended.Core.Contracts.ISearchable<TEntity>.GetSearchProperties();
+        DeclaredSearchFields<TEntity>() ?? Nextended.Core.Contracts.ISearchable<TEntity>.GetSearchProperties();
+
+    /// <summary>The fields the entity's registration declares (AddODataEntity), which a global search without own fields takes.</summary>
+    internal System.Linq.Expressions.LambdaExpression[]? EntitySearchFields(Type entityType) => _searchFields.GetValueOrDefault(entityType);
 
     internal void Add(ODataEntityRegistration registration)
     {

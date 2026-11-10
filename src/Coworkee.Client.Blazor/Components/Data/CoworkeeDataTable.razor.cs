@@ -105,7 +105,11 @@ public partial class CoworkeeDataTable<T> : IDisposable
     /// <summary>Details below a row, opened with the arrow in the first column.</summary>
     [Parameter] public RenderFragment<CellContext<T>>? ChildRowContent { get; set; }
 
+    /// <summary>The OData paths the search box looks in; empty: those the set declares on the server (AddODataEntity SearchFields, AddGlobalSearch, ISearchable).</summary>
     [Parameter] public IReadOnlyCollection<string> SearchFields { get; set; } = [];
+
+    /// <summary>Off: no search box, also when the set declares search fields.</summary>
+    [Parameter] public bool Searchable { get; set; } = true;
 
     [Parameter] public string SearchPlaceholder { get; set; } = "Search";
 
@@ -128,9 +132,16 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     public FacetSelection Selection => _selection;
 
-    public string? CurrentFilter => ODataFilter.And(Filter, _selection.ToFilter(), ColumnFilter, AdvancedFilterText, ODataFilter.Search(_search, SearchFields));
+    public string? CurrentFilter => ODataFilter.And(Filter, _selection.ToFilter(), ColumnFilter, AdvancedFilterText, ODataFilter.Search(_search, Searched));
 
     private string? _lastFilter;
+
+    private IReadOnlyCollection<string> _declaredSearch = [];
+
+    private IReadOnlyCollection<string> Searched => !Searchable ? [] : SearchFields.Count > 0 ? SearchFields : _declaredSearch;
+
+    // a local copy answers at once: the search follows the typing closely; the server gets fewer queries
+    private int SearchDebounce => DataSource is null && Services.GetService<IClientDataCache>()?.AnswersLocally(EntitySet) == true ? 90 : 300;
 
     private string Key => StateKey ?? EntitySet.ToLowerInvariant();
 
@@ -193,6 +204,16 @@ public partial class CoworkeeDataTable<T> : IDisposable
         if (GroupScope is { } scope)
         {
             scope.Changed += Reload;
+        }
+
+        if (Searchable && SearchFields.Count == 0 && DataSource is null && Services.GetService<Search.SearchFieldsCatalog>() is { } catalog)
+        {
+            _declaredSearch = await catalog.OfAsync(EntitySet);
+            // rows loaded meanwhile did not search for the text of the address or view
+            if (_declaredSearch.Count > 0 && !string.IsNullOrWhiteSpace(_search) && _grid is not null)
+            {
+                Reload();
+            }
         }
     }
 

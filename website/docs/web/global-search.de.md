@@ -32,11 +32,16 @@ Die Suche sieht genau das, was die OData-Liste des Sets liefert: ihre Berechtigu
 
 Felder dürfen über eine Navigation lesen (`t => t.Customer!.Name`): sie werden in der Abfrage gelesen und folgen den [Navigationsregeln](odata.md#navigationen-folgen-ihrem-ziel), ein ausgeblendetes Ziel passt also weder noch erscheint es. `Title`, `Subtitle`, `Url` und `Thumbnail` laufen auf der geladenen Zeile, die keine Navigationen hat; Werte anderer Zeilen gehören in Felder.
 
-`$search` auf der OData-Liste des Sets (und ihren Exporten) sucht in denselben Feldern, außer die Entität nennt mit `ISearchable` eigene; ein Feld, das das Suchfeld der Tabelle finden soll, gehört hierher.
+`$search` auf der OData-Liste des Sets (und ihren Exporten) und das Suchfeld ihrer [Datentabellen](../ui/data-table.md#suchfelder) suchen in denselben Feldern, außer die Entität nennt mit `ISearchable` eigene oder das Set gibt sie mit `AddODataEntity(..., o => o.SearchFields(...))` an. Ohne `Fields` nimmt die globale Suche die Felder des Sets, eine Liste gilt also für alle drei:
+
+```csharp
+context.Services.AddODataEntity<Product>("Products", CatalogPermissions.Products.View, o => o.SearchFields(p => p.Name, p => p.Barcode));
+context.Services.AddGlobalSearch<Product>(s => s.Subtitle(p => p.Barcode).Url(p => $"/catalog/products/{p.Id}"));
+```
 
 | Option | Standard |
 |---|---|
-| `Fields(...)` | Pflicht; das erste ist der Titel |
+| `Fields(...)` | die `SearchFields` des Sets, sonst Pflicht; das erste ist der Titel |
 | `Title`, `Subtitle` | erstes Feld, keiner |
 | `Url(p => ...)` | `Page`, gesucht nach dem Titel |
 | `Page("/list")` | die Listenseite; ein Treffer öffnet sie gesucht nach dem Datensatz |
@@ -44,6 +49,10 @@ Felder dürfen über eine Navigation lesen (`t => t.Customer!.Name`): sie werden
 | `Name`, `Group` | das Entity-Set in Kleinbuchstaben, das Entity-Set |
 | `Icon("Person")` | ein Material-Icon-Name (oder SVG-Markup) |
 | `Weight(0.8)` | 1 |
+
+### Zuerst die lokalen Kopien
+
+Ist das Set eine [Client-Entity](../ui/client-entities.md), deren Kopie im Browser vollständig ist, durchsucht die Befehlspalette beim Tippen die Kopie und zeigt ihre Treffer sofort; die Treffer des Servers für dieselben Datensätze kommen ohne Doppelte dazu (gleicher Link oder gleicher Titel und Untertitel). Die Kopie enthält nur Zeilen, die der Benutzer lesen darf. Dafür sagt der Provider dem Client, wie (`GlobalSearchProviderDto.Local` in `/providers`): die Felder als OData-Pfade, die Eigenschaft von Titel und Untertitel und den Link als Vorlage (`/catalog/products/{Id}`) oder die Listenseite. Coworkee findet sie, indem es `Title`, `Subtitle` und `Url` auf zwei erfundenen Zeilen aufruft; sie müssen also Eigenschaften der Zeile selbst lesen (Texte, Ids, Zahlen). Ein Titel aus zwei Werten, ein Link mit einem maskierten oder formatierten Wert oder ein Feld, das kein Eigenschaftspfad ist, lassen das Set beim Server. Eine globale Suche auf einer anderen Entity als dem gespiegelten Set, ein Typfilter (`users:max`) oder Anführungszeichen suchen nur auf dem Server, und eine Kopie zählt erst, wenn eine Seite sie in diesem Besuch gestartet hat (eine Tabelle des Sets).
 
 ## Provider der Bibliothek
 
@@ -103,7 +112,8 @@ services.AddGlobalSearchIndex("myapp-products", s => s
 |---|---|
 | `GET /api/v1/search?q=&types=&limit=` | alle Treffer, die besten zuerst, und wie jeder Provider geendet hat (`GlobalSearchResult`) |
 | `GET /api/v1/search/stream?q=&types=&limit=` | JSON-Zeilen (`application/x-ndjson`): jeder Treffer, sobald er gefunden ist, dann eine Zeile pro Provider mit `Done`, `TimedOut` oder `Failed` |
-| `GET /api/v1/search/providers` | die Provider, die der Benutzer nutzen darf |
+| `GET /api/v1/search/providers` | die Provider, die der Benutzer nutzen darf, mit `Local` für die Suche in einer lokalen Kopie |
+| `GET /api/v1/search/fields` | die angegebenen Suchfelder jedes Sets, das der Benutzer lesen darf, als OData-Pfade, für [Datentabellen](../ui/data-table.md#suchfelder) |
 
 `types` ist eine Komma-Liste von Provider-Namen, `limit` die Treffer pro Provider (`Coworkee:GlobalSearch:DefaultLimit`, Standard 5, höchstens `MaxLimit`, Standard 50). Ein Provider, der nach `Coworkee:GlobalSearch:ProviderTimeout` (3 s) noch sucht, endet als `timedOut`, ohne die anderen aufzuhalten; bricht der Browser die Anfrage ab, hören alle auf. Treffer laufen wie jede Antwort der API durch die [Response-Filter](response-filters.md), ein `ResponseFilter<GlobalSearchHit>` kann also Untertitel vor manchen Benutzern verbergen.
 

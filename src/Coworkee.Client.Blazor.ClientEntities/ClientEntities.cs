@@ -51,6 +51,8 @@ public sealed class ClientEntities : IClientDataCache, IAsyncDisposable
 
     public ClientEntitySet? Find(string entitySet) => _sets.GetValueOrDefault(entitySet);
 
+    public bool AnswersLocally(string entitySet) => Find(entitySet) is { Mode: ClientEntityMode.Client, Status.IsLocal: true };
+
     /// <summary>
     /// The local copy of <paramref name="entitySet"/> with rows of <typeparamref name="T"/>, started on first use. Null when the server does
     /// not offer the set to this user, <typeparamref name="T"/> has no Guid Id or the set is already mirrored with another row type.
