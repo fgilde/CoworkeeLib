@@ -10,14 +10,15 @@ public sealed class OutgoingMail : AggregateRoot
     {
     }
 
-    public string To { get; private set; } = string.Empty;
+    // public setters on what the mail log shows, searches and sorts: the OData convention leaves out properties without one
+    public string To { get; set; } = string.Empty;
 
-    public string Subject { get; private set; } = string.Empty;
+    public string Subject { get; set; } = string.Empty;
 
     public string HtmlBody { get; private set; } = string.Empty;
 
     [Nextended.Core.Facets.ProvideFacet(Label = "Template")]
-    public string TemplateName { get; private set; } = string.Empty;
+    public string TemplateName { get; set; } = string.Empty;
 
     public Guid? TenantId { get; private set; }
 
@@ -28,9 +29,9 @@ public sealed class OutgoingMail : AggregateRoot
 
     public string? LastError { get; set; }
 
-    public Guid? CampaignId { get; private set; }
+    public Guid? CampaignId { get; set; }
 
-    public DateTimeOffset QueuedAt { get; private set; }
+    public DateTimeOffset QueuedAt { get; set; }
 
     public DateTimeOffset? SentAt { get; set; }
 

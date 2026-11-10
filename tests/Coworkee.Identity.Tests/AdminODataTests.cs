@@ -57,4 +57,13 @@ public sealed class AdminODataTests(IdentityApp app) : IAsyncLifetime
 
         page.GetProperty("value").EnumerateArray().Select(r => r.GetProperty("Name").GetString()).ShouldBe([Domain.SystemRoles.Admin, Domain.SystemRoles.User]);
     }
+
+    [Fact]
+    public async Task Sessions_filter_and_show_by_their_end_as_the_sessions_page_asks()
+    {
+        // the page's filter for active sessions; the end was missing from the model (no public setter) and the server refused it
+        var response = await Admin.GetAsync("/odata/UserSessions?$filter=EndedAt eq null and ExpiresAt gt 2026-01-01T00:00:00Z&$select=EndedAt,EndReason&$count=true", Ct);
+
+        response.StatusCode.ShouldBe(System.Net.HttpStatusCode.OK, await response.Content.ReadAsStringAsync(Ct));
+    }
 }

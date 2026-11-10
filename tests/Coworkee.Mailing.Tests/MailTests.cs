@@ -308,4 +308,13 @@ public sealed class MailTests(MailApp app) : IAsyncLifetime
 
     private async Task PutGlobalAsync(string name, string value) =>
         (await Admin.PutAsJsonAsync("/api/v1/settings/global", new SetSettingsRequest(new Dictionary<string, string?> { [name] = value }), Ct)).EnsureSuccessStatusCode();
+
+    [Fact]
+    public async Task The_mail_log_searches_filters_and_sorts_by_what_it_shows()
+    {
+        // the log's search, campaign filter and sorting; these had no public setter, were missing from the model and the server refused the query
+        var response = await Admin.GetAsync("/odata/Mails?$filter=contains(tolower(To),'a') or contains(tolower(Subject),'a') or CampaignId eq null&$orderby=QueuedAt desc&$select=TemplateName", Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, await response.Content.ReadAsStringAsync(Ct));
+    }
 }

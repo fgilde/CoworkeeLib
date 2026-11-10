@@ -41,10 +41,11 @@ public sealed class UserSession : AggregateRoot, IMultiTenant, IHasRealtimeTopic
     /// <summary>When the sign-in runs out without activity; the session no longer counts after it.</summary>
     public DateTimeOffset ExpiresAt { get; set; }
 
-    public DateTimeOffset? EndedAt { get; private set; }
+    // public setters: the OData convention leaves out properties without one, and the sessions page filters and shows these; End sets them
+    public DateTimeOffset? EndedAt { get; set; }
 
     /// <summary>One of <see cref="SessionEndReasons"/>, or why the user's security stamp changed ("signed-out", "locked", "password-changed").</summary>
-    public string? EndReason { get; private set; }
+    public string? EndReason { get; set; }
 
     public Guid? EndedBy { get; private set; }
 

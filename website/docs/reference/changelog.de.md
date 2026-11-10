@@ -2,6 +2,14 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Behoben
+
+- Seite Sitzungen (*Administration › Überwachung › Sitzungen*): Die Liste der aktiven Sitzungen lud nie, der Balken lief weiter, und nach *Beendete anzeigen* und zurück blieben die Zeilen der beendeten stehen. `UserSession.EndedAt` und `EndReason` hatten keinen öffentlichen Setter, das OData-Modell ließ sie weg, und der Server lehnte den Filter der Seite `EndedAt eq null` ab (400); die beendeten zeigten weder Ende noch Grund. Beide sind jetzt im Modell.
+- Mail-Protokoll (*Administration › Kommunikation › Mail-Protokoll*): Suche, Kampagnenfilter und Sortieren nach Datum wurden abgelehnt (400), und die Zeilen kamen ohne Empfänger, Betreff, Vorlage und Datum: `OutgoingMail.To`, `Subject`, `TemplateName`, `CampaignId` und `QueuedAt` hatten keinen öffentlichen Setter und fehlten in der OData-Menge `Mails`. Sie sind jetzt drin.
+- Datentabellen: Eine Abfrage, die der Server ablehnt, zeigt *Die Daten konnten nicht geladen werden.* und eine leere Tabelle statt eines laufenden Balkens über den Zeilen des letzten Ladens.
+
 ## 0.0.1.72 (2026-11-10)
 
 ### Geändert
