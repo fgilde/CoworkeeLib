@@ -15,6 +15,7 @@ internal static class FeatureWriter
     public static async Task AddModuleAsync(Solution solution, string module, IReadOnlyList<EntityModel> entities, IReadOnlyList<EnumSpec> enums, CancellationToken cancellationToken)
     {
         var project = $"src/{solution.Name}.{module}/{solution.Name}.{module}.csproj";
+        Check(entities);
         var changes = new Changes(solution, [.. EnumFiles(solution, enums), .. ServerFiles.Module(solution.Name, module, entities), .. entities.SelectMany(Files)]);
         var infrastructure = solution.Project("Infrastructure");
         var databaseModule = Path.Combine(Path.GetDirectoryName(infrastructure)!, $"{solution.Name}DatabaseModule.cs");
@@ -34,9 +35,17 @@ internal static class FeatureWriter
             throw new CliException($"{moduleClass} does not exist. Create the module with coworkee module add {entity.Module}.");
         }
 
-        var changes = new Changes(solution, [.. EnumFiles(solution, enums), .. Files(entity)]);
+        Check([entity]);
+        var config = CodeGenFiles.ConfigPath(solution.Name, entity.Module);
+        GeneratedFile[] codeGen = entity.CodeGen && !File.Exists(Path.Combine(solution.Root, config)) ? [new(config, CodeGenFiles.Config(solution.Name, entity.Module))] : [];
+        var changes = new Changes(solution, [.. EnumFiles(solution, enums), .. Files(entity), .. codeGen]);
         var project = Path.Combine(root, $"{solution.Name}.{entity.Module}.csproj");
         await changes.EditAsync(moduleClass, text => AppEdits.AddToModule(text, ServerFiles.Services(entity), ServerFiles.Endpoint(entity)), cancellationToken);
+        if (entity.CodeGen)
+        {
+            await changes.EditAsync(project, text => AppEdits.AddToItems(text, CodeGenFiles.Reference), cancellationToken);
+        }
+
         if (entity.Mapping == MappingStrategy.Mapperly)
         {
             await changes.EditAsync(project, text => AppEdits.AddToItems(text, ServerFiles.MapperlyReference), cancellationToken);
@@ -64,6 +73,14 @@ internal static class FeatureWriter
 
     public static IEnumerable<GeneratedFile> Files(EntityModel entity) => ServerFiles.Entity(entity).Concat(ClientFiles.Entity(entity));
 
+    private static void Check(IEnumerable<EntityModel> entities)
+    {
+        foreach (var entity in entities.Where(e => e.CodeGen))
+        {
+            CodeGenFiles.Check(entity);
+        }
+    }
+
     public static IEnumerable<GeneratedFile> EnumFiles(Solution solution, IReadOnlyList<EnumSpec> enums) => enums.Select(e => ServerFiles.Enum(solution.Name, e));
 
     private static async Task WireAsync(Solution solution, Changes changes, IReadOnlyList<EntityModel> entities, CancellationToken cancellationToken)
@@ -79,6 +96,11 @@ internal static class FeatureWriter
         if (entities.Any(e => e.Mapping == MappingStrategy.Mapperly))
         {
             await changes.EditAsync(packages, text => AppEdits.AddToItems(text, Mapperly), cancellationToken);
+        }
+
+        if (entities.Any(e => e.CodeGen))
+        {
+            await changes.EditAsync(packages, text => AppEdits.AddToItems(text, CodeGenFiles.Version), cancellationToken);
         }
 
         if (entities.Any(e => e.Spec.ClientEntity))

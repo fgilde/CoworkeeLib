@@ -98,8 +98,8 @@ public sealed class McpTests : IAsyncLifetime
     public async Task Change_tools_run_the_matching_commands_in_the_app_folder()
     {
         await CallAsync("add_module", new() { ["directory"] = "app", ["module"] = "Sales", ["entity"] = "Order", ["properties"] = new[] { "Number:string:required:50", "Total:decimal" }, ["clientEntity"] = true, ["mapping"] = "Mapperly" });
-        await CallAsync("add_entity", new() { ["directory"] = "app", ["module"] = "Sales", ["entity"] = "Invoice", ["plural"] = "Invoices" });
-        await CallAsync("import_entities", new() { ["directory"] = "app", ["from"] = "db", ["source"] = "shop.db", ["module"] = "Legacy", ["tables"] = new[] { "orders", "customers" }, ["dryRun"] = true });
+        await CallAsync("add_entity", new() { ["directory"] = "app", ["module"] = "Sales", ["entity"] = "Invoice", ["plural"] = "Invoices", ["codegen"] = true });
+        await CallAsync("import_entities", new() { ["directory"] = "app", ["from"] = "db", ["source"] = "shop.db", ["module"] = "Legacy", ["tables"] = new[] { "orders", "customers" }, ["dryRun"] = true, ["codegen"] = true });
         await CallAsync("add_migration", new() { ["directory"] = "app", ["name"] = "AddSales" });
         await CallAsync("add_seed", new() { ["directory"] = "app", ["name"] = "StandardTags", ["module"] = "Sales", ["host"] = true, ["environment"] = "Deployment" });
         await CallAsync("add_option", new() { ["directory"] = "app", ["options"] = new[] { "eventBus", "rabbitMq" }, ["dryRun"] = true });
@@ -111,8 +111,8 @@ public sealed class McpTests : IAsyncLifetime
         _runs.Select(r => string.Join(' ', r.Args)).ShouldBe(
         [
             "module add Sales --entity Order --property Number:string:required:50 --property Total:decimal --client-entity --mapping Mapperly",
-            "entity add Sales Invoice --plural Invoices",
-            "entity import shop.db --from db --module Legacy --tables orders,customers --dry-run",
+            "entity add Sales Invoice --plural Invoices --codegen",
+            "entity import shop.db --from db --module Legacy --tables orders,customers --dry-run --codegen",
             "migrations add AddSales",
             "seed add StandardTags --module Sales --host --deployment",
             "add eventBus rabbitMq --dry-run",

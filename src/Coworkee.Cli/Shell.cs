@@ -64,9 +64,11 @@ internal static class Shell
         return process.ExitCode;
     }
 
-    public static async Task<(int ExitCode, string Output)> CaptureAsync(params string[] args)
+    public static Task<(int ExitCode, string Output)> CaptureAsync(params string[] args) => CaptureAsync(args, null);
+
+    public static async Task<(int ExitCode, string Output)> CaptureAsync(IReadOnlyList<string> args, string? workingDirectory)
     {
-        var start = Start(args, null);
+        var start = Start(args, workingDirectory);
         start.RedirectStandardOutput = true;
         start.RedirectStandardError = true;
         try
