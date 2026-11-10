@@ -3,43 +3,79 @@
 <RealtimeSubscription Topic="@Coworkee.Contracts.Realtime.RealtimeTopics.TenantPermissions" OnEvent="_ => ReloadAsync()" />
 <div data-testid="user-groups-tab">
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2" Wrap="Wrap.Wrap">
-        <MudTextField @bind-Value="_filter" Immediate="true" Placeholder="@L["Filter"]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.FilterList"
-                      Clearable="true" Margin="Density.Margin" Style="max-width:320px" data-testid="user-groups-filter" />
-        <MudSpacer />
-        @if (_canManage)
-        {
-            <MudButton Variant="@(_picking ? Variant.Filled : Variant.Outlined)" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" OnClick="() => _picking = !_picking"
-                       data-testid="user-groups-add">@L["Add group"]</MudButton>
-        }
+        <MudTextField T="string" Value="_filter" ValueChanged="FilterAsync" Immediate="true" DebounceInterval="300" Placeholder="@L["Filter"]" Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Outlined.FilterList" Clearable="true" Margin="Density.Margin" Style="max-width:320px" data-testid="user-groups-filter" />
     </MudStack>
-    @if (_picking)
+    <MudText Typo="Typo.caption" Class="d-block mb-2 mud-text-secondary" data-testid="user-groups-hint">
+        @(_canManage ? L["Tick a group to add this user to it, untick it to take the user out. Each click is saved at once."] : L["Read only: you may not change this."])
+    </MudText>
+    @if (!Loaded || _busy)
     {
-        @* the tree loads level by level and searches on the server: organisations with thousands of groups never load them all *@
-        <MudPaper Outlined="true" Class="pa-2 mb-2" Style="max-height:360px;overflow:auto" data-testid="user-groups-picker">
-            <Coworkee.Client.Blazor.Components.Groups.GroupTree CheckedIds="Shown()" NodeChecked="Toggle" />
-        </MudPaper>
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
     }
-    <MudTable T="GroupRefDto" Items="Rows()" Virtualize="true" FixedHeader="true" Height="360px" Dense="true" Hover="true" Loading="!Loaded" data-testid="user-groups-table">
-        <HeaderContent>
-            <MudTh>@L["Group"]</MudTh>
-            <MudTh Style="width:56px" />
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd data-group="@context.Id">
-                <MudLink Href="@Links.Href($"/admin/groups?group={context.Id}")">@context.Name</MudLink>
-                @if (_toggles.IsSaving(context.Id))
-                {
-                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ml-2" Style="width:14px;height:14px" />
-                }
-            </MudTd>
-            <MudTd Style="text-align:right">
-                @if (_canManage)
-                {
-                    <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" aria-label="@L["Remove"]" OnClick="() => Toggle(context.Id, context.Name, false)"
-                                   data-remove-group="@context.Id" />
-                }
-            </MudTd>
-        </RowTemplate>
-        <NoRecordsContent>@L["No groups."]</NoRecordsContent>
-    </MudTable>
+    @{ var members = Members(); }
+    @* one scroll area for both parts: a capped "Member of" box cut its last rows while the space below stayed empty; the other groups below are
+       virtualized against this area *@
+    <div style="max-height:65vh;overflow:auto" data-testid="user-groups-scroll">
+    <MudText Typo="Typo.overline" Class="d-block mud-text-secondary" data-testid="user-groups-count">@L["Member of"] (@Shown().Count())</MudText>
+    <div data-testid="user-groups-members">
+        @foreach (var (id, path) in members)
+        {
+            @Item(id, path, path, null)
+        }
+        @if (Loaded && members.Count == 0)
+        {
+            <MudText Typo="Typo.body2" Class="mud-text-secondary pa-2">@L[string.IsNullOrWhiteSpace(_filter) ? "No groups." : "No group matches."]</MudText>
+        }
+    </div>
+    @if (_canManage)
+    {
+        var others = Others();
+        <MudText Typo="Typo.overline" Class="d-block mud-text-secondary mt-3">@L["Other groups"]</MudText>
+        @* loaded from the server level by level, or as search matches: organisations with thousands of groups never load them all *@
+        <div data-testid="user-groups-others">
+            <MudVirtualize T="Row" Enabled="true" Items="others" ItemSize="36" OverscanCount="10" Context="row">
+                @Item(row.Node.Id, _searching ? row.Path : row.Node.Name, row.Path, row)
+            </MudVirtualize>
+            @if (!_busy && others.Count == 0)
+            {
+                <MudText Typo="Typo.body2" Class="mud-text-secondary pa-2">@L[_searching ? "No group matches." : "No groups."]</MudText>
+            }
+        </div>
+        @if (_truncated)
+        {
+            <MudText Typo="Typo.caption" Class="d-block mt-1 mud-text-secondary" data-testid="user-groups-truncated">@L["Showing the first {0} matches. Type more to narrow them down.", MaxMatches]</MudText>
+        }
+    }
+    </div>
 </div>
+
+@code {
+    // a tree row (row is set, no search) is indented and opens its children; a member row and a search match show the path
+    private RenderFragment Item(Guid id, string label, string path, Row? row) =>
+        @<div class="d-flex align-center gap-1" style="@($"min-height:36px;padding-left:{(row?.Depth ?? 0) * 24}px")" data-group="@id" title="@path">
+            @if (row is not null && !_searching)
+            {
+                if (row.Node.ChildCount > 0)
+                {
+                    var open = _expanded.Contains(id);
+                    <MudIconButton Icon="@(open ? Icons.Material.Outlined.ExpandMore : Icons.Material.Outlined.ChevronRight)" Size="Size.Small" OnClick="() => ExpandAsync(row)"
+                                   aria-label="@L[open ? "Collapse" : "Expand"]" aria-expanded="@(open ? "true" : "false")" data-group-expand="@id" />
+                }
+                else
+                {
+                    <span style="width:30px;flex:none"></span>
+                }
+            }
+            <MudCheckBox T="bool" Value="Has(id)" ValueChanged="on => Toggle(id, path, on)" Disabled="!_canManage" Label="@label" Dense="true" Size="Size.Small" />
+            @if (_toggles.IsSaving(id))
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Style="width:14px;height:14px" />
+            }
+            <MudSpacer />
+            @if (_canViewGroups)
+            {
+                <MudIconButton Href="@Links.Href($"/admin/groups?group={id}")" Icon="@Icons.Material.Outlined.OpenInNew" Size="Size.Small" aria-label="@L["Open"]" />
+            }
+        </div>;
+}

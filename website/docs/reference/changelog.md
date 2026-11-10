@@ -4,6 +4,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Changed
+
+- User administration: the *Roles* tab is one filterable checklist of all roles, the user's roles ticked on top, with a count (*3 of 12 assigned*); the *Groups* tab shows *Member of* on top and the other groups below as a virtualized checklist (lazy tree without filter text, server search matches by path with it). *Add role*, *Add group* and their pickers are gone, and the dialogs of the users list (*Roles of Bob* …) are usable at once. A clicked row keeps its place until the filter changes, the tab opens again or a realtime reload comes after three seconds without a click. All three tabs say *Read only* to who may not change them. E2E tests that clicked `user-roles-add`/`user-roles-picker` tick the role in `user-roles-list` instead; the rows carry `data-role`/`data-group` with the id. See [User administration](../features/identity.md#user-administration).
+
 ### Fixed
 
 - Azure Container Apps: SQL Server ran with the default 0.5 CPU and 1 GiB, ran out of memory under load ("insufficient system memory in resource pool 'internal'"), refused connections in the pre-login handshake, and every sign-in and page load failed. The SQL Server container gets 1 CPU and 2 GiB now; deploy again.

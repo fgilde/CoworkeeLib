@@ -11,11 +11,15 @@ namespace Coworkee.Client.Blazor.Components.Users;
 /// <summary>
 /// A part of the admin user page that stands alone (<see cref="UserId"/> is all it needs), so the users list shows the same component in a dialog.
 /// Loads when the user changes and again when someone changes roles, groups or grants of the organisation.
+/// Lists that put what the user has on top sort in <see cref="Arrange"/>: never right after a click, so a row does not move away under the mouse.
 /// </summary>
 public abstract class UserTabBase : CoworkeeComponentBase, IDisposable
 {
     private static readonly TimeSpan Settle = TimeSpan.FromMilliseconds(250);
+    // how long after the last click a realtime reload may sort the list again; the reload of an own click comes well within it
+    private static readonly TimeSpan Calm = TimeSpan.FromSeconds(3);
     private Guid _loaded;
+    private long _clickedAt = long.MinValue / 2;
     private CancellationTokenSource? _pending;
 
     [Parameter, EditorRequired] public Guid UserId { get; set; }
@@ -42,6 +46,7 @@ public abstract class UserTabBase : CoworkeeComponentBase, IDisposable
         _loaded = UserId;
         await PrepareAsync();
         Loaded = await Snackbar.RunAsync(LoadAsync);
+        Arrange();
     }
 
     protected async Task<bool> MayAsync(string permission) =>
@@ -52,6 +57,17 @@ public abstract class UserTabBase : CoworkeeComponentBase, IDisposable
 
     /// <summary>Reads the saved state of the user; toggles that are not saved yet stay shown on top of it.</summary>
     protected abstract Task LoadAsync();
+
+    /// <summary>
+    /// Sorts the list from what it shows now (e.g. the user's roles first). Runs after the first load, when the filter changes and after a realtime reload
+    /// once the administrator stopped clicking (<see cref="Clicked"/>); in between ticked and unticked rows stay where they are.
+    /// </summary>
+    protected virtual void Arrange()
+    {
+    }
+
+    /// <summary>Call on every toggle: holds the order (<see cref="Arrange"/>) while the administrator is clicking.</summary>
+    protected void Clicked() => _clickedAt = Environment.TickCount64;
 
     // the topic of every role, group, membership and grant change of the organisation (IdentityRealtimeTopics); a save touches several rows and an
     // administrator ticking ten groups sends ten: one load for the burst
@@ -69,6 +85,11 @@ public abstract class UserTabBase : CoworkeeComponentBase, IDisposable
         }
 
         Loaded = await Snackbar.RunAsync(LoadAsync) || Loaded;
+        if (Environment.TickCount64 - _clickedAt >= Calm.TotalMilliseconds)
+        {
+            Arrange();
+        }
+
         await InvokeAsync(StateHasChanged);
     }
 

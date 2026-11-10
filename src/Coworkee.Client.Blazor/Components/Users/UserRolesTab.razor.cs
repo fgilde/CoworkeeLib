@@ -3,52 +3,68 @@ using Microsoft.AspNetCore.Components;
 
 namespace Coworkee.Client.Blazor.Components.Users;
 
-/// <summary>The roles a user has directly: filter, add from a filterable list, remove; each click saves on its own (<see cref="PendingToggles{TKey}"/>).</summary>
+/// <summary>
+/// All roles of the organisation as one checklist, the user's ticked and on top; each click saves on its own (<see cref="PendingToggles{TKey}"/>), and a
+/// clicked row keeps its place until the list is sorted again (<see cref="UserTabBase.Arrange"/>).
+/// </summary>
 public partial class UserRolesTab
 {
     private readonly PendingToggles<Guid> _toggles = new();
-    private Dictionary<Guid, string> _saved = [];
-    private IReadOnlyList<RoleDto> _all = [];
+    private HashSet<Guid> _saved = [];
+    private IReadOnlyList<RoleRefDto> _roles = [];
+    private HashSet<Guid> _top = [];
     private bool _canManage;
-    private bool _picking;
+    private bool _canViewRoles;
     private string? _filter;
-    private string? _pickFilter;
 
     [Inject] private Navigation.CoworkeePages Links { get; set; } = null!;
 
-    protected override async Task PrepareAsync() => _canManage = await MayAsync(IdentityPermissions.Users.Manage);
+    protected override async Task PrepareAsync()
+    {
+        _canManage = await MayAsync(IdentityPermissions.Users.Manage);
+        _canViewRoles = await MayAsync(IdentityPermissions.Roles.View);
+    }
 
     protected override async Task LoadAsync()
     {
-        // the choices only matter to those who may change the roles; reading the roles of the organisation needs Roles.View
-        var all = _canManage ? Api.GetRolesAsync() : Task.FromResult<IReadOnlyList<RoleDto>>([]);
-        _saved = (await Api.GetUserDetailAsync(UserId)).Roles.ToDictionary(r => r.Id, r => r.Name);
-        _all = [.. (await all).OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase)];
+        // the roles of the organisation need Roles.View (or Users.Manage to give them); without, a reader sees the user's own
+        var all = _canManage || _canViewRoles ? Api.GetRolesAsync() : Task.FromResult<IReadOnlyList<RoleDto>>([]);
+        var own = (await Api.GetUserDetailAsync(UserId)).Roles;
+        _saved = [.. own.Select(r => r.Id)];
+        _roles = [.. (await all).Select(r => new RoleRefDto(r.Id, r.Name)).UnionBy(own, r => r.Id).OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase)];
     }
 
-    private bool Has(Guid id) => _toggles.Shows(id, _saved.ContainsKey(id));
+    protected override void Arrange() => _top = [.. _roles.Where(r => Has(r.Id)).Select(r => r.Id)];
 
-    private static bool Matches(string text, string? filter) => string.IsNullOrWhiteSpace(filter) || text.Contains(filter.Trim(), StringComparison.CurrentCultureIgnoreCase);
+    private bool Has(Guid id) => _toggles.Shows(id, _saved.Contains(id));
 
-    // saved roles and the ones added but not saved yet, without the ones removed but not saved yet
-    private IEnumerable<RoleRefDto> Rows() =>
-        _saved.Keys.Union(_toggles.PendingOn).Where(Has)
-            .Select(id => new RoleRefDto(id, _saved.GetValueOrDefault(id) ?? _all.FirstOrDefault(r => r.Id == id)?.Name ?? string.Empty))
-            .Where(r => Matches(r.Name, _filter))
-            .OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase);
+    private void Filter(string? text)
+    {
+        _filter = text;
+        Arrange();
+    }
 
-    private void Toggle(Guid id, string name, bool on) =>
-        _ = _toggles.ToggleAsync(id, on,
-            () => on ? Api.AddUserRoleAsync(UserId, id) : Api.RemoveUserRoleAsync(UserId, id),
-            failure => SettledAsync(failure, name, () =>
+    private (List<RoleRefDto> Assigned, List<RoleRefDto> Others) Parts()
+    {
+        var shown = _roles.Where(r => string.IsNullOrWhiteSpace(_filter) || r.Name.Contains(_filter.Trim(), StringComparison.CurrentCultureIgnoreCase)).ToList();
+        return ([.. shown.Where(r => _top.Contains(r.Id))], [.. shown.Where(r => !_top.Contains(r.Id))]);
+    }
+
+    private void Toggle(RoleRefDto role, bool on)
+    {
+        Clicked();
+        _ = _toggles.ToggleAsync(role.Id, on,
+            () => on ? Api.AddUserRoleAsync(UserId, role.Id) : Api.RemoveUserRoleAsync(UserId, role.Id),
+            failure => SettledAsync(failure, role.Name, () =>
             {
                 if (on)
                 {
-                    _saved[id] = name;
+                    _saved.Add(role.Id);
                 }
                 else
                 {
-                    _saved.Remove(id);
+                    _saved.Remove(role.Id);
                 }
             }));
+    }
 }

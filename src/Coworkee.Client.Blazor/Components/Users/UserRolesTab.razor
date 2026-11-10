@@ -3,50 +3,55 @@
 <RealtimeSubscription Topic="@Coworkee.Contracts.Realtime.RealtimeTopics.TenantPermissions" OnEvent="_ => ReloadAsync()" />
 <div data-testid="user-roles-tab">
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2" Wrap="Wrap.Wrap">
-        <MudTextField @bind-Value="_filter" Immediate="true" Placeholder="@L["Filter"]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.FilterList"
+        <MudTextField T="string" Value="_filter" ValueChanged="Filter" Immediate="true" Placeholder="@L["Filter"]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.FilterList"
                       Clearable="true" Margin="Density.Margin" Style="max-width:320px" data-testid="user-roles-filter" />
         <MudSpacer />
-        @if (_canManage)
-        {
-            <MudButton Variant="@(_picking ? Variant.Filled : Variant.Outlined)" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" OnClick="() => _picking = !_picking"
-                       data-testid="user-roles-add">@L["Add role"]</MudButton>
-        }
+        <MudText Typo="Typo.body2" Class="mud-text-secondary" data-testid="user-roles-count">@L["{0} of {1} assigned", _roles.Count(r => Has(r.Id)), _roles.Count]</MudText>
     </MudStack>
-    @if (_picking)
+    <MudText Typo="Typo.caption" Class="d-block mb-2 mud-text-secondary" data-testid="user-roles-hint">
+        @(_canManage ? L["Tick a role to give it to this user, untick it to take it away. Each click is saved at once."] : L["Read only: you may not change this."])
+    </MudText>
+    @if (!Loaded)
     {
-        <MudPaper Outlined="true" Class="pa-2 mb-2" data-testid="user-roles-picker">
-            <MudTextField @bind-Value="_pickFilter" Immediate="true" Placeholder="@L["Search roles"]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
-                          Clearable="true" Margin="Density.Margin" Class="mb-1" data-testid="user-roles-search" />
-            <div style="max-height:280px;overflow:auto">
-                @foreach (var role in _all.Where(r => Matches(r.Name, _pickFilter)))
-                {
-                    <MudCheckBox T="bool" Value="Has(role.Id)" ValueChanged="on => Toggle(role.Id, role.Name, on)" Label="@role.Name" Dense="true" Size="Size.Small"
-                                 data-role-pick="@role.Id" />
-                }
-            </div>
-        </MudPaper>
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
     }
-    <MudTable T="RoleRefDto" Items="Rows()" Virtualize="true" FixedHeader="true" Height="360px" Dense="true" Hover="true" Loading="!Loaded" data-testid="user-roles-table">
-        <HeaderContent>
-            <MudTh>@L["Role"]</MudTh>
-            <MudTh Style="width:56px" />
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd data-role="@context.Id">
-                <MudLink Href="@Links.Href($"/admin/roles/{context.Id}")">@context.Name</MudLink>
-                @if (_toggles.IsSaving(context.Id))
-                {
-                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ml-2" Style="width:14px;height:14px" />
-                }
-            </MudTd>
-            <MudTd Style="text-align:right">
-                @if (_canManage)
-                {
-                    <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" aria-label="@L["Remove"]" OnClick="() => Toggle(context.Id, context.Name, false)"
-                                   data-remove-role="@context.Id" />
-                }
-            </MudTd>
-        </RowTemplate>
-        <NoRecordsContent>@L["No roles."]</NoRecordsContent>
-    </MudTable>
+    <div style="max-height:60vh;overflow:auto" data-testid="user-roles-list">
+        @{ var (assigned, others) = Parts(); }
+        @if (assigned.Count > 0)
+        {
+            <MudText Typo="Typo.overline" Class="d-block mud-text-secondary">@L["Assigned"]</MudText>
+            @foreach (var role in assigned)
+            {
+                @Item(role)
+            }
+        }
+        @if (others.Count > 0)
+        {
+            <MudText Typo="Typo.overline" Class="@($"d-block mud-text-secondary{(assigned.Count > 0 ? " mt-2" : null)}")">@L["Other roles"]</MudText>
+            @foreach (var role in others)
+            {
+                @Item(role)
+            }
+        }
+        @if (Loaded && assigned.Count == 0 && others.Count == 0)
+        {
+            <MudText Typo="Typo.body2" Class="mud-text-secondary pa-2">@L[string.IsNullOrWhiteSpace(_filter) ? "No roles." : "No role matches."]</MudText>
+        }
+    </div>
 </div>
+
+@code {
+    private RenderFragment Item(RoleRefDto role) =>
+        @<div class="d-flex align-center gap-1" data-role="@role.Id">
+            <MudCheckBox T="bool" Value="Has(role.Id)" ValueChanged="on => Toggle(role, on)" Disabled="!_canManage" Label="@role.Name" Dense="true" Size="Size.Small" />
+            @if (_toggles.IsSaving(role.Id))
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Style="width:14px;height:14px" />
+            }
+            <MudSpacer />
+            @if (_canViewRoles)
+            {
+                <MudIconButton Href="@Links.Href($"/admin/roles/{role.Id}")" Icon="@Icons.Material.Outlined.OpenInNew" Size="Size.Small" aria-label="@L["Open"]" />
+            }
+        </div>;
+}

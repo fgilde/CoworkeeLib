@@ -3,17 +3,16 @@
 <RealtimeSubscription Topic="@Coworkee.Contracts.Realtime.RealtimeTopics.TenantPermissions" OnEvent="_ => ReloadAsync()" />
 <div data-testid="user-permissions-tab">
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2" Wrap="Wrap.Wrap">
-        <MudTextField @bind-Value="_filter" Immediate="true" Placeholder="@L["Search permissions"]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
+        <MudTextField @bind-Value="_filter" Immediate="true" Placeholder="@L["Filter"]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.FilterList"
                       Clearable="true" Margin="Density.Margin" Style="max-width:320px" data-testid="user-permissions-filter" />
         <MudSwitch T="bool" @bind-Value="_heldOnly" Color="Color.Primary" Label="@L["Held only"]" data-testid="user-permissions-held" />
         <MudSpacer />
         <MudText Typo="Typo.body2" Class="mud-text-secondary" data-testid="user-permissions-count">@L["{0} permissions held", _held.Count]</MudText>
     </MudStack>
-    @if (_canGrant)
-    {
-        <MudText Typo="Typo.caption" Class="d-block mb-2 mud-text-secondary">@L["Tick a permission to grant it to this user directly, besides what his roles and groups give."]</MudText>
-    }
-    <MudTable T="Row" Items="Rows()" Virtualize="true" FixedHeader="true" Height="480px" Dense="true" Hover="true" Loading="!Loaded" data-testid="user-permissions-table">
+    <MudText Typo="Typo.caption" Class="d-block mb-2 mud-text-secondary" data-testid="user-permissions-hint">
+        @(_canGrant ? L["Tick a permission to grant it to this user directly, besides what his roles and groups give."] : L["Read only: you may not change this."])
+    </MudText>
+    <MudTable T="Row" Items="Rows()" Virtualize="true" FixedHeader="true" Height="60vh" Dense="true" Hover="true" Loading="!Loaded" data-testid="user-permissions-table">
         <HeaderContent>
             <MudTh Style="width:48px">@L["Direct"]</MudTh>
             <MudTh>@L["Permission"]</MudTh>
