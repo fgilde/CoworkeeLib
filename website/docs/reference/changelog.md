@@ -2,6 +2,14 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixed
+
+- Sessions page (*Administration › Monitoring › Sessions*): the list of active sessions never loaded, the bar kept running, and after *Show ended* and back the rows of the ended mode stayed. `UserSession.EndedAt` and `EndReason` had no public setter, so the OData model left them out and the server refused the page's filter `EndedAt eq null` (400); the ended list showed no end and no reason. Both are in the model now.
+- Mail log (*Administration › Communication › Mail log*): the search, the campaign filter and sorting by date were refused (400) and the rows came without recipient, subject, template and date: `OutgoingMail.To`, `Subject`, `TemplateName`, `CampaignId` and `QueuedAt` had no public setter and were missing from the OData set `Mails`. They are in it now.
+- Data tables: a query the server refuses shows *The data could not be loaded.* and an empty table instead of a running bar over the rows of the last load.
+
 ## 0.0.1.72 (2026-11-10)
 
 ### Changed
