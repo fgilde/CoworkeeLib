@@ -246,6 +246,8 @@ private GridItemsProvider<SalesOrderDto> Provider => async request =>
 
 ## What runs locally
 
+A table's search box over a local copy never asks the server (in memory and in SQLite, also over nested objects and computed properties), and it waits 90 ms after the last key instead of 300 ms. The [command palette](../web/global-search.md#local-copies-first) finds records of a local copy before the server answers, when the set has a global search.
+
 The local copy understands what tables, facets and pickers send: `eq ne gt ge lt le and or not in`, arithmetic, `contains startswith endswith tolower toupper trim length year month day hour minute second`, paths like `Customer/Name` (null safe) and literals of every simple type, enums included. `$search`, lambda operators (`any`, `all`), an `$expand` the copy was not loaded with and every other function go to the server. Facets keep the server's groups and options; only their counts are computed locally. The copy keeps the server's facets with its rows and asks for them again at most every 10 minutes, in the background; options of values that appeared meanwhile show up then.
 
 ## Performance
@@ -338,7 +340,8 @@ In CI, add the workload before the build:
 - **Kept between visits**: the database file goes to IndexedDB as it is. A reload opens it instead of parsing rows, about a second for 23,000 shipments.
 - **Changes**: the deltas of the change feed are written into the database (delete and insert by id, in slices so the page can render in between). More than 500 changed rows at once (more than ten chunks of 50) come as a new snapshot instead: every chunk costs the server a read of the set's visible keys, so beyond ten one snapshot of the whole set is faster. The table keeps searching the old file until the new one replaces it. A server without snapshots, or one whose snapshot failed, sends the chunks as before.
 - **Queries**: filter, order, page and count are SQL through EF Core on indexed columns. List facets count with one `GROUP BY` per column, whatever the number of options; range facets (dates, amounts) with one statement that puts every row into the interval between the options' bounds it falls in (`CASE`). The values of a filter are parameters, so another search text or choice runs the statements EF Core compiled already. The facets of a copy are counted once in the background after it opened, so the first click does not pay for compiling the queries.
-- **What stays with the server**: `$search`, `any`/`all` over lists, filters on lists and nested objects (kept as JSON columns) and grouping in the table go to the server, as do facet options of lists (their counts are the server's).
+- **Filters SQL cannot read**: a path into a nested object (kept as a JSON column, e.g. `contains(tolower(Customer/Name),'x')` of a table's search) or a property the row type computes runs on the rows in memory instead of the server: the store reads them once and keeps them until the copy changes. `tolower`/`toupper` are SQL's `lower()`/`upper()`, which fold only A–Z (an `Ü` in a value does not match a typed `ü`).
+- **What stays with the server**: `$search`, `any`/`all` over lists and grouping in the table go to the server, as do facet options of lists (their counts are the server's).
 - **A changed row type** opens a new database: the key of the stored copy includes the columns and their formats, so a new property never reads an old file.
 
 Columns are stored like this; the server writes the snapshot in the same formats:

@@ -41,6 +41,7 @@ public static class ClientEntitiesServiceCollectionExtensions
             provider.GetService<IClientEntityEngine>()));
         services.AddScoped<IClientDataCache>(provider => provider.GetRequiredService<ClientEntities>());
         services.AddSingleton(new DataTableToolbarItem(typeof(ClientEntitySwitch)));
+        Coworkee.Client.Blazor.CommandPalette.CommandPaletteServiceCollectionExtensions.AddCommandPaletteProvider<LocalSearchPaletteProvider>(services);
         return services;
     }
 

@@ -7,4 +7,7 @@ public interface IClientDataCache
 
     /// <summary>The rows the user sees changed as a whole (a new group selection): copies of the old scope must not answer any more. The default drops everything.</summary>
     Task ScopeChangedAsync() => ClearAsync();
+
+    /// <summary>Queries of <paramref name="entitySet"/> run in the browser now (the copy is complete and not switched to the server), e.g. for a search box that need not wait.</summary>
+    bool AnswersLocally(string entitySet) => false;
 }

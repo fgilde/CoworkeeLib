@@ -266,6 +266,28 @@ public sealed class ClientEntitySetTests
         (await entities.SetAsync<Gadget>("Others", cancellationToken: Ct)).ShouldBeNull();
     }
 
+    // the table's search box: contains(tolower(...)) over several fields, nested ones too, with the facets of the result
+    [Fact]
+    public async Task A_table_search_on_a_local_copy_never_asks_the_server()
+    {
+        _server.Rows.Add(new(Guid.CreateVersion7(), "Saw", "Tools", 45, new Brand(Guid.NewGuid(), "Bosch")));
+        await using var entities = _server.Entities();
+        IODataClient client = new ClientEntityODataClient(_server, entities);
+        await client.QueryAsync<Gadget>("Gadgets", new ODataQuery { Expand = "Brand" }, Ct);
+        await entities.Find("Gadgets").ShouldBeOfType<ClientEntitySet<Gadget>>().WhenLocalAsync(Ct);
+        await client.QueryAsync<Gadget>("Gadgets", new ODataQuery { Top = 0, Facets = true }, Ct);
+        _server.Queries.Clear();
+
+        var search = ODataFilter.Search("BOS", ["Name", "Category", "Brand/Name"]);
+        var page = await client.QueryAsync<Gadget>("Gadgets", new ODataQuery { Filter = ODataFilter.And("Price gt 1", search), OrderBy = "Name", Top = 25, Expand = "Brand" }, Ct);
+        await client.QueryAsync<Gadget>("Gadgets", new ODataQuery { Filter = search, Top = 0, Count = false, Facets = true }, Ct);
+
+        page.Items.ShouldHaveSingleItem().Name.ShouldBe("Saw");
+        _server.Queries.ShouldBeEmpty();
+        entities.AnswersLocally("Gadgets").ShouldBeTrue();
+        entities.AnswersLocally("Others").ShouldBeFalse();
+    }
+
     [Fact]
     public async Task A_realtime_event_of_the_entity_type_brings_the_change()
     {

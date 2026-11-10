@@ -46,6 +46,9 @@ public sealed class CopyRoundTripTests : IDisposable
         public Guid? Other { get; set; }
         public List<string> Tags { get; set; } = [];
         public Inner? Inner { get; set; }
+
+        // computed by the row: no column, so SQL cannot read it
+        public string Label => $"{Name} {Inner?.Code}";
     }
 
     private static readonly Row[] Rows = [.. Enumerable.Range(0, 40).Select(i => new Row
@@ -260,6 +263,53 @@ public sealed class CopyRoundTripTests : IDisposable
             page.Count.ShouldBe(expected.Count, filter);
             page.Items.Select(r => r.Id).Order().ToList().ShouldBe(expected, filter);
         }
+    }
+
+    // the table's search box: never sent to the server, also over a nested object (a JSON column) or a computed property, with its facets
+    public static TheoryData<string, string> Searches() => new()
+    {
+        { "Name", "W 2" },
+        { "Name,Inner/Code", "2" },
+        { "Inner/Code", "c1" },
+        { "Label", "1 C1" },
+    };
+
+    [Theory]
+    [MemberData(nameof(Searches))]
+    public async Task Searches_answer_locally_as_on_the_rows(string fields, string text)
+    {
+        await using var store = await SnapshotAsync();
+        var filter = Data.ODataFilter.And("Number lt 30", Data.ODataFilter.Search(text, fields.Split(',')));
+        var expected = Rows.AsQueryable().Where(ODataLinq.Filter<Row>(filter)).OrderBy(r => r.Name).ThenBy(r => r.Id).Select(r => r.Id).ToList();
+        var level = new FacetGroupDto("Level", "Level", "Level", FacetKind.CheckboxList, default,
+            [.. new[] { "Low", "Middle", "High" }.Select(l => new FacetOptionDto(default, l, true, -1, $"Level eq '{l}'"))], true, 0);
+
+        var page = await store.QueryAsync(new ODataQuery { Filter = filter, OrderBy = "Name,Id", Top = 5, Facets = true },
+            _ => Task.FromResult<IReadOnlyList<FacetGroupDto>>([level]), TestContext.Current.CancellationToken);
+        var again = await store.QueryAsync(new ODataQuery { Filter = filter, OrderBy = "Name,Id", Skip = 5 }, NoFacets, TestContext.Current.CancellationToken);
+
+        expected.ShouldNotBeEmpty();
+        page.Count.ShouldBe(expected.Count);
+        page.Items.Concat(again.Items).Select(r => r.Id).ToList().ShouldBe(expected);
+        var rows = Rows.AsQueryable().Where(ODataLinq.Filter<Row>(filter));
+        page.Facets.Single().Options.Select(o => (o.OData, o.Count))
+            .ShouldBe(level.Options.Select(o => (o.OData, rows.Count(ODataLinq.Filter<Row>(o.OData)))).Where(x => x.Item2 > 0));
+    }
+
+    // the palette's local search orders by the title, also one in a nested object; a write drops the rows kept in memory
+    [Fact]
+    public async Task Orders_by_a_nested_path_on_the_rows_in_memory_until_the_copy_changes()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var store = Store("nested-order");
+        await store.ReplaceAsync(Rows, Version, ct);
+        var query = new ODataQuery { Filter = "startswith(tolower(Inner/Code),'c1')", OrderBy = "Inner/Code", Top = 3, Count = false };
+
+        (await store.QueryAsync(query, NoFacets, ct)).Items.Select(r => r.Inner!.Code).ShouldBe(["C1", "C10", "C11"]);
+        var renamed = Clone(Rows[1]);
+        renamed.Inner = new Inner("C0", 1);
+        await store.ApplyAsync([renamed], [], Version.AddMinutes(1), ct);
+        (await store.QueryAsync(query with { Filter = "startswith(tolower(Inner/Code),'c')" }, NoFacets, ct)).Items.Select(r => r.Inner!.Code).ShouldBe(["C0", "C10", "C11"]);
     }
 
     [Fact]

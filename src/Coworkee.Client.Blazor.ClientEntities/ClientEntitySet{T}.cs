@@ -173,6 +173,46 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         return [.. counts.Select(c => new ODataGroup(c.Key.Values, c.Value))];
     }
 
+    internal override async Task<IReadOnlyList<string?[]>?> LocalValuesAsync(string filter, string? orderBy, int top, IReadOnlyList<string> paths, CancellationToken cancellationToken)
+    {
+        // a navigation the copy does not expand is null in every row: no hit here would be a wrong answer, the server's
+        if (Mode != ClientEntityMode.Client || paths.Any(p => p.Contains('/') && !Names(Expand).Contains(p[..p.IndexOf('/')])))
+        {
+            return null;
+        }
+
+        var query = new ODataQuery { Filter = filter, OrderBy = orderBy, Top = top, Count = false };
+        ODataPage<T> page;
+        try
+        {
+            if (_store is not null)
+            {
+                if (!_storeLocal)
+                {
+                    return null;
+                }
+
+                page = await _store.QueryAsync(query, FacetsAsync, cancellationToken);
+            }
+            else if (_table is { } table)
+            {
+                page = await LocalAsync(table, query, cancellationToken);
+            }
+            else
+            {
+                return null;
+            }
+        }
+        catch (Exception exception) when (LocalQueryNotSupportedException.IsUnanswerable(exception))
+        {
+            _logger.LogDebug(exception, "{EntitySet} cannot answer {Filter} locally", EntitySet, filter);
+            return null;
+        }
+
+        var getters = paths.Select(path => Getters.GetOrAdd(path.Replace('/', '.'), PropertyPath.Getter<T>)).ToList();
+        return [.. page.Items.Select(row => getters.Select(get => Convert.ToString(get(row), System.Globalization.CultureInfo.InvariantCulture)).ToArray())];
+    }
+
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Func<T, object?>> Getters = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>A LINQ query over the local rows; waits until they are here.</summary>

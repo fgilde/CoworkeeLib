@@ -32,6 +32,11 @@ public sealed class FakeGlobalSearchApi : IGlobalSearchApi
         }
     }
 
+    public Dictionary<string, IReadOnlyList<string>> SearchFields { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    public Task<IReadOnlyDictionary<string, IReadOnlyList<string>>> GetSearchFieldsAsync(CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyDictionary<string, IReadOnlyList<string>>>(SearchFields);
+
     public Task<IReadOnlyList<GlobalSearchProviderDto>> GetProvidersAsync(CancellationToken cancellationToken = default) =>
         Task.FromResult<IReadOnlyList<GlobalSearchProviderDto>>(Providers);
 }

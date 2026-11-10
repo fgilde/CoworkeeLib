@@ -32,11 +32,16 @@ The search sees exactly what the OData list of the set returns: its permission, 
 
 Fields may read through a navigation (`t => t.Customer!.Name`): they are read in the query and follow the [navigation rules](odata.md#navigations-follow-their-target), so a hidden target neither matches nor shows. `Title`, `Subtitle`, `Url` and `Thumbnail` run on the loaded row, which has no navigations; use fields for values of other rows.
 
-`$search` on the set's OData list (and its exports) looks in the same fields, unless the entity names its own with `ISearchable`; list a field here when the table's search box should find it.
+`$search` on the set's OData list (and its exports) and the search box of its [data tables](../ui/data-table.md#search-fields) look in the same fields, unless the entity names its own with `ISearchable` or the set declares them with `AddODataEntity(..., o => o.SearchFields(...))`. Without `Fields` the global search takes the fields the set declares, so one list serves all three:
+
+```csharp
+context.Services.AddODataEntity<Product>("Products", CatalogPermissions.Products.View, o => o.SearchFields(p => p.Name, p => p.Barcode));
+context.Services.AddGlobalSearch<Product>(s => s.Subtitle(p => p.Barcode).Url(p => $"/catalog/products/{p.Id}"));
+```
 
 | Option | Default |
 |---|---|
-| `Fields(...)` | required; the first is the title |
+| `Fields(...)` | the set's `SearchFields`, else required; the first is the title |
 | `Title`, `Subtitle` | first field, none |
 | `Url(p => ...)` | `Page` searched for the title |
 | `Page("/list")` | the list page; a hit opens it searched for the record |
@@ -44,6 +49,10 @@ Fields may read through a navigation (`t => t.Customer!.Name`): they are read in
 | `Name`, `Group` | the entity set in lower case, the entity set |
 | `Icon("Person")` | a Material icon name (or SVG markup) |
 | `Weight(0.8)` | 1 |
+
+### Local copies first
+
+When the set is a [client entity](../ui/client-entities.md) whose copy is complete in the browser, the command palette searches the copy as you type and shows its hits at once; the server's hits of the same records join without doubles (same link, or same title and subtitle). The copy only holds rows the user may read. For that the provider tells the client how (`GlobalSearchProviderDto.Local` in `/providers`): the fields as OData paths, the property of the title and subtitle and the link as a template (`/catalog/products/{Id}`), or the list page. Coworkee finds them by calling `Title`, `Subtitle` and `Url` on two made-up rows, so they must read properties of the row itself (texts, ids, numbers); a title joining two values, a link with an escaped or formatted value or a field that is no property path keep the set on the server. A global search defined on another entity than the mirrored set, a type filter (`users:max`) or quotes search the server only, and a copy only counts once a page started it in this visit (a table of the set).
 
 ## Providers of the library
 
@@ -103,7 +112,8 @@ services.AddGlobalSearchIndex("myapp-products", s => s
 |---|---|
 | `GET /api/v1/search?q=&types=&limit=` | all hits best first and how each provider ended (`GlobalSearchResult`) |
 | `GET /api/v1/search/stream?q=&types=&limit=` | JSON lines (`application/x-ndjson`): each hit as soon as it is found, then one line per provider with `Done`, `TimedOut` or `Failed` |
-| `GET /api/v1/search/providers` | the providers the user may use |
+| `GET /api/v1/search/providers` | the providers the user may use, with `Local` for searching a local copy |
+| `GET /api/v1/search/fields` | the declared search fields of every set the user may read, as OData paths, for [data tables](../ui/data-table.md#search-fields) |
 
 `types` is a comma list of provider names, `limit` the hits per provider (`Coworkee:GlobalSearch:DefaultLimit`, default 5, at most `MaxLimit`, default 50). A provider still busy after `Coworkee:GlobalSearch:ProviderTimeout` (3 s) ends as `timedOut` without holding up the others; a request the browser cancels stops all of them. Hits pass the [response filters](response-filters.md) like any answer of the API, so a `ResponseFilter<GlobalSearchHit>` can hide subtitles from some users.
 

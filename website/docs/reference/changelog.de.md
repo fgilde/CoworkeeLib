@@ -12,10 +12,15 @@
 - Coworkee Studio, Deploy-Assistent: die Abonnements aller Konten, die die Azure CLI angemeldet hält (`az account list --all`), gruppiert nach Konto und Mandant; das Konto folgt dem gewählten Abonnement. *Mit einem anderen Konto anmelden* ruft `az login` auf, wahlweise mit einem Mandanten (`--tenant`, für Gastzugriff), und lässt die anderen Konten angemeldet. Ein Update wählt das Abonnement seines Eintrags vor; sieht kein angemeldetes Konto es, sagt der Assistent das und trägt den Mandanten des Eintrags für die Anmeldung ein. Siehe [Studio](../getting-started/studio.md#deployen).
 - Eigene Azure-Anmeldung pro App (standardmäßig aus): Der Studio-Schalter *Eigene Azure-Anmeldung für diese App* und `coworkee deploy azure --apply --own-azure-sign-in` geben der App einen eigenen Ordner der Azure CLI (`AZURE_CONFIG_DIR` = `~/.coworkee/azure/<app>-<hash>`, nie im Repository) für jeden `az`-Aufruf, das Deployment und den AppHost; die globale Anmeldung bleibt unberührt. Der Eintrag merkt sich `ownAzureSignIn`, Updates nutzen dieselbe Anmeldung; `--own-azure-sign-in false` schaltet sie ab. Siehe [Deployment](../hosting/deployment.md#von-deinem-rechner-deployen).
 - Theming: `ShowAppNameInAppBar` und `ShowAppNameInNav` entscheiden, ob der Name der App neben dem Logo in der App-Leiste und im Kopf der Navigation steht (beide standardmäßig an, wie bisher).
+- Eine Angabe der Suchfelder je Set: `AddODataEntity<T>(set, permission, o => o.SearchFields(p => p.Name, p => p.Brand!.Name))` gilt für `$search`, das Suchfeld jeder `CoworkeeDataTable` des Sets ohne eigene `SearchFields` (die Tabelle fragt einmal je Sitzung `GET /api/v1/search/fields`) und `AddGlobalSearch<T>`, das keine `Fields` mehr braucht, wenn das Set sie angibt. `Searchable="false"` blendet das Feld aus ([Suchfelder](../ui/data-table.md#suchfelder)).
+- Befehlspalette: Datensätze einer [Client-Entity](../ui/client-entities.md), deren Kopie im Browser liegt, erscheinen sofort aus der Kopie, bevor der Server antwortet; die Treffer des Servers für dieselben Datensätze kommen ohne Doppelte dazu. `GET /api/v1/search/providers` sagt dem Client, wie (`GlobalSearchProviderDto.Local`); `IGlobalSearchProvider.Local` und `IGlobalSearchApi.GetSearchFieldsAsync` sind neue Member mit Standard ([zuerst die lokalen Kopien](../web/global-search.md#zuerst-die-lokalen-kopien)).
+- Befehlspalette: **Strg+Enter** (**Cmd+Enter**) öffnet alle Ergebnisse (`/search?q=`); die Fußzeile zeigt es ([Befehlspalette](../ui/command-palette.md)).
 
 ### Geändert
 
 - Benutzerliste: Die Rollenspalte zeigt die Rollen nur noch an; sie ändern sich über *Rollen…* im Menü der Zeile, eine Rolle nach der anderen. Das eingeblendete Feld der effektiven Berechtigungen und die Symbole der Zeile entfallen (*Berechtigungen…* und das Menü ersetzen sie). `GroupTree` nimmt `NodeChecked`, das einen Klick auf ein Kästchen nach dem anderen meldet.
+- Befehlspalette: **Enter** direkt nach dem Tippen öffnet den gewählten Eintrag nur, wenn sein Titel genau dem Getippten entspricht (eine vollständige Nummer, der Name eines Befehls); sonst, auch während die Suche läuft oder ohne Treffer, öffnet es alle Ergebnisse. Nach einer Wahl mit Pfeiltasten oder Maus öffnet es den Eintrag wie bisher.
+- Datentabellen über einer lokalen Kopie warten nach der letzten Taste 90 ms statt 300 ms, bevor sie suchen (der Server behält 300 ms).
 
 ### Behoben
 
@@ -24,6 +29,7 @@
 - Azure Container Apps: Die Seite *Dienste* eines Deployments listete nichts. Die öffentlichen Adressen der Tools fehlten auf Azure in `Coworkee:Services`; sie werden wieder geschrieben. Erneut deployen.
 - Layout: Mit der App-Leiste allein am linken oder rechten Rand und nicht angehefteter Navigation (Overlay) ließ sich die Navigation nicht mehr öffnen: ihr einziger Menüknopf saß in der ausgeblendeten Navigation. Die seitliche Leiste zeigt dann einen Menüknopf.
 - Theming: Das Logo des Themes wurde auf die Breite seines Platzes gestaucht; es behält jetzt seine Proportionen.
+- Client-Entities in SQLite: jede Suche einer Datentabelle ging an den Server. Das `tolower` des Filters wurde zu `ToLowerInvariant`, das EF Core nicht übersetzt; jetzt ist es `lower()` von SQL. Filter auf verschachtelte Objekte (JSON-Spalten) oder berechnete Eigenschaften und Sortierungen danach laufen auf den Zeilen der Kopie im Speicher statt auf dem Server.
 
 ## 0.0.1.73 (2026-11-10)
 

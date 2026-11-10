@@ -22,7 +22,8 @@
 | `Columns` | MudBlazor-Spalten; verschachtelte Eigenschaften sortieren als `Brand/Name` |
 | `Expand` | zu ladende Navigationseigenschaften, z. B. `"Brand"` |
 | `Filter` | ein fester OData-Filter zusätzlich zur Auswahl des Benutzers |
-| `SearchFields` | Eigenschaften, in denen das Suchfeld sucht (`contains`, ohne Groß-/Kleinschreibung) |
+| `SearchFields` | OData-Pfade, in denen das Suchfeld sucht (`contains`, ohne Groß-/Kleinschreibung, z. B. `Brand/Name`); ohne sie die Felder, die das Set auf dem Server angibt, siehe [Suchfelder](#suchfelder) |
+| `Searchable` | `false` blendet das Suchfeld aus, auch wenn das Set Suchfelder angibt (Standard `true`) |
 | `Facets` | Facettenmenüs anzeigen (Standard `true`) |
 | `MultiSelection` | Checkboxen und eine Schaltfläche *Delete n* |
 | `OnCreate`, `OnEdit`, `OnDelete` | Callbacks; die Tabelle lädt danach jeweils neu |
@@ -53,7 +54,18 @@
 
 Die Tabelle lädt von selbst neu, wenn ihre `[Realtime]`-Entity sich ändert (siehe [Realtime](../modules/realtime.md#anderungen-an-entities)). `ReloadAsync()` lädt von außen neu, etwa aus einer `RealtimeSubscription`. `Selection` liefert die Facettenauswahl, `CurrentFilter` den OData-Filter, den die Tabelle sendet (fester Filter, Facetten, Spaltenfilter, erweiterter Filter und Suche).
 
-Für Sets, die als [Client-Entities](client-entities.md) markiert sind, filtert, sucht, sortiert und zählt die Tabelle im Browser, sobald die Zeilen angekommen sind; ein Schalter in ihrer Werkzeugleiste zeigt, wo gesucht wird, und lässt die Wahl.
+Für Sets, die als [Client-Entities](client-entities.md) markiert sind, filtert, sucht, sortiert und zählt die Tabelle im Browser, sobald die Zeilen angekommen sind; ein Schalter in ihrer Werkzeugleiste zeigt, wo gesucht wird, und lässt die Wahl. Solange der Browser antwortet, wartet das Suchfeld nach der letzten Taste 90 ms statt 300 ms, die Zeilen folgen also dem Tippen.
+
+### Suchfelder
+
+Eine Angabe je Set gilt für `$search`, das Suchfeld jeder Tabelle des Sets und die [globale Suche](../web/global-search.md):
+
+```csharp
+services.AddODataEntity<Product>("Products", CatalogPermissions.Products.View, o => o.SearchFields(p => p.Name, p => p.Barcode, p => p.Brand!.Name));
+services.AddGlobalSearch<Product>(s => s.Subtitle(p => p.Barcode).Page("/catalog/products")); // ohne Fields: die von oben
+```
+
+Eine Tabelle ohne `SearchFields` fragt den Server einmal je Sitzung nach den Feldern ihres Sets (`GET /api/v1/search/fields`) und zeigt das Suchfeld, wenn es welche gibt. Sie kommen aus dem `ISearchable` der Entity, sonst aus `SearchFields` von `AddODataEntity`, sonst aus den `Fields` von `AddGlobalSearch`; Felder, die der Benutzer nicht lesen darf (`HideUnless`, verborgene, eingeschränkte Navigationen), und Felder, die kein Eigenschaftspfad sind (eine Verkettung), fallen weg. Ein Set ohne Angabe bekommt wie bisher kein Suchfeld (`$search` sucht weiter in allen Texteigenschaften). `SearchFields` der Seite geht vor, `Searchable="false"` entfernt das Feld.
 
 ## Facetten
 

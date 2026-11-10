@@ -22,7 +22,8 @@
 | `Columns` | MudBlazor columns; nested properties sort as `Brand/Name` |
 | `Expand` | navigation properties to load, e.g. `"Brand"` |
 | `Filter` | a fixed OData filter on top of the user's choices |
-| `SearchFields` | properties the search box looks in (case insensitive `contains`) |
+| `SearchFields` | OData paths the search box looks in (case insensitive `contains`, e.g. `Brand/Name`); without them the fields the set declares on the server, see [search fields](#search-fields) |
+| `Searchable` | `false` hides the search box, also when the set declares search fields (default `true`) |
 | `Facets` | show the facet menus (default `true`) |
 | `MultiSelection` | check boxes and a *Delete n* button |
 | `OnCreate`, `OnEdit`, `OnDelete` | callbacks; the table reloads after each of them |
@@ -53,7 +54,18 @@
 
 The table reloads by itself when its `[Realtime]` entity changes (see [Realtime](../modules/realtime.md#entity-changes)). `ReloadAsync()` reloads from outside, for example from a `RealtimeSubscription`. `Selection` exposes the facet choices, `CurrentFilter` the OData filter the table sends (fixed filter, facets, column filters, advanced filter and search).
 
-For sets marked as [client entities](client-entities.md) the table filters, searches, sorts and counts in the browser once the rows arrived; a switch in its tool bar shows where searching runs and lets the user choose.
+For sets marked as [client entities](client-entities.md) the table filters, searches, sorts and counts in the browser once the rows arrived; a switch in its tool bar shows where searching runs and lets the user choose. While the browser answers, the search box waits 90 ms after the last key instead of 300 ms, so the rows follow the typing.
+
+### Search fields
+
+One declaration per set serves `$search`, the search box of every table of the set and the [global search](../web/global-search.md):
+
+```csharp
+services.AddODataEntity<Product>("Products", CatalogPermissions.Products.View, o => o.SearchFields(p => p.Name, p => p.Barcode, p => p.Brand!.Name));
+services.AddGlobalSearch<Product>(s => s.Subtitle(p => p.Barcode).Page("/catalog/products")); // no Fields: the ones above
+```
+
+A table without `SearchFields` asks the server once per session for the fields of its set (`GET /api/v1/search/fields`) and shows the search box when there are any. They come from the entity's `ISearchable`, else `SearchFields` of `AddODataEntity`, else the `Fields` of `AddGlobalSearch`; fields the user may not read (`HideUnless`, hidden, narrowed navigations) and fields that are no property path (a concatenation) are left out. A set that declares nothing gets no search box, as before (`$search` still looks in every text property). `SearchFields` on the page wins, `Searchable="false"` removes the box.
 
 ## Facets
 

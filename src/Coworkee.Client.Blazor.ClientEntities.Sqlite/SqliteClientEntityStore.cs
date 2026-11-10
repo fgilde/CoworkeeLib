@@ -42,6 +42,9 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
     private DbContextOptions<CopyDb<T>>? _options;
     private bool _disposed;
 
+    // the rows as objects for filters SQL cannot read, loaded on the first such filter and dropped when the copy changes
+    private LocalTable<T>? _memory;
+
     // directory: the browser's in-memory file system; tests pass a temporary folder
     public SqliteClientEntityStore(string key, IClientEntityStorage storage, ILogger logger, string? directory)
     {
@@ -198,9 +201,23 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
             await using var db = Open();
             var all = db.Set<T>().AsNoTracking();
             var rows = Filtered(all, query.Filter);
-            long? count = query.Count ? await rows.LongCountAsync(cancellationToken) : null;
-            var counted = watch.ElapsedMilliseconds;
-            IReadOnlyList<T> items = query.Top is 0 ? [] : await Ordered(rows, query.OrderBy).Skip(query.Skip ?? 0).Take(query.Top ?? int.MaxValue).ToListAsync(cancellationToken);
+            long? count;
+            long counted;
+            IReadOnlyList<T> items;
+            try
+            {
+                count = query.Count ? await rows.LongCountAsync(cancellationToken) : null;
+                counted = watch.ElapsedMilliseconds;
+                items = query.Top is 0 ? [] : await Ordered(rows, query.OrderBy).Skip(query.Skip ?? 0).Take(query.Top ?? int.MaxValue).ToListAsync(cancellationToken);
+            }
+            catch (InvalidOperationException exception) when (exception is not ObjectDisposedException)
+            {
+                // a path into a JSON column (a nested object) or a property the row computes, e.g. the search of a data table over them: SQL cannot read
+                // it, the rows in memory can, instead of the server
+                _logger.LogDebug("{Filter} | {OrderBy} runs on the rows in memory: {Reason}", query.Filter, query.OrderBy, exception.Message);
+                return await InMemoryAsync(db, query, groups, cancellationToken);
+            }
+
             var paged = watch.ElapsedMilliseconds;
             IReadOnlyList<FacetGroupDto> counts = query.Facets ? await FacetsAsync(all, rows, groups, query.FacetContext, _logger, cancellationToken) : [];
             _logger.LogDebug("{Filter} | {OrderBy} -> {Count} rows, page {Items}, {Facets} facet groups: count {Counted} ms, page {Paged} ms, facets {Faceted} ms",
@@ -234,6 +251,17 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
         {
             _gate.Release();
         }
+    }
+
+    // ponytail: holds every row as an object like the in-memory copy; a SQL rewrite into json_extract if such filters must not cost the memory
+    private async Task<ODataPage<T>> InMemoryAsync(CopyDb<T> db, ODataQuery query, IReadOnlyList<FacetGroupDto> groups, CancellationToken cancellationToken)
+    {
+        // in the order of the ids, as SQL answers without an order
+        var table = _memory ??= LocalTable<T>.Of(await Ordered(db.Set<T>().AsNoTracking(), null).ToListAsync(cancellationToken));
+        var found = table.Find(query.Filter, query.OrderBy);
+        var skip = Math.Min(query.Skip ?? 0, found.Length);
+        IReadOnlyList<T> items = query.Top is 0 ? [] : [.. found.Skip(skip).Take(query.Top ?? int.MaxValue).Select(table.Row)];
+        return new ODataPage<T>(items, query.Count ? found.Length : null, query.Facets ? LocalFacets.Count(groups, table, found, query.FacetContext) : []);
     }
 
     private static IQueryable<T> Filtered(IQueryable<T> rows, string? filter) =>
@@ -530,6 +558,7 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
     // ADO with EF's column mapping: EF's change tracking would take far longer for thousands of rows in the browser. True when a row was added, changed or removed.
     private async Task<bool> WriteAsync(IReadOnlyCollection<T> changed, IReadOnlyCollection<Guid> deleted, DateTimeOffset version, bool replace)
     {
+        _memory = null;
         await using var db = Open();
         var entity = db.Model.FindEntityType(typeof(T))!;
         var mapped = entity.GetProperties().Select(p => (Column: p.GetColumnName(), Get: CopyModel.Getter(p.PropertyInfo!), Convert: p.GetTypeMapping().Converter)).ToList();
@@ -652,6 +681,7 @@ internal sealed class SqliteClientEntityStore<T> : IClientEntityStore<T>
 
     private void Close()
     {
+        _memory = null;
         _connection?.Dispose();
         _connection = null;
         _options = null;

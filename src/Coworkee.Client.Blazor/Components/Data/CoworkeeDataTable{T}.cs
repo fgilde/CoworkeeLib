@@ -41,7 +41,7 @@ public partial class CoworkeeDataTable<T>
 
     private bool HasAdvanced => AdvancedFilterText is not null;
 
-    private string? BaseFilter => ODataFilter.And(Filter, ColumnFilter, AdvancedFilterText, ODataFilter.Search(_search, SearchFields));
+    private string? BaseFilter => ODataFilter.And(Filter, ColumnFilter, AdvancedFilterText, ODataFilter.Search(_search, Searched));
 
     private string L10n(string text) => L[text];
 

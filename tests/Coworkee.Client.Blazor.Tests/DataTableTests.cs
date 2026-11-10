@@ -157,6 +157,35 @@ public sealed class DataTableTests : ClientTestBase
         table.WaitForAssertion(() => _odata.LastQuery!.Filter.ShouldBe("(Category eq 'Tools') and (contains(tolower(Name),'dri'))"), TimeSpan.FromSeconds(3));
     }
 
+    // the set's declared search fields (AddODataEntity SearchFields, AddGlobalSearch) when the page names none; a local copy searches while typing
+    [Theory]
+    [InlineData(false, 300)]
+    [InlineData(true, 90)]
+    public void Without_own_search_fields_the_table_searches_those_the_server_declares(bool local, int debounce)
+    {
+        var search = new FakeGlobalSearchApi();
+        search.SearchFields["Gadgets"] = ["Name", "Brand/Name"];
+        Services.AddSingleton<Search.IGlobalSearchApi>(search);
+        Services.AddScoped<Search.SearchFieldsCatalog>();
+        Services.AddSingleton<IClientDataCache>(new LocalCache(local ? "Gadgets" : null));
+        var table = Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.Columns, Columns()));
+        table.WaitForAssertion(() => table.Markup.ShouldContain("Drill"));
+
+        table.FindComponent<MudTextField<string>>().Instance.DebounceInterval.ShouldBe(debounce);
+        table.Find("input[data-testid='table-search'], [data-testid='table-search'] input").Input("dri");
+
+        table.WaitForAssertion(() => _odata.LastQuery!.Filter.ShouldBe("(contains(tolower(Name),'dri') or contains(tolower(Brand/Name),'dri'))"), TimeSpan.FromSeconds(3));
+        Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.Searchable, false).Add(t => t.Columns, Columns()))
+            .FindAll("[data-testid='table-search']").ShouldBeEmpty();
+    }
+
+    private sealed class LocalCache(string? local) : IClientDataCache
+    {
+        public Task ClearAsync() => Task.CompletedTask;
+
+        public bool AnswersLocally(string entitySet) => entitySet == local;
+    }
+
     [Fact]
     public async Task Create_edit_and_delete_run_the_page_callbacks_and_reload()
     {

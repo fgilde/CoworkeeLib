@@ -2,10 +2,12 @@
 
 **Ctrl+K** (**Cmd+K** on a Mac) or the search button in the app bar opens the command palette: one box for pages, records, actions and the assistant. It works without a mouse: type, move with the arrow keys, open with **Enter**, close with **Esc**. On a phone it opens as a sheet at the top.
 
+**Enter** right after typing opens the chosen entry only when it is exactly what was typed (ignoring case: a full shipment number, a command's name); otherwise, also while the search still runs or nothing was found, it opens all results (`/search?q=`). Once you chose an entry with the arrows or the mouse, **Enter** opens it. **Ctrl+Enter** (**Cmd+Enter**) always opens all results; the footer shows the shortcut.
+
 What it finds:
 
 - **Pages** of the navigation the user may open (the same permission, feature and organisation rules as the menu).
-- **Records** from the [global search](../web/global-search.md) of the server once two letters are typed: users, files, reports and the sets your modules register with `AddGlobalSearch`. They show group by group as the providers find them, the entry you chose stays chosen, and *Show all results* opens `/search?q=` with a filter per type.
+- **Records** from the [global search](../web/global-search.md) of the server once two letters are typed: users, files, reports and the sets your modules register with `AddGlobalSearch`. They show group by group as the providers find them, the entry you chose stays chosen, and *Show all results* opens `/search?q=` with a filter per type. Records of a [client entity](client-entities.md) whose copy is in the browser show at once, before the server answers, see [local copies first](../web/global-search.md#local-copies-first).
 - **Actions**: dark or light mode, another theme, another language, another active role, and your own commands like *New product*.
 - **Chat**: *Chat with…* picks a person and opens a [mini chat](../modules/chat.md#mini-chats); `@name` lists the matching people to chat with right away (with the Chat module and its permission).
 - **Ask the assistant: …** as the last entry, when the [assistant](../modules/ai.md) is set up and the user may chat. It opens the assistant window with the text in the input.
