@@ -51,7 +51,8 @@ public sealed class UserDetailTests : ClientTestBase
 
         tab.WaitForAssertion(() => tab.Find($"[data-group='{hamburg.Id}']").TextContent.ShouldContain("Customer A / Hamburg"));
         tab.Find($"[data-group='{hamburg.Id}'] a").GetAttribute("href")!.ShouldEndWith($"/admin/groups?group={hamburg.Id}");
-        tab.FindAll("[data-testid='user-groups-add']").ShouldBeEmpty();
+        tab.Find($"[data-group='{hamburg.Id}'] input").HasAttribute("disabled").ShouldBeTrue();
+        tab.FindAll("[data-testid='user-groups-others']").ShouldBeEmpty();
         Api.DidNotReceive().GetGroupsAsync(Arg.Any<Contracts.PageRequest>(), Arg.Any<CancellationToken>());
     }
 

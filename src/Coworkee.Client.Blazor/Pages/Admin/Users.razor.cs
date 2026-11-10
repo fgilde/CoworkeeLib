@@ -97,18 +97,20 @@ public partial class Users
 
     // the parts of the user page; the table follows their changes over realtime (type:User)
 #pragma warning disable BL0005 // MudEx reads the parameters off these instances and renders components of its own
-    private Task ShowRolesAsync(UserRow user) => UserActions.ShowAsync<UserRolesTab>(Dialogs, L["Roles of {0}", user.Email], t => t.UserId = user.Id);
+    private Task ShowRolesAsync(UserRow user) => UserActions.ShowAsync<UserRolesTab>(Dialogs, L["Roles of {0}", Named(user)], t => t.UserId = user.Id);
 
-    private Task ShowGroupsAsync(UserRow user) => UserActions.ShowAsync<UserGroupsTab>(Dialogs, L["Groups of {0}", user.Email], t => t.UserId = user.Id);
+    private Task ShowGroupsAsync(UserRow user) => UserActions.ShowAsync<UserGroupsTab>(Dialogs, L["Groups of {0}", Named(user)], t => t.UserId = user.Id);
 
-    private Task ShowPermissionsAsync(UserRow user) => UserActions.ShowAsync<UserPermissionsTab>(Dialogs, L["Permissions of {0}", user.Email], t => t.UserId = user.Id);
+    private Task ShowPermissionsAsync(UserRow user) => UserActions.ShowAsync<UserPermissionsTab>(Dialogs, L["Permissions of {0}", Named(user)], t => t.UserId = user.Id);
 
-    private Task ShowSessionsAsync(UserRow user) => UserActions.ShowAsync<UserSessions>(Dialogs, L["Sessions of {0}", user.Email], s =>
+    private Task ShowSessionsAsync(UserRow user) => UserActions.ShowAsync<UserSessions>(Dialogs, L["Sessions of {0}", Named(user)], s =>
     {
         s.UserId = user.Id;
         s.UserName = user.Email;
     });
 #pragma warning restore BL0005
+
+    private static string Named(UserRow user) => user.Name is { Length: > 0 } name ? name : user.Email;
 
     private Task ImpersonateAsync(UserRow user) => Impersonation.StartAsync(Dialogs, Api, Snackbar, Nav, L, user.Id, user.Email);
 
