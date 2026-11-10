@@ -12,10 +12,15 @@ Changes that need action in apps built on Coworkee. Newest first.
 - Coworkee Studio, deploy wizard: the subscriptions of every account the Azure CLI keeps signed in (`az account list --all`), grouped by account and tenant; the account follows the picked subscription. *Sign in with another account* runs `az login`, with an optional tenant (`--tenant`, for guest access), and keeps the other accounts signed in. An update preselects the subscription of its record; when no signed-in account sees it, the wizard says so and prefills the record's tenant for the sign-in. See [Studio](../getting-started/studio.md#deploy).
 - Own Azure sign-in per app (off by default): the Studio switch *Own Azure sign-in for this app* and `coworkee deploy azure --apply --own-azure-sign-in` give the app its own Azure CLI folder (`AZURE_CONFIG_DIR` = `~/.coworkee/azure/<app>-<hash>`, never in the repository) for every `az` call, the deploy and the app host; the global sign-in stays untouched. The record keeps `ownAzureSignIn`, so updates use the same sign-in; `--own-azure-sign-in false` turns it off. See [Deployment](../hosting/deployment.md#deploying-from-your-machine).
 - Theming: `ShowAppNameInAppBar` and `ShowAppNameInNav` decide whether the app's name shows next to the logo in the app bar and at the head of the navigation (both on by default, as before).
+- One declaration of a set's search fields: `AddODataEntity<T>(set, permission, o => o.SearchFields(p => p.Name, p => p.Brand!.Name))` serves `$search`, the search box of every `CoworkeeDataTable` of the set without own `SearchFields` (the table asks `GET /api/v1/search/fields` once per session) and `AddGlobalSearch<T>`, which no longer needs `Fields` when the set declares them. `Searchable="false"` hides the box ([search fields](../ui/data-table.md#search-fields)).
+- Command palette: records of a [client entity](../ui/client-entities.md) whose copy is in the browser show at once from the copy, before the server answers; the server's hits of the same records join without doubles. `GET /api/v1/search/providers` tells the client how (`GlobalSearchProviderDto.Local`); `IGlobalSearchProvider.Local` and `IGlobalSearchApi.GetSearchFieldsAsync` are new members with defaults ([local copies first](../web/global-search.md#local-copies-first)).
+- Command palette: **Ctrl+Enter** (**Cmd+Enter**) opens all results (`/search?q=`); the footer shows it ([command palette](../ui/command-palette.md)).
 
 ### Changed
 
 - Users list: the roles column only shows the roles; they change through *Roles…* of the row's menu, one role at a time. The inline effective-permissions panel and the icons of the row are gone (*Permissions…* and the menu replace them). `GroupTree` takes `NodeChecked` to report one checkbox click at a time.
+- Command palette: **Enter** right after typing opens the chosen entry only when its title is exactly what was typed (a full number, a command's name); otherwise, also while the search runs or without hits, it opens all results. After choosing with the arrows or the mouse it opens the entry as before.
+- Data tables over a local copy wait 90 ms after the last key before searching instead of 300 ms (the server keeps 300 ms).
 
 ### Fixed
 
@@ -24,6 +29,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 - Azure Container Apps: the *Services* page of a deployment listed nothing. The tools' public addresses were left out of `Coworkee:Services` on Azure; they are written again. Deploy again.
 - Layout: with the app bar at the left or right edge alone and the navigation unpinned (overlay), the navigation could not be opened any more: its only menu button sat in the hidden navigation. The side bar shows a menu button then.
 - Theming: the theme's logo was squeezed to the width of its place; it keeps its proportions now.
+- Client entities in SQLite: every search of a data table went to the server. The filter's `tolower` became `ToLowerInvariant`, which EF Core does not translate; it is SQL's `lower()` now. Filters on nested objects (JSON columns) or computed properties, and orders by them, run on the copy's rows in memory instead of the server.
 
 ## 0.0.1.73 (2026-11-10)
 
