@@ -1,25 +1,8 @@
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + IdentityPermissions.Users.View)]
+@using Coworkee.Client.Blazor.Components.Users
 
 <PageHeader Title="Users" Description="Accounts of this organisation, their roles and whether they may sign in." />
 <RealtimeSubscription Topic="@Coworkee.Contracts.Realtime.RealtimeTopics.Type("Role")" OnEvent="_ => ReloadRolesAsync()" />
-@if (_permissionsOf is not null)
-{
-    <MudPaper Outlined="true" Class="pa-4 mb-4">
-        <MudStack Row="true" AlignItems="AlignItems.Center">
-            <MudText Typo="Typo.h6">@L["Effective permissions of {0}", _permissionsOf.Email]</MudText>
-            <MudSpacer />
-            <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" aria-label="@L["Close"]" OnClick="() => _permissionsOf = null" />
-        </MudStack>
-        @if (_permissions.Count == 0)
-        {
-            <MudText Typo="Typo.body2">@L["No permissions."]</MudText>
-        }
-        @foreach (var permission in _permissions)
-        {
-            <MudChip T="string" Size="Size.Small">@permission</MudChip>
-        }
-    </MudPaper>
-}
 <CoworkeeDataTable @ref="_table" RealtimeTopic="type:User" T="UserRow" EntitySet="Users" SearchFields="SearchFields" ExportFileName="users" OnLoaded="LoadRolesAsync"
                    CreateText="New user" CreatePermission="@IdentityPermissions.Users.Manage" OnCreate="CreateAsync">
     <Columns>
@@ -31,42 +14,59 @@
         </PropertyColumn>
         <TemplateColumn T="UserRow" Title="@L["Roles"]" Sortable="false">
             <CellTemplate>
-                <PermissionView Permission="@IdentityPermissions.Users.Manage">
-                    <ChildContent>
-                        <MudSelect Margin="Density.Margin" T="Guid" MultiSelection="true" Dense="Density.Dense" SelectedValues="RolesOf(context.Item)" ToStringFunc="RoleName"
-                                   SelectedValuesChanged="ids => SetRolesAsync(context.Item, ids)" data-testid="@($"roles-{context.Item.Email}")">
-                            @foreach (var role in _roles)
-                            {
-                                <MudSelectItem T="Guid" Value="@role.Id">@role.Name</MudSelectItem>
-                            }
-                        </MudSelect>
-                    </ChildContent>
-                    <NotAuthorized>@string.Join(", ", RolesOf(context.Item).Select(RoleName))</NotAuthorized>
-                </PermissionView>
+                @* changed one at a time through Roles… of the menu, so two administrators do not overwrite each other *@
+                <span data-roles="@context.Item.Email">@string.Join(", ", RolesOf(context.Item))</span>
             </CellTemplate>
         </TemplateColumn>
         <PropertyColumn Property="u => u.IsActive" Title="@L["Active"]">
             <CellTemplate>
-                <PermissionView Permission="@IdentityPermissions.Users.Manage">
-                    <ChildContent><MudSwitch T="bool" Value="@context.Item.IsActive" ValueChanged="v => SetActiveAsync(context.Item, v)" Color="Color.Secondary" /></ChildContent>
-                    <NotAuthorized>@L[context.Item.IsActive ? "yes" : "no"]</NotAuthorized>
-                </PermissionView>
+                @if (_canManage)
+                {
+                    <MudSwitch T="bool" Value="@context.Item.IsActive" ValueChanged="v => SetActiveAsync(context.Item, v)" Color="Color.Secondary" />
+                }
+                else
+                {
+                    @L[context.Item.IsActive ? "yes" : "no"]
+                }
             </CellTemplate>
         </PropertyColumn>
         <PropertyColumn Property="u => u.LastLoginAt" Title="@L["Last sign-in"]" Format="g" />
         <TemplateColumn T="UserRow" Sortable="false" CellStyle="text-align:right;white-space:nowrap">
             <CellTemplate>
-                <MudIconButton Icon="@Icons.Material.Outlined.Key" Size="Size.Small" aria-label="@L["Effective permissions"]" OnClick="() => ShowPermissionsAsync(context.Item)" />
-                <PermissionView Permission="@IdentityPermissions.Users.Manage">
-                    <MudIconButton Icon="@Icons.Material.Outlined.LockReset" Size="Size.Small" aria-label="@L["Send password reset"]" OnClick="() => SendResetAsync(context.Item)" />
-                </PermissionView>
-                <PermissionView Permission="@IdentityPermissions.Users.Impersonate">
-                    @if (context.Item.IsActive && Impersonation.Offers(_user, context.Item.Id))
+                @{ var user = context.Item; }
+                <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="true" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight"
+                         AriaLabel="@L["Actions"]" data-testid="@($"user-actions-{user.Email}")">
+                    <MudMenuItem Icon="@Icons.Material.Outlined.Shield" OnClick="() => ShowRolesAsync(user)" data-testid="@($"user-roles-{user.Email}")">@L["Roles…"]</MudMenuItem>
+                    <MudMenuItem Icon="@Icons.Material.Outlined.Groups" OnClick="() => ShowGroupsAsync(user)" data-testid="@($"user-groups-{user.Email}")">@L["Groups…"]</MudMenuItem>
+                    <MudMenuItem Icon="@Icons.Material.Outlined.Key" OnClick="() => ShowPermissionsAsync(user)" data-testid="@($"user-permissions-{user.Email}")">@L["Permissions…"]</MudMenuItem>
+                    @if (_canViewSessions)
                     {
-                        <MudIconButton Icon="@Icons.Material.Outlined.SupervisorAccount" Size="Size.Small" aria-label="@L["Log in as"]" OnClick="() => ImpersonateAsync(context.Item)"
-                                       data-testid="@($"impersonate-{context.Item.Email}")" />
+                        <MudMenuItem Icon="@Icons.Material.Outlined.Devices" OnClick="() => ShowSessionsAsync(user)" data-testid="@($"user-sessions-{user.Email}")">@L["Sessions…"]</MudMenuItem>
                     }
-                </PermissionView>
+                    @if (_canManage)
+                    {
+                        <MudDivider />
+                        <MudMenuItem Icon="@Icons.Material.Outlined.LockReset" OnClick="() => SendResetAsync(user)" data-testid="@($"reset-{user.Email}")">@L["Send password reset"]</MudMenuItem>
+                        <MudMenuItem Icon="@Icons.Material.Outlined.Logout" OnClick="() => SignOutAsync(user)" data-testid="@($"sign-out-{user.Email}")">@L["Sign out everywhere"]</MudMenuItem>
+                        @if (user.IsLocked)
+                        {
+                            <MudMenuItem Icon="@Icons.Material.Outlined.LockOpen" OnClick="() => UnlockAsync(user)" data-testid="@($"unlock-{user.Email}")">@L["Unlock"]</MudMenuItem>
+                        }
+                        else
+                        {
+                            <MudMenuItem Icon="@Icons.Material.Outlined.Lock" OnClick="() => LockAsync(user)" data-testid="@($"lock-{user.Email}")">@L["Lock"]</MudMenuItem>
+                        }
+                    }
+                    @if (_canImpersonate && user.IsActive && !user.IsLocked && Impersonation.Offers(_user, user.Id))
+                    {
+                        <MudMenuItem Icon="@Icons.Material.Outlined.SupervisorAccount" OnClick="() => ImpersonateAsync(user)" data-testid="@($"impersonate-{user.Email}")">@L["Log in as"]</MudMenuItem>
+                    }
+                    @if (_canManage)
+                    {
+                        <MudDivider />
+                        <MudMenuItem Icon="@Icons.Material.Outlined.DeleteForever" IconColor="Color.Error" OnClick="() => DeleteAsync(user)" data-testid="@($"delete-{user.Email}")">@L["Delete user"]</MudMenuItem>
+                    }
+                </MudMenu>
             </CellTemplate>
         </TemplateColumn>
     </Columns>

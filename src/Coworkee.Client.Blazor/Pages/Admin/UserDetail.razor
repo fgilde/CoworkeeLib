@@ -1,10 +1,10 @@
 @attribute [Authorize(Policy = "perm:" + IdentityPermissions.Users.View)]
 @using MudBlazor.Extensions.Components.ObjectEdit
 @using MudBlazor.Extensions.Components.ObjectEdit.Options
+@using Coworkee.Client.Blazor.Components.Users
 
 <PageTitle>@(_user?.Email ?? "User")</PageTitle>
 <EntityWatch EntityType="User" EntityId="Id" ReturnHref="@Links.Href("/admin/users")" />
-<RealtimeSubscription Topic="@Coworkee.Contracts.Realtime.RealtimeTopics.Type("Role")" OnEvent="_ => ReloadRolesAsync()" />
 <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" Href="@Links.Href("/admin/users")" Class="mb-2">@L["Users"]</MudButton>
 
 @if (_error is not null)
@@ -81,72 +81,36 @@ else
         <MudText Typo="Typo.caption" Class="mt-2 d-block mud-text-secondary">@L["Last sign-in: {0}", _user.LastLoginAt?.ToLocalTime().ToString("g") ?? L["never"]]</MudText>
     </MudPaper>
 
-    <MudGrid>
-        <MudItem xs="12" md="7">
-            <MudPaper Outlined="true" Class="pa-4 mb-4">
-                <MudExObjectEditForm T="UserForm" Value="_form" MetaInformation="_meta" OnValidSubmit="SaveAsync" GroupingStyle="GroupingStyle.Flat"
-                                     ShowSaveButton="_canManage" GlobalResetSettings="@(new GlobalResetSettings { AllowReset = false })" data-testid="user-form" />
-            </MudPaper>
-            <PermissionView Permission="@IdentityPermissions.Users.Manage">
-                <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Outlined.DeleteForever" OnClick="DeleteAsync" Disabled="_busy" data-testid="delete-user">@L["Delete user"]</MudButton>
-            </PermissionView>
-        </MudItem>
-        <MudItem xs="12" md="5">
-            <UserSignIn User="_user" CanManage="_canManage" Changed="LoadAsync" />
-            <PermissionView Permission="@IdentityPermissions.Sessions.View">
+    <MudTabs Outlined="true" Rounded="true" Border="true" TabPanelsClass="pa-4" data-testid="user-tabs">
+        <MudTabPanel Text="@L["General"]" Icon="@Icons.Material.Outlined.Person" data-testid="user-tab-general">
+            <MudGrid>
+                <MudItem xs="12" md="7">
+                    <MudPaper Outlined="true" Class="pa-4 mb-4">
+                        <MudExObjectEditForm T="UserForm" Value="_form" MetaInformation="_meta" OnValidSubmit="SaveAsync" GroupingStyle="GroupingStyle.Flat"
+                                             ShowSaveButton="_canManage" GlobalResetSettings="@(new GlobalResetSettings { AllowReset = false })" data-testid="user-form" />
+                    </MudPaper>
+                    <PermissionView Permission="@IdentityPermissions.Users.Manage">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Outlined.DeleteForever" OnClick="DeleteAsync" Disabled="_busy" data-testid="delete-user">@L["Delete user"]</MudButton>
+                    </PermissionView>
+                </MudItem>
+                <MudItem xs="12" md="5">
+                    <UserSignIn User="_user" CanManage="_canManage" Changed="LoadAsync" />
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+        <MudTabPanel Text="@L["Roles"]" Icon="@Icons.Material.Outlined.Shield" data-testid="user-tab-roles">
+            <UserRolesTab UserId="Id" />
+        </MudTabPanel>
+        <MudTabPanel Text="@L["Groups"]" Icon="@Icons.Material.Outlined.Groups" data-testid="user-tab-groups">
+            <UserGroupsTab UserId="Id" />
+        </MudTabPanel>
+        <MudTabPanel Text="@L["Permissions"]" Icon="@Icons.Material.Outlined.Key" data-testid="user-tab-permissions">
+            <UserPermissionsTab UserId="Id" />
+        </MudTabPanel>
+        <PermissionView Permission="@IdentityPermissions.Sessions.View">
+            <MudTabPanel Text="@L["Sessions"]" Icon="@Icons.Material.Outlined.Devices" data-testid="user-tab-sessions">
                 <UserSessions UserId="Id" UserName="@DisplayName(_user)" />
-            </PermissionView>
-            <MudPaper Outlined="true" Class="pa-4 mb-4">
-                <MudText Typo="Typo.h6" Class="mb-2">@L["Roles"]</MudText>
-                @if (_canManage)
-                {
-                    <MudSelect Margin="Density.Margin" Dense="Density.Dense" T="Guid" MultiSelection="true" Label="@L["Roles"]" SelectedValues="_roleIds" SelectedValuesChanged="SetRolesAsync" ToStringFunc="RoleName" Disabled="_busy" data-testid="user-roles">
-                        @foreach (var role in _roles)
-                        {
-                            <MudSelectItem Value="@role.Id">@role.Name</MudSelectItem>
-                        }
-                    </MudSelect>
-                }
-                else
-                {
-                    @foreach (var role in _user.Roles)
-                    {
-                        <MudChip T="string" Size="Size.Small">@role.Name</MudChip>
-                    }
-                }
-                <MudText Typo="Typo.h6" Class="mt-4 mb-2">@L["Groups"]</MudText>
-                @if (_canManageGroups)
-                {
-                    <MudSelect Margin="Density.Margin" Dense="Density.Dense" T="Guid" MultiSelection="true" Label="@L["Groups"]" SelectedValues="_groupIds" SelectedValuesChanged="SetGroupsAsync" ToStringFunc="id => GroupName(id)" Disabled="_busy" data-testid="user-groups">
-                        @foreach (var group in _groups)
-                        {
-                            <MudSelectItem Value="@group.Id">@GroupName(group.Id)</MudSelectItem>
-                        }
-                    </MudSelect>
-                }
-                else
-                {
-                    @if (_user.Groups.Count == 0)
-                    {
-                        <MudText Class="mud-text-secondary">@L["No groups."]</MudText>
-                    }
-                    @foreach (var group in _user.Groups)
-                    {
-                        <MudChip T="string" Size="Size.Small" Href="@Links.Href($"/admin/groups?group={group.Id}")" Icon="@Icons.Material.Outlined.Groups" data-group="@group.Id">@GroupName(group.Id, group.Name)</MudChip>
-                    }
-                }
-            </MudPaper>
-            <MudPaper Outlined="true" Class="pa-4">
-                <MudText Typo="Typo.h6" Class="mb-2">@L["Effective permissions"]</MudText>
-                @if (_permissions.Count == 0)
-                {
-                    <MudText Class="mud-text-secondary">@L["No permissions."]</MudText>
-                }
-                @foreach (var permission in _permissions)
-                {
-                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@permission</MudChip>
-                }
-            </MudPaper>
-        </MudItem>
-    </MudGrid>
+            </MudTabPanel>
+        </PermissionView>
+    </MudTabs>
 }

@@ -23,6 +23,32 @@ Auf der Seite eines Benutzers bearbeiten Administratoren alles, von der E-Mail-A
 
 Jede Anmeldung ist eine [Sitzung](../security/clients.md#sitzungen): **Administration › Überwachung › Sitzungen** listet, wer wo angemeldet ist (Gerät, Browser, IP-Adresse, App, letzte Aktivität, die Zahl je Benutzer), und beendet eine Sitzung oder alle eines Benutzers, die Benutzerseite zeigt seine, und Benutzer beenden ihre anderen Sitzungen auf der Kontoseite; der Browser einer beendeten Sitzung wird sofort abgemeldet. Die Einstellung *Sitzungen pro Benutzer* (Standard unbegrenzt) und das eigene Limit eines Benutzers bestimmen, wie viele er haben darf; eine Anmeldung darüber beendet die ältesten Sitzungen oder wird abgelehnt.
 
+## Benutzerverwaltung
+
+*Administration › Benutzer* listet die Konten. Das Menü am Ende einer Zeile enthält, was sich mit einem Benutzer tun lässt, jeder Eintrag nur mit seiner Berechtigung: *Rollen…*, *Gruppen…*, *Berechtigungen…* und *Sitzungen…* öffnen dieselben Teile wie die Seite des Benutzers in einem Seitenblatt; *Link zum Zurücksetzen des Passworts senden*, *Überall abmelden*, *Sperren* oder *Entsperren*, *Anmelden als* und *Benutzer löschen* wirken auf das Konto. Die Rollenspalte zeigt die Rollen; sie ändern sich über *Rollen…*.
+
+Die Seite des Benutzers hat oben den Status und die Aktionen des Kontos und darunter Reiter:
+
+- **Allgemein**: das Profilformular, Sprache, Bild, die Wege der Anmeldung, *Benutzer löschen*.
+- **Rollen**: die Rollen, die er direkt hat, als filterbare Tabelle. *Rolle hinzufügen* öffnet eine filterbare Liste der Rollen der Organisation zum Anhaken, die Schaltfläche am Zeilenende entfernt eine. Rollen ändern braucht `Identity.Users.Manage`.
+- **Gruppen**: die Gruppen, in denen er direkt Mitglied ist, mit ihrem Pfad (*Kunde A / Hamburg*). *Gruppe hinzufügen* öffnet den Gruppenbaum, der Ebene für Ebene nachlädt und auf dem Server sucht, er funktioniert also auch mit Tausenden Gruppen. Mitgliedschaften ändern braucht `Identity.Groups.ManageMembers`.
+- **Berechtigungen**: alles, was er über alle seine Rollen hat, mit Herkunft: *Rolle X*, *Rolle X über Gruppe Y*, *Gruppe Y* (an die Gruppe vergeben), *Direkt vergeben* oder *Berechnet* ([berechnete Berechtigungen](../security/permissions.md#berechnete-berechtigungen)). Eine Berechtigung, die eine andere einschließt, zeigt deren Herkunft. Mit `Identity.Permissions.Manage` vergibt ein Kästchen pro Berechtigung sie dem Benutzer direkt; *Nur vorhandene* wechselt zwischen dem, was er hat, und allen Berechtigungen. Der Reiter vergibt nur: Was Rollen und Gruppen geben, ändert sich an der Rolle oder Gruppe.
+- **Sitzungen**: seine Sitzungen, live, mit seinem Sitzungslimit (`Identity.Sessions.View`).
+
+Jedes Häkchen und jedes Entfernen speichert sofort für sich. Die Änderung erscheint, bevor der Server antwortet, die Speichervorgänge laufen nacheinander im Hintergrund, und die Seite bleibt bedienbar, ein Administrator kann also zehn Gruppen hintereinander anhaken. Ein Speichern, das der Server ablehnt, nimmt nur sein eigenes Element zurück, und die Snackbar nennt den Grund. Jeder Klick schickt eine Änderung, nicht die ganze Liste: `POST`/`DELETE /api/v1/identity/users/{id}/roles/{roleId}`, `POST /api/v1/identity/groups/{id}/members/add` und `remove`, `POST`/`DELETE /api/v1/identity/permissions/grants/User/{id}/{name}`. Zwei Administratoren am selben Benutzer setzen einander deshalb nie etwas zurück, und die offenen Reiter laden neu, sobald jemand Rollen, Gruppen oder Berechtigungen ändert (`RealtimeTopics.TenantPermissions`). `GET /api/v1/identity/users/{id}/permissions/sources` liefert die Berechtigungen mit Herkunft (`UserPermissionsDto`, `Identity.Users.View`); `ICoworkeeApi` hat `AddUserRoleAsync`, `RemoveUserRoleAsync`, `AddGrantAsync`, `RemoveGrantAsync` und `GetUserPermissionsAsync`.
+
+Die Reiter sind eigene Komponenten in `Coworkee.Client.Blazor.Components.Users`, die nur die Id des Benutzers brauchen; eine App setzt sie also überall ein, auf einer Seite oder in einem Dialog:
+
+```razor
+<UserRolesTab UserId="userId" />
+<UserGroupsTab UserId="userId" />
+<UserPermissionsTab UserId="userId" />
+```
+
+```csharp
+await dialogs.ShowComponentInDialogAsync<UserGroupsTab>("Gruppen", string.Empty, t => t.UserId = userId, await EditDialogExtensions.SideSheetAsync());
+```
+
 ## Als anderer Benutzer anmelden
 
 Der Support sieht, was ein Benutzer sieht, ohne sein Passwort zu kennen: *Anmelden als* in der Benutzerliste und auf der Seite des Benutzers braucht `Identity.Users.Impersonate` („Sign in as other users“, enthält `Users.View`, ist nicht Teil von `Users.Manage`). Ziel ist ein anderer aktiver, nicht gesperrter Benutzer derselben Organisation, und wer schon als jemand anderes angemeldet ist, kann das nicht noch einmal. Das Ziel hat **keine Berechtigung, die dem Aufrufer fehlt**: effektive Berechtigungen aller Rollen auf beiden Seiten, gleich welche Rolle einer als aktive Rolle gewählt hat. Eine Berechtigung auf eine einzelne Ressource (`ResourcePermission`) zählt, es sei denn, der Aufrufer hat sie global oder auf derselben Ressource. Jede Gruppe, in der das Ziel direkt Mitglied ist, muss in den Gruppen des Aufrufers oder ihren Teilbäumen liegen, wie `IGroupScope` sie berechnet; `Identity.Groups.ScopeAll` hebt das auf. Ein Support-Benutzer einer Kundengruppe meldet sich also nicht als Benutzer einer anderen an, ein Mitglied einer übergeordneten Gruppe aber als Mitglieder ihrer Untergruppen. Die API prüft das beim Ausstellen des Tickets (`POST /api/v1/identity/users/{id}/impersonation`, `ICoworkeeApi.StartImpersonationAsync`), der Auth-Server noch einmal beim Einlösen und bei jeder Autorisierung und jedem Token-Refresh der Übernahme.

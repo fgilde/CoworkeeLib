@@ -3,49 +3,61 @@ using Coworkee.Core.Results;
 using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
 using Coworkee.Infrastructure.Persistence;
-using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Identity.Users;
 
-internal sealed class SetUserRolesHandler(CoworkeeDbContext db, ICurrentUser currentUser, AccountGuard guard) : IHandler<SetUserRoles, Result>
+internal sealed class SetUserRolesHandler(CoworkeeDbContext db, ICurrentUser currentUser, AccountGuard guard)
+    : IHandler<SetUserRoles, Result>, IHandler<AddUserRole, Result>, IHandler<RemoveUserRole, Result>
 {
-    public async Task<Result> HandleAsync(SetUserRoles command, CancellationToken cancellationToken)
+    public Task<Result> HandleAsync(SetUserRoles command, CancellationToken cancellationToken)
     {
-        if (!await db.Set<User>().AnyAsync(u => u.Id == command.Id && u.TenantId == currentUser.TenantId, cancellationToken))
+        var wanted = command.RoleIds.Distinct().ToList();
+        return ChangeAsync(command.Id, wanted, current => [.. current.Except(wanted)], nameof(command.RoleIds), cancellationToken);
+    }
+
+    public Task<Result> HandleAsync(AddUserRole command, CancellationToken cancellationToken) =>
+        ChangeAsync(command.Id, [command.RoleId], _ => [], nameof(command.RoleId), cancellationToken);
+
+    public Task<Result> HandleAsync(RemoveUserRole command, CancellationToken cancellationToken) =>
+        ChangeAsync(command.Id, [], _ => [command.RoleId], nameof(command.RoleId), cancellationToken);
+
+    // only the named roles change: a single add or remove keeps what another administrator changed meanwhile
+    private async Task<Result> ChangeAsync(Guid userId, List<Guid> add, Func<List<Guid>, List<Guid>> remove, string field, CancellationToken cancellationToken)
+    {
+        if (!await db.Set<User>().AnyAsync(u => u.Id == userId && u.TenantId == currentUser.TenantId, cancellationToken))
         {
             return UserErrors.NotFound;
         }
 
-        if (await guard.CheckUserAsync(command.Id, cancellationToken) is { } refused)
+        if (await guard.CheckUserAsync(userId, cancellationToken) is { } refused)
         {
             return refused;
         }
 
-        var wanted = command.RoleIds.Distinct().ToList();
-        var roles = await db.Set<Role>().Where(r => wanted.Contains(r.Id) && (r.TenantId == null || r.TenantId == currentUser.TenantId)).ToListAsync(cancellationToken);
-        if (roles.Count != wanted.Count)
+        var current = await db.Set<IdentityUserRole<Guid>>().Where(r => r.UserId == userId).ToListAsync(cancellationToken);
+        var currentIds = current.Select(r => r.RoleId).ToList();
+        var added = add.Except(currentIds).ToList();
+        var removed = remove(currentIds).Intersect(currentIds).ToList();
+        if (await db.Set<Role>().CountAsync(r => added.Contains(r.Id) && (r.TenantId == null || r.TenantId == currentUser.TenantId), cancellationToken) != added.Count)
         {
-            return Error.Validation(nameof(command.RoleIds), "Unknown role.");
+            return Error.Validation(field, "Unknown role.");
         }
 
-        var adminRoleId = await AdminGuard.AdminRoleIdAsync(db, cancellationToken);
-        var current = await db.Set<IdentityUserRole<Guid>>().Where(r => r.UserId == command.Id).ToListAsync(cancellationToken);
-        var hadAdmin = current.Any(r => r.RoleId == adminRoleId);
-        var changed = wanted.Where(id => current.All(r => r.RoleId != id)).Concat(current.Where(r => !wanted.Contains(r.RoleId)).Select(r => r.RoleId));
-        if (await guard.CheckRolesAsync(changed, cancellationToken) is { } restricted)
+        if (await guard.CheckRolesAsync(added.Concat(removed), cancellationToken) is { } restricted)
         {
             return restricted;
         }
 
-        if (hadAdmin && !wanted.Contains(adminRoleId) && !await AdminGuard.OtherActiveAdminExistsAsync(db, currentUser.TenantId, command.Id, cancellationToken))
+        if (removed.Contains(await AdminGuard.AdminRoleIdAsync(db, cancellationToken))
+            && !await AdminGuard.OtherActiveAdminExistsAsync(db, currentUser.TenantId, userId, cancellationToken))
         {
             return AdminGuard.LastAdmin;
         }
 
-        db.RemoveRange(current.Where(r => !wanted.Contains(r.RoleId)));
-        db.AddRange(wanted.Where(id => current.All(r => r.RoleId != id)).Select(id => new IdentityUserRole<Guid> { UserId = command.Id, RoleId = id }));
+        db.RemoveRange(current.Where(r => removed.Contains(r.RoleId)));
+        db.AddRange(added.Select(id => new IdentityUserRole<Guid> { UserId = userId, RoleId = id }));
         return Result.Success();
     }
 }

@@ -1,0 +1,40 @@
+@inherits UserTabBase
+
+<RealtimeSubscription Topic="@Coworkee.Contracts.Realtime.RealtimeTopics.TenantPermissions" OnEvent="_ => ReloadAsync()" />
+<div data-testid="user-permissions-tab">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2" Wrap="Wrap.Wrap">
+        <MudTextField @bind-Value="_filter" Immediate="true" Placeholder="@L["Search permissions"]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
+                      Clearable="true" Margin="Density.Margin" Style="max-width:320px" data-testid="user-permissions-filter" />
+        <MudSwitch T="bool" @bind-Value="_heldOnly" Color="Color.Primary" Label="@L["Held only"]" data-testid="user-permissions-held" />
+        <MudSpacer />
+        <MudText Typo="Typo.body2" Class="mud-text-secondary" data-testid="user-permissions-count">@L["{0} permissions held", _held.Count]</MudText>
+    </MudStack>
+    @if (_canGrant)
+    {
+        <MudText Typo="Typo.caption" Class="d-block mb-2 mud-text-secondary">@L["Tick a permission to grant it to this user directly, besides what his roles and groups give."]</MudText>
+    }
+    <MudTable T="Row" Items="Rows()" Virtualize="true" FixedHeader="true" Height="480px" Dense="true" Hover="true" Loading="!Loaded" data-testid="user-permissions-table">
+        <HeaderContent>
+            <MudTh Style="width:48px">@L["Direct"]</MudTh>
+            <MudTh>@L["Permission"]</MudTh>
+            <MudTh>@L["Granted by"]</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd data-permission="@context.Name">
+                <MudCheckBox T="bool" Value="Granted(context.Name)" ValueChanged="on => Toggle(context, on)" ReadOnly="!_canGrant" Disabled="!_canGrant" Dense="true" Size="Size.Small"
+                             aria-label="@L["Grant {0} directly", context.DisplayName]" data-grant="@context.Name" />
+            </MudTd>
+            <MudTd>
+                <MudText Typo="Typo.body2">@context.DisplayName</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">@context.Group · @context.Name</MudText>
+            </MudTd>
+            <MudTd data-sources="@context.Name">
+                @foreach (var source in _held.GetValueOrDefault(context.Name) ?? [])
+                {
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Icon="@Icon(source)" Href="@Link(source)">@Describe(source)</MudChip>
+                }
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>@L["No permissions."]</NoRecordsContent>
+    </MudTable>
+</div>

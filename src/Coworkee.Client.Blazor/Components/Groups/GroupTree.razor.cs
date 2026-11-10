@@ -46,6 +46,9 @@ public partial class GroupTree
 
     [Parameter] public EventCallback<IReadOnlySet<Guid>> CheckedIdsChanged { get; set; }
 
+    /// <summary>Checkbox mode, one click at a time: the group and whether it is checked now, instead of <see cref="CheckedIdsChanged"/>; the user page saves each on its own.</summary>
+    [Parameter] public EventCallback<(GroupNodeDto Node, bool Checked)> NodeChecked { get; set; }
+
     /// <summary>Groups whose name is shown bold, e.g. direct memberships.</summary>
     [Parameter] public IReadOnlySet<Guid>? Bold { get; set; }
 
@@ -176,6 +179,11 @@ public partial class GroupTree
 
     private Task ToggleAsync(GroupNodeDto node, bool on)
     {
+        if (NodeChecked.HasDelegate)
+        {
+            return NodeChecked.InvokeAsync((node, on));
+        }
+
         HashSet<Guid> ids = CheckedIds?.ToHashSet() ?? [];
         if (on)
         {

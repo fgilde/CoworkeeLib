@@ -38,7 +38,7 @@ public static class GroupPaths
         return string.Join(" / ", [.. Prefixes(code).SkipLast(1).Select(names.GetValueOrDefault).OfType<string>(), name]);
     }
 
-    /// <summary>The paths of these groups, from two queries: the groups, then their ancestors by code.</summary>
+    /// <summary>The paths of these groups: the groups, then their ancestors by code, each in queries of up to 100 values.</summary>
     public static async Task<Dictionary<Guid, string>> OfAsync(IODataClient odata, IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default)
     {
         if (ids.Count == 0)
@@ -46,11 +46,23 @@ public static class GroupPaths
             return [];
         }
 
-        var groups = (await QueryAsync(odata, $"Id in ({string.Join(",", ids)})", cancellationToken)).Where(g => ids.Contains(g.Id)).ToList();
+        var groups = (await InChunksAsync(odata, "Id", ids.Select(id => id.ToString()), cancellationToken)).Where(g => ids.Contains(g.Id)).ToList();
         var prefixes = groups.Where(g => g.Code is not null).SelectMany(g => Prefixes(g.Code!).SkipLast(1)).Distinct().ToList();
-        var ancestors = prefixes.Count == 0 ? [] : await QueryAsync(odata, $"Code in ({string.Join(",", prefixes.Select(p => $"'{p}'"))})", cancellationToken);
+        var ancestors = await InChunksAsync(odata, "Code", prefixes.Select(p => $"'{p}'"), cancellationToken);
         var named = ancestors.Select(a => (a.Code, a.Name)).ToList();
         return groups.ToDictionary(g => g.Id, g => Path(g.Code, g.Name, named));
+    }
+
+    // a user in hundreds of groups: one "in" list would make a URL longer than servers and proxies take; 100 values a query stay short
+    private static async Task<List<GroupRow>> InChunksAsync(IODataClient odata, string property, IEnumerable<string> values, CancellationToken cancellationToken)
+    {
+        var rows = new List<GroupRow>();
+        foreach (var chunk in values.Chunk(100))
+        {
+            rows.AddRange(await QueryAsync(odata, $"{property} in ({string.Join(",", chunk)})", cancellationToken));
+        }
+
+        return rows;
     }
 
     private static async Task<IReadOnlyList<GroupRow>> QueryAsync(IODataClient odata, string filter, CancellationToken cancellationToken) =>

@@ -1,0 +1,45 @@
+@inherits UserTabBase
+
+<RealtimeSubscription Topic="@Coworkee.Contracts.Realtime.RealtimeTopics.TenantPermissions" OnEvent="_ => ReloadAsync()" />
+<div data-testid="user-groups-tab">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2" Wrap="Wrap.Wrap">
+        <MudTextField @bind-Value="_filter" Immediate="true" Placeholder="@L["Filter"]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.FilterList"
+                      Clearable="true" Margin="Density.Margin" Style="max-width:320px" data-testid="user-groups-filter" />
+        <MudSpacer />
+        @if (_canManage)
+        {
+            <MudButton Variant="@(_picking ? Variant.Filled : Variant.Outlined)" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" OnClick="() => _picking = !_picking"
+                       data-testid="user-groups-add">@L["Add group"]</MudButton>
+        }
+    </MudStack>
+    @if (_picking)
+    {
+        @* the tree loads level by level and searches on the server: organisations with thousands of groups never load them all *@
+        <MudPaper Outlined="true" Class="pa-2 mb-2" Style="max-height:360px;overflow:auto" data-testid="user-groups-picker">
+            <Coworkee.Client.Blazor.Components.Groups.GroupTree CheckedIds="Shown()" NodeChecked="Toggle" />
+        </MudPaper>
+    }
+    <MudTable T="GroupRefDto" Items="Rows()" Virtualize="true" FixedHeader="true" Height="360px" Dense="true" Hover="true" Loading="!Loaded" data-testid="user-groups-table">
+        <HeaderContent>
+            <MudTh>@L["Group"]</MudTh>
+            <MudTh Style="width:56px" />
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd data-group="@context.Id">
+                <MudLink Href="@Links.Href($"/admin/groups?group={context.Id}")">@context.Name</MudLink>
+                @if (_toggles.IsSaving(context.Id))
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ml-2" Style="width:14px;height:14px" />
+                }
+            </MudTd>
+            <MudTd Style="text-align:right">
+                @if (_canManage)
+                {
+                    <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" aria-label="@L["Remove"]" OnClick="() => Toggle(context.Id, context.Name, false)"
+                                   data-remove-group="@context.Id" />
+                }
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>@L["No groups."]</NoRecordsContent>
+    </MudTable>
+</div>
