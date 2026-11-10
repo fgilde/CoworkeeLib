@@ -5,6 +5,7 @@ using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Components.Groups;
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Contracts.Identity;
+using Coworkee.Contracts.Realtime;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -116,6 +117,31 @@ public sealed class GroupScopePickerTests : ClientTestBase
 
         _calls.Count(c => c == "mine").ShouldBe(2);
         await _cache.Received(1).ScopeChangedAsync();
+    }
+
+    [Fact]
+    public async Task A_lost_membership_moves_picker_and_copies_live_and_other_access_changes_move_nothing()
+    {
+        var picker = RenderPicker();
+        picker.WaitForAssertion(() => _calls.Count(c => c == "mine").ShouldBe(1));
+        // the user's topic is followed after the organisation's permission topic
+        picker.WaitForAssertion(() => Realtime.Invocations.ShouldContain(("Subscribe", $"user:{Me}")));
+
+        // a grant elsewhere in the organisation: the user's groups stay as they are
+        Realtime.Push(RealtimeTopics.TenantPermissions);
+        // nothing renders when nothing changed: poll instead of waiting for a render
+        await UntilAsync(() => _calls.Count(c => c == "mine") == 2);
+        await _cache.DidNotReceive().ScopeChangedAsync();
+
+        // an administrator takes the user out of Supplier
+        _mine = [Customer, Hamburg, Bremen];
+        Realtime.Push(RealtimeTopics.TenantPermissions);
+        Realtime.Push(RealtimeTopics.TenantPermissions);
+
+        picker.WaitForAssertion(() => _cache.Received(1).ScopeChangedAsync());
+        _calls.Count(c => c == "mine").ShouldBe(3, "the burst settles into one reload");
+        await OpenAsync(picker);
+        _popovers.WaitForAssertion(() => _popovers.FindAll("[data-group-node]").Select(n => n.TextContent).ShouldNotContain("Supplier"));
     }
 
     [Fact]
@@ -255,6 +281,15 @@ public sealed class GroupScopePickerTests : ClientTestBase
     }
 
     private FakeRealtimeConnection Realtime => Services.GetRequiredService<FakeRealtimeConnection>();
+
+    private static async Task UntilAsync(Func<bool> condition)
+    {
+        for (var waited = 0; !condition(); waited += 50)
+        {
+            waited.ShouldBeLessThan(5000, "the condition never came true");
+            await Task.Delay(50, Xunit.TestContext.Current.CancellationToken);
+        }
+    }
 
     private IRenderedComponent<GroupScopePicker> RenderPicker()
     {

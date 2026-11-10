@@ -37,6 +37,22 @@ public sealed class LivePermissionTests(RealtimeApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Adding_and_removing_a_member_of_a_group_tells_the_member()
+    {
+        // the group picker of the member reloads its groups on this topic (GroupScopeState)
+        var bob = await CreateUserAsync("bob@acme.test");
+        var group = await (await Admin.PostAsJsonAsync("/api/v1/identity/groups", new GroupRequest("Hamburg", null), Ct)).Content.ReadFromJsonAsync<Guid>(Ct);
+        await using var listener = await app.ConnectAsync(bob.Id, _setup.TenantId);
+        await listener.SubscribeAsync(RealtimeTopics.TenantPermissions);
+
+        (await Admin.PostAsJsonAsync($"/api/v1/identity/groups/{group}/members/add", new IdListRequest([bob.Id]), Ct)).EnsureSuccessStatusCode();
+        await listener.NextAsync(e => e.Topic == RealtimeTopics.TenantPermissions);
+
+        (await Admin.PostAsJsonAsync($"/api/v1/identity/groups/{group}/members/remove", new IdListRequest([bob.Id]), Ct)).EnsureSuccessStatusCode();
+        await listener.NextAsync(e => e.Topic == RealtimeTopics.TenantPermissions);
+    }
+
+    [Fact]
     public async Task Editing_the_grants_of_a_role_tells_the_organisation()
     {
         var readers = await CreateRoleAsync("Ticket readers");

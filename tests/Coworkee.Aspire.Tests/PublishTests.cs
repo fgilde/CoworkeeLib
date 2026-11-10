@@ -152,6 +152,9 @@ public sealed class PublishTests
             written.ShouldContain($"http://{CoworkeeApp.AzureCollectorName}:4318");
         }
 
+        // the services page of the deployment lists the tools at their public addresses
+        written.ShouldContain("Coworkee__Services__grafana__Url");
+
         // Container Apps gives every app its own address, so only other targets ask for the public addresses
         foreach (var parameter in new[] { "demo_grafana_url", "demo_keycloak_url" })
         {

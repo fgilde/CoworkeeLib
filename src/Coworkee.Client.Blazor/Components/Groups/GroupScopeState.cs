@@ -12,15 +12,21 @@ namespace Coworkee.Client.Blazor.Components.Groups;
 
 /// <summary>
 /// The groups the signed-in user works in (<see cref="GroupScopePicker"/>). A new selection, here or in another tab of the user, moves the
-/// client entities to the copies of that selection and raises <see cref="Changed"/>, on which data tables reload.
+/// client entities to the copies of that selection and raises <see cref="Changed"/>, on which data tables reload. So does a change of the groups
+/// the user may work in (an administrator adds or removes a membership, moves or deletes a group): the copies must not keep rows of a group the
+/// user lost.
 /// </summary>
 public sealed class GroupScopeState(
     ICoworkeeApi api, RealtimeClient realtime, AuthenticationStateProvider authentication, ILogger<GroupScopeState> logger, IClientDataCache? cache = null)
     : IAsyncDisposable
 {
+    // a membership save touches several rows; one reload for the burst (as the permissions)
+    private static readonly TimeSpan Settle = TimeSpan.FromMilliseconds(250);
     private readonly SemaphoreSlim _selecting = new(1, 1);
     private Task? _subscribing;
     private IAsyncDisposable? _subscription;
+    private IAsyncDisposable? _accessSubscription;
+    private CancellationTokenSource? _pending;
     private HashSet<Guid> _applied = [];
     private int _loads;
 
@@ -83,9 +89,10 @@ public sealed class GroupScopeState(
 
     public async ValueTask DisposeAsync()
     {
-        if (_subscription is not null)
+        _pending?.Cancel();
+        foreach (var subscription in new[] { _subscription, _accessSubscription }.OfType<IAsyncDisposable>())
         {
-            await _subscription.DisposeAsync();
+            await subscription.DisposeAsync();
         }
     }
 
@@ -94,6 +101,11 @@ public sealed class GroupScopeState(
     private async Task ApplyAsync()
     {
         await LoadAsync();
+        await FollowAsync();
+    }
+
+    private async Task FollowAsync()
+    {
         try
         {
             if (cache is not null)
@@ -111,10 +123,35 @@ public sealed class GroupScopeState(
 
     private async Task SubscribeAsync()
     {
+        // memberships, groups and their roles publish on the organisation's permission topic (IdentityRealtimeTopics); only a change of what this user
+        // may pick, or of the selection the server keeps of it, moves the copies
+        _accessSubscription ??= await realtime.SubscribeAsync(RealtimeTopics.TenantPermissions, _ => AccessChangedAsync());
         if (ClientUser.From((await authentication.GetAuthenticationStateAsync()).User).TryGetUserId(out var userId)
             && await realtime.SubscribeAsync(RealtimeTopics.User(userId), OnEventAsync) is var subscription && RealtimeClient.IsActive(subscription))
         {
             _subscription = subscription;
+        }
+
+    }
+
+    private async Task AccessChangedAsync()
+    {
+        _pending?.Cancel();
+        var pending = _pending = new CancellationTokenSource();
+        try
+        {
+            await Task.Delay(Settle, pending.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        var before = Groups.Select(g => (g.Id, g.Selected)).ToHashSet();
+        await LoadAsync();
+        if (!before.SetEquals(Groups.Select(g => (g.Id, g.Selected))))
+        {
+            await FollowAsync();
         }
     }
 
