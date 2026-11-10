@@ -96,8 +96,9 @@ internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
         [Description("Mirror the OData set in the browser.")] bool clientEntity = false,
         [Description("Manual or Mapperly.")] string? mapping = null,
         [Description("Enums the properties use, as Name=Value1,Value2, e.g. OrderStatus=Open,Paid.")] string[]? enums = null,
+        [Description("Generate the DTO and its mapping from the entity on every build (Coworkee.CodeGen) instead of writing them once; mapping then defaults to Mapperly.")] bool codegen = false,
         CancellationToken cancellationToken = default) =>
-        (await run(["module", "add", module, .. entity is null ? [] : new[] { "--entity", entity }, .. Feature(properties, clientEntity, mapping, enums)], directory, cancellationToken)).ToString();
+        (await run(["module", "add", module, .. entity is null ? [] : new[] { "--entity", entity }, .. Feature(properties, clientEntity, mapping, enums, codegen)], directory, cancellationToken)).ToString();
 
     [McpServerTool(Name = "add_entity", Title = "Add an entity")]
     [Description("Adds an entity to a module created with add_module: table, permissions, OData set, endpoints, validation and a Blazor page. Add a migration afterwards.")]
@@ -110,8 +111,9 @@ internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
         [Description("Mirror the OData set in the browser.")] bool clientEntity = false,
         [Description("Manual or Mapperly.")] string? mapping = null,
         [Description("New enums the properties use, as Name=Value1,Value2.")] string[]? enums = null,
+        [Description("Generate the DTO and its mapping from the entity on every build (Coworkee.CodeGen) instead of writing them once; mapping then defaults to Mapperly.")] bool codegen = false,
         CancellationToken cancellationToken = default) =>
-        (await run(["entity", "add", module, entity, .. plural is null ? [] : new[] { "--plural", plural }, .. Feature(properties, clientEntity, mapping, enums)], directory, cancellationToken)).ToString();
+        (await run(["entity", "add", module, entity, .. plural is null ? [] : new[] { "--plural", plural }, .. Feature(properties, clientEntity, mapping, enums, codegen)], directory, cancellationToken)).ToString();
 
     [McpServerTool(Name = "add_migration", Title = "Add a migration")]
     [Description("Adds an EF Core migration to the infrastructure project, e.g. after add_module or add_entity.")]
@@ -156,6 +158,7 @@ internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
         [Description("db: postgres, sqlServer or sqlite (default: guessed).")] string? provider = null,
         [Description("Print the spec and its problems only.")] bool dryRun = false,
         [Description("Write the module into this spec file instead of the app.")] string? specOut = null,
+        [Description("Generate the DTOs and their mappings from the entities on every build (Coworkee.CodeGen, Mapperly) instead of writing them once.")] bool codegen = false,
         CancellationToken cancellationToken = default) =>
         (await run(
         [
@@ -165,6 +168,7 @@ internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
             .. provider is null ? [] : new[] { "--provider", provider },
             .. dryRun ? new[] { "--dry-run" } : [],
             .. specOut is null ? [] : new[] { "--spec-out", specOut },
+            .. codegen ? new[] { "--codegen" } : [],
         ], directory, cancellationToken)).ToString();
 
     [McpServerTool(Name = "run_doctor", ReadOnly = true, Title = "Check the tools")]
@@ -188,11 +192,12 @@ internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
 
     public static string[] CreateArgs(string specFile, string output) => ["new", "--spec", specFile, "-o", output];
 
-    private static string[] Feature(string[]? properties, bool clientEntity, string? mapping, string[]? enums) =>
+    private static string[] Feature(string[]? properties, bool clientEntity, string? mapping, string[]? enums, bool codegen) =>
     [
         .. (enums ?? []).SelectMany(e => new[] { "--enum", e }),
         .. (properties ?? []).SelectMany(p => new[] { "--property", p }),
         .. clientEntity ? new[] { "--client-entity" } : [],
         .. mapping is null ? [] : new[] { "--mapping", mapping },
+        .. codegen ? new[] { "--codegen" } : [],
     ];
 }

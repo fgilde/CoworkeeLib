@@ -4,8 +4,11 @@ using Coworkee.Cli.Spec;
 
 namespace Coworkee.Cli.Generation;
 
-/// <summary>The names one entity of a module is generated with; <see cref="Index"/> resolves its references and enums.</summary>
-internal sealed partial record EntityModel(string App, string Module, EntitySpec Spec, MappingStrategy Mapping, SpecIndex? Index = null)
+/// <summary>
+/// The names one entity of a module is generated with; <see cref="Index"/> resolves its references and enums.
+/// With <see cref="CodeGen"/> the DTO and its mapping are not written but generated from the entity on every build (Coworkee.CodeGen).
+/// </summary>
+internal sealed partial record EntityModel(string App, string Module, EntitySpec Spec, MappingStrategy Mapping, SpecIndex? Index = null, bool CodeGen = false)
 {
     private SpecIndex Known => Index ?? SpecIndex.Empty;
 

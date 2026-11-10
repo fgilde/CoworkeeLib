@@ -214,7 +214,7 @@ public sealed class GenerationTests
         Should.Throw<CliException>(() => FeatureOptions.Property("X:huge"));
     }
 
-    private static TempFolder MinimalApp()
+    internal static TempFolder MinimalApp()
     {
         var app = new TempFolder();
         File.WriteAllText(app.File("Shop.slnx"), "<Solution>\n  <Folder Name=\"/src/\">\n  </Folder>\n</Solution>\n");

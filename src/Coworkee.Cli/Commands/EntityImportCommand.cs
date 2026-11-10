@@ -17,7 +17,7 @@ internal static class EntityImportCommand
 
     public static Command Create() => new Command("import", "Import entities from a database, an OpenAPI document or a CSV file into a module of the app, or into a spec.")
     {
-        Source, From, Module, Tables, Provider, DryRun, SpecOut,
+        Source, From, Module, Tables, Provider, DryRun, SpecOut, FeatureOptions.CodeGen,
     }.Handle(RunAsync);
 
     public static async Task<ImportResult> ImportAsync(ImportRequest request, CancellationToken cancellationToken)
@@ -51,20 +51,20 @@ internal static class EntityImportCommand
     }
 
     /// <summary>A new module is created in one go; into an existing one the entities go one by one, referenced ones first.</summary>
-    public static async Task<int> ApplyAsync(Solution solution, ImportResult result, CancellationToken cancellationToken)
+    public static async Task<int> ApplyAsync(Solution solution, ImportResult result, CancellationToken cancellationToken, bool codeGen = false)
     {
         var existing = ExistingModel.Enums(solution);
         var enums = result.Enums.Where(e => !existing.Contains(e.Name)).ToList();
         if (!Directory.Exists(Path.Combine(solution.Src, $"{solution.Name}.{result.Module.Name}")))
         {
-            return await ModuleCommand.AddAsync(solution, result.Module, cancellationToken, enums);
+            return await ModuleCommand.AddAsync(solution, result.Module, cancellationToken, enums, codeGen);
         }
 
         var spec = new AppSpec { Name = solution.Name, Options = { ["samples"] = solution.HasSamples }, Modules = [result.Module], Enums = enums };
         FeatureOptions.Validate(spec, ExistingModel.Index(solution, spec));
         foreach (var (entity, index) in ReferencedFirst(result.Module.Entities).Select((e, i) => (e, i)))
         {
-            await EntityCommand.AddAsync(solution, result.Module.Name, entity, cancellationToken, index == 0 ? enums : []);
+            await EntityCommand.AddAsync(solution, result.Module.Name, entity, cancellationToken, index == 0 ? enums : [], codeGen);
         }
 
         return 0;
@@ -120,7 +120,18 @@ internal static class EntityImportCommand
         }
 
         var solution = Solution.Find(Environment.CurrentDirectory);
-        await ApplyAsync(solution, result, cancellationToken);
+        var codeGen = parse.GetValue(FeatureOptions.CodeGen);
+        if (codeGen)
+        {
+            result.Module.Entities.ForEach(e => e.Mapping ??= MappingStrategy.Mapperly);
+        }
+
+        await ApplyAsync(solution, result, cancellationToken, codeGen);
+        if (codeGen)
+        {
+            await CodeGenFiles.PrimeAsync(solution, result.Module.Name, result.Module.Entities.Select(e => e.Name), cancellationToken);
+        }
+
         Console.WriteLine($"Imported {result.Module.Entities.Count} entities into {result.Module.Name}. Next: coworkee migrations add Import{result.Module.Name}");
         return 0;
     }

@@ -10,7 +10,13 @@ internal static class ServerFiles
     public static IEnumerable<GeneratedFile> Module(string app, string module, IReadOnlyList<EntityModel> entities)
     {
         var root = $"src/{app}.{module}";
-        yield return new($"{root}/{app}.{module}.csproj", Project(app, entities.Any(e => e.Mapping == MappingStrategy.Mapperly), entities.SelectMany(e => e.ReferencedModules).Distinct(), entities.Any(e => e.Spec.Workflow is not null)));
+        var codeGen = entities.Any(e => e.CodeGen);
+        yield return new($"{root}/{app}.{module}.csproj", Project(app, entities.Any(e => e.Mapping == MappingStrategy.Mapperly), entities.SelectMany(e => e.ReferencedModules).Distinct(), entities.Any(e => e.Spec.Workflow is not null), codeGen));
+        if (codeGen)
+        {
+            yield return new(CodeGenFiles.ConfigPath(app, module), CodeGenFiles.Config(app, module));
+        }
+
         yield return new($"{root}/{ModuleClass(app, module)}.cs", $$"""
             using Coworkee.Application.Authorization;
             using Coworkee.Application.Messaging;
@@ -45,7 +51,7 @@ internal static class ServerFiles
             """);
     }
 
-    public static string Project(string app, bool mapperly, IEnumerable<string>? modules = null, bool workflows = false) => $"""
+    public static string Project(string app, bool mapperly, IEnumerable<string>? modules = null, bool workflows = false, bool codeGen = false) => $"""
         <Project Sdk="Microsoft.NET.Sdk">
           <ItemGroup>
             <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -54,7 +60,7 @@ internal static class ServerFiles
         {string.Concat((modules ?? []).Select(m => ModuleReference(app, m)))}    <CoworkeePackage Include="Coworkee.AspNetCore" />
             <CoworkeePackage Include="Coworkee.Infrastructure" />
             <CoworkeePackage Include="Coworkee.OData" />
-        {(workflows ? WorkflowsReference : string.Empty)}{(mapperly ? MapperlyReference : string.Empty)}  </ItemGroup>
+        {(workflows ? WorkflowsReference : string.Empty)}{(codeGen ? CodeGenFiles.Reference : string.Empty)}{(mapperly ? MapperlyReference : string.Empty)}  </ItemGroup>
         </Project>
 
         """;
@@ -102,7 +108,11 @@ internal static class ServerFiles
         var root = $"src/{e.App}.{e.Module}";
         var features = $"{root}/Features/{e.Plural}";
         yield return new($"{contracts}/{e.Module}Permissions.{e.Plural}.cs", Permissions(e));
-        yield return new($"{contracts}/{e.Name}Dto.cs", Dto(e));
+        if (!e.CodeGen)
+        {
+            yield return new($"{contracts}/{e.Name}Dto.cs", Dto(e));
+        }
+
         yield return new($"{contracts}/AddEdit{e.Name}Request.cs", $$"""
             namespace {{e.App}}.Contracts.{{e.Module}};
 
@@ -122,7 +132,11 @@ internal static class ServerFiles
         }
 
         yield return new($"{features}/Delete{e.Plural}.cs", Delete(e));
-        yield return new($"{features}/{e.Name}Mapping.cs", CommandFiles.Mapping(e));
+        if (!e.CodeGen)
+        {
+            yield return new($"{features}/{e.Name}Mapping.cs", CommandFiles.Mapping(e));
+        }
+
         if (e.Spec.Workflow is { } workflow)
         {
             yield return new($"{features}/{e.Name}Workflow.cs", WorkflowFiles.Declaration(e, workflow));
@@ -167,15 +181,18 @@ internal static class ServerFiles
     private static string Domain(EntityModel e)
     {
         var usings = (e.UsesEnums ? $"using {e.App}.Contracts;\n" : string.Empty) + $"using {e.App}.Contracts.{e.Module};\n"
-            + string.Concat(e.ReferencedModules.Select(m => $"using {e.App}.{m}.Domain;\n"));
-        var inverses = string.Concat(e.Inverses.Select(i => $"    public List<{i.Source.Name}> {i.Property.Inverse} {{ get; set; }} = [];\n\n"));
+            + string.Concat(e.ReferencedModules.Select(m => $"using {e.App}.{m}.Domain;\n")) + (e.CodeGen ? CodeGenFiles.Usings(e) : string.Empty);
+
+        // a generated DTO leaves the inverse collections out like the written one: order -> customer -> orders would never end
+        var ignore = e.CodeGen ? "    [IgnoreOnGeneration]\n" : string.Empty;
+        var inverses = string.Concat(e.Inverses.Select(i => $"{ignore}    public List<{i.Source.Name}> {i.Property.Inverse} {{ get; set; }} = [];\n\n"));
         return $$"""
             using Coworkee.Domain;
             {{usings}}
             namespace {{e.App}}.{{e.Module}}.Domain;
 
             [Realtime({{e.Permissions}}.View)]
-            {{(e.Spec.ClientEntity ? "[ClientEntity]\n" : string.Empty)}}public sealed class {{e.Name}} : AuditedEntity, IMultiTenant
+            {{(e.Spec.ClientEntity ? "[ClientEntity]\n" : string.Empty)}}{{(e.CodeGen ? CodeGenFiles.Attribute(e) : string.Empty)}}public sealed class {{e.Name}} : AuditedEntity, IMultiTenant
             {
             {{string.Concat(e.Properties.Select(p => DomainMember(e, p)))}}{{inverses}}    public Guid TenantId { get; set; }
             }
