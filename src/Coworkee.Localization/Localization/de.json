@@ -2147,7 +2147,6 @@
   "Assigned": "Zugewiesen",
   "Other roles": "Weitere Rollen",
   "No role matches.": "Keine Rolle passt.",
-  "Member of {0} groups": "Mitglied in {0} Gruppen",
   "Tick a group to add this user to it, untick it to take the user out. Each click is saved at once.": "Hake eine Gruppe an, um diesen Benutzer aufzunehmen, nimm den Haken weg, um ihn herauszunehmen. Jeder Klick wird sofort gespeichert.",
   "Member of": "Mitglied in",
   "Other groups": "Weitere Gruppen",

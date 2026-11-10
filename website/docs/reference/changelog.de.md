@@ -4,6 +4,10 @@
 
 ## Unveröffentlicht
 
+### Geändert
+
+- Benutzerverwaltung: Der Reiter *Rollen* ist eine filterbare Checkliste aller Rollen, die Rollen des Benutzers angehakt oben, mit Zähler (*3 von 12 zugewiesen*); der Reiter *Gruppen* zeigt oben *Mitglied in* und darunter die übrigen Gruppen als virtualisierte Checkliste (ohne Filtertext der Baum, Ebene für Ebene, mit Filtertext die Suchtreffer des Servers mit Pfad). *Rolle hinzufügen*, *Gruppe hinzufügen* und ihre Auswahllisten entfallen, und die Dialoge der Benutzerliste (*Rollen von Bob* …) sind sofort bedienbar. Eine angeklickte Zeile bleibt an ihrem Platz, bis sich der Filter ändert, der Reiter neu geöffnet wird oder ein Realtime-Neuladen nach drei Sekunden ohne Klick kommt. Alle drei Reiter sagen *Nur lesen*, wer sie nicht ändern darf. E2E-Tests, die `user-roles-add`/`user-roles-picker` klickten, haken die Rolle stattdessen in `user-roles-list` an; die Zeilen tragen `data-role`/`data-group` mit der Id. Siehe [Benutzerverwaltung](../features/identity.md#benutzerverwaltung).
+
 ### Behoben
 
 - Azure Container Apps: SQL Server lief mit den Standardwerten 0,5 CPU und 1 GiB, ging unter Last der Speicher aus („insufficient system memory in resource pool 'internal'“), er lehnte Verbindungen schon beim Pre-Login-Handshake ab, und jede Anmeldung und jedes Laden einer Seite schlug fehl. Der SQL-Server-Container bekommt jetzt 1 CPU und 2 GiB; erneut deployen.

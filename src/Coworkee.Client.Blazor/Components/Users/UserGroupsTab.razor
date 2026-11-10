@@ -5,8 +5,6 @@
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2" Wrap="Wrap.Wrap">
         <MudTextField T="string" Value="_filter" ValueChanged="FilterAsync" Immediate="true" DebounceInterval="300" Placeholder="@L["Filter"]" Adornment="Adornment.Start"
                       AdornmentIcon="@Icons.Material.Outlined.FilterList" Clearable="true" Margin="Density.Margin" Style="max-width:320px" data-testid="user-groups-filter" />
-        <MudSpacer />
-        <MudText Typo="Typo.body2" Class="mud-text-secondary" data-testid="user-groups-count">@L["Member of {0} groups", Shown().Count()]</MudText>
     </MudStack>
     <MudText Typo="Typo.caption" Class="d-block mb-2 mud-text-secondary" data-testid="user-groups-hint">
         @(_canManage ? L["Tick a group to add this user to it, untick it to take the user out. Each click is saved at once."] : L["Read only: you may not change this."])
@@ -16,7 +14,7 @@
         <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
     }
     @{ var members = Members(); }
-    <MudText Typo="Typo.overline" Class="d-block mud-text-secondary">@L["Member of"]</MudText>
+    <MudText Typo="Typo.overline" Class="d-block mud-text-secondary" data-testid="user-groups-count">@L["Member of"] (@Shown().Count())</MudText>
     <div style="max-height:30vh;overflow:auto" data-testid="user-groups-members">
         @foreach (var (id, path) in members)
         {
@@ -38,7 +36,7 @@
             </MudVirtualize>
             @if (!_busy && others.Count == 0)
             {
-                <MudText Typo="Typo.body2" Class="mud-text-secondary pa-2">@L[_searching ? "No group matches." : "No groups yet."]</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary pa-2">@L[_searching ? "No group matches." : "No groups."]</MudText>
             }
         </div>
         @if (_truncated)

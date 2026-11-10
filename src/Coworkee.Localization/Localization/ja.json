@@ -2147,7 +2147,6 @@
   "Assigned": "割り当て済み",
   "Other roles": "その他のロール",
   "No role matches.": "一致するロールはありません。",
-  "Member of {0} groups": "{0} 個のグループのメンバー",
   "Tick a group to add this user to it, untick it to take the user out. Each click is saved at once.": "グループにチェックを入れるとこのユーザーが追加され、外すと外されます。クリックごとにすぐ保存されます。",
   "Member of": "所属グループ",
   "Other groups": "その他のグループ",

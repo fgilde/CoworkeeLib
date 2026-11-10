@@ -2147,7 +2147,6 @@
   "Assigned": "已分配",
   "Other roles": "其他角色",
   "No role matches.": "没有匹配的角色。",
-  "Member of {0} groups": "属于 {0} 个组",
   "Tick a group to add this user to it, untick it to take the user out. Each click is saved at once.": "勾选组即可将此用户加入，取消勾选即可移出。每次点击都会立即保存。",
   "Member of": "所属组",
   "Other groups": "其他组",

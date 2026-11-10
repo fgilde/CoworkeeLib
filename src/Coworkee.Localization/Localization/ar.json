@@ -2147,7 +2147,6 @@
   "Assigned": "معيّنة",
   "Other roles": "أدوار أخرى",
   "No role matches.": "لا يوجد دور مطابق.",
-  "Member of {0} groups": "عضو في {0} مجموعات",
   "Tick a group to add this user to it, untick it to take the user out. Each click is saved at once.": "حدد مجموعة لإضافة هذا المستخدم إليها، وأزل التحديد لإخراجه. يُحفظ كل نقر فورًا.",
   "Member of": "عضو في",
   "Other groups": "مجموعات أخرى",

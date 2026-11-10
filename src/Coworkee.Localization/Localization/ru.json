@@ -2147,7 +2147,6 @@
   "Assigned": "Назначенные",
   "Other roles": "Другие роли",
   "No role matches.": "Ни одна роль не подходит.",
-  "Member of {0} groups": "Состоит в {0} группах",
   "Tick a group to add this user to it, untick it to take the user out. Each click is saved at once.": "Отметьте группу, чтобы добавить в неё этого пользователя, снимите отметку, чтобы исключить. Каждый щелчок сохраняется сразу.",
   "Member of": "Состоит в",
   "Other groups": "Другие группы",

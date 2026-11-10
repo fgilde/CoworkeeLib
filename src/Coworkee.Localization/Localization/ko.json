@@ -2147,7 +2147,6 @@
   "Assigned": "할당됨",
   "Other roles": "기타 역할",
   "No role matches.": "일치하는 역할이 없습니다.",
-  "Member of {0} groups": "{0}개 그룹의 구성원",
   "Tick a group to add this user to it, untick it to take the user out. Each click is saved at once.": "그룹을 선택하면 이 사용자가 추가되고, 선택을 해제하면 제외됩니다. 클릭할 때마다 바로 저장됩니다.",
   "Member of": "소속 그룹",
   "Other groups": "기타 그룹",
