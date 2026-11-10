@@ -51,7 +51,7 @@ Ein `QueryField` hat einen Namen (den Eigenschaftspfad, `Customer.Name` oder `Cu
 | `Enum` | ist eines von, ist keines von, ist, ist nicht | Auswahl der `Options` |
 | `Guid` | ist, ist nicht, ist eines von, ist keines von | Auswahl der `Options`, Suche über `Lookup`, sonst Text |
 
-`Options` machen jedes Feld zur Auswahl, `Lookup` sucht Auswahlwerte beim Tippen (`Func<string?, CancellationToken, Task<IReadOnlyList<QueryOption>>>`); eine Regel merkt sich die Beschriftungen gesuchter Werte. `Flags = true` kennzeichnet ein `[Flags]`-Enum: *ist* und *ist eines von* prüfen einzelne Flags (`Options has 'Express'`). `Nullable = true` ergänzt *ist leer* und *ist nicht leer*, `Operators` schränkt die Liste ein, `Category` gruppiert die Feldauswahl.
+`Options` machen jedes Feld zur Auswahl, `Lookup` sucht Auswahlwerte beim Tippen (`Func<string?, CancellationToken, Task<IReadOnlyList<QueryOption>>>`); eine Regel merkt sich die Beschriftungen gesuchter Werte. `Flags = true` kennzeichnet ein `[Flags]`-Enum: *ist* und *ist eines von* prüfen einzelne Flags (`Options has 'Express'`). In einer Datentabelle kommen die Felder aus den Spalten, und ein Enum folgt der Facette des Servers zur Eigenschaft, wenn es eine gibt: Ein Client-Typ mit `[Flags]` für ein einfaches Enum des Servers vergleicht mit `eq`. `Nullable = true` ergänzt *ist leer* und *ist nicht leer*, `Operators` schränkt die Liste ein, `Category` gruppiert die Feldauswahl.
 
 ## Übersetzen
 

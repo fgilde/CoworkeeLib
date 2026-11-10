@@ -90,6 +90,35 @@ public sealed class QueryBuilderTests : ClientTestBase
     }
 
     [Fact]
+    public void An_enum_the_client_marks_as_flags_compares_as_the_server_s_facet_says()
+    {
+        var l = Services.GetRequiredService<Localization.CoworkeeLocalizer>();
+        var rule = new QueryGroup { Children = [new QueryRule { Field = "State", Operator = QueryOperator.In, Values = ["Draft", "Booked"] }] };
+        FacetGroupDto Facet(FacetValueKind kind) => new("state", "State", "State", FacetKind.CheckboxList, FacetOperator.Or, [], true, 0) { ValueKind = kind };
+
+        // a plain enum on the server (stored as text there): "has" failed, the rules compare by name and the zero member is a choice
+        var plain = DataTableQueryFields.Field("State", "State", typeof(ShipmentState), l, [Facet(FacetValueKind.Enum)])!;
+        plain.Flags.ShouldBeFalse();
+        plain.Options!.Select(o => o.Value).ShouldContain("Draft");
+        ODataQueryTranslator.ToFilter(rule, [plain]).ShouldBe("(State eq 'Draft' or State eq 'Booked')");
+
+        // flags on the server too, or no facet to tell: the client's type decides
+        DataTableQueryFields.Field("State", "State", typeof(ShipmentState), l, [Facet(FacetValueKind.Flags)])!.Flags.ShouldBeTrue();
+        var flags = DataTableQueryFields.Field("State", "State", typeof(ShipmentState), l)!;
+        flags.Flags.ShouldBeTrue();
+        ODataQueryTranslator.ToFilter(new QueryGroup { Children = [new QueryRule { Field = "State", Operator = QueryOperator.In, Values = ["Booked"] }] }, [flags])
+            .ShouldBe("State has 'Booked'");
+    }
+
+    [Flags]
+    public enum ShipmentState
+    {
+        Draft = 0,
+        Booked = 1,
+        InTransit = 8,
+    }
+
+    [Fact]
     public void The_table_filters_with_the_advanced_filter_and_keeps_it_in_its_state()
     {
         var odata = new FakeODataClient().With("Gadgets", new DataTableTests.Gadget(Guid.NewGuid(), "Drill", "Tools"));

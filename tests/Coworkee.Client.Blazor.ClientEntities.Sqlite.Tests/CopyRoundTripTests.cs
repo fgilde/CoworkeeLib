@@ -15,6 +15,9 @@ public sealed class CopyRoundTripTests : IDisposable
 
     public enum Level { Low, Middle, High }
 
+    [Flags]
+    public enum Perks { None = 0, Express = 1, Gift = 2, Insured = 4 }
+
     public sealed record Inner(string Code, int Size);
 
     public sealed class Row
@@ -38,6 +41,8 @@ public sealed class CopyRoundTripTests : IDisposable
         public char Letter { get; set; }
         public Level Level { get; set; }
         public Level? MaybeLevel { get; set; }
+        public Perks Perks { get; set; }
+        public Perks? MaybePerks { get; set; }
         public Guid? Other { get; set; }
         public List<string> Tags { get; set; } = [];
         public Inner? Inner { get; set; }
@@ -64,6 +69,8 @@ public sealed class CopyRoundTripTests : IDisposable
         Letter = (char)('A' + i % 26),
         Level = (Level)(i % 3),
         MaybeLevel = i % 5 == 0 ? null : (Level)((i + 1) % 3),
+        Perks = (Perks)(i % 8),
+        MaybePerks = i % 5 == 0 ? null : (Perks)((i + 3) % 8),
         Other = i % 2 == 0 ? null : Guid.NewGuid(),
         Tags = [.. Enumerable.Range(0, i % 3).Select(t => "tag" + t)],
         Inner = i % 6 == 0 ? null : new Inner("C" + i, i * 2),
@@ -206,6 +213,15 @@ public sealed class CopyRoundTripTests : IDisposable
         "Letter eq 'C'",
         "Level eq 'High'",
         "MaybeLevel ne 'Low'",
+        // as the query builder writes enums and flags
+        "(Level eq 'Low' or Level eq 'High')",
+        "not ((Level eq 'Low' or Level eq 'High'))",
+        "Level in ('Low','High')",
+        "Perks has 'Gift'",
+        "(Perks has 'Express' or Perks has 'Insured')",
+        "not (Perks has 'Gift')",
+        "MaybePerks has 'Express'",
+        "Perks eq 'Express'",
         "Price gt 30.25",
         "When ge 2026-02-20T00:00:00Z",
         "MaybeWhen lt 2026-01-01T00:00:00Z",
@@ -358,6 +374,8 @@ public sealed class CopyRoundTripTests : IDisposable
             a.Letter.ShouldBe(e.Letter);
             a.Level.ShouldBe(e.Level);
             a.MaybeLevel.ShouldBe(e.MaybeLevel);
+            a.Perks.ShouldBe(e.Perks);
+            a.MaybePerks.ShouldBe(e.MaybePerks);
             a.Other.ShouldBe(e.Other);
             a.Tags.ShouldBe(e.Tags);
             a.Inner.ShouldBe(e.Inner);

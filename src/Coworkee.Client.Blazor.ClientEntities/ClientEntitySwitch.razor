@@ -19,7 +19,7 @@
                 <button type="button" class="@($"cw-ce-switch {(SearchesLocally(set) ? "local" : "server")}")" aria-label="@L["Where searching runs: {0}", Describe(set)]"
                         data-mode="@set.Mode" data-state="@State(set)" data-testid="client-entity-state" @onclick="() => menu.ToggleAsync()">
                     <MudProgressCircular Class="cw-ce-ring" Size="Size.Small" StrokeWidth="3" Color="@RingColor(set.Status)" Value="@RingValue(set.Status)"
-                                         Indeterminate="@(set.Status.State == ClientEntitySyncState.Updating)" />
+                                         Indeterminate="@RingRuns(set.Status)" />
                     <MudIcon Class="cw-ce-icon" Icon="@(SearchesLocally(set) ? Icons.Material.Outlined.Computer : Icons.Material.Outlined.Cloud)" Size="Size.Small" />
                 </button>
             </MudTooltip>

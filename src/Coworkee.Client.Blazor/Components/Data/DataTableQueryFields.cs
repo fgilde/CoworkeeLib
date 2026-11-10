@@ -15,7 +15,7 @@ public static class DataTableQueryFields
     {
         var fields = DataGridLayout<T>.Named(grid)
             .Where(DataGridLayout<T>.IsProperty)
-            .Select(c => Field(c.PropertyName!, DataGridLayout<T>.Label(c), Property(typeof(T), c.PropertyName!), l))
+            .Select(c => Field(c.PropertyName!, DataGridLayout<T>.Label(c), Property(typeof(T), c.PropertyName!), l, facets))
             .OfType<QueryField>()
             .ToList();
         foreach (var facet in facets.Where(f => f.ValueKind == FacetValueKind.Reference && f.ValuePath is not null))
@@ -30,8 +30,12 @@ public static class DataTableQueryFields
         return fields;
     }
 
-    /// <summary>A field for a property path of <paramref name="type"/>, <c>null</c> for types the query builder cannot filter.</summary>
-    public static QueryField? Field(string path, string label, Type? type, Localization.CoworkeeLocalizer l)
+    /// <summary>
+    /// A field for a property path of <paramref name="type"/>, <c>null</c> for types the query builder cannot filter. An enum is a set of flags ("has") when
+    /// its type says so, unless the server's facet of the path says otherwise: the server compares its own type, and a client type marked [Flags] for a
+    /// plain enum of the server (stored as text there) made every rule a "has" the server could not answer.
+    /// </summary>
+    public static QueryField? Field(string path, string label, Type? type, Localization.CoworkeeLocalizer l, IReadOnlyList<FacetGroupDto>? facets = null)
     {
         if (type is null)
         {
@@ -46,13 +50,14 @@ public static class DataTableQueryFields
             return new QueryField(path, label, QueryFieldType.DateTime) { Nullable = nullable };
         }
 
+        var flagged = field.IsEnum && (ServerKind(facets, path) is { } kind ? kind == FacetValueKind.Flags : Flagged(underlying));
         return field switch
         {
             { IsEnum: true } => new QueryField(path, label, QueryFieldType.Enum)
             {
-                Options = [.. Enum.GetValues(underlying).Cast<Enum>().Where(v => !Flagged(underlying) || Convert.ToInt64(v, System.Globalization.CultureInfo.InvariantCulture) != 0)
+                Options = [.. Enum.GetValues(underlying).Cast<Enum>().Where(v => !flagged || Convert.ToInt64(v, System.Globalization.CultureInfo.InvariantCulture) != 0)
                     .Select(v => new QueryOption(v.ToString(), l[EnumLabels.Of(v)]))],
-                Flags = Flagged(underlying),
+                Flags = flagged,
                 Nullable = nullable,
             },
             { IsString: true } => new QueryField(path, label, QueryFieldType.Text),
@@ -66,6 +71,11 @@ public static class DataTableQueryFields
     }
 
     private static bool Flagged(Type type) => type.IsDefined(typeof(FlagsAttribute), false);
+
+    // Enum or Flags as the facet of the path tells, null without one
+    private static FacetValueKind? ServerKind(IReadOnlyList<FacetGroupDto>? facets, string path) =>
+        facets?.FirstOrDefault(f => f.ValueKind is FacetValueKind.Enum or FacetValueKind.Flags
+            && string.Equals((f.ValuePath ?? f.Field).Replace('/', '.'), path, StringComparison.OrdinalIgnoreCase))?.ValueKind;
 
     // the declared type of a path such as Customer.Name, with Nullable kept (the grid's value type drops it)
     private static Type? Property(Type type, string path)

@@ -99,6 +99,30 @@ public sealed class ClientEntitySwitchTests : BunitContext
     }
 
     [Fact]
+    public async Task A_copy_coming_as_one_snapshot_shows_a_running_ring_until_it_is_there()
+    {
+        // SQLite in the browser takes the whole copy as one file: no rows arrive one by one, so a ring by rows stayed at zero, i.e. invisible
+        var store = new MemoryStore { TakesSnapshots = true };
+        var entities = new ClientEntities(new ClientEntityApi(new HttpClient(_server) { BaseAddress = new Uri("http://app/") }), _server,
+            new NoClientEntityStorage(), null, new ClientEntitySignal(), NullLogger<ClientEntities>.Instance, new ClientEntityModes(_api, NullLogger<ClientEntityModes>.Instance), store);
+        Services.AddSingleton(entities);
+        var snapshot = new TaskCompletionSource();
+        _server.SnapshotGate = snapshot.Task;
+        var control = Render<ClientEntitySwitch>(p => p.Add(c => c.Table, _table));
+
+        var set = (await entities.SetAsync<Gadget>("Gadgets", cancellationToken: Ct))!;
+
+        control.WaitForAssertion(() => control.Find("[data-testid='client-entity-state']").GetAttribute("data-state").ShouldBe("downloading"));
+        control.Find(".cw-ce-ring").OuterHtml.ShouldContain("mud-progress-indeterminate");
+        snapshot.SetResult();
+        await set.WhenLocalAsync(Ct);
+        control.WaitForAssertion(() => control.Find("[data-testid='client-entity-state']").GetAttribute("data-state").ShouldBe("synced"));
+        control.Find(".cw-ce-ring").OuterHtml.ShouldNotContain("mud-progress-indeterminate");
+        _server.SnapshotRequests.ShouldBe(1);
+        await entities.DisposeAsync();
+    }
+
+    [Fact]
     public async Task A_set_too_large_to_mirror_checks_the_server_and_shows_nothing_pending()
     {
         _server.MaxRows = 1;
