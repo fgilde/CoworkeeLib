@@ -1,0 +1,21 @@
+@* the search button of the command palette; the app bar shows it while the palette itself sits outside the bar *@
+<style>
+    .cw-palette-trigger { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; margin: 0 6px; border-radius: 8px; cursor: pointer; font: inherit; font-size: .875rem;
+        color: inherit; background: color-mix(in srgb, currentColor 10%, transparent); border: 1px solid color-mix(in srgb, currentColor 22%, transparent); }
+    .cw-palette-trigger:hover { background: color-mix(in srgb, currentColor 16%, transparent); }
+    @@media (max-width: 600px) { .cw-palette-trigger { padding: 0 8px; } .cw-palette-trigger-text, .cw-palette-trigger .cw-palette-kbd { display: none; } }
+</style>
+<MudTooltip Text="@L["Search (Ctrl+K)"]">
+    <button type="button" class="cw-palette-trigger" @onclick="OnClick" aria-label="@L["Search"]" aria-haspopup="dialog" data-testid="palette-button">
+        <MudIcon Icon="@Icons.Material.Outlined.Search" Size="Size.Small" />
+        <span class="cw-palette-trigger-text">@L["Search"]</span>
+        <kbd class="cw-palette-kbd">Ctrl K</kbd>
+    </button>
+</MudTooltip>
+
+@code {
+    [Inject] private CoworkeeLocalizer L { get; set; } = null!;
+
+    /// <summary>Opens the palette.</summary>
+    [Parameter] public EventCallback OnClick { get; set; }
+}

@@ -84,6 +84,8 @@ public partial class CoworkeeAppBar : IDisposable
     private bool HasHiddenPalette => _arranged.FirstOrDefault(a => a.Item.Id == HeaderItems.Search) is { Item: not null } search
         && (Where(search) == (Second ? HeaderPlacement.SecondOverflow : HeaderPlacement.Overflow) || (!Second && Where(search) == HeaderPlacement.Hidden));
 
+    private bool HasPalette => HasHiddenPalette || Bar.Any(i => i.Id == HeaderItems.Search);
+
     private IReadOnlyList<HeaderItem> Placed(HeaderPlacement placement) =>
         _arranged.Where(a => Where(a) == placement && Shown(a.Item)).Select(a => a.Item).ToList();
 

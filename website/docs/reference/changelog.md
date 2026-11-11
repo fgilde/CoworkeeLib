@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixed
+
+- Command palette: its backdrop lay over the palette, so results could not be clicked. The app bar is a stacking context (fixed with a z-index) and held the palette, whose dialog had no z-index of its own below the backdrop's 1450. The palette now sits beside the app bar (the bar shows only the search button, `CommandPaletteButton`) and its dialog lies above its backdrop, in every header position, in the second bar, in the overflow menu and hidden. Apps that place `<CoworkeeCommandPalette />` in a bar of their own should place it outside that bar with `ShowButton="false"` and open it from `<CommandPaletteButton OnClick="..." />`.
+
 ## 0.0.1.78 (2026-11-11)
 
 ### Fixed

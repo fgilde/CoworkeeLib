@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Behoben
+
+- Befehlspalette: Ihr Hintergrund lag über der Palette, Treffer ließen sich nicht anklicken. Die App-Leiste ist ein Stapelkontext (fixiert mit z-index) und enthielt die Palette, deren Dialog keinen eigenen z-index unter den 1450 des Hintergrunds hatte. Die Palette sitzt jetzt neben der App-Leiste (die Leiste zeigt nur den Suchknopf, `CommandPaletteButton`) und ihr Dialog liegt über ihrem Hintergrund, in jeder Position der Kopfleiste, in der zweiten Leiste, im Überlaufmenü und verborgen. Apps, die `<CoworkeeCommandPalette />` in eine eigene Leiste setzen, setzen sie mit `ShowButton="false"` außerhalb dieser Leiste und öffnen sie über `<CommandPaletteButton OnClick="..." />`.
+
 ## 0.0.1.78 (2026-11-11)
 
 ### Behoben
