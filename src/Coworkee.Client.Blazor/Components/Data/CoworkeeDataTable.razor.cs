@@ -306,7 +306,6 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
             FitFilter(column);
             FitCell(column);
-            FitNullSafe(column);
         }
 #pragma warning restore BL0005
     }
