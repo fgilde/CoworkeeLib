@@ -513,3 +513,6 @@ artifacts/
 
 # local planning docs (superpowers)
 /docs/
+
+.libmentor/
+.libmentor-inputs/
