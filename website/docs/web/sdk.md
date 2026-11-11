@@ -24,7 +24,7 @@ public async Task OpenApi_matches_the_snapshot()
 
 ## .NET with `Coworkee.Client`
 
-`CoworkeeApiClient` does the plumbing: JSON calls, OData queries and problem details as `CoworkeeApiException` with status, code and validation messages. You add the typed methods of your endpoints:
+`CoworkeeApiClient` does the plumbing: JSON calls, OData queries and problem details as `CoworkeeApiException` with status, code and validation messages. Its `Json` options are a copy of `CoworkeeJson.Web` (from `Coworkee.Contracts`, which the package references): enums go out by name and read from names or numbers, as the API sends names. You add the typed methods of your endpoints:
 
 ```csharp
 public sealed class MyAppClient(HttpClient http) : CoworkeeApiClient(http)

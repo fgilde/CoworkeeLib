@@ -20,7 +20,7 @@ internal sealed class BackupApi(HttpClient http) : ApiClientBase(http), IBackupA
         using var body = new StreamContent(content);
         body.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
         using var response = await SendContentAsync(HttpMethod.Post, $"{Root}/upload?name={Uri.EscapeDataString(fileName)}", body, cancellationToken);
-        return (await response.Content.ReadFromJsonAsync<BackupDto>(cancellationToken))!;
+        return (await response.Content.ReadFromJsonAsync<BackupDto>(Coworkee.Contracts.CoworkeeJson.Web, cancellationToken))!;
     }
 
     public Task RestoreAsync(Guid id, CancellationToken cancellationToken = default) =>

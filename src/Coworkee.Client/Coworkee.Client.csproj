@@ -2,4 +2,8 @@
   <PropertyGroup>
     <Description>Base for typed .NET clients (SDKs) of Coworkee APIs: JSON calls and problem details as exceptions.</Description>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- CoworkeeJson: the client JSON options; Contracts has no dependencies -->
+    <ProjectReference Include="..\Coworkee.Contracts\Coworkee.Contracts.csproj" />
+  </ItemGroup>
 </Project>

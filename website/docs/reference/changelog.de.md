@@ -2,6 +2,13 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Behoben
+
+- Enums über die Leitung: OData und die API senden Enum-Namen, aber `IODataClient`, `ApiClientBase` (und damit die Proxys der Application Services), Client-Entitäten und `Coworkee.Client` lasen nur mit Web-Standards, ein DTO mit Enum scheiterte also an `"Status":"Shipped"`. Alle nutzen jetzt `CoworkeeJson.Web` (`Coworkee.Contracts`): Namen und Zahlen lesen sich, `[Flags]` gehen als `"A, B"` hin und zurück, Request-Bodies tragen Namen (die Minimal APIs der API nehmen Namen und Zahlen an; ein eigener MVC-Controller braucht einen `JsonStringEnumConverter` in seinen `JsonOptions`). `Coworkee.Client` referenziert `Coworkee.Contracts`. Siehe [OData aus dem Blazor-Client](../web/odata.md#aus-dem-blazor-client).
+- `CoworkeeDataTable`: Eine `PropertyColumn` über eine Navigation (`o => o.OrderStatus.Code`) warf eine `NullReferenceException`, wo die Navigation null war, sobald das Grid die geladene Seite gruppierte (Datenquelle, Client ohne `GroupAsync`) oder seine Zeilen sortierte, und ein Werttyp dahinter zeigte `0`. Solche Spalten bekommen null-sichere Sortier- und Gruppierfunktionen (außer die Seite setzt `SortBy`/`GroupBy`), die Zelle bleibt leer, die OData-Pfade bleiben gleich. `None`-Platzhalter in DTOs können entfallen. Siehe [Datentabellen](../ui/data-table.md#spalten-gruppierung-und-ansichten).
+
 ## 0.0.1.76 (2026-11-10)
 
 ### Geändert

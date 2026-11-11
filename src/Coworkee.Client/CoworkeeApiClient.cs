@@ -9,7 +9,8 @@ namespace Coworkee.Client;
 /// </summary>
 public abstract class CoworkeeApiClient(HttpClient http)
 {
-    protected static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+    /// <summary><see cref="Coworkee.Contracts.CoworkeeJson.Web"/>: enums by name as the API sends them, numbers still read.</summary>
+    protected static readonly JsonSerializerOptions Json = new(Contracts.CoworkeeJson.Web);
 
     protected HttpClient Http => http;
 

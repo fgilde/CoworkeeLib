@@ -94,6 +94,17 @@ public sealed class RequestEndpointTests : IAsyncLifetime
     public async Task Controllers_in_module_assemblies_are_mapped() =>
         (await _client.GetFromJsonAsync<string>("/api/v1/greeting-controller/bob", Ct)).ShouldBe("Hello bob");
 
+    [Theory]
+    [InlineData("""{"shade":"Dark","hues":"Red, Blue"}""")]
+    [InlineData("""{"shade":1,"hues":5}""")]
+    public async Task Enums_in_the_body_bind_from_names_and_numbers_and_come_back_as_names(string json)
+    {
+        var response = await _client.PostAsync("/api/v1/greetings/paint", new StringContent(json, System.Text.Encoding.UTF8, "application/json"), Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await response.Content.ReadAsStringAsync(Ct)).ShouldBe("""{"shade":"Dark","hues":"Red, Blue"}""");
+    }
+
     private RouteEndpoint Endpoint(string pattern) =>
         _app.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>().Where(e => e.RoutePattern.RawText == pattern).ShouldHaveSingleItem();
 
@@ -114,6 +125,24 @@ public sealed class RequestEndpointTests : IAsyncLifetime
     [Get("/api/v1/greetings/count", AllowAnonymous = true)]
     public sealed record CountGreetings : IQuery<int>;
 
+    public enum Shade
+    {
+        Light,
+        Dark,
+    }
+
+    [Flags]
+    public enum Hues
+    {
+        None = 0,
+        Red = 1,
+        Green = 2,
+        Blue = 4,
+    }
+
+    [Post("/api/v1/greetings/paint", AllowAnonymous = true)]
+    public sealed record Paint(Shade Shade, Hues Hues) : ICommand<Result<Paint>>;
+
     [Get("/api/v1/secret", Tag = "Secret stuff")]
     public sealed record GetSecret : IQuery<Result<string>>;
 
@@ -128,8 +157,11 @@ public sealed class RequestEndpointTests : IAsyncLifetime
         IHandler<RenameGreeting, Result<string>>,
         IHandler<DeleteGreeting, Result>,
         IHandler<CountGreetings, int>,
-        IHandler<GetSecret, Result<string>>
+        IHandler<GetSecret, Result<string>>,
+        IHandler<Paint, Result<Paint>>
     {
+        public Task<Result<Paint>> HandleAsync(Paint request, CancellationToken cancellationToken) => Task.FromResult<Result<Paint>>(request);
+
         public Task<Result<string>> HandleAsync(Greet request, CancellationToken cancellationToken) => Task.FromResult<Result<string>>($"Hello {request.Name}");
 
         public Task<Result<int>> HandleAsync(CreateGreeting request, CancellationToken cancellationToken) => Task.FromResult<Result<int>>(request.Times);

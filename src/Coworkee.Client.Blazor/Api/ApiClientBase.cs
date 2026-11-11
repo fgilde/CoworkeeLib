@@ -1,22 +1,26 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using Coworkee.Contracts;
 
 namespace Coworkee.Client.Blazor.Api;
 
-/// <summary>Base for typed API clients behind the BFF: sends the CSRF header and maps problem details to <see cref="ApiException"/>.</summary>
+/// <summary>
+/// Base for typed API clients behind the BFF: sends the CSRF header and maps problem details to <see cref="ApiException"/>.
+/// Bodies are read and written with <see cref="CoworkeeJson.Web"/> (enums by name, numbers still read).
+/// </summary>
 public abstract class ApiClientBase(HttpClient http)
 {
     protected async Task<T> GetAsync<T>(string url, CancellationToken cancellationToken)
     {
         using var response = await http.GetAsync(url, cancellationToken);
         await EnsureSuccessAsync(response, cancellationToken);
-        return (await response.Content.ReadFromJsonAsync<T>(cancellationToken))!;
+        return (await response.Content.ReadFromJsonAsync<T>(CoworkeeJson.Web, cancellationToken))!;
     }
 
     protected async Task<T> SendAsync<T>(HttpMethod method, string url, object? body, CancellationToken cancellationToken)
     {
         using var response = await SendCoreAsync(method, url, body, cancellationToken);
-        return (await response.Content.ReadFromJsonAsync<T>(cancellationToken))!;
+        return (await response.Content.ReadFromJsonAsync<T>(CoworkeeJson.Web, cancellationToken))!;
     }
 
     protected async Task SendAsync(HttpMethod method, string url, object? body, CancellationToken cancellationToken)
@@ -25,7 +29,7 @@ public abstract class ApiClientBase(HttpClient http)
     }
 
     protected Task<HttpResponseMessage> SendCoreAsync(HttpMethod method, string url, object? body, CancellationToken cancellationToken) =>
-        SendContentAsync(method, url, body is null ? null : JsonContent.Create(body), cancellationToken);
+        SendContentAsync(method, url, body is null ? null : JsonContent.Create(body, body.GetType(), options: CoworkeeJson.Web), cancellationToken);
 
     /// <summary>Sends any content, for example binary chunks; the caller disposes the response.</summary>
     protected async Task<HttpResponseMessage> SendContentAsync(HttpMethod method, string url, HttpContent? content, CancellationToken cancellationToken)
@@ -39,7 +43,7 @@ public abstract class ApiClientBase(HttpClient http)
 
     /// <summary>Reads a response of JSON lines as they arrive (application/x-ndjson), e.g. a streamed assistant answer.</summary>
     protected IAsyncEnumerable<T> StreamAsync<T>(string url, object body, CancellationToken cancellationToken) =>
-        StreamAsync<T>(new HttpRequestMessage(HttpMethod.Post, url) { Content = JsonContent.Create(body) }, cancellationToken);
+        StreamAsync<T>(new HttpRequestMessage(HttpMethod.Post, url) { Content = JsonContent.Create(body, body.GetType(), options: CoworkeeJson.Web) }, cancellationToken);
 
     /// <summary>Reads JSON lines of a GET as they arrive, e.g. the hits of the global search.</summary>
     protected IAsyncEnumerable<T> StreamAsync<T>(string url, CancellationToken cancellationToken) =>
@@ -57,7 +61,7 @@ public abstract class ApiClientBase(HttpClient http)
         {
             if (line.Length > 0)
             {
-                yield return JsonSerializer.Deserialize<T>(line, JsonSerializerOptions.Web)!;
+                yield return JsonSerializer.Deserialize<T>(line, CoworkeeJson.Web)!;
             }
         }
     }

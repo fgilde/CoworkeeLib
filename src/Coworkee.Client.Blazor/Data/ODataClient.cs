@@ -2,14 +2,13 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Coworkee.Client.Blazor.Api;
+using Coworkee.Contracts;
 using Coworkee.Contracts.Data;
 
 namespace Coworkee.Client.Blazor.Data;
 
 internal sealed class ODataClient(HttpClient http) : IODataClient
 {
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
-
     public async Task<ODataPage<T>> QueryAsync<T>(string entitySet, ODataQuery query, CancellationToken cancellationToken = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, $"odata/{Uri.EscapeDataString(entitySet)}{query.ToQueryString()}");
@@ -35,7 +34,7 @@ internal sealed class ODataClient(HttpClient http) : IODataClient
         }
 
         // one pass over the response: large pages, such as the download of client entities, cost no extra document
-        var page = await response.Content.ReadFromJsonAsync<Response<T>>(Json, cancellationToken);
+        var page = await response.Content.ReadFromJsonAsync<Response<T>>(CoworkeeJson.Web, cancellationToken);
         return new ODataPage<T>(page?.Value ?? [], page?.Count, page?.Facets ?? []);
     }
 
@@ -69,7 +68,7 @@ internal sealed class ODataClient(HttpClient http) : IODataClient
             }
         }
 
-        return element.ValueKind == JsonValueKind.Null ? null : element.Deserialize(type, Values);
+        return element.ValueKind == JsonValueKind.Null ? null : element.Deserialize(type, CoworkeeJson.Web);
     }
 
     private static bool TryGetProperty(JsonElement element, string name, out JsonElement value)
@@ -86,8 +85,6 @@ internal sealed class ODataClient(HttpClient http) : IODataClient
         value = default;
         return false;
     }
-
-    private static readonly JsonSerializerOptions Values = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
 
     private sealed class Response<T>
     {
