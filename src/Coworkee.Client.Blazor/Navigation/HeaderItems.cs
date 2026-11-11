@@ -18,7 +18,7 @@ public static class HeaderItems
     public const string Assistant = "assistant";
     public const string About = "about";
 
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
+    private static readonly JsonSerializerOptions Json = Coworkee.Contracts.CoworkeeJson.Web;
 
     // app items keep their own small orders and sit between the search and the language menu, as before the header could be arranged
     public static IReadOnlyList<HeaderItem> BuiltIn { get; } =

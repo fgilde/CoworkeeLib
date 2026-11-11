@@ -20,7 +20,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     private const int SnapshotAfterChunks = 10;
     private const int MaxViews = 16;
 
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions Json = Contracts.CoworkeeJson.Web;
     private static readonly Func<T, Guid>? IdOf = typeof(T).GetProperty("Id", BindingFlags.Public | BindingFlags.Instance) is { PropertyType: var type, GetMethod: { } getter } && type == typeof(Guid)
         ? getter.CreateDelegate<Func<T, Guid>>()
         : null;

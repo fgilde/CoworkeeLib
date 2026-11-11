@@ -24,7 +24,7 @@ public async Task OpenApi_matches_the_snapshot()
 
 ## .NET mit `Coworkee.Client`
 
-`CoworkeeApiClient` erledigt die Grundlagen: JSON-Aufrufe, OData-Abfragen und Problem Details als `CoworkeeApiException` mit Status, Code und Validierungsmeldungen. Du ergänzt die typisierten Methoden deiner Endpunkte:
+`CoworkeeApiClient` erledigt die Grundlagen: JSON-Aufrufe, OData-Abfragen und Problem Details als `CoworkeeApiException` mit Status, Code und Validierungsmeldungen. Seine `Json`-Optionen sind eine Kopie von `CoworkeeJson.Web` (aus `Coworkee.Contracts`, das das Paket referenziert): Enums gehen mit Namen hinaus und lesen sich aus Namen oder Zahlen, da die API Namen sendet. Du ergänzt die typisierten Methoden deiner Endpunkte:
 
 ```csharp
 public sealed class MyAppClient(HttpClient http) : CoworkeeApiClient(http)

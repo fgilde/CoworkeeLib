@@ -19,7 +19,7 @@ internal sealed class DataTransferApi(HttpClient http) : ApiClientBase(http), ID
     {
         using var form = new MultipartFormDataContent { { new StreamContent(content), "file", fileName } };
         using var response = await SendContentAsync(HttpMethod.Post, $"{Root}/{Uri.EscapeDataString(entitySet)}/import/file", form, cancellationToken);
-        return (await response.Content.ReadFromJsonAsync<ImportSheetDto>(cancellationToken))!;
+        return (await response.Content.ReadFromJsonAsync<ImportSheetDto>(Coworkee.Contracts.CoworkeeJson.Web, cancellationToken))!;
     }
 
     public Task<ImportSheetDto> ReadAgainAsync(Guid jobId, ImportParseOptions options, CancellationToken cancellationToken = default) =>
@@ -62,7 +62,7 @@ internal sealed class DataTransferApi(HttpClient http) : ApiClientBase(http), ID
         using var response = await SendContentAsync(HttpMethod.Get, url, null, cancellationToken);
         if (response.StatusCode == HttpStatusCode.Accepted)
         {
-            var job = await response.Content.ReadFromJsonAsync<DataTransferJobDto>(cancellationToken);
+            var job = await response.Content.ReadFromJsonAsync<DataTransferJobDto>(Coworkee.Contracts.CoworkeeJson.Web, cancellationToken);
             return new ExportResult(null, job!.FileName ?? entitySet, string.Empty, job);
         }
 

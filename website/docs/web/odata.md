@@ -256,6 +256,8 @@ var page = await odata.QueryAsync<BrandDto>("Brands", new ODataQuery { OrderBy =
 
 The BFF forwards `/odata` to the API with the user's token.
 
+OData writes enums by name (`"Status":"Shipped"`, `[Flags]` as `"Red, Blue"`). `IODataClient`, `ApiClientBase`, the [application service](application-services.md) proxies, [client entities](../ui/client-entities.md) and `Coworkee.Client` read and write JSON with `CoworkeeJson.Web` (namespace `Coworkee.Contracts`): web defaults plus `JsonStringEnumConverter`, so names and numbers read into plain and `[Flags]` enums. Derive own options from it (`new JsonSerializerOptions(CoworkeeJson.Web) { WriteIndented = true }`); the shared instance is read-only.
+
 ## Client entities
 
 Mark an entity `[ClientEntity]` and Blazor clients keep a copy of its set and query it locally; see [Client entities](../ui/client-entities.md).

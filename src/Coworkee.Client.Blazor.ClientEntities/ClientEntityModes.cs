@@ -9,7 +9,7 @@ namespace Coworkee.Client.Blazor.ClientEntities;
 /// <summary>The user's choice of client or server per mirrored set, kept in the user setting <see cref="TableSettings.ClientEntityModes"/>.</summary>
 internal sealed class ClientEntityModes(ICoworkeeApi api, ILogger<ClientEntityModes> logger)
 {
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
+    private static readonly JsonSerializerOptions Json = Contracts.CoworkeeJson.Web;
 
     private Task<Dictionary<string, ClientEntityMode>?>? _loading;
 

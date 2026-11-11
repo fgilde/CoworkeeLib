@@ -22,7 +22,7 @@ internal sealed class CopyDb<T>(DbContextOptions<CopyDb<T>> options) : DbContext
 /// </summary>
 internal static class CopyModel
 {
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions Json = Contracts.CoworkeeJson.Web;
     private static readonly MethodInfo JsonConverterMethod = typeof(CopyModel).GetMethod(nameof(JsonConverter), BindingFlags.NonPublic | BindingFlags.Static)!;
 
     public static IReadOnlyList<PropertyInfo> Properties(Type type) =>

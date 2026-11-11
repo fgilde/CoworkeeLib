@@ -174,6 +174,8 @@ internal sealed class CatalogApi(HttpClient http) : ApiClientBase(http), ICatalo
 }
 ```
 
+Bodies gehen mit `CoworkeeJson.Web` hinaus und kommen damit zurück: Enums werden mit Namen geschrieben und aus Namen oder Zahlen gelesen, so wie die Minimal APIs der API sie annehmen und senden (siehe [OData aus dem Blazor-Client](../web/odata.md#aus-dem-blazor-client)). Ein eigener Controller (MVC) der App liest Namen in einem Body nur, wenn seine `JsonOptions` einen `JsonStringEnumConverter` haben.
+
 `Snackbar.RunAsync(() => api.SaveAsync(...), "Saved")` führt einen Aufruf aus und zeigt Erfolg oder die Validierungsmeldungen eines Fehlers.
 
 ## Aktueller Benutzer

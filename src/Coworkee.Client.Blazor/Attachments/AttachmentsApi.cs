@@ -18,7 +18,7 @@ internal sealed class AttachmentsApi(HttpClient http) : ApiClientBase(http), IAt
         using var body = new StreamContent(content);
         body.Headers.ContentType = MediaTypeHeaderValue.TryParse(contentType, out var type) ? type : new MediaTypeHeaderValue("application/octet-stream");
         using var response = await SendContentAsync(HttpMethod.Post, $"{AttachmentUrls.Slot(entityType, entityId, slot)}?name={Uri.EscapeDataString(fileName)}", body, cancellationToken);
-        return (await response.Content.ReadFromJsonAsync<RecordAttachmentDto>(cancellationToken))!;
+        return (await response.Content.ReadFromJsonAsync<RecordAttachmentDto>(Coworkee.Contracts.CoworkeeJson.Web, cancellationToken))!;
     }
 
     public Task DeleteAsync(RecordAttachmentDto attachment, CancellationToken cancellationToken = default) =>

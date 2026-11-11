@@ -39,7 +39,7 @@ internal sealed class FilesApi(HttpClient http) : ApiClientBase(http), IFilesApi
         body.Headers.ContentType = MediaTypeHeaderValue.TryParse(contentType, out var type) ? type : new MediaTypeHeaderValue("application/octet-stream");
         var url = $"{Root}?name={Uri.EscapeDataString(name)}" + (folderId is { } id ? $"&folderId={id}" : string.Empty);
         using var response = await SendContentAsync(HttpMethod.Post, url, body, cancellationToken);
-        return (await response.Content.ReadFromJsonAsync<StoredFileDto>(cancellationToken))!;
+        return (await response.Content.ReadFromJsonAsync<StoredFileDto>(Coworkee.Contracts.CoworkeeJson.Web, cancellationToken))!;
     }
 
     public async Task<Stream> OpenReadAsync(Guid id, CancellationToken cancellationToken = default)
