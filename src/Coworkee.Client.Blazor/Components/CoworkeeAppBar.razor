@@ -24,14 +24,15 @@ else
         @Content(vertical: false)
     </MudAppBar>
 }
+@if (HasPalette)
+{
+    @* beside the bar, not in it: a bar is a stacking context (fixed, z-index) that would hold the palette's backdrop and dialog below other bars and floating parts;
+       in the overflow menu or hidden, Ctrl+K still opens it *@
+    <CoworkeeCommandPalette @ref="_palette" ShowButton="false" />
+}
 
 @code {
     private RenderFragment Content(bool vertical) => @<text>
-        @if (HasHiddenPalette)
-        {
-            @* in the overflow menu or hidden: Ctrl+K still opens the palette *@
-            <CoworkeeCommandPalette @ref="_palette" ShowButton="false" />
-        }
         @if (!vertical && !HasSpacer)
         {
             @* without a spacer the items sit at the end of a bar across the window *@
@@ -70,7 +71,7 @@ else
         @switch (item.Id)
         {
             case HeaderItems.Search:
-                <CoworkeeCommandPalette @ref="_palette" />
+                <CommandPaletteButton OnClick="OpenSearchAsync" />
                 break;
             case HeaderItems.Language:
                 <LanguageMenu />

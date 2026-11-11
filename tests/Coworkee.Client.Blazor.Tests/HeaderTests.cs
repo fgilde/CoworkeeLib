@@ -213,6 +213,34 @@ public sealed class HeaderTests : ClientTestBase
         layout.Find(".mud-drawer").ClassList.ShouldContain("mud-drawer-clipped-never");
     }
 
+    [Theory]
+    [InlineData("Top", "Bar")]
+    [InlineData("Right", "Bar")]
+    [InlineData("Left", "Overflow")]
+    [InlineData("Top", "SecondBar")]
+    public async Task The_palette_opens_outside_every_bar_so_its_backdrop_cannot_cover_it(string position, string placement)
+    {
+        // a bar is fixed with a z-index: a palette inside it lay under its own backdrop (and under other bars)
+        Configure($$"""[{"id":"search","placement":"{{placement}}"}]""", position, placement == "SecondBar" ? "Right" : null);
+        var layout = RenderLayout();
+        layout.WaitForAssertion(() => layout.Find("[data-testid='app-bar']"));
+
+        if (placement == "Overflow")
+        {
+            await layout.Find("[data-testid='app-bar-more'] button").ClickAsync(new());
+            await layout.Find("[data-testid='header-search']").ClickAsync(new());
+        }
+        else
+        {
+            await layout.Find("[data-testid='palette-button']").ClickAsync(new());
+        }
+
+        layout.WaitForAssertion(() => layout.Find("[data-testid='palette']"));
+        layout.FindAll("[data-testid='palette']").Count.ShouldBe(1);
+        layout.FindAll("[data-testid^='app-bar'] [data-testid='palette'], [data-testid^='app-bar'] [data-testid='palette-backdrop']").ShouldBeEmpty();
+        layout.Find("[data-testid='palette']").ParentElement!.ClassList.ShouldContain("mud-layout");
+    }
+
     [Fact]
     public async Task A_bar_at_the_right_edge_alone_opens_an_unpinned_navigation_with_its_own_menu_button()
     {
