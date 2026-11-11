@@ -3,7 +3,7 @@ name: Docs
 on:
   push:
     branches: [main]
-    paths: ["website/**", ".github/workflows/docs.yml"]
+    paths: ["website/**", "src/**", "Version.props", "README.md", "libmentor.json", ".config/dotnet-tools.json", ".github/actions/libmentor/**", ".github/scripts/libmentor-version.py", ".github/workflows/docs.yml"]
   workflow_dispatch:
 
 permissions:
@@ -25,6 +25,9 @@ jobs:
           python-version: "3.12"
       - run: pip install mkdocs-material==9.6.23 mkdocs-static-i18n==1.3.1
       - run: mkdocs build --strict -f website/mkdocs.yml -d ../site
+      - uses: ./.github/actions/libmentor
+      - name: Include AI documentation
+        run: cp -R .libmentor site/ai
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

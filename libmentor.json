@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "name": "Coworkee",
+  "repository": "https://github.com/fgilde/CoworkeeLib",
+  "revision": "main",
+  "output": ".libmentor",
+  "exclude": [
+    "**/*.de.md",
+    "docs/de/**",
+    "**/node_modules/**"
+  ],
+  "examples": [],
+  "guidance": [
+    "This is a source snapshot. Check the installed package version and API evidence before suggesting code."
+  ],
+  "description": "A modular .NET application framework with Blazor, identity, persistence and Aspire integration.",
+  "version": "0.1.0-source",
+  "documents": [
+    "README.md",
+    "src/*/README.md",
+    "website/docs/**/*.md"
+  ],
+  "sources": [
+    "src/**/*.cs"
+  ],
+  "packages": [
+    "Coworkee.Core",
+    "Coworkee.Application",
+    "Coworkee.AspNetCore",
+    "Coworkee.Aspire"
+  ],
+  "baseUrl": "https://framework.coworkee.de/ai"
+}
