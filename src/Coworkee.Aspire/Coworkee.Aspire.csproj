@@ -7,6 +7,8 @@
     <!-- advisory GHSA-qhrr-8q5h-9q3h: lifts the MessagePack of Aspire.Hosting (2.5.302), also for the app hosts -->
     <PackageReference Include="MessagePack" />
     <PackageReference Include="Aspire.Hosting" />
+    <!-- advisory GHSA-f7vh-h5g3-7jrh: the Nextended Aspire packages bring Aspire.Hosting.AppHost 13.6.4 -->
+    <PackageReference Include="Aspire.Hosting.AppHost" />
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
     <PackageReference Include="Aspire.Hosting.SqlServer" />
     <PackageReference Include="Aspire.Hosting.Redis" />

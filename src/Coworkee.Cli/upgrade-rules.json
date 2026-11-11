@@ -794,6 +794,45 @@
           ]
         }
       ]
+    },
+    {
+      "version": "0.0.1.78",
+      "breaking": [
+        "Security updates: ASP.NET Core, EF Core and Microsoft.Extensions packages 10.0.15, Aspire 13.6.5 (app host SDK, Aspire.Hosting.*, Aspire.Hosting.Testing, Aspire.StackExchange.Redis).",
+        "Nextended 10.1.55: apps that pin Nextended packages move up."
+      ],
+      "needsMigration": false,
+      "manual": [
+        {
+          "text": "Raise Microsoft.AspNetCore.*, Microsoft.EntityFrameworkCore.* and Microsoft.Extensions.* references from 10.0.14 to 10.0.15.",
+          "find": "Version=\"10\\.0\\.14\"",
+          "files": [
+            "**/*.csproj",
+            "Directory.Packages.props"
+          ]
+        }
+      ],
+      "packages": [
+        { "id": "Aspire.AppHost.Sdk", "version": "13.6.5" },
+        { "id": "Aspire.Hosting.Testing", "version": "13.6.5" },
+        { "id": "Aspire.Hosting.Azure.Storage", "version": "13.6.5" },
+        { "id": "Aspire.Hosting.RabbitMQ", "version": "13.6.5" },
+        { "id": "Aspire.Hosting.SqlServer", "version": "13.6.5" },
+        { "id": "Aspire.Hosting.PostgreSQL", "version": "13.6.5" },
+        { "id": "Aspire.Hosting.Redis", "version": "13.6.5" },
+        { "id": "Aspire.StackExchange.Redis", "version": "13.6.5" },
+        { "id": "Microsoft.AspNetCore.Components.WebAssembly", "version": "10.0.15" },
+        { "id": "Microsoft.AspNetCore.Components.WebAssembly.Server", "version": "10.0.15" },
+        { "id": "Microsoft.AspNetCore.Authentication.JwtBearer", "version": "10.0.15" },
+        { "id": "Microsoft.EntityFrameworkCore.Design", "version": "10.0.15" },
+        { "id": "Microsoft.Extensions.Configuration", "version": "10.0.15" },
+        { "id": "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore", "version": "10.0.15" },
+        { "id": "Microsoft.Extensions.Hosting", "version": "10.0.15" },
+        { "id": "Microsoft.AspNetCore.Mvc.Testing", "version": "10.0.15" },
+        { "id": "Nextended.Aspire.Hosting.AspireUI", "version": "10.1.55" },
+        { "id": "Nextended.Core", "version": "10.1.55" },
+        { "id": "Nextended.Web", "version": "10.1.55" }
+      ]
     }
   ]
 }
