@@ -57,9 +57,12 @@ public partial class CoworkeeDataTable<T>
 #pragma warning restore BL0005
     }
 
-    // MudBlazor compiles the cell null safe, but groups the loaded rows (and sorts its filtered items) through the plain expression, so
-    // o => o.Status.Code throws where Status is null; the table gives such columns a null safe getter unless the page set its own SortBy or GroupBy
-    private static void FitNullSafe(Column<T> column)
+    // MudBlazor compiles the cell with null checks that test each step through the unguarded steps before it (MudBlazor 9.12 ExpressionNull), so
+    // o => o.Supplier.Organization.Name throws in every cell where Supplier is null, even with a cell template (Cell's constructor reads the value
+    // for editing); it groups the loaded rows (and sorts its filtered items) through the plain expression, so o => o.Status.Code throws there.
+    // The table gives such columns a null safe getter for cell, sort and group unless the page set its own SortBy or GroupBy.
+    // DataTableNullSafeColumns calls this after every parameter set of the columns, as the column compiles its cell again for each new expression.
+    internal static void FitNullSafe(Column<T> column)
     {
         if (column is IPropertyLikeColumn || !DataGridLayout<T>.IsProperty(column) || column.PropertyName is not { } name
             || !name.Contains('.') || PropertyPath.TypeOf(typeof(T), name) is null)
@@ -78,6 +81,12 @@ public partial class CoworkeeDataTable<T>
         if (GroupByFunction.GetValue(column) is not Delegate group || group.Target == column)
         {
             GroupByFunction.SetValue(column, get);
+        }
+
+        // ponytail: MudBlazor 9 keeps the compiled cell private; DataTableNullColumnsTests fail when it is renamed
+        if (column.GetType().GetField("_cellContentFunc", BindingFlags.Instance | BindingFlags.NonPublic) is { } cell && !ReferenceEquals(cell.GetValue(column), get))
+        {
+            cell.SetValue(column, get);
         }
     }
 }

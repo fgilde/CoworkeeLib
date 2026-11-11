@@ -255,6 +255,7 @@
         <SelectColumn T="T" />
     }
     @Columns
+    <DataTableNullSafeColumns T="T" Table="this" />
     @if (HasRowActions)
     {
         <TemplateColumn T="T" Sortable="false" Groupable="false" Filterable="false" Hideable="false" Resizable="false" DragAndDropEnabled="false" ShowColumnOptions="false"

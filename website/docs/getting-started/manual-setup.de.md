@@ -95,7 +95,7 @@ dotnet add src/Shop.Infrastructure package Coworkee.Theming --version 0.0.1.64
 dotnet add src/Shop.Infrastructure package Coworkee.Realtime --version 0.0.1.64
 dotnet add src/Shop.Infrastructure package Coworkee.Account --version 0.0.1.64
 dotnet add src/Shop.Infrastructure package Coworkee.Localization --version 0.0.1.64
-dotnet add src/Shop.Infrastructure package Microsoft.EntityFrameworkCore.Design --version 10.0.14
+dotnet add src/Shop.Infrastructure package Microsoft.EntityFrameworkCore.Design --version 10.0.15
 dotnet add src/Shop.Api package Coworkee.AspNetCore --version 0.0.1.64
 dotnet add src/Shop.Auth package Coworkee.AuthServer --version 0.0.1.64
 dotnet add src/Shop.Web package Coworkee.Bff --version 0.0.1.64
@@ -108,8 +108,8 @@ dotnet add src/Shop.ServiceDefaults package OpenTelemetry.Extensions.Hosting
 dotnet add src/Shop.ServiceDefaults package OpenTelemetry.Instrumentation.AspNetCore
 dotnet add src/Shop.ServiceDefaults package OpenTelemetry.Instrumentation.Http
 dotnet add src/Shop.ServiceDefaults package OpenTelemetry.Instrumentation.Runtime
-dotnet add src/Shop.Web package Microsoft.AspNetCore.Components.WebAssembly.Server --version 10.0.14
-dotnet add src/Shop.Web.Client package Microsoft.AspNetCore.Components.WebAssembly --version 10.0.14
+dotnet add src/Shop.Web package Microsoft.AspNetCore.Components.WebAssembly.Server --version 10.0.15
+dotnet add src/Shop.Web.Client package Microsoft.AspNetCore.Components.WebAssembly --version 10.0.15
 ```
 
 - Die Coworkee-Pakete bringen mit, worauf sie aufbauen: `Coworkee.Infrastructure` bringt EF Core und die Provider für Postgres, SQL Server und SQLite, `Coworkee.AspNetCore` die Teile der API und so weiter. [Pakete und Namespaces](../reference/packages.md) listet, was jedes enthält.
@@ -130,7 +130,7 @@ dotnet add src/Shop.Web.Client package Microsoft.AspNetCore.Components.WebAssemb
 `Shop.AppHost` entstand als Konsolen-App. Gib ihm das Aspire-SDK (die Version der Aspire-Pakete, die `Coworkee.Aspire` nutzt) und eine User-Secrets-Id, unter der Aspire das generierte Datenbankpasswort ablegt. Ersetze in `src/Shop.AppHost/Shop.AppHost.csproj` die erste Zeile und ergänze die beiden Eigenschaften nach `<Nullable>`:
 
 ```xml title="Shop.AppHost.csproj"
-<Project Sdk="Aspire.AppHost.Sdk/13.6.4">
+<Project Sdk="Aspire.AppHost.Sdk/13.6.5">
   ...
     <UserSecretsId>shop-apphost</UserSecretsId>
     <NoWarn>$(NoWarn);ASPIRE010</NoWarn>

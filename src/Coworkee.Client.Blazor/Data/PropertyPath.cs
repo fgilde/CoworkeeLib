@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -23,7 +24,10 @@ public static class PropertyPath
         return type;
     }
 
-    public static Func<T, object?> Getter<T>(string path)
+    /// <summary>A getter of the path that answers null where any step is null; compiled once per row type and path.</summary>
+    public static Func<T, object?> Getter<T>(string path) => Getters<T>.ByPath.GetOrAdd(path, Compile<T>);
+
+    private static Func<T, object?> Compile<T>(string path)
     {
         var row = Expression.Parameter(typeof(T), "row");
         Expression body = row;
@@ -48,5 +52,10 @@ public static class PropertyPath
         }
 
         return Expression.Lambda<Func<T, object?>>(value, row).Compile();
+    }
+
+    private static class Getters<T>
+    {
+        public static readonly ConcurrentDictionary<string, Func<T, object?>> ByPath = new(StringComparer.Ordinal);
     }
 }
