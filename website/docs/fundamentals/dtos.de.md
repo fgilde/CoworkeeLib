@@ -41,7 +41,7 @@ Daneben liegt eine `codegen.json`. Das Paket findet sie über den Namen; ohne si
 
 Die erzeugten Dateien sind normale Quelldateien im Repository und werden im Pull Request geprüft wie jede andere Änderung. Neu geschrieben werden sie nur, wenn der Build eine geänderte Entity sieht; eine Änderung ist nach dem nächsten Build sichtbar. Wer eine Datei löscht, bekommt sie beim nächsten Build neu.
 
-Geschrieben werden die Dateien, während das Modul kompiliert, also nach dem Build des Contracts-Projekts: Code, der ein neues DTO verwendet, kompiliert ab dem nächsten Build. Um ein handgeschriebenes DTO zu ersetzen, die Entity markieren und einmal bauen, solange das handgeschriebene DTO noch existiert, dann es und sein Mapping löschen. Projekte mit `codegen.json` kompilieren in einem eigenen Compiler-Prozess (das Paket setzt `UseSharedCompilation` auf `false`): parallel gebaute Module würden sonst in die Ordner der anderen schreiben.
+Geschrieben werden die Dateien, während das Modul kompiliert, also nach dem Build des Contracts-Projekts: Code, der ein neues DTO verwendet, kompiliert ab dem nächsten Build. Um ein handgeschriebenes DTO zu ersetzen, die Entity markieren und einmal bauen, solange das handgeschriebene DTO noch existiert, dann es und sein Mapping löschen.
 
 ## Entities markieren
 

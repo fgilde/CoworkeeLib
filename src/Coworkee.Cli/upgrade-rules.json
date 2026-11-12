@@ -833,6 +833,19 @@
         { "id": "Nextended.Core", "version": "10.1.55" },
         { "id": "Nextended.Web", "version": "10.1.55" }
       ]
+    },
+    {
+      "version": "0.0.1.80",
+      "breaking": [
+        "Nextended 10.1.59: apps that pin Nextended packages move up (any newer Nextended works, none older)."
+      ],
+      "needsMigration": false,
+      "packages": [
+        { "id": "Nextended.Aspire.Hosting.AspireUI", "version": "10.1.59" },
+        { "id": "Nextended.CodeGen", "version": "10.1.59" },
+        { "id": "Nextended.Core", "version": "10.1.59" },
+        { "id": "Nextended.Web", "version": "10.1.59" }
+      ]
     }
   ]
 }

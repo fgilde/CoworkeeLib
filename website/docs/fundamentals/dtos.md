@@ -41,7 +41,7 @@ and put a `codegen.json` next to the project file. The package picks it up by na
 
 The generated files are ordinary source files in the repository: review them in the pull request like any other change. They are only rewritten when the build sees a changed entity, and a change shows up after the next build. Delete a file to have it generated again.
 
-The files are written while the module compiles, after the contracts project is built, so code that uses a new DTO compiles from the next build on. To replace a hand-written DTO, mark the entity and build once while the hand-written DTO still exists, then delete it and its mapping. Projects with a `codegen.json` compile in a compiler process of their own (the package sets `UseSharedCompilation` to `false`): modules built in parallel would otherwise write into each other's folders.
+The files are written while the module compiles, after the contracts project is built, so code that uses a new DTO compiles from the next build on. To replace a hand-written DTO, mark the entity and build once while the hand-written DTO still exists, then delete it and its mapping.
 
 ## Mark the entities
 
