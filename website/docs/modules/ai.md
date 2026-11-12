@@ -25,12 +25,22 @@ The library brings these tools:
 
 | Tool | Module | |
 |---|---|---|
-| `list_data_sets` | OData | the entity sets the user may read, with the name and type of each field |
+| `list_data_sets` | OData | the entity sets the user may read, with the name and type of each field and the fields that have an index (`indexed`) |
 | `query_data` | OData | rows of a set with `filter`, `orderBy`, `select`, `top` (1 to 50, default 20) and `skip`: the permissions, row filters, hidden properties and [query limits](../web/odata.md) of the tables apply |
 | `global_search` | OData | the [global search](../web/global-search.md) over every kind of record the user may read (`query`, `types`, `limit` 1 to 50 per provider) |
 | `generate_report` | Reporting | builds a report definition from a description with the app's AI model (`Reports.Manage`); `create_report` and `update_report` save it, see [Create a report with AI](reporting.md#create-a-report-with-ai) |
 
 Further requests of the modules (users, roles, reports, ...) are tools by the rule above.
+
+`query_data` reads the keys of the matching rows once, in the requested order, and takes the total and the page from them; the page's rows are then read by key with every filter still on. A filter no index serves reads the table once instead of once for the count and again for the page: on a table of 6.9 million rows the pages read fell from 1.4 million to 0.7 million. It reads at most `Coworkee:OData:KeyedRowLimit` keys (default 50,000, the setting of [lists read by key](../web/odata.md#lists-read-by-key); `0` turns it off): with more matching rows it stops after one key more, counts them as before, and reads the page by key while it lies among the keys read, otherwise as before. The answer is the same either way.
+
+`list_data_sets` names the `indexed` fields of each set: the first property of every key and index of the set's EF model (a filtered index serves only queries with its filter and is left out), and those the set declares with `IndexedFields`. The tool descriptions tell the model to filter and sort on them where it can, since a filter on another field reads the whole table. A table of a foreign database whose EF mapping leaves out some of its indexes declares them on the set:
+
+```csharp
+services.AddODataEntity<Shipment>("Shipments", ShipmentPermissions.View, o => o.IndexedFields(s => s.HouseBill, s => s.UpdatedAt));
+```
+
+Fields the user may not read stay out of `indexed` like out of the fields.
 
 ## The assistant window
 
