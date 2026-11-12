@@ -1,10 +1,13 @@
 using System.Reflection;
 using Coworkee.Application.Messaging;
 using Coworkee.Core.Results;
+using Coworkee.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData.Extensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.OData;
 using Microsoft.OData.Edm;
 using Nextended.Web.OData;
@@ -25,14 +28,30 @@ internal sealed class QueryDataHandler(IServiceProvider services, ODataEntityReg
             {
                 var type = (IEdmStructuredType)model.FindDeclaredType(entity.EntityType.FullName);
                 var denied = await ODataEntityAccess.DeniedPropertiesAsync(services, entity.EntityType, cancellationToken);
-                sets.Add(new DataSetInfo(entity.EntitySet, type.StructuralProperties()
+                var fields = type.StructuralProperties()
                     .Where(p => (p.Type.IsPrimitive() || p.Type.IsEnum()) && !denied.Contains(p.Name))
-                    .ToDictionary(p => p.Name, p => p.Type.IsEnum() ? string.Join("|", p.Type.AsEnum().EnumDefinition().Members.Select(m => m.Name)) : p.Type.ShortQualifiedName())));
+                    .ToDictionary(p => p.Name, p => p.Type.IsEnum() ? string.Join("|", p.Type.AsEnum().EnumDefinition().Members.Select(m => m.Name)) : p.Type.ShortQualifiedName());
+                var indexed = IndexedProperties(services.DbContextFor(entity.EntityType).Model.FindEntityType(entity.EntityType)).Concat(entity.IndexedFields);
+                sets.Add(new DataSetInfo(entity.EntitySet, fields)
+                {
+                    Indexed = [.. fields.Keys.Where(f => indexed.Contains(f, StringComparer.OrdinalIgnoreCase))],
+                });
             }
         }
 
         return sets;
     }
+
+    /// <summary>
+    /// The first property of each key and index of <paramref name="type"/>: a filter or order on it can seek. A filtered index is left out, it serves
+    /// only queries that repeat its filter.
+    /// </summary>
+    internal static IEnumerable<string> IndexedProperties(IReadOnlyEntityType? type) =>
+        type is null ? [] :
+        [
+            .. type.GetKeys().Select(k => k.Properties[0].Name),
+            .. type.GetIndexes().Where(i => i.GetFilter() is null).Select(i => i.Properties[0].Name),
+        ];
 
     private const int MaxRows = 50;
 
@@ -77,8 +96,13 @@ internal sealed class QueryDataHandler(IServiceProvider services, ODataEntityReg
 
         var scope = ODataNavigationScope.For(services, typeof(TEntity));
         var visible = await scope.ApplyAsync((await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken)).ApplyODataFilter(options), cancellationToken);
-        var total = await visible.LongCountAsync(cancellationToken);
-        var rows = await (await scope.ApplyAsync(visible.ApplyODataOrderBy(options), cancellationToken)).Skip(Math.Max(0, query.Skip)).Take(Math.Clamp(query.Top, 1, MaxRows)).ToListAsync(cancellationToken);
+        var ordered = await scope.ApplyAsync(visible.ApplyODataOrderBy(options), cancellationToken);
+        var (skip, top) = (Math.Max(0, query.Skip), Math.Clamp(query.Top, 1, MaxRows));
+        // one pass: the keys of up to KeyedRowLimit matching rows give the total and the page; more are counted and paged as they are
+        var limit = services.GetRequiredService<IOptions<CoworkeeODataOptions>>().Value.KeyedRowLimit;
+        var keyed = limit > 0 ? await KeyedRows.PageAsync(visible, ordered, skip, top, limit, cancellationToken) : null;
+        var total = keyed?.Total ?? await visible.LongCountAsync(cancellationToken);
+        var rows = keyed?.Page ?? await ordered.Skip(skip).Take(top).ToListAsync(cancellationToken);
         var fields = query.Select?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
         var all = DataExport.Columns<TEntity>(model, await ODataEntityAccess.DeniedPropertiesAsync(services, typeof(TEntity), cancellationToken));
         var columns = all.Where(c => fields.Length == 0 || fields.Contains(c.Name, StringComparer.OrdinalIgnoreCase)).ToList();
