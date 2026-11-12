@@ -214,6 +214,9 @@ public sealed class RequestLogTests(AuditApp app) : IAsyncLifetime
         var on = await MeasureAsync();
         await app.SetSettingAsync(RequestLogSettings.Requests, string.Empty);
         off = Math.Min(off, await MeasureAsync());
+        await app.SetSettingAsync(RequestLogSettings.Requests, null);
+        on = Math.Min(on, await MeasureAsync());
+        await app.SetSettingAsync(RequestLogSettings.Requests, string.Empty);
 
         var report = $"Request log overhead: off {off:F3} ms, on {on:F3} ms per request, {on - off:F3} ms more";
         TestContext.Current.SendDiagnosticMessage(report);
