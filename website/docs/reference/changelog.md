@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Changed
+
+- Nextended 10.1.59 (`Coworkee.CodeGen` brings Nextended.CodeGen 10.1.59): the generator keeps no state between compilations, so modules with a `codegen.json` built in parallel by one compiler server (Visual Studio, `dotnet build` of the solution) no longer write DTOs into each other's folders. `Coworkee.CodeGen` no longer sets `UseSharedCompilation` to `false`; those projects compile in the shared compiler server again. `coworkee update` moves the pinned Nextended packages (`Nextended.Core`, `Nextended.Web`, `Nextended.CodeGen`, `Nextended.Aspire.Hosting.*`). Nextended changes are additive: an app may pin any newer Nextended version, but none older than the one Coworkee references (NU1605).
+
 ## 0.0.1.79 (2026-11-11)
 
 ### Fixed

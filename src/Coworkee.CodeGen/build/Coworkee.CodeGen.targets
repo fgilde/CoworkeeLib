@@ -2,9 +2,4 @@
   <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)\codegen.json')">
     <AdditionalFiles Include="$(MSBuildProjectDirectory)\codegen.json" />
   </ItemGroup>
-  <!-- ponytail: Nextended.CodeGen shares its generator between the compilations of one compiler server, so modules built in parallel write into
-       each other's folders; each module with a codegen.json compiles in its own process until the generator keeps no state between compilations -->
-  <PropertyGroup Condition="Exists('$(MSBuildProjectDirectory)\codegen.json')">
-    <UseSharedCompilation>false</UseSharedCompilation>
-  </PropertyGroup>
 </Project>
