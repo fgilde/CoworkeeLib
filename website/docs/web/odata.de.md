@@ -92,6 +92,16 @@ public sealed class Product : AuditedEntity, IMultiTenant
 }
 ```
 
+### Facetten ohne Attribute
+
+Entities, die kein `[ProvideFacet]` tragen dürfen (ein Modell, das aus einem anderen Repository kopiert wird), erklären ihre Facetten im Code. Mit `Coworkee.CodeGen` macht das eine `CodeGenConfig`-Klasse in der Assembly der Entity ([Im Code konfigurieren](../fundamentals/dtos.md#im-code-konfigurieren-fluent)):
+
+```csharp
+Facets<Product>(f => f.Facet(x => x.BrandId, o => o.Label("Marke").ValuePath("BrandId").LabelPath("Brand.Name").ValueType<Guid>()));
+```
+
+Ohne den Generator macht `FacetRegistry.Register(typeof(Product), nameof(Product.BrandId), f => { f.Label = "Marke"; })` (Nextended.Core) dasselbe beim Start. Registrierungen und Attribute werden zusammen gelesen (`FacetRegistry.GetFacets`): Eine Registrierung an einer Property mit `[ProvideFacet]` ändert nur die Werte, die sie setzt, eine an einem Basistyp erreicht die abgeleiteten Typen. Entities nur mit Attributen funktionieren wie bisher.
+
 `LabelPath` ist ein Dynamic-LINQ-Ausdruck. Eine Navigation, die wie eines seiner Schlüsselwörter heißt (`Parent`, `It`, `Root`, `New`, ...), braucht das Präfix `it.`: `LabelPath = "it.Parent.Name"`; ohne scheitert die Facettenabfrage. `coworkee entity add` schreibt immer `it.`.
 
 Fragt der Request mit `Prefer: odata.include-annotations="cn.facets"` danach (oder mit `"*"`, außer die Route schaltet das ab), enthält die Seite die Facettengruppen unter `@cn.facets`: jede Option mit Beschriftung, Anzahl und dem OData-Filterfragment, das sie setzt. Die Zahlen folgen dem aktuellen Filter, wie man es von Shop-Filtern kennt. Enum-Optionen tragen den Membernamen als Wert und Filter (`Status eq 'Shipped'`) und ihren `[Display]`-Namen als Beschriftung; `[Flags]`-Enums listen jedes Flag einzeln (`Options has 'Express'`). Zahlenbereiche und Datumswerte kommen mit kleinstem und größtem Wert und einem Histogramm. `[FacetBehavior]` neben `[ProvideFacet]` oder `services.ConfigureFacet<T>(...)` legt die Ansicht fest und wie Werte verknüpft werden (*eines von*, *alle von*, einzeln, mit Ausschluss). Mit dem Header `Coworkee-Facets` zählt eine Gruppe ohne ihre eigene Auswahl. [`CoworkeeDataTable`](../ui/data-table.md#facetten) zeigt sie in Ansichten passend zu ihren Werten.

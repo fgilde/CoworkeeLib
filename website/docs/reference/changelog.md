@@ -2,6 +2,16 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- Facets without attributes: OData facets, their counts and report labels read facets through Nextended's `FacetRegistry`, so facets configured in code (fluent `Facets<T>(...)` in a `CodeGenConfig` class, or `FacetRegistry.Register`) count like `[ProvideFacet]`. Entities with attributes only work as before. See [Facets without attributes](../web/odata.md#facets-without-attributes) and [Configuring in code](../fundamentals/dtos.md#configuring-in-code-fluent).
+
+### Changed
+
+- Nextended 10.1.61 (`Coworkee.CodeGen` brings Nextended.CodeGen 10.1.61: fluent facets, `ViewDefaults`, `OrderLast`, `DeleteStaleFiles`). Apps that pin `Nextended.Core` below 10.1.61 fail the restore with NU1605: `coworkee update` raises the pinned Nextended packages.
+
 ## 0.0.1.80 (2026-11-12)
 
 ### Changed

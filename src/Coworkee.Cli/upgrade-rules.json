@@ -846,6 +846,19 @@
         { "id": "Nextended.Core", "version": "10.1.59" },
         { "id": "Nextended.Web", "version": "10.1.59" }
       ]
+    },
+    {
+      "version": "0.0.1.81",
+      "breaking": [
+        "Nextended 10.1.61: Coworkee reads facets through Nextended.Core's FacetRegistry; apps that pin Nextended packages move up (any newer Nextended works, none older)."
+      ],
+      "needsMigration": false,
+      "packages": [
+        { "id": "Nextended.Aspire.Hosting.AspireUI", "version": "10.1.61" },
+        { "id": "Nextended.CodeGen", "version": "10.1.61" },
+        { "id": "Nextended.Core", "version": "10.1.61" },
+        { "id": "Nextended.Web", "version": "10.1.61" }
+      ]
     }
   ]
 }

@@ -209,9 +209,9 @@ internal static class FacetCounts
         _ => value.ToString(),
     };
 
-    // the builder's TopDistinct: the attribute's, else its default
+    // the builder's TopDistinct: the facet's (attribute or code registration), else its default
     private static int? Top(Type entity, FacetGroup group) =>
-        entity.GetProperty(group.Field)?.GetCustomAttributes<ProvideFacetAttribute>(true).OrderBy(f => f.Order).LastOrDefault() is { TopDistinct: > 0 } facet
+        entity.GetProperty(group.Field) is { } property && FacetRegistry.GetFacet(entity, property) is { TopDistinct: > 0 } facet
             ? facet.TopDistinct
             : FacetLiterals.Options().DefaultTopDistinct;
 

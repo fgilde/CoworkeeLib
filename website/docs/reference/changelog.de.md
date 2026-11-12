@@ -2,6 +2,16 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- Facetten ohne Attribute: OData-Facetten, ihre Zählung und die Beschriftungen in Berichten lesen Facetten über Nextendeds `FacetRegistry`, im Code konfigurierte Facetten (Fluent `Facets<T>(...)` in einer `CodeGenConfig`-Klasse oder `FacetRegistry.Register`) zählen also wie `[ProvideFacet]`. Entities nur mit Attributen funktionieren wie bisher. Siehe [Facetten ohne Attribute](../web/odata.md#facetten-ohne-attribute) und [Im Code konfigurieren](../fundamentals/dtos.md#im-code-konfigurieren-fluent).
+
+### Geändert
+
+- Nextended 10.1.61 (`Coworkee.CodeGen` bringt Nextended.CodeGen 10.1.61: Fluent-Facetten, `ViewDefaults`, `OrderLast`, `DeleteStaleFiles`). Apps, die `Nextended.Core` unter 10.1.61 pinnen, scheitern beim Restore mit NU1605: `coworkee update` hebt die gepinnten Nextended-Pakete an.
+
 ## 0.0.1.80 (2026-11-12)
 
 ### Geändert

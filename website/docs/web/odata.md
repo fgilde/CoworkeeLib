@@ -92,6 +92,16 @@ public sealed class Product : AuditedEntity, IMultiTenant
 }
 ```
 
+### Facets without attributes
+
+Entities that must not carry `[ProvideFacet]` (a model copied from another repository) declare their facets in code. With `Coworkee.CodeGen`, a `CodeGenConfig` class in the entity's assembly does it ([Configuring in code](../fundamentals/dtos.md#configuring-in-code-fluent)):
+
+```csharp
+Facets<Product>(f => f.Facet(x => x.BrandId, o => o.Label("Brand").ValuePath("BrandId").LabelPath("Brand.Name").ValueType<Guid>()));
+```
+
+Without the generator, `FacetRegistry.Register(typeof(Product), nameof(Product.BrandId), f => { f.Label = "Brand"; })` (Nextended.Core) does the same at startup. Registrations and attributes are read together (`FacetRegistry.GetFacets`): a registration on a property with `[ProvideFacet]` changes only the values it sets, one on a base type reaches the derived types. Entities with attributes only work as before.
+
 `LabelPath` is a Dynamic LINQ expression. A navigation named like one of its keywords (`Parent`, `It`, `Root`, `New`, ...) needs the `it.` prefix: `LabelPath = "it.Parent.Name"`; without it the facet query fails. `coworkee entity add` always writes `it.`.
 
 When the request asks for them with `Prefer: odata.include-annotations="cn.facets"` (or `"*"`, unless the route turns that off), the page carries the facet groups under `@cn.facets`: every option with label, count and the OData filter fragment to apply. The counts follow the current filter, the same way shop filters do. Enum options carry the member name as value and filter (`Status eq 'Shipped'`) and their `[Display]` name as label; `[Flags]` enums list each flag (`Options has 'Express'`). Number ranges and dates come with their smallest and largest value and a histogram of buckets. `[FacetBehavior]` next to `[ProvideFacet]`, or `services.ConfigureFacet<T>(...)`, sets the view and how values combine (*any of*, *all of*, single, with exclusion). With the `Coworkee-Facets` header a group counts without its own choice. [`CoworkeeDataTable`](../ui/data-table.md#facets) shows them in views that fit their values.

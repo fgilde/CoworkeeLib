@@ -97,7 +97,7 @@ internal sealed partial class ReportSchema(ODataEntityRegistry registry, IEdmMod
     }
 
     private static string Label(PropertyInfo property) =>
-        property.GetCustomAttribute<ProvideFacetAttribute>()?.Label
+        FacetRegistry.GetFacet(property.ReflectedType!, property)?.Label
         ?? property.GetCustomAttribute<DisplayAttribute>()?.GetName()
         ?? property.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName
         ?? Humanize(property.Name);
