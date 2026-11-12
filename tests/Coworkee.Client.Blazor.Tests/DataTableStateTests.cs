@@ -51,14 +51,14 @@ public sealed class DataTableStateTests : ClientTestBase
 
         await OpenAsync(table, popovers, "views", "[data-testid='save-view']");
         popovers.Find("input[data-testid='view-name'], [data-testid='view-name'] input").Input("Drills");
-        await popovers.InvokeAsync(() => popovers.Find("[data-testid='save-view']").ClickAsync(new()));
+        await ClickAsync(popovers, "[data-testid='save-view']");
 
         table.Find("input[data-testid='table-search'], [data-testid='table-search'] input").Input("");
         await SetColumnVisibleAsync(table, popovers, "Category", true);
         table.WaitForAssertion(() => table.Instance.CurrentState.IsEmpty.ShouldBeTrue(), TimeSpan.FromSeconds(3));
 
         await OpenAsync(table, popovers, "views", "[data-view='Drills']");
-        await popovers.InvokeAsync(() => popovers.Find("[data-view='Drills']").ClickAsync(new()));
+        await ClickAsync(popovers, "[data-view='Drills']");
 
         table.WaitForAssertion(() => (table.Instance.CurrentState.Search, table.Instance.CurrentState.HiddenColumns.Single()).ShouldBe(("dri", "Category")));
     }
@@ -73,6 +73,24 @@ public sealed class DataTableStateTests : ClientTestBase
         }
 
         popovers.WaitForElement(inner);
+    }
+
+    // the popover may render once more between finding and clicking (the views load asynchronously): bUnit then knows the old handler id
+    // no more; find it again and click once more
+    private static async Task ClickAsync(IRenderedComponent<MudPopoverProvider> popovers, string selector)
+    {
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                await popovers.InvokeAsync(() => popovers.Find(selector).ClickAsync(new()));
+                return;
+            }
+            catch (Bunit.Rendering.UnknownEventHandlerIdException) when (attempt < 3)
+            {
+                popovers.WaitForElement(selector);
+            }
+        }
     }
 
     internal static async Task SetColumnVisibleAsync<TTable>(IRenderedComponent<TTable> table, IRenderedComponent<MudPopoverProvider> popovers, string column, bool visible)
