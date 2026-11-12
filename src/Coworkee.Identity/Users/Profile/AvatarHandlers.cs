@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Identity;
 using Coworkee.Core.Results;
@@ -45,9 +47,15 @@ internal sealed class AvatarHandlers(CoworkeeDbContext db, ICurrentUser currentU
         return users.Select(u => new UserCardDto(
                 u.Id,
                 UserChanges.Name(u.FirstName, u.LastName, u.Email),
-                u.HasAvatar ? (u.AvatarChangedAt ?? DateTimeOffset.MinValue).ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture) : null))
+                u.HasAvatar ? (u.AvatarChangedAt ?? DateTimeOffset.MinValue).ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture) : null,
+                u.HasAvatar ? null : GravatarHash(u.Email)))
             .ToList();
     }
+
+    // an uploaded picture wins: no hash, so the browser never asks gravatar.com for that user
+    internal static string? GravatarHash(string? email) => string.IsNullOrWhiteSpace(email)
+        ? null
+        : Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(email.Trim().ToLowerInvariant())));
 
     private IQueryable<User> Colleagues() => db.Set<User>().Where(u => u.TenantId == currentUser.TenantId);
 }

@@ -22519,6 +22519,12 @@
               "null",
               "string"
             ]
+          },
+          "gravatarHash": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

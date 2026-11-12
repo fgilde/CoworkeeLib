@@ -1742,6 +1742,8 @@
   "Grant": "Berikan",
   "Toggle dark mode": "Alihkan mode gelap",
   "Color mode": "Mode warna",
+  "Gravatar pictures": "Gambar Gravatar",
+  "People without an uploaded picture show their Gravatar, when they have one. The browser sends a hash of their email address to gravatar.com.": "Orang tanpa gambar unggahan menampilkan Gravatar mereka, jika ada. Peramban mengirim hash alamat email mereka ke gravatar.com.",
   "Version": "Versi",
   "current": "saat ini",
   "Version {0}": "Versi {0}",

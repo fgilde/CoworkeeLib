@@ -1742,6 +1742,8 @@
   "Grant": "授予",
   "Toggle dark mode": "切换深色模式",
   "Color mode": "颜色模式",
+  "Gravatar pictures": "Gravatar 头像",
+  "People without an uploaded picture show their Gravatar, when they have one. The browser sends a hash of their email address to gravatar.com.": "未上传头像的用户在有 Gravatar 时显示其 Gravatar。浏览器会将其电子邮件地址的哈希值发送到 gravatar.com。",
   "Version": "版本",
   "current": "当前",
   "Version {0}": "版本 {0}",

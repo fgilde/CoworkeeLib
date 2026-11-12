@@ -1742,6 +1742,8 @@
   "Grant": "Ver",
   "Toggle dark mode": "Karanlık modu aç/kapat",
   "Color mode": "Renk modu",
+  "Gravatar pictures": "Gravatar resimleri",
+  "People without an uploaded picture show their Gravatar, when they have one. The browser sends a hash of their email address to gravatar.com.": "Yüklenmiş resmi olmayan kişiler, varsa Gravatar'larını gösterir. Tarayıcı, e-posta adreslerinin bir özetini gravatar.com'a gönderir.",
   "Version": "Sürüm",
   "current": "güncel",
   "Version {0}": "Sürüm {0}",

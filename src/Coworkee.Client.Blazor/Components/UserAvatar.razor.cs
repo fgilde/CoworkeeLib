@@ -1,19 +1,25 @@
 using Coworkee.Client.Blazor.Chat;
 using Coworkee.Client.Blazor.People;
 using Coworkee.Client.Blazor.Security;
+using Coworkee.Client.Blazor.Theming;
 using Coworkee.Contracts.Identity;
+using Coworkee.Contracts.Theming;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Components;
 
-/// <summary>The picture of a user, or the initials; updates when the user changes it.</summary>
+/// <summary>
+/// The picture of a user; without an uploaded one their Gravatar (setting <see cref="ThemeSettings.Gravatar"/>), else the initials; updates when the user changes it.
+/// </summary>
 public partial class UserAvatar : IDisposable
 {
     private UserCardDto? _card;
     private bool _online;
     private bool _offerChat;
+    private string? _missingGravatar;
+    private ThemeService? _themes;
 
     [Inject] private UserCards Cards { get; set; } = null!;
 
@@ -44,6 +50,14 @@ public partial class UserAvatar : IDisposable
 
     private string? StyleText => Pixels is { } px ? $"width:{px}px;height:{px}px;font-size:{px / 2.5}px" : null;
 
+    // ponytail: one size for every avatar, so the browser fetches a Gravatar once; per-size URLs when 256 px looks soft on large avatars
+    private string? GravatarUrl => _card?.GravatarHash is { } hash && hash != _missingGravatar
+        && !string.Equals(_themes?.ClientSettings.GetValueOrDefault(ThemeSettings.Gravatar), "false", StringComparison.OrdinalIgnoreCase)
+            ? $"https://gravatar.com/avatar/{hash}?s=256&d=404"
+            : null;
+
+    private void GravatarMissing() => _missingGravatar = _card?.GravatarHash;
+
     private string Initials => _card is null
         ? "?"
         : string.Concat(_card.Name.Split(' ', '@', '.').Where(p => p.Length > 0).Take(2).Select(p => char.ToUpperInvariant(p[0])));
@@ -52,6 +66,11 @@ public partial class UserAvatar : IDisposable
     {
         Cards.Changed += Reload;
         Presence.Changed += PresenceChanged;
+        _themes = Services.GetService<ThemeService>();
+        if (_themes is not null)
+        {
+            _themes.Changed += SettingsChanged;
+        }
     }
 
     protected override async Task OnParametersSetAsync()
@@ -78,7 +97,14 @@ public partial class UserAvatar : IDisposable
     {
         Cards.Changed -= Reload;
         Presence.Changed -= PresenceChanged;
+        if (_themes is not null)
+        {
+            _themes.Changed -= SettingsChanged;
+        }
     }
+
+    // the Gravatar setting switched on or off
+    private void SettingsChanged() => _ = InvokeAsync(StateHasChanged);
 
     private void PresenceChanged(Guid userId)
     {

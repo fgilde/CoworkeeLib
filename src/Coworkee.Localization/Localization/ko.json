@@ -1742,6 +1742,8 @@
   "Grant": "부여",
   "Toggle dark mode": "다크 모드 전환",
   "Color mode": "색상 모드",
+  "Gravatar pictures": "Gravatar 이미지",
+  "People without an uploaded picture show their Gravatar, when they have one. The browser sends a hash of their email address to gravatar.com.": "사진을 업로드하지 않은 사용자는 Gravatar가 있으면 이를 표시합니다. 브라우저는 이메일 주소의 해시를 gravatar.com으로 보냅니다.",
   "Version": "버전",
   "current": "현재",
   "Version {0}": "버전 {0}",

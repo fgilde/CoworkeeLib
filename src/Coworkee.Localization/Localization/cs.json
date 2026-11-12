@@ -1742,6 +1742,8 @@
   "Grant": "Udělit",
   "Toggle dark mode": "Přepnout tmavý režim",
   "Color mode": "Barevný režim",
+  "Gravatar pictures": "Obrázky Gravatar",
+  "People without an uploaded picture show their Gravatar, when they have one. The browser sends a hash of their email address to gravatar.com.": "Lidé bez nahraného obrázku zobrazují svůj Gravatar, pokud ho mají. Prohlížeč odešle hash jejich e-mailové adresy na gravatar.com.",
   "Version": "Verze",
   "current": "aktuální",
   "Version {0}": "Verze {0}",

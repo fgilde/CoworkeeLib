@@ -1742,6 +1742,8 @@
   "Grant": "منح",
   "Toggle dark mode": "تبديل الوضع الداكن",
   "Color mode": "وضع الألوان",
+  "Gravatar pictures": "صور Gravatar",
+  "People without an uploaded picture show their Gravatar, when they have one. The browser sends a hash of their email address to gravatar.com.": "يعرض الأشخاص الذين لم يرفعوا صورة صورة Gravatar الخاصة بهم إن وُجدت. يرسل المتصفح بصمة (hash) لعنوان بريدهم الإلكتروني إلى gravatar.com.",
   "Version": "الإصدار",
   "current": "الحالي",
   "Version {0}": "الإصدار {0}",

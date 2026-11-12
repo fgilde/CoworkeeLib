@@ -38,6 +38,21 @@ public sealed class AvatarTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Without_a_picture_the_card_carries_the_Gravatar_hash_of_the_email_and_with_one_none()
+    {
+        // the example of gravatar.com: trimmed, lower case, SHA-256
+        Users.Profile.AvatarHandlers.GravatarHash(" MyEmailAddress@example.com ").ShouldBe("84059b07d4be67b806386c0aad8070a23f18836bbaae342275dc0a83414c32ee");
+
+        (await CardAsync()).GravatarHash.ShouldBe(Users.Profile.AvatarHandlers.GravatarHash("admin@acme.test"));
+        (await Admin.PutAsJsonAsync("/api/v1/identity/me/avatar", new SetAvatarRequest(Png), Ct)).EnsureSuccessStatusCode();
+        (await CardAsync()).GravatarHash.ShouldBeNull();
+    }
+
+    private async Task<UserCardDto> CardAsync() =>
+        (await (await Admin.PostAsJsonAsync("/api/v1/identity/users/cards", new IdListRequest([_setup.AdminUserId]), Ct))
+            .Content.ReadFromJsonAsync<List<UserCardDto>>(Ct))!.Single();
+
+    [Fact]
     public async Task Only_small_images_are_accepted()
     {
         (await Admin.PutAsJsonAsync("/api/v1/identity/me/avatar", new SetAvatarRequest("data:text/html;base64,PGI+"), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);

@@ -1742,6 +1742,8 @@
   "Grant": "Przyznaj",
   "Toggle dark mode": "Przełącz tryb ciemny",
   "Color mode": "Tryb kolorów",
+  "Gravatar pictures": "Obrazy Gravatar",
+  "People without an uploaded picture show their Gravatar, when they have one. The browser sends a hash of their email address to gravatar.com.": "Osoby bez przesłanego zdjęcia pokazują swój Gravatar, jeśli go mają. Przeglądarka wysyła skrót ich adresu e-mail do gravatar.com.",
   "Version": "Wersja",
   "current": "bieżąca",
   "Version {0}": "Wersja {0}",

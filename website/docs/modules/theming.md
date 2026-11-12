@@ -118,6 +118,7 @@ An unknown `DefaultTheme` keeps Ocean. An app theme with the name of a built-in 
 |---|---|---|
 | `Theme.Mode` (*Color mode*) | system, organisation, user | `system` (default), `light` or `dark` |
 | `Theme.Id` (*Theme*) | user | the theme the user picked; empty follows the organisation's default |
+| `Theme.Gravatar` (*Gravatar pictures*) | system, organisation, user | `true` (default): people without an uploaded picture show their Gravatar; the browser sends a hash of their email address to gravatar.com (see [People](../ui/client.md#people)). `false`: initials, no request to gravatar.com |
 
 The permission `Themes.Manage` (group *Themes*) covers the admin page and every change. Themes are `[Realtime]` entities: the theme lists of holders of `Themes.Manage` follow changes at once, and every open page of the organisation applies a changed theme or default at once (they reach the clients through the settings topics). Each saved theme keeps its versions.
 

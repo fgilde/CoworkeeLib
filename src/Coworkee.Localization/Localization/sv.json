@@ -1742,6 +1742,8 @@
   "Grant": "Bevilja",
   "Toggle dark mode": "Växla mörkt läge",
   "Color mode": "Färgläge",
+  "Gravatar pictures": "Gravatar-bilder",
+  "People without an uploaded picture show their Gravatar, when they have one. The browser sends a hash of their email address to gravatar.com.": "Personer utan uppladdad bild visar sin Gravatar, om de har en. Webbläsaren skickar en hash av deras e-postadress till gravatar.com.",
   "Version": "Version",
   "current": "aktuell",
   "Version {0}": "Version {0}",

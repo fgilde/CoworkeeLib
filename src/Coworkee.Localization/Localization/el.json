@@ -1742,6 +1742,8 @@
   "Grant": "Εκχώρηση",
   "Toggle dark mode": "Εναλλαγή σκοτεινής λειτουργίας",
   "Color mode": "Λειτουργία χρωμάτων",
+  "Gravatar pictures": "Εικόνες Gravatar",
+  "People without an uploaded picture show their Gravatar, when they have one. The browser sends a hash of their email address to gravatar.com.": "Όσοι δεν έχουν ανεβάσει εικόνα εμφανίζουν το Gravatar τους, αν έχουν. Το πρόγραμμα περιήγησης στέλνει ένα hash της διεύθυνσης email τους στο gravatar.com.",
   "Version": "Έκδοση",
   "current": "τρέχουσα",
   "Version {0}": "Έκδοση {0}",

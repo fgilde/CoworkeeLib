@@ -24,10 +24,15 @@ else
     private RenderFragment Badged => @<MudBadge Dot="true" Overlap="true" Bordered="true" Color="Color.Success" Origin="Origin.BottomRight" Visible="_online"
                                                 data-online="@(_online ? "true" : "false")">@Avatar</MudBadge>;
 
-    private RenderFragment Avatar => @<MudAvatar Size="Size" Style="@StyleText" Color="@(_card?.AvatarVersion is null ? Color.Primary : Color.Default)" data-user="@UserId">
+    private RenderFragment Avatar => @<MudAvatar Size="Size" Style="@StyleText" Color="@(_card?.AvatarVersion is null && GravatarUrl is null ? Color.Primary : Color.Default)" data-user="@UserId">
         @if (_card?.AvatarVersion is not null)
         {
             <MudImage Src="@People.UserCards.AvatarUrl(_card)" Alt="@_card.Name" ObjectFit="ObjectFit.Cover" />
+        }
+        else if (GravatarUrl is { } gravatar)
+        {
+            @* d=404: without a Gravatar the image fails and the initials take its place; a plain img, as MudImage does not pass the error event on *@
+            <img src="@gravatar" alt="@_card!.Name" class="mud-image object-cover object-center" @onerror="GravatarMissing" data-gravatar="true" />
         }
         else
         {
