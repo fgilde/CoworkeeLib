@@ -72,8 +72,9 @@ public abstract class ClientEntitySet : IAsyncDisposable
     internal abstract Task<IReadOnlyList<string?[]>?> LocalValuesAsync(string filter, string? orderBy, int top, IReadOnlyList<string> paths, CancellationToken cancellationToken);
 
     /// <summary>
-    /// <paramref name="query"/> answered from the local rows, with the fields of its select (all scalar fields without one) by name; null while the copy
-    /// is not local or switched to the server, for a filter it cannot answer and for a field the row type does not have.
+    /// <paramref name="query"/> answered from the local rows as the server's query_data would, with the fields of its select (without one every field the
+    /// server returns) by name; null while the copy is not local or switched to the server, for a filter it cannot answer and when the row type lacks a field
+    /// the server would return.
     /// </summary>
     internal abstract Task<LocalRows?> LocalRowsAsync(ODataQuery query, CancellationToken cancellationToken);
 

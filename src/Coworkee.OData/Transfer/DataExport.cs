@@ -113,14 +113,17 @@ public static class DataExport
     }
 
     /// <summary>The exportable properties of the EDM type under their names in the model, without <paramref name="denied"/> ones (CLR names).</summary>
-    internal static List<(string Name, PropertyInfo Property)> Columns<TEntity>(IEdmModel model, IReadOnlySet<string> denied)
+    internal static List<(string Name, PropertyInfo Property)> Columns<TEntity>(IEdmModel model, IReadOnlySet<string> denied) => Columns(typeof(TEntity), model, denied);
+
+    /// <summary>The fields an export and query_data return for <paramref name="entityType"/>: its primitive and enum properties the user may read.</summary>
+    internal static List<(string Name, PropertyInfo Property)> Columns(Type entityType, IEdmModel model, IReadOnlySet<string> denied)
     {
-        var type = (IEdmStructuredType)model.FindDeclaredType(typeof(TEntity).FullName);
+        var type = (IEdmStructuredType)model.FindDeclaredType(entityType.FullName);
         return
         [
             .. type.StructuralProperties()
                 .Where(p => p.Type.IsPrimitive() || p.Type.IsEnum())
-                .Select(p => (p.Name, Property: typeof(TEntity).GetProperty(ODataNames.Clr(model, p))))
+                .Select(p => (p.Name, Property: entityType.GetProperty(ODataNames.Clr(model, p))))
                 .Where(p => p.Property is not null && !denied.Contains(p.Property.Name))
                 .Select(p => (p.Name, p.Property!)),
         ];

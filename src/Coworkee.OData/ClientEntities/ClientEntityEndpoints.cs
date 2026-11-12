@@ -43,6 +43,7 @@ internal static class ClientEntityEndpoints
         var options = services.GetRequiredService<IOptions<ClientEntityOptions>>().Value;
         var maxTop = services.GetRequiredService<IOptions<CoworkeeODataOptions>>().Value.MaxTop;
         var sets = new List<ClientEntitySetInfo>();
+        var model = services.GetRequiredService<Microsoft.OData.Edm.IEdmModel>();
         // the copy tracks rows by their Guid Id: sets keyed otherwise stay on the server
         foreach (var entity in services.GetRequiredService<ODataEntityRegistry>().Entities.Where(e => e.HasGuidId))
         {
@@ -54,7 +55,8 @@ internal static class ClientEntityEndpoints
                     ? RealtimeTopics.Type(entity.EntityType.Name)
                     : null;
                 sets.Add(new ClientEntitySetInfo(entity.EntitySet, Math.Min(settings.BatchSize, maxTop), settings.MaxRows, settings.RefreshInterval, realtime,
-                    string.IsNullOrWhiteSpace(settings.Expand) ? null : settings.Expand, Math.Max(1, settings.ParallelPages)));
+                    string.IsNullOrWhiteSpace(settings.Expand) ? null : settings.Expand, Math.Max(1, settings.ParallelPages),
+                    [.. Transfer.DataExport.Columns(entity.EntityType, model, await ODataEntityAccess.DeniedPropertiesAsync(services, entity.EntityType, http.RequestAborted)).Select(c => c.Name)]));
             }
         }
 

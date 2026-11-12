@@ -9,7 +9,14 @@ public sealed class LocalRowsTests
     private readonly FakeServer _server = new();
     private readonly Gadget _drill = new(Guid.CreateVersion7(), "Drill", "Tools", 99, new Brand(Guid.NewGuid(), "Acme"), Kind.Power);
 
-    public LocalRowsTests() => _server.Rows.AddRange([_drill, new(Guid.CreateVersion7(), "Hammer", "Tools", 19), new(Guid.CreateVersion7(), "Lamp", "Light", 35)]);
+    // the fields the server's query_data returns for the set, named in the manifest
+    private static readonly string[] ServerFields = ["Id", "Name", "Category", "Price", "Kind", "Created", "Note"];
+
+    public LocalRowsTests()
+    {
+        _server.Rows.AddRange([_drill, new(Guid.CreateVersion7(), "Hammer", "Tools", 19), new(Guid.CreateVersion7(), "Lamp", "Light", 35)]);
+        _server.Fields = ServerFields;
+    }
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
@@ -37,14 +44,45 @@ public sealed class LocalRowsTests
     }
 
     [Fact]
-    public async Task Without_a_select_every_scalar_field_comes_and_no_navigation()
+    public async Task Without_a_select_every_field_the_server_returns_comes_by_its_name_and_no_navigation()
     {
+        _server.Fields = ["id", "name", "category", "price", "kind", "created", "note"];
         await using var entities = await LocalAsync();
 
         var row = (await entities.QueryLocallyAsync("Gadgets", new ODataQuery { Filter = "Name eq 'Drill'" }, Ct))!.Rows.ShouldHaveSingleItem();
 
-        row.Keys.ShouldBe(["Id", "Name", "Category", "Price", "Kind", "Created", "Note"], ignoreOrder: true);
-        row["Id"].ShouldBe(_drill.Id);
+        row.Keys.ShouldBe(["id", "name", "category", "price", "kind", "created", "note"]);
+        row["id"].ShouldBe(_drill.Id);
+    }
+
+    [Fact]
+    public async Task A_row_type_narrower_than_the_server_answers_only_selects_within_its_fields()
+    {
+        _server.Fields = [.. ServerFields, "Weight"];
+        await using var entities = await LocalAsync();
+
+        (await entities.QueryLocallyAsync("Gadgets", new ODataQuery { Filter = "Name eq 'Drill'" }, Ct)).ShouldBeNull("the server's answer would carry Weight too");
+        (await entities.QueryLocallyAsync("Gadgets", new ODataQuery { Select = "Name,Weight" }, Ct)).ShouldBeNull("the row type lacks Weight");
+        (await entities.QueryLocallyAsync("Gadgets", new ODataQuery { Filter = "Name eq 'Drill'", Select = "Name,Price" }, Ct))!
+            .Rows.ShouldHaveSingleItem().ShouldBe(new Dictionary<string, object?> { ["Name"] = "Drill", ["Price"] = 99m });
+        _server.Queries.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Fields_the_server_does_not_return_or_does_not_name_keep_the_read_on_the_server()
+    {
+        _server.Fields = ["Id", "Name"];
+        await using (var entities = await LocalAsync())
+        {
+            (await entities.QueryLocallyAsync("Gadgets", new ODataQuery { Select = "Name,Note" }, Ct)).ShouldBeNull("the server hides Note");
+            (await entities.QueryLocallyAsync("Gadgets", new ODataQuery { Filter = "Name eq 'Lamp'" }, Ct))!.Rows.ShouldHaveSingleItem().Keys.ShouldBe(["Id", "Name"]);
+        }
+
+        // a server that does not name its fields: a select within the row type, never all fields
+        _server.Fields = null;
+        await using var older = await LocalAsync();
+        (await older.QueryLocallyAsync("Gadgets", new ODataQuery { Filter = "Name eq 'Lamp'" }, Ct)).ShouldBeNull();
+        (await older.QueryLocallyAsync("Gadgets", new ODataQuery { Filter = "Name eq 'Lamp'", Select = "name" }, Ct))!.Rows.ShouldHaveSingleItem()["Name"].ShouldBe("Lamp");
     }
 
     [Fact]

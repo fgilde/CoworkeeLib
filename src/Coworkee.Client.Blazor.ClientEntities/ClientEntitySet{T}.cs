@@ -188,19 +188,37 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
 
     internal override async Task<LocalRows?> LocalRowsAsync(ODataQuery query, CancellationToken cancellationToken)
     {
-        var fields = (query.Select ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        var columns = fields.Length == 0 ? (PropertyInfo?[])Scalars : [.. fields.Select(f => Scalars.FirstOrDefault(c => string.Equals(c.Name, f, StringComparison.OrdinalIgnoreCase)))];
-
-        // a field the row type lacks: the server knows it, or tells which fields there are
-        if (columns.Any(c => c is null) || await LocalPageAsync(query with { Select = null, Facets = false, Count = true }, cancellationToken) is not { } page)
+        // only an answer equal to the server's: the selected fields, or without a select every field the server returns (the manifest's), each
+        // one the row type has; anything else (a narrower row type, a server that does not name its fields) the server answers
+        var selected = (query.Select ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var server = _info.Fields;
+        if (selected.Length == 0 && server is null)
         {
             return null;
         }
 
-        return new LocalRows([.. page.Items.Select(row => (IReadOnlyDictionary<string, object?>)columns.ToDictionary(c => c!.Name, c => c!.GetValue(row)))], page.Count ?? page.Items.Count);
+        var columns = new List<(string Name, PropertyInfo Property)>();
+        foreach (var name in selected.Length > 0 ? selected : server!)
+        {
+            var property = Array.Find(Scalars, p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+            var field = server is null ? property?.Name : server.FirstOrDefault(f => string.Equals(f, name, StringComparison.OrdinalIgnoreCase));
+            if (property is null || field is null)
+            {
+                return null;
+            }
+
+            columns.Add((field, property));
+        }
+
+        if (await LocalPageAsync(query with { Select = null, Facets = false, Count = true }, cancellationToken) is not { } page)
+        {
+            return null;
+        }
+
+        return new LocalRows([.. page.Items.Select(row => (IReadOnlyDictionary<string, object?>)columns.ToDictionary(c => c.Name, c => c.Property.GetValue(row)))], page.Count ?? page.Items.Count);
     }
 
-    // the fields the server's query_data returns: scalar values, no navigations
+    // the fields of the row type that can match what the server's query_data returns: scalar values, no navigations
     private static readonly PropertyInfo[] Scalars = [.. typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
         .Where(p => p.GetMethod is not null && p.GetIndexParameters().Length == 0 && IsScalar(Nullable.GetUnderlyingType(p.PropertyType) ?? p.PropertyType))];
 

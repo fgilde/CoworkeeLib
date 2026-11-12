@@ -45,7 +45,10 @@ internal sealed class FakeServer : HttpMessageHandler, IODataClient
 
     public string? Expand { get; set; }
 
-    public ClientEntitySetInfo Info => new("Gadgets", BatchSize, MaxRows, TimeSpan.Zero, RealtimeTopic, Expand, ParallelPages);
+    /// <summary>The fields the server's query_data returns of the set; null: a server that does not name them.</summary>
+    public IReadOnlyList<string>? Fields { get; set; }
+
+    public ClientEntitySetInfo Info => new("Gadgets", BatchSize, MaxRows, TimeSpan.Zero, RealtimeTopic, Expand, ParallelPages, Fields);
 
     public ClientEntitySet<Gadget> Set(IClientEntityStorage? storage = null, string partition = "p1", IClientEntityEngine? engine = null) =>
         new(Info, "Brand", partition, this, Api, storage ?? new NoClientEntityStorage(), NullLogger.Instance, engine);

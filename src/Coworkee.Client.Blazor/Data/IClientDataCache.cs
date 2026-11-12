@@ -17,7 +17,8 @@ public interface IClientDataCache
     /// <summary>
     /// <paramref name="query"/> (filter, order, top, skip and the fields of <see cref="ODataQuery.Select"/>) answered from the local copy of
     /// <paramref name="entitySet"/> without asking the server; null when it cannot be answered here: the set is not local or switched to the server, the
-    /// filter is beyond the local engine or names a field the copy does not have.
+    /// filter is beyond the local engine or names a field the copy does not have, or the answer would hold fewer fields than the server's (no select and a
+    /// row type without every field the server returns).
     /// </summary>
     Task<LocalRows?> QueryLocallyAsync(string entitySet, ODataQuery query, CancellationToken cancellationToken = default) => Task.FromResult<LocalRows?>(null);
 }
