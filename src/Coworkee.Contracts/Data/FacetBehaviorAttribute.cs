@@ -30,6 +30,13 @@ public sealed class FacetBehaviorAttribute : Attribute
     /// <summary>Splits values into a tree for <see cref="FacetView.Tree"/>, e.g. "Europe / Germany / Berlin".</summary>
     public string? TreeSeparator { get; set; }
 
+    /// <summary>
+    /// How the values show in facets: a display name like <see cref="FacetDisplayAttribute.Country"/> or an app's own, as
+    /// <see cref="FacetDisplayAttribute"/> on the property sets it. For properties that cannot carry the attribute (a copied model):
+    /// <c>services.ConfigureFacet&lt;T&gt;(x =&gt; x.Port, f =&gt; f.Display = "port")</c>. Unset, the property's attribute applies.
+    /// </summary>
+    public string? Display { get; set; }
+
     /// <summary>Bars of the histogram of number ranges.</summary>
     public int Buckets { get; set; } = 12;
 }

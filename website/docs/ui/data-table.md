@@ -155,7 +155,7 @@ Keys are the facet keys: the property name in camel case (`orderDate`).
 public string CountryIsoAlpha2Code { get; set; } = "";
 ```
 
-The attribute also works on client DTOs: a `PropertyColumn` of a marked property renders through the display's renderer unless the page gives it a `CellTemplate`.
+The attribute also works on client DTOs: a `PropertyColumn` of a marked property renders through the display's renderer unless the page gives it a `CellTemplate`. An entity that cannot carry the attribute gets the facet's display in code with `services.ConfigureFacet<T>(x => x.Country, f => f.Display = FacetDisplayAttribute.Country)` ([Facets without attributes](../web/odata.md#facets-without-attributes)); a generated DTO gets the attribute from its generation config (`Property(x => x.Country).Attribute("[CountryCode]")`).
 
 Any other display is a name your app gives: mark the property with `[FacetDisplay("port")]` (the facet sends it to the client as `display`) and register a renderer for that name on the client:
 

@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- `FacetBehaviorAttribute.Display`: the display of a facet's values (`[FacetDisplay]`, `[CountryCode]`) set in code, for entities that cannot carry the attribute: `services.ConfigureFacet<Shipment>(x => x.LoadingPort, f => f.Display = "port")`. Set, it wins over the property's attribute; unset, the attribute applies as before. Apps change nothing. See [Facets without attributes](../web/odata.md#facets-without-attributes).
+
 ## 0.0.1.82 (2026-11-12)
 
 ### Added

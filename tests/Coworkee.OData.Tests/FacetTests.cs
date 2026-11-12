@@ -113,6 +113,7 @@ public sealed class FacetTests(ODataApp app) : IAsyncLifetime
         color.View.ShouldBe(FacetView.Buttons, "ConfigureFacet sets the view");
         color.Display.ShouldBe("color", "[FacetDisplay] names the client's renderer");
         kind.Display.ShouldBeNull();
+        facets.Single(f => f.Field == "MadeAt").Display.ShouldBe("date-of-make", "ConfigureFacet sets the display without the attribute");
         selection.Toggle(color, color.Options.Single(o => o.Label == "Red"));
         selection.Toggle(color, color.Options.Single(o => o.Label == "Blue"));
         selection.ToFilter().ShouldBe("Color eq 'Blue'");

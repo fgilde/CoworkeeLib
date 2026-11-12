@@ -268,6 +268,8 @@ public sealed class GadgetModule : CoworkeeModule
         // a set whose clients send long filters: its own node limit (QueryLimitTests)
         context.Services.AddODataEntity<Widget>("Widgets", ODataApp.ViewGadgets, o => o.MaxNodeCount(1000));
         context.Services.ConfigureFacet<Widget>(w => w.Color, f => f.View = Contracts.Data.FacetView.Buttons);
+        // a display set in code instead of [FacetDisplay] (FacetTests)
+        context.Services.ConfigureFacet<Widget>(w => w.MadeAt, f => f.Display = "date-of-make");
         // a test sets the facet cap of the set itself (ODataEntityOptions.MaxFacetRows)
         context.Services.AddODataEntity<Pump>("Pumps", ODataApp.ViewGadgets, o =>
         {

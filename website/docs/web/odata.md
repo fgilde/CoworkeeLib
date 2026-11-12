@@ -102,6 +102,13 @@ Facets<Product>(f => f.Facet(x => x.BrandId, o => o.Label("Brand").ValuePath("Br
 
 Without the generator, `FacetRegistry.Register(typeof(Product), nameof(Product.BrandId), f => { f.Label = "Brand"; })` (Nextended.Core) does the same at startup. Registrations and attributes are read together (`FacetRegistry.GetFacets`): a registration on a property with `[ProvideFacet]` changes only the values it sets, one on a base type reaches the derived types. Entities with attributes only work as before.
 
+How the facet looks, combines and shows its values works without attributes too: `ConfigureFacet` takes what `[FacetBehavior]`, `[FacetDisplay]` and `[CountryCode]` set:
+
+```csharp
+services.ConfigureFacet<Shipment>(x => x.LoadingPort, f => f.Display = "port");
+services.ConfigureFacet<Shipment>(x => x.OriginCountry, f => { f.Display = FacetDisplayAttribute.Country; f.View = FacetView.Buttons; });
+```
+
 `LabelPath` is a Dynamic LINQ expression. A navigation named like one of its keywords (`Parent`, `It`, `Root`, `New`, ...) needs the `it.` prefix: `LabelPath = "it.Parent.Name"`; without it the facet query fails. `coworkee entity add` always writes `it.`.
 
 When the request asks for them with `Prefer: odata.include-annotations="cn.facets"` (or `"*"`, unless the route turns that off), the page carries the facet groups under `@cn.facets`: every option with label, count and the OData filter fragment to apply. The counts follow the current filter, the same way shop filters do. Enum options carry the member name as value and filter (`Status eq 'Shipped'`) and their `[Display]` name as label; `[Flags]` enums list each flag (`Options has 'Express'`). Number ranges and dates come with their smallest and largest value and a histogram of buckets. `[FacetBehavior]` next to `[ProvideFacet]`, or `services.ConfigureFacet<T>(...)`, sets the view and how values combine (*any of*, *all of*, single, with exclusion). With the `Coworkee-Facets` header a group counts without its own choice. [`CoworkeeDataTable`](../ui/data-table.md#facets) shows them in views that fit their values.

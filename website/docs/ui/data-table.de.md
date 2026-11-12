@@ -155,7 +155,7 @@ Schlüssel sind die Facetten-Schlüssel: der Eigenschaftsname in camelCase (`ord
 public string CountryIsoAlpha2Code { get; set; } = "";
 ```
 
-Das Attribut wirkt auch auf Client-DTOs: eine `PropertyColumn` einer markierten Eigenschaft rendert über den Renderer der Darstellung, sofern die Seite kein eigenes `CellTemplate` mitgibt.
+Das Attribut wirkt auch auf Client-DTOs: eine `PropertyColumn` einer markierten Eigenschaft rendert über den Renderer der Darstellung, sofern die Seite kein eigenes `CellTemplate` mitgibt. Eine Entity, die das Attribut nicht tragen kann, bekommt die Darstellung ihrer Facette im Code mit `services.ConfigureFacet<T>(x => x.Country, f => f.Display = FacetDisplayAttribute.Country)` ([Facetten ohne Attribute](../web/odata.md#facetten-ohne-attribute)); ein generiertes DTO bekommt das Attribut aus seiner Generierungskonfiguration (`Property(x => x.Country).Attribute("[CountryCode]")`).
 
 Jede andere Darstellung ist ein Name, den die App vergibt: Eigenschaft mit `[FacetDisplay("port")]` markieren (die Facette schickt ihn als `display` an den Client) und auf dem Client einen Renderer für diesen Namen registrieren:
 
