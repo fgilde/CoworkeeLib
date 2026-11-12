@@ -162,4 +162,40 @@ public sealed class LiveUpdatesTests : ClientTestBase
         avatar.WaitForAssertion(() => avatar.Markup.ShouldContain("avatar?v=42"));
         avatar.WaitForAssertion(() => avatar.Find("img").GetAttribute("src").ShouldBe($"api/v1/identity/users/{Bob}/avatar?v=42"));
     }
+
+    [Fact]
+    public async Task An_avatar_without_a_picture_shows_the_Gravatar_and_falls_back_to_the_initials()
+    {
+        Api.GetUserCardsAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns([new UserCardDto(Bob, "Bob Builder", null, "abc123")], [new UserCardDto(Bob, "Bob Builder", "42", null)]);
+        var avatar = Render<UserAvatar>(p => p.Add(c => c.UserId, Bob));
+        avatar.WaitForAssertion(() => avatar.Find("img[data-gravatar]").GetAttribute("src").ShouldBe("https://gravatar.com/avatar/abc123?s=256&d=404"));
+
+        // d=404: no Gravatar, the image fails, the initials stay
+        await avatar.Find("img[data-gravatar]").TriggerEventAsync("onerror", new Microsoft.AspNetCore.Components.Web.ErrorEventArgs());
+        avatar.WaitForAssertion(() => avatar.Find("[data-user]").TextContent.Trim().ShouldBe("BB"));
+        avatar.FindAll("img").ShouldBeEmpty();
+
+        // an uploaded picture wins
+        Realtime.Push(UserEvents.Topic, UserEvents.Changed, new { userId = Bob });
+        avatar.WaitForAssertion(() => avatar.Find("img").GetAttribute("src").ShouldBe($"api/v1/identity/users/{Bob}/avatar?v=42"));
+        avatar.FindAll("img[data-gravatar]").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Switched_off_avatars_never_ask_gravatar_and_follow_the_setting_live()
+    {
+        Api.GetUserCardsAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>()).Returns([new UserCardDto(Bob, "Bob Builder", null, "abc123")]);
+        Api.GetClientSettingsAsync(Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<string, string?> { [Contracts.Theming.ThemeSettings.Gravatar] = "false" }, new Dictionary<string, string?> { [Contracts.Theming.ThemeSettings.Gravatar] = "true" });
+        var themes = Services.GetRequiredService<Theming.ThemeService>();
+        await themes.LoadAsync();
+
+        var avatar = Render<UserAvatar>(p => p.Add(c => c.UserId, Bob));
+        avatar.WaitForAssertion(() => avatar.Find("[data-user]").TextContent.Trim().ShouldBe("BB"));
+        avatar.Markup.ShouldNotContain("gravatar.com");
+
+        await avatar.InvokeAsync(themes.LoadAsync);
+        avatar.WaitForAssertion(() => avatar.Find("img[data-gravatar]"));
+    }
 }

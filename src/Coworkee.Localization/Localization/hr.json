@@ -1742,6 +1742,8 @@
   "Grant": "Dodijeli",
   "Toggle dark mode": "Uključi/isključi tamni način",
   "Color mode": "Način boja",
+  "Gravatar pictures": "Gravatar slike",
+  "People without an uploaded picture show their Gravatar, when they have one. The browser sends a hash of their email address to gravatar.com.": "Osobe bez prenesene slike prikazuju svoj Gravatar ako ga imaju. Preglednik šalje hash njihove e-adrese na gravatar.com.",
   "Version": "Verzija",
   "current": "trenutna",
   "Version {0}": "Verzija {0}",

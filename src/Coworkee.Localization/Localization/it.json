@@ -1742,6 +1742,8 @@
   "Grant": "Concedi",
   "Toggle dark mode": "Attiva/disattiva la modalità scura",
   "Color mode": "Modalità colore",
+  "Gravatar pictures": "Immagini Gravatar",
+  "People without an uploaded picture show their Gravatar, when they have one. The browser sends a hash of their email address to gravatar.com.": "Le persone senza un'immagine caricata mostrano il loro Gravatar, se ne hanno uno. Il browser invia un hash del loro indirizzo e-mail a gravatar.com.",
   "Version": "Versione",
   "current": "attuale",
   "Version {0}": "Versione {0}",

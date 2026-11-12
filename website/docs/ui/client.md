@@ -192,7 +192,7 @@ Do not parse the `sub` claim yourself.
 
 ## People
 
-`UserAvatar` shows a user's picture or initials with the presence dot (`ShowPresence`), `UserCard` picture and name with an optional second line. For other people the avatar opens a menu with *Chat* and *Profile* when the user may chat; set `OfferChat="false"` where it sits in something that reacts to clicks. Both load in batches and update for everyone the moment someone changes name or picture on the profile page (`tenant:users` realtime topic).
+`UserAvatar` shows a user's picture or initials with the presence dot (`ShowPresence`), `UserCard` picture and name with an optional second line. For other people the avatar opens a menu with *Chat* and *Profile* when the user may chat; set `OfferChat="false"` where it sits in something that reacts to clicks. Both load in batches and update for everyone the moment someone changes name or picture on the profile page (`tenant:users` realtime topic). Without an uploaded picture the avatar shows the user's [Gravatar](https://gravatar.com), if there is one, else the initials. The server puts the SHA-256 of the trimmed, lower-case email address into the user card (`UserCardDto.GravatarHash`, none for users with a picture) and the browser loads `https://gravatar.com/avatar/{hash}?s=256&d=404`; a 404 keeps the initials. So gravatar.com learns that hash and the viewer's IP address. The setting `Theme.Gravatar` (*Gravatar pictures*, on by default; system, organisation or user, see [Theming](../modules/theming.md#settings-permission-and-endpoints)) switches it off: then no browser asks gravatar.com, and open pages follow the change at once.
 
 ![Profile page](../assets/screenshots/profile.png){ .shot }
 

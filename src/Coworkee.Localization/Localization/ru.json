@@ -1742,6 +1742,8 @@
   "Grant": "Выдать",
   "Toggle dark mode": "Переключить тёмный режим",
   "Color mode": "Цветовой режим",
+  "Gravatar pictures": "Изображения Gravatar",
+  "People without an uploaded picture show their Gravatar, when they have one. The browser sends a hash of their email address to gravatar.com.": "Пользователи без загруженного фото показывают свой Gravatar, если он есть. Браузер отправляет хеш их адреса электронной почты на gravatar.com.",
   "Version": "Версия",
   "current": "текущая",
   "Version {0}": "Версия {0}",

@@ -1742,6 +1742,8 @@
   "Grant": "付与",
   "Toggle dark mode": "ダークモードの切り替え",
   "Color mode": "カラーモード",
+  "Gravatar pictures": "Gravatar 画像",
+  "People without an uploaded picture show their Gravatar, when they have one. The browser sends a hash of their email address to gravatar.com.": "画像をアップロードしていないユーザーは、Gravatar があればそれを表示します。ブラウザーはメールアドレスのハッシュを gravatar.com に送信します。",
   "Version": "バージョン",
   "current": "現在",
   "Version {0}": "バージョン {0}",

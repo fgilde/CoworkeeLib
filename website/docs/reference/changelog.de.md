@@ -7,10 +7,15 @@
 ### Hinzugefügt
 
 - Facetten ohne Attribute: OData-Facetten, ihre Zählung und die Beschriftungen in Berichten lesen Facetten über Nextendeds `FacetRegistry`, im Code konfigurierte Facetten (Fluent `Facets<T>(...)` in einer `CodeGenConfig`-Klasse oder `FacetRegistry.Register`) zählen also wie `[ProvideFacet]`. Entities nur mit Attributen funktionieren wie bisher. Siehe [Facetten ohne Attribute](../web/odata.md#facetten-ohne-attribute) und [Im Code konfigurieren](../fundamentals/dtos.md#im-code-konfigurieren-fluent).
+- Gravatar für Benutzer-Avatare: `UserAvatar` (und damit `UserCard`, das Kontomenü, Chat, Kommentare, Workflows, Protokolle, Profil- und Personenseite) zeigt den Gravatar eines Benutzers, solange er kein Bild hochgeladen hat, und die Initialen, wenn gravatar.com keinen hat (`d=404`). Mit hochgeladenem Bild wird gravatar.com nie gefragt. `UserCardDto` hat das neue optionale `GravatarHash` (SHA-256 der getrimmten, kleingeschriebenen E-Mail-Adresse; null mit Bild). Neue Einstellung `Theme.Gravatar` (*Gravatar-Bilder*, System, Organisation oder Benutzer, Standard `true`): `false` zeigt nur die Initialen, und kein Browser fragt bei gravatar.com an. Datenschutz: Mit eingeschalteter Einstellung erhält gravatar.com den Hash der E-Mail-Adresse und die IP-Adresse des Betrachters; Apps, die das nicht dürfen, setzen `Theme.Gravatar` auf `false` (etwa `seed.Settings["Theme.Gravatar"] = "false"`). Siehe [Personen](../ui/client.md#personen).
 
 ### Geändert
 
 - Nextended 10.1.61 (`Coworkee.CodeGen` bringt Nextended.CodeGen 10.1.61: Fluent-Facetten, `ViewDefaults`, `OrderLast`, `DeleteStaleFiles`). Apps, die `Nextended.Core` unter 10.1.61 pinnen, scheitern beim Restore mit NU1605: `coworkee update` hebt die gepinnten Nextended-Pakete an.
+
+### Behoben
+
+- App-Leiste am linken oder rechten Rand: Die Leiste ließ sich seitwärts scrollen. `overflow-y: auto` allein macht `overflow-x` zu `auto`, und der Konto-Button behielt sein `ml-2` (eine `!important`-Abstandsklasse, gegen die das `margin: 0` der Seitenleiste verlor) und stand damit 8 px über die 64 px breite Leiste hinaus; in einem Fenster, das für die Leiste zu niedrig ist, kam deren senkrechte Bildlaufleiste dazu. Die Seitenleiste blendet waagerechten Überlauf jetzt aus, nutzt eine schmale Bildlaufleiste, nimmt ihren Buttons die Außenabstände und lässt Name und Impersonation-Chip Platz für die Bildlaufleiste; der Aufklapppfeil des Konto-Buttons ist dort wie vorgesehen ausgeblendet (der Selektor nannte eine Klasse, die MudBlazor nicht verwendet). Leisten oben und unten bleiben unverändert.
 
 ## 0.0.1.80 (2026-11-12)
 

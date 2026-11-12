@@ -7,10 +7,15 @@ Changes that need action in apps built on Coworkee. Newest first.
 ### Added
 
 - Facets without attributes: OData facets, their counts and report labels read facets through Nextended's `FacetRegistry`, so facets configured in code (fluent `Facets<T>(...)` in a `CodeGenConfig` class, or `FacetRegistry.Register`) count like `[ProvideFacet]`. Entities with attributes only work as before. See [Facets without attributes](../web/odata.md#facets-without-attributes) and [Configuring in code](../fundamentals/dtos.md#configuring-in-code-fluent).
+- Gravatar for user avatars: `UserAvatar` (and with it `UserCard`, the account menu, chat, comments, workflows, logs, profile and person pages) shows a user's Gravatar while they have no uploaded picture, and the initials when gravatar.com has none (`d=404`). An uploaded picture never asks gravatar.com. `UserCardDto` has the new optional `GravatarHash` (SHA-256 of the trimmed, lower-case email address; null with a picture). New setting `Theme.Gravatar` (*Gravatar pictures*, system, organisation or user, default `true`): `false` shows the initials only and no browser contacts gravatar.com. Privacy: with the setting on, gravatar.com receives the email hash and the viewer's IP address; apps that must not do that set `Theme.Gravatar` to `false` (for example `seed.Settings["Theme.Gravatar"] = "false"`). See [People](../ui/client.md#people).
 
 ### Changed
 
 - Nextended 10.1.61 (`Coworkee.CodeGen` brings Nextended.CodeGen 10.1.61: fluent facets, `ViewDefaults`, `OrderLast`, `DeleteStaleFiles`). Apps that pin `Nextended.Core` below 10.1.61 fail the restore with NU1605: `coworkee update` raises the pinned Nextended packages.
+
+### Fixed
+
+- App bar at the left or right edge: the bar scrolled sideways. `overflow-y: auto` alone turns `overflow-x` to `auto`, and the account button kept its `ml-2` (an `!important` spacing class the side bar's `margin: 0` lost to), so it stood 8 px past the 64 px bar; a window too short for the bar added its vertical scrollbar to that. The side bar now hides horizontal overflow, uses a thin scrollbar, drops the margins of its buttons and leaves the name and the impersonation chip room for the scrollbar; the account button's drop-down arrow is hidden there as intended (the selector named a class MudBlazor does not use). Bars at the top and the bottom are unchanged.
 
 ## 0.0.1.80 (2026-11-12)
 

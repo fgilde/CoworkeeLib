@@ -1742,6 +1742,8 @@
   "Grant": "Toekennen",
   "Toggle dark mode": "Donkere modus wisselen",
   "Color mode": "Kleurmodus",
+  "Gravatar pictures": "Gravatar-afbeeldingen",
+  "People without an uploaded picture show their Gravatar, when they have one. The browser sends a hash of their email address to gravatar.com.": "Mensen zonder geüploade afbeelding tonen hun Gravatar, als ze er een hebben. De browser stuurt een hash van hun e-mailadres naar gravatar.com.",
   "Version": "Versie",
   "current": "huidig",
   "Version {0}": "Versie {0}",

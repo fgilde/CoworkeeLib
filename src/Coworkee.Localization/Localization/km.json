@@ -1742,6 +1742,8 @@
   "Grant": "ផ្ដល់",
   "Toggle dark mode": "បិទ/បើករបៀបងងឹត",
   "Color mode": "របៀបពណ៌",
+  "Gravatar pictures": "រូបភាព Gravatar",
+  "People without an uploaded picture show their Gravatar, when they have one. The browser sends a hash of their email address to gravatar.com.": "អ្នកដែលមិនបានផ្ទុករូបភាពឡើង បង្ហាញ Gravatar របស់ពួកគេ ប្រសិនបើមាន។ កម្មវិធីរុករកផ្ញើ hash នៃអាសយដ្ឋានអ៊ីមែលរបស់ពួកគេទៅ gravatar.com។",
   "Version": "កំណែ",
   "current": "បច្ចុប្បន្ន",
   "Version {0}": "កំណែ {0}",

@@ -118,6 +118,7 @@ Ein unbekannter Name in `DefaultTheme` lässt Ocean als Standard. Ein App-Theme 
 |---|---|---|
 | `Theme.Mode` (*Farbmodus*) | System, Organisation, Benutzer | `system` (Standard), `light` oder `dark` |
 | `Theme.Id` (*Theme*) | Benutzer | das Theme, das der Benutzer gewählt hat; leer folgt dem Standard der Organisation |
+| `Theme.Gravatar` (*Gravatar-Bilder*) | System, Organisation, Benutzer | `true` (Standard): Personen ohne hochgeladenes Bild zeigen ihren Gravatar; der Browser sendet dafür einen Hash ihrer E-Mail-Adresse an gravatar.com (siehe [Personen](../ui/client.md#personen)). `false`: Initialen, keine Anfrage an gravatar.com |
 
 Die Berechtigung `Themes.Manage` (Gruppe *Themes*) deckt die Admin-Seite und jede Änderung ab. Themes sind `[Realtime]`-Entities: Die Theme-Listen von Inhabern von `Themes.Manage` folgen Änderungen sofort, und jede offene Seite der Organisation übernimmt ein geändertes Theme oder einen neuen Standard sofort (über die Themen der Einstellungen). Jedes gespeicherte Theme behält seine Versionen.
 

@@ -1742,6 +1742,8 @@
   "Grant": "Tildel",
   "Toggle dark mode": "Skift mørk tilstand",
   "Color mode": "Farvetilstand",
+  "Gravatar pictures": "Gravatar-billeder",
+  "People without an uploaded picture show their Gravatar, when they have one. The browser sends a hash of their email address to gravatar.com.": "Personer uden et uploadet billede viser deres Gravatar, hvis de har et. Browseren sender en hash af deres e-mailadresse til gravatar.com.",
   "Version": "Version",
   "current": "aktuel",
   "Version {0}": "Version {0}",
