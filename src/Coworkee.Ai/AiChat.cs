@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using Coworkee.Ai.Sessions;
@@ -6,6 +7,7 @@ using Coworkee.Application.Authorization;
 using Coworkee.Contracts.Ai;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
+using Coworkee.OData.Transfer;
 using Coworkee.Settings;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
@@ -16,11 +18,12 @@ namespace Coworkee.Ai;
 /// The assistant: a manual tool loop against the configured <see cref="IChatClient"/> (<see cref="AiProviders"/>), streamed. Tools run as the
 /// current user through <see cref="AiToolRunner"/>, the same tools MCP clients get, so the assistant can do nothing the user could not do
 /// in the API. Read only tools run right away; every tool that changes data waits until the user confirmed exactly that call in the
-/// assistant window, so text planted in data or history can never change anything on its own.
+/// assistant window, so text planted in data or history can never change anything on its own. Reads of data sets the browser holds locally go to the
+/// browser first (<see cref="AiStreamEvent.ClientQuery"/>), the server runs them when it cannot answer in time.
 /// </summary>
 public sealed class AiChat(
     AiToolRunner runner, ISettingProvider settings, IPermissionChecker permissions, ICurrentUser currentUser, AiConnections connections, IAiChatClientFactory clients,
-    ILogger<AiChat> logger)
+    ILogger<AiChat> logger, AiClientResults clientResults)
 {
     public const string HttpClientName = "Coworkee.Ai";
 
@@ -68,11 +71,11 @@ public sealed class AiChat(
     /// <summary>
     /// Answers <paramref name="history"/> (user and assistant turns, ending with the user's), or continues a round the user just decided
     /// on (<paramref name="resume"/>). <paramref name="emit"/> gets the text as it arrives, every tool call and every client action; <paramref name="ui"/>
-    /// is what the client says the user sees.
+    /// is what the client says the user sees. With <paramref name="session"/> the client can answer reads of its local sets (<see cref="AiUiContext.LocalSets"/>).
     /// </summary>
     internal async Task<Result<AiTurn>> RunAsync(
         AiConnection connection, IReadOnlyList<ChatMessage> history, Func<CancellationToken, Task<AiResume?>>? resume, Func<AiStreamEvent, Task> emit,
-        AiUiContext? ui, CancellationToken cancellationToken)
+        AiUiContext? ui, CancellationToken cancellationToken, Guid? session = null)
     {
         var userId = currentUser.UserId!.Value;
         if (!Running.TryAdd(userId, 0))
@@ -88,7 +91,7 @@ public sealed class AiChat(
             var resumed = resume is null ? null : await resume(deadline.Token);
             return resume is not null && resumed is null
                 ? Error.Conflict("ai.nothing_to_confirm", "Nothing waits for a confirmation.")
-                : await LoopAsync(connection, history, resumed, emit, ui, deadline.Token);
+                : await LoopAsync(connection, history, resumed, emit, ui, session, deadline.Token);
         }
         finally
         {
@@ -97,7 +100,8 @@ public sealed class AiChat(
     }
 
     private async Task<Result<AiTurn>> LoopAsync(
-        AiConnection connection, IReadOnlyList<ChatMessage> history, AiResume? resume, Func<AiStreamEvent, Task> emit, AiUiContext? ui, CancellationToken cancellationToken)
+        AiConnection connection, IReadOnlyList<ChatMessage> history, AiResume? resume, Func<AiStreamEvent, Task> emit, AiUiContext? ui, Guid? session,
+        CancellationToken cancellationToken)
     {
         var rounds = Math.Clamp(await settings.GetAsync<int>(AiSettings.MaxToolRounds, cancellationToken), 1, 20);
         var tools = await runner.AvailableAsync(cancellationToken);
@@ -173,7 +177,8 @@ public sealed class AiChat(
                     continue;
                 }
 
-                var outcome = await runner.RunAsync(use.Name, input, AiChannels.Chat, allowWrites: false, cancellationToken);
+                var outcome = await LocalAsync(use, input, tools, ui, session, emit, cancellationToken)
+                    ?? await runner.RunAsync(use.Name, input, AiChannels.Chat, allowWrites: false, cancellationToken);
                 calls.Add(outcome.Call);
                 await emit(new AiStreamEvent(AiStreamEvent.Tool, ToolCall: outcome.Call));
                 results.Add(outcome.Succeeded ? new FunctionResultContent(use.CallId, outcome.Output) : Failed(use.CallId, outcome.Output));
@@ -233,6 +238,43 @@ public sealed class AiChat(
     }
 
     private const string Declined = "The user declined; the tool did not run.";
+
+    private const int MaxLocalSets = 200;
+
+    /// <summary>
+    /// A query_data of a set the browser holds (<see cref="AiUiContext.LocalSets"/>), answered by the browser from its copy and audited as
+    /// <see cref="AiChannels.ChatLocal"/>; null when it is no such read, the setting is off or the browser does not answer in time. The copy holds what the
+    /// user's own OData read returns, so the answer shows nothing the server tool would not; it only ever goes into this user's own turn.
+    /// </summary>
+    private async Task<AiToolOutcome?> LocalAsync(
+        FunctionCallContent use, JsonElement input, IReadOnlyList<AiTool> tools, AiUiContext? ui, Guid? session, Func<AiStreamEvent, Task> emit, CancellationToken cancellationToken)
+    {
+        if (session is not { } id || ui?.LocalSets is not { Count: > 0 } sets || use.CallId is not { Length: > 0 and <= AiClientResults.MaxCallIdLength }
+            || tools.FirstOrDefault(t => t.Name == use.Name)?.RequestType != typeof(QueryDataQuery)
+            || Query(input) is not { } query || !sets.Take(MaxLocalSets).Contains(query.EntitySet, StringComparer.OrdinalIgnoreCase)
+            || !await settings.GetAsync<bool>(AiSettings.LocalQueries, cancellationToken))
+        {
+            return null;
+        }
+
+        var timeout = TimeSpan.FromSeconds(Math.Clamp(await settings.GetAsync<int>(AiSettings.LocalQueryTimeout, cancellationToken), 1, 30));
+        var started = Stopwatch.GetTimestamp();
+        var output = await clientResults.AskAsync(currentUser.UserId!.Value, id, use.CallId,
+            () => emit(new AiStreamEvent(AiStreamEvent.ClientQuery, Action: new AiClientActionCall(use.CallId, use.Name, input.GetRawText()))), timeout, cancellationToken);
+        return output is null ? null : await runner.RecordAsync(use.Name, input, AiChannels.ChatLocal, output, started);
+    }
+
+    private QueryDataQuery? Query(JsonElement input)
+    {
+        try
+        {
+            return input.Deserialize<QueryDataQuery>(runner.JsonOptions) is { EntitySet.Length: > 0 } query ? query : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
 
     private static string Append(StringBuilder text, string part)
     {

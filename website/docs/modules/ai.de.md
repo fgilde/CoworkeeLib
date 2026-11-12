@@ -45,11 +45,11 @@ Weitere Requests der Module (Benutzer, Rollen, Berichte, ...) sind nach der Rege
     ```
 
 - **[MCP-Server](mcp.md)** unter `/mcp` mit denselben Werkzeugen, für Claude Desktop, Claude Code, VS Code, Cursor und andere MCP-Clients, angemeldet mit einem [API-Schlüssel](../security/api-keys.md).
-- **Werkzeug-Audit** für Benutzer mit `Ai.Audit` (*Administration > Monitoring > KI-Werkzeugaufrufe*, `/cw/admin/ai-tool-calls`, OData-Set `AiToolCalls`): jeder Aufruf mit seiner Eingabe (Werte, die nach Geheimnissen aussehen, maskiert, nach 4.000 Zeichen gekürzt), Erfolg oder Fehler, Dauer, Benutzer, Kanal (`chat` oder `mcp`) und API-Schlüssel; die Ausgabe wird nicht gespeichert.
+- **Werkzeug-Audit** für Benutzer mit `Ai.Audit` (*Administration > Monitoring > KI-Werkzeugaufrufe*, `/cw/admin/ai-tool-calls`, OData-Set `AiToolCalls`): jeder Aufruf mit seiner Eingabe (Werte, die nach Geheimnissen aussehen, maskiert, nach 4.000 Zeichen gekürzt), Erfolg oder Fehler, Dauer, Benutzer, Kanal (`chat`, `chat-local` für [Abfragen, die der Browser beantwortet hat](#antworten-aus-den-lokalen-daten-des-browsers), oder `mcp`) und API-Schlüssel; die Ausgabe wird nicht gespeichert.
 - Queries laufen sofort. Jedes Command, das Daten ändert, wartet: das Fenster zeigt genau, was der Assistent ausführen will (Eingaben, die nach Geheimnissen aussehen, maskiert), mit *Ausführen* und *Abbrechen*, destruktive hervorgehoben, und erst der Klick des Benutzers führt es aus. Ein Produkt per Chat anlegen kostet einen Klick. Text, der in Daten oder in der Unterhaltung untergeschoben wurde, kann so nie eigenmächtig etwas ändern. Eine neue Nachricht verwirft einen wartenden Aufruf.
 - Ein wartender Aufruf wird mit ASP.NET Data Protection verschlüsselt gespeichert (den Schlüsselbund zwischen API-Instanzen teilen), nur einmal entschieden, auch wenn zwei Tabs gleichzeitig klicken, und läuft nie zweimal.
 
-Das Fenster spricht mit `/api/v1/ai`: `GET status`, `GET tools` (die Werkzeuge des Benutzers), `GET|POST sessions` (`?search=`), `GET|PUT|DELETE sessions/{id}` sowie `POST sessions/{id}/messages` und `POST sessions/{id}/confirm`, die mit `application/x-ndjson` antworten: ein `AiStreamEvent` pro Zeile, `delta` (Text), `tool` (ein Werkzeugaufruf), `client_action` (`Action`: Aufruf-ID, Name und JSON-Argumente für den Client), dann `done` (die gespeicherte Nachricht) oder `error`. Die Antwort läuft zu Ende und wird gespeichert, auch wenn der Browser geht. Die KI-Seite nutzt `GET connection`, `POST connection/models` und `POST connection/test`, das Audit `GET tool-calls?channel=` (`Ai.Audit`).
+Das Fenster spricht mit `/api/v1/ai`: `GET status`, `GET tools` (die Werkzeuge des Benutzers), `GET|POST sessions` (`?search=`), `GET|PUT|DELETE sessions/{id}` sowie `POST sessions/{id}/messages` und `POST sessions/{id}/confirm`, die mit `application/x-ndjson` antworten: ein `AiStreamEvent` pro Zeile, `delta` (Text), `tool` (ein Werkzeugaufruf), `client_action` (`Action`: Aufruf-ID, Name und JSON-Argumente für den Client), `client_query` (eine Abfrage, die der Client aus seiner [lokalen Kopie](#antworten-aus-den-lokalen-daten-des-browsers) beantworten darf, beantwortet mit `POST sessions/{id}/client-results`), dann `done` (die gespeicherte Nachricht) oder `error`. Die Antwort läuft zu Ende und wird gespeichert, auch wenn der Browser geht. Die KI-Seite nutzt `GET connection`, `POST connection/models` und `POST connection/test`, das Audit `GET tool-calls?channel=` (`Ai.Audit`).
 
 Nachrichten, Bestätigungen, Modelllisten und Verbindungstests laufen über die Rate-Limit-Policy `ai` (standardmäßig 30 Anfragen pro Minute und Benutzer, `Coworkee:RateLimiting:Policies:ai`), wie der MCP-Server.
 
@@ -105,6 +105,23 @@ sealed class OpenCartAction(NavigationManager nav) : IAssistantClientAction
 
 Namen bestehen aus Buchstaben, Ziffern, `_` und `-`; der Name eines Server-Werkzeugs meint immer das Server-Werkzeug. Client-Aktionen nur für umkehrbare Änderungen an der Oberfläche verwenden: sie laufen ohne Rückfrage.
 
+### Antworten aus den lokalen Daten des Browsers
+
+Hält die App [Client-Entities](../ui/client-entities.md), liegen im Browser vollständige Kopien einiger OData-Sets. Der Assistent liest sie dort statt in der Datenbank: ein `query_data` auf so ein Set dauert im Browser Millisekunden statt einer Datenbankabfrage (bei einem großen Set Sekunden, in einem gemessenen Fall 28 Sekunden). Apps ändern nichts; es gilt für jedes Set, das eine Tabelle oder eigener Code gestartet hat und das vollständig und nicht auf den Server umgeschaltet ist.
+
+1. Mit jeder Nachricht nennt das Fenster diese Sets in `AiUiContext.LocalSets` (aus `IClientDataCache.LocalSets`).
+2. Ruft das Modell `query_data` auf einem davon auf, streamt der Server ein `client_query`-Ereignis (`Action`: Aufruf-ID, `query_data`, die JSON-Argumente) und wartet.
+3. Das Fenster führt die Abfrage auf der Kopie aus (`IClientDataCache.QueryLocallyAsync`: Filter, Sortierung, `top` 1 bis 50, `skip`, `select`) und schickt `AiClientResult` (Aufruf-ID, Ausgabe) an `POST /api/v1/ai/sessions/{id}/client-results`. Die Ausgabe hat die Form des Server-Werkzeugs, `{"rows":[{"Name":"Drill"}],"total":1}`, mit denselben Feldnamen und demselben JSON.
+4. Der Server gibt sie dem Modell wie sein eigenes Werkzeugergebnis, nach 20.000 Zeichen gekürzt, und protokolliert den Aufruf mit dem Kanal `chat-local`.
+
+Der Server führt die Abfrage selbst aus (Kanal `chat`), wenn der Browser sie nicht beantworten kann: die Kopie ist nicht vollständig oder auf den Server umgeschaltet, der Filter geht über die [lokale Auswertung](../ui/client-entities.md#was-lokal-lauft) hinaus (`any`, `all`, unbekannte Funktionen) oder nennt ein Feld, das der Zeilentyp des Clients nicht hat, ein `select` nennt ein Feld, das der Zeilentyp nicht hat oder der Server nicht liefert, ohne `select` fehlt dem Zeilentyp ein Feld, das das Server-Werkzeug liefern würde (das [Client-Entity-Manifest](../ui/client-entities.md#endpunkte) nennt sie als `Fields`), oder die Argumente lassen sich nicht lesen. Eine lokale Antwort enthält also nie weniger als die des Servers: ein schmalerer Zeilentyp des Clients beantwortet nur Abfragen, die Felder auswählen, die er hat. Das Fenster schickt dann sofort `null`, damit der Server nicht wartet. Kommt innerhalb von `Ai.LocalQueryTimeout` Sekunden (standardmäßig 4, 1 bis 30) keine Antwort, etwa weil der Tab geschlossen wurde, führt der Server sie ebenfalls aus.
+
+An der Sicherheit ändert sich nichts: eine Kopie enthält genau die Zeilen und Felder, die das eigene OData-Lesen des Benutzers liefert (Berechtigungen, Zeilenfilter, verborgene Eigenschaften), die Antwort zeigt also nichts, was das Server-Werkzeug nicht zeigen würde, und sie geht nur in den eigenen Durchlauf dieses Benutzers. Nur `query_data` geht an den Browser; jedes andere Werkzeug und jede Datenänderung mit ihrer Bestätigung bleibt auf dem Server. Antworten kann nur der Benutzer des laufenden Durchlaufs (der wartende Aufruf ist nach Benutzer, Unterhaltung und Aufruf-ID geschlüsselt; jeder andere bekommt `404`), nur solange er wartet, und nur mit einem JSON-Objekt von höchstens 200.000 Zeichen (sonst `400`).
+
+`global_search` bleibt auf dem Server: die Befehlspalette findet im Browser nur die Anbieter lokaler Sets, die anderen (Benutzer, Rollen, Dateien, ...) brauchen ohnehin den Server. Der [MCP-Server](mcp.md) hat keinen Browser und liest immer auf dem Server.
+
+Abschalten mit `Ai.LocalQueries` = `false`. Der wartende Aufruf liegt im Speicher der API-Instanz, die den Durchlauf streamt, wie die Sperre gegen parallele Nachrichten eines Benutzers: mit mehreren API-Instanzen die Anfragen eines Benutzers an dieselbe Instanz leiten (Sticky Sessions), sonst findet die Antwort nichts Wartendes und der Server führt die Abfrage nach der Wartezeit aus.
+
 ## Anbieter
 
 Der Assistent spricht über `IChatClient` aus `Microsoft.Extensions.AI` mit dem Modell, mit denselben Werkzeugen, Regeln und demselben Audit für jeden Anbieter. Die meisten Anbieter sprechen die OpenAI-Chat-API und unterscheiden sich nur in Adresse, Schlüssel und Modellen; der Katalog (`AiProviderCatalog` in `Coworkee.Contracts.Ai`) kennt sie:
@@ -137,7 +154,7 @@ Host-Administratoren mit `Settings.Manage` richten ihn unter **Administration > 
 - **Schlüssel**: verschlüsselt gespeichert und nie zurück an den Browser geschickt; die Seite zeigt ihn maskiert mit *Ersetzen* und *Entfernen*. Wechseln Anbieter oder Adresse, entfällt der gespeicherte Schlüssel beim Speichern, damit er nie einen anderen Server erreicht.
 - **Modelle laden** fragt den Anbieter mit dem eingegebenen Schlüssel nach seinen Modellen (`/models` der OpenAI-kompatiblen APIs, `/v1/models` von Anthropic, `/api/tags` von Ollama); jeder andere Name lässt sich eintippen.
 - **Verbindung testen** schickt einen kurzen Prompt und eine Werkzeugprobe und zeigt Latenz, Antwort und ob das Modell Werkzeuge aufruft, oder den Fehler des Anbieters.
-- **Erweitert**: Temperatur, maximale Ausgabe-Tokens, Werkzeugrunden pro Nachricht, zusätzliche Header (`HTTP-Referer` und `X-Title` nennen deine App bei OpenRouter) und ein Schlüssel-Header für Server, die den Schlüssel in einem anderen Header als `Authorization: Bearer` erwarten (etwa `api-key`).
+- **Erweitert**: Temperatur, maximale Ausgabe-Tokens, Werkzeugrunden pro Nachricht, [Antworten aus den lokalen Daten des Browsers](#antworten-aus-den-lokalen-daten-des-browsers) und wie lange auf sie gewartet wird, zusätzliche Header (`HTTP-Referer` und `X-Title` nennen deine App bei OpenRouter) und ein Schlüssel-Header für Server, die den Schlüssel in einem anderen Header als `Authorization: Bearer` erwarten (etwa `api-key`).
 
 ![Verbindungstest](../assets/screenshots/ai-admin-test-dark.webp){ .shot }
 
@@ -158,6 +175,8 @@ Die Seite schreibt die KI-Einstellungen. Es gibt sie nur global, damit keine Org
 | `Ai.Temperature` | leer: der Standard des Modells; 0 bis 2, niedriger antwortet vorhersehbarer |
 | `Ai.MaxOutputTokens` | leer: der Standard des Anbieters (16000 bei Anthropic) |
 | `Ai.MaxToolRounds` | wie viele Werkzeugrunden eine Antwort dauern darf, standardmäßig `10` |
+| `Ai.LocalQueries` | Abfragen von Sets, die der Browser lokal hält, werden dort beantwortet, standardmäßig `true`; siehe [oben](#antworten-aus-den-lokalen-daten-des-browsers) |
+| `Ai.LocalQueryTimeout` | Sekunden, die der Server auf die lokale Antwort des Browsers wartet, bevor er die Abfrage selbst ausführt, standardmäßig `4`, 1 bis 30 |
 | `Mcp.Enabled` | der [MCP-Server](mcp.md) zur Laufzeit, standardmäßig `true`; braucht keinen Anbieter |
 
 ```json

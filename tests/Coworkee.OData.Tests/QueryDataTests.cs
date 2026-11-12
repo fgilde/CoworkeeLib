@@ -1,4 +1,6 @@
+using System.Net.Http.Json;
 using Coworkee.Application.Messaging;
+using Coworkee.Contracts.Data;
 using Coworkee.Contracts.Identity;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
@@ -51,6 +53,18 @@ public sealed class QueryDataTests(ODataApp app) : IAsyncLifetime
         var gadgets = sets.Single(s => s.Name == "Gadgets");
         gadgets.Fields["Name"].ShouldBe("String");
         gadgets.Fields.Keys.ShouldNotContain("SerialCode");
+    }
+
+    [Fact]
+    public async Task The_client_entity_manifest_names_exactly_the_fields_query_data_returns()
+    {
+        var manifest = await app.As(_setup.AdminUserId, _setup.TenantId).GetFromJsonAsync<ClientEntityManifest>("/api/v1/client-entities", TestContext.Current.CancellationToken);
+        var row = (await SendAsync(new QueryDataQuery("Gadgets", Top: 1))).Value.Rows.Single();
+
+        // the assistant answers a read without select from the browser's copy only when its row type has all of them
+        var fields = manifest!.Sets.Single(s => s.EntitySet == "Gadgets").Fields.ShouldNotBeNull();
+        fields.ShouldBe(row.Keys, ignoreOrder: true);
+        fields.ShouldNotContain("SerialCode");
     }
 
     private async Task<Result<DataPage>> SendAsync(QueryDataQuery query)

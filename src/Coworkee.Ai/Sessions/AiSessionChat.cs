@@ -55,7 +55,7 @@ internal sealed class AiSessionChat(AiChat chat, CoworkeeDbContext db, ICurrentU
         await db.SaveChangesAsync(cancellationToken);
         return new AiStreamResult(async emit =>
         {
-            var turn = await chat.RunAsync(connection.Value, History(session, before: null), null, emit, request.Ui, CancellationToken.None);
+            var turn = await chat.RunAsync(connection.Value, History(session, before: null), null, emit, request.Ui, CancellationToken.None, session.Id);
             if (turn.Error is not null)
             {
                 session.Messages.Remove(question);
@@ -101,7 +101,8 @@ internal sealed class AiSessionChat(AiChat chat, CoworkeeDbContext db, ICurrentU
 
         return new AiStreamResult(async emit =>
         {
-            var turn = await chat.RunAsync(connection.Value, History(session, before: waiting), ct => DecideAsync(waiting, request.Approve, emit, ct), emit, request.Ui, CancellationToken.None);
+            var turn = await chat.RunAsync(connection.Value, History(session, before: waiting), ct => DecideAsync(waiting, request.Approve, emit, ct), emit, request.Ui,
+                CancellationToken.None, session.Id);
             return await FinishAsync(session, turn);
         });
     }
