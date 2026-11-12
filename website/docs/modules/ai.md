@@ -45,11 +45,11 @@ Further requests of the modules (users, roles, reports, ...) are tools by the ru
     ```
 
 - **[MCP server](mcp.md)** under `/mcp` with the same tools, for Claude Desktop, Claude Code, VS Code, Cursor and other MCP clients, signed in with an [API key](../security/api-keys.md).
-- **Tool call audit** for users with `Ai.Audit` (*Administration > Monitoring > AI tool calls*, `/cw/admin/ai-tool-calls`, OData set `AiToolCalls`): every call with its input (values that look like secrets masked, cut after 4,000 characters), success or error, duration, user, channel (`chat` or `mcp`) and API key; the output is not stored.
+- **Tool call audit** for users with `Ai.Audit` (*Administration > Monitoring > AI tool calls*, `/cw/admin/ai-tool-calls`, OData set `AiToolCalls`): every call with its input (values that look like secrets masked, cut after 4,000 characters), success or error, duration, user, channel (`chat`, `chat-local` for [reads the browser answered](#answers-from-the-browsers-local-data), or `mcp`) and API key; the output is not stored.
 - Queries run at once. Every command, which changes data, waits: the window shows exactly what the assistant wants to run (inputs that look like secrets masked) with *Run* and *Cancel*, destructive ones highlighted, and only the user's click runs it. Creating a product by chat takes one click. Text planted in data or in the conversation can therefore never change anything on its own. A new message cancels a waiting call.
 - A waiting call is stored encrypted with ASP.NET Data Protection (share the key ring between API instances), decided once even when two tabs click at the same time, and never runs twice.
 
-The window talks to `/api/v1/ai`: `GET status`, `GET tools` (the user's tools), `GET|POST sessions` (`?search=`), `GET|PUT|DELETE sessions/{id}`, and `POST sessions/{id}/messages` and `POST sessions/{id}/confirm`, which answer with `application/x-ndjson`: one `AiStreamEvent` per line, `delta` (text), `tool` (a tool call), `client_action` (`Action`: call id, name and JSON arguments for the client), then `done` (the saved message) or `error`. The answer runs to its end and is saved even when the browser goes away. The AI page uses `GET connection`, `POST connection/models` and `POST connection/test`; the audit `GET tool-calls?channel=` (`Ai.Audit`).
+The window talks to `/api/v1/ai`: `GET status`, `GET tools` (the user's tools), `GET|POST sessions` (`?search=`), `GET|PUT|DELETE sessions/{id}`, and `POST sessions/{id}/messages` and `POST sessions/{id}/confirm`, which answer with `application/x-ndjson`: one `AiStreamEvent` per line, `delta` (text), `tool` (a tool call), `client_action` (`Action`: call id, name and JSON arguments for the client), `client_query` (a read the client may answer from its [local copy](#answers-from-the-browsers-local-data), answered with `POST sessions/{id}/client-results`), then `done` (the saved message) or `error`. The answer runs to its end and is saved even when the browser goes away. The AI page uses `GET connection`, `POST connection/models` and `POST connection/test`; the audit `GET tool-calls?channel=` (`Ai.Audit`).
 
 Messages, confirmations, model lists and connection tests go through the rate limit policy `ai` (30 requests a minute per user by default, `Coworkee:RateLimiting:Policies:ai`), like the MCP server.
 
@@ -105,6 +105,23 @@ sealed class OpenCartAction(NavigationManager nav) : IAssistantClientAction
 
 Names take letters, digits, `_` and `-`; a name of a server tool always means the server tool. Keep client actions to reversible UI changes: they run without asking.
 
+### Answers from the browser's local data
+
+When the app keeps [client entities](../ui/client-entities.md), the browser holds complete copies of some OData sets. The assistant reads them there instead of in the database: a `query_data` on such a set takes milliseconds in the browser instead of a database query (on a large set, seconds; in a measured case 28 seconds). Apps change nothing; it works with every set a table or your own code has started and that is complete and not switched to the server.
+
+1. With every message the window lists those sets in `AiUiContext.LocalSets` (from `IClientDataCache.LocalSets`).
+2. When the model calls `query_data` on one of them, the server streams a `client_query` event (`Action`: call id, `query_data`, the JSON arguments) and waits.
+3. The window runs the query on the copy (`IClientDataCache.QueryLocallyAsync`: filter, order, `top` 1 to 50, `skip`, `select`) and posts `AiClientResult` (call id, output) to `POST /api/v1/ai/sessions/{id}/client-results`. The output has the shape of the server tool, `{"rows":[{"Name":"Drill"}],"total":1}`, with the same field names and JSON.
+4. The server hands it to the model like its own tool result, cut after 20,000 characters, and audits the call with the channel `chat-local`.
+
+The server runs the read itself (channel `chat`) when the browser cannot answer it: the copy is not complete or switched to the server, the filter is beyond the [local engine](../ui/client-entities.md#what-runs-locally) (`any`, `all`, unknown functions) or names a field the client's row type does not have, a `select` names such a field, or the arguments do not parse. The window then posts `null` at once, so the server does not wait. Without an answer within `Ai.LocalQueryTimeout` seconds (4 by default, 1 to 30), for example because the tab was closed, the server runs it too.
+
+Nothing changes for security: a copy holds exactly the rows and fields the user's own OData read returns (permissions, row filters, hidden properties), so the answer shows nothing the server tool would not, and it only ever goes into this user's own turn. Only `query_data` goes to the browser; every other tool, and every change of data with its confirmation, stays on the server. Only the user of the running turn can answer (the waiting call is keyed by user, conversation and call id; anyone else gets `404`), only while it waits, and only with a JSON object of at most 200,000 characters (`400` otherwise).
+
+`global_search` stays on the server: the command palette finds only the providers of local sets in the browser, the others (users, roles, files, ...) need the server anyway. The [MCP server](mcp.md) has no browser and always reads on the server.
+
+Switch it off with `Ai.LocalQueries` = `false`. The waiting call lives in the memory of the API instance that streams the turn, like the guard against parallel messages of one user: with several API instances route a user's requests to the same instance (sticky sessions), otherwise the answer finds nothing waiting and the server runs the read after the timeout.
+
 ## Providers
 
 The assistant talks to the model through `IChatClient` of `Microsoft.Extensions.AI`, with the same tools, rules and audit for every provider. Most providers speak the OpenAI chat API, so they only differ in address, key and models; the catalog (`AiProviderCatalog` in `Coworkee.Contracts.Ai`) knows them:
@@ -137,7 +154,7 @@ Host administrators with `Settings.Manage` set it up under **Administration > Sy
 - **Key**: stored encrypted and never sent back to the browser; the page shows it masked with *Replace* and *Remove*. When the provider or the address changes, the stored key is dropped on save, so it never reaches another server.
 - **Load models** asks the provider for its models with the entered key (`/models` of the OpenAI compatible APIs, `/v1/models` of Anthropic, `/api/tags` of Ollama); any other name can be typed.
 - **Test connection** sends a short prompt and a tool call probe and shows the latency, the answer and whether the model calls tools, or the provider's error.
-- **Advanced**: temperature, maximum output tokens, tool rounds per message, extra headers (`HTTP-Referer` and `X-Title` name your app on OpenRouter) and a key header for servers that expect the key in another header than `Authorization: Bearer` (for example `api-key`).
+- **Advanced**: temperature, maximum output tokens, tool rounds per message, [answers from the browser's local data](#answers-from-the-browsers-local-data) and how long to wait for them, extra headers (`HTTP-Referer` and `X-Title` name your app on OpenRouter) and a key header for servers that expect the key in another header than `Authorization: Bearer` (for example `api-key`).
 
 ![Connection test](../assets/screenshots/ai-admin-test-dark.webp){ .shot }
 
@@ -158,6 +175,8 @@ The page writes the AI settings. They are global only, so no organisation switch
 | `Ai.Temperature` | empty: the model's default; 0 to 2, lower answers more predictably |
 | `Ai.MaxOutputTokens` | empty: the provider's default (16000 for Anthropic) |
 | `Ai.MaxToolRounds` | how many tool rounds one answer may take, `10` by default |
+| `Ai.LocalQueries` | reads of sets the browser holds locally are answered there, `true` by default; see [above](#answers-from-the-browsers-local-data) |
+| `Ai.LocalQueryTimeout` | seconds the server waits for the browser's local answer before it runs the read itself, `4` by default, 1 to 30 |
 | `Mcp.Enabled` | the [MCP server](mcp.md) at runtime, `true` by default; needs no provider |
 
 ```json

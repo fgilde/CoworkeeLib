@@ -2,6 +2,13 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- AI assistant: reads of data sets the browser holds as [client entities](../ui/client-entities.md) are answered from the local copy, in milliseconds instead of a database query. A `query_data` on a set the window names in `AiUiContext.LocalSets` streams a `client_query` event; the window answers it from the copy and posts the rows (the server tool's shape) to `POST /api/v1/ai/sessions/{id}/client-results`. The server runs the read itself when the copy cannot answer it or no answer comes within `Ai.LocalQueryTimeout` seconds (4 by default); `Ai.LocalQueries` = `false` switches it off. The audit marks these calls with the channel `chat-local`. Only the user of the running turn can answer, and only `query_data` goes to the browser; `global_search`, writes and MCP stay on the server. Apps change nothing. With several API instances route a user's requests to the same instance (sticky sessions), else the server answers after the timeout. See [Answers from the browser's local data](../modules/ai.md#answers-from-the-browsers-local-data).
+- `IClientDataCache.LocalSets` and `QueryLocallyAsync(entitySet, query)`: the sets that answer locally right now and a query answered from the local copy as `LocalRows` (rows by field name and the total), or `null` when only the server can. `IAssistantApi` has `SendClientResultAsync`; an own implementation of `IAssistantApi` adds it.
+
 ## 0.0.1.81 (2026-11-12)
 
 ### Added
