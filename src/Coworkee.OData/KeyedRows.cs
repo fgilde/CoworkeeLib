@@ -41,6 +41,45 @@ internal static class KeyedRows
         return (rows.Where(row => EF.Parameter(keys).Contains(EF.Property<TKey>(row, key.Name))).TagWith(Tag), keys.Count);
     }
 
+    private static readonly MethodInfo PageMethod = typeof(KeyedRows).GetMethod(nameof(PageOfAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
+
+    /// <summary>
+    /// A page of <paramref name="ordered"/> (<paramref name="rows"/> in an order, or none) and how many rows there are, without a count: the keys of the
+    /// rows in their order first (one read), then the page's rows among them with every filter of <paramref name="rows"/> still on. The keys stop at
+    /// <paramref name="limit"/> + 1: above the limit the total is null, and so is the page when it lies beyond those keys. Null for a set without one
+    /// key of its own. A filter no index serves then reads the table once instead of once for the count and once more for the page.
+    /// </summary>
+    public static Task<(List<T>? Page, int? Total)?> PageAsync<T>(IQueryable<T> rows, IQueryable<T> ordered, int skip, int top, int limit, CancellationToken cancellationToken)
+        where T : class =>
+        !Keyed(rows.Expression) && Key(rows) is { } key
+            ? (Task<(List<T>?, int?)?>)PageMethod.MakeGenericMethod(typeof(T), key.PropertyType).Invoke(null, [rows, ordered, key, skip, top, limit, cancellationToken])!
+            : Task.FromResult<(List<T>?, int?)?>(null);
+
+    private static async Task<(List<T>?, int?)?> PageOfAsync<T, TKey>(
+        IQueryable<T> rows, IQueryable<T> ordered, PropertyInfo key, int skip, int top, int limit, CancellationToken cancellationToken)
+        where T : class
+        where TKey : notnull
+    {
+        var it = Expression.Parameter(typeof(T), "it");
+        var all = await ordered.Select(Expression.Lambda<Func<T, TKey>>(Expression.Property(it, key), it))
+            .Take((int)Math.Min(limit + 1L, int.MaxValue)).ToListAsync(cancellationToken);
+        int? total = all.Count <= limit ? all.Count : null;
+        if (total is null && (long)skip + top > all.Count)
+        {
+            return (null, null);
+        }
+
+        var keys = all.Skip(skip).Take(top).ToList();
+        if (keys.Count == 0)
+        {
+            return ([], total);
+        }
+
+        var page = await rows.Where(row => EF.Parameter(keys).Contains(EF.Property<TKey>(row, key.Name))).TagWith(Tag).ToListAsync(cancellationToken);
+        var at = keys.Select((k, i) => (k, i)).ToDictionary(p => p.k, p => p.i);
+        return ([.. page.OrderBy(row => at[(TKey)key.GetValue(row)!])], total);
+    }
+
     // the one key property of the set the query starts from
     private static PropertyInfo? Key<T>(IQueryable<T> rows) =>
         Root(rows.Expression) is { } root && root.EntityType.ClrType == typeof(T) && root.EntityType.FindPrimaryKey() is { Properties: [{ PropertyInfo: { } key }] }

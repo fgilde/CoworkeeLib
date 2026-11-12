@@ -53,6 +53,13 @@ public sealed class QueryDataTests(ODataApp app) : IAsyncLifetime
         var gadgets = sets.Single(s => s.Name == "Gadgets");
         gadgets.Fields["Name"].ShouldBe("String");
         gadgets.Fields.Keys.ShouldNotContain("SerialCode");
+        // the key from the EF model, Name from IndexedFields; the hidden SerialCode stays out though it is declared
+        gadgets.Indexed.ShouldBe(["Id", "Name"], ignoreOrder: true);
+        // the key and the index EF gives the foreign key, nothing else
+        var pumps = sets.Single(s => s.Name == "Pumps");
+        pumps.Indexed.ShouldContain("Id");
+        pumps.Indexed.ShouldContain("MakerId");
+        pumps.Indexed.ShouldNotContain("Name");
     }
 
     [Fact]

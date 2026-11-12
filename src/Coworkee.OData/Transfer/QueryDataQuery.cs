@@ -5,7 +5,7 @@ using Coworkee.Core.Results;
 namespace Coworkee.OData.Transfer;
 
 [AiTool("Lists rows of a data set (for example Products or Documents) with an optional OData filter like \"Name eq 'Acme'\" or \"contains(Name,'drill')\", " +
-        "an order like \"Name desc\", the fields to return and at most 50 rows. Answers with the rows and the total count; list_data_sets names the sets and fields.")]
+        "an order like \"Name desc\", the fields to return and at most 50 rows. Answers with the rows and the total count; list_data_sets names the sets and fields; prefer filters on its indexed fields.")]
 public sealed record QueryDataQuery(
     [property: Description("The data set, e.g. Products.")] string EntitySet,
     [property: Description("OData $filter expression.")] string? Filter = null,

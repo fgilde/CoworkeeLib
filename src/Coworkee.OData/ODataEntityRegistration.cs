@@ -14,6 +14,9 @@ public sealed record ODataEntityRegistration(Type EntityType, string EntitySet, 
     /// <summary>The facet cap of the set (<see cref="ODataEntityOptions{TEntity}.MaxFacetRows"/>), above which its facets count a sample; null: <c>Coworkee:OData:MaxFacetRows</c>.</summary>
     public int? MaxFacetRows { get; init; }
 
+    /// <summary>Fields with an index the EF model does not declare (<see cref="ODataEntityOptions{TEntity}.IndexedFields"/>).</summary>
+    public IReadOnlyList<string> IndexedFields { get; init; } = [];
+
     internal bool HasGuidId => Key == "Id" && EntityType.GetProperty("Id")?.PropertyType == typeof(Guid);
 
     internal Type KeyType => EntityType.GetProperty(Key)?.PropertyType ?? throw new InvalidOperationException($"{EntityType.Name} needs a {Key} property as the key of its OData set.");

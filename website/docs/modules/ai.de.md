@@ -25,12 +25,22 @@ Die Bibliothek bringt diese Werkzeuge mit:
 
 | Werkzeug | Modul | |
 |---|---|---|
-| `list_data_sets` | OData | die Entity-Sets, die der Benutzer lesen darf, mit Name und Typ jedes Felds |
+| `list_data_sets` | OData | die Entity-Sets, die der Benutzer lesen darf, mit Name und Typ jedes Felds und den Feldern mit Index (`indexed`) |
 | `query_data` | OData | Zeilen eines Sets mit `filter`, `orderBy`, `select`, `top` (1 bis 50, Standard 20) und `skip`: Berechtigungen, Zeilenfilter, ausgeblendete Eigenschaften und [Abfragegrenzen](../web/odata.md) der Tabellen gelten |
 | `global_search` | OData | die [globale Suche](../web/global-search.md) über jede Art von Datensatz, die der Benutzer lesen darf (`query`, `types`, `limit` 1 bis 50 pro Anbieter) |
 | `generate_report` | Reporting | baut mit dem KI-Modell der App eine Berichtsdefinition aus einer Beschreibung (`Reports.Manage`); `create_report` und `update_report` speichern sie, siehe [Bericht mit KI erstellen](reporting.md#einen-bericht-mit-ki-erstellen) |
 
 Weitere Requests der Module (Benutzer, Rollen, Berichte, ...) sind nach der Regel oben Werkzeuge.
+
+`query_data` liest die Schlüssel der passenden Zeilen einmal, in der gewünschten Reihenfolge, und nimmt Gesamtzahl und Seite daraus; die Zeilen der Seite werden dann per Schlüssel gelesen, mit allen Filtern. Ein Filter, den kein Index bedient, liest die Tabelle so einmal statt einmal für die Zählung und noch einmal für die Seite: Auf einer Tabelle mit 6,9 Millionen Zeilen sanken die gelesenen Seiten von 1,4 auf 0,7 Millionen. Es liest höchstens `Coworkee:OData:KeyedRowLimit` Schlüssel (Standard 50.000, die Einstellung der [per Schlüssel gelesenen Listen](../web/odata.md#listen-nach-schlussel); `0` schaltet es ab): Bei mehr passenden Zeilen hört es nach einem Schlüssel mehr auf, zählt sie wie bisher und liest die Seite per Schlüssel, solange sie unter den gelesenen Schlüsseln liegt, sonst wie bisher. Die Antwort ist in jedem Fall dieselbe.
+
+`list_data_sets` nennt die `indexed`-Felder jedes Sets: die erste Eigenschaft jedes Schlüssels und Index im EF-Modell des Sets (ein gefilterter Index bedient nur Abfragen mit seinem Filter und bleibt weg) und die, die das Set mit `IndexedFields` angibt. Die Werkzeugbeschreibungen sagen dem Modell, möglichst auf ihnen zu filtern und zu sortieren, denn ein Filter auf einem anderen Feld liest die ganze Tabelle. Eine Tabelle einer fremden Datenbank, deren EF-Mapping einige ihrer Indizes nicht enthält, gibt sie am Set an:
+
+```csharp
+services.AddODataEntity<Shipment>("Shipments", ShipmentPermissions.View, o => o.IndexedFields(s => s.HouseBill, s => s.UpdatedAt));
+```
+
+Felder, die der Benutzer nicht lesen darf, fehlen in `indexed` wie in den Feldern.
 
 ## Das Assistenten-Fenster
 

@@ -18,6 +18,19 @@ public sealed class ODataEntityOptions<TEntity>
 
     internal List<Expression<Func<TEntity, string?>>> Searched { get; } = [];
 
+    internal List<string> Indexed { get; } = [];
+
+    /// <summary>
+    /// Fields the database has an index for that the EF model does not declare, e.g. <c>o =&gt; o.IndexedFields(s =&gt; s.HouseBill)</c> for a table of a
+    /// foreign database mapped without its indexes. The assistant's <c>list_data_sets</c> names them with the keys and indexes of the EF model, so it
+    /// filters on them when it can.
+    /// </summary>
+    public ODataEntityOptions<TEntity> IndexedFields(params Expression<Func<TEntity, object?>>[] properties)
+    {
+        Indexed.AddRange(properties.Select(ODataServiceCollectionExtensions.PropertyName));
+        return this;
+    }
+
     /// <summary>
     /// The text fields searched in this set, e.g. <c>o =&gt; o.SearchFields(p =&gt; p.Name, p =&gt; p.Barcode)</c>: <c>$search</c>, the search box of every data table of
     /// the set that names no own SearchFields, and the global search of the set when AddGlobalSearch names no fields. Fields may read through navigations
