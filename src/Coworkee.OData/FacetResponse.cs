@@ -160,10 +160,9 @@ internal static class FacetResponse
         return ScopedQueryProvider.Wrap(rows, scope);
     }
 
-    /// <summary>The value and label paths of the facets of a type as the facet builder reads them (its own attribute scan), in Dynamic LINQ form without "it.".</summary>
-    internal static HashSet<string> Paths(Type entityType) => entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-        .SelectMany(p => p.GetCustomAttributes<ProvideFacetAttribute>(inherit: true)
-            .SelectMany(f => new[] { string.IsNullOrWhiteSpace(f.ValuePath) ? p.Name : f.ValuePath, string.IsNullOrWhiteSpace(f.LabelPath) ? null : f.LabelPath }))
+    /// <summary>The value and label paths of the facets of a type as the facet builder reads them (attributes and code registrations), in Dynamic LINQ form without "it.".</summary>
+    internal static HashSet<string> Paths(Type entityType) => FacetRegistry.GetFacets(entityType)
+        .SelectMany(f => new[] { string.IsNullOrWhiteSpace(f.Facet.ValuePath) ? f.Property.Name : f.Facet.ValuePath, string.IsNullOrWhiteSpace(f.Facet.LabelPath) ? null : f.Facet.LabelPath })
         .OfType<string>()
         .Select(Normalize)
         .ToHashSet(StringComparer.Ordinal);
@@ -221,18 +220,15 @@ internal static class FacetResponse
     /// <summary>Refuses a facet whose value path starts with a collection navigation (<c>it.Lines.Id</c>): the facet builder cannot group by it.</summary>
     internal static void RefuseCollectionPaths(Type entityType)
     {
-        foreach (var property in entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        foreach (var (property, facet) in FacetRegistry.GetFacets(entityType).Where(f => !string.IsNullOrWhiteSpace(f.Facet.ValuePath)))
         {
-            foreach (var facet in property.GetCustomAttributes<ProvideFacetAttribute>(inherit: true).Where(f => !string.IsNullOrWhiteSpace(f.ValuePath)))
+            var path = facet.ValuePath!.Replace('/', '.');
+            var first = (path.StartsWith("it.", StringComparison.Ordinal) ? path[3..] : path).Split('.')[0];
+            if (entityType.GetProperty(first, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase)?.PropertyType is { } type
+                && type != typeof(string) && typeof(System.Collections.IEnumerable).IsAssignableFrom(type))
             {
-                var path = facet.ValuePath!.Replace('/', '.');
-                var first = (path.StartsWith("it.", StringComparison.Ordinal) ? path[3..] : path).Split('.')[0];
-                if (entityType.GetProperty(first, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase)?.PropertyType is { } type
-                    && type != typeof(string) && typeof(System.Collections.IEnumerable).IsAssignableFrom(type))
-                {
-                    throw new InvalidOperationException(
-                        $"The facet {entityType.Name}.{property.Name} reads {facet.ValuePath} through the collection {first}; a facet value must be a single value of the row or of a reference.");
-                }
+                throw new InvalidOperationException(
+                    $"The facet {entityType.Name}.{property.Name} reads {facet.ValuePath} through the collection {first}; a facet value must be a single value of the row or of a reference.");
             }
         }
     }

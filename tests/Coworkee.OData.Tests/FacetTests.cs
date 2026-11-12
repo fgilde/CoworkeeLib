@@ -3,6 +3,7 @@ using System.Text.Json;
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Contracts.Data;
 using Coworkee.Contracts.Identity;
+using Nextended.Core.Facets;
 
 namespace Coworkee.OData.Tests;
 
@@ -43,6 +44,20 @@ public sealed class FacetTests(ODataApp app) : IAsyncLifetime
             [("Hammer", "Claw hammer", 2, "Kind eq 'Hammer'"), ("Wrench", "Wrench", 1, "Kind eq 'Wrench'"), ("Saw", "Hand saw", 1, "Kind eq 'Saw'")], ignoreOrder: true);
         facets.Single(f => f.Key == "active").Options.Select(o => o.Label).ShouldBe(["Yes", "No"], ignoreOrder: true);
         (await QueryAsync("Kind eq 'Saw'")).Names.ShouldBe(["Clamp"]);
+    }
+
+    [Fact]
+    public async Task A_facet_registered_in_code_counts_like_an_attribute()
+    {
+        // what Nextended.CodeGen's fluent Facet(...) writes for a model without attributes
+        FacetRegistry.Register(typeof(Widget), nameof(Widget.Name), f => f.Label = "Widget name");
+
+        var (_, facets) = await QueryAsync(null);
+
+        var name = facets.Single(f => f.Key == "name");
+        name.Label.ShouldBe("Widget name");
+        name.Options.Select(o => (o.Value.GetString(), o.Count)).ShouldBe([("Anvil", 1), ("Bolt", 1), ("Clamp", 1), ("Drill", 1)], ignoreOrder: true);
+        (await QueryAsync(name.Options.Single(o => o.Value.GetString() == "Bolt").OData)).Names.ShouldBe(["Bolt"]);
     }
 
     [Fact]

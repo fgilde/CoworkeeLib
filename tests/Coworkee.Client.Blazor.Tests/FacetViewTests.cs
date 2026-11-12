@@ -184,9 +184,9 @@ public sealed class FacetViewTests : ClientTestBase
         var from = view.Find("[data-testid='facet-range-slider'] .mud-ex-range-slider-thumb.start");
         from.GetAttribute("role").ShouldBe("slider");
         from.KeyDown(new KeyboardEventArgs { Key = "PageUp" });
+        _selection.IsEmpty.ShouldBeTrue("sliding applies once the thumbs rest"); // right after the key: three keys can outlast the 350 ms on a busy machine
         view.Find("[data-testid='facet-range-slider'] .mud-ex-range-slider-thumb.start").KeyDown(new KeyboardEventArgs { Key = "PageUp" });
         view.Find("[data-testid='facet-range-slider'] .mud-ex-range-slider-thumb.start").KeyDown(new KeyboardEventArgs { Key = "PageUp" });
-        _selection.IsEmpty.ShouldBeTrue("sliding applies once the thumbs rest");
         view.WaitForAssertion(() => _selection.ToFilter().ShouldBe("(Total ge 40 and Total le 100)"));
         _selection.All.Single().Label.ShouldContain("40");
     }
