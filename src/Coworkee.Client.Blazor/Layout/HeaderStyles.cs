@@ -9,17 +9,22 @@ internal static class HeaderStyles
     public const string Css =
         """
         :root { --cw-side-bar-width: 64px; }
+        /* overflow-y alone turns overflow-x to auto: anything a pixel too wide, or the room a vertical scrollbar takes, scrolled the bar sideways */
         .cw-side-bar { position: fixed; top: 0; bottom: 0; width: var(--cw-side-bar-width); z-index: calc(var(--mud-zindex-appbar) + 2);
-          display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0; overflow-y: auto;
+          display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin;
           background: var(--mud-palette-appbar-background); color: var(--mud-palette-appbar-text); }
         .cw-side-bar-left { inset-inline-start: 0; border-inline-end: 1px solid var(--mud-palette-lines-default); }
         .cw-side-bar-right { inset-inline-end: 0; border-inline-start: 1px solid var(--mud-palette-lines-default); }
         .cw-bar-spacer { flex: 1 1 auto; }
-        .cw-side-bar .cw-palette-trigger-text, .cw-side-bar .cw-palette-kbd, .cw-side-bar .mud-button-end-icon { display: none; }
+        .cw-side-bar .cw-palette-trigger-text, .cw-side-bar .cw-palette-kbd, .cw-side-bar .mud-button-icon-end { display: none; }
         .cw-side-bar .cw-palette-trigger { padding: 8px; }
-        .cw-side-bar .mud-button-root:not(.mud-icon-button) { min-width: 0; padding: 4px; margin: 0; }
+        /* !important beats the spacing classes (ml-2 of the account button is !important too), which pushed the button past the edge */
+        .cw-side-bar .mud-button-root:not(.mud-icon-button) { min-width: 0; padding: 4px; margin: 0 !important; }
         .cw-side-bar .mud-button-root:not(.mud-icon-button) .mud-button-label { flex-direction: column; gap: 2px; font-size: .7rem; line-height: 1.1; }
-        .cw-side-bar .cw-user-name { margin: 0 !important; max-width: calc(var(--cw-side-bar-width) - 8px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        /* the name and a chip (impersonation) leave room for the thin scrollbar of a window too short for the bar */
+        .cw-side-bar .mud-chip { max-width: calc(var(--cw-side-bar-width) - 20px); margin: 0; }
+        .cw-side-bar .mud-chip-content { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cw-side-bar .cw-user-name { margin: 0 !important; max-width: calc(var(--cw-side-bar-width) - 20px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .cw-bar-right .mud-main-content { padding-inline-end: var(--cw-side-bar-width); }
         .cw-bar-right .mud-appbar { padding-inline-end: var(--cw-side-bar-width); }
         .cw-bar-left .mud-main-content { padding-inline-start: var(--cw-side-bar-width); }

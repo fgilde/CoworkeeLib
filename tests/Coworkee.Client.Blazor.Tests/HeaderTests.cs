@@ -213,6 +213,15 @@ public sealed class HeaderTests : ClientTestBase
         layout.Find(".mud-drawer").ClassList.ShouldContain("mud-drawer-clipped-never");
     }
 
+    [Fact]
+    public void A_bar_at_the_left_or_right_edge_never_scrolls_sideways()
+    {
+        // checked in Chromium: overflow-y alone turned overflow-x to auto, and the account button's ml-2 (!important) pushed it 8 px past the edge
+        var css = Layout.HeaderStyles.Css;
+        css.ShouldContain("overflow-y: auto; overflow-x: hidden;");
+        css.ShouldContain(".cw-side-bar .mud-button-root:not(.mud-icon-button) { min-width: 0; padding: 4px; margin: 0 !important; }");
+    }
+
     [Theory]
     [InlineData("Top", "Bar")]
     [InlineData("Right", "Bar")]
