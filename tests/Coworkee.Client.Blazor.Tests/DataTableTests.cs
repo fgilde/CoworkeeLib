@@ -312,6 +312,8 @@ public sealed class DataTableTests : ClientTestBase
         table.WaitForAssertion(() => table.Markup.ShouldContain("Drill"));
         table.FindAll("[data-facet='category']").ShouldBeEmpty();
         odata.Queries.Where(q => q.Top != 0).ShouldAllBe(q => !q.Facets && q.FacetContext == null);
+        // the facets are asked a moment after the rows rendered (LoadFacets yields first): wait for the request, do not expect it with the rows
+        await odata.FacetsAsked.Task.WaitAsync(TimeSpan.FromSeconds(10));
         odata.Queries.Single(q => q.Facets).ShouldSatisfyAllConditions(q => q.Top.ShouldBe(0), q => q.Count.ShouldBeFalse(), q => q.Expand.ShouldBeNull(), q => q.OrderBy.ShouldBeNull());
         odata.Facets.SetResult();
         table.WaitForAssertion(() => table.Find("[data-facet='category']"));
@@ -325,7 +327,7 @@ public sealed class DataTableTests : ClientTestBase
 
         // another filter: the facets again
         table.Find("input[data-testid='table-search'], [data-testid='table-search'] input").Input("dri");
-        table.WaitForAssertion(() => odata.Queries.Count(q => q.Facets).ShouldBe(2), TimeSpan.FromSeconds(3));
+        table.WaitForAssertion(() => odata.Queries.Count(q => q.Facets).ShouldBe(2));
         odata.Queries.Last(q => q.Facets).Filter.ShouldBe("contains(tolower(Name),'dri')");
     }
 
@@ -467,6 +469,9 @@ public sealed class DataTableTests : ClientTestBase
     {
         public TaskCompletionSource Facets { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
+        // set when the first facets request comes in (no render follows it, so a WaitForAssertion would not look again)
+        public TaskCompletionSource FacetsAsked { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
         public System.Collections.Concurrent.ConcurrentQueue<ODataQuery> Queries { get; } = new();
 
         public async Task<ODataPage<T>> QueryAsync<T>(string entitySet, ODataQuery query, CancellationToken cancellationToken = default)
@@ -474,6 +479,7 @@ public sealed class DataTableTests : ClientTestBase
             Queries.Enqueue(query);
             if (query.Facets)
             {
+                FacetsAsked.TrySetResult();
                 await Facets.Task.WaitAsync(cancellationToken);
             }
 
