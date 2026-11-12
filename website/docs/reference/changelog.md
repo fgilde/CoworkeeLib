@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixed
+
+- Testing: `DatabaseFixture.ResetAsync()` on SQL Server no longer fails a test when background work of the app (outbox, jobs, a request of the test before) deadlocks with it. The reset runs with `DEADLOCK_PRIORITY LOW`, so SQL Server rolls back the reset rather than the app's work, and it runs again (error 1205, up to 20 times), as Postgres already retries a lock it cannot get. Apps change nothing. See [Testing](../testing.md).
+
 ## 0.0.1.83 (2026-11-12)
 
 ### Added

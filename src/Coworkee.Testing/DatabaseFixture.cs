@@ -108,7 +108,25 @@ public class DatabaseFixture : IAsyncLifetime
         await using var connection = new SqlConnection(ConnectionString);
         await connection.OpenAsync();
         _respawner ??= await CreateRespawnerAsync(connection, DbAdapter.SqlServer);
-        await _respawner.ResetAsync(connection);
+        // Background work (outbox, jobs, the last test's requests) can write while the reset deletes, and SQL Server ends such a deadlock by rolling
+        // back one side (error 1205). That side is the reset, not the app's work, and it runs again, as SQL Server asks of a deadlock victim.
+        await using (var command = new SqlCommand("SET DEADLOCK_PRIORITY LOW", connection))
+        {
+            await command.ExecuteNonQueryAsync();
+        }
+
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                await _respawner.ResetAsync(connection);
+                return;
+            }
+            catch (SqlException exception) when (exception.Number == 1205 && attempt < 20)
+            {
+                await Task.Delay(200);
+            }
+        }
     }
 
     private async Task ResetSqliteAsync()
