@@ -10,6 +10,7 @@ using Coworkee.Contracts.Realtime;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using MudBlazor;
 
@@ -60,6 +61,8 @@ public partial class AssistantWindow : IAsyncDisposable
     [Inject] private IEnumerable<IAssistantClientAction> Actions { get; set; } = null!;
 
     [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
+
+    [Inject] private IServiceProvider Services { get; set; } = null!;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
@@ -280,6 +283,43 @@ public partial class AssistantWindow : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Answers a read of the assistant from the local copy (client entities), as the server's query_data would; the server waits for it and runs the
+    /// read itself when this cannot answer (null) or fails.
+    /// </summary>
+    private async Task AnswerLocallyAsync(Guid session, AiClientActionCall call)
+    {
+        string? output = null;
+        try
+        {
+            var query = JsonSerializer.Deserialize<LocalQuery>(call.Arguments, Contracts.CoworkeeJson.Web);
+            if (query is { EntitySet.Length: > 0 } && Services.GetService<Data.IClientDataCache>() is { } cache
+                && await cache.QueryLocallyAsync(query.EntitySet, new Data.ODataQuery
+                {
+                    // as query_data: at most 50 rows
+                    Filter = query.Filter, OrderBy = query.OrderBy, Select = query.Select, Top = Math.Clamp(query.Top ?? 20, 1, 50), Skip = Math.Max(0, query.Skip ?? 0),
+                }, _closed.Token) is { } rows)
+            {
+                output = JsonSerializer.Serialize(rows, Contracts.CoworkeeJson.Web);
+            }
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            output = null;
+        }
+
+        try
+        {
+            await Api.SendClientResultAsync(session, new AiClientResult(call.CallId, output), _closed.Token);
+        }
+        catch (Exception exception) when (exception is ApiException or HttpRequestException)
+        {
+            // the server runs the read itself once it stops waiting
+        }
+    }
+
+    private sealed record LocalQuery(string? EntitySet, string? Filter, string? OrderBy, int? Top, int? Skip, string? Select);
+
     /// <summary>Shows the answer as it streams in and runs the client actions it asks for; on failure the question goes back into the input.</summary>
     private async Task StreamAsync(Func<Task<Guid>> session, Func<Guid, AiUiContext, IAsyncEnumerable<AiStreamEvent>> stream, AiMessageDto? question, Action restore)
     {
@@ -297,7 +337,8 @@ public partial class AssistantWindow : IAsyncDisposable
         string? failure = null;
         try
         {
-            await foreach (var item in stream(await session(), await Ui.BuildAsync(_closed.Token)))
+            var id = await session();
+            await foreach (var item in stream(id, await Ui.BuildAsync(_closed.Token)))
             {
                 switch (item.Type)
                 {
@@ -309,6 +350,9 @@ public partial class AssistantWindow : IAsyncDisposable
                         break;
                     case AiStreamEvent.ClientAction when item.Action is not null:
                         _streamNotes.Add(await RunActionAsync(item.Action));
+                        break;
+                    case AiStreamEvent.ClientQuery when item.Action is not null:
+                        await AnswerLocallyAsync(id, item.Action);
                         break;
                     case AiStreamEvent.Done when item.Message is not null:
                         _messages.Add(item.Message);

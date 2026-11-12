@@ -39,6 +39,11 @@ public sealed class AiConnectionForm
 
     public int? MaxToolRounds { get; set; }
 
+    /// <summary>Reads of sets the browser holds locally are answered there (<see cref="AiSettingNames.LocalQueries"/>).</summary>
+    public bool LocalQueries { get; set; } = true;
+
+    public int? LocalQueryTimeout { get; set; }
+
     public AiProviderInfo Info => AiProviderCatalog.Find(Provider) ?? AiProviderCatalog.All[0];
 
     public bool HasStoredKey => _hasStoredKey;
@@ -74,6 +79,8 @@ public sealed class AiConnectionForm
             Temperature = double.TryParse(Get(AiSettingNames.Temperature), NumberStyles.Float, CultureInfo.InvariantCulture, out var t) ? t : null,
             MaxOutputTokens = int.TryParse(Get(AiSettingNames.MaxOutputTokens), CultureInfo.InvariantCulture, out var max) ? max : null,
             MaxToolRounds = int.TryParse(Get(AiSettingNames.MaxToolRounds), CultureInfo.InvariantCulture, out var rounds) ? rounds : null,
+            LocalQueries = !bool.TryParse(Get(AiSettingNames.LocalQueries), out var local) || local,
+            LocalQueryTimeout = int.TryParse(Get(AiSettingNames.LocalQueryTimeout), CultureInfo.InvariantCulture, out var wait) ? wait : null,
         };
         form._savedProvider = form.Provider;
         form._savedEndpoint = Trim(form.Endpoint);
@@ -96,6 +103,8 @@ public sealed class AiConnectionForm
             [AiSettingNames.Temperature] = Temperature?.ToString(CultureInfo.InvariantCulture),
             [AiSettingNames.MaxOutputTokens] = MaxOutputTokens?.ToString(CultureInfo.InvariantCulture),
             [AiSettingNames.MaxToolRounds] = MaxToolRounds?.ToString(CultureInfo.InvariantCulture),
+            [AiSettingNames.LocalQueries] = LocalQueries ? "true" : "false",
+            [AiSettingNames.LocalQueryTimeout] = LocalQueryTimeout?.ToString(CultureInfo.InvariantCulture),
         };
         if (!string.IsNullOrWhiteSpace(NewKey))
         {

@@ -176,41 +176,60 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     internal override async Task<IReadOnlyList<string?[]>?> LocalValuesAsync(string filter, string? orderBy, int top, IReadOnlyList<string> paths, CancellationToken cancellationToken)
     {
         // a navigation the copy does not expand is null in every row: no hit here would be a wrong answer, the server's
-        if (Mode != ClientEntityMode.Client || paths.Any(p => p.Contains('/') && !Names(Expand).Contains(p[..p.IndexOf('/')])))
+        if (paths.Any(p => p.Contains('/') && !Names(Expand).Contains(p[..p.IndexOf('/')]))
+            || await LocalPageAsync(new ODataQuery { Filter = filter, OrderBy = orderBy, Top = top, Count = false }, cancellationToken) is not { } page)
         {
-            return null;
-        }
-
-        var query = new ODataQuery { Filter = filter, OrderBy = orderBy, Top = top, Count = false };
-        ODataPage<T> page;
-        try
-        {
-            if (_store is not null)
-            {
-                if (!_storeLocal)
-                {
-                    return null;
-                }
-
-                page = await _store.QueryAsync(query, FacetsAsync, cancellationToken);
-            }
-            else if (_table is { } table)
-            {
-                page = await LocalAsync(table, query, cancellationToken);
-            }
-            else
-            {
-                return null;
-            }
-        }
-        catch (Exception exception) when (LocalQueryNotSupportedException.IsUnanswerable(exception))
-        {
-            _logger.LogDebug(exception, "{EntitySet} cannot answer {Filter} locally", EntitySet, filter);
             return null;
         }
 
         var getters = paths.Select(path => Getters.GetOrAdd(path.Replace('/', '.'), PropertyPath.Getter<T>)).ToList();
         return [.. page.Items.Select(row => getters.Select(get => Convert.ToString(get(row), System.Globalization.CultureInfo.InvariantCulture)).ToArray())];
+    }
+
+    internal override async Task<LocalRows?> LocalRowsAsync(ODataQuery query, CancellationToken cancellationToken)
+    {
+        var fields = (query.Select ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var columns = fields.Length == 0 ? (PropertyInfo?[])Scalars : [.. fields.Select(f => Scalars.FirstOrDefault(c => string.Equals(c.Name, f, StringComparison.OrdinalIgnoreCase)))];
+
+        // a field the row type lacks: the server knows it, or tells which fields there are
+        if (columns.Any(c => c is null) || await LocalPageAsync(query with { Select = null, Facets = false, Count = true }, cancellationToken) is not { } page)
+        {
+            return null;
+        }
+
+        return new LocalRows([.. page.Items.Select(row => (IReadOnlyDictionary<string, object?>)columns.ToDictionary(c => c!.Name, c => c!.GetValue(row)))], page.Count ?? page.Items.Count);
+    }
+
+    // the fields the server's query_data returns: scalar values, no navigations
+    private static readonly PropertyInfo[] Scalars = [.. typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Where(p => p.GetMethod is not null && p.GetIndexParameters().Length == 0 && IsScalar(Nullable.GetUnderlyingType(p.PropertyType) ?? p.PropertyType))];
+
+    private static bool IsScalar(Type type) =>
+        type.IsPrimitive || type.IsEnum || type == typeof(string) || type == typeof(decimal) || type == typeof(Guid) || type == typeof(DateTime) || type == typeof(DateTimeOffset)
+        || type == typeof(DateOnly) || type == typeof(TimeOnly) || type == typeof(TimeSpan);
+
+    // the page of the local rows; null while the copy is not local or switched to the server and for a query it cannot answer
+    private async Task<ODataPage<T>?> LocalPageAsync(ODataQuery query, CancellationToken cancellationToken)
+    {
+        if (Mode != ClientEntityMode.Client)
+        {
+            return null;
+        }
+
+        try
+        {
+            if (_store is not null)
+            {
+                return _storeLocal ? await _store.QueryAsync(query, FacetsAsync, cancellationToken) : null;
+            }
+
+            return _table is { } table ? await LocalAsync(table, query, cancellationToken) : null;
+        }
+        catch (Exception exception) when (LocalQueryNotSupportedException.IsUnanswerable(exception))
+        {
+            _logger.LogDebug(exception, "{EntitySet} cannot answer {Filter} locally", EntitySet, query.Filter);
+            return null;
+        }
     }
 
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Func<T, object?>> Getters = new(StringComparer.OrdinalIgnoreCase);

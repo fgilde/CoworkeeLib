@@ -71,6 +71,12 @@ public abstract class ClientEntitySet : IAsyncDisposable
     /// </summary>
     internal abstract Task<IReadOnlyList<string?[]>?> LocalValuesAsync(string filter, string? orderBy, int top, IReadOnlyList<string> paths, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// <paramref name="query"/> answered from the local rows, with the fields of its select (all scalar fields without one) by name; null while the copy
+    /// is not local or switched to the server, for a filter it cannot answer and for a field the row type does not have.
+    /// </summary>
+    internal abstract Task<LocalRows?> LocalRowsAsync(ODataQuery query, CancellationToken cancellationToken);
+
     /// <summary>Something changed on the server: refresh soon, several nudges in a row refresh once.</summary>
     internal abstract void Nudge();
 

@@ -24,6 +24,10 @@ internal sealed class AiSettingDefinitions : ISettingDefinitionContributor
             .Add(AiSettings.Temperature, "Temperature", SettingType.String, Scopes, description: "Empty: the model's default. 0 to 2, lower answers more predictably.")
             .Add(AiSettings.MaxOutputTokens, "Maximum output tokens", SettingType.Int, Scopes, description: "Empty: the provider's default (16000 for Anthropic).")
             .Add(AiSettings.MaxToolRounds, "Maximum tool rounds per message", SettingType.Int, Scopes, "10")
+            .Add(AiSettings.LocalQueries, "Answer reads from the browser's local data", SettingType.Bool, Scopes, "true",
+                description: "Reads of data sets the browser already holds (client entities) are answered there, without a database query. Off: always on the server.")
+            .Add(AiSettings.LocalQueryTimeout, "Wait for the browser's local answer (seconds)", SettingType.Int, Scopes, "4",
+                description: "Without an answer in this time, 1 to 30 seconds, the server runs the read itself.")
             .Add(AiSettings.McpEnabled, "MCP server enabled", SettingType.Bool, Scopes, "true",
                 description: "Off: MCP clients get no tools and run nothing, also with valid keys. Needs no AI provider.");
 }

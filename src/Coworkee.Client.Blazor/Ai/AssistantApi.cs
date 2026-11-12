@@ -27,4 +27,7 @@ internal sealed class AssistantApi(HttpClient http) : ApiClientBase(http), IAssi
 
     public IAsyncEnumerable<AiStreamEvent> ConfirmAsync(Guid id, bool approve, AiUiContext? ui, CancellationToken cancellationToken = default) =>
         StreamAsync<AiStreamEvent>($"{Sessions}/{id}/confirm", new AiConfirmRequest(approve, ui), cancellationToken);
+
+    public Task SendClientResultAsync(Guid id, AiClientResult result, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, $"{Sessions}/{id}/client-results", result, cancellationToken);
 }

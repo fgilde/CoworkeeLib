@@ -14,12 +14,12 @@ namespace Coworkee.Client.Blazor.Ai;
 /// <summary>
 /// What the user sees, sent with every message so the assistant can tell where things are and act in the UI: the pages of the navigation
 /// the user may open (placed, hidden and translated like in the menu, with their <see cref="CoworkeeNavItem.Description"/>), the current
-/// page, the appearance choices and the <see cref="IAssistantClientAction"/>s.
+/// page, the appearance choices, the <see cref="IAssistantClientAction"/>s and the data sets the browser answers locally (<see cref="Data.IClientDataCache.LocalSets"/>).
 /// </summary>
 public sealed class AssistantUiContext(
     IEnumerable<INavigationContributor> contributors, IOptions<NavigationMenuOptions> menu, CoworkeePages pageLinks, AuthenticationStateProvider authentication,
     IAuthorizationService authorization, Features.FeatureStore features, IServiceProvider services, NavigationManager nav, ThemeService themes, LayoutPreferences layout,
-    CoworkeeLocalizer l, IEnumerable<IAssistantClientAction> actions)
+    CoworkeeLocalizer l, IEnumerable<IAssistantClientAction> actions, Data.IClientDataCache? cache = null)
 {
     public async Task<AiUiContext> BuildAsync(CancellationToken cancellationToken)
     {
@@ -39,7 +39,7 @@ public sealed class AssistantUiContext(
         return new AiUiContext(
             pages, new AiUiPage(current?.Title ?? path, path, current?.Group), await ThemesAsync(cancellationToken), themes.Current?.Name, themes.Mode,
             [.. l.Languages.Where(x => x.IsEnabled).Select(x => x.Culture)], l.Culture, layout.RightToLeft,
-            [.. actions.Select(a => new AiClientActionDto(a.Name, a.Description, a.Parameters))]);
+            [.. actions.Select(a => new AiClientActionDto(a.Name, a.Description, a.Parameters))], cache?.LocalSets is { Count: > 0 } local ? local : null);
     }
 
     private string? Group(string? group) => group is null ? null : string.Join(" > ", group.Split(NavigationEntry.GroupSeparator).Select(g => l[g]));

@@ -13,6 +13,14 @@
                 <MudNumericField T="int?" @bind-Value="Form.MaxToolRounds" Label="@L["Maximum tool rounds per message"]" Min="1" Max="20" Variant="Variant.Outlined"
                                  HelperText="@L["Empty: 10."]" />
             </MudItem>
+            <MudItem xs="12" md="8">
+                <MudSwitch T="bool" @bind-Value="Form.LocalQueries" Color="Color.Primary" Label="@L["Answer reads from the browser's local data"]" data-testid="ai-local-queries" />
+                <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">@L["Reads of data sets the browser already holds (client entities) are answered there, without a database query. Off: always on the server."]</MudText>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudNumericField T="int?" @bind-Value="Form.LocalQueryTimeout" Label="@L["Wait for the browser's local answer (seconds)"]" Min="1" Max="30" Variant="Variant.Outlined"
+                                 Disabled="@(!Form.LocalQueries)" HelperText="@L["Without an answer in this time, 1 to 30 seconds, the server runs the read itself."]" data-testid="ai-local-query-timeout" />
+            </MudItem>
             @if (Form.Info.Protocol != AiProtocol.Anthropic)
             {
                 <MudItem xs="12" md="8">

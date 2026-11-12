@@ -102,28 +102,49 @@ public sealed class AiToolRunner(
         }
         finally
         {
-            call = new AiToolCall
-            {
-                TenantId = currentUser.TenantId,
-                UserId = currentUser.UserId,
-                ApiKeyId = currentUser.ApiKeyId,
-                Channel = channel,
-                Tool = Truncate(name, 100),
-                Input = Truncate(AiAuditRedaction.Redact(input), MaxAuditedInputLength),
-                Succeeded = error is null,
-                Error = error is null ? null : Truncate(error, 2000),
-                DurationMs = (int)Stopwatch.GetElapsedTime(started).TotalMilliseconds,
-                At = DateTimeOffset.UtcNow,
-            };
-
-            // Own scope: a failed tool may leave changes in its context that must never be saved with the audit row.
-            await using var scope = scopes.CreateAsyncScope();
-            var db = scope.ServiceProvider.GetRequiredService<CoworkeeDbContext>();
-            db.Add(call);
-            await db.SaveChangesAsync(CancellationToken.None);
+            call = await AuditAsync(name, input, channel, error, started);
         }
 
         return new AiToolOutcome(output, error is null, AiToolCall.ToDto(call, output));
+    }
+
+    /// <summary>
+    /// Audits a read only call that ran elsewhere (the browser answered it from its local copy, <see cref="AiChannels.ChatLocal"/>) and hands its
+    /// <paramref name="output"/> on like a call run here; <paramref name="started"/> is the <see cref="Stopwatch.GetTimestamp"/> of the request.
+    /// </summary>
+    public async Task<AiToolOutcome> RecordAsync(string name, JsonElement input, string channel, string output, long started)
+    {
+        if (output.Length > MaxOutputLength)
+        {
+            output = output[..MaxOutputLength] + " …(truncated)";
+        }
+
+        var call = await AuditAsync(name, input, channel, null, started);
+        return new AiToolOutcome(output, true, AiToolCall.ToDto(call, output));
+    }
+
+    private async Task<AiToolCall> AuditAsync(string name, JsonElement input, string channel, string? error, long started)
+    {
+        var call = new AiToolCall
+        {
+            TenantId = currentUser.TenantId,
+            UserId = currentUser.UserId,
+            ApiKeyId = currentUser.ApiKeyId,
+            Channel = channel,
+            Tool = Truncate(name, 100),
+            Input = Truncate(AiAuditRedaction.Redact(input), MaxAuditedInputLength),
+            Succeeded = error is null,
+            Error = error is null ? null : Truncate(error, 2000),
+            DurationMs = (int)Stopwatch.GetElapsedTime(started).TotalMilliseconds,
+            At = DateTimeOffset.UtcNow,
+        };
+
+        // Own scope: a failed tool may leave changes in its context that must never be saved with the audit row.
+        await using var scope = scopes.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<CoworkeeDbContext>();
+        db.Add(call);
+        await db.SaveChangesAsync(CancellationToken.None);
+        return call;
     }
 
     private async Task<(string Output, string? Error)> DispatchAsync(AiTool tool, JsonElement input, CancellationToken cancellationToken)

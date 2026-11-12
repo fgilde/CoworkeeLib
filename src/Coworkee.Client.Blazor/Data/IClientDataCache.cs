@@ -10,4 +10,14 @@ public interface IClientDataCache
 
     /// <summary>Queries of <paramref name="entitySet"/> run in the browser now (the copy is complete and not switched to the server), e.g. for a search box that need not wait.</summary>
     bool AnswersLocally(string entitySet) => false;
+
+    /// <summary>The sets <see cref="AnswersLocally"/> is true for right now; the assistant reads them here instead of on the server.</summary>
+    IReadOnlyList<string> LocalSets => [];
+
+    /// <summary>
+    /// <paramref name="query"/> (filter, order, top, skip and the fields of <see cref="ODataQuery.Select"/>) answered from the local copy of
+    /// <paramref name="entitySet"/> without asking the server; null when it cannot be answered here: the set is not local or switched to the server, the
+    /// filter is beyond the local engine or names a field the copy does not have.
+    /// </summary>
+    Task<LocalRows?> QueryLocallyAsync(string entitySet, ODataQuery query, CancellationToken cancellationToken = default) => Task.FromResult<LocalRows?>(null);
 }

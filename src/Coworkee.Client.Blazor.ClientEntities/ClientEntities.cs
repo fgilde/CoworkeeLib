@@ -53,6 +53,11 @@ public sealed class ClientEntities : IClientDataCache, IAsyncDisposable
 
     public bool AnswersLocally(string entitySet) => Find(entitySet) is { Mode: ClientEntityMode.Client, Status.IsLocal: true };
 
+    public IReadOnlyList<string> LocalSets => [.. _sets.Keys.Where(AnswersLocally)];
+
+    public async Task<LocalRows?> QueryLocallyAsync(string entitySet, ODataQuery query, CancellationToken cancellationToken = default) =>
+        AnswersLocally(entitySet) && Find(entitySet) is { } set ? await set.LocalRowsAsync(query, cancellationToken) : null;
+
     /// <summary>
     /// The local copy of <paramref name="entitySet"/> with rows of <typeparamref name="T"/>, started on first use. Null when the server does
     /// not offer the set to this user, <typeparamref name="T"/> has no Guid Id or the set is already mirrored with another row type.

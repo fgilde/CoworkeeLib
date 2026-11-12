@@ -20,4 +20,7 @@ public interface IAssistantApi
     IAsyncEnumerable<AiStreamEvent> SendAsync(Guid id, string text, AiUiContext? ui, CancellationToken cancellationToken = default);
 
     IAsyncEnumerable<AiStreamEvent> ConfirmAsync(Guid id, bool approve, AiUiContext? ui, CancellationToken cancellationToken = default);
+
+    /// <summary>Answers a <see cref="AiStreamEvent.ClientQuery"/> of the running turn of conversation <paramref name="id"/>.</summary>
+    Task SendClientResultAsync(Guid id, AiClientResult result, CancellationToken cancellationToken = default);
 }

@@ -13,5 +13,7 @@ public static class AiSettingNames
     public const string MaxOutputTokens = "Ai.MaxOutputTokens";
     public const string MaxToolRounds = "Ai.MaxToolRounds";
     public const string Display = "Ai.Display";
+    public const string LocalQueries = "Ai.LocalQueries";
+    public const string LocalQueryTimeout = "Ai.LocalQueryTimeout";
     public const string McpEnabled = "Mcp.Enabled";
 }

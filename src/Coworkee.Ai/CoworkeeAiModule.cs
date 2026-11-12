@@ -10,11 +10,14 @@ using Coworkee.AspNetCore.RateLimiting;
 using Coworkee.Contracts;
 using Coworkee.Contracts.Ai;
 using Coworkee.Core.Modularity;
+using Coworkee.Core.Results;
+using Coworkee.Core.Security;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.OData;
 using Coworkee.Settings;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -43,6 +46,7 @@ public sealed class CoworkeeAiModule : CoworkeeModule, IWebModule
         services.AddScoped<IODataEntityFilter<AiToolCall>, OData.AiToolCallODataFilter>();
         services.AddScoped<AiToolRunner>();
         services.AddScoped<AiChat>();
+        services.AddSingleton<AiClientResults>();
         services.AddScoped<AiSessionChat>();
         services.AddDataProtection();
         services.AddSingleton<AiPendingProtector>();
@@ -76,6 +80,13 @@ public sealed class CoworkeeAiModule : CoworkeeModule, IWebModule
         ai.MapPut("/sessions/{id:guid}", (Guid id, AiSessionRequest body, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new RenameAiSession(id, body.Title ?? string.Empty), ct).ToHttpResult());
         ai.MapDelete("/sessions/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteAiSession(id), ct).ToHttpResult());
+
+        // the browser's answer to a client_query of a running turn: only the user of that turn finds it waiting
+        ai.MapPost("/sessions/{id:guid}/client-results", (Guid id, AiClientResult body, AiClientResults results, ICurrentUser user) =>
+                AiClientResults.Invalid(body) is { } invalid ? Error.Validation(nameof(AiClientResult.Output), invalid).ToProblem()
+                : user.UserId is { } me && results.Complete(me, id, body) ? Results.NoContent()
+                : Error.NotFound("ai.client_result_not_waited_for", "No turn waits for this result.").ToProblem())
+            .WithMetadata(new RequestSizeLimitAttribute(AiClientResults.MaxOutputLength * 4L));
 
         // the turns call the model: rate limited, answered as a stream of JSON lines (AiStreamEvent)
         var turns = app.MapCoworkeeApi("/api/v1/ai/sessions").WithTags("AI").RequireAuthorization().RequireCoworkeeRateLimit(CoworkeeRateLimitOptions.Ai);

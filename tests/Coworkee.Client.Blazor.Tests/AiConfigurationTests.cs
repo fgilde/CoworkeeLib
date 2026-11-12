@@ -109,6 +109,19 @@ public sealed class AiConfigurationTests : ClientTestBase
     }
 
     [Fact]
+    public void Local_answers_are_on_by_default_and_the_form_writes_both_settings()
+    {
+        var form = AiConnectionForm.From([]);
+        (form.LocalQueries, form.LocalQueryTimeout).ShouldBe((true, (int?)null));
+
+        form = AiConnectionForm.From([new SettingValueDto(AiSettingNames.LocalQueries, "false", true), new SettingValueDto(AiSettingNames.LocalQueryTimeout, "7", true)]);
+
+        (form.LocalQueries, form.LocalQueryTimeout).ShouldBe((false, (int?)7));
+        var settings = form.ToSettings();
+        (settings[AiSettingNames.LocalQueries], settings[AiSettingNames.LocalQueryTimeout]).ShouldBe(("false", "7"));
+    }
+
+    [Fact]
     public void The_form_keeps_the_stored_key_only_for_its_provider_and_address()
     {
         var form = AiConnectionForm.From([new SettingValueDto(AiSettingNames.Provider, "azureOpenAI", true),

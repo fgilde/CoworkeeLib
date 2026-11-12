@@ -64,6 +64,7 @@ public sealed class AssistantUiTests : ClientTestBase
         ui.RightToLeft.ShouldBeFalse();
         ui.Actions!.Select(a => a.Name).ShouldBe(["navigate", "set_theme", "set_color_mode", "set_right_to_left", "set_language"], ignoreOrder: true);
         ui.Actions!.ShouldAllBe(a => a.Parameters!.Value.GetProperty("type").GetString() == "object");
+        ui.LocalSets.ShouldBeNull("without client entities nothing answers locally");
     }
 
     [Fact]
@@ -125,6 +126,77 @@ public sealed class AssistantUiTests : ClientTestBase
         notes[1].GetAttribute("data-succeeded").ShouldBe("false");
         Services.GetRequiredService<ThemeService>().Mode.ShouldBe("dark");
         _api.Received(1).SendAsync(session.Id, "dark please", Arg.Is<AiUiContext?>(u => u!.Actions!.Any(a => a.Name == "set_color_mode")), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task The_ui_context_names_the_sets_the_browser_answers_locally()
+    {
+        Services.AddSingleton<Data.IClientDataCache>(new LocalCache());
+        await Services.GetRequiredService<Localization.CoworkeeLocalizer>().InitializeAsync("en");
+
+        var ui = await Services.GetRequiredService<AssistantUiContext>().BuildAsync(Xunit.TestContext.Current.CancellationToken);
+
+        ui.LocalSets.ShouldBe(["Products"]);
+    }
+
+    [Fact]
+    public async Task The_window_answers_reads_of_local_sets_from_the_copy_and_hands_the_rest_back()
+    {
+        var cache = new LocalCache();
+        Services.AddSingleton<Data.IClientDataCache>(cache);
+        var session = await AskWithQueriesAsync(
+            new AiClientActionCall("c1", "query_data", """{"entitySet":"Products","filter":"Price gt 10","orderBy":"Name","top":500,"skip":-3,"select":"Name"}"""),
+            new AiClientActionCall("c2", "query_data", """{"entitySet":"Others"}"""),
+            new AiClientActionCall("c3", "query_data", """{"entitySet":"Products","top":"many"}"""));
+
+        // the server tool's shape: {"rows":[...],"total":n}
+        await _api.Received(1).SendClientResultAsync(session, new AiClientResult("c1", """{"rows":[{"Name":"Drill"}],"total":1}"""), Arg.Any<CancellationToken>());
+        await _api.Received(1).SendClientResultAsync(session, new AiClientResult("c2", null), Arg.Any<CancellationToken>());
+        await _api.Received(1).SendClientResultAsync(session, new AiClientResult("c3", null), Arg.Any<CancellationToken>());
+        var (set, query) = cache.Asked[0];
+        set.ShouldBe("Products");
+        // as query_data: 1 to 50 rows, no negative skip
+        query.ShouldBe(new Data.ODataQuery { Filter = "Price gt 10", OrderBy = "Name", Select = "Name", Top = 50, Skip = 0 });
+    }
+
+    [Fact]
+    public async Task Without_local_copies_the_window_hands_every_read_back()
+    {
+        var session = await AskWithQueriesAsync(new AiClientActionCall("c1", "query_data", """{"entitySet":"Products"}"""));
+
+        await _api.Received(1).SendClientResultAsync(session, new AiClientResult("c1", null), Arg.Any<CancellationToken>());
+    }
+
+    private async Task<Guid> AskWithQueriesAsync(params AiClientActionCall[] queries)
+    {
+        var session = new AiSessionDto(Guid.NewGuid(), "Count", DateTimeOffset.Now);
+        var answer = new AiMessageDto(Guid.NewGuid(), "assistant", "One.", [], [], null, DateTimeOffset.Now);
+        _api.CreateSessionAsync(default).ReturnsForAnyArgs(session);
+        _api.SendAsync(session.Id, "how many?", Arg.Any<AiUiContext?>(), Arg.Any<CancellationToken>()).Returns(Stream(
+            [.. queries.Select(q => new AiStreamEvent(AiStreamEvent.ClientQuery, Action: q)), new AiStreamEvent(AiStreamEvent.Done, Message: answer)]));
+        _api.GetSessionAsync(session.Id, default).ReturnsForAnyArgs(new AiSessionDetailDto(session.Id, "Count", DateTimeOffset.Now, [answer]));
+        var window = Render<AssistantWindow>();
+
+        window.Find("[data-testid='assistant-input']").Input("how many?");
+        await window.Find("[data-testid='assistant-send']").ClickAsync(new());
+
+        window.WaitForAssertion(() => _api.ReceivedCalls().Count(c => c.GetMethodInfo().Name == nameof(IAssistantApi.SendClientResultAsync)).ShouldBe(queries.Length));
+        return session.Id;
+    }
+
+    private sealed class LocalCache : Data.IClientDataCache
+    {
+        public List<(string Set, Data.ODataQuery Query)> Asked { get; } = [];
+
+        public IReadOnlyList<string> LocalSets => ["Products"];
+
+        public Task ClearAsync() => Task.CompletedTask;
+
+        public Task<Data.LocalRows?> QueryLocallyAsync(string entitySet, Data.ODataQuery query, CancellationToken cancellationToken = default)
+        {
+            Asked.Add((entitySet, query));
+            return Task.FromResult(entitySet == "Products" ? new Data.LocalRows([new Dictionary<string, object?> { ["Name"] = "Drill" }], 1) : null);
+        }
     }
 
     private static async IAsyncEnumerable<AiStreamEvent> Stream(params AiStreamEvent[] items)
