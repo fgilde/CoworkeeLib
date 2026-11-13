@@ -87,6 +87,7 @@ public sealed class CatalogCodeGen : CodeGenConfig
         Dto<Brand>(d => d
             .Ignore(x => x.Tax)
             .Property(x => x.Description, p => p.Name("Notes"))
+            .Property(x => x.Country, p => p.Attribute<CountryCodeAttribute>())   // typisiert: [global::Coworkee.Contracts.Data.CountryCode]
             .View("BrandRow", v => v.Ignore(x => x.Description)));             // ein zweites DTO: BrandRow
 
         ViewDefaults(v => v.Ignore("DateCreatedUtc", "DateUpdatedUtc"));     // für jede View
@@ -98,7 +99,7 @@ public sealed class CatalogCodeGen : CodeGenConfig
 }
 ```
 
-Die Klasse wird automatisch gefunden (jede Klasse im Projekt, die von `CodeGenConfig` oder `DtoConfig<T>` erbt); ihre Methoden beschreiben nur, beim Build läuft nichts davon. So registrierte Facetten erreichen die OData-Facetten wie `[ProvideFacet]` (siehe [Facetten ohne Attribute](../web/odata.md#facetten-ohne-attribute)); konfiguriert werden sie in der Assembly der Entity. Die Referenz zur [Fluent-Konfiguration](https://fgilde.github.io/Nextended/de/projects/codegen#fluent-konfiguration-empfohlen) listet jede Methode: Views mit `ViewDefaults`, `Order`/`OrderLast`, Facetten und `DeleteStaleFiles` für generierte Dateien, die nicht mehr geschrieben werden.
+Die Klasse wird automatisch gefunden (jede Klasse im Projekt, die von `CodeGenConfig` oder `DtoConfig<T>` erbt); ihre Methoden beschreiben nur, beim Build läuft nichts davon. So registrierte Facetten erreichen die OData-Facetten wie `[ProvideFacet]` (siehe [Facetten ohne Attribute](../web/odata.md#facetten-ohne-attribute)); konfiguriert werden sie in der Assembly der Entity. Die Referenz zur [Fluent-Konfiguration](https://fgilde.github.io/Nextended/de/projects/codegen#fluent-konfiguration-empfohlen) listet jede Methode: Views mit `ViewDefaults`, `Order`/`OrderLast`, Facetten und `DeleteStaleFiles` für generierte Dateien, die nicht mehr geschrieben werden. Typen und Attribute gehen typisiert hinein (`Attribute<T>(args)`, `BaseType<T>()`, `Interface<T>()`), Namen über `nameof`, damit ein Umbenennen in der IDE die Konfiguration erreicht. Jeder generierte Typ trägt `[GeneratedCode("Nextended.CodeGen", null)]` (Coverage und Analyzer überspringen ihn); `Defaults(d => d.GeneratedCodeAttribute(false))` lässt es weg.
 
 ## Mapping mit Extension-Methoden
 

@@ -87,6 +87,7 @@ public sealed class CatalogCodeGen : CodeGenConfig
         Dto<Brand>(d => d
             .Ignore(x => x.Tax)
             .Property(x => x.Description, p => p.Name("Notes"))
+            .Property(x => x.Country, p => p.Attribute<CountryCodeAttribute>())   // typed: [global::Coworkee.Contracts.Data.CountryCode]
             .View("BrandRow", v => v.Ignore(x => x.Description)));             // a second DTO: BrandRow
 
         ViewDefaults(v => v.Ignore("DateCreatedUtc", "DateUpdatedUtc"));     // for every view
@@ -98,7 +99,7 @@ public sealed class CatalogCodeGen : CodeGenConfig
 }
 ```
 
-The class is found automatically (any class deriving from `CodeGenConfig` or `DtoConfig<T>` in the project); its methods only describe, nothing of it runs at build time. Facets registered this way reach the OData facets like `[ProvideFacet]` (see [Facets without attributes](../web/odata.md#facets-without-attributes)); configure them in the assembly of the entity. The [fluent configuration](https://fgilde.github.io/Nextended/projects/codegen#fluent-configuration) reference lists every method: [views](https://fgilde.github.io/Nextended/projects/codegen#views) with `ViewDefaults`, `Order`/`OrderLast`, [facets](https://fgilde.github.io/Nextended/projects/codegen#facets), and `DeleteStaleFiles` for generated files that are no longer written.
+The class is found automatically (any class deriving from `CodeGenConfig` or `DtoConfig<T>` in the project); its methods only describe, nothing of it runs at build time. Facets registered this way reach the OData facets like `[ProvideFacet]` (see [Facets without attributes](../web/odata.md#facets-without-attributes)); configure them in the assembly of the entity. The [fluent configuration](https://fgilde.github.io/Nextended/projects/codegen#fluent-configuration) reference lists every method: [views](https://fgilde.github.io/Nextended/projects/codegen#views) with `ViewDefaults`, `Order`/`OrderLast`, [facets](https://fgilde.github.io/Nextended/projects/codegen#facets), and `DeleteStaleFiles` for generated files that are no longer written. Types and attributes go in typed (`Attribute<T>(args)`, `BaseType<T>()`, `Interface<T>()`) and names through `nameof`, so a rename in the IDE reaches the config. Every generated type carries `[GeneratedCode("Nextended.CodeGen", null)]` (coverage and analyzers skip it); `Defaults(d => d.GeneratedCodeAttribute(false))` leaves it out.
 
 ## Mapping with extension methods
 

@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Geändert
+
+- Nextended 10.1.64: Generierte Typen tragen `[GeneratedCode("Nextended.CodeGen", null)]`; der erste Build nach dem Update ergänzt diese Zeile einmal in jeder generierten Datei (committen), `Defaults(d => d.GeneratedCodeAttribute(false))` lässt die Dateien, wie sie waren. Die Fluent-Konfiguration nimmt Typen und Attribute typisiert: `Attribute<T>(args)` (typisierte Aufrufe addieren sich), `BaseType<T>()`, `Interface<T>()` und für TypeScript `IncludeTypesWithAttribute<T>()`. `BaseType(null)` braucht jetzt einen Cast: `BaseType((string?)null)`. Apps, die Nextended-Pakete pinnen, heben sie auf 10.1.64 (`coworkee update` macht das). Siehe [Im Code konfigurieren](../fundamentals/dtos.md#im-code-konfigurieren-fluent).
+
 ## 0.0.1.84 (2026-11-13)
 
 ### Behoben

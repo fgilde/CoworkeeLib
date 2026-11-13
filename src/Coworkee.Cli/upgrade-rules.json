@@ -872,6 +872,19 @@
         { "id": "Nextended.Core", "version": "10.1.63" },
         { "id": "Nextended.Web", "version": "10.1.63" }
       ]
+    },
+    {
+      "version": "0.0.1.85",
+      "breaking": [
+        "Nextended 10.1.64: generated types carry [GeneratedCode(\"Nextended.CodeGen\", null)]; build once and commit the regenerated files (Defaults(d => d.GeneratedCodeAttribute(false)) keeps them unchanged). BaseType(null) in a fluent config needs BaseType((string?)null). Apps that pin Nextended packages move up (any newer Nextended works, none older)."
+      ],
+      "needsMigration": false,
+      "packages": [
+        { "id": "Nextended.Aspire.Hosting.AspireUI", "version": "10.1.64" },
+        { "id": "Nextended.CodeGen", "version": "10.1.64" },
+        { "id": "Nextended.Core", "version": "10.1.64" },
+        { "id": "Nextended.Web", "version": "10.1.64" }
+      ]
     }
   ]
 }
