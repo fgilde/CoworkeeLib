@@ -92,7 +92,8 @@ public sealed class ThemesPageTests : ClientTestBase
         await dialogs.InvokeAsync(() => { });
         dialogs.WaitForAssertion(() => dialogs.FindAll("button").First(b => b.TextContent.Trim() == "Save").Click());
 
-        await Api.Received(1).UpdateThemeAsync(BuiltIn.Id, Arg.Is<ThemeRequest>(r => r.Name == "Coworkee"), Arg.Any<CancellationToken>());
+        // the save handler is async: under load the call lands after the click returns
+        dialogs.WaitForAssertion(() => _ = Api.Received(1).UpdateThemeAsync(BuiltIn.Id, Arg.Is<ThemeRequest>(r => r.Name == "Coworkee"), Arg.Any<CancellationToken>()));
         await Api.DidNotReceiveWithAnyArgs().CreateThemeAsync(default!, default);
     }
 

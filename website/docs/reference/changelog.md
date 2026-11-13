@@ -8,6 +8,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 - Testing: `DatabaseFixture.ResetAsync()` on SQL Server no longer fails a test when background work of the app (outbox, jobs, a request of the test before) deadlocks with it. The reset runs with `DEADLOCK_PRIORITY LOW`, so SQL Server rolls back the reset rather than the app's work, and it runs again (error 1205, up to 20 times), as Postgres already retries a lock it cannot get. Apps change nothing. See [Testing](../testing.md).
 
+### Changed
+
+- Nextended 10.1.63: the members of a generated DTO (and its TypeScript type) whose entity is a `partial` class spread over several files come in a fixed order, by file path and then position, instead of the order the compiler received the files (Visual Studio, CLI and incremental builds differed, e.g. a property of a second partial file jumped between first and last). Types from one file generate as before. Apps that pin Nextended packages move them up to 10.1.63 (`coworkee update` does it); regenerate once and commit the reordered files.
+
 ## 0.0.1.83 (2026-11-12)
 
 ### Added

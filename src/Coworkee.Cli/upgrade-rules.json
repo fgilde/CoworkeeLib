@@ -859,6 +859,19 @@
         { "id": "Nextended.Core", "version": "10.1.61" },
         { "id": "Nextended.Web", "version": "10.1.61" }
       ]
+    },
+    {
+      "version": "0.0.1.84",
+      "breaking": [
+        "Nextended 10.1.63: generated DTO and TypeScript members of partial types follow a fixed order (file path, then position); apps that pin Nextended packages move up (any newer Nextended works, none older)."
+      ],
+      "needsMigration": false,
+      "packages": [
+        { "id": "Nextended.Aspire.Hosting.AspireUI", "version": "10.1.63" },
+        { "id": "Nextended.CodeGen", "version": "10.1.63" },
+        { "id": "Nextended.Core", "version": "10.1.63" },
+        { "id": "Nextended.Web", "version": "10.1.63" }
+      ]
     }
   ]
 }
