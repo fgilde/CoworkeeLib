@@ -11,7 +11,7 @@ Every step checks its fields before the next one opens; *Back* keeps what was en
 
 ## Settings admins change at runtime
 
-Under **Administration > Settings > Accounts**:
+Under **Administration > Settings > Accounts**, and together with the sign-in settings, the registration form and the look of the sign-in page on **Administration > System > Sign-in** (see [Sign-in pages](sign-in-pages.md#on-the-page-sign-in)):
 
 | Setting | Default | Meaning |
 |---|---|---|
@@ -100,7 +100,7 @@ Accounts whose email is not confirmed cannot sign in with a password.
 
 With at least one external provider configured, **Administration > Settings > Sign-in security** has the setting **Sign-in methods** (`Auth.LoginMode`, scope `Global`): *Password only* (`Internal`), *External providers only* (`External`) or *Password and external providers* (`Both`). `External:Mode` is its default; a stored value that is no mode name falls back to it. Without a provider the setting is not defined and the auth server always shows the password form, so nobody is locked out. The host of the settings API need not be the auth server: it reads `External:Mode` and the display names of the providers from its configuration, never their secrets (the Aspire app host passes both, see [Keycloak](../hosting/aspire.md#keycloak)).
 
-An admin who saves *External providers only* while the provider is down locks everybody out, and the stored setting would win over any configuration change. The operator's way back is `Coworkee:Auth:External:ModeOverride`: when set, it wins over the setting (still the password form without a provider). Set `Coworkee__Auth__External__ModeOverride=Both` (or `Internal`) as an environment variable of the auth server and restart it; after the setting is fixed, remove the override.
+An admin who saves *External providers only* while the provider is down locks everybody out, and the stored setting would win over any configuration change. The operator's way back is `Coworkee:Auth:External:ModeOverride`: when set, it wins over the setting (still the password form without a provider). Set `Coworkee__Auth__External__ModeOverride=Both` (or `Internal`) as an environment variable of the auth server and restart it; after the setting is fixed, remove the override. Set it for the API as well (the host of the settings): the setting then shows read-only on the settings pages with the fixed mode, so nobody changes a value that has no effect.
 
 ## External sign-in and existing accounts
 

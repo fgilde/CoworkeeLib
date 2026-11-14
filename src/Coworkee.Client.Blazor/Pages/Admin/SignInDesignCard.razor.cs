@@ -14,7 +14,7 @@ using MudBlazor.Extensions;
 namespace Coworkee.Client.Blazor.Pages.Admin;
 
 /// <summary>
-/// The installation's <see cref="SignInDesign"/> with a thumbnail per layout, saved as app configuration section; hidden for users who may not
+/// The installation's <see cref="SignInDesign"/> with a thumbnail per layout on the page Sign-in, saved as app configuration section and reloaded when it changes; hidden for users who may not
 /// change the app configuration (outside the system organisation) or while the API does not accept changes.
 /// </summary>
 public partial class SignInDesignCard
@@ -36,6 +36,8 @@ public partial class SignInDesignCard
     [Inject] private Security.PermissionStore Permissions { get; set; } = null!;
 
     [Inject] private NavigationManager Navigation { get; set; } = null!;
+
+    [Inject] private IEnumerable<ClientAppConfiguration> Registrations { get; set; } = null!;
 
     private bool _canPickFiles;
 
@@ -59,6 +61,22 @@ public partial class SignInDesignCard
         catch (ApiException)
         {
             _design = null;
+        }
+    }
+
+    // another administrator, or the texts form on the same page, saved the design: show what applies now
+    private async Task ChangedAsync(Contracts.Realtime.RealtimeEnvelope envelope)
+    {
+        if (_design is not null && Components.AppConfigurationChanges.Touches(envelope, SignInDesign.Section, Registrations))
+        {
+            try
+            {
+                _design = Read(await Api.GetAppConfigurationAsync(SignInDesign.Section));
+            }
+            catch (ApiException)
+            {
+                // keep what shows; the next save answers with the error
+            }
         }
     }
 

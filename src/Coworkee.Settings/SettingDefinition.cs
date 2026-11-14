@@ -14,7 +14,8 @@ public sealed record SettingDefinition(
     string? Description,
     IReadOnlyList<string>? Choices,
     SettingCondition? EnabledWhen = null,
-    string? Permission = null)
+    string? Permission = null,
+    string? FixedValue = null)
 {
     public bool IsEncrypted => Type == SettingType.Secret;
 

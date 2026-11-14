@@ -136,6 +136,70 @@ public sealed class AuthDesignTests(AuthApp app) : IAsyncLifetime
         html.ShouldContain("class=\"layout-split\"");
         html.ShouldContain("class=\"split media-left\"");
         html.ShouldNotContain("design-background");
+        // nor the texts and the app name, which came later
+        html.ShouldContain("<h1>Sign in</h1>");
+        html.ShouldNotContain("sign-in-subtitle");
+        html.ShouldNotContain("sign-in-notice");
+        html.ShouldContain($"<span>{Options.DisplayName}</span>");
+    }
+
+    [Fact]
+    public async Task Own_texts_show_on_the_sign_in_page_in_the_visitors_language_as_plain_text()
+    {
+        var saved = await OidcFlow.SendAsync(app, _setup.AdminUserId, _setup.TenantId, new SaveAppConfiguration(SignInDesign.Section, JsonSerializer.SerializeToElement(new SignInDesign
+        {
+            Texts = new SignInTexts
+            {
+                Title = "Welcome <b>aboard</b>",
+                Titles = { ["de"] = "Willkommen" },
+                Subtitle = "Sign in with your company account",
+                Notice = "Maintenance tonight\n<script>alert(1)</script>",
+            },
+        })));
+        saved.IsSuccess.ShouldBeTrue();
+
+        var english = await GetAsync("/Account/Login?ui-culture=en");
+        var german = await GetAsync("/Account/Login?ui-culture=de-AT");
+
+        english.ShouldContain("<h1>Welcome &lt;b&gt;aboard&lt;/b&gt;</h1>");
+        english.ShouldContain("<p class=\"subtitle\" data-testid=\"sign-in-subtitle\">Sign in with your company account</p>");
+        english.ShouldContain("Maintenance tonight&#xA;&lt;script&gt;alert(1)&lt;/script&gt;"); // the notice keeps its line break (white-space: pre-line)
+        english.ShouldNotContain("<script>alert(1)");
+        german.ShouldContain("<h1>Willkommen</h1>");
+        german.ShouldContain("data-testid=\"sign-in-notice\"");
+        // the other account pages keep their headings
+        (await GetAsync("/Account/ForgotPassword")).ShouldNotContain("aboard");
+    }
+
+    [Theory]
+    [InlineData(SignInLayouts.Card)]
+    [InlineData(SignInLayouts.Split)]
+    [InlineData(SignInLayouts.Slide)]
+    public async Task Without_the_app_name_the_logo_stands_alone_in_every_layout(string layout)
+    {
+        Options.Design = new SignInDesign { Layout = layout, ShowAppName = false };
+
+        var html = await GetAsync("/Account/Login");
+
+        html.ShouldNotContain($"<span>{Options.DisplayName}</span>");
+        html.ShouldNotContain($"<h2>{Options.DisplayName}</h2>");
+        html.ShouldContain("data-testid=\"brand\"");
+    }
+
+    [Fact]
+    public async Task Saving_the_app_settings_keeps_the_sign_in_design_inside_their_section()
+    {
+        (await OidcFlow.SendAsync(app, _setup.AdminUserId, _setup.TenantId, new SaveAppConfiguration(SignInDesign.Section,
+            JsonSerializer.SerializeToElement(new SignInDesign { Layout = SignInLayouts.Split, Texts = new SignInTexts { Title = "Kept" } })))).IsSuccess.ShouldBeTrue();
+        var settings = await OidcFlow.SendAsync(app, _setup.AdminUserId, _setup.TenantId, new GetAppConfiguration(Contracts.Settings.CoworkeeAppSettings.Section));
+
+        var saved = await OidcFlow.SendAsync(app, _setup.AdminUserId, _setup.TenantId, new SaveAppConfiguration(Contracts.Settings.CoworkeeAppSettings.Section, settings.Value.Values));
+
+        saved.IsSuccess.ShouldBeTrue();
+        saved.Value.ChangedKeys.ShouldNotContain(k => k.StartsWith(SignInDesign.Section, StringComparison.OrdinalIgnoreCase));
+        var design = await OidcFlow.SendAsync(app, _setup.AdminUserId, _setup.TenantId, new GetAppConfiguration(SignInDesign.Section));
+        design.Value.Values.GetProperty("layout").GetString().ShouldBe(SignInLayouts.Split);
+        design.Value.Values.GetProperty("texts").GetProperty("title").GetString().ShouldBe("Kept");
     }
 
     [Fact]

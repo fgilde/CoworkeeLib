@@ -28,7 +28,13 @@ Das Design gilt für die ganze Installation, unabhängig davon, welches Theme St
       "MediaUrl": "/media/welcome.mp4",
       "MediaSide": "Right",
       "BackgroundUrl": "/media/sky.jpg",
-      "BackgroundDim": 30
+      "BackgroundDim": 30,
+      "ShowAppName": true,
+      "Texts": {
+        "Title": "Welcome",
+        "Titles": { "de": "Willkommen" },
+        "Notice": "Wartung am Sonntag von 20 bis 22 Uhr."
+      }
     },
     "AllowDesignChanges": true
   }
@@ -43,13 +49,31 @@ Das Design gilt für die ganze Installation, unabhängig davon, welches Theme St
 | `Design:BackgroundUrl` | ein Bild oder Video hinter der ganzen Seite in jedem Layout, mit denselben Regeln wie `MediaUrl` (Pfad oder `http(s)`-Adresse, deren Origin in die Policy kommt); leer behält den Hintergrund des Themes |
 | `Design:BackgroundDim` | dunkelt den Hintergrund ab, `0` bis `90` Prozent (Standard `0`) |
 | `Design:LoadingScreen` | Hintergrund des [Ladebildschirms](../modules/theming.md#ladebildschirm) der App: `Animated`, `SignInMedia` (das Bild oder Video oben) oder `Plain` |
-| `AllowDesignChanges` | `true` (Standard) lässt Administratoren das Design auf der Themes-Seite ändern; `false` behält die Konfiguration. Setz es für den Dienst, der die API hostet: Dort wird die Änderung gespeichert. |
+| `Design:ShowAppName` | `true` (Standard) zeigt den App-Namen neben dem Logo und auf der Medienfläche von `Split` und `Slide`; `false` lässt das Logo allein stehen |
+| `Design:Texts:Title`, `Subtitle`, `Notice` | eigene Überschrift, eine Zeile darunter und ein Hinweis über dem Formular der Anmeldeseite, für jede Sprache; leer behält die eingebaute Überschrift *Anmelden* und zeigt weder Zeile noch Hinweis |
+| `Design:Texts:Titles`, `Subtitles`, `Notices` | dasselbe je Sprache (`"de"`, `"de-AT"`): die Sprache des Besuchers (`de-AT`, dann `de`) geht dem Text für jede Sprache vor |
+| `AllowDesignChanges` | `true` (Standard) lässt Administratoren das Design auf der Seite *Anmeldung* ändern; `false` behält die Konfiguration. Setz es für den Dienst, der die API hostet: Dort wird die Änderung gespeichert. |
 
 Der Aspire-AppHost setzt dieselben Werte mit `options.SignIn` und liefert einen Pfad zum Medium von der Web-App aus, siehe [Aspire-AppHost](../hosting/aspire.md).
 
-## Auf der Themes-Seite
+## Texte
 
-*Administration > Themes* beginnt mit der Karte *Anmeldeseite*: eine Vorschau je Layout zum Auswählen, die Adresse des Bildes oder Videos und seine Seite, der Seitenhintergrund mit seiner Abdunklung sowie der Hintergrund des [Ladebildschirms](../modules/theming.md#ladebildschirm) der App. Die Ordner-Knöpfe in den Adressfeldern wählen das Bild oder Video aus den Dateien der App; eine private Datei wird vorher (nach Rückfrage) öffentlich gemacht, und das Feld erhält ihre absolute öffentliche Adresse, die Auth-Server, Keycloak und Ladebildschirm ohne Anmeldung laden können. *Speichern* legt die Werte als App-Konfigurationsabschnitt `Coworkee:Auth:Design` ab (Tabelle `cw.ConfigurationEntries`, siehe [App-Konfiguration](../modules/settings.md)); *Standardwerte wiederherstellen* verwirft sie, dann gilt wieder die Konfiguration.
+Die Texte ändern nur die Anmeldeseite (`/Account/Login`); die anderen Kontoseiten behalten ihre Überschriften. Sie sind reiner Text: Die Seite kodiert sie, Markup erscheint also so, wie es eingegeben wurde, und kann nichts einschleusen; ein Zeilenumbruch im Hinweis bleibt erhalten. Die Sprache ist die, die der Auth-Server für die Anfrage wählt (die Sprache des Browsers oder `?ui-culture=de`). Das Keycloak-Login-Theme bekommt die Texte ebenfalls: Sein Skript setzt sie als Text auf die Anmeldeseite von Keycloak, in deren Sprache; ohne App-Namen lässt das Theme den Kopftext von Keycloak leer. Ein gespeichertes Design ohne die neuen Werte sieht aus wie bisher.
+
+## Auf der Seite Anmeldung
+
+*Administration > System > Anmeldung* (`/cw/admin/sign-in`, Seitenschlüssel `sign-in`) bündelt die ganze Anmelde- und Registrierungskonfiguration. Sie ist nur eine weitere Ansicht auf dieselben Quellen, mit den Formularen der Einstellungsseite; nichts wird anders gespeichert:
+
+| Teil | Quelle |
+|---|---|
+| *Anmeldung, Sicherheit und Registrierung* | die Einstellungsgruppen *Anmeldesicherheit* (Anmeldemethoden, Passkeys, Sitzungen je Benutzer und Verhalten beim Limit, Passwortregeln, Sperre, Ablauf und Verlauf von Passwörtern, Handeln in einer Rolle) und *Konten* (Selbstregistrierung, Aktivierung, E-Mail-Bestätigung), dasselbe Formular wie unter *Einstellungen*. *Anmeldemethoden* erscheint nur, solange ein externer Anbieter konfiguriert ist; legt der Betreiber den Modus mit `Coworkee:Auth:External:ModeOverride` fest, erscheint es schreibgeschützt mit einem Hinweis (setz die Variable auch für die API, die die Einstellungen ausliefert) |
+| *Registrierungsformular* | der Teil `Registration` der App-Einstellungen (Adresse, erlaubte E-Mails, Dokumente und ihre Plätze), das Formular der App-Einstellungen, die übrigen Teile ausgeblendet und unverändert gespeichert |
+| Karte *Anmeldeseite* | das unten beschriebene Design |
+| *Texte der Anmeldeseite* | `ShowAppName` und `Texts` desselben Abschnitts `Coworkee:Auth:Design`, im Formular der App-Konfiguration |
+
+Die Seite braucht `Settings.Manage`; das Menü zeigt sie der Systemorganisation. Andere Organisationen sehen dort nur ihre eigenen Sitzungseinstellungen und keine App-Konfiguration. Die Seite folgt Änderungen anderer sofort: Eine gespeicherte Einstellung lädt das Einstellungsformular neu (außer es hat ungespeicherte Änderungen), ein gespeicherter Konfigurationswert das Formular seines Abschnitts. *Administration > Themes* verlinkt auf die Seite.
+
+Die Karte *Anmeldeseite* zeigt eine Vorschau je Layout zum Auswählen, die Adresse des Bildes oder Videos und seine Seite, der Seitenhintergrund mit seiner Abdunklung sowie der Hintergrund des [Ladebildschirms](../modules/theming.md#ladebildschirm) der App. Die Ordner-Knöpfe in den Adressfeldern wählen das Bild oder Video aus den Dateien der App; eine private Datei wird vorher (nach Rückfrage) öffentlich gemacht, und das Feld erhält ihre absolute öffentliche Adresse, die Auth-Server, Keycloak und Ladebildschirm ohne Anmeldung laden können. *Speichern* legt die Werte als App-Konfigurationsabschnitt `Coworkee:Auth:Design` ab (Tabelle `cw.ConfigurationEntries`, siehe [App-Konfiguration](../modules/settings.md)); *Standardwerte wiederherstellen* verwirft sie, dann gilt wieder die Konfiguration.
 
 *Vorschau* öffnet die echte Anmeldeseite des Auth-Servers mit den Werten, die die Karte gerade zeigt, gespeichert oder nicht, in einem Vollbild-Dialog. Der Dialog rahmt `/bff/sign-in-preview?design={json}` ein, das den Rahmen an `/Account/Preview` des Auth-Servers weiterleitet; diese Adresse rendert die Anmeldeseite mit dem übergebenen Design nach denselben Prüfungen wie ein gespeichertes. Sie antwortet nur auf ein `GET`, das der Browser als Laden eines Rahmens kennzeichnet (`Sec-Fetch-Dest: iframe`), und nur die Origins registrierter Clients dürfen sie einrahmen (`frame-ancestors`); ein Link oder eine andere Seite kann so kein untergeschobenes Design unter der Adresse des Auth-Servers zeigen. Der Rahmen läuft ohne Formulare (`sandbox`), dort meldet sich niemand an, und die Sitzung des Administrators bleibt unberührt. Die Policy der Web-App erlaubt dafür die Origin des Auth-Servers in `frame-src`. Mit Keycloak als Anmeldung zeigt die Vorschau die Seite des Coworkee-Auth-Servers, die es dort nicht gibt; dort übernimmt die Keycloak-Karte das Design.
 
@@ -67,13 +91,13 @@ builder.Services.AddCoworkeeClient(baseAddress, options =>
 });
 ```
 
-Ein eigenes Layout erhält eine allgemeine Vorschau mit seinem Namen. Themes, die noch den früheren Wert je Theme tragen (`SignIn` in den Theme-Optionen), werden ignoriert; leg das Design einmal auf der Themes-Seite fest.
+Ein eigenes Layout erhält eine allgemeine Vorschau mit seinem Namen. Themes, die noch den früheren Wert je Theme tragen (`SignIn` in den Theme-Optionen), werden ignoriert; leg das Design einmal auf der Seite *Anmeldung* fest.
 
 ## Eigene Designs
 
 Die Layouts sind Razor-Layouts neben den Seiten der Bibliothek: `Pages/_DesignCard.cshtml`, `Pages/_DesignSplit.cshtml` und `Pages/_DesignSlide.cshtml`, alle innerhalb von `Pages/_Layout.cshtml`, das Kopf, Theme-Variablen, Stylesheet und Skript rendert. Wie bei jeder Razor-Klassenbibliothek gewinnt eine View des Auth-Hosts unter demselben Pfad:
 
-- **Eigenes Layout**: `Pages/_DesignAurora.cshtml` im Auth-Host anlegen und `Design:Layout` auf `Aurora` setzen (oder auf der Themes-Seite wählen).
+- **Eigenes Layout**: `Pages/_DesignAurora.cshtml` im Auth-Host anlegen und `Design:Layout` auf `Aurora` setzen (oder auf der Seite *Anmeldung* wählen).
 - **Ein mitgeliefertes ersetzen**: `Pages/_DesignCard.cshtml` im Auth-Host anlegen.
 - **Alles ersetzen**: `Pages/_Layout.cshtml` anlegen; dann gehören auch Stylesheet und Skript dir.
 

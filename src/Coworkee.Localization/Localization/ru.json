@@ -2162,5 +2162,20 @@
   "Page background (image or video)": "Фон страницы (изображение или видео)",
   "Behind the whole page in every layout; empty keeps the theme's background.": "За всей страницей в каждом макете; пустое значение сохраняет фон темы.",
   "Choose the page background from files": "Выбрать фон страницы из файлов",
-  "Darken background (%)": "Затемнить фон (%)"
+  "Darken background (%)": "Затемнить фон (%)",
+  "Everything about signing in and registering in one place: sign-in methods, passkeys, sessions, password rules, registration and the look and texts of the sign-in page. The same settings as under Settings, changes apply at once.": "Всё о входе и регистрации в одном месте: способы входа, ключи доступа, сеансы, правила паролей, регистрация, а также вид и тексты страницы входа. Те же настройки, что и в разделе «Настройки», изменения действуют сразу.",
+  "Sign-in, security and registration": "Вход, безопасность и регистрация",
+  "Registration form": "Форма регистрации",
+  "Texts of the sign-in page": "Тексты страницы входа",
+  "Layout, media, background and texts of the sign-in page are set on the page Sign-in.": "Макет, медиа, фон и тексты страницы входа настраиваются на странице «Вход».",
+  "The host fixes {0} in its configuration; the stored value applies once it no longer does.": "Хост фиксирует {0} в своей конфигурации; сохранённое значение действует, как только он перестанет это делать.",
+  "Show the app name": "Показывать название приложения",
+  "Next to the logo and on the media panel; off leaves the logo alone.": "Рядом с логотипом и на медиапанели; если выключено, остаётся только логотип.",
+  "Texts": "Тексты",
+  "Title in other languages": "Заголовок на других языках",
+  "Subtitle in other languages": "Подзаголовок на других языках",
+  "Notice": "Уведомление",
+  "Notice in other languages": "Уведомление на других языках",
+  "For every language without its own text; empty keeps the built-in one.": "Для каждого языка без собственного текста; пусто — остаётся встроенный.",
+  "A hint above the sign-in form, e.g. maintenance or whom to ask for an account. For every language without its own text; empty keeps the built-in one.": "Уведомление над формой входа, например о техработах или к кому обращаться за учётной записью. Для каждого языка без собственного текста; пусто — остаётся встроенный."
 }

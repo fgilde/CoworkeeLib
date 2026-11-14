@@ -109,6 +109,11 @@ public sealed partial class SettingsModel
             {
                 property.AsDisabledIf<object>(m => !condition.Values.Contains(Format(dependency.GetValue(m))));
             }
+
+            if (setting.FixedValue is not null)
+            {
+                property.AsDisabledIf<object>(_ => true);
+            }
         }
     }
 #pragma warning restore BL0005
@@ -119,6 +124,12 @@ public sealed partial class SettingsModel
     private string? Description(SettingDefinitionDto setting, CoworkeeLocalizer l)
     {
         var description = setting.Description is { Length: > 0 } text ? l[text] : null;
+        if (setting.FixedValue is { } fixedValue)
+        {
+            var hint = l["The host fixes {0} in its configuration; the stored value applies once it no longer does.", l.Find(fixedValue) ?? fixedValue];
+            return description is null ? hint : $"{description} {hint}";
+        }
+
         if (setting.Type != SettingType.Secret)
         {
             return description;

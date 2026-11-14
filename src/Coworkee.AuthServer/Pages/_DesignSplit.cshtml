@@ -8,7 +8,10 @@
 <div class="split @side" data-design="split">
   <aside class="media @(brand.Design.MediaUrl is null ? null : "has-media")">
     <partial name="_Media" model="brand" />
-    <h2>@brand.AppName</h2>
+    @if (brand.Design.ShowAppName)
+    {
+      <h2>@brand.AppName</h2>
+    }
   </aside>
   <div class="form">
     <main class="panel @(ViewData["Wide"] is true ? "wide" : null)">

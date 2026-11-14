@@ -1,6 +1,7 @@
 @typeparam T where T : class, new()
 @using MudBlazor.Extensions.Components.ObjectEdit
 
+<RealtimeSubscription Topic="@AppConfigurationChanges.Topic" OnEvent="ChangedAsync" />
 @if (_error is not null)
 {
     <MudAlert Severity="Severity.Error" Dense="Density.Dense" Class="mb-4" data-testid="configuration-error">@_error</MudAlert>

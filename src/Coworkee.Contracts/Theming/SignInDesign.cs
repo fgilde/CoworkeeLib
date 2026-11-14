@@ -1,8 +1,10 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Coworkee.Contracts.Theming;
 
 /// <summary>
 /// Look of the auth server's account pages for the whole installation, independent of the theme. The configuration sets it
-/// (<see cref="Section"/>); administrators change it on the Themes page, stored like any app configuration section.
+/// (<see cref="Section"/>); administrators change it on the admin page Sign-in, stored like any app configuration section.
 /// </summary>
 public sealed class SignInDesign
 {
@@ -26,4 +28,12 @@ public sealed class SignInDesign
 
     /// <summary>Background of the app's loading screen; <see cref="LoadingScreenBackground.SignInMedia"/> shows <see cref="MediaUrl"/>.</summary>
     public LoadingScreenBackground? LoadingScreen { get; set; }
+
+    /// <summary>Shows the app name next to the logo (and on the media panel of the split and slide layouts); off leaves the logo alone.</summary>
+    [Display(Name = "Show the app name", GroupName = "Texts", Description = "Next to the logo and on the media panel; off leaves the logo alone.")]
+    public bool ShowAppName { get; set; } = true;
+
+    /// <summary>Own title, subtitle and notice of the sign-in page, per language; empty keeps the page as it is.</summary>
+    [Display(Name = "Texts", GroupName = "Texts")]
+    public SignInTexts Texts { get; set; } = new();
 }

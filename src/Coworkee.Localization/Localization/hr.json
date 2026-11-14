@@ -2162,5 +2162,20 @@
   "Page background (image or video)": "Pozadina stranice (slika ili video)",
   "Behind the whole page in every layout; empty keeps the theme's background.": "Iza cijele stranice u svakom rasporedu; prazno zadržava pozadinu teme.",
   "Choose the page background from files": "Odaberite pozadinu stranice iz datoteka",
-  "Darken background (%)": "Zatamni pozadinu (%)"
+  "Darken background (%)": "Zatamni pozadinu (%)",
+  "Everything about signing in and registering in one place: sign-in methods, passkeys, sessions, password rules, registration and the look and texts of the sign-in page. The same settings as under Settings, changes apply at once.": "Sve o prijavi i registraciji na jednom mjestu: načini prijave, pristupni ključevi, sesije, pravila lozinki, registracija te izgled i tekstovi stranice za prijavu. Iste postavke kao pod Postavkama, promjene vrijede odmah.",
+  "Sign-in, security and registration": "Prijava, sigurnost i registracija",
+  "Registration form": "Obrazac za registraciju",
+  "Texts of the sign-in page": "Tekstovi stranice za prijavu",
+  "Layout, media, background and texts of the sign-in page are set on the page Sign-in.": "Raspored, mediji, pozadina i tekstovi stranice za prijavu postavljaju se na stranici Prijava.",
+  "The host fixes {0} in its configuration; the stored value applies once it no longer does.": "Domaćin fiksira {0} u svojoj konfiguraciji; spremljena vrijednost vrijedi čim to prestane činiti.",
+  "Show the app name": "Prikaži naziv aplikacije",
+  "Next to the logo and on the media panel; off leaves the logo alone.": "Pokraj logotipa i na medijskoj ploči; isključeno ostavlja samo logotip.",
+  "Texts": "Tekstovi",
+  "Title in other languages": "Naslov na drugim jezicima",
+  "Subtitle in other languages": "Podnaslov na drugim jezicima",
+  "Notice": "Obavijest",
+  "Notice in other languages": "Obavijest na drugim jezicima",
+  "For every language without its own text; empty keeps the built-in one.": "Za svaki jezik bez vlastitog teksta; prazno zadržava ugrađeni.",
+  "A hint above the sign-in form, e.g. maintenance or whom to ask for an account. For every language without its own text; empty keeps the built-in one.": "Obavijest iznad obrasca za prijavu, npr. održavanje ili koga pitati za račun. Za svaki jezik bez vlastitog teksta; prazno zadržava ugrađeni."
 }

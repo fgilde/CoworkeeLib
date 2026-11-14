@@ -2162,5 +2162,20 @@
   "Page background (image or video)": "Sidebaggrund (billede eller video)",
   "Behind the whole page in every layout; empty keeps the theme's background.": "Bag hele siden i alle layouts; tom beholder temaets baggrund.",
   "Choose the page background from files": "Vælg sidebaggrunden fra filer",
-  "Darken background (%)": "Gør baggrunden mørkere (%)"
+  "Darken background (%)": "Gør baggrunden mørkere (%)",
+  "Everything about signing in and registering in one place: sign-in methods, passkeys, sessions, password rules, registration and the look and texts of the sign-in page. The same settings as under Settings, changes apply at once.": "Alt om login og registrering ét sted: loginmetoder, adgangsnøgler, sessioner, adgangskoderegler, registrering samt udseende og tekster på loginsiden. De samme indstillinger som under Indstillinger, ændringer gælder med det samme.",
+  "Sign-in, security and registration": "Login, sikkerhed og registrering",
+  "Registration form": "Registreringsformular",
+  "Texts of the sign-in page": "Tekster på loginsiden",
+  "Layout, media, background and texts of the sign-in page are set on the page Sign-in.": "Layout, medier, baggrund og tekster på loginsiden indstilles på siden Login.",
+  "The host fixes {0} in its configuration; the stored value applies once it no longer does.": "Værten fastlægger {0} i sin konfiguration; den gemte værdi gælder, så snart den ikke længere gør det.",
+  "Show the app name": "Vis appens navn",
+  "Next to the logo and on the media panel; off leaves the logo alone.": "Ved siden af logoet og på mediepanelet; slået fra står logoet alene.",
+  "Texts": "Tekster",
+  "Title in other languages": "Titel på andre sprog",
+  "Subtitle in other languages": "Undertitel på andre sprog",
+  "Notice": "Meddelelse",
+  "Notice in other languages": "Meddelelse på andre sprog",
+  "For every language without its own text; empty keeps the built-in one.": "For hvert sprog uden egen tekst; tom beholder den indbyggede.",
+  "A hint above the sign-in form, e.g. maintenance or whom to ask for an account. For every language without its own text; empty keeps the built-in one.": "En meddelelse over loginformularen, f.eks. vedligeholdelse eller hvem man spørger om en konto. For hvert sprog uden egen tekst; tom beholder den indbyggede."
 }

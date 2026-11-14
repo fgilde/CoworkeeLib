@@ -121,6 +121,31 @@ public sealed class KeycloakLoginThemeTests : IDisposable
     }
 
     [Fact]
+    public void The_script_gets_the_own_texts_per_language_and_without_the_app_name_the_header_stays_empty()
+    {
+        Write(Content() with
+        {
+            Design = new SignInDesign
+            {
+                ShowAppName = false,
+                Texts = new SignInTexts { Title = "Welcome", Titles = { ["de-AT"] = "Servus", ["fr"] = " " }, Notice = "<b>Maintenance</b>" },
+            },
+        });
+
+        var script = Read("resources/js/coworkee.js");
+        var config = JsonDocument.Parse(script["var coworkee = ".Length..script.IndexOf(";\n", StringComparison.Ordinal)]).RootElement;
+        config.GetProperty("title").GetProperty("").GetString().ShouldBe("Welcome");
+        config.GetProperty("title").GetProperty("de-at").GetString().ShouldBe("Servus");
+        config.GetProperty("title").TryGetProperty("fr", out _).ShouldBeFalse();
+        config.GetProperty("subtitle").ValueKind.ShouldBe(JsonValueKind.Null);
+        config.GetProperty("notice").GetProperty("").GetString().ShouldBe("<b>Maintenance</b>"); // the script sets it as text
+        config.GetProperty("appName").ValueKind.ShouldBe(JsonValueKind.Null);
+        script.ShouldContain("line.textContent = text;");
+        script.ShouldNotContain("innerHTML");
+        Read("messages/messages_en.properties").ShouldBe("loginTitleHtml=\n");
+    }
+
+    [Fact]
     public void Rewriting_leaves_no_temporary_files()
     {
         Write(Content());

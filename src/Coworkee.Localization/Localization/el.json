@@ -2162,5 +2162,20 @@
   "Page background (image or video)": "Φόντο σελίδας (εικόνα ή βίντεο)",
   "Behind the whole page in every layout; empty keeps the theme's background.": "Πίσω από ολόκληρη τη σελίδα σε κάθε διάταξη· κενό διατηρεί το φόντο του θέματος.",
   "Choose the page background from files": "Επιλογή φόντου σελίδας από τα αρχεία",
-  "Darken background (%)": "Σκούρεμα φόντου (%)"
+  "Darken background (%)": "Σκούρεμα φόντου (%)",
+  "Everything about signing in and registering in one place: sign-in methods, passkeys, sessions, password rules, registration and the look and texts of the sign-in page. The same settings as under Settings, changes apply at once.": "Όλα για τη σύνδεση και την εγγραφή σε ένα σημείο: μέθοδοι σύνδεσης, κλειδιά πρόσβασης, συνεδρίες, κανόνες κωδικών, εγγραφή και η εμφάνιση και τα κείμενα της σελίδας σύνδεσης. Οι ίδιες ρυθμίσεις με τις Ρυθμίσεις, οι αλλαγές ισχύουν αμέσως.",
+  "Sign-in, security and registration": "Σύνδεση, ασφάλεια και εγγραφή",
+  "Registration form": "Φόρμα εγγραφής",
+  "Texts of the sign-in page": "Κείμενα της σελίδας σύνδεσης",
+  "Layout, media, background and texts of the sign-in page are set on the page Sign-in.": "Η διάταξη, τα πολυμέσα, το φόντο και τα κείμενα της σελίδας σύνδεσης ορίζονται στη σελίδα Σύνδεση.",
+  "The host fixes {0} in its configuration; the stored value applies once it no longer does.": "Ο κεντρικός υπολογιστής ορίζει σταθερά το {0} στη διαμόρφωσή του· η αποθηκευμένη τιμή ισχύει μόλις πάψει να το κάνει.",
+  "Show the app name": "Εμφάνιση του ονόματος της εφαρμογής",
+  "Next to the logo and on the media panel; off leaves the logo alone.": "Δίπλα στο λογότυπο και στο πλαίσιο πολυμέσων· όταν είναι ανενεργό, μένει μόνο το λογότυπο.",
+  "Texts": "Κείμενα",
+  "Title in other languages": "Τίτλος σε άλλες γλώσσες",
+  "Subtitle in other languages": "Υπότιτλος σε άλλες γλώσσες",
+  "Notice": "Ειδοποίηση",
+  "Notice in other languages": "Ειδοποίηση σε άλλες γλώσσες",
+  "For every language without its own text; empty keeps the built-in one.": "Για κάθε γλώσσα χωρίς δικό της κείμενο· κενό διατηρεί το ενσωματωμένο.",
+  "A hint above the sign-in form, e.g. maintenance or whom to ask for an account. For every language without its own text; empty keeps the built-in one.": "Μια ειδοποίηση πάνω από τη φόρμα σύνδεσης, π.χ. συντήρηση ή σε ποιον να ζητήσετε λογαριασμό. Για κάθε γλώσσα χωρίς δικό της κείμενο· κενό διατηρεί το ενσωματωμένο."
 }

@@ -7,10 +7,18 @@
 ### Hinzugefügt
 
 - Anmeldeseite: ein optionaler Seitenhintergrund (`Coworkee:Auth:Design:BackgroundUrl`, Bild oder Video, mit `BackgroundDim` zum Abdunkeln) hinter der ganzen Seite in jedem Layout, unabhängig vom Medium des Feldes, auch im Keycloak-Login-Theme und in `options.SignIn` des Aspire-AppHosts. Die Karte auf der Themes-Seite bearbeitet ihn (mit Dateiauswahl) und bekommt einen Knopf *Vorschau*, der die echte Anmeldeseite mit dem ungespeicherten Design in einem Rahmen zeigt. Die Content Security Policy der Web-App erlaubt dafür die Origin des Auth-Servers in `frame-src`; Apps mit eigener `ContentSecurityPolicy` ergänzen sie für die Vorschau selbst. Videos auf den Kontoseiten stehen still, wenn das System reduzierte Bewegung verlangt. Gespeicherte Designs ohne die neuen Werte sehen aus wie bisher; Apps ändern nichts. Siehe [Anmeldeseiten](../security/sign-in-pages.md).
+- Admin-Seite *Anmeldung* (`/cw/admin/sign-in`, Seitenschlüssel `sign-in`, `Settings.Manage`, im Menü für die Systemorganisation): die ganze Anmelde- und Registrierungskonfiguration an einem Ort, mit den Formularen der Einstellungsseite. Die Einstellungsgruppen *Anmeldesicherheit* und *Konten*, der Teil `Registration` der App-Einstellungen, die Karte *Anmeldeseite* (von der Themes-Seite hierher verschoben, die jetzt dorthin verlinkt) und die Texte der Anmeldeseite. Nichts wird anders gespeichert; die Einstellungsseite zeigt alles wie bisher. Siehe [Anmeldeseiten](../security/sign-in-pages.md#auf-der-seite-anmeldung).
+- Texte der Anmeldeseite: `Coworkee:Auth:Design:Texts` (`Title`, `Subtitle`, `Notice`, jeweils mit einem Wörterbuch je Sprache `Titles`, `Subtitles`, `Notices`) und `ShowAppName` (Standard `true`), kodiert auf der Anmeldeseite gerendert und an das Keycloak-Login-Theme weitergegeben. Ohne Werte bleibt die Seite genau wie bisher; Apps ändern nichts.
+- Einstellungen: Eine Definition kann einen `fixedValue` tragen (`Add(..., fixedValue: ...)`, `SettingDefinitionDto.FixedValue`), schreibgeschützt mit Hinweis angezeigt. `Auth.LoginMode` nutzt ihn für `Coworkee:Auth:External:ModeOverride`; setz den Override deshalb auch für die API.
+- `SettingsForm` nimmt `Groups` (nur diese Einstellungsgruppen), `AppConfigurationEditor` nimmt `Only` (nur diese Eigenschaftspfade, der Rest wird unverändert gespeichert). Beide laden neu, wenn jemand speichert: ein `SettingsForm` über das Einstellungsthema seines Bereichs, außer es hat ungespeicherte Änderungen, ein `AppConfigurationEditor` über das neue Thema `type:ConfigurationEntry` (`ConfigurationEntry` ist `[Realtime(Settings.Manage)]`, der Schlüssel als Id, nie der Wert).
 
 ### Geändert
 
 - Die `.gitignore` des Templates ignoriert `.data/`, wo der App-Host den lokalen Blob-Speicher und SQLite-Dateien ablegt (`Coworkee.Aspire` `BlobRoot`); `coworkee update` ergänzt die Zeile in bestehenden Apps.
+
+### Behoben
+
+- Das Speichern der App-Einstellungen (Abschnitt `Coworkee`) löscht nicht mehr die Werte eines darin registrierten Abschnitts wie des Anmeldedesigns `Coworkee:Auth:Design` und führt sie nicht mehr als geändert.
 
 ## 0.0.1.85 (2026-11-13)
 

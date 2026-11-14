@@ -2162,5 +2162,20 @@
   "Page background (image or video)": "ផ្ទៃខាងក្រោយទំព័រ (រូបភាព ឬវីដេអូ)",
   "Behind the whole page in every layout; empty keeps the theme's background.": "នៅពីក្រោយទំព័រទាំងមូលក្នុងប្លង់នីមួយៗ; ទទេរក្សាផ្ទៃខាងក្រោយរបស់រចនាប័ទ្ម។",
   "Choose the page background from files": "ជ្រើសផ្ទៃខាងក្រោយទំព័រពីឯកសារ",
-  "Darken background (%)": "ធ្វើឱ្យផ្ទៃខាងក្រោយងងឹត (%)"
+  "Darken background (%)": "ធ្វើឱ្យផ្ទៃខាងក្រោយងងឹត (%)",
+  "Everything about signing in and registering in one place: sign-in methods, passkeys, sessions, password rules, registration and the look and texts of the sign-in page. The same settings as under Settings, changes apply at once.": "អ្វីៗទាំងអស់អំពីការចូល និងការចុះឈ្មោះនៅកន្លែងតែមួយ៖ វិធីចូល សោចូល វគ្គ ច្បាប់ពាក្យសម្ងាត់ ការចុះឈ្មោះ និងរូបរាង និងអត្ថបទនៃទំព័រចូល។ ការកំណត់ដូចគ្នានឹងក្នុងការកំណត់ ការផ្លាស់ប្តូរមានប្រសិទ្ធភាពភ្លាមៗ។",
+  "Sign-in, security and registration": "ការចូល សុវត្ថិភាព និងការចុះឈ្មោះ",
+  "Registration form": "ទម្រង់ចុះឈ្មោះ",
+  "Texts of the sign-in page": "អត្ថបទនៃទំព័រចូល",
+  "Layout, media, background and texts of the sign-in page are set on the page Sign-in.": "ប្លង់ មេឌៀ ផ្ទៃខាងក្រោយ និងអត្ថបទនៃទំព័រចូល ត្រូវកំណត់នៅលើទំព័រ ការចូល។",
+  "The host fixes {0} in its configuration; the stored value applies once it no longer does.": "ម៉ាស៊ីនបម្រើកំណត់ {0} ថេរក្នុងការកំណត់រចនាសម្ព័ន្ធរបស់វា; តម្លៃដែលបានរក្សាទុកមានប្រសិទ្ធភាពនៅពេលវាលែងធ្វើដូច្នេះ។",
+  "Show the app name": "បង្ហាញឈ្មោះកម្មវិធី",
+  "Next to the logo and on the media panel; off leaves the logo alone.": "នៅជាប់និមិត្តសញ្ញា និងលើផ្ទាំងមេឌៀ; បិទ ទុកតែនិមិត្តសញ្ញា។",
+  "Texts": "អត្ថបទ",
+  "Title in other languages": "ចំណងជើងជាភាសាផ្សេងទៀត",
+  "Subtitle in other languages": "ចំណងជើងរងជាភាសាផ្សេងទៀត",
+  "Notice": "សេចក្តីជូនដំណឹង",
+  "Notice in other languages": "សេចក្តីជូនដំណឹងជាភាសាផ្សេងទៀត",
+  "For every language without its own text; empty keeps the built-in one.": "សម្រាប់គ្រប់ភាសាដែលគ្មានអត្ថបទផ្ទាល់ខ្លួន; ទទេ រក្សាអត្ថបទដែលមានស្រាប់។",
+  "A hint above the sign-in form, e.g. maintenance or whom to ask for an account. For every language without its own text; empty keeps the built-in one.": "សេចក្តីជូនដំណឹងនៅខាងលើទម្រង់ចូល ឧ. ការថែទាំ ឬអ្នកណាដែលត្រូវសុំគណនី។ សម្រាប់គ្រប់ភាសាដែលគ្មានអត្ថបទផ្ទាល់ខ្លួន; ទទេ រក្សាអត្ថបទដែលមានស្រាប់។"
 }

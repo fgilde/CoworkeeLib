@@ -4,9 +4,14 @@
     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" OnClick="CreateAsync" data-testid="theme-new">@L["New theme"]</MudButton>
 </PageHeader>
 <RealtimeSubscription Topic="type:ThemeDefinition" OnEvent="_ => ReloadAsync()" />
-@if (Options.AllowSignInDesign)
+@if (Options.AllowSignInDesign && Pages.Href("/admin/sign-in") is { } signIn)
 {
-    <SignInDesignCard />
+    @* the sign-in design lives with the other sign-in configuration *@
+    <MudPaper Outlined="true" Class="pa-4 mb-4 d-flex align-center gap-3" data-testid="sign-in-link">
+        <MudIcon Icon="@Icons.Material.Outlined.Login" Color="Color.Primary" />
+        <MudText Typo="Typo.body2" Class="flex-grow-1">@L["Layout, media, background and texts of the sign-in page are set on the page Sign-in."]</MudText>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href="@signIn" data-testid="sign-in-open">@L["Open"]</MudButton>
+    </MudPaper>
 }
 
 <KeycloakThemeCard />

@@ -7,10 +7,18 @@ Changes that need action in apps built on Coworkee. Newest first.
 ### Added
 
 - Sign-in page: an optional page background (`Coworkee:Auth:Design:BackgroundUrl`, image or video, with `BackgroundDim` to darken it) behind the whole page in every layout, independent of the panel's media, also in the Keycloak login theme and in the Aspire app host's `options.SignIn`. The card on the Themes page edits it (with the file picker) and gets a *Preview* button that shows the real sign-in page with the unsaved design in a frame. The web app's content security policy allows the auth server's origin in `frame-src` for it; apps with their own `ContentSecurityPolicy` add it themselves for the preview. Videos on the account pages stand still when the system asks for reduced motion. Stored designs without the new values look as before; apps change nothing. See [Sign-in pages](../security/sign-in-pages.md).
+- Admin page *Sign-in* (`/cw/admin/sign-in`, page key `sign-in`, `Settings.Manage`, system organisation in the menu): all sign-in and registration configuration in one place, through the forms of the settings page. The setting groups *Sign-in security* and *Accounts*, the `Registration` part of the app settings, the card *Sign-in page* (moved from the Themes page, which now links there) and the texts of the sign-in page. Nothing is stored differently; the Settings page shows everything as before. See [Sign-in pages](../security/sign-in-pages.md#on-the-page-sign-in).
+- Sign-in page texts: `Coworkee:Auth:Design:Texts` (`Title`, `Subtitle`, `Notice`, each with a per language dictionary `Titles`, `Subtitles`, `Notices`) and `ShowAppName` (default `true`), rendered encoded on the sign-in page and passed to the Keycloak login theme. Unset, the page stays exactly as it was; apps change nothing.
+- Settings: a definition can carry a `fixedValue` (`Add(..., fixedValue: ...)`, `SettingDefinitionDto.FixedValue`), shown read-only with a hint. `Auth.LoginMode` uses it for `Coworkee:Auth:External:ModeOverride`, so set the override for the API too.
+- `SettingsForm` takes `Groups` (only these setting groups) and `AppConfigurationEditor` takes `Only` (only these property paths, the rest saved unchanged). Both reload when someone saves: a `SettingsForm` on its scope's settings topic unless it holds unsaved changes, an `AppConfigurationEditor` on the new topic `type:ConfigurationEntry` (`ConfigurationEntry` is `[Realtime(Settings.Manage)]`, the key as id, never the value).
 
 ### Changed
 
 - The template's `.gitignore` ignores `.data/`, where the app host keeps the local blob storage and SQLite files (`Coworkee.Aspire` `BlobRoot`); `coworkee update` adds the line to existing apps.
+
+### Fixed
+
+- Saving the app settings (section `Coworkee`) no longer deletes the values of a section registered inside it, such as the sign-in design `Coworkee:Auth:Design`, and no longer lists them as changed.
 
 ## 0.0.1.85 (2026-11-13)
 

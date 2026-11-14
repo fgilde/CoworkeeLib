@@ -2162,5 +2162,20 @@
   "Page background (image or video)": "Фон на страницата (изображение или видео)",
   "Behind the whole page in every layout; empty keeps the theme's background.": "Зад цялата страница във всяко оформление; празно запазва фона на темата.",
   "Choose the page background from files": "Изберете фона на страницата от файловете",
-  "Darken background (%)": "Затъмняване на фона (%)"
+  "Darken background (%)": "Затъмняване на фона (%)",
+  "Everything about signing in and registering in one place: sign-in methods, passkeys, sessions, password rules, registration and the look and texts of the sign-in page. The same settings as under Settings, changes apply at once.": "Всичко за влизането и регистрацията на едно място: методи за влизане, ключове за достъп, сесии, правила за пароли, регистрация и видът и текстовете на страницата за вход. Същите настройки като в Настройки, промените важат веднага.",
+  "Sign-in, security and registration": "Вход, сигурност и регистрация",
+  "Registration form": "Формуляр за регистрация",
+  "Texts of the sign-in page": "Текстове на страницата за вход",
+  "Layout, media, background and texts of the sign-in page are set on the page Sign-in.": "Оформлението, медиите, фонът и текстовете на страницата за вход се задават на страницата Вход.",
+  "The host fixes {0} in its configuration; the stored value applies once it no longer does.": "Хостът фиксира {0} в своята конфигурация; запазената стойност важи, щом престане да го прави.",
+  "Show the app name": "Показване на името на приложението",
+  "Next to the logo and on the media panel; off leaves the logo alone.": "До логото и в медийния панел; изключено оставя само логото.",
+  "Texts": "Текстове",
+  "Title in other languages": "Заглавие на други езици",
+  "Subtitle in other languages": "Подзаглавие на други езици",
+  "Notice": "Съобщение",
+  "Notice in other languages": "Съобщение на други езици",
+  "For every language without its own text; empty keeps the built-in one.": "За всеки език без собствен текст; празно запазва вградения.",
+  "A hint above the sign-in form, e.g. maintenance or whom to ask for an account. For every language without its own text; empty keeps the built-in one.": "Съобщение над формуляра за вход, напр. поддръжка или към кого да се обърнете за акаунт. За всеки език без собствен текст; празно запазва вградения."
 }

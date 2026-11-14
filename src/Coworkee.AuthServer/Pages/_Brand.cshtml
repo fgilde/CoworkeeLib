@@ -4,5 +4,8 @@
   {
     <img src="@logo" alt="" />
   }
-  <span>@Model.AppName</span>
+  @if (Model.Design.ShowAppName)
+  {
+    <span>@Model.AppName</span>
+  }
 </a>

@@ -2162,5 +2162,20 @@
   "Page background (image or video)": "Sfondo della pagina (immagine o video)",
   "Behind the whole page in every layout; empty keeps the theme's background.": "Dietro l’intera pagina in ogni layout; vuoto mantiene lo sfondo del tema.",
   "Choose the page background from files": "Scegli lo sfondo della pagina dai file",
-  "Darken background (%)": "Scurisci lo sfondo (%)"
+  "Darken background (%)": "Scurisci lo sfondo (%)",
+  "Everything about signing in and registering in one place: sign-in methods, passkeys, sessions, password rules, registration and the look and texts of the sign-in page. The same settings as under Settings, changes apply at once.": "Tutto sull'accesso e sulla registrazione in un unico posto: metodi di accesso, passkey, sessioni, regole delle password, registrazione e l'aspetto e i testi della pagina di accesso. Le stesse impostazioni di Impostazioni, le modifiche valgono subito.",
+  "Sign-in, security and registration": "Accesso, sicurezza e registrazione",
+  "Registration form": "Modulo di registrazione",
+  "Texts of the sign-in page": "Testi della pagina di accesso",
+  "Layout, media, background and texts of the sign-in page are set on the page Sign-in.": "Layout, media, sfondo e testi della pagina di accesso si impostano nella pagina Accesso.",
+  "The host fixes {0} in its configuration; the stored value applies once it no longer does.": "L'host fissa {0} nella sua configurazione; il valore salvato vale non appena smette di farlo.",
+  "Show the app name": "Mostra il nome dell'app",
+  "Next to the logo and on the media panel; off leaves the logo alone.": "Accanto al logo e nel pannello multimediale; disattivato lascia il logo da solo.",
+  "Texts": "Testi",
+  "Title in other languages": "Titolo in altre lingue",
+  "Subtitle in other languages": "Sottotitolo in altre lingue",
+  "Notice": "Avviso",
+  "Notice in other languages": "Avviso in altre lingue",
+  "For every language without its own text; empty keeps the built-in one.": "Per ogni lingua senza un testo proprio; vuoto mantiene quello predefinito.",
+  "A hint above the sign-in form, e.g. maintenance or whom to ask for an account. For every language without its own text; empty keeps the built-in one.": "Un avviso sopra il modulo di accesso, ad es. una manutenzione o a chi chiedere un account. Per ogni lingua senza un testo proprio; vuoto mantiene quello predefinito."
 }

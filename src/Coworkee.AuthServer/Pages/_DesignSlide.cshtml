@@ -31,7 +31,7 @@
       <p>@T("Create an account in a few steps.")</p>
       <a class="cta" asp-page="/Account/Register" data-testid="slide-register">@T("Create an account")</a>
     }
-    else
+    else if (brand.Design.ShowAppName)
     {
       <h2>@brand.AppName</h2>
     }

@@ -2162,5 +2162,20 @@
   "Page background (image or video)": "Arrière-plan de la page (image ou vidéo)",
   "Behind the whole page in every layout; empty keeps the theme's background.": "Derrière toute la page dans chaque mise en page ; vide conserve l’arrière-plan du thème.",
   "Choose the page background from files": "Choisir l’arrière-plan de la page dans les fichiers",
-  "Darken background (%)": "Assombrir l’arrière-plan (%)"
+  "Darken background (%)": "Assombrir l’arrière-plan (%)",
+  "Everything about signing in and registering in one place: sign-in methods, passkeys, sessions, password rules, registration and the look and texts of the sign-in page. The same settings as under Settings, changes apply at once.": "Tout sur la connexion et l'inscription au même endroit : méthodes de connexion, clés d'accès, sessions, règles de mot de passe, inscription ainsi que l'apparence et les textes de la page de connexion. Les mêmes paramètres que sous Paramètres, les modifications s'appliquent immédiatement.",
+  "Sign-in, security and registration": "Connexion, sécurité et inscription",
+  "Registration form": "Formulaire d'inscription",
+  "Texts of the sign-in page": "Textes de la page de connexion",
+  "Layout, media, background and texts of the sign-in page are set on the page Sign-in.": "La mise en page, les médias, l'arrière-plan et les textes de la page de connexion se règlent sur la page Connexion.",
+  "The host fixes {0} in its configuration; the stored value applies once it no longer does.": "L'hôte fixe {0} dans sa configuration ; la valeur enregistrée s'applique dès qu'il ne le fait plus.",
+  "Show the app name": "Afficher le nom de l'application",
+  "Next to the logo and on the media panel; off leaves the logo alone.": "À côté du logo et sur le panneau média ; désactivé, le logo reste seul.",
+  "Texts": "Textes",
+  "Title in other languages": "Titre dans d'autres langues",
+  "Subtitle in other languages": "Sous-titre dans d'autres langues",
+  "Notice": "Avis",
+  "Notice in other languages": "Avis dans d'autres langues",
+  "For every language without its own text; empty keeps the built-in one.": "Pour chaque langue sans texte propre ; vide conserve le texte intégré.",
+  "A hint above the sign-in form, e.g. maintenance or whom to ask for an account. For every language without its own text; empty keeps the built-in one.": "Un avis au-dessus du formulaire de connexion, p. ex. une maintenance ou à qui demander un compte. Pour chaque langue sans texte propre ; vide conserve le texte intégré."
 }

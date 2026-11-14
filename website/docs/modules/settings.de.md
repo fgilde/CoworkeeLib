@@ -66,6 +66,7 @@ context.Services.AddSingleton<ISettingDefinitionContributor, BillingSettingDefin
 | `Language` | eine Auswahl der Sprachen der App; leer heißt erben, angezeigt als *Configured default* im Tab System und *Inherited* in Organisation und Meine Einstellungen (dort beschriftet mit *Language*) |
 | `Secret` | ein Passwortfeld, das leer bleibt; der Hilfetext sagt, ob ein Wert gespeichert ist, und nur ein eingetippter Wert wird gesendet |
 | `enabledWhen` | das Feld ist deaktiviert, solange der Wert der anderen Einstellung nicht in den Werten der Bedingung liegt |
+| `fixedValue` | der Host legt den Wert in seiner Konfiguration fest (z. B. `ModeOverride` für `Auth.LoginMode`): Das Feld ist deaktiviert, der Hilfetext nennt den festen Wert; der gespeicherte Wert gilt, sobald der Host ihn nicht mehr festlegt |
 | Gruppe mit `page` | erscheint nicht in den Einstellungs-Tabs; siehe unten |
 | Bereiche | eine Einstellung erscheint im Tab jedes ihrer Bereiche |
 
@@ -103,6 +104,17 @@ Die Einstellung ändert sich dann nur mit dieser Berechtigung zusätzlich zur Re
 ### Gruppen auf eigener Seite
 
 `context.Group(name, displayName, page: "/admin/ai-settings")` markiert eine Gruppe als auf einer eigenen Admin-Seite gepflegt. Die Einstellungs-Tabs überspringen sie, **Meine Einstellungen** des Benutzers zeigen weiter jede Gruppe ohne `page`. So arbeitet die KI-Gruppe: Ihre Einstellungen, auch der MCP-Schalter, liegen auf `/admin/ai-settings`. Ebenso Mail: Anbieter, Zugangsdaten und der Schalter für den eigenen Server einer Organisation liegen auf `/admin/mail-settings`, siehe [Mailversand](mailing.md#die-seite-mail-einstellungen). Die Aufbewahrung hält ihre Tage auf `/admin/retention`, siehe [Aufbewahrung](retention.md).
+
+### Ein Thema auf eigener Seite
+
+Eine Seite, die ein Thema aus Einstellungen und App-Konfiguration bündelt, nutzt dieselben Formulare mit einem Filter; Definition, Speicherung, Validierung und Live-Aktualisierung bleiben die der Einstellungsseite. So arbeitet die Seite *Anmeldung* (siehe [Anmeldeseiten](../security/sign-in-pages.md#auf-der-seite-anmeldung)):
+
+```razor
+<SettingsForm Scope="SettingScope.Global" Groups="@(new HashSet<string> { "Security", "Account" })" />
+<AppConfigurationEditor T="CoworkeeAppSettings" Registration="appSettings" Only="@(["Registration"])" />
+```
+
+`Groups` zeigt nur die genannten Einstellungsgruppen (auch Gruppen mit `page`); in den Einstellungs-Tabs bleiben die Gruppen ebenfalls. `Only` zeigt nur diese Eigenschaftspfade eines Abschnitts (`"Registration"`, `"Texts.Title"`); die übrigen Eigenschaften behalten ihre Werte und werden unverändert gespeichert. Eine gespeicherte Einstellung lädt ein `SettingsForm` ihres Bereichs neu, außer es hat ungespeicherte Änderungen; ein gespeicherter Konfigurationswert (Realtime-Thema `type:ConfigurationEntry`, nur für `Settings.Manage`, der Schlüssel als Id, nie der Wert) lädt den `AppConfigurationEditor` seines Abschnitts neu. Das Speichern eines Abschnitts lässt einen darin registrierten Abschnitt unberührt (die App-Einstellungen `Coworkee` behalten `Coworkee:Auth:Design`).
 
 ### Spracheinstellungen
 

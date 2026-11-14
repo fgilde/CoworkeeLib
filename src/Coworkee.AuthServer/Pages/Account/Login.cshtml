@@ -1,7 +1,21 @@
 @page
 @model Coworkee.AuthServer.Pages.Account.LoginModel
-@{ ViewData["Title"] = T("Sign in"); }
-<h1>@T("Sign in")</h1>
+@inject Coworkee.AuthServer.AuthBrandingProvider BrandingProvider
+@{
+  ViewData["Title"] = T("Sign in");
+  // the administrators' own texts (Sign-in page); plain text, Razor encodes it
+  var texts = (await BrandingProvider.GetAsync(HttpContext.RequestAborted)).Design.Texts;
+  var culture = System.Globalization.CultureInfo.CurrentUICulture;
+}
+<h1>@(texts.TitleIn(culture) ?? T("Sign in"))</h1>
+@if (texts.SubtitleIn(culture) is { } subtitle)
+{
+  <p class="subtitle" data-testid="sign-in-subtitle">@subtitle</p>
+}
+@if (texts.NoticeIn(culture) is { } notice)
+{
+  <p class="notice" role="note" data-testid="sign-in-notice">@notice</p>
+}
 @if (Model.Mode != Coworkee.Contracts.Configuration.LoginMode.Internal)
 {
   <form method="post" asp-page-handler="External" asp-route-returnUrl="@Model.Request.Query["returnUrl"]" class="external">

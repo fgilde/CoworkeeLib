@@ -66,6 +66,7 @@ context.Services.AddSingleton<ISettingDefinitionContributor, BillingSettingDefin
 | `Language` | a select of the app's languages; empty means inherit, shown as *Configured default* in the System tab and *Inherited* in Organisation and My settings (labelled *Language* in My settings) |
 | `Secret` | a password field that stays empty; the help text says whether a value is stored, and only a typed value is sent |
 | `enabledWhen` | the field is disabled while the other setting's value is not in the condition's values |
+| `fixedValue` | the host fixes the value in its configuration (e.g. `ModeOverride` for `Auth.LoginMode`): the field is disabled and the help text names the fixed value; the stored value applies once the host no longer fixes it |
 | group with a `page` | not shown on the settings tabs; see below |
 | scopes | a setting shows in the tab of each of its scopes |
 
@@ -103,6 +104,17 @@ The setting then changes only with that permission on top of the scope's own rul
 ### Groups on their own page
 
 `context.Group(name, displayName, page: "/admin/ai-settings")` marks a group as maintained on its own admin page. The settings tabs skip it, and the user's **My settings** keep every group that has no page. The AI group works this way: its settings, including the MCP switch, live on `/admin/ai-settings`. So does Mail: provider, credentials and the own-server switch of an organisation live on `/admin/mail-settings`, see [Mailing](mailing.md#the-mail-settings-page). Retention keeps its days on `/admin/retention`, see [Retention](retention.md).
+
+### One topic on a page of its own
+
+A page that gathers one topic from settings and app configuration uses the same forms with a filter, so definition, storage, validation and live updates stay those of the settings page. The page *Sign-in* works this way (see [Sign-in pages](../security/sign-in-pages.md#on-the-page-sign-in)):
+
+```razor
+<SettingsForm Scope="SettingScope.Global" Groups="@(new HashSet<string> { "Security", "Account" })" />
+<AppConfigurationEditor T="CoworkeeAppSettings" Registration="appSettings" Only="@(["Registration"])" />
+```
+
+`Groups` shows only the setting groups named (also groups with a `page`); the groups stay on the settings tabs as well. `Only` shows only these property paths of a section (`"Registration"`, `"Texts.Title"`); the other properties keep their values and are saved unchanged. A saved setting reloads a `SettingsForm` of its scope unless the form holds unsaved changes; a saved configuration value (realtime topic `type:ConfigurationEntry`, only for `Settings.Manage`, the key as id, never the value) reloads the `AppConfigurationEditor` of its section. Saving a section never touches a section registered inside it (the app settings `Coworkee` keep `Coworkee:Auth:Design`).
 
 ### Language settings
 

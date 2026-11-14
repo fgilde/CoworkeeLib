@@ -2162,5 +2162,20 @@
   "Page background (image or video)": "Paginaachtergrond (afbeelding of video)",
   "Behind the whole page in every layout; empty keeps the theme's background.": "Achter de hele pagina in elke indeling; leeg houdt de achtergrond van het thema.",
   "Choose the page background from files": "Paginaachtergrond uit bestanden kiezen",
-  "Darken background (%)": "Achtergrond verdonkeren (%)"
+  "Darken background (%)": "Achtergrond verdonkeren (%)",
+  "Everything about signing in and registering in one place: sign-in methods, passkeys, sessions, password rules, registration and the look and texts of the sign-in page. The same settings as under Settings, changes apply at once.": "Alles over aanmelden en registreren op één plek: aanmeldmethoden, passkeys, sessies, wachtwoordregels, registratie en het uiterlijk en de teksten van de aanmeldpagina. Dezelfde instellingen als onder Instellingen, wijzigingen gelden direct.",
+  "Sign-in, security and registration": "Aanmelden, beveiliging en registratie",
+  "Registration form": "Registratieformulier",
+  "Texts of the sign-in page": "Teksten van de aanmeldpagina",
+  "Layout, media, background and texts of the sign-in page are set on the page Sign-in.": "Lay-out, media, achtergrond en teksten van de aanmeldpagina stelt u in op de pagina Aanmelden.",
+  "The host fixes {0} in its configuration; the stored value applies once it no longer does.": "De host legt {0} vast in zijn configuratie; de opgeslagen waarde geldt zodra dat niet meer zo is.",
+  "Show the app name": "App-naam tonen",
+  "Next to the logo and on the media panel; off leaves the logo alone.": "Naast het logo en op het mediapaneel; uit laat het logo alleen staan.",
+  "Texts": "Teksten",
+  "Title in other languages": "Titel in andere talen",
+  "Subtitle in other languages": "Ondertitel in andere talen",
+  "Notice": "Melding",
+  "Notice in other languages": "Melding in andere talen",
+  "For every language without its own text; empty keeps the built-in one.": "Voor elke taal zonder eigen tekst; leeg behoudt de ingebouwde.",
+  "A hint above the sign-in form, e.g. maintenance or whom to ask for an account. For every language without its own text; empty keeps the built-in one.": "Een melding boven het aanmeldformulier, bijv. onderhoud of bij wie men een account aanvraagt. Voor elke taal zonder eigen tekst; leeg behoudt de ingebouwde."
 }

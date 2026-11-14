@@ -19,6 +19,7 @@ internal static class LibraryPages
         new("api-keys", typeof(ApiKeys), "admin/api-keys"),
         new("sessions", typeof(Sessions), "admin/sessions"),
         new("settings", typeof(Settings), "admin/settings", "admin/configuration"),
+        new("sign-in", typeof(SignInConfiguration), "admin/sign-in"),
         new("ai-settings", typeof(AiConfiguration), "admin/ai-settings"),
         new("ai-tool-calls", typeof(AiToolCalls), "admin/ai-tool-calls"),
         new("audit", typeof(AuditLog), "admin/audit"),

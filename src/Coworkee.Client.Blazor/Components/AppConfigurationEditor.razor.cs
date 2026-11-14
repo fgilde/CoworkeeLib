@@ -21,8 +21,17 @@ public partial class AppConfigurationEditor<T>
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
+    [Inject] private IEnumerable<ClientAppConfiguration> Registrations { get; set; } = null!;
+
     [Parameter, EditorRequired]
     public ClientAppConfiguration Registration { get; set; } = null!;
+
+    /// <summary>
+    /// Shows only these properties (paths below the section, "Registration" or "Texts.Title"), e.g. on a page that gathers one topic; the others keep
+    /// their values and are saved unchanged. Empty shows all.
+    /// </summary>
+    [Parameter]
+    public IReadOnlyCollection<string>? Only { get; set; }
 
     private T? _value;
     private ObjectEditMeta<T>? _meta;
@@ -72,7 +81,26 @@ public partial class AppConfigurationEditor<T>
         {
             property.Ignore().IgnoreOnExportAndImport();
         }
+
+        if (Only is { Count: > 0 } only)
+        {
+            foreach (var property in meta.AllProperties.Where(p => !only.Any(o => Related(p.PropertyName, o.Replace(':', '.')))).ToList())
+            {
+                property.Ignore().IgnoreOnExportAndImport();
+            }
+        }
     }
+
+    // the property itself, one inside it or one it lies in
+    private static bool Related(string property, string path) =>
+        string.Equals(property, path, StringComparison.OrdinalIgnoreCase)
+        || property.StartsWith(path + ".", StringComparison.OrdinalIgnoreCase) || path.StartsWith(property + ".", StringComparison.OrdinalIgnoreCase);
+
+    // another administrator saved this section (or another form on the page did): show what applies now
+    private Task ChangedAsync(Contracts.Realtime.RealtimeEnvelope envelope) =>
+        !_busy && AppConfigurationChanges.Touches(envelope, Registration.Section, Registrations)
+            ? LoadAsync(() => Api.GetAppConfigurationAsync(Registration.Section))
+            : Task.CompletedTask;
 
 #pragma warning disable BL0005 // MudEx configures the lock icon through these instances
     private void Lock(ObjectEditPropertyMeta property)

@@ -23,9 +23,10 @@ public sealed class SettingGroupBuilder
         string? description = null,
         string[]? choices = null,
         SettingCondition? enabledWhen = null,
-        string? permission = null)
+        string? permission = null,
+        string? fixedValue = null)
     {
-        _context.Definitions.Add(new SettingDefinition(name, _group, displayName, type, scopes, defaultValue, visibleToClient, description, choices, enabledWhen, permission));
+        _context.Definitions.Add(new SettingDefinition(name, _group, displayName, type, scopes, defaultValue, visibleToClient, description, choices, enabledWhen, permission, fixedValue));
         return this;
     }
 }

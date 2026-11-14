@@ -32,6 +32,9 @@ public partial class SettingsForm
     /// <summary>Settings the page offers in its own way (e.g. the theme as cards).</summary>
     [Parameter] public IReadOnlySet<string>? Hide { get; set; }
 
+    /// <summary>Only the settings of these groups (e.g. "Security" and "Account" on the page Sign-in), also groups with a page of their own; empty shows all others.</summary>
+    [Parameter] public IReadOnlySet<string>? Groups { get; set; }
+
     protected override async Task OnParametersSetAsync()
     {
         if (_loadedScope != Scope)
@@ -46,12 +49,21 @@ public partial class SettingsForm
         var definitions = await Api.GetSettingDefinitionsAsync(Scope == SettingScope.User);
         var stored = (await Api.GetSettingsAsync(Scope)).ToDictionary(v => v.Name, StringComparer.Ordinal);
         var groups = definitions
-            .Where(g => g.Page is null)
+            .Where(g => Groups is { Count: > 0 } only ? only.Contains(g.Name) : g.Page is null)
             .Select(g => g with { Settings = g.Settings.Where(s => s.Scopes.Contains(Scope) && Hide?.Contains(s.Name) != true).ToList() })
             .Where(g => g.Settings.Count > 0)
             .ToList();
         _model = new SettingsModel(groups, stored, Scope);
         Rebuild();
+    }
+
+    // someone saved a setting of this scope: show what applies now, unless the form holds changes of its own
+    private async Task ChangedAsync()
+    {
+        if (!_saving && _model?.Changes() is not { Count: > 0 })
+        {
+            await LoadAsync();
+        }
     }
 
     private void Rebuild()

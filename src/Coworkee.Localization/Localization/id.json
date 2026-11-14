@@ -2162,5 +2162,20 @@
   "Page background (image or video)": "Latar halaman (gambar atau video)",
   "Behind the whole page in every layout; empty keeps the theme's background.": "Di belakang seluruh halaman di setiap tata letak; kosong mempertahankan latar tema.",
   "Choose the page background from files": "Pilih latar halaman dari berkas",
-  "Darken background (%)": "Gelapkan latar (%)"
+  "Darken background (%)": "Gelapkan latar (%)",
+  "Everything about signing in and registering in one place: sign-in methods, passkeys, sessions, password rules, registration and the look and texts of the sign-in page. The same settings as under Settings, changes apply at once.": "Semua tentang masuk dan pendaftaran di satu tempat: metode masuk, kunci sandi, sesi, aturan kata sandi, pendaftaran, serta tampilan dan teks halaman masuk. Pengaturan yang sama seperti di Pengaturan, perubahan langsung berlaku.",
+  "Sign-in, security and registration": "Masuk, keamanan, dan pendaftaran",
+  "Registration form": "Formulir pendaftaran",
+  "Texts of the sign-in page": "Teks halaman masuk",
+  "Layout, media, background and texts of the sign-in page are set on the page Sign-in.": "Tata letak, media, latar belakang, dan teks halaman masuk diatur di halaman Masuk.",
+  "The host fixes {0} in its configuration; the stored value applies once it no longer does.": "Host menetapkan {0} dalam konfigurasinya; nilai yang disimpan berlaku setelah host tidak lagi menetapkannya.",
+  "Show the app name": "Tampilkan nama aplikasi",
+  "Next to the logo and on the media panel; off leaves the logo alone.": "Di samping logo dan pada panel media; jika mati, logo tampil sendiri.",
+  "Texts": "Teks",
+  "Title in other languages": "Judul dalam bahasa lain",
+  "Subtitle in other languages": "Subjudul dalam bahasa lain",
+  "Notice": "Pemberitahuan",
+  "Notice in other languages": "Pemberitahuan dalam bahasa lain",
+  "For every language without its own text; empty keeps the built-in one.": "Untuk setiap bahasa tanpa teks sendiri; kosong mempertahankan teks bawaan.",
+  "A hint above the sign-in form, e.g. maintenance or whom to ask for an account. For every language without its own text; empty keeps the built-in one.": "Pemberitahuan di atas formulir masuk, mis. pemeliharaan atau kepada siapa meminta akun. Untuk setiap bahasa tanpa teks sendiri; kosong mempertahankan teks bawaan."
 }

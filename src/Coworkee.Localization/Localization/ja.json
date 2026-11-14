@@ -2162,5 +2162,20 @@
   "Page background (image or video)": "ページの背景（画像または動画）",
   "Behind the whole page in every layout; empty keeps the theme's background.": "すべてのレイアウトでページ全体の背後に表示します。空の場合はテーマの背景のままです。",
   "Choose the page background from files": "ページの背景をファイルから選択",
-  "Darken background (%)": "背景を暗くする (%)"
+  "Darken background (%)": "背景を暗くする (%)",
+  "Everything about signing in and registering in one place: sign-in methods, passkeys, sessions, password rules, registration and the look and texts of the sign-in page. The same settings as under Settings, changes apply at once.": "サインインと登録に関するすべてを1か所に: サインイン方法、パスキー、セッション、パスワードのルール、登録、サインインページの外観とテキスト。設定と同じ項目で、変更はすぐに反映されます。",
+  "Sign-in, security and registration": "サインイン、セキュリティ、登録",
+  "Registration form": "登録フォーム",
+  "Texts of the sign-in page": "サインインページのテキスト",
+  "Layout, media, background and texts of the sign-in page are set on the page Sign-in.": "サインインページのレイアウト、メディア、背景、テキストは「サインイン」ページで設定します。",
+  "The host fixes {0} in its configuration; the stored value applies once it no longer does.": "ホストが構成で {0} を固定しています。固定されなくなると保存済みの値が適用されます。",
+  "Show the app name": "アプリ名を表示",
+  "Next to the logo and on the media panel; off leaves the logo alone.": "ロゴの横とメディアパネルに表示します。オフにするとロゴだけになります。",
+  "Texts": "テキスト",
+  "Title in other languages": "他の言語のタイトル",
+  "Subtitle in other languages": "他の言語のサブタイトル",
+  "Notice": "お知らせ",
+  "Notice in other languages": "他の言語のお知らせ",
+  "For every language without its own text; empty keeps the built-in one.": "独自のテキストがないすべての言語に使います。空欄なら組み込みのテキストのままです。",
+  "A hint above the sign-in form, e.g. maintenance or whom to ask for an account. For every language without its own text; empty keeps the built-in one.": "サインインフォームの上に表示するお知らせ（例: メンテナンスやアカウントの問い合わせ先）。独自のテキストがないすべての言語に使います。空欄なら組み込みのテキストのままです。"
 }

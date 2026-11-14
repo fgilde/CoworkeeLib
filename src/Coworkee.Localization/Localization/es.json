@@ -2162,5 +2162,20 @@
   "Page background (image or video)": "Fondo de página (imagen o vídeo)",
   "Behind the whole page in every layout; empty keeps the theme's background.": "Detrás de toda la página en todos los diseños; vacío mantiene el fondo del tema.",
   "Choose the page background from files": "Elegir el fondo de página entre los archivos",
-  "Darken background (%)": "Oscurecer el fondo (%)"
+  "Darken background (%)": "Oscurecer el fondo (%)",
+  "Everything about signing in and registering in one place: sign-in methods, passkeys, sessions, password rules, registration and the look and texts of the sign-in page. The same settings as under Settings, changes apply at once.": "Todo sobre el inicio de sesión y el registro en un solo lugar: métodos de inicio de sesión, llaves de acceso, sesiones, reglas de contraseña, registro y el aspecto y los textos de la página de inicio de sesión. Los mismos ajustes que en Configuración; los cambios se aplican al instante.",
+  "Sign-in, security and registration": "Inicio de sesión, seguridad y registro",
+  "Registration form": "Formulario de registro",
+  "Texts of the sign-in page": "Textos de la página de inicio de sesión",
+  "Layout, media, background and texts of the sign-in page are set on the page Sign-in.": "El diseño, los medios, el fondo y los textos de la página de inicio de sesión se configuran en la página Inicio de sesión.",
+  "The host fixes {0} in its configuration; the stored value applies once it no longer does.": "El host fija {0} en su configuración; el valor guardado se aplica en cuanto deje de hacerlo.",
+  "Show the app name": "Mostrar el nombre de la aplicación",
+  "Next to the logo and on the media panel; off leaves the logo alone.": "Junto al logotipo y en el panel multimedia; desactivado deja el logotipo solo.",
+  "Texts": "Textos",
+  "Title in other languages": "Título en otros idiomas",
+  "Subtitle in other languages": "Subtítulo en otros idiomas",
+  "Notice": "Aviso",
+  "Notice in other languages": "Aviso en otros idiomas",
+  "For every language without its own text; empty keeps the built-in one.": "Para cada idioma sin texto propio; vacío mantiene el texto integrado.",
+  "A hint above the sign-in form, e.g. maintenance or whom to ask for an account. For every language without its own text; empty keeps the built-in one.": "Un aviso sobre el formulario de inicio de sesión, p. ej. un mantenimiento o a quién pedir una cuenta. Para cada idioma sin texto propio; vacío mantiene el texto integrado."
 }

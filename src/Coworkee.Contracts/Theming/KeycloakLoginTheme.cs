@@ -77,7 +77,7 @@ public static partial class KeycloakLoginTheme
         Save(Path.Combine(login, "theme.properties"), Properties);
         Save(Path.Combine(login, "resources", "css", "coworkee.css"), Css(content, logoAddress));
         Save(Path.Combine(login, "resources", "js", "coworkee.js"), Script(content));
-        Save(Path.Combine(login, "messages", "messages_en.properties"), $"loginTitleHtml={MessageText(content.AppName)}\n");
+        Save(Path.Combine(login, "messages", "messages_en.properties"), $"loginTitleHtml={(content.Design.ShowAppName ? MessageText(content.AppName) : string.Empty)}\n");
 
         // only after the styles stopped pointing at them
         foreach (var extension in Extensions.Values.Where(e => Directory.Exists(images) && $"logo.{e}" != file))
@@ -142,9 +142,27 @@ public static partial class KeycloakLoginTheme
             ["background"] = background,
             ["backgroundVideo"] = IsVideo(background),
             ["backgroundDim"] = Math.Clamp(design.BackgroundDim ?? 0, 0, 90),
-            ["appName"] = content.AppName,
+            ["appName"] = design.ShowAppName ? content.AppName : null,
+            ["title"] = Texts(design.Texts.Title, design.Texts.Titles),
+            ["subtitle"] = Texts(design.Texts.Subtitle, design.Texts.Subtitles),
+            ["notice"] = Texts(design.Texts.Notice, design.Texts.Notices),
         };
         return $"var coworkee = {config.ToJsonString()};\n{StaticScript}";
+    }
+
+    // culture to text, "" for every language; the script sets them as text, never as markup
+    private static JsonObject? Texts(string? text, Dictionary<string, string>? perCulture)
+    {
+        var texts = new JsonObject();
+        foreach (var (culture, value) in (perCulture ?? []).Where(t => !string.IsNullOrWhiteSpace(t.Value)).Prepend(new(string.Empty, text ?? string.Empty)))
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                texts[culture.ToLowerInvariant()] = value.Trim();
+            }
+        }
+
+        return texts.Count == 0 ? null : texts;
     }
 
     private static string Declarations(IReadOnlyDictionary<string, string> palette, IReadOnlyDictionary<string, string> defaults) => string.Concat(Colors.Select(c =>
@@ -210,6 +228,8 @@ public static partial class KeycloakLoginTheme
         .cw-background{position:fixed;inset:0;z-index:-1;overflow:hidden;background:center/cover no-repeat}
         .cw-background video{width:100%;height:100%;object-fit:cover}
         .cw-background::after{content:"";position:absolute;inset:0;background:rgb(0 0 0 / var(--cw-dim,0%))}
+        .cw-subtitle{margin:.25rem 0 0;color:var(--cw-text-2)}
+        .cw-notice{margin:1rem 0 0;padding:.6rem .75rem;border-left:3px solid var(--cw-primary);white-space:pre-line;font-size:.875rem}
         .cw-media{display:none}
         @media (min-width:768px){
         .cw-layout-split .cw-media,.cw-layout-slide .cw-media{display:flex;position:fixed;inset:0 auto 0 0;width:50vw;overflow:hidden;align-items:center;justify-content:center;
@@ -251,6 +271,37 @@ public static partial class KeycloakLoginTheme
             });
           }
 
+          // the administrators' own texts on the sign-in page, in the page's language
+          if (coworkee.title || coworkee.subtitle || coworkee.notice) {
+            document.addEventListener("DOMContentLoaded", function () {
+              var heading = document.getElementById("kc-page-title");
+              if (!heading || document.body.dataset.pageId !== "login-login") {
+                return;
+              }
+
+              var lang = (document.documentElement.lang || "").toLowerCase();
+              var pick = function (texts) {
+                return texts ? texts[lang] || texts[lang.split("-")[0]] || texts[""] || null : null;
+              };
+              var title = pick(coworkee.title);
+              if (title) {
+                heading.textContent = title;
+              }
+
+              var after = heading;
+              [["subtitle", "cw-subtitle"], ["notice", "cw-notice"]].forEach(function (part) {
+                var text = pick(coworkee[part[0]]);
+                if (text) {
+                  var line = document.createElement("p");
+                  line.className = part[1];
+                  line.textContent = text;
+                  after.insertAdjacentElement("afterend", line);
+                  after = line;
+                }
+              });
+            });
+          }
+
           if (coworkee.layout === "card") {
             return;
           }
@@ -273,7 +324,7 @@ public static partial class KeycloakLoginTheme
               aside.style.backgroundImage = "url(" + JSON.stringify(coworkee.media) + ")";
             }
 
-            if (coworkee.layout === "slide") {
+            if (coworkee.layout === "slide" && coworkee.appName) {
               var name = document.createElement("h2");
               name.textContent = coworkee.appName;
               aside.appendChild(name);

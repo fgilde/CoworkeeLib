@@ -2162,5 +2162,20 @@
   "Page background (image or video)": "Фон сторінки (зображення або відео)",
   "Behind the whole page in every layout; empty keeps the theme's background.": "За всією сторінкою в кожному макеті; порожнє значення зберігає фон теми.",
   "Choose the page background from files": "Вибрати фон сторінки з файлів",
-  "Darken background (%)": "Затемнити фон (%)"
+  "Darken background (%)": "Затемнити фон (%)",
+  "Everything about signing in and registering in one place: sign-in methods, passkeys, sessions, password rules, registration and the look and texts of the sign-in page. The same settings as under Settings, changes apply at once.": "Усе про вхід і реєстрацію в одному місці: способи входу, ключі доступу, сеанси, правила паролів, реєстрація, а також вигляд і тексти сторінки входу. Ті самі налаштування, що й у розділі «Налаштування», зміни діють одразу.",
+  "Sign-in, security and registration": "Вхід, безпека та реєстрація",
+  "Registration form": "Форма реєстрації",
+  "Texts of the sign-in page": "Тексти сторінки входу",
+  "Layout, media, background and texts of the sign-in page are set on the page Sign-in.": "Макет, медіа, фон і тексти сторінки входу налаштовуються на сторінці «Вхід».",
+  "The host fixes {0} in its configuration; the stored value applies once it no longer does.": "Хост фіксує {0} у своїй конфігурації; збережене значення діє, щойно він перестане це робити.",
+  "Show the app name": "Показувати назву застосунку",
+  "Next to the logo and on the media panel; off leaves the logo alone.": "Поруч із логотипом і на медіапанелі; якщо вимкнено, лишається тільки логотип.",
+  "Texts": "Тексти",
+  "Title in other languages": "Заголовок іншими мовами",
+  "Subtitle in other languages": "Підзаголовок іншими мовами",
+  "Notice": "Повідомлення",
+  "Notice in other languages": "Повідомлення іншими мовами",
+  "For every language without its own text; empty keeps the built-in one.": "Для кожної мови без власного тексту; порожнє — лишається вбудований.",
+  "A hint above the sign-in form, e.g. maintenance or whom to ask for an account. For every language without its own text; empty keeps the built-in one.": "Повідомлення над формою входу, наприклад про техроботи або до кого звертатися по обліковий запис. Для кожної мови без власного тексту; порожнє — лишається вбудований."
 }

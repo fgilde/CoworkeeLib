@@ -63,6 +63,9 @@ public sealed partial class AuthBrandingProvider(
         MediaSide = design.MediaSide,
         BackgroundUrl = SafeUrl(design.BackgroundUrl),
         BackgroundDim = design.BackgroundDim is { } dim ? Math.Clamp(dim, 0, 90) : null,
+        // plain text, encoded where the pages show it
+        ShowAppName = design.ShowAppName,
+        Texts = design.Texts ?? new SignInTexts(),
     };
 
     // a path on the auth server or an http(s) address: nothing that runs script or leaves for another host without saying so

@@ -28,7 +28,13 @@ The design applies to the whole installation, whichever theme is the default. Th
       "MediaUrl": "/media/welcome.mp4",
       "MediaSide": "Right",
       "BackgroundUrl": "/media/sky.jpg",
-      "BackgroundDim": 30
+      "BackgroundDim": 30,
+      "ShowAppName": true,
+      "Texts": {
+        "Title": "Welcome",
+        "Titles": { "de": "Willkommen" },
+        "Notice": "Maintenance on Sunday from 8 to 10 pm."
+      }
     },
     "AllowDesignChanges": true
   }
@@ -43,13 +49,31 @@ The design applies to the whole installation, whichever theme is the default. Th
 | `Design:BackgroundUrl` | an image or video behind the whole page in every layout, same rules as `MediaUrl` (path or `http(s)` address, its origin enters the policy); empty keeps the theme's background |
 | `Design:BackgroundDim` | darkens the background, `0` to `90` percent (default `0`) |
 | `Design:LoadingScreen` | background of the app's [loading screen](../modules/theming.md#loading-screen): `Animated`, `SignInMedia` (the image or video above) or `Plain` |
-| `AllowDesignChanges` | `true` (default) lets administrators change the design on the Themes page; `false` keeps the configuration. Set it for the service that hosts the API, where the change is saved. |
+| `Design:ShowAppName` | `true` (default) shows the app name next to the logo and on the media panel of `Split` and `Slide`; `false` leaves the logo alone |
+| `Design:Texts:Title`, `Subtitle`, `Notice` | own heading, a line under it and a notice above the form of the sign-in page, for every language; empty keeps the built-in heading *Sign in* and shows neither line nor notice |
+| `Design:Texts:Titles`, `Subtitles`, `Notices` | the same per language (`"de"`, `"de-AT"`): the visitor's language (`de-AT`, then `de`) wins over the text for every language |
+| `AllowDesignChanges` | `true` (default) lets administrators change the design on the page *Sign-in*; `false` keeps the configuration. Set it for the service that hosts the API, where the change is saved. |
 
 The Aspire app host sets the same values with `options.SignIn` and serves a media path from the web app, see [Aspire app host](../hosting/aspire.md).
 
-## On the Themes page
+## Texts
 
-*Administration > Themes* starts with the card *Sign-in page*: a thumbnail per layout to pick from, the image or video address and its side, the page background with its darkening, and the background of the app's [loading screen](../modules/theming.md#loading-screen). The folder buttons in the address fields pick the image or video from the app's files; a private file is made public first (after a question), and the field gets its absolute public address, which the auth server, Keycloak and the loading screen can load without sign-in. *Save* stores the values as the app configuration section `Coworkee:Auth:Design` (table `cw.ConfigurationEntries`, see [App configuration](../modules/settings.md)); *Restore defaults* drops them, so the configured values apply again.
+The texts change the sign-in page only (`/Account/Login`); the other account pages keep their headings. They are plain text: the page encodes them, so markup shows as typed and cannot inject anything, and a line break in the notice stays one. The language is the one the auth server picks for the request (the browser's language or `?ui-culture=de`). The Keycloak login theme gets the texts too: its script sets them as text on Keycloak's sign-in page in the language of that page; without the app name the theme leaves Keycloak's header text empty. A stored design without the new values looks as before.
+
+## On the page Sign-in
+
+*Administration > System > Sign-in* (`/cw/admin/sign-in`, page key `sign-in`) gathers the whole sign-in and registration configuration. It is one more view on the same sources, with the forms of the settings page; nothing is stored differently:
+
+| Part | Source |
+|---|---|
+| *Sign-in, security and registration* | the setting groups *Sign-in security* (sign-in methods, passkeys, sessions per user and the limit mode, password rules, lockout, password expiry and history, act within one role) and *Accounts* (self registration, activation, email confirmation), the same form as under *Settings*. *Sign-in methods* shows only while an external provider is configured; when the operator fixes the mode with `Coworkee:Auth:External:ModeOverride` it shows read-only with a hint (set the variable for the API too, which serves the settings) |
+| *Registration form* | the part `Registration` of the app settings (address, allowed emails, documents and their slots), the form of the app settings with the other parts left out and saved unchanged |
+| card *Sign-in page* | the design described below |
+| *Texts of the sign-in page* | `ShowAppName` and `Texts` of the same section `Coworkee:Auth:Design`, in the form of the app configuration |
+
+The page needs `Settings.Manage`; the menu shows it to the system organisation. Other organisations get only their own session settings there and no app configuration. The page follows changes of others at once: a saved setting reloads the settings form (unless it holds unsaved changes), a saved configuration value reloads the form of its section. *Administration > Themes* links to the page.
+
+The card *Sign-in page* shows a thumbnail per layout to pick from, the image or video address and its side, the page background with its darkening, and the background of the app's [loading screen](../modules/theming.md#loading-screen). The folder buttons in the address fields pick the image or video from the app's files; a private file is made public first (after a question), and the field gets its absolute public address, which the auth server, Keycloak and the loading screen can load without sign-in. *Save* stores the values as the app configuration section `Coworkee:Auth:Design` (table `cw.ConfigurationEntries`, see [App configuration](../modules/settings.md)); *Restore defaults* drops them, so the configured values apply again.
 
 *Preview* opens the real sign-in page of the auth server with the values the card shows now, saved or not, in a full screen dialog. The dialog frames `/bff/sign-in-preview?design={json}`, which sends the frame on to the auth server's `/Account/Preview`; that address renders the sign-in page with the given design after the same checks as a saved one. It answers only a `GET` that the browser marks as frame load (`Sec-Fetch-Dest: iframe`), and only the origins of registered clients may frame it (`frame-ancestors`), so a link or another site cannot show a crafted design under the auth server's address. The frame runs without forms (`sandbox`), nobody signs in there, and the admin's own session stays as it is. The web app's policy allows the auth server's origin in `frame-src` for this. With Keycloak as sign-in the preview shows the Coworkee auth server's page, which Keycloak does not have; there the Keycloak card applies the design.
 
@@ -67,13 +91,13 @@ builder.Services.AddCoworkeeClient(baseAddress, options =>
 });
 ```
 
-An own layout gets a generic thumbnail with its name. Themes saved with the former per theme value (`SignIn` in the theme options) are ignored; set the design once on the Themes page.
+An own layout gets a generic thumbnail with its name. Themes saved with the former per theme value (`SignIn` in the theme options) are ignored; set the design once on the page *Sign-in*.
 
 ## Own designs
 
 The layouts are Razor layouts next to the pages of the library: `Pages/_DesignCard.cshtml`, `Pages/_DesignSplit.cshtml` and `Pages/_DesignSlide.cshtml`, all inside `Pages/_Layout.cshtml`, which renders the head, the theme variables, the style sheet and the script. As with every Razor class library, a view of the auth host at the same path wins:
 
-- **Own layout**: add `Pages/_DesignAurora.cshtml` to the auth host and set `Design:Layout` to `Aurora` (or choose it on the Themes page).
+- **Own layout**: add `Pages/_DesignAurora.cshtml` to the auth host and set `Design:Layout` to `Aurora` (or choose it on the page *Sign-in*).
 - **Replace a built-in one**: add `Pages/_DesignCard.cshtml` to the auth host.
 - **Replace everything**: add `Pages/_Layout.cshtml`; then the style sheet and the script are yours as well.
 

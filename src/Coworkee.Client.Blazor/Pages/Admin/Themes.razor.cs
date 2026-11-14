@@ -27,6 +27,8 @@ public partial class Themes
 
     [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
 
+    [Inject] private Navigation.CoworkeePages Pages { get; set; } = null!;
+
     protected override Task OnInitializedAsync() => ReloadAsync();
 
     private async Task ReloadAsync() => _tiles = [.. (await Api.GetThemesAsync()).Select(t => (t, ThemeMapper.ToTheme(t, ThemeService.ThemeType)))];

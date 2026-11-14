@@ -117,38 +117,24 @@ public sealed class ThemesPageTests : ClientTestBase
     }
 
     [Fact]
-    public async Task The_sign_in_page_card_shows_a_thumbnail_per_layout_and_saves_the_installation_wide_design()
+    public void The_sign_in_page_design_moved_to_the_page_sign_in_the_themes_page_links_there()
     {
-        Render<MudPopoverProvider>();
         var page = Render<Themes>();
-        page.WaitForAssertion(() => page.FindAll("[data-testid='sign-in-layout']").Count.ShouldBe(SignInLayouts.All.Count));
-        page.Find("[data-layout='Card']").GetAttribute("aria-checked").ShouldBe("true");
 
-        await page.Find("[data-layout='Split']").ClickAsync(new());
-        page.Find("input[data-testid='sign-in-media'], [data-testid='sign-in-media'] input").Change("/media/welcome.jpg");
-        await page.Find("[data-testid='sign-in-save']").ClickAsync(new());
-
-        await Api.Received(1).SaveAppConfigurationAsync(SignInDesign.Section,
-            Arg.Is<JsonElement>(v => v.GetProperty("layout").GetString() == SignInLayouts.Split && v.GetProperty("mediaUrl").GetString() == "/media/welcome.jpg"),
-            Arg.Any<CancellationToken>());
-        page.Find("[data-layout='Split']").GetAttribute("aria-checked").ShouldBe("true");
+        page.WaitForAssertion(() => page.FindAll("[data-testid='theme-tile']").Count.ShouldBe(2));
+        page.Find("[data-testid='sign-in-open']").GetAttribute("href")!.ShouldEndWith("/admin/sign-in");
+        page.FindAll("[data-testid='sign-in-design']").ShouldBeEmpty();
     }
 
-    [Theory]
-    [InlineData(false, 200)]
-    [InlineData(true, 403)]
-    public void The_sign_in_page_card_stays_hidden_when_the_app_turns_it_off_or_the_user_may_not_change_the_app_configuration(bool allowed, int status)
+    [Fact]
+    public void No_link_when_the_app_turns_the_sign_in_design_off()
     {
-        Services.AddSingleton(new CoworkeeClientOptions { AllowSignInDesign = allowed });
-        if (status != 200)
-        {
-            Api.GetAppConfigurationAsync(SignInDesign.Section, Arg.Any<CancellationToken>()).ThrowsAsync(new ApiException(status, "configuration.system_only", null));
-        }
+        Services.AddSingleton(new CoworkeeClientOptions { AllowSignInDesign = false });
 
         var page = Render<Themes>();
 
         page.WaitForAssertion(() => page.FindAll("[data-testid='theme-tile']").Count.ShouldBe(2));
-        page.FindAll("[data-testid='sign-in-design']").ShouldBeEmpty();
+        page.FindAll("[data-testid='sign-in-link']").ShouldBeEmpty();
     }
 
     [Fact]

@@ -1,5 +1,7 @@
 @using MudBlazor.Extensions.Components.ObjectEdit
 
+<RealtimeSubscription Topic="@(Scope == SettingScope.Tenant ? SettingTopics.Tenant : Scope == SettingScope.Global ? SettingTopics.Global : string.Empty)" OnEvent="_ => ChangedAsync()" />
+
 @if (_model is null)
 {
     <MudProgressLinear Indeterminate="true" />

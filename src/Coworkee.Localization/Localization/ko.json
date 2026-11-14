@@ -2162,5 +2162,20 @@
   "Page background (image or video)": "페이지 배경(이미지 또는 동영상)",
   "Behind the whole page in every layout; empty keeps the theme's background.": "모든 레이아웃에서 페이지 전체 뒤에 표시됩니다. 비워 두면 테마 배경이 유지됩니다.",
   "Choose the page background from files": "파일에서 페이지 배경 선택",
-  "Darken background (%)": "배경 어둡게 (%)"
+  "Darken background (%)": "배경 어둡게 (%)",
+  "Everything about signing in and registering in one place: sign-in methods, passkeys, sessions, password rules, registration and the look and texts of the sign-in page. The same settings as under Settings, changes apply at once.": "로그인과 가입에 관한 모든 것을 한곳에서: 로그인 방법, 패스키, 세션, 비밀번호 규칙, 가입, 로그인 페이지의 모양과 텍스트. 설정과 같은 항목이며 변경 사항은 즉시 적용됩니다.",
+  "Sign-in, security and registration": "로그인, 보안 및 가입",
+  "Registration form": "가입 양식",
+  "Texts of the sign-in page": "로그인 페이지 텍스트",
+  "Layout, media, background and texts of the sign-in page are set on the page Sign-in.": "로그인 페이지의 레이아웃, 미디어, 배경, 텍스트는 로그인 페이지에서 설정합니다.",
+  "The host fixes {0} in its configuration; the stored value applies once it no longer does.": "호스트가 구성에서 {0}(으)로 고정했습니다. 더 이상 고정하지 않으면 저장된 값이 적용됩니다.",
+  "Show the app name": "앱 이름 표시",
+  "Next to the logo and on the media panel; off leaves the logo alone.": "로고 옆과 미디어 패널에 표시합니다. 끄면 로고만 남습니다.",
+  "Texts": "텍스트",
+  "Title in other languages": "다른 언어의 제목",
+  "Subtitle in other languages": "다른 언어의 부제목",
+  "Notice": "공지",
+  "Notice in other languages": "다른 언어의 공지",
+  "For every language without its own text; empty keeps the built-in one.": "자체 텍스트가 없는 모든 언어에 사용됩니다. 비워 두면 기본 제공 텍스트가 유지됩니다.",
+  "A hint above the sign-in form, e.g. maintenance or whom to ask for an account. For every language without its own text; empty keeps the built-in one.": "로그인 양식 위에 표시되는 공지입니다(예: 점검 안내나 계정 문의처). 자체 텍스트가 없는 모든 언어에 사용됩니다. 비워 두면 기본 제공 텍스트가 유지됩니다."
 }

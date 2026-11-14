@@ -14,7 +14,11 @@ using Microsoft.Extensions.Configuration;
 
 namespace Coworkee.Settings;
 
-/// <summary>One configuration value changed in the app; it overrides appsettings and environment for every service of the app.</summary>
+/// <summary>
+/// One configuration value changed in the app; it overrides appsettings and environment for every service of the app. A change tells the open
+/// configuration pages (type:ConfigurationEntry, the key as id, never the value).
+/// </summary>
+[Coworkee.Domain.Realtime(SettingsPermissions.Manage)]
 public sealed class ConfigurationEntry
 {
     public required string Key { get; set; }
@@ -283,8 +287,9 @@ internal sealed partial class AppConfigurationHandlers(
     private async Task ReplaceAsync(string section, List<ConfigurationEntry> entries, CancellationToken cancellationToken)
     {
         var prefix = section + ":";
-        db.RemoveRange(await db.Set<ConfigurationEntry>().Where(e => e.Key.StartsWith(prefix)).ToListAsync(cancellationToken));
-        db.AddRange(entries);
+        // a section inside this one (Coworkee:Auth:Design inside the app settings Coworkee) keeps its values
+        db.RemoveRange((await db.Set<ConfigurationEntry>().Where(e => e.Key.StartsWith(prefix)).ToListAsync(cancellationToken)).Where(e => !InOtherSection(section, e.Key)));
+        db.AddRange(entries.Where(e => !InOtherSection(section, e.Key)));
         await db.SaveChangesAsync(cancellationToken);
 
         // this service sees the change at once, the others with their next reload
@@ -305,11 +310,16 @@ internal sealed partial class AppConfigurationHandlers(
         }
 
         var changed = configuration.DatabaseProvider() is { } provider
-            ? configuration.GetSection(registration.Section).AsEnumerable().Select(p => p.Key).Where(k => provider.TryGet(k, out _)).Order().ToList()
+            ? configuration.GetSection(registration.Section).AsEnumerable().Select(p => p.Key)
+                .Where(k => provider.TryGet(k, out _) && !InOtherSection(registration.Section, k)).Order().ToList()
             : [];
         return new AppConfigurationValuesDto(registration.Section, JsonSerializer.SerializeToElement(current), JsonSerializer.SerializeToElement(defaults), changed,
             registration.Locked, registration.Hidden, registration.Protected);
     }
+
+    private bool InOtherSection(string section, string key) => registrations.Any(r =>
+        r.Section.Length > section.Length && r.Section.StartsWith(section + ":", StringComparison.OrdinalIgnoreCase)
+        && key.StartsWith(r.Section + ":", StringComparison.OrdinalIgnoreCase));
 
     private object Current(AppConfigurationRegistration registration) =>
         configuration.GetSection(registration.Section).Get(registration.Type) ?? Activator.CreateInstance(registration.Type)!;

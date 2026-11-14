@@ -2162,5 +2162,20 @@
   "Page background (image or video)": "Sayfa arka planı (resim veya video)",
   "Behind the whole page in every layout; empty keeps the theme's background.": "Her düzende tüm sayfanın arkasında; boş bırakılırsa temanın arka planı kalır.",
   "Choose the page background from files": "Sayfa arka planını dosyalardan seç",
-  "Darken background (%)": "Arka planı karart (%)"
+  "Darken background (%)": "Arka planı karart (%)",
+  "Everything about signing in and registering in one place: sign-in methods, passkeys, sessions, password rules, registration and the look and texts of the sign-in page. The same settings as under Settings, changes apply at once.": "Oturum açma ve kayıtla ilgili her şey tek yerde: oturum açma yöntemleri, geçiş anahtarları, oturumlar, parola kuralları, kayıt ile oturum açma sayfasının görünümü ve metinleri. Ayarlar altındakiyle aynı ayarlar, değişiklikler hemen geçerli olur.",
+  "Sign-in, security and registration": "Oturum açma, güvenlik ve kayıt",
+  "Registration form": "Kayıt formu",
+  "Texts of the sign-in page": "Oturum açma sayfasının metinleri",
+  "Layout, media, background and texts of the sign-in page are set on the page Sign-in.": "Oturum açma sayfasının düzeni, medyası, arka planı ve metinleri Oturum açma sayfasında ayarlanır.",
+  "The host fixes {0} in its configuration; the stored value applies once it no longer does.": "Ana bilgisayar {0} değerini yapılandırmasında sabitler; kayıtlı değer, bunu yapmayı bıraktığında geçerli olur.",
+  "Show the app name": "Uygulama adını göster",
+  "Next to the logo and on the media panel; off leaves the logo alone.": "Logonun yanında ve medya panelinde; kapalıyken yalnızca logo kalır.",
+  "Texts": "Metinler",
+  "Title in other languages": "Diğer dillerde başlık",
+  "Subtitle in other languages": "Diğer dillerde alt başlık",
+  "Notice": "Duyuru",
+  "Notice in other languages": "Diğer dillerde duyuru",
+  "For every language without its own text; empty keeps the built-in one.": "Kendi metni olmayan her dil için; boş bırakılırsa yerleşik metin kalır.",
+  "A hint above the sign-in form, e.g. maintenance or whom to ask for an account. For every language without its own text; empty keeps the built-in one.": "Oturum açma formunun üstünde bir duyuru, örn. bakım veya hesap için kime başvurulacağı. Kendi metni olmayan her dil için; boş bırakılırsa yerleşik metin kalır."
 }

@@ -7,7 +7,7 @@ namespace Coworkee.Account;
 
 /// <summary>
 /// Reads the configuration instead of the options because the host of the settings API need not be the auth server; there
-/// it takes the mode and the display names of the providers, never their secrets.
+/// it takes the mode, the operator's ModeOverride (shown as fixed value) and the display names of the providers, never their secrets.
 /// </summary>
 internal sealed class LoginModeSettingDefinitions(IConfiguration configuration) : ISettingDefinitionContributor
 {
@@ -22,6 +22,6 @@ internal sealed class LoginModeSettingDefinitions(IConfiguration configuration) 
         context.Group("Security", "Sign-in security")
             .Add(AuthSettings.LoginMode, "Sign-in methods", SettingType.Choice, [SettingScope.Global], external.Mode.ToString(),
                 description: "Password, external providers (e.g. Keycloak) or both. Shows only when an external provider is configured.",
-                choices: Enum.GetNames<LoginMode>());
+                choices: Enum.GetNames<LoginMode>(), fixedValue: external.ModeOverride?.ToString());
     }
 }

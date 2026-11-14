@@ -11,7 +11,7 @@ Jeder Schritt prüft seine Felder, bevor der nächste öffnet; *Zurück* behält
 
 ## Einstellungen, die Admins zur Laufzeit ändern
 
-Unter **Administration > Einstellungen > Accounts**:
+Unter **Administration > Einstellungen > Accounts**, und zusammen mit den Anmeldeeinstellungen, dem Registrierungsformular und dem Aussehen der Anmeldeseite auf **Administration > System > Anmeldung** (siehe [Anmeldeseiten](sign-in-pages.md#auf-der-seite-anmeldung)):
 
 | Einstellung | Standard | Bedeutung |
 |---|---|---|
@@ -100,7 +100,7 @@ Konten mit unbestätigter E-Mail können sich nicht mit Passwort anmelden.
 
 Ist mindestens ein externer Anbieter konfiguriert, gibt es unter **Administration > Einstellungen > Anmeldesicherheit** die Einstellung **Anmeldemethoden** (`Auth.LoginMode`, Geltungsbereich `Global`): *Nur Passwort* (`Internal`), *Nur externe Anbieter* (`External`) oder *Passwort und externe Anbieter* (`Both`). `External:Mode` ist ihr Standard; ein gespeicherter Wert, der kein Modusname ist, fällt darauf zurück. Ohne Anbieter ist die Einstellung nicht definiert, und der Auth-Server zeigt immer das Passwortformular, damit sich niemand aussperrt. Der Host der Einstellungs-API muss nicht der Auth-Server sein: Er liest `External:Mode` und die Anzeigenamen der Anbieter aus seiner Konfiguration, nie deren Secrets (der Aspire-App-Host gibt beides weiter, siehe [Keycloak](../hosting/aspire.md#keycloak)).
 
-Speichert ein Admin *Nur externe Anbieter*, während der Anbieter ausfällt, kommt niemand mehr hinein, und der gespeicherte Wert gewinnt gegen jede Konfigurationsänderung. Der Rückweg für Betreiber ist `Coworkee:Auth:External:ModeOverride`: Ist er gesetzt, gewinnt er gegen die Einstellung (ohne Anbieter bleibt es beim Passwortformular). Setz `Coworkee__Auth__External__ModeOverride=Both` (oder `Internal`) als Umgebungsvariable des Auth-Servers und starte ihn neu; nach der Korrektur der Einstellung entfernst du den Override wieder.
+Speichert ein Admin *Nur externe Anbieter*, während der Anbieter ausfällt, kommt niemand mehr hinein, und der gespeicherte Wert gewinnt gegen jede Konfigurationsänderung. Der Rückweg für Betreiber ist `Coworkee:Auth:External:ModeOverride`: Ist er gesetzt, gewinnt er gegen die Einstellung (ohne Anbieter bleibt es beim Passwortformular). Setz `Coworkee__Auth__External__ModeOverride=Both` (oder `Internal`) als Umgebungsvariable des Auth-Servers und starte ihn neu; nach der Korrektur der Einstellung entfernst du den Override wieder. Setz ihn auch für die API (den Host der Einstellungen): Dann erscheint die Einstellung auf den Einstellungsseiten schreibgeschützt mit dem festgelegten Modus, und niemand ändert einen Wert, der nichts bewirkt.
 
 ## Externe Anmeldung und bestehende Konten
 

@@ -1,0 +1,28 @@
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + SettingsPermissions.Manage)]
+
+<PageHeader Title="Sign-in" Description="Everything about signing in and registering in one place: sign-in methods, passkeys, sessions, password rules, registration and the look and texts of the sign-in page. The same settings as under Settings, changes apply at once." />
+
+<MudStack Spacing="6">
+    <section data-testid="sign-in-settings">
+        <MudText Typo="Typo.h6" Class="mb-2">@L["Sign-in, security and registration"]</MudText>
+        <SettingsForm Scope="Scope" Groups="SettingGroups" />
+    </section>
+
+    @if (_system && RegistrationSection is { } registration)
+    {
+        <section data-testid="sign-in-registration">
+            <MudText Typo="Typo.h6" Class="mb-2">@L["Registration form"]</MudText>
+            <DynamicComponent Type="@typeof(AppConfigurationEditor<>).MakeGenericType(registration.Type)"
+                              Parameters="@(new Dictionary<string, object> { ["Registration"] = registration, ["Only"] = RegistrationOnly })" />
+        </section>
+    }
+
+    @if (_system && Options.AllowSignInDesign)
+    {
+        <section data-testid="sign-in-appearance">
+            <SignInDesignCard />
+            <MudText Typo="Typo.h6" Class="mb-2">@L["Texts of the sign-in page"]</MudText>
+            <AppConfigurationEditor T="SignInDesign" Registration="DesignSection" Only="DesignTextsOnly" />
+        </section>
+    }
+</MudStack>
