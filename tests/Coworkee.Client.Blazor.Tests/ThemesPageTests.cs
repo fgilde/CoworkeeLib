@@ -119,11 +119,22 @@ public sealed class ThemesPageTests : ClientTestBase
     [Fact]
     public void The_sign_in_page_design_moved_to_the_page_sign_in_the_themes_page_links_there()
     {
+        AddAuthorization().SetAuthorized("Ada").SetPolicies(
+            Security.PermissionPolicy.For(ThemePermissions.Manage), Security.PermissionPolicy.For(Contracts.Settings.SettingsPermissions.Manage));
         var page = Render<Themes>();
 
         page.WaitForAssertion(() => page.FindAll("[data-testid='theme-tile']").Count.ShouldBe(2));
         page.Find("[data-testid='sign-in-open']").GetAttribute("href")!.ShouldEndWith("/admin/sign-in");
         page.FindAll("[data-testid='sign-in-design']").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void No_link_without_the_permission_of_the_page_sign_in()
+    {
+        var page = Render<Themes>();
+
+        page.WaitForAssertion(() => page.FindAll("[data-testid='theme-tile']").Count.ShouldBe(2));
+        page.FindAll("[data-testid='sign-in-link']").ShouldBeEmpty();
     }
 
     [Fact]
