@@ -1,5 +1,4 @@
-<RealtimeSubscription Topic="@Components.AppConfigurationChanges.Topic" OnEvent="ChangedAsync" />
-@if (_design is not null)
+@if (Value is not null)
 {
     <MudCard Outlined="true" Class="mb-4" data-testid="sign-in-design">
         <MudCardHeader>
@@ -14,7 +13,7 @@
                 {
                     var selected = IsSelected(layout);
                     <button type="button" role="radio" aria-checked="@(selected ? "true" : "false")" style="@TileStyle(selected)"
-                            @onclick="() => _design.Layout = layout" data-testid="sign-in-layout" data-layout="@(layout)">
+                            @onclick="() => ChooseAsync(layout)" data-testid="sign-in-layout" data-layout="@(layout)">
                         <span style="@ThumbStyle(layout)">
                             @if (HasMedia(layout))
                             {
@@ -28,30 +27,30 @@
             </div>
             <MudGrid Spacing="2">
                 <MudItem xs="12" sm="8">
-                    <MudTextField T="string" @bind-Value="_design.MediaUrl" Label="@L["Image or video address"]" Clearable="true" Margin="Density.Margin"
+                    <MudTextField T="string" @bind-Value="Value.MediaUrl" @bind-Value:after="NotifyAsync" Label="@L["Image or video address"]" Clearable="true" Margin="Density.Margin"
                                   Variant="Variant.Outlined" Disabled="!UsesMedia" HelperText="@L["For the split and slide layouts, for example /media/welcome.mp4"]"
                                   Adornment="@(_canPickFiles ? Adornment.End : Adornment.None)" AdornmentIcon="@Icons.Material.Outlined.FolderOpen"
                                   AdornmentAriaLabel="@L["Choose from files"]" OnAdornmentClick="ChooseMediaAsync" data-testid="sign-in-media" />
                 </MudItem>
                 <MudItem xs="12" sm="4">
-                    <MudSelect T="SignInMediaSide?" @bind-Value="_design.MediaSide" Label="@L["Image side"]" Clearable="true" Margin="Density.Margin"
+                    <MudSelect T="SignInMediaSide?" @bind-Value="Value.MediaSide" @bind-Value:after="NotifyAsync" Label="@L["Image side"]" Clearable="true" Margin="Density.Margin"
                                Variant="Variant.Outlined" Disabled="!HasMedia(SelectedLayout)">
                         <MudSelectItem T="SignInMediaSide?" Value="SignInMediaSide.Left">@L["Left"]</MudSelectItem>
                         <MudSelectItem T="SignInMediaSide?" Value="SignInMediaSide.Right">@L["Right"]</MudSelectItem>
                     </MudSelect>
                 </MudItem>
                 <MudItem xs="12" sm="8">
-                    <MudTextField T="string" @bind-Value="_design.BackgroundUrl" Label="@L["Page background (image or video)"]" Clearable="true" Margin="Density.Margin"
+                    <MudTextField T="string" @bind-Value="Value.BackgroundUrl" @bind-Value:after="NotifyAsync" Label="@L["Page background (image or video)"]" Clearable="true" Margin="Density.Margin"
                                   Variant="Variant.Outlined" HelperText="@L["Behind the whole page in every layout; empty keeps the theme's background."]"
                                   Adornment="@(_canPickFiles ? Adornment.End : Adornment.None)" AdornmentIcon="@Icons.Material.Outlined.FolderOpen"
                                   AdornmentAriaLabel="@L["Choose the page background from files"]" OnAdornmentClick="ChooseBackgroundAsync" data-testid="sign-in-background" />
                 </MudItem>
                 <MudItem xs="12" sm="4">
-                    <MudNumericField T="int?" @bind-Value="_design.BackgroundDim" Label="@L["Darken background (%)"]" Min="0" Max="90" Step="10" Clearable="true"
-                                     Margin="Density.Margin" Variant="Variant.Outlined" Disabled="@string.IsNullOrWhiteSpace(_design.BackgroundUrl)" data-testid="sign-in-background-dim" />
+                    <MudNumericField T="int?" @bind-Value="Value.BackgroundDim" @bind-Value:after="NotifyAsync" Label="@L["Darken background (%)"]" Min="0" Max="90" Step="10" Clearable="true"
+                                     Margin="Density.Margin" Variant="Variant.Outlined" Disabled="@string.IsNullOrWhiteSpace(Value.BackgroundUrl)" data-testid="sign-in-background-dim" />
                 </MudItem>
                 <MudItem xs="12" sm="8">
-                    <MudSelect T="LoadingScreenBackground" @bind-Value="LoadingScreen" Label="@L["Loading screen"]" Margin="Density.Margin" Variant="Variant.Outlined"
+                    <MudSelect T="LoadingScreenBackground" @bind-Value="LoadingScreen" @bind-Value:after="NotifyAsync" Label="@L["Loading screen"]" Margin="Density.Margin" Variant="Variant.Outlined"
                                HelperText="@L["Shown while the app loads, in the colours and with the logo of the default theme."]" data-testid="loading-screen">
                         <MudSelectItem T="LoadingScreenBackground" Value="LoadingScreenBackground.Animated">@L["Animated background"]</MudSelectItem>
                         <MudSelectItem T="LoadingScreenBackground" Value="LoadingScreenBackground.SignInMedia">@L["Image or video of the sign-in page"]</MudSelectItem>
@@ -61,9 +60,8 @@
             </MudGrid>
         </MudCardContent>
         <MudCardActions>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Save" OnClick="SaveAsync" data-testid="sign-in-save">@L["Save"]</MudButton>
-            <MudButton StartIcon="@Icons.Material.Outlined.Preview" OnClick="PreviewAsync" data-testid="sign-in-preview">@L["Preview"]</MudButton>
-            <MudButton StartIcon="@Icons.Material.Outlined.SettingsBackupRestore" OnClick="ResetAsync" data-testid="sign-in-reset">@L["Restore defaults"]</MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Preview" OnClick="PreviewAsync" data-testid="sign-in-preview">@L["Preview"]</MudButton>
+            @Actions
         </MudCardActions>
     </MudCard>
 }

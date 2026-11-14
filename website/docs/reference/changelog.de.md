@@ -4,9 +4,14 @@
 
 ## Unveröffentlicht
 
+### Geändert
+
+- Admin-Seite *Anmeldung*: eine eigene Oberfläche statt der allgemeinen Formulare. Tabs *Methoden*, *Sicherheit*, *Registrierung*, *Darstellung* und *Texte* mit einer Karte je Thema: eine Segmentauswahl für die Anmeldemethoden, Schalter, Zahlen mit Einheiten, erlaubte E-Mails als Chips, die Registrierungsdokumente als Liste, die Texte je Sprache mit Sprachumschalter und eine Speicherleiste mit Änderungsstand und *Verwerfen* in der klebenden Tab-Leiste. Die Speicherung bleibt, wie sie war (Einstellungen, der Teil `Registration` der App-Einstellungen, der Abschnitt `Coworkee:Auth:Design`), daher zeigt und ändert *Einstellungen* dieselben Werte; ein festgelegter `ModeOverride`, gesperrte oder ausgeblendete Konfigurationswerte sowie fehlende Einstellungen oder ein fehlender Dokumentenspeicher werden berücksichtigt. `SignInDesignCard` bearbeitet jetzt einen `Value`, den die Seite übergibt, und hat keinen eigenen Speichern-Knopf mehr. Neue Komponente `SettingField` (eine Einstellung als Bedienelement ihres Typs) sowie `SettingsModel.Definition`, `Get`, `Set`, `Editable` und `Select`. Siehe [Anmeldeseiten](../security/sign-in-pages.md#auf-der-seite-anmeldung).
+
 ### Behoben
 
 - Der Vorschaudialog der Anmeldeseite startet wie jeder andere Dialog versteckt mit der Initial-Klasse von MudEx (`MudExCss.Classes.Dialog.Initial`) und blitzt vor seiner Öffnungsanimation nicht mehr kurz auf. Ein Test schlägt jetzt für jeden `<MudDialog>` der Bibliothek ohne die Klasse fehl.
+- Klebende Leisten folgen dem Layout: Die Tab-Leiste von `StickyMergeTabs`, die klebende Toolbar der Einstellungsformulare und die Facetten einer Tabelle kleben an der neuen CSS-Variable `--cw-sticky-top`, unter der oberen App-Leiste oder ganz oben, wenn die Kopfleiste links, rechts oder unten sitzt (dazu die Notch eines Telefons), statt immer unter einer oberen Leiste. Die klebende Tab-Leiste hat die Oberflächenfarbe als Hintergrund und einen Schatten, verschmilzt mit der Toolbar des offenen Panels in deren Höhe, ohne ihre Knöpfe zu verdecken, und überlässt auf Telefonen das Kleben dieser Toolbar.
 
 ## 0.0.1.86 (2026-11-14)
 

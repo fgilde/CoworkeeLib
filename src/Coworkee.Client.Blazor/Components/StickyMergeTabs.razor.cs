@@ -3,7 +3,10 @@ using Microsoft.JSInterop;
 
 namespace Coworkee.Client.Blazor.Components;
 
-/// <summary>Wraps a <c>MudTabs</c>: its tab bar sticks below the app bar while scrolling and then shrinks to its tabs, so a sticky toolbar inside a panel shows next to it.</summary>
+/// <summary>
+/// Wraps a <c>MudTabs</c>: its tab bar sticks at <c>--cw-sticky-top</c> (below the top app bar, at the very top without one) with the surface as background and a shadow
+/// while stuck; once a sticky toolbar of the open panel reaches the same line, the tabs shrink to their width and sit at its start (not on phones, there only the toolbar sticks).
+/// </summary>
 public partial class StickyMergeTabs : IAsyncDisposable
 {
     private ElementReference _root;

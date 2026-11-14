@@ -214,7 +214,8 @@ builder.Services.AddSingleton(new ProfileTab("Documents", "documents", typeof(My
 | Komponente | Zweck |
 |---|---|
 | `PageHeader` | Titel, Beschreibung, Aktionen rechts; setzt den Browsertitel. Übergib Textschlüssel (`Title="Brands"`), es übersetzt sie selbst; ebenso `CreateText` von `CoworkeeDataTable` |
-| `StickyMergeTabs` | umschließt ein `<MudTabs>`: dessen Tab-Leiste klebt unter der App-Leiste und schrumpft auf die Breite der Tabs, sodass eine klebende `MudExObjectEditForm`-Toolbar im Panel daneben sichtbar wird; nicht auf schmalen Bildschirmen |
+| `StickyMergeTabs` | umschließt ein `<MudTabs>`: dessen Tab-Leiste klebt an `--cw-sticky-top` (unter der oberen App-Leiste, ganz oben, wenn die Kopfleiste links, rechts oder unten sitzt, dazu die Notch eines Telefons), mit der Oberflächenfarbe als Hintergrund und einem Schatten, solange sie klebt. Erreicht eine klebende `MudExObjectEditForm`-Toolbar des offenen Panels dieselbe Linie, schrumpfen die Tabs auf ihre Breite und sitzen am Anfang der Toolbar, so hoch wie sie, die ihnen Platz lässt; auf Telefonen klebt nur diese Toolbar. Inhalt der Tab-Leiste (`<Header>` von `MudTabs`, z. B. eine Speicherleiste) klebt mit |
+| `SettingField` | eine Einstellung eines `SettingsModel` als Bedienelement ihres Typs für Seiten, die Einstellungen selbst anordnen: Schalter, Zahl mit `Unit`, `Min` und `Max`, Auswahl (`ChoiceLabels`), Text. Rendert nichts, wenn die App die Einstellung für den Bereich nicht definiert; ein vom Host festgelegter Wert erscheint schreibgeschützt mit dem Grund |
 | `PermissionGate`, `PermissionView` | rendern Inhalt nur mit einer Berechtigung |
 | `PermissionPicker` | wählt Berechtigungen aus, siehe unten |
 | `FeatureGate` | rendert Inhalt nur, solange ein boolesches Feature an ist (`Disabled` für den anderen Fall) |

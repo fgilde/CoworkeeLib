@@ -1,28 +1,346 @@
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + SettingsPermissions.Manage)]
+@using MudBlazor.Extensions.Components
+@using Coworkee.Client.Blazor.Components.Editors
+@using Coworkee.Contracts.Configuration
+
+<RealtimeSubscription Topic="@(_system ? SettingTopics.Global : SettingTopics.Tenant)" OnEvent="_ => SettingsChangedAsync()" />
+<RealtimeSubscription Topic="@AppConfigurationChanges.Topic" OnEvent="ConfigurationChangedAsync" />
+
+<style>
+    .cw-signin-section { display: grid; gap: 16px; padding: 16px; }
+    .cw-signin-card { padding: 16px 20px; }
+    .cw-signin-card-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+    .cw-signin-card-head > .mud-icon-root { margin-top: 4px; color: var(--mud-palette-primary); flex: none; }
+    .cw-signin-grid { display: grid; gap: 4px 24px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); align-items: start; }
+    .cw-setting-field { min-width: 0; }
+    .cw-setting-hint { padding-inline-start: 58px; margin-top: -6px; margin-bottom: 8px; }
+    .cw-signin-actions { display: flex; align-items: center; gap: 8px; padding-inline: 12px; }
+    .cw-signin-slot { padding: 12px 16px; }
+    .cw-setting-field .mud-input-adornment-text { font-size: .875rem; color: var(--mud-palette-text-secondary); }
+    @@media (max-width: 599.98px) {
+        .cw-signin-section { padding: 8px; gap: 12px; }
+        .cw-signin-card { padding: 12px; }
+        .cw-signin-actions { padding-inline: 4px; gap: 4px; }
+        .cw-signin-actions .cw-signin-action-text { display: none; }
+        .cw-setting-hint { padding-inline-start: 0; margin-top: 0; }
+        /* five tabs and the save bar: icons only, the names stay for screen readers */
+        .cw-signin-tabs { --cw-signin-tab-width: 40px; }
+        .cw-signin-tabs .mud-tabs-tabbar .mud-tab { padding-inline: 8px; font-size: 0; }
+        .cw-signin-actions [data-testid='sign-in-dirty'] { display: none; }
+    }
+</style>
 
 <PageHeader Title="Sign-in" Description="Everything about signing in and registering in one place: sign-in methods, passkeys, sessions, password rules, registration and the look and texts of the sign-in page. The same settings as under Settings, changes apply at once." />
 
-<MudStack Spacing="6">
-    <section data-testid="sign-in-settings">
-        <MudText Typo="Typo.h6" Class="mb-2">@L["Sign-in, security and registration"]</MudText>
-        <SettingsForm Scope="Scope" Groups="SettingGroups" />
-    </section>
-
-    @if (_system && RegistrationSection is { } registration)
-    {
-        <section data-testid="sign-in-registration">
-            <MudText Typo="Typo.h6" Class="mb-2">@L["Registration form"]</MudText>
-            <DynamicComponent Type="@typeof(AppConfigurationEditor<>).MakeGenericType(registration.Type)"
-                              Parameters="@(new Dictionary<string, object> { ["Registration"] = registration, ["Only"] = RegistrationOnly })" />
-        </section>
-    }
-
-    @if (_system && Options.AllowSignInDesign)
-    {
-        <section data-testid="sign-in-appearance">
-            <SignInDesignCard />
-            <MudText Typo="Typo.h6" Class="mb-2">@L["Texts of the sign-in page"]</MudText>
-            <AppConfigurationEditor T="SignInDesign" Registration="DesignSection" Only="DesignTextsOnly" />
-        </section>
-    }
-</MudStack>
+@if (_settings is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <StickyMergeTabs>
+        <MudTabs @bind-ActivePanelIndex="_tab" Elevation="0" Outlined="true" Class="cw-signin-tabs" MinimumTabWidth="var(--cw-signin-tab-width, 160px)" HeaderPosition="TabHeaderPosition.After" data-testid="sign-in-tabs">
+            <Header>
+                <div class="cw-signin-actions" data-testid="sign-in-save-bar">
+                    @if (Dirty)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Text" Icon="@Icons.Material.Outlined.Edit" data-testid="sign-in-dirty">
+                            <span class="cw-signin-action-text">@L["Unsaved changes"]</span>
+                        </MudChip>
+                    }
+                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.Undo" Disabled="@(!Dirty || _saving)" OnClick="Discard" Size="Density.Size" data-testid="sign-in-discard"
+                               aria-label="@L["Discard"]"><span class="cw-signin-action-text">@L["Discard"]</span></MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Save" Disabled="@(!Dirty || _saving)" OnClick="SaveAsync" Size="Density.Size"
+                               data-testid="sign-in-save" aria-label="@L["Save"]">
+                        @if (_saving)
+                        {
+                            <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" />
+                        }
+                        <span class="cw-signin-action-text">@L["Save"]</span>
+                    </MudButton>
+                </div>
+            </Header>
+            <ChildContent>
+                @if (HasMethods)
+                {
+                    <MudTabPanel Text="@L["Methods"]" Icon="@Icons.Material.Outlined.Login" data-testid="sign-in-tab-methods">
+                        <div class="cw-signin-section" data-testid="sign-in-methods">
+                            <MudPaper Outlined="true" Class="cw-signin-card" data-testid="sign-in-login-mode">
+                                <div class="cw-signin-card-head">
+                                    <MudIcon Icon="@Icons.Material.Outlined.Login" />
+                                    <div>
+                                        <MudText Typo="Typo.h6">@L["How users sign in"]</MudText>
+                                        @if (_settings.Definition(AuthSettings.LoginMode) is { Description: { } description })
+                                        {
+                                            <MudText Typo="Typo.body2" Class="mud-text-secondary">@L[description]</MudText>
+                                        }
+                                    </div>
+                                </div>
+                                @if (_settings.Definition(AuthSettings.LoginMode) is { } mode)
+                                {
+                                    <MudToggleGroup T="string" Value="LoginMode" ValueChanged="SetLoginMode" Color="Color.Primary" Disabled="@(!_settings.Editable(mode.Name))"
+                                                    Style="max-width: 640px" data-testid="sign-in-login-mode-toggle">
+                                        @foreach (var (value, label, icon) in LoginModes)
+                                        {
+                                            <MudToggleItem Value="value">
+                                                <span class="d-flex align-center gap-2" data-mode="@value"><MudIcon Icon="@icon" Size="Size.Small" />@L[label]</span>
+                                            </MudToggleItem>
+                                        }
+                                    </MudToggleGroup>
+                                    @if (mode.FixedValue is { } fixedMode)
+                                    {
+                                        <MudAlert Severity="Severity.Info" Dense="true" Icon="@Icons.Material.Outlined.Lock" Class="mt-3" data-testid="sign-in-login-mode-fixed">
+                                            @L["The host fixes {0} in its configuration; the stored value applies once it no longer does.", L.Find(fixedMode) ?? fixedMode]
+                                        </MudAlert>
+                                    }
+                                }
+                                else
+                                {
+                                    <MudAlert Severity="Severity.Info" Dense="true" data-testid="sign-in-no-provider">@L["Users sign in with their password: no external provider (e.g. Keycloak) is configured, so there is no method to choose."]</MudAlert>
+                                }
+                                @if (_settings.Definition(AuthSettings.PasskeysEnabled) is not null)
+                                {
+                                    <MudDivider Class="my-4" />
+                                    <div class="d-flex align-start gap-3" data-testid="sign-in-passkeys">
+                                        <MudIcon Icon="@Icons.Material.Outlined.Fingerprint" Color="Color.Primary" Class="mt-2" />
+                                        <SettingField Model="_settings" Name="@AuthSettings.PasskeysEnabled" Changed="Changed" />
+                                    </div>
+                                }
+                            </MudPaper>
+                        </div>
+                    </MudTabPanel>
+                }
+                @if (HasSecurity)
+                {
+                    <MudTabPanel Text="@L["Security"]" Icon="@Icons.Material.Outlined.Shield" data-testid="sign-in-tab-security">
+                        <div class="cw-signin-section" data-testid="sign-in-security">
+                            @if (Any(PasswordRules))
+                            {
+                                <MudPaper Outlined="true" Class="cw-signin-card" data-testid="sign-in-password">
+                                    <div class="cw-signin-card-head">
+                                        <MudIcon Icon="@Icons.Material.Outlined.Password" />
+                                        <div>
+                                            <MudText Typo="Typo.h6">@L["Password rules"]</MudText>
+                                            <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["What every new password needs; existing passwords stay valid until they are changed."]</MudText>
+                                        </div>
+                                    </div>
+                                    <div class="cw-signin-grid">
+                                        <SettingField Model="_settings" Name="@PasswordSettings.RequiredLength" Unit="@L["characters"]" Min="1" Changed="Changed" />
+                                        <SettingField Model="_settings" Name="@PasswordSettings.RequiredUniqueChars" Unit="@L["characters"]" Changed="Changed" />
+                                        <SettingField Model="_settings" Name="@PasswordExpiryDays" Unit="@L["days"]" Changed="Changed" />
+                                        <SettingField Model="_settings" Name="@PasswordHistory" Unit="@L["passwords"]" Changed="Changed" />
+                                    </div>
+                                    <div class="cw-signin-grid mt-2">
+                                        <SettingField Model="_settings" Name="@PasswordSettings.RequireDigit" Changed="Changed" />
+                                        <SettingField Model="_settings" Name="@PasswordSettings.RequireLowercase" Changed="Changed" />
+                                        <SettingField Model="_settings" Name="@PasswordSettings.RequireUppercase" Changed="Changed" />
+                                        <SettingField Model="_settings" Name="@PasswordSettings.RequireNonAlphanumeric" Changed="Changed" />
+                                    </div>
+                                </MudPaper>
+                            }
+                            @if (Any(LockoutSettings))
+                            {
+                                <MudPaper Outlined="true" Class="cw-signin-card" data-testid="sign-in-lockout">
+                                    <div class="cw-signin-card-head">
+                                        <MudIcon Icon="@Icons.Material.Outlined.LockClock" />
+                                        <div>
+                                            <MudText Typo="Typo.h6">@L["Lockout"]</MudText>
+                                            <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["Locks an account for a while after too many failed sign-ins in a row."]</MudText>
+                                        </div>
+                                    </div>
+                                    <div class="cw-signin-grid">
+                                        <SettingField Model="_settings" Name="@MaxFailedAttempts" Unit="@L["attempts"]" Changed="Changed" />
+                                        <SettingField Model="_settings" Name="@LockoutMinutes" Unit="@L["min"]" Changed="Changed" />
+                                    </div>
+                                </MudPaper>
+                            }
+                            @if (Any(SessionSettings))
+                            {
+                                <MudPaper Outlined="true" Class="cw-signin-card" data-testid="sign-in-sessions">
+                                    <div class="cw-signin-card-head">
+                                        <MudIcon Icon="@Icons.Material.Outlined.Devices" />
+                                        <div>
+                                            <MudText Typo="Typo.h6">@L["Sessions"]</MudText>
+                                            <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["How many browsers and devices a user may be signed in on at once."]</MudText>
+                                        </div>
+                                    </div>
+                                    <div class="cw-signin-grid">
+                                        <SettingField Model="_settings" Name="@AuthSettings.MaxSessionsPerUser" Unit="@L["sessions"]" Changed="Changed" />
+                                        <SettingField Model="_settings" Name="@AuthSettings.SessionLimitMode" ChoiceLabels="SessionModes" Changed="Changed" />
+                                    </div>
+                                </MudPaper>
+                            }
+                            @if (Others.Count > 0)
+                            {
+                                <MudPaper Outlined="true" Class="cw-signin-card" data-testid="sign-in-more">
+                                    <div class="cw-signin-card-head">
+                                        <MudIcon Icon="@Icons.Material.Outlined.Tune" />
+                                        <MudText Typo="Typo.h6">@L["More settings"]</MudText>
+                                    </div>
+                                    <div class="cw-signin-grid">
+                                        @foreach (var setting in Others)
+                                        {
+                                            <SettingField @key="setting.Name" Model="_settings" Name="@setting.Name" Changed="Changed" />
+                                        }
+                                    </div>
+                                </MudPaper>
+                            }
+                        </div>
+                    </MudTabPanel>
+                }
+                @if (HasRegistration)
+                {
+                    <MudTabPanel Text="@L["Registration"]" Icon="@Icons.Material.Outlined.PersonAdd" data-testid="sign-in-tab-registration">
+                        <div class="cw-signin-section" data-testid="sign-in-registration">
+                            <MudPaper Outlined="true" Class="cw-signin-card" data-testid="sign-in-self-registration">
+                                <div class="cw-signin-card-head">
+                                    <MudIcon Icon="@Icons.Material.Outlined.HowToReg" />
+                                    <div>
+                                        <MudText Typo="Typo.h6">@L["Self registration"]</MudText>
+                                        <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["Whether people create their own accounts on the sign-in page and what happens before they can sign in."]</MudText>
+                                    </div>
+                                </div>
+                                <div class="cw-signin-grid">
+                                    <SettingField Model="_settings" Name="@AllowRegistration" Changed="Changed" />
+                                    <SettingField Model="_settings" Name="@RegistrationRequiresActivation" Changed="Changed" />
+                                    <SettingField Model="_settings" Name="@RegistrationRequiresEmailConfirmation" Changed="Changed" />
+                                    @if (_registration is { } registration && Shows(nameof(RegistrationOptions.RequireAddress)))
+                                    {
+                                        <div class="cw-setting-field" data-option="requireAddress">
+                                            <MudSwitch T="bool" @bind-Value="registration.RequireAddress" @bind-Value:after="Changed" Label="@L["Ask for the address"]" Color="Color.Primary"
+                                                       Disabled="@Locked(nameof(RegistrationOptions.RequireAddress))" Class="ma-0" />
+                                            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block cw-setting-hint">
+                                                @Hint(nameof(RegistrationOptions.RequireAddress), L["Adds street, zip code, city and country to the registration."])
+                                            </MudText>
+                                        </div>
+                                    }
+                                </div>
+                            </MudPaper>
+                            @if (_registration is { } options)
+                            {
+                                @if (Shows(nameof(RegistrationOptions.AllowedEmails)))
+                                {
+                                    <MudPaper Outlined="true" Class="cw-signin-card" data-testid="sign-in-allowed-emails">
+                                        <div class="cw-signin-card-head">
+                                            <MudIcon Icon="@Icons.Material.Outlined.AlternateEmail" />
+                                            <div>
+                                                <MudText Typo="Typo.h6">@L["Allowed emails"]</MudText>
+                                                <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                                                    @Hint(nameof(RegistrationOptions.AllowedEmails), L["Patterns like *@example.com an address must match to register; empty allows every address."])
+                                                </MudText>
+                                            </div>
+                                        </div>
+                                        <MudExTagField T="string" Values="options.AllowedEmails" ValuesChanged="SetAllowedEmails" Delimiters="EmailDelimiters" CommitOnBlur="true"
+                                                       Placeholder="@EmailPattern" Variant="Variant.Outlined" Margin="Density.Margin" Disabled="@Locked(nameof(RegistrationOptions.AllowedEmails))"
+                                                       data-testid="sign-in-allowed-emails-input" />
+                                    </MudPaper>
+                                }
+                                @if (Shows(nameof(RegistrationOptions.Documents)))
+                                {
+                                    <MudPaper Outlined="true" Class="cw-signin-card" data-testid="sign-in-documents">
+                                        <div class="cw-signin-card-head">
+                                            <MudIcon Icon="@Icons.Material.Outlined.UploadFile" />
+                                            <div>
+                                                <MudText Typo="Typo.h6">@L["Documents"]</MudText>
+                                                <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                                                    @Hint(nameof(RegistrationOptions.Documents), L["Adds a step where new users upload the documents listed below."])
+                                                </MudText>
+                                            </div>
+                                        </div>
+                                        @if (!_documentsAvailable)
+                                        {
+                                            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3" data-testid="sign-in-documents-unavailable">
+                                                @L["Uploading documents needs the Files module (or a document store of the app); without it the registration asks for none."]
+                                            </MudAlert>
+                                        }
+                                        <MudSwitch T="bool" @bind-Value="options.RequireDocuments" @bind-Value:after="Changed" Label="@L["Ask for documents"]" Color="Color.Primary"
+                                                   Disabled="@(!DocumentsEditable || Locked(nameof(RegistrationOptions.RequireDocuments)))" Class="ma-0" data-testid="sign-in-require-documents" />
+                                        <MudStack Spacing="2" Class="mt-2">
+                                            @foreach (var slot in options.Documents)
+                                            {
+                                                <MudPaper Outlined="true" Class="cw-signin-slot" data-testid="sign-in-document-slot">
+                                                    <div class="cw-signin-grid">
+                                                        <MudTextField T="string" @bind-Value="slot.Name" @bind-Value:after="Changed" Label="@L["Name"]" Required="true" Disabled="@(!DocumentsEditable)"
+                                                                      HelperText="@L["The label of the upload field, e.g. Passport; uploaded files are filed under this name."]" Variant="Variant.Outlined" Margin="Density.Margin" />
+                                                        <MudTextField T="string" @bind-Value="slot.Description" @bind-Value:after="Changed" Label="@L["Hint"]" Disabled="@(!DocumentsEditable)"
+                                                                      HelperText="@L["Optional text under the field, e.g. Both sides, readable."]" Variant="Variant.Outlined" Margin="Density.Margin" />
+                                                        <ContentTypesEditor Value="slot.ContentTypes" ValueChanged="types => SetTypes(slot, types)" Label="@L["Accepted file types"]" ReadOnly="@(!DocumentsEditable)" />
+                                                        <FileSizeEditor Value="slot.MaxSize" ValueChanged="size => SetSize(slot, size)" Label="@L["Largest file"]" ReadOnly="@(!DocumentsEditable)" />
+                                                    </div>
+                                                    <div class="d-flex align-center flex-wrap gap-2 mt-1">
+                                                        <MudSwitch T="bool" @bind-Value="slot.Required" @bind-Value:after="Changed" Label="@L["Required"]" Color="Color.Primary" Disabled="@(!DocumentsEditable)" Class="ma-0" />
+                                                        <MudSpacer />
+                                                        <MudButton Variant="Variant.Text" Color="Color.Error" StartIcon="@Icons.Material.Outlined.Delete" Disabled="@(!DocumentsEditable)"
+                                                                   OnClick="() => RemoveSlot(slot)" Size="Density.Size" data-testid="sign-in-document-remove">@L["Remove"]</MudButton>
+                                                    </div>
+                                                    <MudExpansionPanels Elevation="0" Outlined="false" Class="mt-1">
+                                                        <MudExpansionPanel Text="@L["Translations (optional)"]" Dense="true" Gutters="false">
+                                                            <TranslationsEditor Value="slot.Names" ValueChanged="names => SetNames(slot, names)" Label="@L["Name in other languages"]" ReadOnly="@(!DocumentsEditable)" />
+                                                            <TranslationsEditor Value="slot.Descriptions" ValueChanged="hints => SetHints(slot, hints)" Label="@L["Hint in other languages"]" ReadOnly="@(!DocumentsEditable)" />
+                                                        </MudExpansionPanel>
+                                                    </MudExpansionPanels>
+                                                </MudPaper>
+                                            }
+                                            @if (options.Documents.Count == 0)
+                                            {
+                                                <MudText Typo="Typo.body2" Class="mud-text-secondary" data-testid="sign-in-documents-none">@L["No documents yet."]</MudText>
+                                            }
+                                        </MudStack>
+                                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" Disabled="@(!DocumentsEditable)" Class="mt-3"
+                                                   OnClick="AddSlot" Size="Density.Size" data-testid="sign-in-document-add">@L["Add document"]</MudButton>
+                                    </MudPaper>
+                                }
+                            }
+                        </div>
+                    </MudTabPanel>
+                }
+                @if (_design is { } design)
+                {
+                    <MudTabPanel Text="@L["Appearance"]" Icon="@Icons.Material.Outlined.Palette" data-testid="sign-in-tab-appearance">
+                        <div class="cw-signin-section" data-testid="sign-in-appearance">
+                            <SignInDesignCard Value="design" Changed="Changed">
+                                <Actions>
+                                    <MudButton StartIcon="@Icons.Material.Outlined.SettingsBackupRestore" OnClick="ResetDesignAsync" data-testid="sign-in-reset">@L["Restore defaults"]</MudButton>
+                                </Actions>
+                            </SignInDesignCard>
+                        </div>
+                    </MudTabPanel>
+                    <MudTabPanel Text="@L["Texts"]" Icon="@Icons.Material.Outlined.TextFields" data-testid="sign-in-tab-texts">
+                        <div class="cw-signin-section" data-testid="sign-in-texts">
+                            <MudPaper Outlined="true" Class="cw-signin-card">
+                                <div class="cw-signin-card-head">
+                                    <MudIcon Icon="@Icons.Material.Outlined.Translate" />
+                                    <div>
+                                        <MudText Typo="Typo.h6">@L["Texts of the sign-in page"]</MudText>
+                                        <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["Own title, subtitle and notice instead of the built-in heading; a language without its own text shows the one for every language."]</MudText>
+                                    </div>
+                                </div>
+                                <div class="cw-setting-field mb-3">
+                                    <MudSwitch T="bool" @bind-Value="design.ShowAppName" @bind-Value:after="Changed" Label="@L["Show the app name"]" Color="Color.Primary" Class="ma-0" />
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary d-block cw-setting-hint">@L["Next to the logo and on the media panel; off leaves the logo alone."]</MudText>
+                                </div>
+                                <MudChipSet T="string" SelectedValue="_language" SelectedValueChanged="SelectLanguage" SelectionMode="SelectionMode.SingleSelection" CheckMark="true"
+                                            SelectedColor="Color.Primary" Variant="Variant.Outlined" Size="Density.Size" data-testid="sign-in-text-languages">
+                                    <MudChip T="string" Value="@string.Empty" Icon="@Icons.Material.Outlined.Public" data-culture="">@L["Every language"]</MudChip>
+                                    @foreach (var language in L.Languages.Where(l => l.IsEnabled))
+                                    {
+                                        <MudChip T="string" Value="@language.Culture" data-culture="@language.Culture">@language.Name</MudChip>
+                                    }
+                                </MudChipSet>
+                                <MudStack Spacing="2" Class="mt-3">
+                                    <MudTextField T="string" Value="Text(TextPart.Title)" ValueChanged="v => SetText(TextPart.Title, v)" Label="@L["Title"]" Placeholder="@Fallback(TextPart.Title)"
+                                                  Variant="Variant.Outlined" Margin="Density.Margin" Clearable="true" data-testid="sign-in-text-title" />
+                                    <MudTextField T="string" Value="Text(TextPart.Subtitle)" ValueChanged="v => SetText(TextPart.Subtitle, v)" Label="@L["Subtitle"]" Placeholder="@Fallback(TextPart.Subtitle)"
+                                                  Variant="Variant.Outlined" Margin="Density.Margin" Clearable="true" data-testid="sign-in-text-subtitle" />
+                                    <MudTextField T="string" Value="Text(TextPart.Notice)" ValueChanged="v => SetText(TextPart.Notice, v)" Label="@L["Notice"]" Placeholder="@Fallback(TextPart.Notice)"
+                                                  Lines="3" Sizing="InputSizing.Auto" HelperText="@L["A hint above the sign-in form, e.g. maintenance or whom to ask for an account."]"
+                                                  Variant="Variant.Outlined" Margin="Density.Margin" data-testid="sign-in-text-notice" />
+                                </MudStack>
+                            </MudPaper>
+                        </div>
+                    </MudTabPanel>
+                }
+            </ChildContent>
+        </MudTabs>
+    </StickyMergeTabs>
+}

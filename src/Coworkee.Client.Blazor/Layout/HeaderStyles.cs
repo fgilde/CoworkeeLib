@@ -9,6 +9,8 @@ internal static class HeaderStyles
     public const string Css =
         """
         :root { --cw-side-bar-width: 64px; }
+        /* the line sticky bars (tabs, form toolbars, the facets of a table) stick at: below the top app bar and a notch, at the very top without a top bar */
+        :root { --cw-sticky-top: calc(var(--mud-appbar-height) + env(safe-area-inset-top, 0px)); }
         /* overflow-y alone turns overflow-x to auto: anything a pixel too wide, or the room a vertical scrollbar takes, scrolled the bar sideways */
         .cw-side-bar { position: fixed; top: 0; bottom: 0; width: var(--cw-side-bar-width); z-index: calc(var(--mud-zindex-appbar) + 2);
           display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin;
@@ -37,7 +39,7 @@ internal static class HeaderStyles
         .cw-bar-left { --cw-edge-start: var(--cw-side-bar-width); }
         .cw-bar-right { --cw-edge-end: var(--cw-side-bar-width); }
         .cw-bar-bottom { --cw-edge-bottom: var(--mud-appbar-height); }
-        .cw-no-top-bar { --cw-edge-top: 0px; }
+        .cw-no-top-bar { --cw-edge-top: 0px; --cw-sticky-top: env(safe-area-inset-top, 0px); }
         .cw-drawer-head { display: flex; align-items: center; justify-content: space-between; gap: 4px; min-height: var(--mud-appbar-height); padding: 0 8px; }
         .cw-drawer-brand { display: flex; align-items: center; min-width: 0; overflow: hidden; }
         .mud-drawer--closed .cw-drawer-head { justify-content: center; padding: 0; }

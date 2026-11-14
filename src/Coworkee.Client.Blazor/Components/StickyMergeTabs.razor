@@ -1,14 +1,21 @@
 <style>
-    .cw-tabs-stick-merge > .mud-tabs > .mud-tabs-tabbar { border-radius: var(--mud-default-borderradius) var(--mud-default-borderradius) 0 0; }
+    .cw-tabs-stick-merge > .mud-tabs > .mud-tabs-tabbar { position: sticky; top: var(--cw-sticky-top, var(--mud-appbar-height)); z-index: 10; background: var(--mud-palette-surface);
+        border-radius: var(--mud-default-borderradius) var(--mud-default-borderradius) 0 0; transition: box-shadow .15s ease, border-radius .15s ease; }
     .cw-tabs-stick-merge > .mud-tabs > .mud-tabs-panels { border: 1px solid var(--mud-palette-lines-default); border-top: 0; border-radius: 0 0 var(--mud-default-borderradius) var(--mud-default-borderradius); }
+    .cw-tabs-stick-merge[stuck] > .mud-tabs > .mud-tabs-tabbar { border-radius: 0; box-shadow: 0 1px 0 var(--mud-palette-lines-default), 0 8px 12px -10px rgba(0, 0, 0, .45); }
+    /* a phone has no room for the tabs above a sticky toolbar: only the toolbar sticks */
+    @@media (max-width: 599.98px) { .cw-tabs-stick-merge[has-toolbar] > .mud-tabs > .mud-tabs-tabbar { position: static; box-shadow: none; } }
+    /* once the toolbar of the open panel reached the line too, the tabs shrink and sit at its start, as high as the toolbar, which leaves them their room */
     @@media (min-width: 600px) {
-        .cw-tabs-stick-merge > .mud-tabs > .mud-tabs-tabbar { position: sticky; top: var(--mud-appbar-height); z-index: 10; }
-        .cw-tabs-stick-merge[stuck] > .mud-tabs > .mud-tabs-tabbar { display: flex; align-items: center; min-height: var(--cw-stuck-height, 0px); width: fit-content; box-sizing: border-box; padding-inline: 16px; background: var(--mud-palette-surface); border-radius: 0 0 var(--mud-default-borderradius) 0; }
+        .cw-tabs-stick-merge[merged] > .mud-tabs > .mud-tabs-tabbar { display: flex; align-items: center; width: fit-content; max-width: 60%; min-height: var(--cw-stuck-height, 0px);
+            box-sizing: border-box; padding-inline: 8px; box-shadow: none; border-inline-end: 1px solid var(--mud-palette-lines-default); }
+        .cw-tabs-stick-merge[merged] .mud-ex-toolbar-sticky { padding-inline-start: calc(var(--cw-stuck-tabs-width, 0px) + 8px);
+            box-shadow: 0 1px 0 var(--mud-palette-lines-default), 0 8px 12px -10px rgba(0, 0, 0, .45); }
     }
     .cw-tabs-sentinel { height: 1px; margin-bottom: -1px; pointer-events: none; }
 </style>
 
-<div @ref="_root" class="cw-tabs-stick-merge">
+<div @ref="_root" class="cw-tabs-stick-merge" data-testid="sticky-tabs">
     <div @ref="_sentinel" class="cw-tabs-sentinel"></div>
     @ChildContent
 </div>

@@ -49,9 +49,15 @@ public sealed class StickyMergeTabsTests : ClientTestBase
     {
         var css = RenderTabs().Find("style").TextContent;
 
-        css.ShouldContain(".mud-tabs-tabbar { border-radius: var(--mud-default-borderradius) var(--mud-default-borderradius) 0 0; }");
+        css.ShouldContain("border-radius: var(--mud-default-borderradius) var(--mud-default-borderradius) 0 0;");
         css.ShouldContain(".mud-tabs-panels { border: 1px solid var(--mud-palette-lines-default); border-top: 0;");
+        // stuck: an opaque bar with a shadow instead of content bleeding through; merged: as high as the toolbar, which leaves the tabs their room
+        css.ShouldContain("background: var(--mud-palette-surface);");
+        css.ShouldContain(".cw-tabs-stick-merge[stuck] > .mud-tabs > .mud-tabs-tabbar { border-radius: 0; box-shadow:");
         css.ShouldContain("min-height: var(--cw-stuck-height");
+        css.ShouldContain(".cw-tabs-stick-merge[merged] .mud-ex-toolbar-sticky { padding-inline-start: calc(var(--cw-stuck-tabs-width, 0px) + 8px);");
+        // phones: only the toolbar sticks when there is one
+        css.ShouldContain(".cw-tabs-stick-merge[has-toolbar] > .mud-tabs > .mud-tabs-tabbar { position: static;");
     }
 
     [Fact]

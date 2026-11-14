@@ -1,11 +1,8 @@
 using System.Text.Json;
-using Coworkee.Client.Blazor.Api;
-using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Components.Files;
 using Coworkee.Client.Blazor.Dialogs;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Files;
-using Coworkee.Contracts.Settings;
 using Coworkee.Contracts.Theming;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -14,15 +11,11 @@ using MudBlazor.Extensions;
 namespace Coworkee.Client.Blazor.Pages.Admin;
 
 /// <summary>
-/// The installation's <see cref="SignInDesign"/> with a thumbnail per layout on the page Sign-in, saved as app configuration section and reloaded when it changes; hidden for users who may not
-/// change the app configuration (outside the system organisation) or while the API does not accept changes.
+/// Edits the installation's <see cref="SignInDesign"/> on the page Sign-in: a thumbnail per layout, media, page background and loading screen, and a preview of the real
+/// sign-in page with what shows now. The page loads and saves the design (one save bar for all its sections).
 /// </summary>
 public partial class SignInDesignCard
 {
-    private SignInDesign? _design;
-
-    [Inject] private ICoworkeeApi Api { get; set; } = null!;
-
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
     [Inject] private IDialogService Dialogs { get; set; } = null!;
@@ -37,62 +30,42 @@ public partial class SignInDesignCard
 
     [Inject] private NavigationManager Navigation { get; set; } = null!;
 
-    [Inject] private IEnumerable<ClientAppConfiguration> Registrations { get; set; } = null!;
+    [Parameter, EditorRequired] public SignInDesign? Value { get; set; }
+
+    /// <summary>After every change of <see cref="Value"/>.</summary>
+    [Parameter] public EventCallback Changed { get; set; }
+
+    /// <summary>Further buttons next to the preview.</summary>
+    [Parameter] public RenderFragment? Actions { get; set; }
 
     private bool _canPickFiles;
 
-    private string SelectedLayout => _design?.Layout is { Length: > 0 } layout ? layout : SignInLayouts.Default;
+    private string SelectedLayout => Value?.Layout is { Length: > 0 } layout ? layout : SignInLayouts.Default;
 
     private LoadingScreenBackground LoadingScreen
     {
-        get => _design?.LoadingScreen ?? LoadingScreenBackground.Animated;
-        set => _design!.LoadingScreen = value;
+        get => Value?.LoadingScreen ?? LoadingScreenBackground.Animated;
+        set => Value!.LoadingScreen = value;
     }
 
     private bool UsesMedia => HasMedia(SelectedLayout) || LoadingScreen == LoadingScreenBackground.SignInMedia;
 
-    protected override async Task OnInitializedAsync()
-    {
-        _canPickFiles = await Permissions.HasAsync(FilePermissions.View);
-        try
-        {
-            _design = Read(await Api.GetAppConfigurationAsync(SignInDesign.Section));
-        }
-        catch (ApiException)
-        {
-            _design = null;
-        }
-    }
+    protected override async Task OnInitializedAsync() => _canPickFiles = await Permissions.HasAsync(FilePermissions.View);
 
-    // another administrator, or the texts form on the same page, saved the design: show what applies now
-    private async Task ChangedAsync(Contracts.Realtime.RealtimeEnvelope envelope)
-    {
-        if (_design is not null && Components.AppConfigurationChanges.Touches(envelope, SignInDesign.Section, Registrations))
-        {
-            try
-            {
-                _design = Read(await Api.GetAppConfigurationAsync(SignInDesign.Section));
-            }
-            catch (ApiException)
-            {
-                // keep what shows; the next save answers with the error
-            }
-        }
-    }
+    private Task NotifyAsync() => Changed.InvokeAsync();
 
-    private static SignInDesign Read(AppConfigurationValuesDto section) => section.Values.Deserialize<SignInDesign>(JsonSerializerOptions.Web) ?? new SignInDesign();
-
-    private async Task SaveAsync()
+    private Task ChooseAsync(string layout)
     {
-        var values = JsonSerializer.SerializeToElement(_design, JsonSerializerOptions.Web);
-        await Snackbar.RunAsync(async () => _design = Read(await Api.SaveAppConfigurationAsync(SignInDesign.Section, values)), L["Sign-in page saved"]);
+        Value!.Layout = layout;
+        return NotifyAsync();
     }
 
     private async Task ChooseMediaAsync()
     {
         if (await PublicFileChooser.ChooseAsync(Dialogs, Files, Snackbar, L, Navigation, "image/*,video/*") is { } url)
         {
-            _design!.MediaUrl = url;
+            Value!.MediaUrl = url;
+            await NotifyAsync();
         }
     }
 
@@ -100,23 +73,15 @@ public partial class SignInDesignCard
     {
         if (await PublicFileChooser.ChooseAsync(Dialogs, Files, Snackbar, L, Navigation, "image/*,video/*") is { } url)
         {
-            _design!.BackgroundUrl = url;
+            Value!.BackgroundUrl = url;
+            await NotifyAsync();
         }
     }
 
     // the real sign-in page with what the card shows now, saved or not
     private Task PreviewAsync() => Dialogs.ShowExAsync<SignInPreviewDialog>(L["Sign-in page"],
-        new DialogParameters<SignInPreviewDialog> { { d => d.Design, JsonSerializer.Serialize(_design, JsonSerializerOptions.Web) } },
+        new DialogParameters<SignInPreviewDialog> { { d => d.Design, JsonSerializer.Serialize(Value, JsonSerializerOptions.Web) } },
         CoworkeeDialogOptions.For(DialogPart.Fullscreen));
-
-    private async Task ResetAsync()
-    {
-        if (await Dialogs.ConfirmAsync(L["Restore defaults"], L["All changes made here go away; the configured values apply again."], L["Restore"], L["Cancel"],
-                Icons.Material.Outlined.SettingsBackupRestore))
-        {
-            await Snackbar.RunAsync(async () => _design = Read(await Api.ResetAppConfigurationAsync(SignInDesign.Section)));
-        }
-    }
 
     private bool IsSelected(string layout) => string.Equals(SelectedLayout, layout, StringComparison.OrdinalIgnoreCase);
 
@@ -124,8 +89,8 @@ public partial class SignInDesignCard
 
     // like the auth server: the split shows its media left, the slide its panel right unless set otherwise
     private bool MediaRight(string layout) => string.Equals(layout, SignInLayouts.Slide, StringComparison.OrdinalIgnoreCase)
-        ? _design?.MediaSide != SignInMediaSide.Left
-        : _design?.MediaSide == SignInMediaSide.Right;
+        ? Value?.MediaSide != SignInMediaSide.Left
+        : Value?.MediaSide == SignInMediaSide.Right;
 
     private static string TileStyle(bool selected) =>
         $"display:flex;flex-direction:column;align-items:center;padding:8px;cursor:pointer;background:none;color:inherit;border-radius:var(--mud-default-borderradius);"

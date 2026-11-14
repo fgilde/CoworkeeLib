@@ -214,7 +214,8 @@ builder.Services.AddSingleton(new ProfileTab("Documents", "documents", typeof(My
 | Component | Use |
 |---|---|
 | `PageHeader` | title, description, actions on the right; sets the browser title. Pass text keys (`Title="Brands"`), it translates them itself; so does `CreateText` of `CoworkeeDataTable` |
-| `StickyMergeTabs` | wraps a `<MudTabs>`: its tab bar sticks below the app bar and shrinks to its tabs, so a sticky `MudExObjectEditForm` toolbar in the panel shows next to it; not on narrow screens |
+| `StickyMergeTabs` | wraps a `<MudTabs>`: its tab bar sticks at `--cw-sticky-top` (below the top app bar, at the very top when the header sits left, right or at the bottom, plus the notch of a phone) with the surface as background and a shadow while stuck. Once a sticky `MudExObjectEditForm` toolbar of the open panel reaches the same line, the tabs shrink to their width and sit at the start of the toolbar, as high as it, which leaves them their room; on phones only that toolbar sticks. Content of the tab bar (`<Header>` of `MudTabs`, e.g. a save bar) sticks with it |
+| `SettingField` | one setting of a `SettingsModel` as a control of its type for pages that arrange settings by hand: switch, number with `Unit`, `Min` and `Max`, select (`ChoiceLabels`), text. Renders nothing when the app defines no such setting for the scope; a value the host fixes shows read-only with the hint why |
 | `PermissionGate`, `PermissionView` | render content only with a permission |
 | `PermissionPicker` | picks permissions, see below |
 | `FeatureGate` | renders content only while a bool feature is on (`Disabled` for the other case) |

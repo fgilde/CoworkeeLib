@@ -45,6 +45,31 @@ public sealed partial class SettingsModel
     /// <summary>The object the form edits.</summary>
     public object Value { get; }
 
+    /// <summary>The definition of a setting of this model; null when the app defines no such setting for the scope (a page built by hand leaves it out then).</summary>
+    public SettingDefinitionDto? Definition(string name) => _settings.FirstOrDefault(s => s.Setting.Name == name).Setting;
+
+    /// <summary>The settings of the model, in the order of their groups.</summary>
+    public IEnumerable<SettingDefinitionDto> Definitions => _settings.Select(s => s.Setting);
+
+    /// <summary>The edited value of a setting: bool, int?, string or the chosen strings, as the form holds it.</summary>
+    public object? Get(string name) => Property(Definition(name)!).GetValue(Value);
+
+    public void Set(string name, object? value) => Property(Definition(name)!).SetValue(Value, value);
+
+    /// <summary>False while the host fixes the setting or the setting it depends on (EnabledWhen) has none of the values it needs.</summary>
+    public bool Editable(string name) =>
+        Definition(name) is { FixedValue: null } setting
+        && (setting.EnabledWhen is not { } condition || Definition(condition.Setting) is null || condition.Values.Contains(Format(Get(condition.Setting))));
+
+    /// <summary>Only the groups the page shows (all others when empty) and the settings of the scope that <paramref name="hide"/> leaves.</summary>
+    public static IReadOnlyList<SettingGroupDto> Select(IEnumerable<SettingGroupDto> definitions, SettingScope scope, IReadOnlySet<string>? groups, IReadOnlySet<string>? hide = null) =>
+    [
+        .. definitions
+            .Where(g => groups is { Count: > 0 } only ? only.Contains(g.Name) : g.Page is null)
+            .Select(g => g with { Settings = g.Settings.Where(s => s.Scopes.Contains(scope) && hide?.Contains(s.Name) != true).ToList() })
+            .Where(g => g.Settings.Count > 0),
+    ];
+
     /// <summary>Label, help text, group and editor of every setting; secrets as password, choices and languages as select.</summary>
 #pragma warning disable BL0005 // MudEx configures the rendered editors through these instances
     public void Configure(ObjectEditMeta<object> meta, CoworkeeLocalizer l, SettingScope scope)

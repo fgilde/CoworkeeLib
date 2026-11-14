@@ -4,9 +4,14 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Changed
+
+- Admin page *Sign-in*: its own interface instead of the generic forms. Tabs *Methods*, *Security*, *Registration*, *Appearance* and *Texts* with a card per topic: a segmented choice for the sign-in methods, switches, numbers with units, allowed emails as chips, the registration documents as a list, the texts per language with a language switch, and one save bar with unsaved state and *Discard* in the sticky tab bar. Storage stays as it was (settings, the part `Registration` of the app settings, the section `Coworkee:Auth:Design`), so *Settings* shows and edits the same values; a fixed `ModeOverride`, locked or hidden configuration values and missing settings or a missing document store are respected. `SignInDesignCard` now edits a `Value` the page hands it and has no save button of its own. New component `SettingField` (one setting as a control of its type) and `SettingsModel.Definition`, `Get`, `Set`, `Editable` and `Select`. See [Sign-in pages](../security/sign-in-pages.md#on-the-page-sign-in).
+
 ### Fixed
 
 - The sign-in page preview dialog starts hidden with MudEx's initial dialog class (`MudExCss.Classes.Dialog.Initial`) like every other dialog, so it no longer flashes in place before its open animation. A test now fails for any `<MudDialog>` in the library without the class.
+- Sticky bars follow the layout: the tab bar of `StickyMergeTabs`, the sticky toolbar of the settings forms and the facets of a table stick at the new CSS variable `--cw-sticky-top`, below the top app bar or at the very top when the header sits left, right or at the bottom (plus the notch of a phone), instead of always below a top bar. The stuck tab bar has the surface as background and a shadow, merges with the toolbar of the open panel at its height without covering its buttons, and on phones leaves the sticking to that toolbar.
 
 ## 0.0.1.86 (2026-11-14)
 

@@ -48,12 +48,7 @@ public partial class SettingsForm
     {
         var definitions = await Api.GetSettingDefinitionsAsync(Scope == SettingScope.User);
         var stored = (await Api.GetSettingsAsync(Scope)).ToDictionary(v => v.Name, StringComparer.Ordinal);
-        var groups = definitions
-            .Where(g => Groups is { Count: > 0 } only ? only.Contains(g.Name) : g.Page is null)
-            .Select(g => g with { Settings = g.Settings.Where(s => s.Scopes.Contains(Scope) && Hide?.Contains(s.Name) != true).ToList() })
-            .Where(g => g.Settings.Count > 0)
-            .ToList();
-        _model = new SettingsModel(groups, stored, Scope);
+        _model = new SettingsModel(SettingsModel.Select(definitions, Scope, Groups, Hide), stored, Scope);
         Rebuild();
     }
 

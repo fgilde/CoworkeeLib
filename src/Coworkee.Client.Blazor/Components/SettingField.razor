@@ -1,0 +1,34 @@
+@if (Setting is { } setting)
+{
+    <div class="cw-setting-field" data-setting="@setting.Name">
+        @switch (setting.Type)
+        {
+            case SettingType.Bool:
+                <MudSwitch T="bool" Value="@(Shown is bool on && on)" ValueChanged="(bool v) => SetAsync(v)" Label="@L[setting.DisplayName]" Color="Color.Primary" Disabled="!Model.Editable(setting.Name)" Class="ma-0" />
+                @if (Hint is { Length: > 0 } hint)
+                {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary d-block cw-setting-hint">@hint</MudText>
+                }
+                break;
+            case SettingType.Int:
+                <MudNumericField T="int?" Value="@(Shown as int?)" ValueChanged="(int? v) => SetAsync(v)" Label="@L[setting.DisplayName]" Min="Min" Max="Max" Clearable="true"
+                                 Placeholder="@setting.DefaultValue" HelperText="@Hint" Disabled="!Model.Editable(setting.Name)" Variant="Variant.Outlined" Margin="Density.Margin"
+                                 Adornment="@(Unit is null ? Adornment.None : Adornment.End)" AdornmentText="@Unit" />
+                break;
+            case SettingType.Choice:
+                <MudSelect T="string" Value="@(Shown as string)" ValueChanged="(string? v) => SetAsync(v)" ToStringFunc="ChoiceLabel" Label="@L[setting.DisplayName]" HelperText="@Hint" Disabled="!Model.Editable(setting.Name)"
+                           Variant="Variant.Outlined" Margin="Density.Margin">
+                    @foreach (var choice in setting.Choices ?? [])
+                    {
+                        <MudSelectItem T="string" Value="choice">@ChoiceLabel(choice)</MudSelectItem>
+                    }
+                </MudSelect>
+                break;
+            default:
+                <MudTextField T="string" Value="@(Shown as string)" ValueChanged="(string? v) => SetAsync(v)" Label="@L[setting.DisplayName]" HelperText="@Hint" Disabled="!Model.Editable(setting.Name)"
+                              Placeholder="@setting.DefaultValue" Variant="Variant.Outlined" Margin="Density.Margin"
+                              InputType="@(setting.Type == SettingType.Secret ? InputType.Password : InputType.Text)" />
+                break;
+        }
+    </div>
+}

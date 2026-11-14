@@ -213,6 +213,36 @@ public sealed class HeaderTests : ClientTestBase
         layout.Find(".mud-drawer").ClassList.ShouldContain("mud-drawer-clipped-never");
     }
 
+    [Theory]
+    [InlineData("Top", null, true)]
+    [InlineData("Right", null, false)]
+    [InlineData("Left", null, false)]
+    [InlineData("Bottom", null, false)]
+    [InlineData("Right", "Top", true)]
+    public void Sticky_bars_stick_below_a_top_bar_and_at_the_very_top_without_one(string position, string? second, bool topBar)
+    {
+        Configure(null, position, second);
+
+        var layout = RenderLayout();
+
+        layout.WaitForAssertion(() => layout.Find("[data-testid='app-bar']"));
+        layout.Find(".mud-layout").ClassList.Contains("cw-no-top-bar").ShouldBe(!topBar);
+        // the line every sticky bar uses: app bar plus notch with a top bar, the notch alone without one
+        var css = Layout.HeaderStyles.Css;
+        css.ShouldContain(":root { --cw-sticky-top: calc(var(--mud-appbar-height) + env(safe-area-inset-top, 0px)); }");
+        css.ShouldContain(".cw-no-top-bar { --cw-edge-top: 0px; --cw-sticky-top: env(safe-area-inset-top, 0px); }");
+    }
+
+    [Fact]
+    public void The_sticky_tabs_the_form_toolbars_and_the_facets_follow_the_sticky_line()
+    {
+        Components.SettingsFormRules.FormAttributes[nameof(MudBlazor.Extensions.Components.ObjectEdit.MudExObjectEditForm<object>.StickyToolbarTop)]
+            .ShouldBe("var(--cw-sticky-top, var(--mud-appbar-height))");
+        var tabs = Render<Components.StickyMergeTabs>().Find("style").TextContent;
+        tabs.ShouldContain("top: var(--cw-sticky-top, var(--mud-appbar-height))");
+        tabs.ShouldNotContain("top: var(--mud-appbar-height)");
+    }
+
     [Fact]
     public void A_bar_at_the_left_or_right_edge_never_scrolls_sideways()
     {

@@ -59,11 +59,12 @@ public sealed class LoadingScreenAndPublicMediaTests : ClientTestBase
     }
 
     [Fact]
-    public async Task The_sign_in_card_saves_the_loading_screen_and_takes_a_video_from_the_files_after_making_it_public()
+    public async Task The_sign_in_card_sets_the_loading_screen_and_takes_a_video_from_the_files_after_making_it_public()
     {
         var dialogs = Render<MudDialogProvider>();
         Render<MudPopoverProvider>();
-        var card = Render<SignInDesignCard>();
+        var design = new SignInDesign { Layout = SignInLayouts.Card };
+        var card = Render<SignInDesignCard>(p => p.Add(c => c.Value, design));
         var select = card.WaitForComponent<MudSelect<LoadingScreenBackground>>();
         await card.InvokeAsync(() => select.Instance.ValueChanged.InvokeAsync(LoadingScreenBackground.SignInMedia));
 
@@ -72,21 +73,20 @@ public sealed class LoadingScreenAndPublicMediaTests : ClientTestBase
         dialogs.WaitForAssertion(() => dialogs.FindAll("button").Any(b => b.TextContent.Trim() == "Make public").ShouldBeTrue());
         await dialogs.FindAll("button").First(b => b.TextContent.Trim() == "Make public").ClickAsync(new());
         await choosing;
-        await card.InvokeAsync(() => card.Find("[data-testid='sign-in-save']").ClickAsync(new()));
 
+        // the page Sign-in saves the design it hands the card
         await _files.Received(1).SetPublicAsync(_video.Id, true, Arg.Any<CancellationToken>());
-        await Api.Received(1).SaveAppConfigurationAsync(SignInDesign.Section,
-            Arg.Is<JsonElement>(v => v.GetProperty("loadingScreen").GetString() == "SignInMedia"
-                && v.GetProperty("mediaUrl").GetString() == $"http://localhost/api/v1/files/public/{_video.Id}/welcome.mp4"),
-            Arg.Any<CancellationToken>());
+        design.LoadingScreen.ShouldBe(LoadingScreenBackground.SignInMedia);
+        design.MediaUrl.ShouldBe($"http://localhost/api/v1/files/public/{_video.Id}/welcome.mp4");
     }
 
     [Fact]
-    public async Task The_sign_in_card_takes_a_page_background_video_from_the_files_and_saves_it_with_its_darkening()
+    public async Task The_sign_in_card_takes_a_page_background_video_from_the_files_and_sets_its_darkening()
     {
         var dialogs = Render<MudDialogProvider>();
         Render<MudPopoverProvider>();
-        var card = Render<SignInDesignCard>();
+        var design = new SignInDesign { Layout = SignInLayouts.Card };
+        var card = Render<SignInDesignCard>(p => p.Add(c => c.Value, design));
         var dim = card.WaitForComponent<MudNumericField<int?>>();
         // a stored section from before the field: empty, nothing to darken yet
         dim.Instance.Disabled.ShouldBeTrue();
@@ -98,12 +98,10 @@ public sealed class LoadingScreenAndPublicMediaTests : ClientTestBase
         await choosing;
         card.WaitForAssertion(() => card.FindComponent<MudNumericField<int?>>().Instance.Disabled.ShouldBeFalse());
         await card.InvokeAsync(() => card.FindComponent<MudNumericField<int?>>().Instance.ValueChanged.InvokeAsync(40));
-        await card.InvokeAsync(() => card.Find("[data-testid='sign-in-save']").ClickAsync(new()));
 
-        await Api.Received(1).SaveAppConfigurationAsync(SignInDesign.Section,
-            Arg.Is<JsonElement>(v => v.GetProperty("backgroundUrl").GetString() == $"http://localhost/api/v1/files/public/{_video.Id}/welcome.mp4"
-                && v.GetProperty("backgroundDim").GetInt32() == 40 && v.GetProperty("mediaUrl").ValueKind == JsonValueKind.Null),
-            Arg.Any<CancellationToken>());
+        design.BackgroundUrl.ShouldBe($"http://localhost/api/v1/files/public/{_video.Id}/welcome.mp4");
+        design.BackgroundDim.ShouldBe(40);
+        design.MediaUrl.ShouldBeNull();
     }
 
     [Fact]
@@ -111,7 +109,8 @@ public sealed class LoadingScreenAndPublicMediaTests : ClientTestBase
     {
         Api.GetMyPermissionsAsync(default).ReturnsForAnyArgs([]);
 
-        var card = Render<SignInDesignCard>();
+        var design = new SignInDesign { Layout = SignInLayouts.Card };
+        var card = Render<SignInDesignCard>(p => p.Add(c => c.Value, design));
 
         card.WaitForComponents<MudTextField<string>>().Single(f => f.Instance.Label == "Page background (image or video)").Instance.Adornment.ShouldBe(Adornment.None);
         card.FindAll("button[aria-label='Choose the page background from files']").ShouldBeEmpty();
@@ -122,7 +121,8 @@ public sealed class LoadingScreenAndPublicMediaTests : ClientTestBase
     {
         var dialogs = Render<MudDialogProvider>();
         Render<MudPopoverProvider>();
-        var card = Render<SignInDesignCard>();
+        var design = new SignInDesign { Layout = SignInLayouts.Card };
+        var card = Render<SignInDesignCard>(p => p.Add(c => c.Value, design));
         var background = card.WaitForComponents<MudTextField<string>>().Single(f => f.Instance.Label == "Page background (image or video)");
         await card.InvokeAsync(() => background.Instance.ValueChanged.InvokeAsync("/media/sky.jpg"));
         await card.InvokeAsync(() => card.Find("[data-layout='Slide']").ClickAsync(new()));
@@ -132,9 +132,9 @@ public sealed class LoadingScreenAndPublicMediaTests : ClientTestBase
         var frame = dialogs.WaitForElement("[data-testid='sign-in-preview-frame']");
         var src = frame.GetAttribute("src")!;
         src.ShouldStartWith("/bff/sign-in-preview?design=");
-        var design = JsonSerializer.Deserialize<SignInDesign>(Uri.UnescapeDataString(src[(src.IndexOf('=') + 1)..]), JsonSerializerOptions.Web)!;
-        design.Layout.ShouldBe(SignInLayouts.Slide);
-        design.BackgroundUrl.ShouldBe("/media/sky.jpg");
+        var shown = JsonSerializer.Deserialize<SignInDesign>(Uri.UnescapeDataString(src[(src.IndexOf('=') + 1)..]), JsonSerializerOptions.Web)!;
+        shown.Layout.ShouldBe(SignInLayouts.Slide);
+        shown.BackgroundUrl.ShouldBe("/media/sky.jpg");
         frame.GetAttribute("sandbox").ShouldBe("allow-scripts allow-same-origin");
         await Api.DidNotReceiveWithAnyArgs().SaveAppConfigurationAsync(default!, default, default);
     }

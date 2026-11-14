@@ -6,14 +6,17 @@ using Coworkee.Client.Blazor.Components;
 using Coworkee.Client.Blazor.Pages.Admin;
 using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.Configuration;
+using Coworkee.Contracts.Files;
+using Coworkee.Contracts.Identity;
+using Coworkee.Contracts.Localization;
 using Coworkee.Contracts.Realtime;
 using Coworkee.Contracts.Settings;
 using Coworkee.Contracts.Theming;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
+using MudBlazor.Extensions.Components;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using static Coworkee.Client.Blazor.Tests.SettingsFormTests;
@@ -40,92 +43,227 @@ public sealed class SignInConfigurationTests : ClientTestBase
         Api.GetAppConfigurationAsync(SignInDesign.Section, Arg.Any<CancellationToken>()).Returns(Design(new SignInDesign { Layout = SignInLayouts.Card }));
         Api.SaveAppConfigurationAsync(SignInDesign.Section, Arg.Any<JsonElement>(), Arg.Any<CancellationToken>())
             .Returns(call => Design(call.Arg<JsonElement>().Deserialize<SignInDesign>(JsonSerializerOptions.Web)!));
-        JSInterop.Setup<MudBlazor.Extensions.Core.CssVariable[]>("MudExCssHelper.getCssVariables", _ => true).SetResult([]);
+        Api.GetMyPermissionsAsync(default).ReturnsForAnyArgs([FilePermissions.View]);
         Services.AddSingleton(new ClientAppConfiguration(CoworkeeAppSettings.Section, "App settings", typeof(CoworkeeAppSettings), null, IsAppSettings: true));
     }
 
     [Fact]
-    public void Gathers_the_sign_in_settings_the_registration_part_of_the_app_settings_and_the_sign_in_design()
+    public void Arranges_the_settings_by_topic_in_tabs_with_the_registration_and_the_design_of_the_app_configuration()
     {
         var page = RenderPage();
 
-        page.WaitForAssertion(() => Labels(page).ShouldContain("Sign-in methods"));
+        page.WaitForAssertion(() => Tabs(page).ShouldBe(["Methods", "Security", "Registration", "Appearance", "Texts"]));
+        page.Find("[data-testid='sign-in-login-mode-toggle'] [data-mode='Both']");
         Labels(page).ShouldContain("Passkeys");
-        Labels(page).ShouldContain("Sessions per user");
-        Labels(page).ShouldContain("Minimum password length");
-        Labels(page).ShouldContain("Allow self registration");
-        Labels(page).ShouldNotContain("Cache minutes");
+
+        Open(page, "Security");
         Input(page, "Sessions per user").GetAttribute("value").ShouldBe("3");
+        Labels(page).ShouldContain("Minimum password length");
+        page.Find("[data-testid='sign-in-password'] [data-setting='Account.Password.RequiredLength'] .mud-input-adornment").TextContent.Trim().ShouldBe("characters");
+        // a setting of the two groups the page does not arrange itself still shows, other groups do not
+        page.Find("[data-testid='sign-in-more']").TextContent.ShouldContain("Act within one role");
+        Labels(page).ShouldNotContain("Cache minutes");
 
-        // the registration of the app settings, nothing else of them
-        page.WaitForAssertion(() => page.Find("[data-testid='sign-in-registration']").InnerHtml.ShouldContain("*@acme.test"));
-        Labels(page).ShouldContain(nameof(RegistrationOptions.RequireAddress));
-        Labels(page).ShouldContain(nameof(RegistrationOptions.Documents));
-        page.FindAll("[data-testid='sign-in-registration'] input").Select(i => i.GetAttribute("value")).ShouldNotContain("7");
+        Open(page, "Registration");
+        Labels(page).ShouldContain("Allow self registration");
+        Input(page, "Ask for the address").HasAttribute("checked").ShouldBeTrue();
+        page.Find("[data-testid='sign-in-allowed-emails']").TextContent.ShouldContain("*@acme.test");
+        page.Find("[data-testid='sign-in-documents-none']");
 
-        page.Find("[data-testid='sign-in-design']");
-        page.WaitForAssertion(() => Labels(page).ShouldContain(nameof(SignInDesign.ShowAppName)));
+        Open(page, "Appearance");
+        page.Find("[data-testid='sign-in-design'] [data-layout='Card']").GetAttribute("aria-checked").ShouldBe("true");
+
+        Open(page, "Texts");
+        Labels(page).ShouldContain("Show the app name");
         Labels(page).ShouldContain("Title");
         Labels(page).ShouldContain("Notice");
-        Labels(page).ShouldNotContain("Layout");
     }
 
     [Fact]
-    public void Without_an_external_provider_the_sign_in_methods_do_not_show()
+    public void Without_an_external_provider_there_is_no_method_to_choose()
     {
         Definitions(loginMode: false);
 
         var page = RenderPage();
 
-        page.WaitForAssertion(() => Labels(page).ShouldContain("Passkeys"));
-        Labels(page).ShouldNotContain("Sign-in methods");
+        page.WaitForAssertion(() => page.Find("[data-testid='sign-in-no-provider']"));
+        page.FindAll("[data-testid='sign-in-login-mode-toggle']").ShouldBeEmpty();
+        Labels(page).ShouldContain("Passkeys");
     }
 
     [Fact]
-    public void A_mode_the_host_fixes_shows_read_only_with_a_hint()
+    public void A_mode_the_host_fixes_shows_selected_and_read_only_with_a_hint()
     {
-        Definitions(fixedMode: nameof(LoginMode.Both));
+        Definitions(fixedMode: nameof(LoginMode.External));
 
         var page = RenderPage();
 
-        page.WaitForAssertion(() => page.Markup.ShouldContain("The host fixes Both in its configuration; the stored value applies once it no longer does."));
-        page.FindAll(".mud-input-control.mud-disabled, .mud-disabled").ShouldNotBeEmpty();
+        page.WaitForAssertion(() => page.Find("[data-testid='sign-in-login-mode-fixed']").TextContent
+            .ShouldContain("The host fixes External in its configuration; the stored value applies once it no longer does."));
+        var toggle = page.FindComponent<MudToggleGroup<string>>().Instance;
+        toggle.Disabled.ShouldBeTrue();
+        toggle.Value.ShouldBe(nameof(LoginMode.External));
     }
 
     [Fact]
-    public async Task Saves_settings_as_settings_and_the_registration_and_texts_as_app_configuration()
+    public async Task Saving_sends_the_changed_settings_under_their_keys_and_leaves_the_app_configuration_alone()
     {
         var page = RenderPage();
-        page.WaitForAssertion(() => Input(page, "Sessions per user"));
-        page.WaitForAssertion(() => page.FindComponents<AppConfigurationEditor<SignInDesign>>().ShouldHaveSingleItem());
-        page.WaitForAssertion(() => page.FindComponents<AppConfigurationEditor<CoworkeeAppSettings>>().ShouldHaveSingleItem());
+        page.WaitForAssertion(() => Tabs(page).ShouldContain("Security"));
+        page.Find("[data-testid='sign-in-save']").HasAttribute("disabled").ShouldBeTrue();
 
+        Open(page, "Security");
         Input(page, "Sessions per user").Change("5");
-        await page.InvokeAsync(() => page.FindComponent<SettingsForm>().Instance.SaveAsync());
+        page.Find("[data-testid='sign-in-dirty']");
+        await page.Find("[data-testid='sign-in-save']").ClickAsync(new());
+
         await Api.Received(1).SetSettingsAsync(SettingScope.Global,
             Arg.Is<IReadOnlyDictionary<string, string?>>(c => c.Count == 1 && c[AuthSettings.MaxSessionsPerUser] == "5"), Arg.Any<CancellationToken>());
-
-        // the other app settings go back unchanged
-        await page.InvokeAsync(() => page.FindComponent<AppConfigurationEditor<CoworkeeAppSettings>>().Instance.SaveAsync());
-        await Api.Received(1).SaveAppConfigurationAsync(CoworkeeAppSettings.Section, Arg.Is<JsonElement>(v =>
-            v.GetProperty("registration").GetProperty("requireAddress").GetBoolean() && v.GetProperty("jobs").GetProperty("workerCount").GetInt32() == 7), Arg.Any<CancellationToken>());
-
-        Input(page, "Title").Change("Welcome aboard");
-        await page.InvokeAsync(() => page.FindComponent<AppConfigurationEditor<SignInDesign>>().Instance.SaveAsync());
-        await Api.Received(1).SaveAppConfigurationAsync(SignInDesign.Section, Arg.Is<JsonElement>(v =>
-            v.GetProperty("texts").GetProperty("title").GetString() == "Welcome aboard" && v.GetProperty("layout").GetString() == SignInLayouts.Card), Arg.Any<CancellationToken>());
+        await Api.DidNotReceiveWithAnyArgs().SaveAppConfigurationAsync(default!, default, default);
+        page.WaitForAssertion(() => page.FindAll("[data-testid='sign-in-dirty']").ShouldBeEmpty());
     }
 
     [Fact]
-    public void Another_organisation_gets_its_own_session_settings_and_no_app_configuration()
+    public async Task A_login_mode_and_a_switch_are_saved_as_their_settings()
+    {
+        var page = RenderPage();
+        page.WaitForAssertion(() => page.Find("[data-testid='sign-in-login-mode-toggle']"));
+
+        await page.InvokeAsync(() => page.FindComponent<MudToggleGroup<string>>().Instance.ValueChanged.InvokeAsync(nameof(LoginMode.Internal)));
+        Input(page, "Passkeys").Change(false);
+        await page.Find("[data-testid='sign-in-save']").ClickAsync(new());
+
+        await Api.Received(1).SetSettingsAsync(SettingScope.Global, Arg.Is<IReadOnlyDictionary<string, string?>>(c =>
+            c.Count == 2 && c[AuthSettings.LoginMode] == nameof(LoginMode.Internal) && c[AuthSettings.PasskeysEnabled] == "false"), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task The_registration_goes_back_inside_the_unchanged_app_settings()
+    {
+        var page = RenderPage();
+        page.WaitForAssertion(() => Tabs(page).ShouldContain("Registration"));
+        Open(page, "Registration");
+
+        Input(page, "Ask for the address").Change(false);
+        await page.InvokeAsync(() => page.FindComponent<MudExTagField<string>>().Instance.ValuesChanged.InvokeAsync(["*@acme.test", "*@beta.test"]));
+        await page.Find("[data-testid='sign-in-document-add']").ClickAsync(new());
+        page.Find("[data-testid='sign-in-document-slot'] input").Change("Passport");
+        await page.Find("[data-testid='sign-in-save']").ClickAsync(new());
+
+        await Api.Received(1).SaveAppConfigurationAsync(CoworkeeAppSettings.Section, Arg.Is<JsonElement>(v =>
+            !v.GetProperty("registration").GetProperty("requireAddress").GetBoolean()
+            && v.GetProperty("registration").GetProperty("allowedEmails").GetArrayLength() == 2
+            && v.GetProperty("registration").GetProperty("documents")[0].GetProperty("name").GetString() == "Passport"
+            && v.GetProperty("jobs").GetProperty("workerCount").GetInt32() == 7), Arg.Any<CancellationToken>());
+        await Api.DidNotReceiveWithAnyArgs().SetSettingsAsync(default, default!, default);
+        await Api.DidNotReceive().SaveAppConfigurationAsync(SignInDesign.Section, Arg.Any<JsonElement>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Texts_are_saved_with_the_design_for_every_language_and_per_language()
+    {
+        Localization.GetLanguagesAsync(Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            .Returns([new LanguageDto(null, "en", "English", true, true), new LanguageDto(null, "de", "Deutsch", true, false)]);
+        await Services.GetRequiredService<Blazor.Localization.CoworkeeLocalizer>().RefreshAsync();
+        var page = RenderPage();
+        page.WaitForAssertion(() => Tabs(page).ShouldContain("Texts"));
+        Open(page, "Texts");
+
+        page.Find("input[data-testid='sign-in-text-title'], [data-testid='sign-in-text-title'] input").Change("Welcome aboard");
+        await page.Find("[data-testid='sign-in-text-languages'] [data-culture='de']").ClickAsync(new());
+        page.WaitForAssertion(() => page.Find("input[data-testid='sign-in-text-title'], [data-testid='sign-in-text-title'] input").GetAttribute("placeholder").ShouldBe("Welcome aboard"));
+        page.Find("input[data-testid='sign-in-text-title'], [data-testid='sign-in-text-title'] input").Change("Willkommen");
+        await page.Find("[data-testid='sign-in-save']").ClickAsync(new());
+
+        await Api.Received(1).SaveAppConfigurationAsync(SignInDesign.Section, Arg.Is<JsonElement>(v =>
+            v.GetProperty("texts").GetProperty("title").GetString() == "Welcome aboard"
+            && v.GetProperty("texts").GetProperty("titles").GetProperty("de").GetString() == "Willkommen"
+            && v.GetProperty("layout").GetString() == SignInLayouts.Card), Arg.Any<CancellationToken>());
+        await Api.DidNotReceive().SaveAppConfigurationAsync(CoworkeeAppSettings.Section, Arg.Any<JsonElement>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task The_design_card_and_the_texts_share_one_design_so_saving_one_keeps_the_other()
+    {
+        var page = RenderPage();
+        page.WaitForAssertion(() => Tabs(page).ShouldContain("Appearance"));
+
+        Open(page, "Appearance");
+        await page.Find("[data-layout='Split']").ClickAsync(new());
+        Open(page, "Texts");
+        page.Find("textarea[data-testid='sign-in-text-notice'], [data-testid='sign-in-text-notice'] textarea").Change("Maintenance tonight");
+        await page.Find("[data-testid='sign-in-save']").ClickAsync(new());
+
+        await Api.Received(1).SaveAppConfigurationAsync(SignInDesign.Section, Arg.Is<JsonElement>(v =>
+            v.GetProperty("layout").GetString() == SignInLayouts.Split && v.GetProperty("texts").GetProperty("notice").GetString() == "Maintenance tonight"),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public void Discarding_restores_what_was_loaded()
+    {
+        var page = RenderPage();
+        page.WaitForAssertion(() => Tabs(page).ShouldContain("Security"));
+        Open(page, "Security");
+
+        Input(page, "Sessions per user").Change("9");
+        page.Find("[data-testid='sign-in-dirty']");
+        page.Find("[data-testid='sign-in-discard']").Click();
+
+        page.WaitForAssertion(() => Input(page, "Sessions per user").GetAttribute("value").ShouldBe("3"));
+        page.FindAll("[data-testid='sign-in-dirty']").ShouldBeEmpty();
+        Api.DidNotReceiveWithAnyArgs().SetSettingsAsync(default, default!, default);
+    }
+
+    [Fact]
+    public void Locked_and_hidden_parts_of_the_registration_are_read_only_or_absent()
+    {
+        Api.GetAppConfigurationAsync(CoworkeeAppSettings.Section, Arg.Any<CancellationToken>()).Returns(AppSettings(new CoworkeeAppSettings(),
+            locked: ["Registration:AllowedEmails"], hidden: ["Registration:Documents"]));
+
+        var page = RenderPage();
+        page.WaitForAssertion(() => Tabs(page).ShouldContain("Registration"));
+        Open(page, "Registration");
+
+        page.FindComponent<MudExTagField<string>>().Instance.Disabled.ShouldBeTrue();
+        page.Find("[data-testid='sign-in-allowed-emails']").TextContent.ShouldContain("Set in the configuration");
+        page.FindAll("[data-testid='sign-in-documents']").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Without_the_files_module_the_documents_are_disabled_with_a_hint()
+    {
+        Api.GetMyPermissionsAsync(default).ReturnsForAnyArgs([]);
+        Api.GetPermissionDefinitionsAsync(Arg.Any<CancellationToken>()).Returns([new PermissionGroupDto("Settings", "Settings", [])]);
+
+        var page = RenderPage();
+        page.WaitForAssertion(() => Tabs(page).ShouldContain("Registration"));
+        Open(page, "Registration");
+
+        page.Find("[data-testid='sign-in-documents-unavailable']");
+        page.Find("[data-testid='sign-in-document-add']").HasAttribute("disabled").ShouldBeTrue();
+        page.Find("input[data-testid='sign-in-require-documents'], [data-testid='sign-in-require-documents'] input").HasAttribute("disabled").ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Another_organisation_gets_only_its_own_session_settings()
     {
         var page = RenderPage(system: false);
 
-        page.WaitForAssertion(() => Labels(page).ShouldContain("Sessions per user"));
+        page.WaitForAssertion(() => Tabs(page).ShouldBe(["Security"]));
+        Labels(page).ShouldContain("Sessions per user");
         Labels(page).ShouldNotContain("Passkeys");
-        page.FindAll("[data-testid='sign-in-registration']").ShouldBeEmpty();
-        page.FindAll("[data-testid='sign-in-appearance']").ShouldBeEmpty();
         Api.DidNotReceive().GetAppConfigurationAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public void The_appearance_stays_away_when_the_api_refuses_the_design()
+    {
+        Api.GetAppConfigurationAsync(SignInDesign.Section, Arg.Any<CancellationToken>()).ThrowsAsync(new Api.ApiException(403, "configuration.system_only", null));
+
+        var page = RenderPage();
+
+        page.WaitForAssertion(() => Tabs(page).ShouldBe(["Methods", "Security", "Registration"]));
     }
 
     [Fact]
@@ -135,16 +273,16 @@ public sealed class SignInConfigurationTests : ClientTestBase
 
         var page = RenderPage();
 
-        page.WaitForAssertion(() => page.Find("[data-testid='sign-in-registration']"));
-        page.FindAll("[data-testid='sign-in-appearance']").ShouldBeEmpty();
+        page.WaitForAssertion(() => Tabs(page).ShouldBe(["Methods", "Security", "Registration"]));
+        Api.DidNotReceive().GetAppConfigurationAsync(SignInDesign.Section, Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task A_design_saved_elsewhere_reloads_the_design_but_not_the_app_settings()
     {
         var page = RenderPage();
-        page.WaitForAssertion(() => page.FindComponents<AppConfigurationEditor<SignInDesign>>().ShouldHaveSingleItem());
-        page.WaitForAssertion(() => page.FindComponents<AppConfigurationEditor<CoworkeeAppSettings>>().ShouldHaveSingleItem());
+        page.WaitForAssertion(() => Tabs(page).ShouldContain("Appearance"));
+        Open(page, "Appearance");
         Api.GetAppConfigurationAsync(SignInDesign.Section, Arg.Any<CancellationToken>()).Returns(Design(new SignInDesign { Layout = SignInLayouts.Split, ShowAppName = false }));
         Api.ClearReceivedCalls();
 
@@ -152,15 +290,15 @@ public sealed class SignInConfigurationTests : ClientTestBase
             new EntityChangedPayload("ConfigurationEntry", SignInDesign.Section + ":Layout", EntityChangedPayload.Updated, ["Value"])));
 
         page.WaitForAssertion(() => page.Find("[data-layout='Split']").GetAttribute("aria-checked").ShouldBe("true"));
-        page.WaitForAssertion(() => Input(page, nameof(SignInDesign.ShowAppName)).HasAttribute("checked").ShouldBeFalse());
         await Api.DidNotReceive().GetAppConfigurationAsync(CoworkeeAppSettings.Section, Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task A_setting_saved_elsewhere_shows_unless_the_form_holds_own_changes()
+    public async Task A_setting_saved_elsewhere_shows_unless_the_page_holds_own_changes()
     {
         var page = RenderPage();
-        page.WaitForAssertion(() => Input(page, "Sessions per user").GetAttribute("value").ShouldBe("3"));
+        page.WaitForAssertion(() => Tabs(page).ShouldContain("Security"));
+        Open(page, "Security");
         Api.GetSettingsAsync(SettingScope.Global, Arg.Any<CancellationToken>()).Returns([new SettingValueDto(AuthSettings.MaxSessionsPerUser, "4", true)]);
 
         await page.InvokeAsync(() => Services.GetRequiredService<FakeRealtimeConnection>().Push(SettingTopics.Global));
@@ -173,30 +311,28 @@ public sealed class SignInConfigurationTests : ClientTestBase
     }
 
     [Fact]
-    public async Task The_design_card_shows_a_thumbnail_per_layout_and_saves_the_installation_wide_design()
+    public async Task Restoring_the_design_defaults_resets_its_section_after_asking()
     {
+        var dialogs = Render<MudDialogProvider>();
+        Api.ResetAppConfigurationAsync(SignInDesign.Section, Arg.Any<CancellationToken>()).Returns(Design(new SignInDesign()));
         var page = RenderPage();
-        page.WaitForAssertion(() => page.FindAll("[data-testid='sign-in-layout']").Count.ShouldBe(SignInLayouts.All.Count));
-        page.Find("[data-layout='Card']").GetAttribute("aria-checked").ShouldBe("true");
+        page.WaitForAssertion(() => Tabs(page).ShouldContain("Appearance"));
+        Open(page, "Appearance");
 
-        await page.Find("[data-layout='Split']").ClickAsync(new());
-        page.Find("input[data-testid='sign-in-media'], [data-testid='sign-in-media'] input").Change("/media/welcome.jpg");
-        await page.Find("[data-testid='sign-in-save']").ClickAsync(new());
+        var resetting = page.InvokeAsync(() => page.Find("[data-testid='sign-in-reset']").ClickAsync(new()));
+        dialogs.WaitForAssertion(() => dialogs.FindAll("button").Any(b => b.TextContent.Trim() == "Restore").ShouldBeTrue());
+        await dialogs.FindAll("button").First(b => b.TextContent.Trim() == "Restore").ClickAsync(new());
+        await resetting;
 
-        await Api.Received(1).SaveAppConfigurationAsync(SignInDesign.Section,
-            Arg.Is<JsonElement>(v => v.GetProperty("layout").GetString() == SignInLayouts.Split && v.GetProperty("mediaUrl").GetString() == "/media/welcome.jpg"),
-            Arg.Any<CancellationToken>());
+        await Api.Received(1).ResetAppConfigurationAsync(SignInDesign.Section, Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public void The_design_card_stays_hidden_when_the_user_may_not_change_the_app_configuration()
+    public void The_save_bar_sits_in_the_sticky_tab_bar()
     {
-        Api.GetAppConfigurationAsync(SignInDesign.Section, Arg.Any<CancellationToken>()).ThrowsAsync(new Api.ApiException(403, "configuration.system_only", null));
-
         var page = RenderPage();
 
-        page.WaitForAssertion(() => page.Find("[data-testid='sign-in-registration']"));
-        page.FindAll("[data-testid='sign-in-design']").ShouldBeEmpty();
+        page.WaitForAssertion(() => page.Find("[data-testid='sticky-tabs'] .mud-tabs-tabbar [data-testid='sign-in-save-bar']"));
     }
 
     [Theory]
@@ -229,6 +365,10 @@ public sealed class SignInConfigurationTests : ClientTestBase
             new ClaimsPrincipal(new ClaimsIdentity([new Claim(SystemTenant.ClaimType, system ? "true" : "false")], "test"))))));
     }
 
+    private static List<string> Tabs(IRenderedComponent<SignInConfiguration> page) => [.. page.FindAll(".mud-tab").Select(t => t.TextContent.Trim())];
+
+    private static void Open(IRenderedComponent<SignInConfiguration> page, string tab) => page.FindAll(".mud-tab").First(t => t.TextContent.Trim() == tab).Click();
+
     private void Definitions(bool loginMode = true, string? fixedMode = null)
     {
         List<SettingDefinitionDto> security =
@@ -236,6 +376,7 @@ public sealed class SignInConfigurationTests : ClientTestBase
             new(PasswordSettings.RequiredLength, "Minimum password length", null, SettingType.Int, "8", Global, null),
             new(AuthSettings.PasskeysEnabled, "Passkeys", null, SettingType.Bool, "true", Global, null),
             new(AuthSettings.MaxSessionsPerUser, "Sessions per user", null, SettingType.Int, "0", Both, null),
+            new("Account.ActiveRole", "Act within one role", null, SettingType.Bool, "true", Global, null),
         ];
         if (loginMode)
         {
@@ -250,8 +391,9 @@ public sealed class SignInConfigurationTests : ClientTestBase
         ]);
     }
 
-    private static AppConfigurationValuesDto AppSettings(CoworkeeAppSettings settings) =>
-        new(CoworkeeAppSettings.Section, JsonSerializer.SerializeToElement(settings, JsonSerializerOptions.Web), JsonSerializer.SerializeToElement(new CoworkeeAppSettings(), JsonSerializerOptions.Web), []);
+    private static AppConfigurationValuesDto AppSettings(CoworkeeAppSettings settings, IReadOnlyList<string>? locked = null, IReadOnlyList<string>? hidden = null) =>
+        new(CoworkeeAppSettings.Section, JsonSerializer.SerializeToElement(settings, JsonSerializerOptions.Web), JsonSerializer.SerializeToElement(new CoworkeeAppSettings(), JsonSerializerOptions.Web), [],
+            locked, hidden);
 
     private static AppConfigurationValuesDto Design(SignInDesign design) =>
         new(SignInDesign.Section, JsonSerializer.SerializeToElement(design, JsonSerializerOptions.Web), JsonSerializer.SerializeToElement(new SignInDesign(), JsonSerializerOptions.Web), []);

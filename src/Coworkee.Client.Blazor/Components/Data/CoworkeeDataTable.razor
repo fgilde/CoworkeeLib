@@ -35,7 +35,7 @@
     .cw-group-pager .mud-table-pagination-spacer { display: none; }
     .cw-grouped-result > .mud-table-container > table > tbody > tr > td { padding: 0 !important; }
     .cw-table-paneled { display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 16px; align-items: start; }
-    .cw-table-facets { position: sticky; top: 72px; max-height: calc(100vh - 96px); overflow-y: auto; padding-right: 2px; }
+    .cw-table-facets { position: sticky; top: calc(var(--cw-sticky-top, 64px) + 8px); max-height: calc(100vh - var(--cw-sticky-top, 64px) - 32px); overflow-y: auto; padding-right: 2px; }
     @@media (max-width: 960px) { .cw-table-paneled { grid-template-columns: 1fr; } .cw-table-facets { position: static; max-height: none; } }
     .cw-table-main { min-width: 0; }
     /* the rows scroll inside the table, so the horizontal scrollbar, the headers and the pager stay in view; the whole head sticks, as the group zone is a row of it */

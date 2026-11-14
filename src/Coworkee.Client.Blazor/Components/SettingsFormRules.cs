@@ -23,6 +23,8 @@ public static class SettingsFormRules
     {
         [nameof(MudExObjectEditForm<object>.SingleExpand)] = false,
         [nameof(MudExObjectEditForm<object>.StickyToolbar)] = true,
+        // below the top app bar, or at the very top when the layout has none (HeaderStyles)
+        [nameof(MudExObjectEditForm<object>.StickyToolbarTop)] = "var(--cw-sticky-top, var(--mud-appbar-height))",
         [nameof(MudExObjectEditForm<object>.StickyActionBar)] = true,
         [nameof(MudExObjectEditForm<object>.AllowExport)] = true,
         [nameof(MudExObjectEditForm<object>.AllowImport)] = true,

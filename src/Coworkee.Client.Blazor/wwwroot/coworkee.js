@@ -150,15 +150,38 @@ export function onHotkey(dotnet, key) {
     return { dispose: () => document.removeEventListener('keydown', handler) };
 }
 
+// the tab bar of StickyMergeTabs sticks at its computed top (--cw-sticky-top: below the top app bar, 0 without one), so the state follows the layout:
+// "stuck" once the sentinel above it passed that line, "merged" once a sticky MudEx toolbar of the open panel reached it as well
 export function observeStuck(sentinel, root) {
-    const appbar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mud-appbar-height')) || 0;
-    const observer = new IntersectionObserver(([entry]) => root.toggleAttribute('stuck', entry.boundingClientRect.top < entry.rootBounds.top),
-        { threshold: 1, rootMargin: `-${appbar}px 0px 0px 0px` });
-    observer.observe(sentinel);
-    const matchToolbar = () => root.style.setProperty('--cw-stuck-height', `${root.querySelector('.mud-ex-toolbar-sticky')?.offsetHeight ?? 0}px`);
-    const resize = new ResizeObserver(matchToolbar);
+    let frame = 0;
+    const bar = () => root.querySelector(':scope > .mud-tabs > .mud-tabs-tabbar') ?? root;
+    const update = () => {
+        frame = 0;
+        const tabs = bar();
+        const toolbar = root.querySelector('.mud-ex-toolbar-sticky');
+        const top = parseFloat(getComputedStyle(tabs).top);
+        const sticky = getComputedStyle(tabs).position === 'sticky' && !Number.isNaN(top);
+        root.toggleAttribute('has-toolbar', !!toolbar);
+        root.toggleAttribute('stuck', sticky && sentinel.getBoundingClientRect().top < top);
+        root.toggleAttribute('merged', sticky && !!toolbar && toolbar.getBoundingClientRect().top <= top + 1);
+        root.style.setProperty('--cw-stuck-height', `${toolbar?.offsetHeight ?? 0}px`);
+        root.style.setProperty('--cw-stuck-tabs-width', `${root.hasAttribute('merged') ? tabs.offsetWidth : 0}px`);
+    };
+    const schedule = () => frame ||= requestAnimationFrame(update);
+    document.addEventListener('scroll', schedule, { capture: true, passive: true });
+    window.addEventListener('resize', schedule);
+    const resize = new ResizeObserver(schedule);
     resize.observe(root);
-    return { dispose: () => { observer.disconnect(); resize.disconnect(); } };
+    resize.observe(bar());
+    update();
+    return {
+        dispose: () => {
+            cancelAnimationFrame(frame);
+            document.removeEventListener('scroll', schedule, { capture: true });
+            window.removeEventListener('resize', schedule);
+            resize.disconnect();
+        },
+    };
 }
 
 export function submitOnEnter(element, dotnet) {
