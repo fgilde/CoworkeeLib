@@ -151,6 +151,9 @@ public sealed class PublishTests
         {
             written.ShouldNotContain("otel-collector");
             written.ShouldContain($"http://{CoworkeeApp.AzureCollectorName}:4318");
+            // nor keycloak:8080 (an app name answers on port 80 only): the auth server reaches the realm at Keycloak's public address, like the migrations
+            written.ShouldNotContain("http://keycloak:8080");
+            written.ShouldContain("Coworkee__Auth__External__Providers__keycloak__Authority");
         }
 
         // the services page of the deployment lists the tools at their public addresses

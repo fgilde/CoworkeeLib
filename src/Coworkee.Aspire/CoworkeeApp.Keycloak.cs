@@ -87,7 +87,9 @@ public sealed partial class CoworkeeApp
         auth.WaitFor(Keycloak)
             .WithSetting(s => s.Coworkee.Auth.External.Mode, options.LoginMode.ToString())
             .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].DisplayName, options.DisplayName)
-            .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].Authority, Publishing ? ReferenceExpression.Create($"{ContainerKeycloakAuthority()}") : KeycloakAuthority)
+            // the endpoint as each target resolves it, like the migrations reach it: http://keycloak:8080 in Docker Compose and Kubernetes,
+            // the public address on Container Apps, which resolves an app name on port 80 only (keycloak:8080 timed out there)
+            .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].Authority, KeycloakAuthority)
             .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].ClientId, authClient.ClientId)
             .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].ClientSecret, authClient.Secret)
             .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].RequireHttpsMetadata, false)
@@ -101,7 +103,7 @@ public sealed partial class CoworkeeApp
     private void PublishKeycloak(IResourceBuilder<KeycloakResource> keycloak)
     {
         keycloak.WithEnvironment("KC_PROXY_HEADERS", "xforwarded").WithEnvironment("KC_HTTP_ENABLED", "true");
-        ContainerKeycloakAuthority();
+        NameKeycloakByItsBrowserAddress();
         if (Migrations is not { } migrations)
         {
             return;

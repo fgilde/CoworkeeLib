@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Behoben
+
+- Anmeldung über Keycloak auf Azure Container Apps: Der Auth-Server fragte den Realm unter `http://keycloak:8080` an, was Container Apps nicht auflöst (ein App-Name antwortet nur auf Port 80), und antwortete nach dem Timeout mit 500. Er nimmt jetzt den Keycloak-Endpunkt so, wie ihn jedes Ziel auflöst, wie die Migrationen: `http://keycloak:8080` in Docker Compose und Kubernetes, die öffentliche Adresse auf Container Apps. Zum Übernehmen neu deployen.
+
 ## 0.0.1.87 (2026-11-14)
 
 ### Geändert
