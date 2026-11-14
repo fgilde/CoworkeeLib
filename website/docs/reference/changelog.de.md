@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Geändert
+
+- Die `.gitignore` des Templates ignoriert `.data/`, wo der App-Host den lokalen Blob-Speicher und SQLite-Dateien ablegt (`Coworkee.Aspire` `BlobRoot`); `coworkee update` ergänzt die Zeile in bestehenden Apps.
+
 ## 0.0.1.85 (2026-11-13)
 
 ### Geändert

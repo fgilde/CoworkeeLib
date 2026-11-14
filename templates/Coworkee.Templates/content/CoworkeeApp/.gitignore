@@ -7,3 +7,5 @@ TestResults/
 artifacts/
 **/observability/.generated/
 **/.coworkee/
+# local blob storage and SQLite files of the app host (Coworkee.Aspire BlobRoot)
+.data/

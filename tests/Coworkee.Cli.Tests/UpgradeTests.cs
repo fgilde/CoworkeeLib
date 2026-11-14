@@ -114,5 +114,23 @@ public sealed class UpgradeTests
         UpgradeRules.Apply(folder.Path, rules, dryRun: false).ShouldBeEmpty();
     }
 
+    [Theory]
+    [InlineData("bin/\nobj/\n")]
+    [InlineData("bin/\nobj/")]
+    [InlineData("bin/\r\nobj/\r\n\r\n")]
+    public void Update_ignores_the_local_data_folder_of_the_app_host_once(string gitignore)
+    {
+        using var folder = new TempFolder();
+        File.WriteAllText(folder.File(".gitignore"), gitignore);
+        var rules = UpgradeRules.Between("0.0.1.85", "0.0.1.86");
+
+        UpgradeRules.Apply(folder.Path, rules, dryRun: false).Select(c => c.File).ShouldBe([".gitignore"]);
+        var text = Read(folder.Path, ".gitignore");
+        text.ShouldStartWith(gitignore.TrimEnd());
+        text.ShouldEndWith("\n.data/\n");
+        text.Split(".data/").Length.ShouldBe(2, "added once");
+        UpgradeRules.Apply(folder.Path, rules, dryRun: false).ShouldBeEmpty();
+    }
+
     private static string Read(string root, string path) => File.ReadAllText(Path.Combine(root, path));
 }

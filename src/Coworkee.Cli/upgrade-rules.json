@@ -885,6 +885,16 @@
         { "id": "Nextended.Core", "version": "10.1.64" },
         { "id": "Nextended.Web", "version": "10.1.64" }
       ]
+    },
+    {
+      "version": "0.0.1.86",
+      "breaking": [
+        ".data/ (the app host's local blob storage and SQLite files) belongs in .gitignore; coworkee update adds the line."
+      ],
+      "needsMigration": false,
+      "renames": [
+        { "find": "(?s)\\A(.*?)\\s*\\z", "replace": "$1\n\n# local blob storage and SQLite files of the app host (Coworkee.Aspire BlobRoot)\n.data/\n", "files": [ ".gitignore" ], "unless": ".data/", "description": ".data/ (local blob storage of the app host) in .gitignore" }
+      ]
     }
   ]
 }
