@@ -1,0 +1,7 @@
+@* the real sign-in page of the auth server with the unsaved design; forms stay off (sandbox without allow-forms), so nobody signs in here *@
+<MudDialog ContentClass="d-flex flex-column">
+    <DialogContent>
+        <iframe src="@Src" title="@L["Sign-in page"]" sandbox="allow-scripts allow-same-origin" style="width:100%;height:calc(100vh - 120px);min-height:480px;border:0"
+                data-testid="sign-in-preview-frame"></iframe>
+    </DialogContent>
+</MudDialog>

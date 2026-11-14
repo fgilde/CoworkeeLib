@@ -4,6 +4,10 @@
 
 ## Unveröffentlicht
 
+### Hinzugefügt
+
+- Anmeldeseite: ein optionaler Seitenhintergrund (`Coworkee:Auth:Design:BackgroundUrl`, Bild oder Video, mit `BackgroundDim` zum Abdunkeln) hinter der ganzen Seite in jedem Layout, unabhängig vom Medium des Feldes, auch im Keycloak-Login-Theme und in `options.SignIn` des Aspire-AppHosts. Die Karte auf der Themes-Seite bearbeitet ihn (mit Dateiauswahl) und bekommt einen Knopf *Vorschau*, der die echte Anmeldeseite mit dem ungespeicherten Design in einem Rahmen zeigt. Die Content Security Policy der Web-App erlaubt dafür die Origin des Auth-Servers in `frame-src`; Apps mit eigener `ContentSecurityPolicy` ergänzen sie für die Vorschau selbst. Videos auf den Kontoseiten stehen still, wenn das System reduzierte Bewegung verlangt. Gespeicherte Designs ohne die neuen Werte sehen aus wie bisher; Apps ändern nichts. Siehe [Anmeldeseiten](../security/sign-in-pages.md).
+
 ### Geändert
 
 - Die `.gitignore` des Templates ignoriert `.data/`, wo der App-Host den lokalen Blob-Speicher und SQLite-Dateien ablegt (`Coworkee.Aspire` `BlobRoot`); `coworkee update` ergänzt die Zeile in bestehenden Apps.

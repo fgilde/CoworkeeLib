@@ -2158,5 +2158,9 @@
   "Other groups": "Другие группы",
   "Showing the first {0} matches. Type more to narrow them down.": "Показаны первые {0} совпадений. Введите больше, чтобы сузить.",
   "Collapse": "Свернуть",
-  "Expand": "Развернуть"
+  "Expand": "Развернуть",
+  "Page background (image or video)": "Фон страницы (изображение или видео)",
+  "Behind the whole page in every layout; empty keeps the theme's background.": "За всей страницей в каждом макете; пустое значение сохраняет фон темы.",
+  "Choose the page background from files": "Выбрать фон страницы из файлов",
+  "Darken background (%)": "Затемнить фон (%)"
 }

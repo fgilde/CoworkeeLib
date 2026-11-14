@@ -20,5 +20,9 @@ public sealed record AuthBranding(string AppName, string? LogoUrl, string? Css, 
     public string LayoutView(IRazorViewEngine views, ActionContext context) =>
         views.FindPage(context, "_Design" + Layout).Page is not null ? "_Design" + Layout : "_Design" + SignInLayouts.Default;
 
-    public bool MediaIsVideo => Design.MediaUrl is { } url && VideoExtensions.Any(e => url.Split('?', '#')[0].EndsWith(e, StringComparison.OrdinalIgnoreCase));
+    public bool MediaIsVideo => IsVideo(Design.MediaUrl);
+
+    public bool BackgroundIsVideo => IsVideo(Design.BackgroundUrl);
+
+    private static bool IsVideo(string? url) => url is not null && VideoExtensions.Any(e => url.Split('?', '#')[0].EndsWith(e, StringComparison.OrdinalIgnoreCase));
 }

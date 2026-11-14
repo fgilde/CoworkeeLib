@@ -16,6 +16,14 @@ public sealed class SignInDesign
 
     public SignInMediaSide? MediaSide { get; set; }
 
+    /// <summary>
+    /// Image or video (.mp4, .webm, .ogg) behind the whole page in every layout, independent of <see cref="MediaUrl"/>; empty keeps the theme's background.
+    /// </summary>
+    public string? BackgroundUrl { get; set; }
+
+    /// <summary>How much <see cref="BackgroundUrl"/> is darkened, 0 to 90 percent; empty is none.</summary>
+    public int? BackgroundDim { get; set; }
+
     /// <summary>Background of the app's loading screen; <see cref="LoadingScreenBackground.SignInMedia"/> shows <see cref="MediaUrl"/>.</summary>
     public LoadingScreenBackground? LoadingScreen { get; set; }
 }

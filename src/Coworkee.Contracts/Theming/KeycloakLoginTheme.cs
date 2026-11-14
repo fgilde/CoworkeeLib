@@ -132,12 +132,16 @@ public static partial class KeycloakLoginTheme
         var layout = design.Layout is { } named && SignInLayouts.All.FirstOrDefault(l => l.Equals(named, StringComparison.OrdinalIgnoreCase)) is { } known ? known : SignInLayouts.Default;
         var side = design.MediaSide ?? (layout == SignInLayouts.Slide ? SignInMediaSide.Right : SignInMediaSide.Left);
         var media = WebAddress(design.MediaUrl);
+        var background = WebAddress(design.BackgroundUrl);
         var config = new JsonObject
         {
             ["layout"] = layout.ToLowerInvariant(),
             ["side"] = side.ToString().ToLowerInvariant(),
             ["media"] = media,
-            ["video"] = media is not null && VideoExtensions.Any(e => media.Split('?', '#')[0].EndsWith(e, StringComparison.OrdinalIgnoreCase)),
+            ["video"] = IsVideo(media),
+            ["background"] = background,
+            ["backgroundVideo"] = IsVideo(background),
+            ["backgroundDim"] = Math.Clamp(design.BackgroundDim ?? 0, 0, 90),
             ["appName"] = content.AppName,
         };
         return $"var coworkee = {config.ToJsonString()};\n{StaticScript}";
@@ -145,6 +149,8 @@ public static partial class KeycloakLoginTheme
 
     private static string Declarations(IReadOnlyDictionary<string, string> palette, IReadOnlyDictionary<string, string> defaults) => string.Concat(Colors.Select(c =>
         $"{c.Variable}:{(palette.TryGetValue(c.Palette, out var value) && Color().IsMatch(value) ? value : defaults[c.Palette])};"));
+
+    private static bool IsVideo(string? url) => url is not null && VideoExtensions.Any(e => url.Split('?', '#')[0].EndsWith(e, StringComparison.OrdinalIgnoreCase));
 
     private static string? WebAddress(string? url) =>
         Uri.TryCreate(url, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp) ? uri.AbsoluteUri : null;
@@ -199,6 +205,11 @@ public static partial class KeycloakLoginTheme
         .pf-v5-c-button{--pf-v5-c-button--m-primary--Color:var(--cw-on-primary);--pf-v5-c-button--m-primary--hover--Color:var(--cw-on-primary);
         --pf-v5-c-button--m-primary--focus--Color:var(--cw-on-primary);--pf-v5-c-button--m-primary--active--Color:var(--cw-on-primary)}
         #kc-header-wrapper{color:var(--cw-text)!important;text-transform:none;letter-spacing:0;display:flex;flex-direction:column;align-items:center;gap:.75rem}
+        .cw-has-background{background:var(--cw-background)}
+        .cw-has-background body,.cw-has-background .pf-v5-c-login{background:transparent}
+        .cw-background{position:fixed;inset:0;z-index:-1;overflow:hidden;background:center/cover no-repeat}
+        .cw-background video{width:100%;height:100%;object-fit:cover}
+        .cw-background::after{content:"";position:absolute;inset:0;background:rgb(0 0 0 / var(--cw-dim,0%))}
         .cw-media{display:none}
         @media (min-width:768px){
         .cw-layout-split .cw-media,.cw-layout-slide .cw-media{display:flex;position:fixed;inset:0 auto 0 0;width:50vw;overflow:hidden;align-items:center;justify-content:center;
@@ -218,6 +229,28 @@ public static partial class KeycloakLoginTheme
         (function () {
           var root = document.documentElement;
           root.classList.add("cw-layout-" + coworkee.layout, "cw-side-" + coworkee.side);
+          if (coworkee.background) {
+            // behind the whole page, independent of the panel's media
+            root.classList.add("cw-has-background");
+            document.addEventListener("DOMContentLoaded", function () {
+              var back = document.createElement("div");
+              back.className = "cw-background";
+              back.setAttribute("aria-hidden", "true");
+              back.style.setProperty("--cw-dim", coworkee.backgroundDim + "%");
+              if (coworkee.backgroundVideo) {
+                var clip = document.createElement("video");
+                clip.src = coworkee.background;
+                clip.muted = clip.loop = clip.playsInline = true;
+                clip.autoplay = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+                back.appendChild(clip);
+              } else {
+                back.style.backgroundImage = "url(" + JSON.stringify(coworkee.background) + ")";
+              }
+
+              document.body.prepend(back);
+            });
+          }
+
           if (coworkee.layout === "card") {
             return;
           }

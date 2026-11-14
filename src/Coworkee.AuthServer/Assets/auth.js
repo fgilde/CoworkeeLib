@@ -66,6 +66,14 @@
     });
   }
 
+  // the panel's and the page's videos stand still when the system asks for reduced motion
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    for (const video of document.querySelectorAll('video[autoplay]')) {
+      video.removeAttribute('autoplay');
+      video.pause();
+    }
+  }
+
   // a page restored by the back button may still look busy
   window.addEventListener('pageshow', () => {
     for (const form of document.forms) delete form.dataset.busy;

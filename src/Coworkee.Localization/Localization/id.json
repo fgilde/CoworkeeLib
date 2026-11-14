@@ -2158,5 +2158,9 @@
   "Other groups": "Grup lain",
   "Showing the first {0} matches. Type more to narrow them down.": "Menampilkan {0} hasil pertama. Ketik lebih banyak untuk mempersempit.",
   "Collapse": "Ciutkan",
-  "Expand": "Bentangkan"
+  "Expand": "Bentangkan",
+  "Page background (image or video)": "Latar halaman (gambar atau video)",
+  "Behind the whole page in every layout; empty keeps the theme's background.": "Di belakang seluruh halaman di setiap tata letak; kosong mempertahankan latar tema.",
+  "Choose the page background from files": "Pilih latar halaman dari berkas",
+  "Darken background (%)": "Gelapkan latar (%)"
 }

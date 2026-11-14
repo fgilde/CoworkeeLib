@@ -2158,5 +2158,9 @@
   "Other groups": "Outros grupos",
   "Showing the first {0} matches. Type more to narrow them down.": "Mostrando os primeiros {0} resultados. Digite mais para refinar.",
   "Collapse": "Recolher",
-  "Expand": "Expandir"
+  "Expand": "Expandir",
+  "Page background (image or video)": "Fundo da página (imagem ou vídeo)",
+  "Behind the whole page in every layout; empty keeps the theme's background.": "Atrás de toda a página em todos os layouts; vazio mantém o fundo do tema.",
+  "Choose the page background from files": "Escolher o fundo da página nos arquivos",
+  "Darken background (%)": "Escurecer o fundo (%)"
 }

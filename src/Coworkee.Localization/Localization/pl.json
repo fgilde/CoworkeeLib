@@ -2158,5 +2158,9 @@
   "Other groups": "Inne grupy",
   "Showing the first {0} matches. Type more to narrow them down.": "Pokazano pierwsze {0} wyników. Wpisz więcej, aby je zawęzić.",
   "Collapse": "Zwiń",
-  "Expand": "Rozwiń"
+  "Expand": "Rozwiń",
+  "Page background (image or video)": "Tło strony (obraz lub wideo)",
+  "Behind the whole page in every layout; empty keeps the theme's background.": "Za całą stroną w każdym układzie; puste zachowuje tło motywu.",
+  "Choose the page background from files": "Wybierz tło strony z plików",
+  "Darken background (%)": "Przyciemnij tło (%)"
 }

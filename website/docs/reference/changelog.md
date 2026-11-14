@@ -4,6 +4,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Added
+
+- Sign-in page: an optional page background (`Coworkee:Auth:Design:BackgroundUrl`, image or video, with `BackgroundDim` to darken it) behind the whole page in every layout, independent of the panel's media, also in the Keycloak login theme and in the Aspire app host's `options.SignIn`. The card on the Themes page edits it (with the file picker) and gets a *Preview* button that shows the real sign-in page with the unsaved design in a frame. The web app's content security policy allows the auth server's origin in `frame-src` for it; apps with their own `ContentSecurityPolicy` add it themselves for the preview. Videos on the account pages stand still when the system asks for reduced motion. Stored designs without the new values look as before; apps change nothing. See [Sign-in pages](../security/sign-in-pages.md).
+
 ### Changed
 
 - The template's `.gitignore` ignores `.data/`, where the app host keeps the local blob storage and SQLite files (`Coworkee.Aspire` `BlobRoot`); `coworkee update` adds the line to existing apps.

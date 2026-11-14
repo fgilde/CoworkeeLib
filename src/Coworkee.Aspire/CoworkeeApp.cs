@@ -174,6 +174,11 @@ public sealed partial class CoworkeeApp
             {
                 service.WithSetting(s => s.Coworkee.Auth.Design.MediaUrl, ReferenceExpression.Create($"{redirect}{media}"));
             }
+
+            if (Options.SignIn.BackgroundUrl is { } background && background.StartsWith('/'))
+            {
+                service.WithSetting(s => s.Coworkee.Auth.Design.BackgroundUrl, ReferenceExpression.Create($"{redirect}{background}"));
+            }
         }
 
         foreach (var service in _loginTheme is null ? [] : _apis)
@@ -290,6 +295,16 @@ public sealed partial class CoworkeeApp
         if (Options.SignIn.MediaUrl is { } media && !media.StartsWith('/'))
         {
             service.WithSetting(s => s.Coworkee.Auth.Design.MediaUrl, media);
+        }
+
+        if (Options.SignIn.BackgroundUrl is { } background && !background.StartsWith('/'))
+        {
+            service.WithSetting(s => s.Coworkee.Auth.Design.BackgroundUrl, background);
+        }
+
+        if (Options.SignIn.BackgroundDim is { } dim)
+        {
+            service.WithSetting(s => s.Coworkee.Auth.Design.BackgroundDim, dim);
         }
     }
 

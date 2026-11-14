@@ -12,7 +12,9 @@ Three layouts ship with the library:
 | `Split` | full page: image or video on one side, the form on the other |
 | `Slide` (default) | a card with a colored panel next to the form. On the sign-in page the panel invites to create an account (when registration is on); on the registration page it moves to the other side and links back to sign-in. Browsers with cross-document view transitions animate the move. |
 
-The pages work without script. A small script adds what a browser alone cannot: a button that shows the password, a hint while Caps Lock is on, a *Last used* badge on the sign-in method chosen the last time (only when there are external providers) and one submit per form. Passkeys need a second small script, `passkey.js`; without it their button stays hidden (see [Passkeys](passkeys.md)). Animations stop when the system asks for reduced motion.
+The pages work without script. A small script adds what a browser alone cannot: a button that shows the password, a hint while Caps Lock is on, a *Last used* badge on the sign-in method chosen the last time (only when there are external providers) and one submit per form. Passkeys need a second small script, `passkey.js`; without it their button stays hidden (see [Passkeys](passkeys.md)). Animations stop and videos stand still when the system asks for reduced motion.
+
+**Page background.** Independent of the layout's image or video, `Design:BackgroundUrl` puts an image or video behind the whole page (cover, fixed while the page scrolls), optionally darkened with `Design:BackgroundDim`. `Card` and `Slide` show it around their card; `Split` shows it behind the form side, where the form then sits on a card of its own so it stays readable; the media side keeps its image or video. On phones `Card` and `Slide` fill the screen, so the background stays out of sight there. Own layouts get it as well, since `_Layout.cshtml` renders it. Without the value the pages look as before.
 
 ## Configuration
 
@@ -24,7 +26,9 @@ The design applies to the whole installation, whichever theme is the default. Th
     "Design": {
       "Layout": "Split",
       "MediaUrl": "/media/welcome.mp4",
-      "MediaSide": "Right"
+      "MediaSide": "Right",
+      "BackgroundUrl": "/media/sky.jpg",
+      "BackgroundDim": 30
     },
     "AllowDesignChanges": true
   }
@@ -36,6 +40,8 @@ The design applies to the whole installation, whichever theme is the default. Th
 | `Design:Layout` | `Card`, `Split`, `Slide` or the name of an own layout; unknown names fall back to `Slide` |
 | `Design:MediaUrl` | an image, or a video for `.mp4`, `.webm`, `.ogg`, `.ogv` and `.mov`; a path on the auth server or an `http(s)` address, whose origin enters `img-src` and `media-src` of the content security policy |
 | `Design:MediaSide` | `Left` (default) or `Right`; with `Slide` the panel of the registration page sits on the other side |
+| `Design:BackgroundUrl` | an image or video behind the whole page in every layout, same rules as `MediaUrl` (path or `http(s)` address, its origin enters the policy); empty keeps the theme's background |
+| `Design:BackgroundDim` | darkens the background, `0` to `90` percent (default `0`) |
 | `Design:LoadingScreen` | background of the app's [loading screen](../modules/theming.md#loading-screen): `Animated`, `SignInMedia` (the image or video above) or `Plain` |
 | `AllowDesignChanges` | `true` (default) lets administrators change the design on the Themes page; `false` keeps the configuration. Set it for the service that hosts the API, where the change is saved. |
 
@@ -43,7 +49,9 @@ The Aspire app host sets the same values with `options.SignIn` and serves a medi
 
 ## On the Themes page
 
-*Administration > Themes* starts with the card *Sign-in page*: a thumbnail per layout to pick from, the image or video address and its side, and the background of the app's [loading screen](../modules/theming.md#loading-screen). The folder button in the address field picks the image or video from the app's files; a private file is made public first (after a question), and the field gets its absolute public address, which the auth server, Keycloak and the loading screen can load without sign-in. *Save* stores the values as the app configuration section `Coworkee:Auth:Design` (table `cw.ConfigurationEntries`, see [App configuration](../modules/settings.md)); *Restore defaults* drops them, so the configured values apply again.
+*Administration > Themes* starts with the card *Sign-in page*: a thumbnail per layout to pick from, the image or video address and its side, the page background with its darkening, and the background of the app's [loading screen](../modules/theming.md#loading-screen). The folder buttons in the address fields pick the image or video from the app's files; a private file is made public first (after a question), and the field gets its absolute public address, which the auth server, Keycloak and the loading screen can load without sign-in. *Save* stores the values as the app configuration section `Coworkee:Auth:Design` (table `cw.ConfigurationEntries`, see [App configuration](../modules/settings.md)); *Restore defaults* drops them, so the configured values apply again.
+
+*Preview* opens the real sign-in page of the auth server with the values the card shows now, saved or not, in a full screen dialog. The dialog frames `/bff/sign-in-preview?design={json}`, which sends the frame on to the auth server's `/Account/Preview`; that address renders the sign-in page with the given design after the same checks as a saved one. It answers only a `GET` that the browser marks as frame load (`Sec-Fetch-Dest: iframe`), and only the origins of registered clients may frame it (`frame-ancestors`), so a link or another site cannot show a crafted design under the auth server's address. The frame runs without forms (`sandbox`), nobody signs in there, and the admin's own session stays as it is. The web app's policy allows the auth server's origin in `frame-src` for this. With Keycloak as sign-in the preview shows the Coworkee auth server's page, which Keycloak does not have; there the Keycloak card applies the design.
 
 The card shows for administrators of the system organisation who may manage settings (`Settings.Manage`), because the section applies to every organisation. It stays hidden for everyone else and while `AllowDesignChanges` is off.
 

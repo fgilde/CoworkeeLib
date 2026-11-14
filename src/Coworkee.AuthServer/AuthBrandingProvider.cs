@@ -12,7 +12,8 @@ using Microsoft.Extensions.Options;
 
 namespace Coworkee.AuthServer;
 
-public sealed partial class AuthBrandingProvider(IServiceProvider services, HybridCache cache, IOptionsMonitor<AuthServerOptions> options, Settings.ISettingProvider settings)
+public sealed partial class AuthBrandingProvider(
+    IServiceProvider services, HybridCache cache, IOptionsMonitor<AuthServerOptions> options, Settings.ISettingProvider settings, Microsoft.AspNetCore.Http.IHttpContextAccessor http)
 {
     private static readonly HybridCacheEntryOptions Entry = new() { Expiration = TimeSpan.FromMinutes(1), LocalCacheExpiration = TimeSpan.FromMinutes(1) };
 
@@ -22,10 +23,11 @@ public sealed partial class AuthBrandingProvider(IServiceProvider services, Hybr
         ("--signal", "Primary"), ("--on-signal", "PrimaryContrastText"), ("--accent", "Secondary"), ("--error", "Error"), ("--success", "Success"),
     ];
 
-    // the theme part waits for the cache; the design follows the configuration at once, which picks up changes made in the app with its next reload
+    // the theme part waits for the cache; the design follows the configuration at once, which picks up changes made in the app with its next reload.
+    // The preview of the Themes page brings an unsaved design for its one request (already checked).
     public async ValueTask<AuthBranding> GetAsync(CancellationToken cancellationToken) =>
         await cache.GetOrCreateInScopeAsync(services, new ImpersonatedUser(null, null), "coworkee:auth-branding", LoadAsync, Entry, cancellationToken: cancellationToken)
-            with { Design = Checked(options.CurrentValue.Design) };
+            with { Design = SignInPreview.Design(http.HttpContext) ?? Checked(options.CurrentValue.Design) };
 
     /// <summary>"light", "dark" or "system": the color mode setting of the user, else of the installation.</summary>
     public async Task<string> ModeAsync(CancellationToken cancellationToken) =>
@@ -57,9 +59,15 @@ public sealed partial class AuthBrandingProvider(IServiceProvider services, Hybr
     internal static SignInDesign Checked(SignInDesign design) => new()
     {
         Layout = design.Layout is { } layout && Name().IsMatch(layout) ? layout : null,
-        MediaUrl = design.MediaUrl is { } url && ((url.StartsWith('/') && !url.StartsWith("//", StringComparison.Ordinal)) || Clients.ClientApp.IsWebAddress(url)) ? url : null,
+        MediaUrl = SafeUrl(design.MediaUrl),
         MediaSide = design.MediaSide,
+        BackgroundUrl = SafeUrl(design.BackgroundUrl),
+        BackgroundDim = design.BackgroundDim is { } dim ? Math.Clamp(dim, 0, 90) : null,
     };
+
+    // a path on the auth server or an http(s) address: nothing that runs script or leaves for another host without saying so
+    private static string? SafeUrl(string? url) =>
+        url is not null && ((url.StartsWith('/') && !url.StartsWith("//", StringComparison.Ordinal) && !url.Contains('\\')) || Clients.ClientApp.IsWebAddress(url)) ? url : null;
 
     private static IEnumerable<(string Variable, string Value)> PaletteColors(JsonElement palette) => Colors
         .Select(c => (c.Variable, Value: palette.TryGetProperty(c.Palette, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null))

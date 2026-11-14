@@ -2158,5 +2158,9 @@
   "Other groups": "기타 그룹",
   "Showing the first {0} matches. Type more to narrow them down.": "처음 {0}개 결과를 표시합니다. 더 입력하여 범위를 좁히세요.",
   "Collapse": "접기",
-  "Expand": "펼치기"
+  "Expand": "펼치기",
+  "Page background (image or video)": "페이지 배경(이미지 또는 동영상)",
+  "Behind the whole page in every layout; empty keeps the theme's background.": "모든 레이아웃에서 페이지 전체 뒤에 표시됩니다. 비워 두면 테마 배경이 유지됩니다.",
+  "Choose the page background from files": "파일에서 페이지 배경 선택",
+  "Darken background (%)": "배경 어둡게 (%)"
 }

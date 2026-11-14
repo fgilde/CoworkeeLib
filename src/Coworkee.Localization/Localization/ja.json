@@ -2158,5 +2158,9 @@
   "Other groups": "その他のグループ",
   "Showing the first {0} matches. Type more to narrow them down.": "最初の {0} 件を表示しています。さらに入力して絞り込んでください。",
   "Collapse": "折りたたむ",
-  "Expand": "展開"
+  "Expand": "展開",
+  "Page background (image or video)": "ページの背景（画像または動画）",
+  "Behind the whole page in every layout; empty keeps the theme's background.": "すべてのレイアウトでページ全体の背後に表示します。空の場合はテーマの背景のままです。",
+  "Choose the page background from files": "ページの背景をファイルから選択",
+  "Darken background (%)": "背景を暗くする (%)"
 }

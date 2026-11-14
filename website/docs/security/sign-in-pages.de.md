@@ -12,7 +12,9 @@ Drei Layouts kommen mit der Bibliothek:
 | `Split` | ganze Seite: Bild oder Video auf einer Seite, das Formular auf der anderen |
 | `Slide` (Standard) | eine Karte mit farbigem Feld neben dem Formular. Auf der Anmeldeseite lädt das Feld zur Registrierung ein (wenn sie erlaubt ist); auf der Registrierungsseite wechselt es auf die andere Seite und führt zurück zur Anmeldung. Browser mit dokumentübergreifenden View Transitions animieren den Wechsel. |
 
-Die Seiten funktionieren ohne Skript. Ein kleines Skript ergänzt, was ein Browser allein nicht kann: einen Knopf, der das Passwort zeigt, einen Hinweis bei aktiver Feststelltaste, ein Abzeichen *Zuletzt verwendet* an der zuletzt gewählten Anmeldeart (nur wenn es externe Anbieter gibt) und ein einziges Absenden je Formular. Passkeys brauchen ein zweites kleines Skript, `passkey.js`; ohne es bleibt ihr Button verborgen (siehe [Passkeys](passkeys.md)). Animationen entfallen, wenn das System reduzierte Bewegung verlangt.
+Die Seiten funktionieren ohne Skript. Ein kleines Skript ergänzt, was ein Browser allein nicht kann: einen Knopf, der das Passwort zeigt, einen Hinweis bei aktiver Feststelltaste, ein Abzeichen *Zuletzt verwendet* an der zuletzt gewählten Anmeldeart (nur wenn es externe Anbieter gibt) und ein einziges Absenden je Formular. Passkeys brauchen ein zweites kleines Skript, `passkey.js`; ohne es bleibt ihr Button verborgen (siehe [Passkeys](passkeys.md)). Animationen entfallen und Videos stehen still, wenn das System reduzierte Bewegung verlangt.
+
+**Seitenhintergrund.** Unabhängig vom Bild oder Video des Layouts legt `Design:BackgroundUrl` ein Bild oder Video hinter die ganze Seite (füllend, fest beim Scrollen), auf Wunsch abgedunkelt mit `Design:BackgroundDim`. `Card` und `Slide` zeigen ihn um ihre Karte herum; `Split` zeigt ihn hinter der Formularseite, wo das Formular dann auf einer eigenen Karte liegt und lesbar bleibt; die Medienseite behält ihr Bild oder Video. Auf Telefonen füllen `Card` und `Slide` den Bildschirm, dort bleibt der Hintergrund verdeckt. Eigene Layouts bekommen ihn ebenfalls, denn `_Layout.cshtml` rendert ihn. Ohne den Wert sehen die Seiten aus wie bisher.
 
 ## Konfiguration
 
@@ -24,7 +26,9 @@ Das Design gilt für die ganze Installation, unabhängig davon, welches Theme St
     "Design": {
       "Layout": "Split",
       "MediaUrl": "/media/welcome.mp4",
-      "MediaSide": "Right"
+      "MediaSide": "Right",
+      "BackgroundUrl": "/media/sky.jpg",
+      "BackgroundDim": 30
     },
     "AllowDesignChanges": true
   }
@@ -36,6 +40,8 @@ Das Design gilt für die ganze Installation, unabhängig davon, welches Theme St
 | `Design:Layout` | `Card`, `Split`, `Slide` oder der Name eines eigenen Layouts; unbekannte Namen fallen auf `Slide` zurück |
 | `Design:MediaUrl` | ein Bild, bei `.mp4`, `.webm`, `.ogg`, `.ogv` und `.mov` ein Video; ein Pfad auf dem Auth-Server oder eine `http(s)`-Adresse, deren Origin in `img-src` und `media-src` der Content Security Policy aufgenommen wird |
 | `Design:MediaSide` | `Left` (Standard) oder `Right`; bei `Slide` liegt das Feld auf der Registrierungsseite auf der anderen Seite |
+| `Design:BackgroundUrl` | ein Bild oder Video hinter der ganzen Seite in jedem Layout, mit denselben Regeln wie `MediaUrl` (Pfad oder `http(s)`-Adresse, deren Origin in die Policy kommt); leer behält den Hintergrund des Themes |
+| `Design:BackgroundDim` | dunkelt den Hintergrund ab, `0` bis `90` Prozent (Standard `0`) |
 | `Design:LoadingScreen` | Hintergrund des [Ladebildschirms](../modules/theming.md#ladebildschirm) der App: `Animated`, `SignInMedia` (das Bild oder Video oben) oder `Plain` |
 | `AllowDesignChanges` | `true` (Standard) lässt Administratoren das Design auf der Themes-Seite ändern; `false` behält die Konfiguration. Setz es für den Dienst, der die API hostet: Dort wird die Änderung gespeichert. |
 
@@ -43,7 +49,9 @@ Der Aspire-AppHost setzt dieselben Werte mit `options.SignIn` und liefert einen 
 
 ## Auf der Themes-Seite
 
-*Administration > Themes* beginnt mit der Karte *Anmeldeseite*: eine Vorschau je Layout zum Auswählen, die Adresse des Bildes oder Videos und seine Seite sowie der Hintergrund des [Ladebildschirms](../modules/theming.md#ladebildschirm) der App. Der Ordner-Knopf im Adressfeld wählt das Bild oder Video aus den Dateien der App; eine private Datei wird vorher (nach Rückfrage) öffentlich gemacht, und das Feld erhält ihre absolute öffentliche Adresse, die Auth-Server, Keycloak und Ladebildschirm ohne Anmeldung laden können. *Speichern* legt die Werte als App-Konfigurationsabschnitt `Coworkee:Auth:Design` ab (Tabelle `cw.ConfigurationEntries`, siehe [App-Konfiguration](../modules/settings.md)); *Standardwerte wiederherstellen* verwirft sie, dann gilt wieder die Konfiguration.
+*Administration > Themes* beginnt mit der Karte *Anmeldeseite*: eine Vorschau je Layout zum Auswählen, die Adresse des Bildes oder Videos und seine Seite, der Seitenhintergrund mit seiner Abdunklung sowie der Hintergrund des [Ladebildschirms](../modules/theming.md#ladebildschirm) der App. Die Ordner-Knöpfe in den Adressfeldern wählen das Bild oder Video aus den Dateien der App; eine private Datei wird vorher (nach Rückfrage) öffentlich gemacht, und das Feld erhält ihre absolute öffentliche Adresse, die Auth-Server, Keycloak und Ladebildschirm ohne Anmeldung laden können. *Speichern* legt die Werte als App-Konfigurationsabschnitt `Coworkee:Auth:Design` ab (Tabelle `cw.ConfigurationEntries`, siehe [App-Konfiguration](../modules/settings.md)); *Standardwerte wiederherstellen* verwirft sie, dann gilt wieder die Konfiguration.
+
+*Vorschau* öffnet die echte Anmeldeseite des Auth-Servers mit den Werten, die die Karte gerade zeigt, gespeichert oder nicht, in einem Vollbild-Dialog. Der Dialog rahmt `/bff/sign-in-preview?design={json}` ein, das den Rahmen an `/Account/Preview` des Auth-Servers weiterleitet; diese Adresse rendert die Anmeldeseite mit dem übergebenen Design nach denselben Prüfungen wie ein gespeichertes. Sie antwortet nur auf ein `GET`, das der Browser als Laden eines Rahmens kennzeichnet (`Sec-Fetch-Dest: iframe`), und nur die Origins registrierter Clients dürfen sie einrahmen (`frame-ancestors`); ein Link oder eine andere Seite kann so kein untergeschobenes Design unter der Adresse des Auth-Servers zeigen. Der Rahmen läuft ohne Formulare (`sandbox`), dort meldet sich niemand an, und die Sitzung des Administrators bleibt unberührt. Die Policy der Web-App erlaubt dafür die Origin des Auth-Servers in `frame-src`. Mit Keycloak als Anmeldung zeigt die Vorschau die Seite des Coworkee-Auth-Servers, die es dort nicht gibt; dort übernimmt die Keycloak-Karte das Design.
 
 Die Karte sehen Administratoren der Systemorganisation, die Einstellungen verwalten dürfen (`Settings.Manage`), denn der Abschnitt gilt für alle Organisationen. Für alle anderen und solange `AllowDesignChanges` aus ist, bleibt sie verborgen.
 

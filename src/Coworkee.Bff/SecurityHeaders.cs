@@ -74,6 +74,12 @@ public static class SecurityHeaders
             directives["connect-src"].AddRange(DevelopmentConnect);
         }
 
+        // the preview of the sign-in page on the Themes page frames the auth server's /Account/Preview (via /bff/sign-in-preview)
+        if (Uri.TryCreate(options.Authority, UriKind.Absolute, out var authority) && authority.Scheme is "https" or "http")
+        {
+            directives["frame-src"].Add(authority.GetLeftPart(UriPartial.Authority));
+        }
+
         foreach (var directive in new[] { "script-src", "style-src", "connect-src" })
         {
             directives[directive].AddRange(headers.FileViewerCdns);

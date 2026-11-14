@@ -97,6 +97,91 @@ public sealed class AuthDesignTests(AuthApp app) : IAsyncLifetime
         saved.Value.Values.GetProperty("mediaSide").GetString().ShouldBe("Left");
     }
 
+    [Theory]
+    [InlineData(SignInLayouts.Card, "https://media.test/sky.webm", 40)]
+    [InlineData(SignInLayouts.Split, "https://media.test/sky.jpg", null)]
+    [InlineData(SignInLayouts.Slide, "https://media.test/sky.jpg", 200)]
+    public async Task The_page_background_lies_behind_every_layout_independent_of_the_panel_media(string layout, string background, int? dim)
+    {
+        Options.Design = new SignInDesign { Layout = layout, MediaUrl = "/media/welcome.jpg", BackgroundUrl = background, BackgroundDim = dim };
+
+        using var response = await app.Browser().GetAsync("/Account/Login", Ct);
+        var html = await response.Content.ReadAsStringAsync(Ct);
+
+        html.ShouldContain($"class=\"layout-{layout.ToLowerInvariant()} has-background\"");
+        html.ShouldContain($"style=\"--dim:{Math.Clamp(dim ?? 0, 0, 90)}%\" data-testid=\"design-background\"");
+        html.ShouldContain(background.EndsWith(".webm", StringComparison.Ordinal)
+            ? $"<video src=\"{background}\" autoplay muted loop playsinline></video>"
+            : $"<img src=\"{background}\" alt=\"\" />");
+        if (layout != SignInLayouts.Card)
+        {
+            html.ShouldContain("<img src=\"/media/welcome.jpg\" alt=\"\" data-testid=\"design-media\"");
+        }
+
+        var policy = response.Headers.GetValues("Content-Security-Policy").Single();
+        policy.ShouldContain("img-src 'self' data: https://media.test");
+        policy.ShouldContain("media-src 'self' https://media.test;");
+        policy.ShouldContain("frame-ancestors 'none'");
+    }
+
+    [Fact]
+    public async Task A_stored_design_without_the_page_background_looks_as_before()
+    {
+        var saved = await OidcFlow.SendAsync(app, _setup.AdminUserId, _setup.TenantId, new SaveAppConfiguration(SignInDesign.Section,
+            JsonDocument.Parse("""{"layout":"Split","mediaUrl":"/media/welcome.jpg"}""").RootElement));
+        saved.IsSuccess.ShouldBeTrue();
+
+        var html = await GetAsync("/Account/Login");
+
+        html.ShouldContain("class=\"layout-split\"");
+        html.ShouldContain("class=\"split media-left\"");
+        html.ShouldNotContain("design-background");
+    }
+
+    [Fact]
+    public async Task The_preview_renders_the_real_sign_in_page_with_an_unsaved_design_only_inside_a_frame_of_a_client()
+    {
+        Options.Design = new SignInDesign { Layout = SignInLayouts.Card };
+        var design = Uri.EscapeDataString("""{"layout":"Slide","mediaSide":"Left","backgroundUrl":"https://media.test/sky.jpg","backgroundDim":30}""");
+        using var request = new HttpRequestMessage(HttpMethod.Get, SignInPreview.Path + "?design=" + design);
+        request.Headers.Add("Sec-Fetch-Dest", "iframe");
+
+        using var response = await app.Browser().SendAsync(request, Ct);
+        var html = await response.Content.ReadAsStringAsync(Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        html.ShouldContain("class=\"slide media-left");
+        html.ShouldContain("data-sign-in=\"password\"");
+        html.ShouldContain("<img src=\"https://media.test/sky.jpg\" alt=\"\" />");
+        html.ShouldContain("--dim:30%");
+        response.Headers.Contains("X-Frame-Options").ShouldBeFalse();
+        var policy = response.Headers.GetValues("Content-Security-Policy").Single();
+        policy.ShouldContain("frame-ancestors https://client.test");
+        policy.ShouldContain("img-src 'self' data: https://media.test");
+        // the saved design is untouched and links keep the sign-in address
+        (await GetAsync("/Account/Login")).ShouldContain("data-design=\"card\"");
+        (await GetAsync("/Account/ForgotPassword")).ShouldNotContain(SignInPreview.Path);
+    }
+
+    [Theory]
+    [InlineData("GET", null, "{\"layout\":\"Card\"}")]
+    [InlineData("GET", "document", "{\"layout\":\"Card\"}")]
+    [InlineData("POST", "iframe", "{\"layout\":\"Card\"}")]
+    [InlineData("GET", "iframe", "not json")]
+    [InlineData("GET", "iframe", "")]
+    public async Task The_preview_answers_nothing_to_links_posts_and_broken_designs(string method, string? destination, string design)
+    {
+        using var request = new HttpRequestMessage(new HttpMethod(method), SignInPreview.Path + "?design=" + Uri.EscapeDataString(design));
+        if (destination is not null)
+        {
+            request.Headers.Add("Sec-Fetch-Dest", destination);
+        }
+
+        using var response = await app.Browser().SendAsync(request, Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
     [Fact]
     public async Task An_unknown_layout_falls_back_to_the_default()
     {
@@ -113,6 +198,12 @@ public sealed class AuthDesignTests(AuthApp app) : IAsyncLifetime
 
         design.Layout.ShouldBeNull();
         design.MediaUrl.ShouldBeNull();
+        AuthBrandingProvider.Checked(new SignInDesign { BackgroundUrl = "javascript:alert(1)" }).BackgroundUrl.ShouldBeNull();
+        AuthBrandingProvider.Checked(new SignInDesign { BackgroundUrl = "/\\evil.test/x.png" }).BackgroundUrl.ShouldBeNull();
+        AuthBrandingProvider.Checked(new SignInDesign { BackgroundUrl = "data:image/png;base64,AA" }).BackgroundUrl.ShouldBeNull();
+        AuthBrandingProvider.Checked(new SignInDesign { BackgroundUrl = "/media/sky.jpg", BackgroundDim = -5 }).ShouldSatisfyAllConditions(
+            d => d.BackgroundUrl.ShouldBe("/media/sky.jpg"), d => d.BackgroundDim.ShouldBe(0));
+        new AuthBranding("App", null, null, new SignInDesign { BackgroundUrl = "/v/sky.MP4" }).BackgroundIsVideo.ShouldBeTrue();
         new AuthBranding("App", null, null, new SignInDesign { MediaUrl = "/v/intro.webm?x=1" }).MediaIsVideo.ShouldBeTrue();
     }
 

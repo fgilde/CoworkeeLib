@@ -171,7 +171,8 @@ public sealed partial class CoworkeeApp
         KeycloakLoginTheme.Write(KeycloakThemes, theme, new(Title, KeycloakLoginTheme.DefaultLight, KeycloakLoginTheme.DefaultDark)
         {
             LogoUrl = await OnWebAsync(Options.LogoUrl, cancellationToken),
-            Design = new() { Layout = Options.SignIn.Layout, MediaSide = Options.SignIn.MediaSide, MediaUrl = await OnWebAsync(Options.SignIn.MediaUrl, cancellationToken) },
+            Design = new() { Layout = Options.SignIn.Layout, MediaSide = Options.SignIn.MediaSide, MediaUrl = await OnWebAsync(Options.SignIn.MediaUrl, cancellationToken),
+                BackgroundUrl = await OnWebAsync(Options.SignIn.BackgroundUrl, cancellationToken), BackgroundDim = Options.SignIn.BackgroundDim },
         });
     }
 

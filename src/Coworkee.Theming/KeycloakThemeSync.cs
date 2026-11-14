@@ -95,7 +95,8 @@ internal sealed class KeycloakThemeSync : IHostedService, IDisposable
             {
                 Logo = theme.IsSuccess ? theme.Value.Logo : null,
                 LogoUrl = OnWeb(options.LogoUrl, options),
-                Design = new() { Layout = design.Layout, MediaSide = design.MediaSide, MediaUrl = OnWeb(design.MediaUrl, options) },
+                Design = new() { Layout = design.Layout, MediaSide = design.MediaSide, MediaUrl = OnWeb(design.MediaUrl, options),
+                    BackgroundUrl = OnWeb(design.BackgroundUrl, options), BackgroundDim = design.BackgroundDim },
             });
             (_writtenAt, _failed) = (_time.GetUtcNow(), false);
         }

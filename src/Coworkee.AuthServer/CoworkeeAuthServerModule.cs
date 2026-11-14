@@ -38,7 +38,16 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         services.AddSingleton<Application.Localization.ITextTranslator, AuthTextTranslator>();
         services.AddSingleton<AuthClientSeeder>();
         services.AddHostedService(provider => provider.GetRequiredService<AuthClientSeeder>());
-        services.AddRazorPages(AuthImpersonation.Conventions).AddApplicationPart(typeof(CoworkeeAuthServerModule).Assembly);
+        services.AddHttpContextAccessor();
+        services.AddRazorPages(pages =>
+        {
+            AuthImpersonation.Conventions(pages);
+            // the preview of the Themes page is the sign-in page itself; links keep going to /Account/Login
+            pages.Conventions.AddPageRouteModelConvention("/Account/Login", model => model.Selectors.Add(new Microsoft.AspNetCore.Mvc.ApplicationModels.SelectorModel
+            {
+                AttributeRouteModel = new Microsoft.AspNetCore.Mvc.ApplicationModels.AttributeRouteModel { Template = SignInPreview.Path.TrimStart('/'), SuppressLinkGeneration = true },
+            }));
+        }).AddApplicationPart(typeof(CoworkeeAuthServerModule).Assembly);
         if (options.FrameAncestors.Count > 0)
         {
             // antiforgery's X-Frame-Options would forbid every frame; frame-ancestors of the policy allows the listed origins instead
@@ -159,19 +168,20 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
     /// <summary>
     /// The account pages load their scripts from the own origin only (passkeys included) and style inline; after sign-in the browser follows redirects to the clients, which
     /// browsers check against form-action, so the clients' origins are allowed there. Logos and the design's image or video from elsewhere
-    /// add their origins to img-src and media-src.
+    /// add their origins to img-src and media-src. The <see cref="SignInPreview"/> may be framed by the clients' origins as well.
     /// </summary>
-    internal static string ContentSecurityPolicy(AuthServerOptions options, StoredClients stored, string? mediaUrl = null)
+    internal static string ContentSecurityPolicy(AuthServerOptions options, StoredClients stored, IReadOnlyCollection<string?>? mediaUrls = null, bool preview = false)
     {
-        var clients = options.Clients.SelectMany(c => c.RedirectUris.Concat(c.PostLogoutRedirectUris)).Concat(stored.Uris)
-            .Select(u => Uri.TryCreate(u, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Authority) : null)
-            .OfType<string>().Concat(ExternalProviders.Origins(options.External)).Distinct(StringComparer.OrdinalIgnoreCase);
-        var logos = new[] { options.LogoUrl, mediaUrl }.Concat(options.Clients.Select(c => c.LogoUrl)).Concat(stored.Logos)
+        var clientOrigins = options.Clients.SelectMany(c => c.RedirectUris.Concat(c.PostLogoutRedirectUris)).Concat(stored.Uris)
+            .Select(u => Uri.TryCreate(u, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Authority) : null).OfType<string>().ToList();
+        var clients = clientOrigins.Concat(ExternalProviders.Origins(options.External)).Distinct(StringComparer.OrdinalIgnoreCase);
+        mediaUrls ??= [];
+        var logos = mediaUrls.Prepend(options.LogoUrl).Concat(options.Clients.Select(c => c.LogoUrl)).Concat(stored.Logos)
             .Where(Clients.ClientApp.IsWebAddress).Select(u => new Uri(u!).GetLeftPart(UriPartial.Authority)).Distinct(StringComparer.OrdinalIgnoreCase);
-        var media = Clients.ClientApp.IsWebAddress(mediaUrl) ? " " + new Uri(mediaUrl!).GetLeftPart(UriPartial.Authority) : null;
+        var media = mediaUrls.Where(Clients.ClientApp.IsWebAddress).Select(u => new Uri(u!).GetLeftPart(UriPartial.Authority)).Distinct(StringComparer.OrdinalIgnoreCase);
         var ancestors = options.FrameAncestors.Select(o => Uri.TryCreate(o, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Authority) : null)
-            .OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        return $"default-src 'self'; script-src 'self' {FormPostScriptHash}; style-src 'self' 'unsafe-inline'; img-src {string.Join(' ', ["'self'", "data:", .. logos])}; media-src 'self'{media}; "
+            .OfType<string>().Concat(preview ? clientOrigins : []).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        return $"default-src 'self'; script-src 'self' {FormPostScriptHash}; style-src 'self' 'unsafe-inline'; img-src {string.Join(' ', ["'self'", "data:", .. logos])}; media-src {string.Join(' ', ["'self'", .. media])}; "
             + "object-src 'none'; base-uri 'self'; "
             + $"frame-ancestors {(ancestors.Count == 0 ? "'none'" : string.Join(' ', ancestors))}; form-action {string.Join(' ', ["'self'", .. clients])}";
     }
@@ -217,21 +227,22 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
             cancellationToken: context.RequestAborted);
 
     // only the account pages show the design; administrators may change its media in the app
-    private static async Task<string?> MediaUrlAsync(Microsoft.AspNetCore.Http.HttpContext context, AuthServerOptions options)
+    private static async Task<string?[]> MediaUrlsAsync(Microsoft.AspNetCore.Http.HttpContext context, AuthServerOptions options)
     {
         if (!context.Request.Path.StartsWithSegments("/Account"))
         {
-            return null;
+            return [];
         }
 
         try
         {
-            return (await context.RequestServices.GetRequiredService<AuthBrandingProvider>().GetAsync(context.RequestAborted)).Design.MediaUrl;
+            var design = (await context.RequestServices.GetRequiredService<AuthBrandingProvider>().GetAsync(context.RequestAborted)).Design;
+            return [design.MediaUrl, design.BackgroundUrl];
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             // before the database is migrated
-            return options.Design.MediaUrl;
+            return [options.Design.MediaUrl, options.Design.BackgroundUrl];
         }
     }
 
@@ -248,7 +259,24 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         app.Use(async (context, next) =>
         {
             var headers = context.Response.Headers;
-            headers.ContentSecurityPolicy = ContentSecurityPolicy(options, await StoredClientsAsync(context), await MediaUrlAsync(context, options));
+            var preview = SignInPreview.IsPreview(context);
+            if (preview && !SignInPreview.TryStart(context))
+            {
+                context.Response.StatusCode = Microsoft.AspNetCore.Http.StatusCodes.Status404NotFound;
+                return;
+            }
+
+            if (preview)
+            {
+                // the sign-in form's antiforgery token adds X-Frame-Options: SAMEORIGIN, which no frame of the app's origin passes; frame-ancestors decides instead
+                context.Response.OnStarting(() =>
+                {
+                    headers.Remove("X-Frame-Options");
+                    return Task.CompletedTask;
+                });
+            }
+
+            headers.ContentSecurityPolicy = ContentSecurityPolicy(options, await StoredClientsAsync(context), await MediaUrlsAsync(context, options), preview);
             if (context.Request.Path.StartsWithSegments("/Account"))
             {
                 await context.RequestServices.GetRequiredService<Coworkee.Account.PasswordPolicy>()

@@ -2158,5 +2158,9 @@
   "Other groups": "Diğer gruplar",
   "Showing the first {0} matches. Type more to narrow them down.": "İlk {0} eşleşme gösteriliyor. Daraltmak için daha fazla yazın.",
   "Collapse": "Daralt",
-  "Expand": "Genişlet"
+  "Expand": "Genişlet",
+  "Page background (image or video)": "Sayfa arka planı (resim veya video)",
+  "Behind the whole page in every layout; empty keeps the theme's background.": "Her düzende tüm sayfanın arkasında; boş bırakılırsa temanın arka planı kalır.",
+  "Choose the page background from files": "Sayfa arka planını dosyalardan seç",
+  "Darken background (%)": "Arka planı karart (%)"
 }

@@ -154,6 +154,15 @@ public sealed class BffTests : IAsyncLifetime
         (await _client.GetAsync("/bff/impersonate?returnUrl=%2F", TestContext.Current.CancellationToken)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
+    [Fact]
+    public async Task The_sign_in_preview_frame_goes_to_the_auth_servers_preview_with_the_design()
+    {
+        var preview = await _client.GetAsync("/bff/sign-in-preview?design=" + Uri.EscapeDataString("{\"layout\":\"Card\"}"), TestContext.Current.CancellationToken);
+
+        preview.Headers.Location!.OriginalString.ShouldBe("https://auth.test/Account/Preview?design=%7B%22layout%22%3A%22Card%22%7D");
+        (await _client.GetAsync("/bff/sign-in-preview", TestContext.Current.CancellationToken)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
     [Theory]
     [InlineData("/\\evil.test")]
     [InlineData("/\t/evil.test")]

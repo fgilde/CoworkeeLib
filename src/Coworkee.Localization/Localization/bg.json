@@ -2158,5 +2158,9 @@
   "Other groups": "Други групи",
   "Showing the first {0} matches. Type more to narrow them down.": "Показани са първите {0} съвпадения. Пишете още, за да ги стесните.",
   "Collapse": "Свий",
-  "Expand": "Разгъни"
+  "Expand": "Разгъни",
+  "Page background (image or video)": "Фон на страницата (изображение или видео)",
+  "Behind the whole page in every layout; empty keeps the theme's background.": "Зад цялата страница във всяко оформление; празно запазва фона на темата.",
+  "Choose the page background from files": "Изберете фона на страницата от файловете",
+  "Darken background (%)": "Затъмняване на фона (%)"
 }

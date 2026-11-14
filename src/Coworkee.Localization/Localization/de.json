@@ -2158,5 +2158,9 @@
   "Other groups": "Weitere Gruppen",
   "Showing the first {0} matches. Type more to narrow them down.": "Die ersten {0} Treffer werden gezeigt. Tippe weiter, um sie einzugrenzen.",
   "Collapse": "Zuklappen",
-  "Expand": "Aufklappen"
+  "Expand": "Aufklappen",
+  "Page background (image or video)": "Seitenhintergrund (Bild oder Video)",
+  "Behind the whole page in every layout; empty keeps the theme's background.": "Hinter der ganzen Seite in jedem Layout; leer behält den Hintergrund des Themes.",
+  "Choose the page background from files": "Seitenhintergrund aus Dateien wählen",
+  "Darken background (%)": "Hintergrund abdunkeln (%)"
 }

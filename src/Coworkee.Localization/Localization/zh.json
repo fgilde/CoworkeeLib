@@ -2158,5 +2158,9 @@
   "Other groups": "其他组",
   "Showing the first {0} matches. Type more to narrow them down.": "仅显示前 {0} 个匹配项。继续输入以缩小范围。",
   "Collapse": "折叠",
-  "Expand": "展开"
+  "Expand": "展开",
+  "Page background (image or video)": "页面背景（图片或视频）",
+  "Behind the whole page in every layout; empty keeps the theme's background.": "在每种布局中位于整个页面之后；留空则保留主题背景。",
+  "Choose the page background from files": "从文件中选择页面背景",
+  "Darken background (%)": "背景变暗 (%)"
 }

@@ -274,6 +274,8 @@ public sealed class CoworkeeAppTests : IDisposable
             o.SignIn.Layout = "Split";
             o.SignIn.MediaUrl = "/media/welcome.mp4";
             o.SignIn.MediaSide = Coworkee.Contracts.Theming.SignInMediaSide.Right;
+            o.SignIn.BackgroundUrl = "https://cdn.test/sky.jpg";
+            o.SignIn.BackgroundDim = 30;
         });
 
         app.AddMigrations<FakeProjects.Migrations>();
@@ -288,6 +290,8 @@ public sealed class CoworkeeAppTests : IDisposable
         settings["Coworkee__Auth__Design__MediaSide"].ShouldBe("Right");
         settings["Coworkee__Auth__Design__MediaUrl"].ShouldStartWith("{demo-web.bindings.https.url}");
         settings["Coworkee__Auth__Design__MediaUrl"].ShouldEndWith("/media/welcome.mp4");
+        settings["Coworkee__Auth__Design__BackgroundUrl"].ShouldBe("https://cdn.test/sky.jpg");
+        settings["Coworkee__Auth__Design__BackgroundDim"].ShouldBe("30");
     }
 
     [Fact]
@@ -373,6 +377,7 @@ public sealed class CoworkeeAppTests : IDisposable
             o.DisplayName = "Realm App";
             o.LogoUrl = "/logo.svg";
             o.SignIn.MediaUrl = "/media/welcome.mp4";
+            o.SignIn.BackgroundUrl = "/media/sky.jpg";
             o.UseKeycloak();
         });
         app.AddMigrations<FakeProjects.Migrations>();
@@ -389,6 +394,7 @@ public sealed class CoworkeeAppTests : IDisposable
         var login = Path.Combine(app.KeycloakThemes, "coworkee-realm", "login");
         File.ReadAllText(Path.Combine(login, "resources", "css", "coworkee.css")).ShouldContain("url(\"https://localhost:7001/logo.svg\")");
         File.ReadAllText(Path.Combine(login, "resources", "js", "coworkee.js")).ShouldContain("\"media\":\"https://localhost:7001/media/welcome.mp4\"");
+        File.ReadAllText(Path.Combine(login, "resources", "js", "coworkee.js")).ShouldContain("\"background\":\"https://localhost:7001/media/sky.jpg\"");
         File.ReadAllText(Path.Combine(login, "messages", "messages_en.properties")).ShouldContain("Realm App");
 
         File.WriteAllText(Path.Combine(login, "messages", "messages_en.properties"), "loginTitleHtml=Changed by the api");

@@ -44,10 +44,11 @@ public sealed class KeycloakThemeSyncTests(ThemeApp app) : IAsyncLifetime
     {
         try
         {
-            (await Admin.PutAsJsonAsync($"/api/v1/configuration/{SignInDesign.Section}", new SignInDesign { Layout = "Split", MediaUrl = "/media/hero.jpg" }, Ct)).EnsureSuccessStatusCode();
+            (await Admin.PutAsJsonAsync($"/api/v1/configuration/{SignInDesign.Section}", new SignInDesign { Layout = "Split", MediaUrl = "/media/hero.jpg", BackgroundUrl = "/media/sky.jpg" }, Ct)).EnsureSuccessStatusCode();
 
             await EventuallyAsync(() => Read("resources/js/coworkee.js").Contains("\"layout\":\"split\"", StringComparison.Ordinal));
             Read("resources/js/coworkee.js").ShouldContain("\"media\":\"https://web.test/media/hero.jpg\"");
+            Read("resources/js/coworkee.js").ShouldContain("\"background\":\"https://web.test/media/sky.jpg\"");
         }
         finally
         {

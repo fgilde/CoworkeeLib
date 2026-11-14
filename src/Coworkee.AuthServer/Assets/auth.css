@@ -102,6 +102,13 @@ button.last-used { outline: 2px solid color-mix(in srgb, var(--signal) 40%, tran
 .media a.cta { align-self: flex-start; padding: 10px 28px; border: 2px solid currentColor; border-radius: 999px; color: inherit; font-weight: 600; text-decoration: none; transition: background .15s; }
 .media a.cta:hover { background: rgb(255 255 255 / .15); }
 
+/* image or video behind the whole page (Design:BackgroundUrl); the form keeps its own surface */
+.page-background { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.page-background > img, .page-background > video { width: 100%; height: 100%; object-fit: cover; }
+.page-background::after { content: ""; position: absolute; inset: 0; background: rgb(0 0 0 / var(--dim, 0%)); }
+body.has-background .split > .form { background: transparent; }
+body.has-background .split > .form > .panel { padding: 32px; background: var(--surface); border: 1px solid var(--rule); border-radius: calc(var(--radius) * 2); box-shadow: 0 12px 40px rgb(0 0 0 / .14); }
+
 /* Card */
 body.layout-card { display: grid; place-items: center; padding: 24px 16px; }
 body.layout-card .panel { padding: 32px; background: var(--surface); border: 1px solid var(--rule); border-radius: calc(var(--radius) * 2); box-shadow: 0 12px 40px rgb(0 0 0 / .08); }

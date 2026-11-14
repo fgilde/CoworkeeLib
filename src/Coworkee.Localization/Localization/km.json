@@ -2158,5 +2158,9 @@
   "Other groups": "ក្រុមផ្សេងទៀត",
   "Showing the first {0} matches. Type more to narrow them down.": "កំពុងបង្ហាញលទ្ធផល {0} ដំបូង។ វាយបន្ថែមដើម្បីបង្រួម។",
   "Collapse": "បង្រួម",
-  "Expand": "ពង្រីក"
+  "Expand": "ពង្រីក",
+  "Page background (image or video)": "ផ្ទៃខាងក្រោយទំព័រ (រូបភាព ឬវីដេអូ)",
+  "Behind the whole page in every layout; empty keeps the theme's background.": "នៅពីក្រោយទំព័រទាំងមូលក្នុងប្លង់នីមួយៗ; ទទេរក្សាផ្ទៃខាងក្រោយរបស់រចនាប័ទ្ម។",
+  "Choose the page background from files": "ជ្រើសផ្ទៃខាងក្រោយទំព័រពីឯកសារ",
+  "Darken background (%)": "ធ្វើឱ្យផ្ទៃខាងក្រោយងងឹត (%)"
 }

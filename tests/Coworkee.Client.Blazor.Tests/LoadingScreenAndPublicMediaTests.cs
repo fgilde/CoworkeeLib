@@ -82,6 +82,74 @@ public sealed class LoadingScreenAndPublicMediaTests : ClientTestBase
     }
 
     [Fact]
+    public async Task The_sign_in_card_takes_a_page_background_video_from_the_files_and_saves_it_with_its_darkening()
+    {
+        var dialogs = Render<MudDialogProvider>();
+        Render<MudPopoverProvider>();
+        var card = Render<SignInDesignCard>();
+        var dim = card.WaitForComponent<MudNumericField<int?>>();
+        // a stored section from before the field: empty, nothing to darken yet
+        dim.Instance.Disabled.ShouldBeTrue();
+
+        var choosing = card.InvokeAsync(() => card.Find("button[aria-label='Choose the page background from files']").ClickAsync(new()));
+        await dialogs.WaitForElement($"[data-file-grid-key='{_video.Id}']").DoubleClickAsync(new());
+        dialogs.WaitForAssertion(() => dialogs.FindAll("button").Any(b => b.TextContent.Trim() == "Make public").ShouldBeTrue());
+        await dialogs.FindAll("button").First(b => b.TextContent.Trim() == "Make public").ClickAsync(new());
+        await choosing;
+        card.WaitForAssertion(() => card.FindComponent<MudNumericField<int?>>().Instance.Disabled.ShouldBeFalse());
+        await card.InvokeAsync(() => card.FindComponent<MudNumericField<int?>>().Instance.ValueChanged.InvokeAsync(40));
+        await card.InvokeAsync(() => card.Find("[data-testid='sign-in-save']").ClickAsync(new()));
+
+        await Api.Received(1).SaveAppConfigurationAsync(SignInDesign.Section,
+            Arg.Is<JsonElement>(v => v.GetProperty("backgroundUrl").GetString() == $"http://localhost/api/v1/files/public/{_video.Id}/welcome.mp4"
+                && v.GetProperty("backgroundDim").GetInt32() == 40 && v.GetProperty("mediaUrl").ValueKind == JsonValueKind.Null),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public void Without_the_files_permission_the_page_background_has_no_file_button()
+    {
+        Api.GetMyPermissionsAsync(default).ReturnsForAnyArgs([]);
+
+        var card = Render<SignInDesignCard>();
+
+        card.WaitForComponents<MudTextField<string>>().Single(f => f.Instance.Label == "Page background (image or video)").Instance.Adornment.ShouldBe(Adornment.None);
+        card.FindAll("button[aria-label='Choose the page background from files']").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task The_preview_shows_the_real_sign_in_page_with_the_unsaved_design_in_a_frame_without_forms()
+    {
+        var dialogs = Render<MudDialogProvider>();
+        Render<MudPopoverProvider>();
+        var card = Render<SignInDesignCard>();
+        var background = card.WaitForComponents<MudTextField<string>>().Single(f => f.Instance.Label == "Page background (image or video)");
+        await card.InvokeAsync(() => background.Instance.ValueChanged.InvokeAsync("/media/sky.jpg"));
+        await card.InvokeAsync(() => card.Find("[data-layout='Slide']").ClickAsync(new()));
+
+        await card.InvokeAsync(() => card.Find("[data-testid='sign-in-preview']").ClickAsync(new()));
+
+        var frame = dialogs.WaitForElement("[data-testid='sign-in-preview-frame']");
+        var src = frame.GetAttribute("src")!;
+        src.ShouldStartWith("/bff/sign-in-preview?design=");
+        var design = JsonSerializer.Deserialize<SignInDesign>(Uri.UnescapeDataString(src[(src.IndexOf('=') + 1)..]), JsonSerializerOptions.Web)!;
+        design.Layout.ShouldBe(SignInLayouts.Slide);
+        design.BackgroundUrl.ShouldBe("/media/sky.jpg");
+        frame.GetAttribute("sandbox").ShouldBe("allow-scripts allow-same-origin");
+        await Api.DidNotReceiveWithAnyArgs().SaveAppConfigurationAsync(default!, default, default);
+    }
+
+    [Fact]
+    public void A_stored_design_without_the_page_background_reads_as_none()
+    {
+        var design = JsonSerializer.Deserialize<SignInDesign>("""{"layout":"Slide","mediaUrl":"/media/welcome.mp4","mediaSide":"Left"}""", JsonSerializerOptions.Web)!;
+
+        design.BackgroundUrl.ShouldBeNull();
+        design.BackgroundDim.ShouldBeNull();
+        design.MediaSide.ShouldBe(SignInMediaSide.Left);
+    }
+
+    [Fact]
     public async Task The_logo_dialog_takes_an_image_from_the_files()
     {
         string? value = null;

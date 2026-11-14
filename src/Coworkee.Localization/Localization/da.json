@@ -2158,5 +2158,9 @@
   "Other groups": "Andre grupper",
   "Showing the first {0} matches. Type more to narrow them down.": "Viser de første {0} resultater. Skriv mere for at indsnævre dem.",
   "Collapse": "Fold sammen",
-  "Expand": "Fold ud"
+  "Expand": "Fold ud",
+  "Page background (image or video)": "Sidebaggrund (billede eller video)",
+  "Behind the whole page in every layout; empty keeps the theme's background.": "Bag hele siden i alle layouts; tom beholder temaets baggrund.",
+  "Choose the page background from files": "Vælg sidebaggrunden fra filer",
+  "Darken background (%)": "Gør baggrunden mørkere (%)"
 }

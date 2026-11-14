@@ -2,12 +2,14 @@ using System.Text.Json;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Components.Files;
+using Coworkee.Client.Blazor.Dialogs;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Files;
 using Coworkee.Contracts.Settings;
 using Coworkee.Contracts.Theming;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using MudBlazor.Extensions;
 
 namespace Coworkee.Client.Blazor.Pages.Admin;
 
@@ -75,6 +77,19 @@ public partial class SignInDesignCard
             _design!.MediaUrl = url;
         }
     }
+
+    private async Task ChooseBackgroundAsync()
+    {
+        if (await PublicFileChooser.ChooseAsync(Dialogs, Files, Snackbar, L, Navigation, "image/*,video/*") is { } url)
+        {
+            _design!.BackgroundUrl = url;
+        }
+    }
+
+    // the real sign-in page with what the card shows now, saved or not
+    private Task PreviewAsync() => Dialogs.ShowExAsync<SignInPreviewDialog>(L["Sign-in page"],
+        new DialogParameters<SignInPreviewDialog> { { d => d.Design, JsonSerializer.Serialize(_design, JsonSerializerOptions.Web) } },
+        CoworkeeDialogOptions.For(DialogPart.Fullscreen));
 
     private async Task ResetAsync()
     {

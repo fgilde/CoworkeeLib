@@ -244,6 +244,10 @@ public static class BffExtensions
             ? ToAuthServer(options, context, "/Account/Impersonate", returnUrl, KeyValuePair.Create("ticket", (string?)ticket))
             : Results.BadRequest());
         app.MapGet("/bff/stop-impersonation", (HttpContext context, string? returnUrl) => ToAuthServer(options, context, "/Account/StopImpersonation", returnUrl));
+        // the Themes page's preview frame: the auth server renders its sign-in page with the unsaved design (only inside a frame of a client's origin)
+        app.MapGet("/bff/sign-in-preview", (string? design) => design is { Length: > 0 }
+            ? Results.Redirect(options.Authority.TrimEnd('/') + "/Account/Preview" + QueryString.Create("design", design))
+            : Results.BadRequest());
         app.MapGet(LoadingScreenLogo.Path, LoadingScreenLogo.ServeAsync);
         app.MapGet(LoadingScreenScript.Path, LoadingScreenScript.Serve);
         Pwa.PwaEndpoints.Map(app);

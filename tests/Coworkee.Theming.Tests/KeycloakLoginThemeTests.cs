@@ -93,6 +93,23 @@ public sealed class KeycloakLoginThemeTests : IDisposable
         config.GetProperty("media").GetString().ShouldBe(expectedMedia);
         config.GetProperty("video").GetBoolean().ShouldBe(video);
         config.GetProperty("appName").GetString().ShouldBe("Mein <Büro>");
+        config.GetProperty("background").ValueKind.ShouldBe(JsonValueKind.Null);
+    }
+
+    [Theory]
+    [InlineData("https://app.example/media/sky.webm", 140, "https://app.example/media/sky.webm", true, 90)]
+    [InlineData("https://app.example/sky.jpg", null, "https://app.example/sky.jpg", false, 0)]
+    [InlineData("javascript:alert(1)", 30, null, false, 30)]
+    public void The_script_gets_the_page_background_and_its_darkening(string background, int? dim, string? expected, bool video, int expectedDim)
+    {
+        Write(Content() with { Design = new SignInDesign { Layout = "Card", BackgroundUrl = background, BackgroundDim = dim } });
+
+        var script = Read("resources/js/coworkee.js");
+        var config = JsonDocument.Parse(script["var coworkee = ".Length..script.IndexOf(";\n", StringComparison.Ordinal)]).RootElement;
+        config.GetProperty("background").GetString().ShouldBe(expected);
+        config.GetProperty("backgroundVideo").GetBoolean().ShouldBe(video);
+        config.GetProperty("backgroundDim").GetInt32().ShouldBe(expectedDim);
+        Read("resources/css/coworkee.css").ShouldContain(".cw-background{position:fixed");
     }
 
     [Fact]

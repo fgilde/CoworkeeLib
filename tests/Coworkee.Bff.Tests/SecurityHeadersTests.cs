@@ -24,6 +24,10 @@ public sealed class SecurityHeadersTests
     }
 
     [Fact]
+    public void The_auth_server_may_be_framed_for_the_sign_in_preview() =>
+        SecurityHeaders.ContentSecurityPolicy(new BffOptions { Authority = "https://auth.test/realms/x" }, development: false).ShouldContain("frame-src 'self' data: blob: https://auth.test;");
+
+    [Fact]
     public void Development_lets_hot_reload_connect() =>
         SecurityHeaders.ContentSecurityPolicy(new BffOptions(), development: true).ShouldContain("connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:*");
 
