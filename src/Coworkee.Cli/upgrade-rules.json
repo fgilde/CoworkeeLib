@@ -895,6 +895,24 @@
       "renames": [
         { "find": "(?s)\\A(.*?)\\s*\\z", "replace": "$1\n\n# local blob storage and SQLite files of the app host (Coworkee.Aspire BlobRoot)\n.data/\n", "files": [ ".gitignore" ], "unless": ".data/", "description": ".data/ (local blob storage of the app host) in .gitignore" }
       ]
+    },
+    {
+      "version": "0.0.1.87",
+      "breaking": [
+        "Nextended 10.1.65 and MudBlazor.Extensions 9.13.0: apps that pin Nextended or MudBlazor.Extensions packages move up (any newer version works, none older). MudBlazor.Extensions 9.13.0 removes MudExFileDisplayExcel, MudExFileDisplayExcelUniver, MudExFileDisplayPresentation and IMudExFileService.ReadExcelFile (xlsx, csv and pptx open in its spreadsheet and slide editors)."
+      ],
+      "needsMigration": false,
+      "packages": [
+        { "id": "Nextended.Aspire.Hosting.AspireUI", "version": "10.1.65" },
+        { "id": "Nextended.CodeGen", "version": "10.1.65" },
+        { "id": "Nextended.Core", "version": "10.1.65" },
+        { "id": "Nextended.Web", "version": "10.1.65" },
+        { "id": "MudBlazor", "version": "9.13.0" },
+        { "id": "MudBlazor.Extensions", "version": "9.13.0" }
+      ],
+      "manual": [
+        { "text": "MudExFileDisplayExcel, MudExFileDisplayExcelUniver, MudExFileDisplayPresentation and IMudExFileService.ReadExcelFile are gone in MudBlazor.Extensions 9.13.0: MudExFileDisplay opens xlsx, csv and pptx itself (MudExSpreadsheetEditor, MudExSlideEditor).", "find": "\\b(MudExFileDisplayExcel|MudExFileDisplayExcelUniver|MudExFileDisplayPresentation|ReadExcelFile)\\b", "files": [ "src/**/*.cs", "src/**/*.razor" ] }
+      ]
     }
   ]
 }

@@ -13,6 +13,10 @@
 - Der Vorschaudialog der Anmeldeseite startet wie jeder andere Dialog versteckt mit der Initial-Klasse von MudEx (`MudExCss.Classes.Dialog.Initial`) und blitzt vor seiner Öffnungsanimation nicht mehr kurz auf. Ein Test schlägt jetzt für jeden `<MudDialog>` der Bibliothek ohne die Klasse fehl.
 - Klebende Leisten folgen dem Layout: Die Tab-Leiste von `StickyMergeTabs`, die klebende Toolbar der Einstellungsformulare und die Facetten einer Tabelle kleben an der neuen CSS-Variable `--cw-sticky-top`, unter der oberen App-Leiste oder ganz oben, wenn die Kopfleiste links, rechts oder unten sitzt (dazu die Notch eines Telefons), statt immer unter einer oberen Leiste. Die klebende Tab-Leiste hat die Oberflächenfarbe als Hintergrund und einen Schatten, verschmilzt mit der Toolbar des offenen Panels in deren Höhe, ohne ihre Knöpfe zu verdecken, und überlässt auf Telefonen das Kleben dieser Toolbar.
 
+### Geändert
+
+- Nextended 10.1.65 und MudBlazor.Extensions 9.13.0: xlsx-, csv- und pptx-Dateien öffnen sich in den Tabellen- und Folien-Editoren von MudEx (in Dateivorschauen schreibgeschützt), dessen Dialoge mit der MudEx-Animation. Apps, die diese Pakete pinnen, heben sie an (`coworkee update` macht das); MudExFileDisplayExcel, MudExFileDisplayExcelUniver, MudExFileDisplayPresentation und `IMudExFileService.ReadExcelFile` gibt es nicht mehr.
+
 ## 0.0.1.86 (2026-11-14)
 
 ### Hinzugefügt

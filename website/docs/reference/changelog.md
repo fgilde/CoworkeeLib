@@ -13,6 +13,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 - The sign-in page preview dialog starts hidden with MudEx's initial dialog class (`MudExCss.Classes.Dialog.Initial`) like every other dialog, so it no longer flashes in place before its open animation. A test now fails for any `<MudDialog>` in the library without the class.
 - Sticky bars follow the layout: the tab bar of `StickyMergeTabs`, the sticky toolbar of the settings forms and the facets of a table stick at the new CSS variable `--cw-sticky-top`, below the top app bar or at the very top when the header sits left, right or at the bottom (plus the notch of a phone), instead of always below a top bar. The stuck tab bar has the surface as background and a shadow, merges with the toolbar of the open panel at its height without covering its buttons, and on phones leaves the sticking to that toolbar.
 
+### Changed
+
+- Nextended 10.1.65 and MudBlazor.Extensions 9.13.0: xlsx, csv and pptx files open in MudEx's spreadsheet and slide editors (read-only in file previews), its dialogs open with the MudEx animation. Apps that pin these packages move them up (`coworkee update` does it); MudExFileDisplayExcel, MudExFileDisplayExcelUniver, MudExFileDisplayPresentation and `IMudExFileService.ReadExcelFile` are gone.
+
 ## 0.0.1.86 (2026-11-14)
 
 ### Added
