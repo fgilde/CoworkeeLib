@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Behoben
+
+- Der Vorschaudialog der Anmeldeseite startet wie jeder andere Dialog versteckt mit der Initial-Klasse von MudEx (`MudExCss.Classes.Dialog.Initial`) und blitzt vor seiner Öffnungsanimation nicht mehr kurz auf. Ein Test schlägt jetzt für jeden `<MudDialog>` der Bibliothek ohne die Klasse fehl.
+
 ## 0.0.1.86 (2026-11-14)
 
 ### Hinzugefügt

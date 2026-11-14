@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixed
+
+- The sign-in page preview dialog starts hidden with MudEx's initial dialog class (`MudExCss.Classes.Dialog.Initial`) like every other dialog, so it no longer flashes in place before its open animation. A test now fails for any `<MudDialog>` in the library without the class.
+
 ## 0.0.1.86 (2026-11-14)
 
 ### Added
