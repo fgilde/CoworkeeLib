@@ -2,30 +2,20 @@ using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 
 namespace Coworkee.Cli.Spec;
 
-/// <summary>
-/// Which options a sign-in layout shows and how it names its two backgrounds.
-/// ponytail: a copy of Coworkee.Contracts.Theming.SignInLayoutOptions, written in parallel; use that one once both are on main.
-/// </summary>
+/// <summary>Which options a sign-in layout shows and how it names its two backgrounds: Contracts' <see cref="Coworkee.Contracts.Theming.SignInLayoutOptions"/> in the spec's terms.</summary>
 public sealed record SignInLayoutOptions(string PageLabel, string? PanelLabel, bool MediaSide, bool Surface, bool Animation, bool Dim, bool Tilt, bool LogoSize)
 {
-    /// <summary>The built-in layouts in the order the pickers show them (SignInLayouts.All).</summary>
-    public static IReadOnlyList<string> Layouts { get; } = ["Card", "Split", "Slide", "Spotlight", "Poster", "Stack", "Minimal"];
+    /// <summary>The built-in layouts in the order the pickers show them.</summary>
+    public static IReadOnlyList<string> Layouts => Coworkee.Contracts.Theming.SignInLayouts.All;
 
-    public static SignInLayoutOptions For(string? layout) => layout switch
+    public static SignInLayoutOptions For(string? layout)
     {
-        "Card" => new("Page background", null, MediaSide: false, Surface: true, Animation: true, Dim: true, Tilt: false, LogoSize: false),
-        "Split" => new("Form side", "Media side", MediaSide: true, Surface: false, Animation: false, Dim: false, Tilt: false, LogoSize: false),
-        "Slide" => new("Page background", "Panel", MediaSide: true, Surface: false, Animation: false, Dim: true, Tilt: false, LogoSize: false),
-        "Spotlight" => new("Page background", null, MediaSide: true, Surface: true, Animation: true, Dim: true, Tilt: false, LogoSize: false),
-        "Poster" => new("Form side", "Poster", MediaSide: true, Surface: false, Animation: false, Dim: false, Tilt: false, LogoSize: false),
-        "Stack" => new("Page background", "Cards behind", MediaSide: false, Surface: false, Animation: true, Dim: true, Tilt: true, LogoSize: false),
-        "Minimal" => new("Page background", null, MediaSide: false, Surface: false, Animation: true, Dim: true, Tilt: false, LogoSize: true),
-        _ => new("Page background", "Panel", MediaSide: true, Surface: true, Animation: true, Dim: true, Tilt: false, LogoSize: false),
-    };
+        var options = Coworkee.Contracts.Theming.SignInLayoutOptions.For(layout);
+        return new(options.PageBackground ?? "Page background", options.PanelBackground, options.MediaSide is not null, options.Surface, options.Animation, options.Dim, options.Tilt, options.LogoSize);
+    }
 
     /// <summary>The built-in layouts that show an option, for <see cref="OptionDependency"/>.</summary>
     public static string[] With(Func<SignInLayoutOptions, bool> option) => [.. Layouts.Where(l => option(For(l)))];
@@ -75,10 +65,10 @@ public enum GradientKind
 /// <summary>The sign-in options beyond layout and media: fills, legacy layout names and the SignInDesign settings of a generated app.</summary>
 public static partial class SignInStyle
 {
-    public const int MaxStops = 8;
+    public const int MaxStops = Coworkee.Contracts.Theming.SignInFills.MaxStops;
 
     /// <summary>Theme colors a fill may name; the sign-in pages map them to the theme's variables.</summary>
-    public static readonly IReadOnlyList<string> ThemeColors = ["primary", "secondary", "tertiary", "background", "surface"];
+    public static readonly IReadOnlyList<string> ThemeColors = Coworkee.Contracts.Theming.SignInFills.ThemeColors;
 
     // the runtime model's spelling: property names as they are, enums as their names
     private static readonly JsonSerializerOptions Settings = new()
@@ -95,7 +85,7 @@ public static partial class SignInStyle
         : string.Equals(layout, "Aurora", StringComparison.OrdinalIgnoreCase) ? ("signInAnimation", "Aurora")
         : null;
 
-    public static bool IsColor(string? color) => color is not null && ColorPattern().IsMatch(color);
+    public static bool IsColor(string? color) => Coworkee.Contracts.Theming.SignInFills.IsColor(color);
 
     /// <summary>A fill as option value (a color, or the JSON of a fill); null or empty is none.</summary>
     public static SignInFillSpec? Parse(string? value)
@@ -197,8 +187,4 @@ public static partial class SignInStyle
 
         return design.Count == 0 ? null : design;
     }
-
-    // numbers only inside the functions: this ends up in CSS
-    [GeneratedRegex(@"^(#[0-9a-fA-F]{3}|#[0-9a-fA-F]{6}|#[0-9a-fA-F]{8}|(rgb|rgba|hsl|hsla)\([0-9.,%/ ]+\)|primary|secondary|tertiary|background|surface)$")]
-    private static partial Regex ColorPattern();
 }
