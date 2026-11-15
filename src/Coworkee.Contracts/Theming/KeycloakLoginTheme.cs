@@ -16,19 +16,19 @@ public static partial class KeycloakLoginTheme
     public static readonly IReadOnlyDictionary<string, string> DefaultLight = new Dictionary<string, string>
     {
         ["Primary"] = "#1565c0", ["PrimaryContrastText"] = "#ffffff", ["Background"] = "#f4f7fb", ["Surface"] = "#ffffff",
-        ["TextPrimary"] = "#424242ff", ["TextSecondary"] = "#00000089", ["LinesDefault"] = "#0000001e",
+        ["TextPrimary"] = "#424242ff", ["TextSecondary"] = "#00000089", ["LinesDefault"] = "#0000001e", ["Secondary"] = "#00838f", ["Tertiary"] = "#1ec8a5",
     };
 
     public static readonly IReadOnlyDictionary<string, string> DefaultDark = new Dictionary<string, string>
     {
         ["Primary"] = "#64b5f6", ["PrimaryContrastText"] = "#0b1a2a", ["Background"] = "#0f1722", ["Surface"] = "#16202e",
-        ["TextPrimary"] = "#e3eefb", ["TextSecondary"] = "#9fb3c8", ["LinesDefault"] = "#26364a",
+        ["TextPrimary"] = "#e3eefb", ["TextSecondary"] = "#9fb3c8", ["LinesDefault"] = "#26364a", ["Secondary"] = "#4dd0e1", ["Tertiary"] = "#1ec8a5",
     };
 
     private static readonly (string Variable, string Palette)[] Colors =
     [
         ("--cw-primary", "Primary"), ("--cw-on-primary", "PrimaryContrastText"), ("--cw-background", "Background"), ("--cw-surface", "Surface"),
-        ("--cw-text", "TextPrimary"), ("--cw-text-2", "TextSecondary"), ("--cw-lines", "LinesDefault"),
+        ("--cw-text", "TextPrimary"), ("--cw-text-2", "TextSecondary"), ("--cw-lines", "LinesDefault"), ("--cw-secondary", "Secondary"), ("--cw-tertiary", "Tertiary"),
     ];
 
     private static readonly Dictionary<string, string> Extensions = new()
@@ -132,7 +132,8 @@ public static partial class KeycloakLoginTheme
         var layout = design.Layout is { } named && SignInLayouts.All.FirstOrDefault(l => l.Equals(named, StringComparison.OrdinalIgnoreCase)) is { } known ? known : SignInLayouts.Default;
         var side = design.MediaSide ?? (layout == SignInLayouts.Slide ? SignInMediaSide.Right : SignInMediaSide.Left);
         var media = WebAddress(design.MediaUrl);
-        var background = WebAddress(design.BackgroundUrl);
+        // the glass card lies over the media when there is no page background
+        var background = WebAddress(design.BackgroundUrl) ?? (layout == SignInLayouts.Glass ? media : null);
         var config = new JsonObject
         {
             ["layout"] = layout.ToLowerInvariant(),
@@ -230,6 +231,24 @@ public static partial class KeycloakLoginTheme
         .cw-background::after{content:"";position:absolute;inset:0;background:rgb(0 0 0 / var(--cw-dim,0%))}
         .cw-subtitle{margin:.25rem 0 0;color:var(--cw-text-2)}
         .cw-notice{margin:1rem 0 0;padding:.6rem .75rem;border-left:3px solid var(--cw-primary);white-space:pre-line;font-size:.875rem}
+        .cw-layout-glass{background:radial-gradient(60vmax 60vmax at 12% 18%,color-mix(in srgb,var(--cw-primary) 55%,transparent),transparent 70%),
+        radial-gradient(55vmax 55vmax at 88% 85%,color-mix(in srgb,var(--cw-tertiary) 45%,transparent),transparent 70%),
+        linear-gradient(135deg,color-mix(in srgb,var(--cw-primary) 18%,var(--cw-background)),var(--cw-background));min-height:100%}
+        .cw-layout-glass body,.cw-layout-glass .pf-v5-c-login,.cw-layout-aurora body,.cw-layout-aurora .pf-v5-c-login{background:transparent}
+        .cw-layout-glass .pf-v5-c-login__main{background:color-mix(in srgb,var(--cw-surface) 62%,transparent);border:1px solid color-mix(in srgb,var(--cw-text) 12%,transparent);
+        border-radius:1.25rem;box-shadow:0 24px 60px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.18);-webkit-backdrop-filter:blur(22px) saturate(160%);backdrop-filter:blur(22px) saturate(160%)}
+        .cw-layout-glass .pf-v5-c-login__main .pf-v5-c-form-control{background:color-mix(in srgb,var(--cw-surface) 70%,transparent)}
+        .cw-layout-aurora{background:var(--cw-background);min-height:100%}
+        .cw-layout-aurora .pf-v5-c-login__main{border:1px solid var(--cw-lines);border-radius:1.25rem;box-shadow:0 30px 80px color-mix(in srgb,var(--cw-primary) 22%,rgba(0,0,0,.12))}
+        .cw-aurora{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none}
+        .cw-aurora span{position:absolute;width:64vmax;height:64vmax;border-radius:50%;filter:blur(80px);opacity:.45;will-change:transform}
+        .cw-aurora span:nth-child(1){background:var(--cw-primary);top:-26vmax;left:-18vmax;animation:cw-aurora-a 18s ease-in-out infinite alternate}
+        .cw-aurora span:nth-child(2){background:var(--cw-secondary);bottom:-30vmax;right:-22vmax;opacity:.3;animation:cw-aurora-b 23s ease-in-out infinite alternate}
+        .cw-aurora span:nth-child(3){background:var(--cw-tertiary);width:44vmax;height:44vmax;top:34%;left:38%;opacity:.35;animation:cw-aurora-c 27s ease-in-out infinite alternate}
+        @keyframes cw-aurora-a{to{transform:translate(22vmax,14vmax) scale(1.15)}}
+        @keyframes cw-aurora-b{to{transform:translate(-20vmax,-12vmax) scale(1.1)}}
+        @keyframes cw-aurora-c{to{transform:translate(-16vmax,10vmax) scale(.85)}}
+        @media (prefers-reduced-motion:reduce){.cw-aurora span{animation:none}}
         .cw-media{display:none}
         @media (min-width:768px){
         .cw-layout-split .cw-media,.cw-layout-slide .cw-media{display:flex;position:fixed;inset:0 auto 0 0;width:50vw;overflow:hidden;align-items:center;justify-content:center;
@@ -302,7 +321,21 @@ public static partial class KeycloakLoginTheme
             });
           }
 
-          if (coworkee.layout === "card") {
+          if (coworkee.layout === "aurora") {
+            // soft fields of the theme colors behind the card, below a page background
+            document.addEventListener("DOMContentLoaded", function () {
+              var aurora = document.createElement("div");
+              aurora.className = "cw-aurora";
+              aurora.setAttribute("aria-hidden", "true");
+              for (var i = 0; i < 3; i++) {
+                aurora.appendChild(document.createElement("span"));
+              }
+
+              document.body.prepend(aurora);
+            });
+          }
+
+          if (coworkee.layout !== "split" && coworkee.layout !== "slide") {
             return;
           }
 

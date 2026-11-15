@@ -20,32 +20,58 @@ public sealed partial class AuthBrandingProvider(
     private static readonly (string Variable, string Palette)[] Colors =
     [
         ("--paper", "Background"), ("--surface", "Surface"), ("--ink", "TextPrimary"), ("--ink-2", "TextSecondary"), ("--rule", "LinesDefault"),
-        ("--signal", "Primary"), ("--on-signal", "PrimaryContrastText"), ("--accent", "Secondary"), ("--error", "Error"), ("--success", "Success"),
+        ("--signal", "Primary"), ("--on-signal", "PrimaryContrastText"), ("--accent", "Secondary"), ("--tertiary", "Tertiary"), ("--error", "Error"), ("--success", "Success"),
     ];
 
-    // the theme part waits for the cache; the design follows the configuration at once, which picks up changes made in the app with its next reload.
-    // The preview of the Themes page brings an unsaved design for its one request (already checked).
-    public async ValueTask<AuthBranding> GetAsync(CancellationToken cancellationToken) =>
-        await cache.GetOrCreateInScopeAsync(services, new ImpersonatedUser(null, null), "coworkee:auth-branding", LoadAsync, Entry, cancellationToken: cancellationToken)
-            with { Design = SignInPreview.Design(http.HttpContext) ?? Checked(options.CurrentValue.Design) };
+    /// <summary>Cookie of the auth server with the theme the browser used last (<see cref="SignInDesign.ThemeParameter"/>).</summary>
+    public const string ThemeCookie = "coworkee-theme";
+
+    // the themes wait for the cache; the design follows the configuration at once, which picks up changes made in the app with its next reload.
+    // The design is the one the theme the browser used last names (cookie, a theme of the system organisation), else the one of the default theme, else the default design.
+    // The preview of the Sign-in page brings an unsaved design for its one request (already checked).
+    public async ValueTask<AuthBranding> GetAsync(CancellationToken cancellationToken)
+    {
+        var configured = options.CurrentValue;
+        var themes = await cache.GetOrCreateInScopeAsync(services, new ImpersonatedUser(null, null), "coworkee:auth-branding", LoadAsync, Entry, cancellationToken: cancellationToken);
+        var theme = Pick(themes, ThemeHint(http.HttpContext));
+        return new AuthBranding(configured.DisplayName, theme?.Logo ?? configured.LogoUrl, theme?.Css,
+            SignInPreview.Design(http.HttpContext) ?? Checked(configured.Design.For(theme?.Design)));
+    }
 
     /// <summary>"light", "dark" or "system": the color mode setting of the user, else of the installation.</summary>
     public async Task<string> ModeAsync(CancellationToken cancellationToken) =>
         await settings.GetAsync(ThemeSettings.Mode, cancellationToken) switch { "light" => "light", "dark" => "dark", _ => "system" };
 
-    // the same for every visitor: the theme as an anonymous visitor gets it
-    private async Task<AuthBranding> LoadAsync(IServiceProvider scope, CancellationToken cancellationToken)
-    {
-        var configured = options.CurrentValue;
-        var theme = await scope.GetRequiredService<IDispatcher>().SendAsync(new GetCurrentTheme(), cancellationToken);
-        if (!theme.IsSuccess)
-        {
-            return new AuthBranding(configured.DisplayName, configured.LogoUrl, null, new SignInDesign());
-        }
+    /// <summary>The theme of <paramref name="hint"/> when the visitor may use it, else the default theme.</summary>
+    internal static AuthTheme? Pick(AuthTheme[] themes, Guid? hint) =>
+        themes.FirstOrDefault(t => t.Id == hint) ?? themes.FirstOrDefault(t => t.IsDefault) ?? themes.FirstOrDefault();
 
-        var dto = theme.Value;
-        var logo = ThemeLogo.ToDataUrl(dto.Logo) ?? configured.LogoUrl;
-        return new AuthBranding(configured.DisplayName, logo, Css(dto), new SignInDesign());
+    /// <summary>
+    /// Keeps the theme an authorization request names (<see cref="SignInDesign.ThemeParameter"/>, sent by the web app) in <see cref="ThemeCookie"/>, so the
+    /// account pages of this browser show its design; only a theme id, which picks among the themes the pages may show anyway.
+    /// </summary>
+    internal static void RememberTheme(Microsoft.AspNetCore.Http.HttpContext context, string? theme)
+    {
+        if (Guid.TryParse(theme, out var id) && ThemeHint(context) != id)
+        {
+            context.Response.Cookies.Append(ThemeCookie, id.ToString(), new Microsoft.AspNetCore.Http.CookieOptions
+            {
+                HttpOnly = true, Secure = context.Request.IsHttps, SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax, MaxAge = TimeSpan.FromDays(365), IsEssential = true, Path = "/",
+            });
+        }
+    }
+
+    /// <summary>The theme in the auth server's cookie, written when the web app names it in the authorization request.</summary>
+    internal static Guid? ThemeHint(Microsoft.AspNetCore.Http.HttpContext? context) =>
+        context?.Request.Cookies.TryGetValue(ThemeCookie, out var value) == true && Guid.TryParse(value, out var id) ? id : null;
+
+    // the same for every visitor: the themes of the system organisation an anonymous visitor may have used, one entry, so no theme id makes the cache grow
+    private static async Task<AuthTheme[]> LoadAsync(IServiceProvider scope, CancellationToken cancellationToken)
+    {
+        var themes = await scope.GetRequiredService<IDispatcher>().SendAsync(new GetSignInThemes(), cancellationToken);
+        return themes.IsSuccess
+            ? [.. themes.Value.Select(t => new AuthTheme(t.Id, t.IsDefault, ThemeLogo.ToDataUrl(t.Logo), Css(t), SignInDesign.KeyOf(t.Options)))]
+            : [];
     }
 
     internal static string Css(ThemeDto theme)

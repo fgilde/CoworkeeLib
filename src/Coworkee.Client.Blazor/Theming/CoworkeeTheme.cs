@@ -69,6 +69,9 @@ public class CoworkeeTheme : MudTheme
 
     public bool StripedTables { get; set; }
 
+    /// <summary>Key of the sign-in design (admin page Sign-in) the sign-in page shows for this theme; empty is the default design.</summary>
+    public string? SignInDesign { get; set; }
+
     /// <summary>Users can choose the theme.</summary>
     public bool IsPublished { get; set; }
 

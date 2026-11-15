@@ -43,12 +43,12 @@ public sealed partial class CoworkeeApp
     }
 
     /// <summary>
-    /// The realm as containers reach it. Keycloak then names itself by the browser's address (KC_HOSTNAME), whoever asks,
-    /// so tokens fetched over the container network carry the same issuer as those of the auth server.
+    /// Keycloak names itself by the browser's address (KC_HOSTNAME), whoever asks, so tokens fetched over the container network
+    /// carry the same issuer as those of the auth server.
     /// </summary>
-    private string ContainerKeycloakAuthority()
+    private void NameKeycloakByItsBrowserAddress()
     {
-        var keycloak = RequireKeycloak(nameof(ContainerKeycloakAuthority));
+        var keycloak = RequireKeycloak(nameof(NameKeycloakByItsBrowserAddress));
         var http = keycloak.GetEndpoint("http");
         if (!_keycloakHostname)
         {
@@ -63,8 +63,6 @@ public sealed partial class CoworkeeApp
                 keycloak.WithEnvironment(context => context.EnvironmentVariables["KC_HOSTNAME"] = http.Url);
             }
         }
-
-        return $"http://{keycloak.Resource.Name}:{http.TargetPort}/realms/{_realm}";
     }
 
     /// <summary>

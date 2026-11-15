@@ -68,7 +68,8 @@ public sealed class SignInConfigurationTests : ClientTestBase
         Labels(page).ShouldContain("Allow self registration");
         Input(page, "Ask for the address").HasAttribute("checked").ShouldBeTrue();
         page.Find("[data-testid='sign-in-allowed-emails']").TextContent.ShouldContain("*@acme.test");
-        page.Find("[data-testid='sign-in-documents-none']");
+        // the requested documents show once the step is switched on
+        page.FindAll("[data-testid='sign-in-document-add']").ShouldBeEmpty();
 
         Open(page, "Appearance");
         page.Find("[data-testid='sign-in-design'] [data-layout='Card']").GetAttribute("aria-checked").ShouldBe("true");
@@ -77,6 +78,21 @@ public sealed class SignInConfigurationTests : ClientTestBase
         Labels(page).ShouldContain("Show the app name");
         Labels(page).ShouldContain("Title");
         Labels(page).ShouldContain("Notice");
+    }
+
+    [Fact]
+    public async Task The_appearance_applies_the_design_to_keycloak_with_its_button()
+    {
+        Api.GetKeycloakThemeStatusAsync(Arg.Any<CancellationToken>()).Returns(new KeycloakThemeStatusDto(true, "coworkee-demo", null, null));
+        Api.ApplyKeycloakThemeAsync(Arg.Any<CancellationToken>()).Returns(new KeycloakThemeStatusDto(true, "coworkee-demo", DateTimeOffset.UtcNow, null));
+        var page = RenderPage();
+
+        page.WaitForAssertion(() => Tabs(page).ShouldContain("Appearance"));
+        Open(page, "Appearance");
+        page.WaitForAssertion(() => page.Find("[data-testid='sign-in-appearance'] [data-testid='keycloak-theme-apply']"));
+        await page.InvokeAsync(() => page.Find("[data-testid='keycloak-theme-apply']").Click());
+
+        await Api.Received(1).ApplyKeycloakThemeAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -146,6 +162,7 @@ public sealed class SignInConfigurationTests : ClientTestBase
 
         Input(page, "Ask for the address").Change(false);
         await page.InvokeAsync(() => page.FindComponent<MudExTagField<string>>().Instance.ValuesChanged.InvokeAsync(["*@acme.test", "*@beta.test"]));
+        Input(page, "Ask new users for documents").Change(true);
         await page.Find("[data-testid='sign-in-document-add']").ClickAsync(new());
         page.Find("[data-testid='sign-in-document-slot'] input").Change("Passport");
         await page.Find("[data-testid='sign-in-save']").ClickAsync(new());
@@ -153,6 +170,7 @@ public sealed class SignInConfigurationTests : ClientTestBase
         await Api.Received(1).SaveAppConfigurationAsync(CoworkeeAppSettings.Section, Arg.Is<JsonElement>(v =>
             !v.GetProperty("registration").GetProperty("requireAddress").GetBoolean()
             && v.GetProperty("registration").GetProperty("allowedEmails").GetArrayLength() == 2
+            && v.GetProperty("registration").GetProperty("requireDocuments").GetBoolean()
             && v.GetProperty("registration").GetProperty("documents")[0].GetProperty("name").GetString() == "Passport"
             && v.GetProperty("jobs").GetProperty("workerCount").GetInt32() == 7), Arg.Any<CancellationToken>());
         await Api.DidNotReceiveWithAnyArgs().SetSettingsAsync(default, default!, default);
@@ -200,6 +218,27 @@ public sealed class SignInConfigurationTests : ClientTestBase
     }
 
     [Fact]
+    public async Task A_new_named_design_is_saved_in_the_design_section_next_to_the_unchanged_default_design()
+    {
+        Api.GetThemesAsync(Arg.Any<CancellationToken>()).Returns([]);
+        var page = RenderPage();
+        page.WaitForAssertion(() => Tabs(page).ShouldContain("Appearance"));
+        Open(page, "Appearance");
+
+        await page.InvokeAsync(() => page.Find("[data-testid='sign-in-design-add']").ClickAsync(new()));
+        page.Find("[data-testid='sign-in-dirty']");
+        await page.InvokeAsync(() => page.Find("[data-testid='sign-in-design'] [data-layout='Aurora']").ClickAsync(new()));
+        await page.InvokeAsync(() => page.Find("[data-testid='sign-in-save']").ClickAsync(new()));
+
+        await Api.Received(1).SaveAppConfigurationAsync(SignInDesign.Section, Arg.Is<JsonElement>(v =>
+            v.GetProperty("layout").GetString() == SignInLayouts.Card
+            && v.GetProperty("designs").GetArrayLength() == 1
+            && v.GetProperty("designs")[0].GetProperty("layout").GetString() == SignInLayouts.Aurora
+            && v.GetProperty("designs")[0].GetProperty("name").GetString() == "New design"
+            && v.GetProperty("designs")[0].GetProperty("key").GetString()!.StartsWith("design-")), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public void Discarding_restores_what_was_loaded()
     {
         var page = RenderPage();
@@ -241,8 +280,26 @@ public sealed class SignInConfigurationTests : ClientTestBase
         Open(page, "Registration");
 
         page.Find("[data-testid='sign-in-documents-unavailable']");
-        page.Find("[data-testid='sign-in-document-add']").HasAttribute("disabled").ShouldBeTrue();
+        page.FindAll("[data-testid='sign-in-document-add']").ShouldBeEmpty();
         page.Find("input[data-testid='sign-in-require-documents'], [data-testid='sign-in-require-documents'] input").HasAttribute("disabled").ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Requested_documents_read_as_a_list_of_what_new_users_upload()
+    {
+        var page = RenderPage();
+        page.WaitForAssertion(() => Tabs(page).ShouldContain("Registration"));
+        Open(page, "Registration");
+
+        Input(page, "Ask new users for documents").Change(true);
+        page.Find("[data-testid='sign-in-documents-none']").TextContent.ShouldContain("the registration skips this step");
+        await page.Find("[data-testid='sign-in-document-add']").ClickAsync(new());
+
+        page.Find("[data-testid='sign-in-document-add']").TextContent.ShouldContain("Request a document");
+        page.FindAll("[data-testid='sign-in-documents-none']").ShouldBeEmpty();
+        page.Find("[data-testid='sign-in-document-title']").TextContent.ShouldContain("Document 1");
+        page.Find("[data-testid='sign-in-document-slot'] input").Change("Passport");
+        page.Find("[data-testid='sign-in-document-title']").TextContent.ShouldContain("Passport");
     }
 
     [Fact]

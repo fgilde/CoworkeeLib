@@ -96,6 +96,12 @@ public static class BffExtensions
                         context.ProtocolMessage.LoginHint = hint;
                     }
 
+                    // the theme this browser used last (remembered for the loading screen): the sign-in page shows the sign-in design it names
+                    if (LoadingScreenPreferences.Read(context.Request).ThemeId is { } theme)
+                    {
+                        context.ProtocolMessage.SetParameter(Contracts.Theming.SignInDesign.ThemeParameter, theme.ToString());
+                    }
+
                     return Task.CompletedTask;
                 };
                 oidc.SaveTokens = true;

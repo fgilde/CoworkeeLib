@@ -216,4 +216,18 @@ public sealed class BffTests : IAsyncLifetime
 
         response.Headers.Location!.Query.ShouldContain("login_hint=ada%40acme.test");
     }
+
+    [Fact]
+    public async Task Login_names_the_theme_this_browser_used_last_so_the_sign_in_page_shows_its_design()
+    {
+        var theme = Guid.NewGuid();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/bff/login?returnUrl=/admin");
+        request.Headers.Add("Cookie", $"{LoadingScreenPreferences.Cookie}=mode=dark&theme={theme}");
+
+        var named = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        var none = await _client.GetAsync("/bff/login?returnUrl=/admin", TestContext.Current.CancellationToken);
+
+        named.Headers.Location!.Query.ShouldContain($"{Contracts.Theming.SignInDesign.ThemeParameter}={theme}");
+        none.Headers.Location!.Query.ShouldNotContain(Contracts.Theming.SignInDesign.ThemeParameter);
+    }
 }

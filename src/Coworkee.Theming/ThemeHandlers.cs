@@ -20,6 +20,7 @@ internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUs
       IHandler<GetCurrentTheme, Result<ThemeDto>>,
       IHandler<GetChoosableTheme, Result<ThemeDto>>,
       IHandler<GetBuiltInThemes, Result<IReadOnlyList<ThemeDto>>>,
+      IHandler<GetSignInThemes, Result<IReadOnlyList<ThemeDto>>>,
       IHandler<CreateTheme, Result<ThemeDto>>,
       IHandler<UpdateTheme, Result<ThemeDto>>,
       IHandler<DeleteTheme, Result>,
@@ -62,6 +63,20 @@ internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUs
         return await EffectiveAsync(tenantId, cancellationToken) is { } theme
             ? ToDto(theme, true, await VersionAsync(tenantId, theme, cancellationToken))
             : NotFound;
+    }
+
+    public async Task<Result<IReadOnlyList<ThemeDto>>> HandleAsync(GetSignInThemes query, CancellationToken cancellationToken)
+    {
+        await ThemeSeeds.EnsureAsync(db, options.Value, cancellationToken);
+        var tenantId = await SystemTenantIdAsync(cancellationToken);
+        var defaultId = (await EffectiveAsync(tenantId, cancellationToken))?.Id;
+        var versions = await VersionsAsync(tenantId, cancellationToken);
+        IReadOnlyList<ThemeDto> themes = (await db.Set<ThemeDefinition>().AsNoTracking().Where(t => t.BuiltInId == null && (t.TenantId == null || t.TenantId == tenantId))
+                .ToListAsync(cancellationToken))
+            .Select(t => ToDto(t, t.Id == defaultId, versions.GetValueOrDefault(t.Id)))
+            .Where(t => t.IsPublished || t.IsDefault)
+            .ToList();
+        return Result<IReadOnlyList<ThemeDto>>.Success(themes);
     }
 
     // independent of the caller's permissions, so the answer is the same for everyone in the organisation (the web app caches it per organisation)

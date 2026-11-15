@@ -2,6 +2,20 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- Anmeldedesigns je Theme: Neben dem Standarddesign enthält `Coworkee:Auth:Design:Designs` benannte Designs (`Key`, `Name`, Layout, Medium und seine Seite, Seitenhintergrund und Abdunklung), und ein Theme nennt eines mit dem neuen `CoworkeeTheme.SignInDesign` (Theme-Option `SignInDesign`, eine Auswahl im Theme-Editor; `AppTheme.Options` setzt es für die Themes einer App). Die Anmeldeseiten zeigen das Design des zuletzt im Browser verwendeten Themes (das BFF nennt es in der Autorisierungsanfrage als `coworkee_theme`, der Auth-Server hält es in seinem Cookie `coworkee-theme`; nur mitgelieferte oder veröffentlichte Themes der Systemorganisation zählen, mit ihren Farben und ihrem Logo), sonst das des Standard-Themes, sonst das Standarddesign, auch bei einem Design, das es nicht mehr gibt. Die Keycloak-Seite zeigt das Design des Standard-Themes. Texte, App-Name und Ladebildschirm bleiben die des Standarddesigns. Bestehende Konfigurationen sehen aus wie bisher; nichts zu tun. Siehe [Designs je Theme](../security/sign-in-pages.md#designs-je-theme).
+- Zwei neue Anmelde-Layouts, auf dem Auth-Server und im Keycloak-Login-Theme: `Glass`, eine Milchglas-Karte über dem Seitenhintergrund, dem Medium oder einem Verlauf aus den Theme-Farben, und `Aurora`, eine Karte über langsam wandernden Feldern aus Primär-, Sekundär- und Tertiärfarbe des Themes (still bei reduzierter Bewegung). Das Stylesheet hat die neue Variable `--tertiary` (Palette `Tertiary`), das Keycloak-Theme `--cw-secondary` und `--cw-tertiary`. Eine App mit einem eigenen Layout namens `Glass` oder `Aurora` behält es (ihre View gewinnt); eine, die den Namen zu `SignInLayouts` hinzugefügt hat, sieht die Kachel doppelt und entfernt ihren Eintrag.
+- Admin-Seite *Anmeldung*, Tab *Darstellung*: Die Karte *Anmeldedesigns* zeigt das Standarddesign und die benannten als Kacheln mit den Themes, die sie zeigen, fügt sie hinzu, dupliziert, benennt um und löscht sie (das Löschen nennt die Themes, die dann das Standarddesign zeigen); die Karte darunter bearbeitet das gewählte Design und zeigt seine Vorschau. Neue Komponenten `SignInDesignList`, `SignInLayoutThumb` und `SignInDesignSelect`; `SignInDesignCard.Value` ist jetzt ein `SignInLook` (die Basis von `SignInDesign` und `NamedSignInDesign`) mit `Defaults`, `Title` und `Description`.
+
+### Behoben
+
+- Admin-Seite *Anmeldung*, Tab *Registrierung*: Die Dokument-Karte sagt, wofür sie da ist. *Dokumente bei der Registrierung* mit kurzer Erklärung, der Schalter *Neue Benutzer nach Dokumenten fragen* zeigt die angeforderten Dokumente (je eine Karte mit Namen oder *Dokument 1* und *Pflicht*/*Optional*), der Button heißt *Dokument anfordern*, und eine leere Liste sagt, dass die Registrierung den Schritt überspringt.
+- Admin-Seite *Anmeldung*: Der Tab *Darstellung* hat wieder die Karte *Keycloak-Anmeldeseite* mit dem Button *Nach Keycloak übernehmen* (sie war nur auf der Seite Themes geblieben, als das Design umzog). Sie erscheint überall dort, wo die API ein Keycloak-Login-Theme pflegt, also bei lokalen Läufen.
+- Anmeldung über Keycloak auf Azure Container Apps: Der Auth-Server fragte den Realm unter `http://keycloak:8080` an, was Container Apps nicht auflöst (ein App-Name antwortet nur auf Port 80), und antwortete nach dem Timeout mit 500. Er nimmt jetzt den Keycloak-Endpunkt so, wie ihn jedes Ziel auflöst, wie die Migrationen: `http://keycloak:8080` in Docker Compose und Kubernetes, die öffentliche Adresse auf Container Apps. Zum Übernehmen neu deployen.
+
 ## 0.0.1.87 (2026-11-14)
 
 ### Geändert
