@@ -46,6 +46,8 @@ public static class CoworkeeClientExtensions
         services.AddScoped<Auditing.TraceViewer>();
         services.AddSingleton(new Pages.ProfileTab("API keys", "api-keys", typeof(Pages.ProfileApiKeys), Coworkee.Contracts.Identity.ApiKeyPermissions.Create,
             MudBlazor.Icons.Material.Outlined.Key, Order: 100));
+        Components.Users.UserDetailTabs.AddUserDetailTab<Components.Files.UserFilesTab>(services, "Files", Coworkee.Contracts.Files.FilePermissions.View,
+            MudBlazor.Icons.Material.Outlined.FolderOpen, order: 100);
         services.AddHttpClient<Backup.IBackupApi, Backup.BackupApi>(client =>
         {
             client.BaseAddress = baseAddress;

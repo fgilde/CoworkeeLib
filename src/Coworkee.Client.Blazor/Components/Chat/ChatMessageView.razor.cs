@@ -49,7 +49,7 @@ public partial class ChatMessageView
 
     private Task OpenAsync(ChatAttachmentDto file) => FilePreviewDialog.ShowAsync(Dialogs, Url(file), file.ContentType, file.Name);
 
-    private static string FileSize(long bytes) => bytes switch
+    internal static string FileSize(long bytes) => bytes switch
     {
         < 1024 => $"{bytes} B",
         < 1024 * 1024 => string.Create(CultureInfo.CurrentCulture, $"{bytes / 1024.0:0.#} KB"),

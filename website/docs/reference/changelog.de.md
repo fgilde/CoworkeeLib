@@ -2,6 +2,13 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- Die Admin-Benutzerseite nimmt Reiter von Modulen und Apps auf: `services.AddUserDetailTab<TComponent>(title, permission, icon, order)`; die Komponente bekommt `[Parameter] Guid UserId`, der Reiter erscheint nur mit seiner Berechtigung.
+- Die Admin-Benutzerseite hat den Reiter **Dateien** (`Files.View`): die Registrierungsunterlagen des Benutzers und seine anderen Uploads getrennt, mit Vorschau und Download, live.
+
 ## 0.0.1.90 (2026-11-15)
 
 ### Behoben

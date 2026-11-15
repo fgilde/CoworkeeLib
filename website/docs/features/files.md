@@ -32,6 +32,8 @@ That sign-in media has to load without a session, so it comes from a public file
 
 A private file can be handed out for a moment instead: *Copy temporary link* (`POST /api/v1/files/{id}/token`) gives a link that opens it without sign-in for five minutes ([temporary links](../modules/files.md#temporary-links)).
 
+Administrators see a user's files on his page, tab *Files*: registration documents and other uploads apart ([users](identity.md#user-administration)).
+
 ## Files on a record
 
 [Record attachments](../modules/attachments.md) put files on a row of your own entity, in named slots (`services.AddRecordAttachments<LeaveRequest>("LeaveRequests", a => a.Slot("certificate", ...))`). Who may read them follows the row's visibility in its OData set; the `RecordAttachment` component uploads, shows and deletes them.

@@ -32,6 +32,8 @@ Diese Medien müssen ohne Sitzung laden, deshalb kommen sie aus einer öffentlic
 
 Eine private Datei lässt sich stattdessen kurz herausgeben: *Copy temporary link* (`POST /api/v1/files/{id}/token`) liefert einen Link, der sie fünf Minuten lang ohne Anmeldung öffnet ([temporäre Links](../modules/files.md#temporare-links)).
 
+Administratoren sehen die Dateien eines Benutzers auf seiner Seite, Reiter *Dateien*: Registrierungsunterlagen und andere Uploads getrennt ([Benutzer](identity.md#benutzerverwaltung)).
+
 ## Dateien an einem Datensatz
 
 [Anhänge an Datensätzen](../modules/attachments.md) hängen Dateien in benannten Slots an eine Zeile deiner eigenen Entity (`services.AddRecordAttachments<LeaveRequest>("LeaveRequests", a => a.Slot("certificate", ...))`). Wer sie lesen darf, folgt der Sichtbarkeit der Zeile in ihrem OData-Set; die Komponente `RecordAttachment` lädt sie hoch, zeigt und löscht sie.

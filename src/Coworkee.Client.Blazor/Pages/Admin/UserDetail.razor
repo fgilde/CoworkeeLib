@@ -112,5 +112,11 @@ else
                 <UserSessions UserId="Id" UserName="@DisplayName(_user)" />
             </MudTabPanel>
         </PermissionView>
+        @foreach (var tab in _tabs)
+        {
+            <MudTabPanel @key="tab" Text="@L[tab.Title]" Icon="@tab.Icon" data-testid="@($"user-tab-{tab.Component.Name}")">
+                <DynamicComponent Type="tab.Component" Parameters="@(new Dictionary<string, object> { ["UserId"] = Id })" />
+            </MudTabPanel>
+        }
     </MudTabs>
 }

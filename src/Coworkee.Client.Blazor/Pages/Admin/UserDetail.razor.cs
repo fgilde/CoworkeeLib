@@ -1,5 +1,6 @@
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components.Data;
+using Coworkee.Client.Blazor.Components.Users;
 using Coworkee.Client.Blazor.People;
 using Coworkee.Contracts;
 using Coworkee.Contracts.Identity;
@@ -38,6 +39,10 @@ public partial class UserDetail
 
     [Inject] private IAuthorizationService Authorization { get; set; } = null!;
 
+    [Inject] private IEnumerable<UserDetailTab> Tabs { get; set; } = null!;
+
+    private List<UserDetailTab> _tabs = [];
+
     private UserDetailDto? _user;
     private UserForm _form = new();
     private ObjectEditMeta<UserForm>? _meta;
@@ -52,6 +57,15 @@ public partial class UserDetail
         var user = (await AuthenticationState).User;
         _mayImpersonate = Impersonation.Offers(user, Id);
         _canManage = (await Authorization.AuthorizeAsync(user, Security.PermissionPolicy.For(IdentityPermissions.Users.Manage))).Succeeded;
+        _tabs = [];
+        foreach (var tab in Tabs.OrderBy(t => t.Order))
+        {
+            if (tab.Permission is null || (await Authorization.AuthorizeAsync(user, Security.PermissionPolicy.For(tab.Permission))).Succeeded)
+            {
+                _tabs.Add(tab);
+            }
+        }
+
         try
         {
             await LoadAsync();

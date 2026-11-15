@@ -16,7 +16,7 @@ namespace Coworkee.Files;
 /// </summary>
 internal sealed class FileRegistrationDocuments(CoworkeeDbContext db, ICurrentUser currentUser, IBlobStorage storage, TimeProvider clock) : IRegistrationDocumentStore
 {
-    public const string RootFolder = "Registrations";
+    public const string RootFolder = FolderDto.RegistrationsRoot;
     public const string ReaderRole = "Registration documents";
 
     public async Task SaveAsync(RegistrationDocument document, CancellationToken cancellationToken)

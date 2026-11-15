@@ -2,6 +2,13 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- The admin user page takes tabs from modules and apps: `services.AddUserDetailTab<TComponent>(title, permission, icon, order)`; the component gets `[Parameter] Guid UserId`, the tab shows only with its permission.
+- The admin user page has the tab **Files** (`Files.View`): the user's registration documents and his other uploads apart, with preview and download, live.
+
 ## 0.0.1.90 (2026-11-15)
 
 ### Fixed

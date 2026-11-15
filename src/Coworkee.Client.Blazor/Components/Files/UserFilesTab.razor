@@ -1,0 +1,32 @@
+<RealtimeSubscription Topic="@Coworkee.Contracts.Realtime.RealtimeTopics.Type("StoredFile")" OnEvent="_ => LoadAsync()" />
+<div data-testid="user-files-tab">
+    @if (_files is null)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    }
+    else if (_files.Count == 0)
+    {
+        <MudText Class="mud-text-secondary" data-testid="user-files-empty">@L["This user has no files."]</MudText>
+    }
+    else
+    {
+        @foreach (var (title, testId, files) in Groups())
+        {
+            <MudText Typo="Typo.subtitle1" Class="mt-2">@L[title]</MudText>
+            <MudSimpleTable Dense="true" Hover="true" Class="mb-4" data-testid="@testId">
+                <tbody>
+                    @foreach (var file in files)
+                    {
+                        <tr data-file="@file.Id">
+                            <td><MudLink OnClick="() => PreviewAsync(file)">@file.Name</MudLink></td>
+                            <td style="white-space:nowrap">@Chat.ChatMessageView.FileSize(file.Size)</td>
+                            <td style="white-space:nowrap">@file.CreatedAt.ToLocalTime().ToString("g")</td>
+                            <td style="width:1%"><MudIconButton Icon="@Icons.Material.Outlined.Download" Size="Size.Small" Href="@Coworkee.Client.Blazor.Files.FileUrls.Content(file.Id, true)"
+                                                                 aria-label="@L["Download"]" /></td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        }
+    }
+</div>
