@@ -34,6 +34,9 @@ var app = builder.AddCoworkeeApp("myapp", options =>
 #if (signInMedia != "")
     options.SignIn.MediaUrl = "COWORKEE_SIGNIN_MEDIA";
 #endif
+#if (signInBackground != "")
+    options.SignIn.BackgroundUrl = "COWORKEE_SIGNIN_BACKGROUND";
+#endif
 #if (loadingScreen != "Animated")
     options.SignIn.LoadingScreen = Coworkee.Contracts.Theming.LoadingScreenBackground.COWORKEE_LOADING_SCREEN;
 #endif

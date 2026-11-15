@@ -2,6 +2,13 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- Coworkee Studio, step *Sign-in*: the seven layouts `Card`, `Split`, `Slide`, `Spotlight`, `Poster`, `Stack` and `Minimal`, each with an animated sketch of its own, and only the options the layout offers. Each background (page, form side, media side, panel, poster, cards behind) is the theme's, an image or video, a color or a gradient; the new gradient control has a preview bar with draggable stops (a click adds one in the color there), a color picker, the position and delete per stop, the kind (linear, radial, conic), the angle and *Animated*. The card *Look* holds side, surface `Solid`/`Glass`, *Aurora*, darkening, tilt and logo size where the layout has them. See [Coworkee Studio](../getting-started/studio.md#sign-in).
+- CLI and app spec: `signInLayout` takes the new layouts; new options (and `branding` keys) `signInBackground`, `signInPageFill`, `signInPanelFill`, `signInBackgroundDim`, `signInSurface`, `signInAnimation`, `signInTilt` and `signInLogoSize`, checked like the sign-in pages check them (colors, two to eight stops, ranges) and left out with a warning where the layout does not offer them. The background file goes into the app host (`options.SignIn.BackgroundUrl`, a local file into `wwwroot/media`); fills and looks into `Coworkee:Auth:Design` of the `appsettings.json` of the auth server and the api; `coworkee add` carries them too. Specs with the old layouts `Glass` or `Aurora` become `Card` with `signInSurface Glass` or `signInAnimation Aurora`. `signInMediaSide` now depends on the layout (`Split`, `Slide`, `Spotlight`, `Poster`) instead of the media. See [Sign-in fills](../getting-started/cli.md#sign-in-fills).
+
 ## 0.0.1.90 (2026-11-15)
 
 ### Fixed

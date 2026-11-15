@@ -6,7 +6,7 @@
              x:DataType="vm:PreviewViewModel"
              x:Name="Root">
   <UserControl.Styles>
-    <!-- gentle loops: the card floats, the split media drifts, the slide panel swaps sides like the real pages -->
+    <!-- gentle loops: the card floats, the split media drifts, the slide panel swaps sides, aurora fields wander like the real pages -->
     <Style Selector="Border.float">
       <Style.Animations>
         <Animation Duration="0:0:4" IterationCount="Infinite" PlaybackDirection="Alternate" Easing="SineEaseInOut">
@@ -34,16 +34,47 @@
         </Animation>
       </Style.Animations>
     </Style>
+    <Style Selector="Ellipse.wander">
+      <Style.Animations>
+        <Animation Duration="0:0:11" IterationCount="Infinite" PlaybackDirection="Alternate" Easing="SineEaseInOut">
+          <KeyFrame Cue="0%"><Setter Property="TranslateTransform.X" Value="0" /><Setter Property="TranslateTransform.Y" Value="0" /></KeyFrame>
+          <KeyFrame Cue="100%"><Setter Property="TranslateTransform.X" Value="60" /><Setter Property="TranslateTransform.Y" Value="30" /></KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
+    <Style Selector="Ellipse.wander.back">
+      <Style.Animations>
+        <Animation Duration="0:0:13" IterationCount="Infinite" PlaybackDirection="Alternate" Easing="SineEaseInOut">
+          <KeyFrame Cue="0%"><Setter Property="TranslateTransform.X" Value="0" /><Setter Property="TranslateTransform.Y" Value="0" /></KeyFrame>
+          <KeyFrame Cue="100%"><Setter Property="TranslateTransform.X" Value="-70" /><Setter Property="TranslateTransform.Y" Value="-24" /></KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
+    <!-- underlined inputs of Poster and the bare inputs of Minimal -->
+    <Style Selector="TextBlock.label">
+      <Setter Property="FontSize" Value="6.5" />
+      <Setter Property="Opacity" Value="0.75" />
+    </Style>
   </UserControl.Styles>
 
   <!-- drawn on a fixed 320x200 canvas, so the loops can move by fixed amounts; the viewbox scales it -->
   <Viewbox Stretch="Uniform" DataContext="{Binding #Root.Preview}">
   <Border Width="320" Height="200" Background="{Binding Background}" CornerRadius="12" ClipToBounds="True" BorderBrush="{Binding Lines}" BorderThickness="1">
     <Panel>
+      <!-- background 1: theme tint, fill, image or video with its darkening, aurora fields -->
+      <Border Background="{Binding Gradient}" Opacity="{Binding #Root.Tint}" />
+      <Border Background="{Binding #Root.Sketch.PageFill}" />
+      <Image Source="{Binding #Root.Sketch.PageImage}" Stretch="UniformToFill" />
+      <Border Background="Black" Opacity="{Binding #Root.Dim}" />
+      <Panel IsVisible="{Binding #Root.ShowAurora}" ClipToBounds="True">
+        <Ellipse Classes="wander" Width="200" Height="150" Fill="{Binding Primary}" Opacity="0.6" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-50,-50,0,0" Effect="blur(40)" />
+        <Ellipse Classes="wander back" Width="210" Height="150" Fill="{Binding Secondary}" Opacity="0.5" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-50,-50" Effect="blur(40)" />
+        <Ellipse Classes="wander back" Width="120" Height="90" Fill="{Binding Primary}" Opacity="0.35" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,10,40,0" Effect="blur(34)" />
+      </Panel>
+
       <!-- Card -->
       <Panel IsVisible="{Binding #Root.Layout, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Card}">
-        <Border Background="{Binding Gradient}" Opacity="0.12" />
-        <Border Classes="float" Background="{Binding Surface}" CornerRadius="{Binding SmallCorner}" BorderBrush="{Binding Lines}" BorderThickness="1"
+        <Border Classes="float" Background="{Binding #Root.CardBrush}" CornerRadius="{Binding SmallCorner}" BorderBrush="{Binding #Root.CardBorder}" BorderThickness="1"
                 Width="124" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="10" BoxShadow="0 4 14 0 #22000000">
           <v:SignInForm />
         </Border>
@@ -57,26 +88,23 @@
             <Border Background="{Binding Gradient}" />
             <Path Data="M0,100 L30,55 L48,75 L72,35 L100,100 Z" Stretch="Fill" Fill="#40ffffff" VerticalAlignment="Bottom" Height="60" />
             <Ellipse Width="22" Height="22" Fill="#66ffffff" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,16,22,0" />
-            <Image Source="{Binding #Root.Media}" Stretch="UniformToFill" />
+            <Border Background="{Binding #Root.Sketch.PanelFill}" />
+            <Image Source="{Binding #Root.Sketch.Media}" Stretch="UniformToFill" />
           </Panel>
         </Panel>
-        <Border Grid.Column="1" Background="{Binding Surface}" FlowDirection="LeftToRight">
-          <v:SignInForm Margin="14,0" VerticalAlignment="Center" />
-        </Border>
+        <v:SignInForm Grid.Column="1" Margin="18,0" VerticalAlignment="Center" FlowDirection="LeftToRight" />
       </Grid>
 
       <!-- Slide -->
       <Grid ColumnDefinitions="*,*" IsVisible="{Binding #Root.Layout, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Slide}"
             FlowDirection="{Binding #Root.MediaRight, Converter={x:Static v:Converters.Mirror}}">
-        <Border Grid.Column="1" Background="{Binding Surface}" FlowDirection="LeftToRight">
-          <v:SignInForm Margin="14,0" VerticalAlignment="Center" />
-        </Border>
-        <Border Grid.Column="0" Background="{Binding Surface}" FlowDirection="LeftToRight">
-          <v:SignInForm Margin="14,0" VerticalAlignment="Center" />
-        </Border>
-        <Border Grid.Column="0" Classes="slider" Background="{Binding Gradient}" CornerRadius="0,18,18,0" ClipToBounds="True">
+        <v:SignInForm Grid.Column="1" Margin="18,0" VerticalAlignment="Center" FlowDirection="LeftToRight" />
+        <v:SignInForm Grid.Column="0" Margin="18,0" VerticalAlignment="Center" FlowDirection="LeftToRight" />
+        <Border Grid.Column="0" Classes="slider" CornerRadius="0,18,18,0" ClipToBounds="True">
           <Panel>
-            <Image Source="{Binding #Root.Media}" Stretch="UniformToFill" Opacity="0.35" />
+            <Border Background="{Binding Gradient}" />
+            <Border Background="{Binding #Root.Sketch.PanelFill}" />
+            <Image Source="{Binding #Root.Sketch.Media}" Stretch="UniformToFill" Opacity="0.35" />
             <Ellipse Width="70" Height="70" Fill="#1affffff" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-20,-20,0" />
             <StackPanel VerticalAlignment="Center" Margin="14,0" Spacing="6" FlowDirection="LeftToRight">
               <TextBlock Text="Welcome back" Foreground="{Binding PrimaryText}" FontFamily="{Binding Font}" FontWeight="Bold" FontSize="12" />
@@ -89,6 +117,77 @@
           </Panel>
         </Border>
       </Grid>
+
+      <!-- Spotlight: the page carries everything, the form floats in a tall panel at one side -->
+      <Panel IsVisible="{Binding #Root.Layout, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Spotlight}">
+        <Border Width="128" Margin="10" HorizontalAlignment="{Binding #Root.MediaRight, Converter={x:Static v:Converters.Side}}"
+                Background="{Binding #Root.CardBrush}" CornerRadius="12" BorderBrush="{Binding #Root.CardBorder}" BorderThickness="1" Padding="12" BoxShadow="0 8 22 0 #33000000">
+          <v:SignInForm VerticalAlignment="Center" />
+        </Border>
+      </Panel>
+
+      <!-- Poster: big type on one side, a calm form with underlined fields on the other -->
+      <Grid ColumnDefinitions="1.15*,*" IsVisible="{Binding #Root.Layout, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Poster}"
+            FlowDirection="{Binding #Root.MediaRight, Converter={x:Static v:Converters.Mirror}}">
+        <Panel ClipToBounds="True">
+          <Border Background="{Binding Gradient}" />
+          <Border Background="{Binding #Root.Sketch.PanelFill}" />
+          <Image Source="{Binding #Root.Sketch.Media}" Stretch="UniformToFill" Opacity="0.5" />
+          <StackPanel FlowDirection="LeftToRight" VerticalAlignment="Bottom" Margin="14,0,10,16" Spacing="3">
+            <TextBlock Text="{Binding Title}" Foreground="{Binding PrimaryText}" FontFamily="{Binding Font}" FontWeight="Black" FontSize="30" LineHeight="30" TextWrapping="Wrap" />
+            <TextBlock Text="Welcome back" Foreground="{Binding PrimaryText}" FontFamily="{Binding Font}" FontSize="10" Opacity="0.85" />
+            <Border Height="3" Width="34" HorizontalAlignment="Left" CornerRadius="2" Background="{Binding PrimaryText}" Margin="0,5,0,0" />
+          </StackPanel>
+        </Panel>
+        <StackPanel Grid.Column="1" FlowDirection="LeftToRight" VerticalAlignment="Center" Margin="18,0" Spacing="5">
+          <TextBlock Text="Sign in" Foreground="{Binding Text}" FontFamily="{Binding Font}" FontWeight="Bold" FontSize="13" Margin="0,0,0,4" />
+          <TextBlock Classes="label" Text="Email" Foreground="{Binding TextSecondary}" />
+          <Border Height="1" Background="{Binding Lines}" />
+          <TextBlock Classes="label" Text="Password" Foreground="{Binding TextSecondary}" Margin="0,4,0,0" />
+          <Border Height="1" Background="{Binding Lines}" />
+          <Border Height="15" CornerRadius="{Binding SmallCorner}" Background="{Binding Primary}" Margin="0,8,0,0">
+            <TextBlock Text="Sign in" Foreground="{Binding PrimaryText}" FontSize="8.5" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+        </StackPanel>
+      </Grid>
+
+      <!-- Stack: the form card in front of two tilted cards -->
+      <Panel IsVisible="{Binding #Root.Layout, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Stack}">
+        <Panel Width="124" Height="138" HorizontalAlignment="Center" VerticalAlignment="Center">
+          <Border CornerRadius="12" ClipToBounds="True" Margin="18,10,-18,-10" RenderTransform="{Binding #Root.BackTransform}" Opacity="0.75">
+            <Panel>
+              <Border Background="{Binding Gradient}" />
+              <Border Background="{Binding #Root.Sketch.PanelFill}" />
+              <Image Source="{Binding #Root.Sketch.Media}" Stretch="UniformToFill" />
+            </Panel>
+          </Border>
+          <Border CornerRadius="12" ClipToBounds="True" Margin="-12,4,12,-4" RenderTransform="{Binding #Root.MiddleTransform}">
+            <Panel>
+              <Border Background="{Binding Gradient}" />
+              <Border Background="{Binding #Root.Sketch.PanelFill}" />
+              <Image Source="{Binding #Root.Sketch.Media}" Stretch="UniformToFill" />
+            </Panel>
+          </Border>
+          <Border Classes="float" Background="{Binding Surface}" CornerRadius="12" BorderBrush="{Binding Lines}" BorderThickness="1" Padding="10" BoxShadow="0 6 16 0 #2a000000">
+            <v:SignInForm VerticalAlignment="Center" />
+          </Border>
+        </Panel>
+      </Panel>
+
+      <!-- Minimal: a large logo and the form straight on the background -->
+      <StackPanel IsVisible="{Binding #Root.Layout, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Minimal}"
+                  Width="118" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="5">
+        <Panel Width="{Binding #Root.LogoPixels}" Height="{Binding #Root.LogoPixels}" HorizontalAlignment="Center">
+          <Image Source="{Binding Logo}" IsVisible="{Binding HasLogo}" />
+          <Ellipse Fill="{Binding Primary}" IsVisible="{Binding !HasLogo}" />
+        </Panel>
+        <TextBlock Text="{Binding Title}" Foreground="{Binding Text}" FontFamily="{Binding Font}" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,4" />
+        <Border Height="13" CornerRadius="{Binding SmallCorner}" Background="{Binding Surface}" BorderBrush="{Binding Lines}" BorderThickness="1" />
+        <Border Height="13" CornerRadius="{Binding SmallCorner}" Background="{Binding Surface}" BorderBrush="{Binding Lines}" BorderThickness="1" />
+        <Border Height="15" CornerRadius="{Binding SmallCorner}" Background="{Binding Primary}" Margin="0,2,0,0">
+          <TextBlock Text="Sign in" Foreground="{Binding PrimaryText}" FontSize="8.5" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+      </StackPanel>
     </Panel>
   </Border>
   </Viewbox>

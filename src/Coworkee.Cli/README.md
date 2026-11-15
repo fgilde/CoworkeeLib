@@ -11,7 +11,7 @@ coworkee run
 
 | Command | |
 |---|---|
-| `coworkee new <name> [switches]` | Installs `Coworkee.Templates` of the tool's version, creates the solution, restores it and adds the migration the chosen modules need. `coworkee options` lists every switch: modules, event bus, storage, client entities, Keycloak, theme, brand colors, logo, sign-in layout and media, DTO mapping, languages, color mode, registration, CI workflow, dev container, git |
+| `coworkee new <name> [switches]` | Installs `Coworkee.Templates` of the tool's version, creates the solution, restores it and adds the migration the chosen modules need. `coworkee options` lists every switch: modules, event bus, storage, client entities, Keycloak, theme, brand colors, logo, sign-in layout, media, backgrounds, fills and looks, DTO mapping, languages, color mode, registration, CI workflow, dev container, git |
 | `coworkee new --spec app.json` | The same from a JSON spec with name, options, branding and feature modules with entities and properties |
 | `coworkee options [--json]` | Every switch with default, choices, pros, cons and when to use it |
 | `coworkee spec schema`, `spec example`, `spec validate <file>` | JSON Schema, an example and the check of a spec |

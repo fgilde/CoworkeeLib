@@ -80,6 +80,8 @@ internal static partial class OptionApplier
             throw new CliException("dotnet new coworkee failed; see above.");
         }
 
+        // the sign-in design beyond the app host is written after dotnet new, so it is part of the difference too
+        Generation.SignInDesignWriter.Write(Solution.Find(output), SpecOptions.Resolve(spec));
         return output;
     }
 

@@ -337,7 +337,7 @@ public sealed class TemplateOptionTests(TemplateFixture template)
     public async Task Branding_reaches_the_theme_the_client_and_the_sign_in_pages()
     {
         var app = await template.CreateAsync("brand", "--title", "Acme Shop", "--theme", "HighContrast", "--primaryColor", "#0a7d5a", "--secondaryColor", "#ff8f00", "--logo", "logo.png",
-            "--signInLayout", "Split", "--signInMedia", "/media/welcome.mp4", "--signInMediaSide", "Right");
+            "--signInLayout", "Split", "--signInMedia", "/media/welcome.mp4", "--signInMediaSide", "Right", "--signInBackground", "/media/page.jpg");
 
         var infrastructure = Read(app, "src/Shop.Infrastructure/ShopInfrastructureModule.cs");
         infrastructure.ShouldContain("themes.DefaultTheme = \"Acme Shop\";");
@@ -349,6 +349,7 @@ public sealed class TemplateOptionTests(TemplateFixture template)
         appHost.ShouldContain("options.SignIn.Layout = \"Split\";");
         appHost.ShouldContain("options.SignIn.MediaSide = Coworkee.Contracts.Theming.SignInMediaSide.Right;");
         appHost.ShouldContain("options.SignIn.MediaUrl = \"/media/welcome.mp4\";");
+        appHost.ShouldContain("options.SignIn.BackgroundUrl = \"/media/page.jpg\";");
         Read(app, "src/Shop.Web.Client/Program.cs").ShouldContain("options.AppLogo = \"logo.png\";");
         Read(app, "src/Shop.Web/App.razor").ShouldContain("<link rel=\"icon\" href=\"logo.png\" />");
         File.Exists(Path.Combine(app, "src/Shop.Web.Client/wwwroot/coworkee-icon.svg")).ShouldBeFalse();
@@ -359,6 +360,43 @@ public sealed class TemplateOptionTests(TemplateFixture template)
         var plain = await template.CreateAsync("default-theme");
         Read(plain, "src/Shop.Infrastructure/ShopInfrastructureModule.cs").ShouldNotContain("ThemingOptions");
         Read(plain, "src/Shop.AppHost/AppHost.cs").ShouldNotContain("SignIn");
+    }
+
+    [Fact]
+    public async Task The_sign_in_design_beyond_the_app_host_goes_into_the_appsettings_of_auth_and_api()
+    {
+        var app = await template.CreateAsync("sign-in-design", "--signInLayout", "Stack");
+        var spec = new AppSpec
+        {
+            Name = "Shop",
+            Branding = new BrandingSpec
+            {
+                SignInLayout = "Stack",
+                SignInPanelFill = new SignInFillSpec { Color = "#112233" },
+                SignInPageFill = new SignInFillSpec { Gradient = new SignInGradientSpec { Kind = GradientKind.Conic, Angle = 30, Stops = [new() { Color = "primary", Position = 0 }, new() { Color = "#ffffff80", Position = 100 }], Animated = true } },
+                SignInTilt = 9,
+                SignInAnimation = "Aurora",
+                SignInSurface = "Glass", // Stack has no surface: left out
+            },
+        };
+
+        SignInDesignWriter.Write(Solution.Find(app), SpecOptions.Resolve(spec));
+
+        foreach (var project in new[] { "Auth", "Api" })
+        {
+            var settings = System.Text.Json.Nodes.JsonNode.Parse(Read(app, $"src/Shop.{project}/appsettings.json"))!;
+            var design = settings["Coworkee"]!["Auth"]!["Design"]!;
+            design["PanelFill"]!["Color"]!.GetValue<string>().ShouldBe("#112233");
+            design["PageFill"]!["Gradient"]!["Kind"]!.GetValue<string>().ShouldBe("Conic");
+            design["PageFill"]!["Gradient"]!["Stops"]![1]!["Color"]!.GetValue<string>().ShouldBe("#ffffff80");
+            design["Tilt"]!.GetValue<int>().ShouldBe(9);
+            design["Animation"]!.GetValue<string>().ShouldBe("Aurora");
+            design["Surface"].ShouldBeNull();
+        }
+
+        // what the api had stays
+        Read(app, "src/Shop.Api/appsettings.json").ShouldContain("Retention.outbox.Days");
+        Read(app, "src/Shop.AppHost/AppHost.cs").ShouldContain("options.SignIn.Layout = \"Stack\";");
     }
 
     [Fact]

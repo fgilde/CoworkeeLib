@@ -27,6 +27,8 @@ public static class Converters
 
     public static IValueConverter Mirror { get; } = new FuncValueConverter<bool, FlowDirection>(right => right ? FlowDirection.RightToLeft : FlowDirection.LeftToRight);
 
+    public static IValueConverter Side { get; } = new FuncValueConverter<bool, Avalonia.Layout.HorizontalAlignment>(right => right ? Avalonia.Layout.HorizontalAlignment.Right : Avalonia.Layout.HorizontalAlignment.Left);
+
     public static IValueConverter Positive { get; } = new FuncValueConverter<int, bool>(count => count > 0);
 
     public static IValueConverter Zero { get; } = new FuncValueConverter<int, bool>(count => count == 0);

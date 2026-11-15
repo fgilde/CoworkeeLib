@@ -2,6 +2,13 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- Coworkee Studio, Schritt *Anmeldung*: die sieben Layouts `Card`, `Split`, `Slide`, `Spotlight`, `Poster`, `Stack` und `Minimal`, jedes mit einer eigenen animierten Skizze, und nur die Optionen, die das Layout bietet. Jeder Hintergrund (Seite, Formularseite, Medienseite, Panel, Poster, Karten dahinter) ist der des Themes, ein Bild oder Video, eine Farbe oder ein Verlauf; die neue Verlaufssteuerung hat einen Vorschaubalken mit ziehbaren Stopps (ein Klick fügt einen in der Farbe an dieser Stelle hinzu), einen Farbwähler, Position und Löschen je Stopp, die Art (linear, radial, konisch), den Winkel und *Animiert*. Die Karte *Aussehen* hat Seite, Oberfläche `Solid`/`Glass`, *Aurora*, Abdunkeln, Neigung und Logogröße, wo das Layout sie hat. Siehe [Coworkee Studio](../getting-started/studio.md#anmeldung).
+- CLI und App-Spezifikation: `signInLayout` nimmt die neuen Layouts; neue Optionen (und `branding`-Schlüssel) `signInBackground`, `signInPageFill`, `signInPanelFill`, `signInBackgroundDim`, `signInSurface`, `signInAnimation`, `signInTilt` und `signInLogoSize`, geprüft wie die Anmeldeseiten sie prüfen (Farben, zwei bis acht Stopps, Wertebereiche) und mit Warnung weggelassen, wo das Layout sie nicht bietet. Die Hintergrunddatei geht in den AppHost (`options.SignIn.BackgroundUrl`, eine lokale Datei nach `wwwroot/media`); Füllungen und Aussehen nach `Coworkee:Auth:Design` der `appsettings.json` von Auth-Server und API; `coworkee add` überträgt sie ebenso. Spezifikationen mit den alten Layouts `Glass` oder `Aurora` werden zu `Card` mit `signInSurface Glass` oder `signInAnimation Aurora`. `signInMediaSide` hängt jetzt vom Layout ab (`Split`, `Slide`, `Spotlight`, `Poster`) statt vom Medium. Siehe [Füllungen der Anmeldeseiten](../getting-started/cli.md#fullungen-der-anmeldeseiten).
+
 ## 0.0.1.90 (2026-11-15)
 
 ### Behoben

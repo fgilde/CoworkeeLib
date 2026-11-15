@@ -530,10 +530,16 @@ public sealed partial class MainViewModel : ObservableObject
             SignInMedia = Relative(Changed("signInMedia")),
             SignInMediaSide = Changed("signInMediaSide"),
             LoadingScreen = Changed("loadingScreen"),
+            SignInPanelFill = SignInStyle.Parse(Changed("signInPanelFill")),
+            SignInBackground = Relative(Changed("signInBackground")),
+            SignInPageFill = SignInStyle.Parse(Changed("signInPageFill")),
+            SignInBackgroundDim = Number(Changed("signInBackgroundDim")),
+            SignInSurface = Changed("signInSurface"),
+            SignInAnimation = Changed("signInAnimation"),
+            SignInTilt = Number(Changed("signInTilt")),
+            SignInLogoSize = Changed("signInLogoSize"),
         };
-        spec.Branding = branding is { Title: null, Theme: null, PrimaryColor: null, SecondaryColor: null, Logo: null, SignInLayout: null, SignInMedia: null, SignInMediaSide: null, LoadingScreen: null }
-            ? null
-            : branding;
+        spec.Branding = branding.IsEmpty() ? null : branding;
         spec.Modules = Entities.ToSpec();
         spec.Enums = Entities.EnumSpecs();
         spec.Roles = Users.RoleSpecs();
@@ -669,6 +675,8 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     private string? Changed(string id) => Options[id] is { IsChanged: true, IsRelevant: true, Value: { Length: > 0 } value } ? value : null;
+
+    private static int? Number(string? value) => int.TryParse(value, System.Globalization.CultureInfo.InvariantCulture, out var number) ? number : null;
 
     private void UpdateSetting(Action change)
     {

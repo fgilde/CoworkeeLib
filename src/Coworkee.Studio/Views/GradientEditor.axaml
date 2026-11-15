@@ -1,0 +1,91 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Coworkee.Studio.ViewModels"
+             xmlns:v="using:Coworkee.Studio.Views"
+             xmlns:l="using:Coworkee.Studio.Localization"
+             x:Class="Coworkee.Studio.Views.GradientEditor"
+             x:DataType="vm:GradientViewModel">
+  <UserControl.Styles>
+    <Style Selector="ItemsControl.stops > ContentPresenter" x:DataType="vm:GradientStopViewModel">
+      <Setter Property="v:StopPanel.Position" Value="{Binding Position}" />
+    </Style>
+    <Style Selector="Border.handle">
+      <Setter Property="Width" Value="18" />
+      <Setter Property="Height" Value="18" />
+      <Setter Property="CornerRadius" Value="9" />
+      <Setter Property="BorderBrush" Value="White" />
+      <Setter Property="BorderThickness" Value="3" />
+      <Setter Property="BoxShadow" Value="0 1 4 0 #55000000" />
+      <Setter Property="Cursor" Value="SizeWestEast" />
+    </Style>
+    <Style Selector="Border.ring">
+      <Setter Property="Padding" Value="2" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="BorderThickness" Value="2" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="Border.ring.selected">
+      <Setter Property="BorderBrush" Value="{DynamicResource Primary}" />
+    </Style>
+  </UserControl.Styles>
+
+  <StackPanel Spacing="12">
+    <Grid ColumnDefinitions="*,22,Auto">
+      <!-- the stops from left to right; a click adds one, the handles below drag -->
+      <Panel x:Name="Track" Height="52" Margin="9,0,0,0" Background="Transparent" PointerMoved="OnTrackMoved" PointerReleased="OnTrackReleased">
+        <Border x:Name="Bar" Height="30" VerticalAlignment="Top" CornerRadius="9" Background="{Binding Bar}" BorderBrush="{DynamicResource Lines}" BorderThickness="1"
+                Cursor="Hand" PointerPressed="OnBarPressed" ToolTip.Tip="{l:L 'Click to add a color, drag a handle to move it'}" />
+        <ItemsControl Classes="stops" ItemsSource="{Binding Stops}" Margin="0,19,0,0" VerticalAlignment="Top" ClipToBounds="False">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <v:StopPanel />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:GradientStopViewModel">
+              <Border Classes="ring" Classes.selected="{Binding IsSelected}" Background="Transparent" PointerPressed="OnHandlePressed">
+                <Border Classes="handle" Background="{Binding Brush}" />
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </Panel>
+      <!-- the gradient as the page draws it -->
+      <Border Grid.Column="2" Width="92" Height="52" CornerRadius="10" Background="{Binding Brush}" BorderBrush="{DynamicResource Lines}" BorderThickness="1" />
+    </Grid>
+
+    <!-- the selected stop -->
+    <Border Classes="soft" Padding="10" IsVisible="{Binding HasSelection}">
+      <Grid ColumnDefinitions="Auto,12,*,12,Auto,8,Auto">
+        <ColorPicker Color="{Binding SelectedStop.Color}" IsAlphaVisible="True" />
+        <TextBox Grid.Column="2" Text="{Binding SelectedStop.Text}" ToolTip.Tip="{l:L '#rrggbb, #rrggbbaa, rgb(), hsl() or a theme color: primary, secondary, tertiary, background, surface'}" />
+        <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+          <NumericUpDown Value="{Binding SelectedStop.Position}" Minimum="0" Maximum="100" Increment="1" FormatString="0" Width="110" />
+          <TextBlock Classes="caption" Text="%" VerticalAlignment="Center" />
+        </StackPanel>
+        <Button Grid.Column="6" Classes="icon danger" Command="{Binding RemoveStopCommand}" ToolTip.Tip="{l:L 'Remove the color'}">
+          <PathIcon Classes="small" Data="{StaticResource Icon.Delete}" />
+        </Button>
+      </Grid>
+    </Border>
+
+    <Grid ColumnDefinitions="Auto,16,*,16,Auto">
+      <ListBox Classes="segments" ItemsSource="{x:Static vm:GradientViewModel.Kinds}" SelectedItem="{Binding KindName}">
+        <ListBox.ItemTemplate>
+          <DataTemplate x:DataType="x:String">
+            <TextBlock Text="{Binding Converter={x:Static v:Converters.Text}}" FontSize="12.5" FontWeight="SemiBold" />
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+      <Grid Grid.Column="2" ColumnDefinitions="Auto,8,*,8,Auto" IsVisible="{Binding HasAngle}" VerticalAlignment="Center">
+        <TextBlock Classes="caption" Text="{l:L Angle}" VerticalAlignment="Center" />
+        <Slider Grid.Column="2" Minimum="0" Maximum="359" Value="{Binding Angle}" SmallChange="1" LargeChange="15" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="4" Classes="mono caption" Text="{Binding Angle, StringFormat='{}{0}°'}" Width="34" VerticalAlignment="Center" />
+      </Grid>
+      <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+        <TextBlock Classes="caption" Text="{l:L Animated}" VerticalAlignment="Center" />
+        <ToggleSwitch IsChecked="{Binding Animated}" />
+      </StackPanel>
+    </Grid>
+  </StackPanel>
+</UserControl>

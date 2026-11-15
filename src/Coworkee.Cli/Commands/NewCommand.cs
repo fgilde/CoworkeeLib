@@ -129,6 +129,7 @@ internal static class NewCommand
         var values = SpecOptions.Resolve(settings.Spec);
         var solution = Solution.Find(settings.Output);
         Assets.Copy(settings, values);
+        SignInDesignWriter.Write(solution, values);
         DemoUsersWriter.Write(solution, settings.Spec);
         Apps.AppState.Write(settings.Output, settings.Spec);
         if (DeployWorkflowSettings.From(values) is { IsOn: true } deploy)

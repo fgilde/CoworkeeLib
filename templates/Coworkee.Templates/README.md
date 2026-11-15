@@ -23,7 +23,7 @@ dotnet run --project src/Shop.AppHost
 | `--theme` | `Ocean` | `Coworkee`, `Classic`, `Forest`, `Midnight`, `Sunset`, `HighContrast`, `Octo`, `Code`, `Arctic`, `Vampire`, `Solar`, `Atom`, `Paper`, `Aubergine`, `GitHub`, `LinkHub`, `Terminal`, `Slate`, `Ember`, `Mint` |
 | `--primaryColor`, `--secondaryColor` | | Brand colors `#rrggbb`: an app theme as default |
 | `--logo` | `coworkee-icon.svg` | File name in `wwwroot` of the web client (copy the file there) |
-| `--signInLayout`, `--signInMedia`, `--signInMediaSide` | `Slide`, none, `Left` | Design of the sign-in pages |
+| `--signInLayout`, `--signInMedia`, `--signInMediaSide`, `--signInBackground` | `Slide`, none, `Left`, none | Design of the sign-in pages: `Card`, `Split`, `Slide`, `Spotlight`, `Poster`, `Stack` or `Minimal`, the media of the second background and its side, the image or video behind the page (fills, surface, animation and the rest are written by `coworkee new` into `Coworkee:Auth:Design`) |
 | `--loadingScreen` | `Animated` | Background of the loading screen: `Animated`, `SignInMedia` (the sign-in media, with every layout) or `Plain` |
 | `--languages`, `--defaultLanguage` | all shipped, `en` | Languages offered from the start (`en,de`) and the default one |
 | `--colorMode`, `--registration` | `system`, `false` | Seeded color mode and self registration |

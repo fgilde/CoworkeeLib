@@ -78,6 +78,7 @@ public static partial class SpecValidator
         }
 
         Ai(errors, values);
+        SignIn(errors, values);
         Repository(errors, values);
         Languages(errors, values);
         Enums(errors, spec);
@@ -97,15 +98,16 @@ public static partial class SpecValidator
     /// </summary>
     public static string? FileProblem(string id, string value, string? baseDirectory, bool trusted)
     {
-        if (id == "signInMedia" && IsWebAddress(value))
+        var media = id is "signInMedia" or "signInBackground";
+        if (media && IsWebAddress(value))
         {
             return null;
         }
 
         var extension = Path.GetExtension(value).ToLowerInvariant();
-        if (!Images.Contains(extension) && !(id == "signInMedia" && Videos.Contains(extension)))
+        if (!Images.Contains(extension) && !(media && Videos.Contains(extension)))
         {
-            return id == "signInMedia" ? "is no image, video (mp4, webm, ogg) or http(s) address" : "is no image (svg, png, jpg, jpeg, webp, gif, ico)";
+            return media ? "is no image, video (mp4, webm, ogg) or http(s) address" : "is no image (svg, png, jpg, jpeg, webp, gif, ico)";
         }
 
         if (!trusted && (!IsRelativeInside(value) || (baseDirectory is not null && !IsUnder(baseDirectory, Path.Combine(baseDirectory, value)))))
@@ -160,6 +162,26 @@ public static partial class SpecValidator
             && (!Uri.TryCreate(endpoint, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https") || !IsSafeTitle(endpoint)))
         {
             errors.Add($"aiEndpoint: '{endpoint}' is not an http or https address.");
+        }
+    }
+
+    // fills end up in CSS of the sign-in pages, so only colors the runtime accepts
+    private static void SignIn(List<string> errors, IReadOnlyDictionary<string, string?> values)
+    {
+        foreach (var id in new[] { "signInPageFill", "signInPanelFill" })
+        {
+            if (SignInStyle.Problem(values[id]) is { } problem)
+            {
+                errors.Add($"{id}: '{values[id]}' {problem}.");
+            }
+        }
+
+        foreach (var (id, max) in new[] { ("signInBackgroundDim", 90), ("signInTilt", 12) })
+        {
+            if (SignInStyle.RangeProblem(values[id], 0, max) is { } problem)
+            {
+                errors.Add($"{id}: '{values[id]}' {problem}.");
+            }
         }
     }
 

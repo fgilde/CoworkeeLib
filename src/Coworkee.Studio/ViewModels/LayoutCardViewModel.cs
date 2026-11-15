@@ -11,12 +11,6 @@ public sealed partial class LayoutCardViewModel(string value, string description
 
     public string Description => L.Get(description);
 
-    public bool IsCard => value == "Card";
-
-    public bool IsSplit => value == "Split";
-
-    public bool IsSlide => value == "Slide";
-
     [ObservableProperty]
     public partial bool IsSelected { get; set; }
 }
