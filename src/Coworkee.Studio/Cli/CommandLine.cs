@@ -7,7 +7,7 @@ public static class CommandLine
     public static string[] Validate(string specFile) => ["spec", "validate", specFile];
 
     /// <summary>
-    /// The spec file for <c>coworkee new</c> and its arguments: output folder, logo and sign-in media chosen anywhere on disk go on the
+    /// The spec file for <c>coworkee new</c> and its arguments: output folder, logo, sign-in media and background chosen anywhere on disk go on the
     /// command line (the CLI trusts only typed paths outside the spec folder), the rest stays in the spec.
     /// </summary>
     public static (AppSpec Spec, string[] Args) New(AppSpec spec, string specFile, string? templateSource)
@@ -34,7 +34,13 @@ public static class CommandLine
                 branding.SignInMedia = null;
             }
 
-            if (branding is { Title: null, Theme: null, PrimaryColor: null, SecondaryColor: null, Logo: null, SignInLayout: null, SignInMedia: null, SignInMediaSide: null })
+            if (branding.SignInBackground is { } background && !SpecValidator.IsWebAddress(background))
+            {
+                args.AddRange(["--sign-in-background", background]);
+                branding.SignInBackground = null;
+            }
+
+            if (branding.IsEmpty())
             {
                 copy.Branding = null;
             }

@@ -1,0 +1,55 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Coworkee.Studio.ViewModels"
+             xmlns:v="using:Coworkee.Studio.Views"
+             xmlns:l="using:Coworkee.Studio.Localization"
+             x:Class="Coworkee.Studio.Views.FillSlot"
+             x:DataType="vm:FillSlotViewModel">
+  <StackPanel Spacing="12">
+    <Grid ColumnDefinitions="*,Auto">
+      <TextBlock Classes="h3" Text="{Binding Title}" VerticalAlignment="Center" />
+      <!-- what the slot shows now -->
+      <Border Grid.Column="1" Width="46" Height="28" CornerRadius="7" BorderBrush="{DynamicResource Lines}" BorderThickness="1" ClipToBounds="True"
+              Background="{DynamicResource SurfaceAlt}">
+        <Panel>
+          <Border Background="{Binding Brush}" />
+          <Image Source="{Binding Image}" Stretch="UniformToFill" />
+        </Panel>
+      </Border>
+    </Grid>
+    <ListBox Classes="segments" ItemsSource="{Binding Modes}" SelectedItem="{Binding Mode}" HorizontalAlignment="Left">
+      <ListBox.ItemTemplate>
+        <DataTemplate x:DataType="x:String">
+          <TextBlock Text="{Binding Converter={x:Static v:Converters.Text}}" FontSize="12.5" FontWeight="SemiBold" />
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+    <StackPanel Spacing="8" IsVisible="{Binding IsFile}">
+      <Grid ColumnDefinitions="*,Auto,Auto">
+        <TextBox Text="{Binding FilePath}" PlaceholderText="{l:L 'https://… or a file'}" />
+        <Button Grid.Column="1" Margin="8,0,0,0" Command="{Binding BrowseCommand}">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <PathIcon Classes="small" Data="{StaticResource Icon.Image}" />
+            <TextBlock Text="{l:L Choose}" />
+          </StackPanel>
+        </Button>
+        <Button Grid.Column="2" Classes="icon" Margin="4,0,0,0" Command="{Binding ClearFileCommand}" IsVisible="{Binding HasFile}" ToolTip.Tip="{l:L Remove}">
+          <PathIcon Classes="small" Data="{StaticResource Icon.Close}" />
+        </Button>
+      </Grid>
+      <TextBlock Classes="caption" TextWrapping="Wrap" Text="{l:L 'A local file the CLI copies into the web client, or an http(s) address. mp4, webm and ogg play as video.'}" />
+      <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsVideo}">
+        <PathIcon Classes="small" Data="{StaticResource Icon.Play}" Foreground="{DynamicResource Secondary}" />
+        <TextBlock Classes="caption" Text="{l:L 'Plays muted in a loop. Keep it short: large videos slow the first sign-in.'}" />
+      </StackPanel>
+    </StackPanel>
+
+    <Grid ColumnDefinitions="Auto,12,*" IsVisible="{Binding IsColor}">
+      <ColorPicker Color="{Binding ColorValue}" IsAlphaVisible="True" />
+      <TextBox Grid.Column="2" Text="{Binding ColorText}" ToolTip.Tip="{l:L '#rrggbb, #rrggbbaa, rgb(), hsl() or a theme color: primary, secondary, tertiary, background, surface'}" />
+    </Grid>
+
+    <v:GradientEditor DataContext="{Binding GradientEditor}" IsVisible="{Binding $parent[v:FillSlot].((vm:FillSlotViewModel)DataContext).IsGradient}" />
+  </StackPanel>
+</UserControl>

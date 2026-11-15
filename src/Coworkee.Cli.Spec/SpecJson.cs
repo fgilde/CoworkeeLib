@@ -124,7 +124,12 @@ public static class SpecJson
                     property["pattern"] = SpecValidator.ColorPattern;
                     break;
                 default:
-                    property["type"] = "string";
+                    property["type"] = option.Id switch
+                    {
+                        "signInPageFill" or "signInPanelFill" => new JsonArray("string", "object"),
+                        "signInBackgroundDim" or "signInTilt" => new JsonArray("string", "integer"),
+                        _ => "string",
+                    };
                     break;
             }
 

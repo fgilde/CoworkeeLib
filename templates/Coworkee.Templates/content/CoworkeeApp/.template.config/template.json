@@ -497,6 +497,22 @@
         {
           "choice": "Slide",
           "description": "A colored panel next to the form."
+        },
+        {
+          "choice": "Spotlight",
+          "description": "The background fills the page, the form floats in a tall panel at one side."
+        },
+        {
+          "choice": "Poster",
+          "description": "Big type on one side, a calm form on the other."
+        },
+        {
+          "choice": "Stack",
+          "description": "The form card in front of two tilted cards."
+        },
+        {
+          "choice": "Minimal",
+          "description": "A large logo and the form straight on the background."
         }
       ],
       "replaces": "COWORKEE_SIGNIN_LAYOUT"
@@ -524,6 +540,13 @@
         }
       ],
       "replaces": "COWORKEE_SIGNIN_SIDE"
+    },
+    "signInBackground": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "",
+      "description": "Image or video behind the whole sign-in page: an http(s) address or a path the web app serves (/media/background.jpg).",
+      "replaces": "COWORKEE_SIGNIN_BACKGROUND"
     },
     "loadingScreen": {
       "type": "parameter",

@@ -36,6 +36,13 @@ public static class SpecOptions
             values["workflows"] = "true";
         }
 
+        // older specs name looks of Card as layouts
+        if (SignInStyle.Legacy(values["signInLayout"]) is { } legacy)
+        {
+            values["signInLayout"] = "Card";
+            values[legacy.Option] = legacy.Value;
+        }
+
         foreach (var option in OptionCatalog.All.Where(o => o.Choices is not null && o.Kind == OptionKind.Choice))
         {
             values[option.Id] = option.Choices!.FirstOrDefault(c => c.Value.Equals(values[option.Id], StringComparison.OrdinalIgnoreCase))?.Value ?? values[option.Id];

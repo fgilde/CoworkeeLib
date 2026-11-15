@@ -22,7 +22,7 @@ public sealed class OptionDependencyTests
     public void Options_that_only_make_sense_with_another_one_say_so()
     {
         OptionCatalog.All.Where(o => o.DependsOn is not null).Select(o => o.Id)
-            .ShouldBe(["airworksPackages", "airworksLauncher", "backup", "elsa", "elsaStudio", "aiProvider", "aiModel", "aiEndpoint", "kibana", "openWebUI", "signInMedia", "signInMediaSide", "deployResourceGroupPrefix", "deployLocation", "deployBranches", "deployTeardown"]);
+            .ShouldBe(["airworksPackages", "airworksLauncher", "backup", "elsa", "elsaStudio", "aiProvider", "aiModel", "aiEndpoint", "kibana", "openWebUI", "signInMedia", "signInMediaSide", "signInPanelFill", "signInBackgroundDim", "signInSurface", "signInAnimation", "signInTilt", "signInLogoSize", "deployResourceGroupPrefix", "deployLocation", "deployBranches", "deployTeardown"]);
         foreach (var option in OptionCatalog.All.Where(o => o.DependsOn is not null))
         {
             var parent = OptionCatalog.Find(option.DependsOn!.Option).ShouldNotBeNull(option.Id);
@@ -71,18 +71,20 @@ public sealed class OptionDependencyTests
     }
 
     [Fact]
-    public void Sign_in_media_needs_a_layout_with_media_and_its_side_needs_the_media()
+    public void Sign_in_media_needs_a_layout_with_a_second_background_and_its_side_a_layout_with_sides()
     {
         var card = Spec(("signInLayout", "Card"), ("signInMedia", "https://cdn.test/a.mp4"), ("signInMediaSide", "Right"));
 
         SpecValidator.Warnings(card).ShouldBe(
         [
-            "signInMedia: ignored, it only matters with signInLayout = Split or Slide, or loadingScreen = SignInMedia (coworkee options).",
-            "signInMediaSide: ignored, it only matters with signInLayout = Split or Slide, or loadingScreen = SignInMedia (coworkee options).",
+            "signInMedia: ignored, it only matters with signInLayout = Split or Slide or Poster or Stack, or loadingScreen = SignInMedia (coworkee options).",
+            "signInMediaSide: ignored, it only matters with signInLayout = Split or Slide or Spotlight or Poster (coworkee options).",
         ]);
         NewCommand.TemplateArgs(new NewSettings(card, ".", "shop", null)).ShouldNotContain("--signInMedia");
 
-        SpecValidator.Warnings(Spec(("signInMediaSide", "Right"))).ShouldBe(["signInMediaSide: ignored, it only matters with signInMedia (coworkee options)."]);
+        // the slide panel and the spotlight panel have a side without media
+        SpecValidator.Warnings(Spec(("signInMediaSide", "Right"))).ShouldBeEmpty();
+        SpecValidator.Warnings(Spec(("signInLayout", "Spotlight"), ("signInMediaSide", "Right"))).ShouldBeEmpty();
         SpecValidator.Warnings(Spec(("signInMedia", "https://cdn.test/a.mp4"), ("signInMediaSide", "Right"))).ShouldBeEmpty();
     }
 

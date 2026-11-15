@@ -87,9 +87,17 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--primary-color` | `primaryColor` | `#rrggbb` | | Markenfarbe: Die App bekommt ein eigenes Theme auf Basis von `--theme`, benannt wie der Titel, als Standard |
 | `--secondary-color` | `secondaryColor` | `#rrggbb` | | Zweite Markenfarbe |
 | `--logo` | `logo` | Datei | Coworkee-Symbol | Wird in den Web-Client kopiert; App-Leiste, Browser-Tab und Anmeldeseiten |
-| `--sign-in-layout` | `signInLayout` | `Card`, `Split`, `Slide` | `Slide` | Layout der [Anmeldeseiten](../security/sign-in-pages.md) |
-| `--sign-in-media` | `signInMedia` | Datei oder http(s)-Adresse | | Bild oder Video neben dem Anmeldeformular (Split, Slide) oder hinter dem Ladebildschirm (`--loading-screen SignInMedia`, jedes Layout); eine Datei wird nach `wwwroot/media` des Web-Clients kopiert |
-| `--sign-in-media-side` | `signInMediaSide` | `Left`, `Right` | `Left` | Seite des Mediums |
+| `--sign-in-layout` | `signInLayout` | `Card`, `Split`, `Slide`, `Spotlight`, `Poster`, `Stack`, `Minimal` | `Slide` | Layout der [Anmeldeseiten](../security/sign-in-pages.md); `Glass` und `Aurora` aus älteren Spezifikationen werden zu `Card` mit `signInSurface Glass` oder `signInAnimation Aurora` |
+| `--sign-in-media` | `signInMedia` | Datei oder http(s)-Adresse | | Bild oder Video des zweiten Hintergrunds (Split, Slide, Poster, Stack) oder hinter dem Ladebildschirm (`--loading-screen SignInMedia`, jedes Layout); eine Datei wird nach `wwwroot/media` des Web-Clients kopiert |
+| `--sign-in-media-side` | `signInMediaSide` | `Left`, `Right` | `Left` | Seite des Mediums, des Posters oder des schwebenden Panels (Split, Slide, Spotlight, Poster) |
+| `--sign-in-panel-fill` | `signInPanelFill` | Farbe oder Füllungs-JSON | | Der zweite Hintergrund als Farbe oder Verlauf ohne Medium (Split, Slide, Poster, Stack), siehe [Füllungen der Anmeldeseiten](#fullungen-der-anmeldeseiten) |
+| `--sign-in-background` | `signInBackground` | Datei oder http(s)-Adresse | | Bild oder Video hinter der ganzen Seite (bei Split und Poster die Formularseite); eine Datei wird nach `wwwroot/media` kopiert |
+| `--sign-in-page-fill` | `signInPageFill` | Farbe oder Füllungs-JSON | | Der Seitenhintergrund als Farbe oder Verlauf ohne `signInBackground` |
+| `--sign-in-background-dim` | `signInBackgroundDim` | 0 bis 90 | | Abdunkeln des Hintergrundbilds in Prozent (Card, Slide, Spotlight, Stack, Minimal) |
+| `--sign-in-surface` | `signInSurface` | `Solid`, `Glass` | `Solid` | Karte oder Panel des Formulars (Card, Spotlight) |
+| `--sign-in-animation` | `signInAnimation` | `None`, `Aurora` | `None` | Treibende Farbfelder hinter dem Formular (Card, Spotlight, Stack, Minimal) |
+| `--sign-in-tilt` | `signInTilt` | 0 bis 12 | | Drehung der Karten hinter dem Formular in Grad (Stack) |
+| `--sign-in-logo-size` | `signInLogoSize` | `Small`, `Medium`, `Large` | `Medium` | Das Logo über dem Formular (Minimal) |
 | `--loading-screen` | `loadingScreen` | `Animated`, `SignInMedia`, `Plain` | `Animated` | Hintergrund des [Ladebildschirms](../modules/theming.md#ladebildschirm) |
 | `--mapping` | `mapping` | `manual`, `mapperly` | `manual` | DTO-Mapping erzeugter Entities, siehe [DTOs und Mapping](../fundamentals/dtos.md) |
 | `--languages` | `languages` | `en`, `de`, `fr`, `es`, `it`, `pt`, `pt-BR`, `nl`, `pl`, `ja`, `zh` und 28 weitere (`coworkee options`), durch Kommas getrennt (in einer Spezifikation ein Array) | `en`, `de` | Sprachen von Anfang an; die ohne mitgelieferte Texte werden beim ersten Start [maschinell übersetzt](../modules/localization.md#maschinelle-ubersetzung) |
@@ -108,7 +116,7 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 
 Ein bool-Schalter ohne Wert bedeutet `true` (`--files`), `--chat false` schaltet aus.
 
-**Optionen, die eine andere brauchen.** Manche Optionen gelten nur mit einer anderen: `--airworks-packages` und `--airworks-launcher` mit `--airworks`, `--ai-provider`, `--ai-model` und `--ai-endpoint` mit dem KI-Assistenten (`--ai`), `--backup` mit `--database postgres`, `--elsa` mit `--workflows`, `--elsa-studio` mit `--elsa`, `--kibana` mit `--elasticsearch`, `--open-web-ui` mit `--ai-provider ollama`, `--sign-in-media` mit dem Layout `Split` oder `Slide` (oder `--loading-screen SignInMedia`) und `--sign-in-media-side` mit einem Anmeldemedium. Ohne sie fragt die CLI nicht danach (es gibt keine Rückfragen, jeder Wert ist ein Schalter oder ein Schlüssel der Spezifikation), gibt sie nicht weiter, die App ist also die ohne den Schalter, und warnt: `warn  airworksPackages: ignored, it only matters with airworks (coworkee options).` `coworkee spec validate` gibt dieselben Warnungen nach `ok` aus. `coworkee options` nennt die Voraussetzung (`Needs: airworks`), `--json` als `dependsOn`, und das Studio deaktiviert die Karte, mit dem Grund als Tooltip, bis die andere Option an ist. `--backup true` mit einer anderen Datenbank als `postgres` bleibt ein Fehler.
+**Optionen, die eine andere brauchen.** Manche Optionen gelten nur mit einer anderen: `--airworks-packages` und `--airworks-launcher` mit `--airworks`, `--ai-provider`, `--ai-model` und `--ai-endpoint` mit dem KI-Assistenten (`--ai`), `--backup` mit `--database postgres`, `--elsa` mit `--workflows`, `--elsa-studio` mit `--elsa`, `--kibana` mit `--elasticsearch`, `--open-web-ui` mit `--ai-provider ollama`, `--sign-in-media` und `--sign-in-panel-fill` mit einem Layout mit zweitem Hintergrund (`Split`, `Slide`, `Poster`, `Stack`; das Medium auch mit `--loading-screen SignInMedia`), `--sign-in-media-side` mit `Split`, `Slide`, `Spotlight` oder `Poster` und das Aussehen mit den Layouts, die es bieten (`--sign-in-surface`, `--sign-in-animation`, `--sign-in-background-dim`, `--sign-in-tilt`, `--sign-in-logo-size`, siehe Tabelle). Ohne sie fragt die CLI nicht danach (es gibt keine Rückfragen, jeder Wert ist ein Schalter oder ein Schlüssel der Spezifikation), gibt sie nicht weiter, die App ist also die ohne den Schalter, und warnt: `warn  airworksPackages: ignored, it only matters with airworks (coworkee options).` `coworkee spec validate` gibt dieselben Warnungen nach `ok` aus. `coworkee options` nennt die Voraussetzung (`Needs: airworks`), `--json` als `dependsOn`, und das Studio deaktiviert die Karte, mit dem Grund als Tooltip, bis die andere Option an ist. `--backup true` mit einer anderen Datenbank als `postgres` bleibt ein Fehler.
 
 **Links.** `coworkee options` gibt die Webseite dessen aus, was eine Option mitbringt (`More:`): Git, AirWorks, installierbare Web-Apps, GitHub, Elsa, Elasticsearch, Kibana, Keycloak, Redis, Grafana, WebDataStudio, Open WebUI, AspireUI, GitHub Actions und den Dev-Container; bei Auswahlen eine Zeile je Produkt (`More (postgres):`): npm, PostgreSQL, SQL Server, SQLite, RabbitMQ, Azure Blob Storage, Mapperly, Ollama, LM Studio, LibreTranslate, MyMemory, DeepL, Azure AI Translator und Google Cloud Translation. `--json` enthält sie als `infoUrl` der Option und der Auswahl. Das Studio zeigt sie als Öffnen-Knopf auf der Karte.
 
@@ -174,7 +182,7 @@ Mit der CLI kommen zehn Startvorlagen (ERP, HR-Selfservice, Reparaturwerkstatt, 
 ```
 
 - `modules` sind deine eigenen Module mit ihren Entitäten. Die Module der Bibliothek (Audit-Log, Chat, Dateien, ...) sind Optionen unter `options`, und eine selbst geschriebene Spezifikation nennt nur, was von den Standardwerten abweicht: ohne `"chat": false` hat die App den Chat, eine Spezifikation der Standardwerte enthält also kein Modul. Das Studio schreibt deshalb jedes Bibliotheksmodul mit `true` oder `false`; `coworkee spec show` gibt dasselbe für jede Spezifikation aus (`Library modules on:` / `off:`, dann jede andere Option mit ihrem Wert, `(unused)` wo sie ignoriert wird, und deine eigenen Module).
-- `options` nimmt die Ids aus der Tabelle oben; `branding` nimmt `title`, `theme`, `primaryColor`, `secondaryColor`, `logo`, `signInLayout`, `signInMedia`, `signInMediaSide` und `loadingScreen` und gewinnt gegen dieselben Ids in `options`.
+- `options` nimmt die Ids aus der Tabelle oben; `branding` nimmt `title`, `theme`, `primaryColor`, `secondaryColor`, `logo`, `signInLayout`, `signInMedia`, `signInMediaSide`, `loadingScreen`, `signInPanelFill`, `signInBackground`, `signInPageFill`, `signInBackgroundDim`, `signInSurface`, `signInAnimation`, `signInTilt` und `signInLogoSize` und gewinnt gegen dieselben Ids in `options`.
 - Dateien und `output` sind relativ zur Spezifikation und müssen in ihrem Ordner bleiben (keine absoluten Pfade, kein `..`). Ein Logo ist ein Bild (svg, png, jpg, jpeg, webp, gif, ico), das Anmeldemedium ein Bild, ein Video (mp4, webm, ogg) oder eine http(s)-Adresse: Beide liegen danach öffentlich im Web-Client. Eine als Schalter angegebene Datei (`--logo C:\brand\logo.svg`) darf überall liegen. Kommentare und abschließende Kommas sind erlaubt.
 - Der Titel landet unverändert in Code und HTML und darf daher kein `"`, `\`, `<`, `>`, `@` und keine Steuerzeichen enthalten.
 - Typen der Eigenschaften: `string`, `int`, `long`, `decimal`, `double`, `bool`, `dateTime` (`DateTimeOffset`), `guid`, `dateOnly`, `timeOnly`, `text` (langer Text, mehrzeilig im Formular, keine Listenspalte), `email` und `url` (Strings mit Prüfung, 256 und 2000 Zeichen, sofern `maxLength` nichts anderes sagt), `money` (Decimal mit `precision` 18 und `scale` 2, sofern nicht angegeben), `enum` und `reference`. Eine Eigenschaft ohne `required` ist nullable; `maxLength` gilt für Strings, E-Mails und URLs, `precision` und `scale` für Decimal und Money.
@@ -183,6 +191,30 @@ Mit der CLI kommen zehn Startvorlagen (ERP, HR-Selfservice, Reparaturwerkstatt, 
 - `default` setzt den Anfangswert von Zahlen, Bools, Enums und Texten; `unique` legt einen eindeutigen Index je Mandant und eine Prüfung im Command an; `label` ist die Beschriftung von Spalte und Feld; `display` markiert den Text, der eine Zeile benennt; `searchable` (Standard: true für Texte) nimmt sie ins Suchfeld; `facet` bietet sie als Facette neben der Liste an (Bools, Enums, Referenzen, ganze Zahlen, Strings).
 - `plural` benennt Tabelle, OData-Set, Route und Seite (Standard: ein englischer Plural des Namens). `mapping` übersteuert die Option `mapping`.
 - Namen von Entities dürfen keine Namespaces der App sein (`Application`, `Contracts`, `Infrastructure`, `Domain`, `Features`, `Persistence`, `Permissions`, `Endpoints`): In der App würde der Namespace den Typ verdecken.
+
+### Füllungen der Anmeldeseiten
+
+`signInPageFill` und `signInPanelFill` (und dieselben Schlüssel in `branding`) nehmen eine Farbe oder einen Verlauf. Eine Farbe ist `#rgb`, `#rrggbb`, `#rrggbbaa`, `rgb()`, `rgba()`, `hsl()` oder `hsla()` nur mit Zahlen oder eine Theme-Farbe: `primary`, `secondary`, `tertiary`, `background` oder `surface`. Alles andere ist ein Fehler, denn der Wert landet im Stylesheet der Anmeldeseiten. Ein Verlauf hat eine Art `kind` (`linear`, `radial`, `conic`), einen Winkel `angle` (0 bis 359, 0 zeigt nach oben), zwei bis acht Stopps `stops` mit `color` und `position` (0 bis 100) und `animated`. Auf der Kommandozeile ist die Füllung eine Farbe oder ihr JSON (`--sign-in-page-fill "#0a7d5a"`).
+
+```json
+"branding": {
+  "signInLayout": "Spotlight",
+  "signInSurface": "Glass",
+  "signInPageFill": {
+    "gradient": { "kind": "linear", "angle": 135, "animated": true,
+      "stops": [ { "color": "primary", "position": 0 }, { "color": "#1d3c78", "position": 55 }, { "color": "secondary", "position": 100 } ] }
+  }
+}
+```
+
+Layout, Medium und seine Seite, die Hintergrunddatei und der Ladebildschirm gehen in den AppHost (`options.SignIn`). Füllungen, Oberfläche, Animation, Abdunkeln, Neigung und Logogröße schreibt `coworkee new` nach `Coworkee:Auth:Design` der `appsettings.json` von Auth-Server und API, in der Schreibweise von `SignInDesign`, nur wo sie vom Standard abweichen und das Layout sie bietet:
+
+```json
+{ "Coworkee": { "Auth": { "Design": {
+  "PageFill": { "Gradient": { "Kind": "Linear", "Angle": 135, "Stops": [ { "Color": "primary", "Position": 0 }, { "Color": "#1d3c78", "Position": 55 }, { "Color": "secondary", "Position": 100 } ], "Animated": true } },
+  "Surface": "Glass"
+} } } }
+```
 
 ### Workflows
 

@@ -289,27 +289,91 @@
           "default": "coworkee-icon.svg"
         },
         "signInLayout": {
-          "description": "Layout of the sign-in pages.",
+          "description": "Layout of the sign-in pages. Glass and Aurora of older specs become Card with a glass surface or the drifting animation.",
           "type": "string",
           "enum": [
             "Card",
             "Split",
-            "Slide"
+            "Slide",
+            "Spotlight",
+            "Poster",
+            "Stack",
+            "Minimal"
           ],
           "default": "Slide"
         },
         "signInMedia": {
-          "description": "Image or video next to the sign-in form: a local file (copied into the web client) or an http(s) address. Only used with signInLayout = Split or Slide, or loadingScreen = SignInMedia.",
+          "description": "Image or video of the second background (beside the form, the poster or the cards behind): a local file (copied into the web client) or an http(s) address. Only used with signInLayout = Split or Slide or Poster or Stack, or loadingScreen = SignInMedia.",
           "type": "string"
         },
         "signInMediaSide": {
-          "description": "Side of the sign-in media. Only used with signInMedia.",
+          "description": "Side of the sign-in media, the poster or the floating panel. Only used with signInLayout = Split or Slide or Spotlight or Poster.",
           "type": "string",
           "enum": [
             "Left",
             "Right"
           ],
           "default": "Left"
+        },
+        "signInPanelFill": {
+          "description": "The second background as a color or gradient when there is no sign-in media: a color (#rrggbb, primary, ...) or the JSON of a fill ({\"gradient\": {\"kind\": \"linear\", \"angle\": 135, \"stops\": [...]}}). Only used with signInLayout = Split or Slide or Poster or Stack.",
+          "type": [
+            "string",
+            "object"
+          ]
+        },
+        "signInBackground": {
+          "description": "Image or video behind the whole sign-in page (the form side with Split and Poster): a local file (copied into the web client) or an http(s) address.",
+          "type": "string"
+        },
+        "signInPageFill": {
+          "description": "The page background as a color or gradient when there is no sign-in background: a color or the JSON of a fill, like the panel fill.",
+          "type": [
+            "string",
+            "object"
+          ]
+        },
+        "signInBackgroundDim": {
+          "description": "How much the background image is darkened, 0 to 90 percent. Only used with signInLayout = Card or Slide or Spotlight or Stack or Minimal.",
+          "type": [
+            "string",
+            "integer"
+          ]
+        },
+        "signInSurface": {
+          "description": "The card or panel of the form: solid, or frosted glass that shows the background through. Only used with signInLayout = Card or Spotlight.",
+          "type": "string",
+          "enum": [
+            "Solid",
+            "Glass"
+          ],
+          "default": "Solid"
+        },
+        "signInAnimation": {
+          "description": "Soft blurred fields of the fill or theme colors that drift slowly behind the form. Only used with signInLayout = Card or Spotlight or Stack or Minimal.",
+          "type": "string",
+          "enum": [
+            "None",
+            "Aurora"
+          ],
+          "default": "None"
+        },
+        "signInTilt": {
+          "description": "How far the cards behind the form are rotated, 0 to 12 degrees. Only used with signInLayout = Stack.",
+          "type": [
+            "string",
+            "integer"
+          ]
+        },
+        "signInLogoSize": {
+          "description": "Size of the logo above the form. Only used with signInLayout = Minimal.",
+          "type": "string",
+          "enum": [
+            "Small",
+            "Medium",
+            "Large"
+          ],
+          "default": "Medium"
         },
         "loadingScreen": {
           "description": "Background of the app's loading screen while the WebAssembly app loads.",
@@ -548,21 +612,153 @@
           ]
         },
         "signInLayout": {
-          "description": "Card, Split or Slide.",
+          "description": "Card, Split, Slide, Spotlight, Poster, Stack or Minimal (Glass and Aurora of older specs become Card with signInSurface Glass or signInAnimation Aurora).",
           "type": [
             "string",
             "null"
           ]
         },
         "signInMedia": {
-          "description": "Image or video of the sign-in pages: a file relative to the spec file (copied into the web client) or an http(s) address.",
+          "description": "Image or video of the second sign-in background (beside the form, the poster, the cards behind): a file relative to the spec file (copied into the web client) or an http(s) address.",
           "type": [
             "string",
             "null"
           ]
         },
         "signInMediaSide": {
-          "description": "Left or Right.",
+          "description": "Left or Right: side of the media, the poster or the floating panel.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "signInPanelFill": {
+          "description": "The second sign-in background as a color or gradient, used without signInMedia (Split, Slide, Poster, Stack).",
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "color": {
+              "description": "A color: #rgb, #rrggbb, #rrggbbaa, rgb()/rgba()/hsl()/hsla() with numbers, or a theme color primary, secondary, tertiary, background or surface.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "gradient": {
+              "description": "A gradient instead of a color.",
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "kind": {
+                  "description": "linear, radial or conic.",
+                  "enum": [
+                    "linear",
+                    "radial",
+                    "conic"
+                  ]
+                },
+                "angle": {
+                  "description": "Direction of a linear gradient, start of a conic one: 0 to 359 degrees (0 points up, 90 right).",
+                  "type": [
+                    "string",
+                    "integer"
+                  ],
+                  "pattern": "^-?(?:0|[1-9]\\d*)$"
+                },
+                "stops": {
+                  "description": "Two to eight colors along the gradient.",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "color": {
+                        "description": "A color like SignInFillSpec.Color.",
+                        "type": "string"
+                      },
+                      "position": {
+                        "description": "Where along the gradient, 0 to 100 percent.",
+                        "type": [
+                          "string",
+                          "integer"
+                        ],
+                        "pattern": "^-?(?:0|[1-9]\\d*)$"
+                      }
+                    }
+                  }
+                },
+                "animated": {
+                  "description": "Shifts the gradient slowly.",
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        "signInBackground": {
+          "description": "Image or video behind the whole sign-in page: a file relative to the spec file (copied into the web client) or an http(s) address.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "signInPageFill": {
+          "description": "The sign-in page background as a color or gradient, used without signInBackground.",
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "color": {
+              "description": "A color: #rgb, #rrggbb, #rrggbbaa, rgb()/rgba()/hsl()/hsla() with numbers, or a theme color primary, secondary, tertiary, background or surface.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "gradient": {
+              "description": "A gradient instead of a color.",
+              "$ref": "#/properties/branding/properties/signInPanelFill/properties/gradient"
+            }
+          }
+        },
+        "signInBackgroundDim": {
+          "description": "How much the sign-in background image is darkened, 0 to 90 percent.",
+          "type": [
+            "string",
+            "integer",
+            "null"
+          ],
+          "pattern": "^-?(?:0|[1-9]\\d*)$"
+        },
+        "signInSurface": {
+          "description": "Solid or Glass: the card or panel of the form (Card, Spotlight).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "signInAnimation": {
+          "description": "None or Aurora: drifting fields of color behind the form (Card, Spotlight, Stack, Minimal).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "signInTilt": {
+          "description": "Rotation of the cards behind the form, 0 to 12 degrees (Stack).",
+          "type": [
+            "string",
+            "integer",
+            "null"
+          ],
+          "pattern": "^-?(?:0|[1-9]\\d*)$"
+        },
+        "signInLogoSize": {
+          "description": "Small, Medium or Large: the logo above the form (Minimal).",
           "type": [
             "string",
             "null"

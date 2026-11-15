@@ -13,7 +13,7 @@ coworkee ui
 |---|---|
 | Basics | Name (prefix of every project and namespace), title and folder |
 | Branding | Logo, the twenty-one built-in themes, brand colors, with a live preview of the app shell in light and dark |
-| Sign-in | Card, Split or Slide, image or video and its side |
+| Sign-in | Card, Split, Slide, Spotlight, Poster, Stack or Minimal; each background as theme default, image or video, color or gradient (multi-stop gradient control); side, surface, Aurora, darkening, tilt and logo size where the layout has them |
 | Architecture | Presets for the app type, then every module and infrastructure option with description, pros, cons, when to use it and its package; the projects, Aspire containers and packages of the solution |
 | Entities | Feature modules with entities and properties (references, enums, flags), enums, plural, client entity and mapping; routes, permissions and files the CLI generates |
 | Review | Validation, the app spec as JSON and the equivalent `coworkee new` command |

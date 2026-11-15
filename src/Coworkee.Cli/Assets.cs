@@ -3,13 +3,13 @@ using Coworkee.Cli.Spec;
 
 namespace Coworkee.Cli;
 
-/// <summary>Logo and sign-in media of <c>coworkee new</c>: local files go into the wwwroot of the web client, the template gets their address there.</summary>
+/// <summary>Logo, sign-in media and background of <c>coworkee new</c>: local files go into the wwwroot of the web client, the template gets their address there.</summary>
 internal static class Assets
 {
     public static string TemplateValue(string id, string value) => id switch
     {
         "logo" => Path.GetFileName(value),
-        "signInMedia" when !SpecValidator.IsWebAddress(value) => "/media/" + Path.GetFileName(value),
+        "signInMedia" or "signInBackground" when !SpecValidator.IsWebAddress(value) => "/media/" + Path.GetFileName(value),
         _ => value,
     };
 
@@ -21,9 +21,12 @@ internal static class Assets
             Copy(settings, "logo", logo, wwwroot);
         }
 
-        if (SpecOptions.IsSet(settings.Spec, "signInMedia") && OptionCatalog.IsActive(OptionCatalog.Find("signInMedia")!, values) && values["signInMedia"] is { } media && !SpecValidator.IsWebAddress(media))
+        foreach (var id in new[] { "signInMedia", "signInBackground" })
         {
-            Copy(settings, "signInMedia", media, Path.Combine(wwwroot, "media"));
+            if (SpecOptions.IsSet(settings.Spec, id) && OptionCatalog.IsActive(OptionCatalog.Find(id)!, values) && values[id] is { } media && !SpecValidator.IsWebAddress(media))
+            {
+                Copy(settings, id, media, Path.Combine(wwwroot, "media"));
+            }
         }
     }
 
