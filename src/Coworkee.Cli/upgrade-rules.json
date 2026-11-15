@@ -914,5 +914,15 @@
         { "text": "MudExFileDisplayExcel, MudExFileDisplayExcelUniver, MudExFileDisplayPresentation and IMudExFileService.ReadExcelFile are gone in MudBlazor.Extensions 9.13.0: MudExFileDisplay opens xlsx, csv and pptx itself (MudExSpreadsheetEditor, MudExSlideEditor).", "find": "\\b(MudExFileDisplayExcel|MudExFileDisplayExcelUniver|MudExFileDisplayPresentation|ReadExcelFile)\\b", "files": [ "src/**/*.cs", "src/**/*.razor" ] }
       ]
     }
-  ]
+,
+    {
+      "version": "0.0.1.89",
+      "breaking": [
+        "Documents at registration need a store in the auth host: with Coworkee.Files the auth module depends on CoworkeeFileRegistrationDocumentsModule. Without a store the registration skips the documents and logs an error instead of stopping the auth server."
+      ],
+      "needsMigration": false,
+      "manual": [
+        { "text": "Documents at registration need a store in the auth server, which loads no Coworkee.Files on its own: with Coworkee.Files add typeof(Coworkee.Files.CoworkeeFileRegistrationDocumentsModule) to the DependsOn of the auth module (or register an own IRegistrationDocumentStore). Without a store the registration skips the documents and logs an error.", "find": "CoworkeeAuthServerModule", "files": [ "src/*.Auth/**/*.cs" ], "unless": "RegistrationDocuments" }
+      ]
+    }  ]
 }

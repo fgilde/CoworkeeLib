@@ -39,9 +39,15 @@ public sealed class SettingsItemDialogTests : ClientTestBase
         dialogs.WaitForAssertion(() => dialogs.Find("[data-testid='translations']"));
         dialogs.FindAll("[data-option]").ShouldBeEmpty(); // the file types are searched, not rendered all at once: hundreds of options froze WebAssembly
         dialogs.Markup.ShouldContain("Required");
-        dialogs.FindAll(".mud-expand-panel-text").Select(g => g.TextContent).ShouldBe(["Shown to the user", "Translations (optional)", "Upload"]);
+        dialogs.FindAll(".mud-expand-panel-text").Select(g => g.TextContent).ShouldBe(["Shown to the user", "Upload", "Translations (optional)"]);
         dialogs.Markup.ShouldContain("Empty accepts every file type.");
         dialogs.Markup.ShouldNotContain("Display name");
+        // labels are the names the class gives ([Display(Name)]), not the property names
+        dialogs.Markup.ShouldContain("Accepted file types");
+        dialogs.Markup.ShouldContain("Largest file");
+        dialogs.Markup.ShouldContain(">Hint<");
+        dialogs.Markup.ShouldNotContain(">ContentTypes<");
+        dialogs.Markup.ShouldNotContain(">MaxSize<");
         dialogs.FindAll(".mud-ex-property-reset-conatiner").ShouldBeEmpty();
         dialogs.Markup.ShouldNotContain(new GlobalResetSettings().ResetIcon);
     }

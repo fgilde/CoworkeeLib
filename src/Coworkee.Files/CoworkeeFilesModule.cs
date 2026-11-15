@@ -18,14 +18,13 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 namespace Coworkee.Files;
 
 /// <summary>Folders and files in the blob storage, with per-folder grants, soft delete, audit and realtime changes.</summary>
-[DependsOn(typeof(CoworkeeApplicationModule), typeof(CoworkeeStorageModule))]
+[DependsOn(typeof(CoworkeeApplicationModule), typeof(CoworkeeStorageModule), typeof(CoworkeeFileRegistrationDocumentsModule))]
 public sealed class CoworkeeFilesModule : CoworkeeModule, IWebModule
 {
     public override void ConfigureServices(ModuleServiceContext context)
     {
         var services = context.Services;
         services.AddMessagingFromAssembly(typeof(CoworkeeFilesModule).Assembly);
-        services.AddSingleton<IModelContributor, FileModelContributor>();
         services.AddSingleton<IPermissionDefinitionContributor, FilePermissionDefinitions>();
         services.AddScoped<IResourceHierarchy, FolderHierarchy>();
         services.AddSystemStatus<FilesStatus>();
@@ -37,9 +36,6 @@ public sealed class CoworkeeFilesModule : CoworkeeModule, IWebModule
         services.AddScoped<IODataEntityFilter<StoredFile>>(sp => sp.GetRequiredService<RegistrationFolders>());
         services.AddScoped<Application.Privacy.IPersonalDataContributor, FilePersonalData>();
         services.TryAddSingleton(TimeProvider.System);
-        services.TryAddScoped<Application.Registration.IRegistrationDocumentStore, FileRegistrationDocuments>();
-        // found by its name: a renamed one would be created again with the next registration
-        services.Configure<Identity.Users.IdentityAdministrationOptions>(o => o.FixedRoleNames[FileRegistrationDocuments.ReaderRole] = "Files: registration documents");
         services.AddODataEntity<StoredFile>("StoredFiles", FilePermissions.View, f => f.BlobKey);
         services.AddODataEntity<FileFolder>("FileFolders", FilePermissions.View);
         services.AddGlobalSearch<StoredFile>(s => s.Fields(f => f.Name).Name("files").Group("Files").Subtitle(f => f.ContentType).Url(f => $"/files?file={f.Id}").Icon("InsertDriveFile"));

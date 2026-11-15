@@ -21,6 +21,9 @@ public partial class ContentTypesEditor
 
     [Parameter] public bool ReadOnly { get; set; }
 
+    /// <summary>The variant of the field, the one the surrounding form uses.</summary>
+    [Parameter] public MudBlazor.Variant Variant { get; set; } = MudBlazor.Variant.Text;
+
     private IReadOnlyList<string> Selected => Value ?? [];
 
     private string Name(string? value) => value is null ? string.Empty : L[ContentTypeCatalog.Describe(value).Name];

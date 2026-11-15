@@ -2,6 +2,18 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Breaking changes
+
+- Documents at registration need a store in the auth host. Apps with `Coworkee.Files` add `typeof(Coworkee.Files.CoworkeeFileRegistrationDocumentsModule)` to the `DependsOn` of their auth module (`coworkee update` points to it); without a store the registration skips the documents.
+
+### Fixed
+
+- Documents at registration work in apps whose auth host loads no `Coworkee.Files`: turning them on in the admin stopped the auth server for good (an options validation failed at every start, so nobody could sign in). The new `CoworkeeFileRegistrationDocumentsModule` (`Coworkee.Files`) brings the store and the file tables to an auth host, without the file api; the template's auth host depends on it. Apps add `typeof(Coworkee.Files.CoworkeeFileRegistrationDocumentsModule)` to the `DependsOn` of their auth module; `coworkee update` points to it. See [Registration](../security/registration.md#where-documents-go).
+- Documents asked for without a store no longer stop the auth server: the registration skips the documents step and logs an error naming the missing store.
+- The documents on the admin page **Sign-in** are a list of rules, one line each (*Passport · Required · PDF document · up to 10 MB*), added and edited in a dialog. The accepted file types read as one field holding a list of chips, and the largest file lines up with its unit (KB, MB, GB), both in the variant of the form around them. List items edited in a dialog of a settings form are labelled with their `[Display(Name)]` (*Accepted file types*) instead of the property name (*ContentTypes*), and the optional translations come last.
+
 ## 0.0.1.88 (2026-11-15)
 
 ### Added

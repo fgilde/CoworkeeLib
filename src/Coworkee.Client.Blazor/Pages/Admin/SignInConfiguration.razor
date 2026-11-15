@@ -1,5 +1,6 @@
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + SettingsPermissions.Manage)]
 @using MudBlazor.Extensions.Components
+@using MudBlazor.Extensions.Components.ObjectEdit
 @using Coworkee.Client.Blazor.Components.Editors
 @using Coworkee.Contracts.Configuration
 
@@ -257,46 +258,19 @@ else
                                                    Disabled="@(!DocumentsEditable || Locked(nameof(RegistrationOptions.RequireDocuments)))" Class="ma-0" data-testid="sign-in-require-documents" />
                                         @if (options.RequireDocuments)
                                         {
-                                        <MudStack Spacing="2" Class="mt-2">
-                                            @foreach (var (slot, number) in options.Documents.Select((slot, index) => (slot, index + 1)))
-                                            {
-                                                <MudPaper Outlined="true" Class="cw-signin-slot" data-testid="sign-in-document-slot">
-                                                    <div class="d-flex align-center gap-2 mb-2" data-testid="sign-in-document-title">
-                                                        <MudIcon Icon="@Icons.Material.Outlined.Description" Color="Color.Primary" Size="Size.Small" />
-                                                        <MudText Typo="Typo.subtitle1" Class="flex-grow-1">@(string.IsNullOrWhiteSpace(slot.Name) ? L["Document {0}", number] : slot.Name)</MudText>
-                                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(slot.Required ? Color.Primary : Color.Default)">@(slot.Required ? L["Required"] : L["Optional"])</MudChip>
-                                                    </div>
-                                                    <div class="cw-signin-grid">
-                                                        <MudTextField T="string" @bind-Value="slot.Name" @bind-Value:after="Changed" Label="@L["Name"]" Required="true" Disabled="@(!DocumentsEditable)"
-                                                                      HelperText="@L["The label of the upload field, e.g. Passport; uploaded files are filed under this name."]" Variant="Variant.Outlined" Margin="Density.Margin" />
-                                                        <MudTextField T="string" @bind-Value="slot.Description" @bind-Value:after="Changed" Label="@L["Hint"]" Disabled="@(!DocumentsEditable)"
-                                                                      HelperText="@L["Optional text under the field, e.g. Both sides, readable."]" Variant="Variant.Outlined" Margin="Density.Margin" />
-                                                        <ContentTypesEditor Value="slot.ContentTypes" ValueChanged="types => SetTypes(slot, types)" Label="@L["Accepted file types"]" ReadOnly="@(!DocumentsEditable)" />
-                                                        <FileSizeEditor Value="slot.MaxSize" ValueChanged="size => SetSize(slot, size)" Label="@L["Largest file"]" ReadOnly="@(!DocumentsEditable)" />
-                                                    </div>
-                                                    <div class="d-flex align-center flex-wrap gap-2 mt-1">
-                                                        <MudSwitch T="bool" @bind-Value="slot.Required" @bind-Value:after="Changed" Label="@L["Required"]" Color="Color.Primary" Disabled="@(!DocumentsEditable)" Class="ma-0" />
-                                                        <MudSpacer />
-                                                        <MudButton Variant="Variant.Text" Color="Color.Error" StartIcon="@Icons.Material.Outlined.Delete" Disabled="@(!DocumentsEditable)"
-                                                                   OnClick="() => RemoveSlot(slot)" Size="Density.Size" data-testid="sign-in-document-remove">@L["Remove"]</MudButton>
-                                                    </div>
-                                                    <MudExpansionPanels Elevation="0" Outlined="false" Class="mt-1">
-                                                        <MudExpansionPanel Text="@L["Translations (optional)"]" Dense="true" Gutters="false">
-                                                            <TranslationsEditor Value="slot.Names" ValueChanged="names => SetNames(slot, names)" Label="@L["Name in other languages"]" ReadOnly="@(!DocumentsEditable)" />
-                                                            <TranslationsEditor Value="slot.Descriptions" ValueChanged="hints => SetHints(slot, hints)" Label="@L["Hint in other languages"]" ReadOnly="@(!DocumentsEditable)" />
-                                                        </MudExpansionPanel>
-                                                    </MudExpansionPanels>
-                                                </MudPaper>
-                                            }
+                                            @* the rules of what new users upload: one line each, added and edited in a dialog (SettingsItemMeta, CoworkeeEditors) *@
+                                            <div class="mt-3" data-testid="sign-in-documents-list">
+                                                <MudExCollectionEditor T="RegistrationDocumentSlot" Items="options.Documents" ItemsChanged="DocumentsChanged" ItemToStringFunc="Rule"
+                                                                       ItemIcon="@Icons.Material.Outlined.Description" ReadOnly="@(!DocumentsEditable)" Virtualize="false"
+                                                                       FilterMode="PropertyFilterMode.Disabled" ShowClearButton="false" Variant="Variant.Outlined"
+                                                                       DialogOptions="DocumentDialog" TextAdd="@L["Request a document"]" TextEdit="@L["Edit {0}"]" />
+                                            </div>
                                             @if (options.Documents.Count == 0)
                                             {
-                                                <MudAlert Severity="Severity.Info" Dense="true" data-testid="sign-in-documents-none">
+                                                <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2" data-testid="sign-in-documents-none">
                                                     @L["Nothing is requested yet, so the registration skips this step. Request a document new users have to upload."]
                                                 </MudAlert>
                                             }
-                                        </MudStack>
-                                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" Disabled="@(!DocumentsEditable)" Class="mt-3"
-                                                   OnClick="AddSlot" Size="Density.Size" data-testid="sign-in-document-add">@L["Request a document"]</MudButton>
                                         }
                                     </MudPaper>
                                 }

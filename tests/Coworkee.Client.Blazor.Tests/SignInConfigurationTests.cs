@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 using MudBlazor.Extensions.Components;
+using MudBlazor.Extensions.Components.ObjectEdit;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using static Coworkee.Client.Blazor.Tests.SettingsFormTests;
@@ -69,7 +70,7 @@ public sealed class SignInConfigurationTests : ClientTestBase
         Input(page, "Ask for the address").HasAttribute("checked").ShouldBeTrue();
         page.Find("[data-testid='sign-in-allowed-emails']").TextContent.ShouldContain("*@acme.test");
         // the requested documents show once the step is switched on
-        page.FindAll("[data-testid='sign-in-document-add']").ShouldBeEmpty();
+        page.FindAll("[data-testid='sign-in-documents-list']").ShouldBeEmpty();
 
         Open(page, "Appearance");
         page.Find("[data-testid='sign-in-design'] [data-layout='Card']").GetAttribute("aria-checked").ShouldBe("true");
@@ -163,8 +164,7 @@ public sealed class SignInConfigurationTests : ClientTestBase
         Input(page, "Ask for the address").Change(false);
         await page.InvokeAsync(() => page.FindComponent<MudExTagField<string>>().Instance.ValuesChanged.InvokeAsync(["*@acme.test", "*@beta.test"]));
         Input(page, "Ask new users for documents").Change(true);
-        await page.Find("[data-testid='sign-in-document-add']").ClickAsync(new());
-        page.Find("[data-testid='sign-in-document-slot'] input").Change("Passport");
+        await Documents(page, new RegistrationDocumentSlot { Name = "Passport" });
         await page.Find("[data-testid='sign-in-save']").ClickAsync(new());
 
         await Api.Received(1).SaveAppConfigurationAsync(CoworkeeAppSettings.Section, Arg.Is<JsonElement>(v =>
@@ -280,12 +280,12 @@ public sealed class SignInConfigurationTests : ClientTestBase
         Open(page, "Registration");
 
         page.Find("[data-testid='sign-in-documents-unavailable']");
-        page.FindAll("[data-testid='sign-in-document-add']").ShouldBeEmpty();
+        page.FindAll("[data-testid='sign-in-documents-list']").ShouldBeEmpty();
         page.Find("input[data-testid='sign-in-require-documents'], [data-testid='sign-in-require-documents'] input").HasAttribute("disabled").ShouldBeTrue();
     }
 
     [Fact]
-    public async Task Requested_documents_read_as_a_list_of_what_new_users_upload()
+    public async Task Requested_documents_read_as_rules_one_line_each_edited_in_a_dialog()
     {
         var page = RenderPage();
         page.WaitForAssertion(() => Tabs(page).ShouldContain("Registration"));
@@ -293,14 +293,31 @@ public sealed class SignInConfigurationTests : ClientTestBase
 
         Input(page, "Ask new users for documents").Change(true);
         page.Find("[data-testid='sign-in-documents-none']").TextContent.ShouldContain("the registration skips this step");
-        await page.Find("[data-testid='sign-in-document-add']").ClickAsync(new());
+        var list = page.FindComponent<MudExCollectionEditor<RegistrationDocumentSlot>>().Instance;
+        list.TextAdd.ShouldBe("Request a document");
+        list.DialogOptions.ShouldNotBeNull();
 
-        page.Find("[data-testid='sign-in-document-add']").TextContent.ShouldContain("Request a document");
+        await Documents(page,
+            new RegistrationDocumentSlot { Name = "Passport", ContentTypes = ["application/pdf"], MaxSize = 10L << 20 },
+            new RegistrationDocumentSlot { Name = "Trade licence", Required = false });
+
         page.FindAll("[data-testid='sign-in-documents-none']").ShouldBeEmpty();
-        page.Find("[data-testid='sign-in-document-title']").TextContent.ShouldContain("Document 1");
-        page.Find("[data-testid='sign-in-document-slot'] input").Change("Passport");
-        page.Find("[data-testid='sign-in-document-title']").TextContent.ShouldContain("Passport");
+        var rules = page.Find("[data-testid='sign-in-documents-list']").TextContent;
+        rules.ShouldContain("Passport · Required · ");
+        rules.ShouldContain(" · up to 10 MB");
+        rules.ShouldContain("Trade licence · Optional · Every file type");
     }
+
+    [Theory]
+    [InlineData(512L << 10, "512 KB")]
+    [InlineData(10L << 20, "10 MB")]
+    [InlineData((5L << 20) / 2, "2.5 MB")]
+    [InlineData(2L << 30, "2 GB")]
+    public void File_sizes_read_in_the_largest_unit_that_still_shows_one(long bytes, string shown) =>
+        Blazor.Components.Editors.FileSizeEditor.Format(bytes).Replace(',', '.').ShouldBe(shown);
+
+    private static Task Documents(IRenderedComponent<SignInConfiguration> page, params RegistrationDocumentSlot[] documents) =>
+        page.InvokeAsync(() => page.FindComponent<MudExCollectionEditor<RegistrationDocumentSlot>>().Instance.ItemsChanged.InvokeAsync(documents.ToList()));
 
     [Fact]
     public void Another_organisation_gets_only_its_own_session_settings()

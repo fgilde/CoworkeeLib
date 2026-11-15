@@ -53,7 +53,7 @@ Defaults for a fresh installation come from configuration, for example `Coworkee
 
 Admins edit the same values under **Settings > App settings > Registration**. Each document opens in a dialog with three sections: *Shown to the user* (name and hint, in every language), *Translations (optional)* (only for multilingual apps: a row per language, labeled *Translation for German* and so on, shown instead of the text above to users of that language) and *Upload* (required, accepted file types found by searching every known MIME type, or added as a whole group, largest file).
 
-On the admin page **Sign-in** (tab *Registration*), the card *Documents at registration* holds the same values: the switch *Ask new users for documents* turns the step on, then every requested document is a card titled with its name (or *Document 1*, *Document 2* until it has one) and marked *Required* or *Optional*, and *Request a document* adds one. Nothing requested means the registration skips the step, even with the switch on. You upload nothing yourself here; you only say what new users have to upload.
+On the admin page **Sign-in** (tab *Registration*), the card *Documents at registration* holds the same values: the switch *Ask new users for documents* turns the step on, then the requested documents are a list of rules, one line each (*Passport · Required · Image, PDF document · up to 10 MB*). *Request a document* adds one and a click on a line edits it, both in a dialog with the name, the hint, the accepted file types (a list of chips, searched by name, extension or MIME type, or added as a group), the largest file in KB, MB or GB and the names in other languages. Nothing requested means the registration skips the step, even with the switch on. You upload nothing yourself here; you only say what new users have to upload.
 
 ## Roles offered in the registration
 
@@ -75,9 +75,16 @@ public interface IRegistrationDocumentStore
 - **`Coworkee.Files`** brings a default: the files land in *Registrations/{email}*. That folder has a single grant, for the new user through the role *Registration documents* (which may view files). Global file grants (`Files.View`, `Files.Manage`) do not reach the *Registrations* tree, neither in the file manager nor through OData; only the user and holders of `Files.Registrations.View` see it. Administrators have it like every permission; grant it to a role for others who check registrations.
 - **Your own store** wins over the default when your module registers it later (`services.AddScoped<IRegistrationDocumentStore, MyStore>()`). An app with its own document module stores them there, for example as documents of the type *Registration*, owned by the user and not public.
 
-The store has to live in the **auth server host**, where the registration runs; a store in the API host does not count. `Coworkee.Files` registers its default with `TryAdd`, so any store registered by the app wins. The app template with samples puts the registration documents into its *Documents* module (`MyAppRegistrationDocumentsModule` in the auth host); without samples, add `Coworkee.Files` or your own store to the auth host before you configure documents.
+The store has to live in the **auth server host**, where the registration runs; a store in the API host does not count. The auth host loads no `Coworkee.Files` on its own (it would bring the file api along), so it depends on `CoworkeeFileRegistrationDocumentsModule`: the store and the file tables, no endpoints. `CoworkeeFilesModule` depends on it as well, and the store is registered with `TryAdd`, so any store registered by the app wins.
 
-Configured documents without any store stop the auth server at startup with an `OptionsValidationException` that names the missing `IRegistrationDocumentStore`.
+```csharp
+[DependsOn(typeof(MyAppInfrastructureModule), typeof(CoworkeeAuthServerModule), typeof(Coworkee.Files.CoworkeeFileRegistrationDocumentsModule))]
+internal sealed class MyAppAuthModule : CoworkeeModule;
+```
+
+The app template does this in its auth host when it has `Coworkee.Files`; with samples the documents go to its *Documents* module instead (`MyAppRegistrationDocumentsModule`). The auth server shares the blob storage of the API (the files volume of a deployment), so the API serves the uploaded files. `coworkee update` points apps whose auth module lacks a store to this line.
+
+Documents asked for without any store never stop the auth server (an admin turns them on while it runs): the registration skips the documents step and the auth server logs an error that names the missing `IRegistrationDocumentStore` and `CoworkeeFileRegistrationDocumentsModule`.
 
 ## Sign-in rules
 

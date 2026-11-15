@@ -3,6 +3,7 @@ using Coworkee.Contracts.Configuration;
 using Coworkee.Core.Modularity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Coworkee.AuthServer.Tests;
@@ -10,17 +11,20 @@ namespace Coworkee.AuthServer.Tests;
 public sealed class RegistrationStoreTests
 {
     [Fact]
-    public void Registration_documents_without_a_store_fail_with_a_clear_message()
+    public void Registration_documents_without_a_store_are_skipped_instead_of_stopping_the_server()
     {
-        var error = Should.Throw<OptionsValidationException>(() => Options(withStore: false));
-        error.Message.ShouldContain("Coworkee:Registration:Documents needs an IRegistrationDocumentStore");
+        // an admin turns the documents on in the app while the server runs; that must never take the sign-in down
+        Should.NotThrow(() => Options(withStore: false)).RequireDocuments.ShouldBeFalse();
 
-        Options(withStore: true).Documents.Count.ShouldBe(1);
+        var stored = Options(withStore: true);
+        stored.RequireDocuments.ShouldBeTrue();
+        stored.Documents.Count.ShouldBe(1);
     }
 
     private static RegistrationOptions Options(bool withStore)
     {
         var services = new ServiceCollection();
+        services.AddLogging();
         new CoworkeeAuthServerModule().ConfigureServices(new ModuleServiceContext(services, new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["Coworkee:Auth:DevelopmentCertificates"] = "true",

@@ -53,7 +53,7 @@ Standardwerte für eine neue Installation kommen aus der Konfiguration, zum Beis
 
 Admins bearbeiten dieselben Werte unter **Einstellungen > App-Einstellungen > Registrierung**. Jedes Dokument öffnet sich in einem Dialog mit drei Abschnitten: *Für den Benutzer sichtbar* (Name und Hinweis, in jeder Sprache), *Übersetzungen (optional)* (nur für mehrsprachige Apps: eine Zeile je Sprache, beschriftet mit *Übersetzung für Deutsch* usw., die Benutzern dieser Sprache statt des obigen Texts angezeigt wird) und *Upload* (Pflicht, erlaubte Dateitypen per Suche über alle bekannten MIME-Typen oder als ganze Gruppe, größte Datei).
 
-Auf der Admin-Seite **Anmeldung** (Tab *Registrierung*) hält die Karte *Dokumente bei der Registrierung* dieselben Werte: Der Schalter *Neue Benutzer nach Dokumenten fragen* schaltet den Schritt ein, danach ist jedes angeforderte Dokument eine Karte mit seinem Namen als Titel (oder *Dokument 1*, *Dokument 2*, solange es keinen hat), markiert als *Pflicht* oder *Optional*, und *Dokument anfordern* fügt eines hinzu. Ist nichts angefordert, überspringt die Registrierung den Schritt, auch mit eingeschaltetem Schalter. Du lädst hier selbst nichts hoch; du legst nur fest, was neue Benutzer hochladen müssen.
+Auf der Admin-Seite **Anmeldung** (Tab *Registrierung*) hält die Karte *Dokumente bei der Registrierung* dieselben Werte: Der Schalter *Neue Benutzer nach Dokumenten fragen* schaltet den Schritt ein, danach sind die angeforderten Dokumente eine Liste von Regeln, eine Zeile je Dokument (*Reisepass · Pflicht · Bild, PDF-Dokument · bis 10 MB*). *Dokument anfordern* fügt eines hinzu, ein Klick auf eine Zeile bearbeitet es, beides in einem Dialog mit Name, Hinweis, erlaubten Dateitypen (eine Liste von Chips, gesucht nach Name, Endung oder MIME-Typ oder als Gruppe hinzugefügt), größter Datei in KB, MB oder GB und den Namen in anderen Sprachen. Ist nichts angefordert, überspringt die Registrierung den Schritt, auch mit eingeschaltetem Schalter. Du lädst hier selbst nichts hoch; du legst nur fest, was neue Benutzer hochladen müssen.
 
 ## Rollen in der Registrierung
 
@@ -75,9 +75,16 @@ public interface IRegistrationDocumentStore
 - **`Coworkee.Files`** bringt einen Standard mit: die Dateien landen in *Registrations/{E-Mail}*. Der Ordner hat genau eine Freigabe, für den neuen Benutzer über die Rolle *Registration documents* (darf Dateien sehen). Globale Datei-Berechtigungen (`Files.View`, `Files.Manage`) reichen nicht in den Baum *Registrations*, weder in der Dateiverwaltung noch über OData; nur der Benutzer und Inhaber von `Files.Registrations.View` sehen ihn. Administratoren haben sie wie jede Berechtigung; für andere, die Registrierungen prüfen, vergib sie an eine Rolle.
 - **Ein eigener Store** gewinnt gegen den Standard, wenn dein Modul ihn später registriert (`services.AddScoped<IRegistrationDocumentStore, MyStore>()`). Eine App mit eigenem Dokumentenmodul legt sie dort ab, zum Beispiel als Dokumente vom Typ *Registration*, im Besitz des Benutzers und nicht öffentlich.
 
-Der Store muss im **Host des Auth-Servers** liegen, dort läuft die Registrierung; ein Store nur im API-Host zählt nicht. `Coworkee.Files` registriert seinen Standard mit `TryAdd`, jeder Store der App gewinnt also. Die App-Vorlage mit Beispielen legt die Registrierungsdokumente in ihrem Modul *Documents* ab (`MyAppRegistrationDocumentsModule` im Auth-Host); ohne Beispiele nimm `Coworkee.Files` oder einen eigenen Store in den Auth-Host auf, bevor du Dokumente konfigurierst.
+Der Store muss im **Host des Auth-Servers** liegen, dort läuft die Registrierung; ein Store nur im API-Host zählt nicht. Der Auth-Host lädt `Coworkee.Files` nicht von selbst (es brächte die Datei-API mit), deshalb hängt er von `CoworkeeFileRegistrationDocumentsModule` ab: Store und Datei-Tabellen, keine Endpunkte. `CoworkeeFilesModule` hängt ebenfalls davon ab, und der Store wird mit `TryAdd` registriert, jeder Store der App gewinnt also.
 
-Konfigurierte Dokumente ohne jeden Store halten den Auth-Server schon beim Start an, mit einer `OptionsValidationException`, die den fehlenden `IRegistrationDocumentStore` nennt.
+```csharp
+[DependsOn(typeof(MyAppInfrastructureModule), typeof(CoworkeeAuthServerModule), typeof(Coworkee.Files.CoworkeeFileRegistrationDocumentsModule))]
+internal sealed class MyAppAuthModule : CoworkeeModule;
+```
+
+Die App-Vorlage macht das in ihrem Auth-Host, wenn sie `Coworkee.Files` hat; mit Beispielen gehen die Dokumente stattdessen in ihr Modul *Documents* (`MyAppRegistrationDocumentsModule`). Der Auth-Server teilt den Blob-Speicher der API (das Datei-Volume einer Bereitstellung), die API liefert die hochgeladenen Dateien also aus. `coworkee update` weist Apps, deren Auth-Modul keinen Store hat, auf diese Zeile hin.
+
+Angeforderte Dokumente ohne jeden Store halten den Auth-Server nie an (ein Admin schaltet sie ein, während er läuft): Die Registrierung überspringt den Dokumentschritt, und der Auth-Server schreibt einen Fehler ins Log, der den fehlenden `IRegistrationDocumentStore` und `CoworkeeFileRegistrationDocumentsModule` nennt.
 
 ## Anmelderegeln
 
