@@ -80,6 +80,21 @@ public sealed class SignInConfigurationTests : ClientTestBase
     }
 
     [Fact]
+    public async Task The_appearance_applies_the_design_to_keycloak_with_its_button()
+    {
+        Api.GetKeycloakThemeStatusAsync(Arg.Any<CancellationToken>()).Returns(new KeycloakThemeStatusDto(true, "coworkee-demo", null, null));
+        Api.ApplyKeycloakThemeAsync(Arg.Any<CancellationToken>()).Returns(new KeycloakThemeStatusDto(true, "coworkee-demo", DateTimeOffset.UtcNow, null));
+        var page = RenderPage();
+
+        page.WaitForAssertion(() => Tabs(page).ShouldContain("Appearance"));
+        Open(page, "Appearance");
+        page.WaitForAssertion(() => page.Find("[data-testid='sign-in-appearance'] [data-testid='keycloak-theme-apply']"));
+        await page.InvokeAsync(() => page.Find("[data-testid='keycloak-theme-apply']").Click());
+
+        await Api.Received(1).ApplyKeycloakThemeAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public void Without_an_external_provider_there_is_no_method_to_choose()
     {
         Definitions(loginMode: false);

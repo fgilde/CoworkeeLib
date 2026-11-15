@@ -6,6 +6,7 @@
 
 ### Behoben
 
+- Admin-Seite *Anmeldung*: Der Tab *Darstellung* hat wieder die Karte *Keycloak-Anmeldeseite* mit dem Button *Nach Keycloak übernehmen* (sie war nur auf der Seite Themes geblieben, als das Design umzog). Sie erscheint überall dort, wo die API ein Keycloak-Login-Theme pflegt, also bei lokalen Läufen.
 - Anmeldung über Keycloak auf Azure Container Apps: Der Auth-Server fragte den Realm unter `http://keycloak:8080` an, was Container Apps nicht auflöst (ein App-Name antwortet nur auf Port 80), und antwortete nach dem Timeout mit 500. Er nimmt jetzt den Keycloak-Endpunkt so, wie ihn jedes Ziel auflöst, wie die Migrationen: `http://keycloak:8080` in Docker Compose und Kubernetes, die öffentliche Adresse auf Container Apps. Zum Übernehmen neu deployen.
 
 ## 0.0.1.87 (2026-11-14)
