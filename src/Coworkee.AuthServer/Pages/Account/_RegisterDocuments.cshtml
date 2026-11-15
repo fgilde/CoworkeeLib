@@ -2,13 +2,37 @@
 @using Coworkee.AuthServer.Registration
 <partial name="_RegisterSummary" model="Model" />
 <p>@T("Please add the documents that confirm your person and qualification.")</p>
-@for (var index = 0; index < Model.Options.Documents.Count; index++)
-{
-  var slot = Model.Options.Documents[index];
-  <label for="document-@index">@slot.DisplayName@(slot.Required ? " *" : "")</label>
-  @if (slot.DisplayDescription is { Length: > 0 } description)
+@* auth.js turns each slot into a drop zone with live checks against these rules; without script the native file fields work as they are *@
+<div class="documents" data-documents data-text-remove="@T("Remove")">
+  @for (var index = 0; index < Model.Options.Documents.Count; index++)
   {
-    <small class="hint">@description</small>
+    var slot = Model.Options.Documents[index];
+    <div class="document" data-document="@index" data-name="@slot.DisplayName" data-required="@(slot.Required ? "true" : "false")"
+         data-content-types="@string.Join(',', slot.ContentTypes)" data-max-size="@(slot.MaxSize is > 0 ? slot.MaxSize : null)"
+         data-text-type="@T("\"{0}\" has a file type that is not accepted.", slot.DisplayName)"
+         data-text-size="@(slot.MaxSize is > 0 and var max ? T("\"{0}\" is larger than {1}.", slot.DisplayName, RegistrationDocuments.Size(max)) : null)">
+      <label for="document-@index">
+        @slot.DisplayName
+        @if (slot.Required)
+        {
+          <span class="required" aria-hidden="true">*</span>
+        }
+      </label>
+      @if (slot.DisplayDescription is { Length: > 0 } description)
+      {
+        <small class="hint">@description</small>
+      }
+      <small class="hint rule" data-testid="document-rule">@RegistrationDocuments.Rule(slot)</small>
+      <div class="drop">
+        <span class="drop-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.99 5.99 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96ZM14 13v4h-4v-4H7l5-5 5 5h-3Z"/></svg></span>
+        <span class="drop-text"><strong data-file-name>@T("Drag a file here or click to choose")</strong><small data-file-size></small></span>
+        <input id="document-@index" type="file" name="@RegistrationDocuments.Field(index)" accept="@RegistrationDocuments.Accept(slot)" required="@slot.Required" />
+      </div>
+      <p class="document-error" data-document-error hidden></p>
+    </div>
   }
-  <input id="document-@index" type="file" name="@RegistrationDocuments.Field(index)" accept="@RegistrationDocuments.Accept(slot)" required="@slot.Required" />
-}
+</div>
+<div class="documents-missing" data-documents-missing role="status" hidden>
+  <p>@T("These documents are still missing:")</p>
+  <ul></ul>
+</div>

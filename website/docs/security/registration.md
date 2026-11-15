@@ -7,6 +7,8 @@ New users register themselves on the auth server with a wizard. It is server-ren
 3. **Role**: only when roles are offered for registration; the user may pick several.
 4. **Documents** or **Summary**: the summary of everything entered, plus one upload per document slot when documents are required. Browsers cannot keep a chosen file across pages, so the documents come with the final submit.
 
+In the documents step each slot is a drop zone: its name (required ones marked with *), the hint, and its rule in words (*Images, PDF · up to 10 MB*). The user drops a file on it or clicks to choose one; the zone then shows the file name, its size, an icon for the type and a button to remove it. The browser checks the file against the slot's real rules right away, including wildcards the `accept` attribute cannot express (`application/vnd.openxmlformats-officedocument.*`) and the largest size, and says under the zone what is wrong. Above the submit button a box lists the required documents still missing, and the submit stays blocked until they are there and every file fits. The server checks again on the submit, as before. Without script the native file fields work as they are.
+
 Every step checks its fields before the next one opens; *Back* keeps what was entered. Between the steps the input travels encrypted (ASP.NET Core data protection, two hours) in a hidden field, so the server keeps no session. The last submit checks all steps again.
 
 ## Settings admins change at runtime

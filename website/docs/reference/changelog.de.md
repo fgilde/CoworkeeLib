@@ -8,6 +8,7 @@
 
 - Die Admin-Benutzerseite nimmt Reiter von Modulen und Apps auf: `services.AddUserDetailTab<TComponent>(title, permission, icon, order)`; die Komponente bekommt `[Parameter] Guid UserId`, der Reiter erscheint nur mit seiner Berechtigung.
 - Die Admin-Benutzerseite hat den Reiter **Dateien** (`Files.View`): die Registrierungsunterlagen des Benutzers und seine anderen Uploads getrennt, mit Vorschau und Download, live.
+- Der Dokumentschritt der Registrierung zeigt jedes Dokument als Ablagefläche mit seiner Regel in Worten (*Bilder, PDF · bis 10 MB*), die gewählte Datei mit Name, Größe, Typ-Symbol und einer Schaltfläche zum Entfernen, prüft Typ (auch Platzhalter) und Größe im Browser vor dem Absenden und listet über der Schaltfläche die noch fehlenden Pflichtdokumente. Die Prüfungen des Servers bleiben gleich; ohne Skript funktionieren die normalen Dateifelder wie bisher. Siehe [Registrierung](../security/registration.md).
 
 ## 0.0.1.90 (2026-11-15)
 

@@ -17,6 +17,35 @@ public static class RegistrationDocuments
             ? string.Join(',', slot.ContentTypes)
             : null;
 
+    /// <summary>The slot's rule in words for the upload field: "PDF, Images · up to 10 MB".</summary>
+    public static string Rule(RegistrationDocumentSlot slot) =>
+        (slot.ContentTypes.Count == 0 ? T("Every file type") : string.Join(", ", slot.ContentTypes.Select(TypeName).Distinct(StringComparer.Ordinal)))
+        + (slot.MaxSize is > 0 and var max ? " · " + T("up to {0}", Size(max)) : string.Empty);
+
+    /// <summary>"1.5 MB" or "800 KB" in the current culture; the script of the documents step formats the same way.</summary>
+    public static string Size(long bytes) => bytes >= 1024 * 1024 ? $"{bytes / 1024d / 1024d:0.#} MB" : $"{Math.Ceiling(bytes / 1024d):0} KB";
+
+    // a group word for wildcards and office families, the short format name ("PNG", "JSON") for single types, else the pattern itself
+    private static string TypeName(string pattern)
+    {
+        var type = pattern.Trim().ToLowerInvariant();
+        var (major, minor) = type.IndexOf('/') is > 0 and var slash ? (type[..slash], type[(slash + 1)..]) : (type, string.Empty);
+        return type switch
+        {
+            "application/pdf" => "PDF",
+            "text/plain" => T("Text files"),
+            _ when minor == "*" => major switch { "image" => T("Images"), "video" => T("Videos"), "audio" => T("Audio"), "text" => T("Text files"), _ => pattern },
+            _ when type.Contains("spreadsheet", StringComparison.Ordinal) || type.Contains("excel", StringComparison.Ordinal) || type == "text/csv" => T("Spreadsheets"),
+            _ when type.Contains("presentation", StringComparison.Ordinal) || type.Contains("powerpoint", StringComparison.Ordinal) => T("Presentations"),
+            _ when type.Contains("word", StringComparison.Ordinal) || type.Contains("opendocument.text", StringComparison.Ordinal) || type == "application/rtf" => T("Text documents"),
+            _ when type.Contains("officedocument", StringComparison.Ordinal) || type.Contains("opendocument", StringComparison.Ordinal) => T("Office documents"),
+            _ when type.Contains("zip", StringComparison.Ordinal) || type.Contains("compressed", StringComparison.Ordinal) || type.Contains("x-tar", StringComparison.Ordinal) => T("Archives"),
+            _ when major is "image" or "video" or "audio" or "text" or "application" && !minor.Contains('*', StringComparison.Ordinal)
+                => minor.Split('+')[0].Replace("x-", string.Empty, StringComparison.Ordinal).Replace("vnd.", string.Empty, StringComparison.Ordinal).ToUpperInvariant(),
+            _ => pattern,
+        };
+    }
+
     public static IEnumerable<string> Validate(IReadOnlyList<RegistrationDocumentSlot> slots, IFormFileCollection files)
     {
         for (var index = 0; index < slots.Count; index++)
@@ -39,7 +68,7 @@ public static class RegistrationDocuments
 
             if (slot.MaxSize is > 0 and var max && file.Length > max)
             {
-                yield return T("\"{0}\" is larger than {1}.", slot.DisplayName, max >= 1024 * 1024 ? $"{max / 1024d / 1024d:0.#} MB" : $"{Math.Ceiling(max / 1024d):0} KB");
+                yield return T("\"{0}\" is larger than {1}.", slot.DisplayName, Size(max));
             }
         }
     }

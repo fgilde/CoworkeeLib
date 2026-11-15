@@ -7,7 +7,8 @@ Changes that need action in apps built on Coworkee. Newest first.
 ### Added
 
 - The admin user page takes tabs from modules and apps: `services.AddUserDetailTab<TComponent>(title, permission, icon, order)`; the component gets `[Parameter] Guid UserId`, the tab shows only with its permission.
-- The admin user page has the tab **Files** (`Files.View`): the user's registration documents and his other uploads apart, with preview and download, live.
+- The admin user page has the tab **Files** (`Files.View`): the user's registration documents and their other uploads apart, with preview and download, live.
+- The documents step of the registration shows each document as a drop zone with its rule in words (*Images, PDF · up to 10 MB*), the chosen file with name, size, type icon and a remove button, checks type (wildcards included) and size in the browser before the submit and lists the required documents still missing above the submit button. Server checks are unchanged; without script the native file fields work as before. See [Registration](../security/registration.md).
 
 ## 0.0.1.90 (2026-11-15)
 
