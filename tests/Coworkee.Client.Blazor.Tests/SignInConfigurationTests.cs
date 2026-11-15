@@ -287,6 +287,8 @@ public sealed class SignInConfigurationTests : ClientTestBase
     [Fact]
     public async Task Requested_documents_read_as_rules_one_line_each_edited_in_a_dialog()
     {
+        // the app registers localization; MudEx then translates item.ToString() (the name) instead of the rule unless the list opts out
+        Services.AddLocalization();
         var page = RenderPage();
         page.WaitForAssertion(() => Tabs(page).ShouldContain("Registration"));
         Open(page, "Registration");

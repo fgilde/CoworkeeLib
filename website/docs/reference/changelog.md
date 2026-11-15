@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixed
+
+- The documents on the admin page **Sign-in** show their whole rule (*Passport · Required · PDF document · up to 10 MB*) in apps with localization; they showed only the name, because the list translated the document's name instead of its rule text.
+
 ## 0.0.1.89 (2026-11-15)
 
 ### Breaking changes

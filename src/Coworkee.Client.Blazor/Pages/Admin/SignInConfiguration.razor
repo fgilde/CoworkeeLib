@@ -260,7 +260,7 @@ else
                                         {
                                             @* the rules of what new users upload: one line each, added and edited in a dialog (SettingsItemMeta, CoworkeeEditors) *@
                                             <div class="mt-3" data-testid="sign-in-documents-list">
-                                                <MudExCollectionEditor T="RegistrationDocumentSlot" Items="options.Documents" ItemsChanged="DocumentsChanged" ItemToStringFunc="Rule"
+                                                <MudExCollectionEditor T="RegistrationDocumentSlot" Items="options.Documents" ItemsChanged="DocumentsChanged" ItemToStringFunc="Rule" LocalizerPattern=""
                                                                        ItemIcon="@Icons.Material.Outlined.Description" ReadOnly="@(!DocumentsEditable)" Virtualize="false"
                                                                        FilterMode="PropertyFilterMode.Disabled" ShowClearButton="false" Variant="Variant.Outlined"
                                                                        DialogOptions="DocumentDialog" TextAdd="@L["Request a document"]" TextEdit="@L["Edit {0}"]" />

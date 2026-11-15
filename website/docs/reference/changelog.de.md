@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Behoben
+
+- Die Dokumente auf der Admin-Seite **Anmeldung** zeigen in Apps mit Lokalisierung ihre ganze Regel (*Reisepass · Pflicht · PDF-Dokument · bis 10 MB*); sie zeigten nur den Namen, weil die Liste den Namen des Dokuments übersetzte statt des Regeltexts.
+
 ## 0.0.1.89 (2026-11-15)
 
 ### Breaking Changes
