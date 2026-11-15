@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- Der Dokumentschritt der Registrierung zeigt jedes Dokument als Ablagefläche mit seiner Regel in Worten (*Bilder, PDF · bis 10 MB*), die gewählte Datei mit Name, Größe, Typ-Symbol und einer Schaltfläche zum Entfernen, prüft Typ (auch Platzhalter) und Größe im Browser vor dem Absenden und listet über der Schaltfläche die noch fehlenden Pflichtdokumente. Die Prüfungen des Servers bleiben gleich; ohne Skript funktionieren die normalen Dateifelder wie bisher. Siehe [Registrierung](../security/registration.md).
+
 ## 0.0.1.90 (2026-11-15)
 
 ### Behoben

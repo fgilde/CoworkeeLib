@@ -101,6 +101,55 @@ public sealed partial class RegistrationTests(AuthApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Each_document_is_a_drop_zone_that_carries_its_rules_for_the_checks_in_the_browser()
+    {
+        var wizard = await new RegistrationWizard(app.Browser()).FillAsync("drop@acme.test");
+        wizard.Step.ShouldBe("documents");
+        var html = Regex.Replace(WebUtility.HtmlDecode(wizard.Html), @"\s+", " ");
+
+        // the passport: required, images or PDF up to 1000 bytes; the certificate: optional, every type, no limit
+        html.ShouldContain("data-documents data-text-remove=\"Remove\"");
+        Regex.Count(html, "<div class=\"drop\">").ShouldBe(2);
+        html.ShouldContain("data-document=\"0\" data-name=\"Passport\" data-required=\"true\" data-content-types=\"image/*,application/pdf\" data-max-size=\"1000\"");
+        html.ShouldContain("data-text-type=\"\"Passport\" has a file type that is not accepted.\"");
+        html.ShouldContain("data-text-size=\"\"Passport\" is larger than 1 KB.\"");
+        html.ShouldContain("data-document=\"1\" data-name=\"Certificate\" data-required=\"false\" data-content-types=\"\"");
+        html.ShouldNotContain("data-text-size=\"\"Certificate\"");
+        html.ShouldContain("<span class=\"required\" aria-hidden=\"true\">*</span>");
+        html.ShouldContain(">Images, PDF · up to 1 KB</small>");
+        html.ShouldContain(">Every file type</small>");
+        html.ShouldContain("Drag a file here or click to choose");
+        html.ShouldContain("<div class=\"documents-missing\" data-documents-missing role=\"status\" hidden>");
+        html.ShouldContain("These documents are still missing:");
+        // without script the native fields still do the work
+        html.ShouldContain("type=\"file\" name=\"Document0\" accept=\"image/*,application/pdf\" required=\"required\"");
+        html.ShouldContain($"/auth-assets/auth.js?v={AuthAssets.Version}");
+        wizard.Errors.ShouldBeEmpty();
+    }
+
+    [Theory]
+    [InlineData("", null, "Every file type")]
+    [InlineData("image/*,application/pdf", 10L * 1024 * 1024, "Images, PDF · up to 10 MB")]
+    [InlineData("application/vnd.openxmlformats-officedocument.*,application/vnd.oasis.opendocument.text", 1536L * 1024, "Office documents, Text documents · up to 1.5 MB")]
+    [InlineData("image/png,image/jpeg,image/svg+xml,application/json", 800L, "PNG, JPEG, SVG, JSON · up to 1 KB")]
+    [InlineData("text/csv,application/vnd.ms-excel,application/zip,video/*,audio/*", 0L, "Spreadsheets, Archives, Videos, Audio")]
+    public void The_rule_of_a_document_reads_as_words(string types, long? maxSize, string rule)
+    {
+        var (culture, uiCulture) = (System.Globalization.CultureInfo.CurrentCulture, System.Globalization.CultureInfo.CurrentUICulture);
+        System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.CurrentUICulture = System.Globalization.CultureInfo.InvariantCulture;
+        try
+        {
+            var slot = new Contracts.Configuration.RegistrationDocumentSlot { Name = "Any", ContentTypes = [.. types.Split(',', StringSplitOptions.RemoveEmptyEntries)], MaxSize = maxSize };
+
+            Registration.RegistrationDocuments.Rule(slot).ShouldBe(rule);
+        }
+        finally
+        {
+            (System.Globalization.CultureInfo.CurrentCulture, System.Globalization.CultureInfo.CurrentUICulture) = (culture, uiCulture);
+        }
+    }
+
+    [Fact]
     public async Task Without_activation_and_confirmation_the_new_account_signs_in_right_away()
     {
         await app.SetSettingAsync(AccountSettings.RegistrationRequiresActivation, "false");
@@ -141,8 +190,13 @@ public sealed partial class RegistrationTests(AuthApp app) : IAsyncLifetime
         page.ShouldContain("Persönliche Daten");
 
         var wizard = await new RegistrationWizard(browser).FillAsync("de@acme.test");
-        WebUtility.HtmlDecode(wizard.Html).ShouldContain("Reisepass *");
-        WebUtility.HtmlDecode(wizard.Html).ShouldContain("Ein Scan Ihres Reisepasses");
+        var documents = WebUtility.HtmlDecode(wizard.Html);
+        documents.ShouldContain("data-name=\"Reisepass\"");
+        documents.ShouldContain("Ein Scan Ihres Reisepasses");
+        documents.ShouldContain("Bilder, PDF · bis 1 KB");
+        documents.ShouldContain("Datei hierher ziehen oder zum Auswählen klicken");
+        documents.ShouldContain("Diese Dokumente fehlen noch:");
+        documents.ShouldContain("data-text-type=\"„Reisepass“ hat einen Dateityp, der nicht angenommen wird.\"");
         await wizard.SubmitAsync();
         wizard.Errors.ShouldBe(["Fügen Sie das Dokument „Reisepass“ hinzu."]);
     }

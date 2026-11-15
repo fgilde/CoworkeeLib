@@ -7,6 +7,8 @@ Neue Benutzer registrieren sich selbst auf dem Auth-Server mit einem Assistenten
 3. **Rolle**: nur wenn Rollen zur Registrierung angeboten werden; der Benutzer darf mehrere wählen.
 4. **Dokumente** oder **Zusammenfassung**: alle Eingaben im Überblick, dazu ein Upload je Dokument-Slot, wenn Dokumente verlangt sind. Browser behalten eine gewählte Datei nicht über mehrere Seiten, darum kommen die Dokumente mit dem letzten Absenden.
 
+Im Dokumentschritt ist jeder Slot eine Ablagefläche: sein Name (Pflichtdokumente mit * markiert), der Hinweis und seine Regel in Worten (*Bilder, PDF · bis 10 MB*). Der Benutzer zieht eine Datei darauf oder klickt, um eine zu wählen; die Fläche zeigt dann Dateiname, Größe, ein Symbol für den Typ und eine Schaltfläche zum Entfernen. Der Browser prüft die Datei sofort gegen die echten Regeln des Slots, auch Platzhalter, die das Attribut `accept` nicht ausdrücken kann (`application/vnd.openxmlformats-officedocument.*`), und die größte Datei, und sagt unter der Fläche, was nicht passt. Über der Schaltfläche zum Absenden listet ein Kasten die Pflichtdokumente, die noch fehlen; das Absenden bleibt gesperrt, bis sie da sind und jede Datei passt. Der Server prüft beim Absenden wie bisher noch einmal. Ohne Skript funktionieren die normalen Dateifelder wie gehabt.
+
 Jeder Schritt prüft seine Felder, bevor der nächste öffnet; *Zurück* behält die Eingaben. Zwischen den Schritten reisen die Eingaben verschlüsselt (ASP.NET Core Data Protection, zwei Stunden) in einem versteckten Feld, der Server hält keine Sitzung. Das letzte Absenden prüft alle Schritte noch einmal.
 
 ## Einstellungen, die Admins zur Laufzeit ändern

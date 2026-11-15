@@ -82,6 +82,40 @@ code.recovery { display: inline-block; margin: 4px 8px 4px 0; font-size: 15px; }
 .last-used::before { content: attr(data-last-used); position: absolute; top: -9px; right: 10px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 600; line-height: 18px; background: var(--signal); color: var(--on-signal); }
 button.last-used { outline: 2px solid color-mix(in srgb, var(--signal) 40%, transparent); }
 
+/* documents step of the registration: each slot a drop zone (auth.js); without script the native file field sits in it */
+.document { margin-top: 18px; }
+.document label { margin-top: 0; }
+.document .required { color: var(--signal); }
+.document .hint { margin-bottom: 2px; font-size: 13px; }
+.document .rule { margin-bottom: 8px; font-variant-numeric: tabular-nums; }
+.drop { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 16px; border: 1.5px dashed color-mix(in srgb, var(--ink-2) 40%, var(--rule)); border-radius: var(--radius);
+  background: color-mix(in srgb, var(--surface) 70%, transparent); color: var(--ink-2); transition: border-color .15s, background .15s, box-shadow .15s; }
+.drop-icon { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--radius); background: color-mix(in srgb, var(--signal) 12%, transparent); color: var(--signal); }
+.drop-icon svg { width: 22px; height: 22px; fill: currentColor; }
+.drop-text { display: flex; flex-direction: column; flex: 1; min-width: 0; font-size: 14px; }
+.drop-text strong { font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.drop-text small:empty { display: none; }
+.drop input[type=file] { flex-basis: 100%; }
+.documents.enhanced .drop { cursor: pointer; }
+.documents.enhanced .drop input[type=file] { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; opacity: 0; cursor: pointer; }
+.documents.enhanced .drop:hover, .drop.dragging { border-color: var(--signal); background: color-mix(in srgb, var(--signal) 6%, var(--surface)); }
+.drop.dragging { border-style: solid; box-shadow: 0 0 0 3px color-mix(in srgb, var(--signal) 20%, transparent); }
+.drop:has(input:focus-visible) { border-color: var(--signal); box-shadow: 0 0 0 3px color-mix(in srgb, var(--signal) 25%, transparent); }
+.document.has-file .drop { border-style: solid; border-color: color-mix(in srgb, var(--success) 60%, var(--rule)); }
+.document.has-file .drop-icon { background: color-mix(in srgb, var(--success) 14%, transparent); color: var(--success); }
+.document.invalid .drop { border-style: solid; border-color: var(--error); background: color-mix(in srgb, var(--error) 6%, var(--surface)); }
+.document.invalid .drop-icon { background: color-mix(in srgb, var(--error) 14%, transparent); color: var(--error); }
+.drop-remove { position: relative; z-index: 1; flex: none; width: 36px; height: 36px; padding: 0; display: grid; place-items: center; background: transparent; color: var(--ink-2); border-radius: 50%; }
+.drop-remove:hover { filter: none; color: var(--error); background: color-mix(in srgb, var(--error) 10%, transparent); }
+.drop-remove[hidden] { display: none; }
+.drop-remove svg { width: 20px; height: 20px; fill: currentColor; }
+.document-error { margin: 6px 0 0; font-size: 13px; color: var(--error); }
+.documents-missing { margin: 18px 0 0; padding: 10px 12px; border-left: 4px solid var(--rule); border-radius: var(--radius); background: color-mix(in srgb, var(--ink) 5%, transparent); font-size: 14px; }
+.documents-missing p { margin: 0; color: var(--ink-2); }
+.documents-missing ul { margin: 4px 0 0; padding-left: 20px; font-weight: 600; }
+.documents-missing.blocked { border-color: var(--error); background: color-mix(in srgb, var(--error) 10%, transparent); }
+.documents-missing.blocked p { color: var(--error); }
+
 /* app launcher */
 .apps { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; list-style: none; padding: 0; margin: 0; }
 .app { display: flex; gap: 14px; align-items: center; height: 100%; padding: 16px; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); color: var(--ink); text-decoration: none; transition: border-color .15s, transform .15s; }

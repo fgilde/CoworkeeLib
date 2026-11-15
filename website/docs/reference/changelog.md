@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- The documents step of the registration shows each document as a drop zone with its rule in words (*Images, PDF · up to 10 MB*), the chosen file with name, size, type icon and a remove button, checks type (wildcards included) and size in the browser before the submit and lists the required documents still missing above the submit button. Server checks are unchanged; without script the native file fields work as before. See [Registration](../security/registration.md).
+
 ## 0.0.1.90 (2026-11-15)
 
 ### Fixed
