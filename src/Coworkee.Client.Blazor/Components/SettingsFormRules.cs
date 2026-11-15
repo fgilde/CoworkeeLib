@@ -73,6 +73,12 @@ public static class SettingsFormRules
 
     private static void Describe(ObjectEditPropertyMeta property, DisplayAttribute display)
     {
+        // the label the class names (Accepted file types), not the property name (ContentTypes)
+        if (display.GetName() is { Length: > 0 } name)
+        {
+            property.WithLabel(name);
+        }
+
         if (display.GetDescription() is { Length: > 0 } description)
         {
             property.WithDescription(description);

@@ -2,6 +2,18 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Breaking Changes
+
+- Dokumente bei der Registrierung brauchen einen Store im Auth-Host. Apps mit `Coworkee.Files` nehmen `typeof(Coworkee.Files.CoworkeeFileRegistrationDocumentsModule)` in das `DependsOn` ihres Auth-Moduls auf (`coworkee update` weist darauf hin); ohne Store überspringt die Registrierung die Dokumente.
+
+### Behoben
+
+- Dokumente bei der Registrierung funktionieren in Apps, deren Auth-Host kein `Coworkee.Files` lädt: Sie im Admin einzuschalten hielt den Auth-Server dauerhaft an (eine Options-Validierung schlug bei jedem Start fehl, niemand konnte sich anmelden). Das neue `CoworkeeFileRegistrationDocumentsModule` (`Coworkee.Files`) bringt Store und Datei-Tabellen in einen Auth-Host, ohne Datei-API; der Auth-Host der Vorlage hängt davon ab. Apps nehmen `typeof(Coworkee.Files.CoworkeeFileRegistrationDocumentsModule)` in das `DependsOn` ihres Auth-Moduls auf; `coworkee update` weist darauf hin. Siehe [Registrierung](../security/registration.md#wohin-die-dokumente-gehen).
+- Angeforderte Dokumente ohne Store halten den Auth-Server nicht mehr an: Die Registrierung überspringt den Dokumentschritt und schreibt einen Fehler mit dem fehlenden Store ins Log.
+- Die Dokumente auf der Admin-Seite **Anmeldung** sind eine Liste von Regeln, eine Zeile je Dokument (*Reisepass · Pflicht · PDF-Dokument · bis 10 MB*), hinzugefügt und bearbeitet in einem Dialog. Die erlaubten Dateitypen sind ein Feld mit einer Liste von Chips, und die größte Datei steht auf einer Linie mit ihrer Einheit (KB, MB, GB), beide in der Variante des Formulars um sie herum. Listeneinträge, die im Dialog eines Einstellungsformulars bearbeitet werden, tragen ihren `[Display(Name)]` als Beschriftung (*Erlaubte Dateitypen*) statt des Property-Namens (*ContentTypes*), und die optionalen Übersetzungen stehen am Ende.
+
 ## 0.0.1.88 (2026-11-15)
 
 ### Hinzugefügt

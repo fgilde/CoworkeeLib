@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using OpenIddict.Server;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
@@ -24,11 +25,19 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         var services = context.Services;
         var options = context.Configuration.GetSection(AuthServerOptions.Section).Get<AuthServerOptions>() ?? new AuthServerOptions();
         services.Configure<AuthServerOptions>(context.Configuration.GetSection(AuthServerOptions.Section));
+        // the documents are a setting the admins change while the server runs: without a store the registration skips them and logs why,
+        // it never stops the server (an options validation would, at every start, as long as the setting stays)
         services.AddOptions<RegistrationOptions>().Bind(context.Configuration.GetSection(RegistrationOptions.Section))
-            .Validate<IServiceProviderIsService>(
-                (registration, registered) => !registration.RequireDocuments || registration.Documents.Count == 0 || registered.IsService(typeof(IRegistrationDocumentStore)),
-                $"{RegistrationOptions.Section}:Documents needs an {nameof(IRegistrationDocumentStore)}: add Coworkee.Files or register your own store.")
-            .ValidateOnStart();
+            .PostConfigure<IServiceProviderIsService, ILoggerFactory>((registration, registered, logs) =>
+            {
+                if (registration.RequireDocuments && registration.Documents.Count > 0 && !registered.IsService(typeof(IRegistrationDocumentStore)))
+                {
+                    logs.CreateLogger<CoworkeeAuthServerModule>().LogError(
+                        "{Section}:Documents asks for documents, but the auth server has no {Store}: the registration skips them. Depend on CoworkeeFileRegistrationDocumentsModule (Coworkee.Files) or register your own store.",
+                        RegistrationOptions.Section, nameof(IRegistrationDocumentStore));
+                    registration.RequireDocuments = false;
+                }
+            });
         services.Configure<IdentityOptions>(identity => identity.SignIn.RequireConfirmedEmail = true);
         // a passkey skips the second step, so the device has to verify its user (overridable, but the sign-in still refuses unverified ones)
         services.Configure<IdentityPasskeyOptions>(passkeys => passkeys.UserVerificationRequirement = "required");

@@ -1,9 +1,6 @@
-<MudStack Spacing="1" Class="my-2" data-testid="content-types">
-    @if (Label is not null)
-    {
-        <MudText Typo="Typo.caption" Class="mud-text-secondary">@Label</MudText>
-    }
-    <MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="1">
+@* one field like its neighbours (label, variant, helper text): the chips inside are the list, the search below adds to it *@
+<MudField Label="@Label" Variant="Variant" HelperText="@HelperText" Margin="Density.Margin" Class="cw-content-types" data-testid="content-types">
+    <MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="1" Class="pt-1">
         @foreach (var type in Selected.Select(ContentTypeCatalog.Describe))
         {
             <MudTooltip Text="@type.Value">
@@ -26,8 +23,8 @@
     {
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
             <MudAutocomplete T="string" Value="@null" ValueChanged="PickAsync" SearchFunc="SearchAsync" MaxItems="MaxResults" ToStringFunc="Name"
-                             ResetValueOnEmptyText="true" CoerceText="false" Clearable="true" Placeholder="@L["Search by name, extension or MIME type"]"
-                             AdornmentIcon="@Icons.Material.Outlined.Search" Margin="Density.Margin" Dense="Density.Dense" Variant="Variant.Outlined"
+                             ResetValueOnEmptyText="true" CoerceText="false" Clearable="true" Placeholder="@L["Add a file type: name, extension or MIME type"]"
+                             AdornmentIcon="@Icons.Material.Outlined.Add" Adornment="Adornment.Start" Margin="Density.Margin" Dense="Density.Dense" Underline="false"
                              Style="max-width:420px" data-testid="content-type-search">
                 <ItemTemplate>
                     @{ var type = ContentTypeCatalog.Describe(context); }
@@ -46,8 +43,4 @@
             </MudMenu>
         </MudStack>
     }
-    @if (HelperText is not null)
-    {
-        <MudText Typo="Typo.caption" Class="mud-text-secondary">@HelperText</MudText>
-    }
-</MudStack>
+</MudField>

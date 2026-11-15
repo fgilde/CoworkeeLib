@@ -1,5 +1,6 @@
 using Coworkee.Client.Blazor.Localization;
 using Microsoft.AspNetCore.Components;
+using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Components.Editors;
 
@@ -23,6 +24,16 @@ public partial class FileSizeEditor
     [Parameter] public string? HelperText { get; set; }
 
     [Parameter] public bool ReadOnly { get; set; }
+
+    /// <summary>The variant of both fields, the one the surrounding form uses (MudBlazor's default, like MudEx's fields).</summary>
+    [Parameter] public Variant Variant { get; set; } = Variant.Text;
+
+    /// <summary>A size in the largest unit that still shows at least 1, e.g. 10 MB, 512 KB.</summary>
+    public static string Format(long bytes)
+    {
+        var (name, factor) = Units.LastOrDefault(u => bytes >= u.Factor, Units[0]);
+        return $"{Math.Round((decimal)bytes / factor, 2).ToString("0.##", System.Globalization.CultureInfo.CurrentCulture)} {name}";
+    }
 
     protected override void OnParametersSet()
     {

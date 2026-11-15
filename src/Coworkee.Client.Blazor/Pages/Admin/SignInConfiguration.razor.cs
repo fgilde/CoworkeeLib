@@ -260,17 +260,22 @@ public partial class SignInConfiguration
 
     private void SetAllowedEmails(List<string>? emails) => _registration!.AllowedEmails = [.. emails ?? []];
 
-    private void AddSlot() => _registration!.Documents.Add(new RegistrationDocumentSlot());
+    private static readonly MudBlazor.Extensions.Options.DialogOptionsEx DocumentDialog = Coworkee.Client.Blazor.Dialogs.CoworkeeDialogOptions.For(Coworkee.Client.Blazor.Dialogs.DialogPart.ListItem);
 
-    private void RemoveSlot(RegistrationDocumentSlot slot) => _registration!.Documents.Remove(slot);
+    private void DocumentsChanged(ICollection<RegistrationDocumentSlot> documents)
+    {
+        _registration!.Documents = [.. documents];
+        Changed();
+    }
 
-    private static void SetTypes(RegistrationDocumentSlot slot, IReadOnlyList<string> types) => slot.ContentTypes = [.. types];
-
-    private static void SetSize(RegistrationDocumentSlot slot, long? size) => slot.MaxSize = size;
-
-    private static void SetNames(RegistrationDocumentSlot slot, IReadOnlyDictionary<string, string> names) => slot.Names = new(names, StringComparer.OrdinalIgnoreCase);
-
-    private static void SetHints(RegistrationDocumentSlot slot, IReadOnlyDictionary<string, string> hints) => slot.Descriptions = new(hints, StringComparer.OrdinalIgnoreCase);
+    // one line per document, read as the rule it is: Passport · Required · Image, PDF · up to 10 MB
+    private string Rule(RegistrationDocumentSlot slot) => string.Join(" · ", new[]
+    {
+        string.IsNullOrWhiteSpace(slot.Name) ? L["New document"] : slot.Name,
+        slot.Required ? L["Required"] : L["Optional"],
+        slot.ContentTypes.Count == 0 ? L["Every file type"] : string.Join(", ", slot.ContentTypes.Select(t => L[Components.Editors.ContentTypeCatalog.Describe(t).Name]).Distinct()),
+        slot.MaxSize is > 0 ? L["up to {0}", Components.Editors.FileSizeEditor.Format(slot.MaxSize.Value)] : null,
+    }.Where(part => part is not null));
 
     private void SelectLanguage(string? culture) => _language = culture ?? string.Empty;
 

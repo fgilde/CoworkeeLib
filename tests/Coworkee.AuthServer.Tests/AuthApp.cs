@@ -24,7 +24,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Coworkee.AuthServer.Tests;
 
-public sealed class AuthApp : DatabaseFixture
+public class AuthApp : DatabaseFixture
 {
     public const string ClientId = "test-web";
     public const string RedirectUri = "https://client.test/signin-oidc";
@@ -43,6 +43,12 @@ public sealed class AuthApp : DatabaseFixture
     public ShiftedClock Clock { get; } = new();
 
     protected override string[] SchemasToExclude => ["hangfire"];
+
+    /// <summary>The documents of the registration go to the real files store (CoworkeeFileRegistrationDocumentsModule) instead of <see cref="Documents"/>.</summary>
+    protected virtual bool FileStore => false;
+
+    /// <summary>The blob storage of <see cref="FileStore"/>.</summary>
+    public string BlobRoot { get; } = Path.Combine(Path.GetTempPath(), $"coworkee-auth-blobs-{Guid.NewGuid():N}");
 
     public override async ValueTask InitializeAsync()
     {
@@ -114,7 +120,14 @@ public sealed class AuthApp : DatabaseFixture
         // changes made in the app (the sign-in design) reach the options like in a real deployment
         builder.Configuration.AddCoworkeeDatabaseConfiguration("test", TimeSpan.FromHours(1));
         builder.Services.AddSingleton<TimeProvider>(Clock);
-        builder.AddCoworkee<TestAuthModule>();
+        if (FileStore)
+        {
+            builder.AddCoworkee<TestAuthWithFilesModule>();
+        }
+        else
+        {
+            builder.AddCoworkee<TestAuthModule>();
+        }
 
         // an API next to the auth server, validating its access tokens like the real API does
         builder.Services.AddAuthentication().AddJwtBearer(jwt =>
@@ -127,7 +140,10 @@ public sealed class AuthApp : DatabaseFixture
         });
         builder.Services.RemoveAll<Coworkee.Mailing.IMailSender>();
         builder.Services.AddSingleton<Coworkee.Mailing.IMailSender>(Mails);
-        builder.Services.AddSingleton<Coworkee.Application.Registration.IRegistrationDocumentStore>(Documents);
+        if (!FileStore)
+        {
+            builder.Services.AddSingleton<Coworkee.Application.Registration.IRegistrationDocumentStore>(Documents);
+        }
         App = builder.Build();
         await using (var scope = App.Services.CreateAsyncScope())
         {
@@ -230,6 +246,15 @@ public sealed class AuthApp : DatabaseFixture
 
 public sealed class AuthTestDbContext(DbContextOptions<AuthTestDbContext> options, ICurrentUser currentUser, IEnumerable<IModelContributor> contributors)
     : CoworkeeDbContext(options, currentUser, contributors);
+
+/// <summary>An auth server like the template's: the registration documents land in the files, without the files api.</summary>
+public sealed class AuthAppWithFiles : AuthApp
+{
+    protected override bool FileStore => true;
+}
+
+[DependsOn(typeof(TestAuthModule), typeof(Coworkee.Files.CoworkeeFileRegistrationDocumentsModule))]
+public sealed class TestAuthWithFilesModule : CoworkeeModule;
 
 [DependsOn(typeof(CoworkeeAuthServerModule), typeof(Coworkee.Notifications.CoworkeeNotificationsModule))]
 public sealed class TestAuthModule : CoworkeeModule

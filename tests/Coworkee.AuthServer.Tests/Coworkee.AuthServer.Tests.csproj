@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="..\..\src\Coworkee.AuthServer\Coworkee.AuthServer.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.Files\Coworkee.Files.csproj" />
     <ProjectReference Include="..\..\src\Coworkee.Testing\Coworkee.Testing.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
