@@ -295,6 +295,47 @@ public sealed class CoworkeeAppTests : IDisposable
     }
 
     [Fact]
+    public async Task The_layout_options_and_fills_of_the_sign_in_design_reach_the_auth_server()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo", o =>
+        {
+            o.SignIn.Layout = "Stack";
+            o.SignIn.Surface = Coworkee.Contracts.Theming.SignInSurface.Glass;
+            o.SignIn.Animation = Coworkee.Contracts.Theming.SignInAnimation.Aurora;
+            o.SignIn.Tilt = 9;
+            o.SignIn.LogoSize = Coworkee.Contracts.Theming.SignInLogoSize.Large;
+            o.SignIn.PageFill = new Coworkee.Contracts.Theming.SignInFill { Color = "#101820" };
+            o.SignIn.PanelFill = new Coworkee.Contracts.Theming.SignInFill
+            {
+                Gradient = new Coworkee.Contracts.Theming.SignInGradient
+                {
+                    Kind = Coworkee.Contracts.Theming.SignInGradientKind.Conic, Angle = 30, Animated = true,
+                    Stops = [new() { Color = "primary", Position = 0 }, new() { Color = "#ffc371", Position = 100 }],
+                },
+            };
+        });
+
+        app.AddMigrations<FakeProjects.Migrations>();
+        var auth = app.AddAuthServer<FakeProjects.Auth>();
+        app.AddApi<FakeProjects.Api>();
+        app.AddWeb<FakeProjects.Web>();
+
+        var settings = await Environment(auth.Resource);
+        settings["Coworkee__Auth__Design__Surface"].ShouldBe("Glass");
+        settings["Coworkee__Auth__Design__Animation"].ShouldBe("Aurora");
+        settings["Coworkee__Auth__Design__Tilt"].ShouldBe("9");
+        settings["Coworkee__Auth__Design__LogoSize"].ShouldBe("Large");
+        settings["Coworkee__Auth__Design__PageFill__Color"].ShouldBe("#101820");
+        settings["Coworkee__Auth__Design__PanelFill__Gradient__Kind"].ShouldBe("Conic");
+        settings["Coworkee__Auth__Design__PanelFill__Gradient__Angle"].ShouldBe("30");
+        settings["Coworkee__Auth__Design__PanelFill__Gradient__Animated"].ShouldBe("true");
+        settings["Coworkee__Auth__Design__PanelFill__Gradient__Stops__0__Color"].ShouldBe("primary");
+        settings["Coworkee__Auth__Design__PanelFill__Gradient__Stops__1__Position"].ShouldBe("100");
+        settings.Keys.ShouldNotContain("Coworkee__Auth__Design__PageFill__Gradient__Kind");
+    }
+
+    [Fact]
     public async Task Keycloak_gets_a_realm_for_the_app_offered_at_the_auth_server_and_room_for_large_cookies()
     {
         var builder = DistributedApplication.CreateBuilder();

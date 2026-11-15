@@ -2,6 +2,21 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- Sign-in styles **Spotlight** (the background fills the screen, the form floats in a full-height panel at one edge, a bottom sheet on phones), **Poster** (two columns without a card: the app name in huge letters with the sign-in title as claim, a calm form side with line inputs), **Stack** (the form card in front of two tilted cards that flip between sign-in and registration, option `Tilt`) and **Minimal** (no card, a large logo with `LogoSize`, the form right on the background). All work in light and dark mode, on phones and without motion for those who ask. See [Sign-in pages](../security/sign-in-pages.md#layouts).
+- Both backgrounds of a sign-in design can be a color or a gradient besides an image or video: `PageFill` and `PanelFill` (`SignInFill` with `Color` or `Gradient`: linear, radial or conic, angle, up to 8 stops, optionally animated; colors as hex, `rgb()`/`hsl()` or a theme color like `primary`). The auth server, the preview and the Keycloak theme rebuild them from checked parts only, and text on a fill turns light or dark with its brightness. See [Backgrounds](../security/sign-in-pages.md#backgrounds-files-colors-and-gradients).
+- `SignInLayoutOptions.For(layout)` says which options a layout shows (labels of its two backgrounds and of its side, surface, animation, darken, tilt, logo size); the admin card, the docs and the Studio use it.
+- The admin card of a sign-in design shows only the options of the chosen layout, with a fill editor per background (*Theme default*, *Image or video*, *Color*, *Gradient*) and a multi-stop gradient control: live preview, click on the track to add a stop with the color at that point, drag or arrow keys to move it, per stop color, theme color and position, kind, angle, animation and presets. Both are library components (`FillEditor`, `GradientEditor` in `Coworkee.Client.Blazor.Components.Editors`). The layout thumbnails show the design's fills.
+- The Aspire app host passes `options.SignIn` `Surface`, `Animation`, `Tilt`, `LogoSize`, `PageFill` and `PanelFill` to the auth server and the API.
+
+### Changed
+
+- **Glass** and **Aurora** are no longer layouts but options of **Card**: `Surface = Glass` and `Animation = Aurora` (Spotlight and the other layouts offer them where they fit). Stored designs keep working: `Layout` `Glass` reads as Card with the glass surface (its media becomes the page background when it has none), `Aurora` as Card with the aurora; the next save on the page **Sign-in** stores the new form. `SignInLayouts.Glass` and `SignInLayouts.Aurora` remain but are obsolete, `SignInLayouts.All` lists the seven layouts. An auth host's own `Pages/_DesignGlass.cshtml` or `_DesignAurora.cshtml` still wins. Own CSS for `body.layout-glass` or `body.layout-aurora` targets `body.layout-card.surface-glass` and `body.layout-card.with-aurora` now; the frosted panel is `.panel.glass`.
+- The aurora drifts in the colors of the page fill when there is one, above the page background.
+
 ## 0.0.1.90 (2026-11-15)
 
 ### Fixed

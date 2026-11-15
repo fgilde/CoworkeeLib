@@ -2,6 +2,21 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- Anmeldestile **Spotlight** (der Hintergrund füllt den Bildschirm, das Formular schwebt in einem Panel voller Höhe an einem Rand, auf Telefonen ein Bottom Sheet), **Poster** (zwei Spalten ohne Karte: der App-Name in riesigen Buchstaben mit dem Anmeldetitel als Claim, eine ruhige Formularseite mit Linien-Eingabefeldern), **Stack** (die Formularkarte vor zwei geneigten Karten, die sich zwischen Anmeldung und Registrierung drehen, Option `Tilt`) und **Minimal** (keine Karte, ein großes Logo mit `LogoSize`, das Formular direkt auf dem Hintergrund). Alle funktionieren hell und dunkel, auf Telefonen und ohne Bewegung für alle, die das wünschen. Siehe [Anmeldeseiten](../security/sign-in-pages.de.md#layouts).
+- Beide Hintergründe eines Anmeldedesigns können neben Bild oder Video eine Farbe oder ein Verlauf sein: `PageFill` und `PanelFill` (`SignInFill` mit `Color` oder `Gradient`: linear, radial oder konisch, Winkel, bis zu 8 Farbpunkte, auf Wunsch animiert; Farben als Hex, `rgb()`/`hsl()` oder eine Theme-Farbe wie `primary`). Auth-Server, Vorschau und Keycloak-Theme bauen sie nur aus geprüften Teilen neu zusammen, und Text auf einer Füllung wird je nach ihrer Helligkeit hell oder dunkel. Siehe [Hintergründe](../security/sign-in-pages.de.md#hintergrunde-dateien-farben-und-verlaufe).
+- `SignInLayoutOptions.For(layout)` sagt, welche Optionen ein Layout zeigt (Beschriftungen seiner zwei Hintergründe und seiner Seite, Oberfläche, Animation, Abdunkeln, Neigung, Logogröße); Admin-Karte, Doku und Studio nutzen es.
+- Die Admin-Karte eines Anmeldedesigns zeigt nur die Optionen des gewählten Layouts, mit einem Füllungseditor je Hintergrund (*Vom Theme*, *Bild oder Video*, *Farbe*, *Verlauf*) und einer Verlaufssteuerung mit mehreren Farbpunkten: Live-Vorschau, Klick auf die Leiste fügt einen Punkt mit der Farbe an dieser Stelle hinzu, Ziehen oder Pfeiltasten verschieben ihn, je Punkt Farbe, Theme-Farbe und Position, dazu Art, Winkel, Animation und Vorlagen. Beides sind Komponenten der Bibliothek (`FillEditor`, `GradientEditor` in `Coworkee.Client.Blazor.Components.Editors`). Die Vorschaubilder der Layouts zeigen die Füllungen des Designs.
+- Der Aspire-App-Host reicht `Surface`, `Animation`, `Tilt`, `LogoSize`, `PageFill` und `PanelFill` aus `options.SignIn` an Auth-Server und API weiter.
+
+### Geändert
+
+- **Glass** und **Aurora** sind keine Layouts mehr, sondern Optionen von **Card**: `Surface = Glass` und `Animation = Aurora` (Spotlight und die anderen Layouts bieten sie an, wo sie passen). Gespeicherte Designs funktionieren weiter: `Layout` `Glass` gilt als Card mit Glasoberfläche (sein Medium wird zum Seitenhintergrund, wenn es keinen hat), `Aurora` als Card mit Aurora; das nächste Speichern auf der Seite **Anmeldung** legt die neue Form ab. `SignInLayouts.Glass` und `SignInLayouts.Aurora` bleiben, sind aber veraltet, `SignInLayouts.All` nennt die sieben Layouts. Eine eigene `Pages/_DesignGlass.cshtml` oder `_DesignAurora.cshtml` des Auth-Hosts gewinnt weiterhin. Eigenes CSS für `body.layout-glass` oder `body.layout-aurora` zielt jetzt auf `body.layout-card.surface-glass` und `body.layout-card.with-aurora`; das Milchglas-Panel ist `.panel.glass`.
+- Die Aurora wandert in den Farben der Seitenfüllung, wenn es eine gibt, und liegt über dem Seitenhintergrund.
+
 ## 0.0.1.90 (2026-11-15)
 
 ### Behoben
