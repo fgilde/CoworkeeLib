@@ -17,22 +17,31 @@
   <script src="@Coworkee.AuthServer.AuthAssets.Url("auth.js")" defer></script>
   <script src="@Coworkee.AuthServer.AuthAssets.Url("passkey.js")" defer></script>
 </head>
-<body class="layout-@(((string?)ViewData["Design"] ?? brand.Layout).ToLowerInvariant())@(brand.Design.BackgroundUrl is null ? null : " has-background")" data-text-show="@T("Show password")" data-text-hide="@T("Hide password")"
+<body class="layout-@(((string?)ViewData["Design"] ?? brand.Layout).ToLowerInvariant())@(brand.Classes is { Length: > 0 } classes ? " " + classes : null)" style="@brand.Style"
+      data-text-show="@T("Show password")" data-text-hide="@T("Hide password")"
       data-text-caps="@T("Caps Lock is on")" data-text-last="@T("Last used")"
       data-text-passkey-failed="@T("The passkey did not work. Try again or use another way to sign in.")">
-  @if (brand.Design.BackgroundUrl is { } background)
+  @if (brand.HasBackground)
   {
-    @* behind every layout, fixed while the page scrolls; --dim darkens it *@
-    <div class="page-background" aria-hidden="true" style="--dim:@(brand.Design.BackgroundDim ?? 0)%" data-testid="design-background">
-      @if (brand.BackgroundIsVideo)
+    @* background 1 behind every layout, fixed while the page scrolls: a file or a fill (--page-fill); --dim darkens it *@
+    <div class="page-background" aria-hidden="true" style="--dim:@(brand.Dim)%" data-testid="design-background">
+      @if (brand.Design.BackgroundUrl is { } background)
       {
-        <video src="@background" autoplay muted loop playsinline></video>
-      }
-      else
-      {
-        <img src="@background" alt="" />
+        if (brand.BackgroundIsVideo)
+        {
+          <video src="@background" autoplay muted loop playsinline></video>
+        }
+        else
+        {
+          <img src="@background" alt="" />
+        }
       }
     </div>
+  }
+  @if (brand.Aurora)
+  {
+    @* blurred fields of the fill's or the theme's colors that drift above background 1 *@
+    <div class="aurora" aria-hidden="true" data-testid="design-aurora"><span></span><span></span><span></span></div>
   }
   @RenderBody()
 </body>

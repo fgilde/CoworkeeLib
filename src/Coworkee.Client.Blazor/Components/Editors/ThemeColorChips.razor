@@ -1,0 +1,21 @@
+@* the theme colors a fill may name: they follow the theme (light, dark, another theme) instead of a fixed value *@
+<div class="cw-theme-colors" role="radiogroup" aria-label="@L["Theme colors"]">
+    @foreach (var color in SignInFills.ThemeColors)
+    {
+        var name = L[char.ToUpperInvariant(color[0]) + color[1..]];
+        <MudTooltip Text="@name">
+            <button type="button" role="radio" class="cw-theme-color" style="--stop:@ThemeColor(color)" aria-label="@name" aria-checked="@(Value == color ? "true" : "false")"
+                    aria-pressed="@(Value == color ? "true" : "false")" @onclick="() => ValueChanged.InvokeAsync(color)" data-testid="theme-color" data-color="@color"></button>
+        </MudTooltip>
+    }
+</div>
+
+@code {
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
+    [Parameter] public string? Value { get; set; }
+
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+
+    [Parameter] public Func<string, string> ThemeColor { get; set; } = GradientEditor.MudThemeColor;
+}

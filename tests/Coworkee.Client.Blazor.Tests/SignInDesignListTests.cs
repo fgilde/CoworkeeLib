@@ -31,7 +31,7 @@ public sealed class SignInDesignListTests : ClientTestBase
     {
         Layout = SignInLayouts.Card,
         Texts = new SignInTexts { Title = "Hi" },
-        Designs = [new NamedSignInDesign { Key = "night", Name = "Night", Layout = SignInLayouts.Aurora }],
+        Designs = [new NamedSignInDesign { Key = "night", Name = "Night", Layout = SignInLayouts.Stack }],
     };
 
     private static ThemeDto Theme(string name, string? design) => new(Guid.NewGuid(), name, true, false, Empty, Empty, null, null, null, null, 1,
@@ -48,7 +48,7 @@ public sealed class SignInDesignListTests : ClientTestBase
         Tiles(list)[0].TextContent.ShouldContain("Card");
         Tiles(list)[0].GetAttribute("aria-selected").ShouldBe("true");
         Tiles(list)[1].TextContent.ShouldContain("Night");
-        Tiles(list)[1].TextContent.ShouldContain("Aurora");
+        Tiles(list)[1].TextContent.ShouldContain("Stack");
         Tiles(list)[1].TextContent.ShouldContain("Used by Night");
         list.Find("[data-testid='sign-in-design'] h6").TextContent.ShouldBe("Default design");
         list.FindAll("[data-testid='sign-in-design-delete']").ShouldBeEmpty();
@@ -92,7 +92,7 @@ public sealed class SignInDesignListTests : ClientTestBase
         await list.InvokeAsync(() => list.Find("[data-testid='sign-in-design-duplicate']").ClickAsync(new()));
 
         design.Designs.Select(d => (d.Name, d.Layout, d.BackgroundUrl)).ShouldBe(
-            [("Night", SignInLayouts.Aurora, "/media/sky.jpg"), ("Night (copy)", SignInLayouts.Aurora, "/media/sky.jpg"), ("Default design (copy)", SignInLayouts.Card, null)]);
+            [("Night", SignInLayouts.Stack, "/media/sky.jpg"), ("Night (copy)", SignInLayouts.Stack, "/media/sky.jpg"), ("Default design (copy)", SignInLayouts.Card, null)]);
         design.Designs.Select(d => d.Key).Distinct().Count().ShouldBe(3);
     }
 
@@ -139,19 +139,42 @@ public sealed class SignInDesignListTests : ClientTestBase
 
         var src = dialogs.WaitForElement("[data-testid='sign-in-preview-frame']").GetAttribute("src")!;
         var shown = JsonSerializer.Deserialize<SignInDesign>(Uri.UnescapeDataString(src[(src.IndexOf('=') + 1)..]), JsonSerializerOptions.Web)!;
-        shown.Layout.ShouldBe(SignInLayouts.Aurora);
+        shown.Layout.ShouldBe(SignInLayouts.Stack);
         shown.Texts.Title.ShouldBe("Hi");
         shown.Designs.ShouldBeEmpty();
     }
 
     [Fact]
-    public void The_card_offers_the_glass_and_aurora_layouts_with_their_own_thumbnails()
+    public void The_card_offers_the_seven_layouts_with_their_own_thumbnails()
     {
         var list = RenderList(Design());
 
         list.FindAll("[data-testid='sign-in-design'] [data-testid='sign-in-layout']").Select(t => t.GetAttribute("data-layout")).ShouldBe(SignInLayouts.All);
-        list.Find("[data-testid='sign-in-design'] [data-thumb='Glass']").InnerHtml.ShouldContain("backdrop-filter");
-        list.Find("[data-testid='sign-in-design'] [data-thumb='Aurora']").GetAttribute("style")!.ShouldContain("--mud-palette-tertiary");
+        var thumbs = SignInLayouts.All.Select(l => list.Find($"[data-testid='sign-in-design'] [data-thumb='{l}']").InnerHtml).ToList();
+        thumbs.Distinct().Count().ShouldBe(SignInLayouts.All.Count);
+        list.Find("[data-testid='sign-in-design'] [data-thumb='Stack']").InnerHtml.ShouldContain("rotate(");
+    }
+
+    [Fact]
+    public async Task A_new_design_starts_as_a_glass_card()
+    {
+        var design = Design();
+        var list = RenderList(design);
+
+        await list.InvokeAsync(() => list.Find("[data-testid='sign-in-design-add']").ClickAsync(new()));
+
+        design.Designs[^1].ShouldSatisfyAllConditions(d => d.Layout.ShouldBe(SignInLayouts.Card), d => d.Surface.ShouldBe(SignInSurface.Glass));
+    }
+
+    [Fact]
+    public void The_tiles_show_the_fills_of_each_design()
+    {
+        var design = Design();
+        design.Designs[0].PanelFill = new SignInFill { Color = "#ff5f6d" };
+
+        var list = RenderList(design);
+
+        Tiles(list)[1].InnerHtml.ShouldContain("#ff5f6d");
     }
 
     [Fact]

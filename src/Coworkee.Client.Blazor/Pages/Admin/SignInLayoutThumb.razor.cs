@@ -1,9 +1,11 @@
+using System.Globalization;
+using Coworkee.Client.Blazor.Components.Editors;
 using Coworkee.Contracts.Theming;
 using Microsoft.AspNetCore.Components;
 
 namespace Coworkee.Client.Blazor.Pages.Admin;
 
-/// <summary>Thumbnail of a sign-in layout: media panel and form as the auth server places them, glass and aurora with their backgrounds.</summary>
+/// <summary>Thumbnail of a sign-in layout: panels, form and background as the auth server places them, in the design's fills where it has them.</summary>
 public partial class SignInLayoutThumb
 {
     [Parameter, EditorRequired] public string Layout { get; set; } = SignInLayouts.Default;
@@ -11,27 +13,41 @@ public partial class SignInLayoutThumb
     /// <summary>The media side the design chose, null for the layout's own.</summary>
     [Parameter] public SignInMediaSide? MediaSide { get; set; }
 
-    private bool Is(string layout) => string.Equals(Layout, layout, StringComparison.OrdinalIgnoreCase);
+    /// <summary>Background 1 as fill; the theme's background without one.</summary>
+    [Parameter] public SignInFill? PageFill { get; set; }
 
-    // like the auth server: the split shows its media left, the slide its panel right unless set otherwise
-    private bool MediaRight => Is(SignInLayouts.Slide) ? MediaSide != SignInMediaSide.Left : MediaSide == SignInMediaSide.Right;
+    /// <summary>Background 2 as fill; the theme's colors without one.</summary>
+    [Parameter] public SignInFill? PanelFill { get; set; }
 
-    private string Background =>
-        Is(SignInLayouts.Glass) ? "radial-gradient(circle at 15% 20%,var(--mud-palette-primary),transparent 65%),radial-gradient(circle at 85% 85%,var(--mud-palette-tertiary),transparent 60%),var(--mud-palette-background)"
-        : Is(SignInLayouts.Aurora) ? "radial-gradient(circle at 20% 15%,color-mix(in srgb,var(--mud-palette-primary) 60%,transparent),transparent 55%),radial-gradient(circle at 80% 90%,color-mix(in srgb,var(--mud-palette-secondary) 45%,transparent),transparent 55%),radial-gradient(circle at 60% 50%,color-mix(in srgb,var(--mud-palette-tertiary) 45%,transparent),transparent 50%),var(--mud-palette-background)"
-        : "var(--mud-palette-background)";
+    [Parameter] public int? Tilt { get; set; }
 
-    private string ThumbStyle =>
-        $"display:flex;flex-direction:{(MediaRight ? "row-reverse" : "row")};align-items:center;justify-content:center;width:128px;height:80px;overflow:hidden;"
-        + $"border-radius:4px;background:{Background};border:1px solid var(--mud-palette-lines-default)";
+    // the built-in layout to draw, the card for an app's own
+    private string Kind => SignInLayouts.All.FirstOrDefault(l => string.Equals(l, Layout, StringComparison.OrdinalIgnoreCase)) ?? SignInLayouts.Card;
 
-    private string MediaStyle => Is(SignInLayouts.Slide)
-        ? "width:40%;align-self:stretch;background:var(--mud-palette-primary)"
-        : "flex:1;align-self:stretch;background:linear-gradient(135deg,var(--mud-palette-primary),var(--mud-palette-secondary))";
+    // like the auth server: split and poster show their media left, slide and spotlight their panel right unless set otherwise
+    private bool MediaRight => Kind is SignInLayouts.Slide or SignInLayouts.Spotlight ? MediaSide != SignInMediaSide.Left : MediaSide == SignInMediaSide.Right;
 
-    private string FormStyle =>
-        (SignInLayouts.HasPanel(Layout) ? "flex:1;margin:0 8px;height:60%;" : "width:46%;height:70%;")
-        + (Is(SignInLayouts.Glass)
-            ? "background:color-mix(in srgb,var(--mud-palette-surface) 55%,transparent);backdrop-filter:blur(4px);border:1px solid color-mix(in srgb,var(--mud-palette-surface) 80%,transparent);border-radius:5px"
-            : "background:var(--mud-palette-surface);border:1px solid var(--mud-palette-lines-default);border-radius:3px");
+    private string Side => MediaRight ? "right" : "left";
+
+    private string Other => MediaRight ? "left" : "right";
+
+    private string? PageFillCss => SignInFills.Css(PageFill, GradientEditor.MudThemeColor);
+
+    private string Panel => SignInFills.Css(PanelFill, GradientEditor.MudThemeColor) ?? "linear-gradient(135deg,var(--mud-palette-primary),var(--mud-palette-secondary))";
+
+    private string Background => PageFillCss ?? Kind switch
+    {
+        SignInLayouts.Spotlight => "radial-gradient(circle at 0% 100%,var(--mud-palette-primary),transparent 70%),linear-gradient(150deg,color-mix(in srgb,var(--mud-palette-primary) 45%,var(--mud-palette-background)),var(--mud-palette-background))",
+        _ => "var(--mud-palette-background)",
+    };
+
+    private string Frame =>
+        $"position:relative;display:block;width:128px;height:80px;overflow:hidden;border-radius:4px;background:{Background};border:1px solid var(--mud-palette-lines-default)";
+
+    private string Degrees(double factor) => ((Tilt ?? SignInLayoutOptions.DefaultTilt) * factor).ToString(CultureInfo.InvariantCulture);
+
+    // three lines of a form: two inputs and a button
+    private static string FormBlock(int width, int height) =>
+        $"width:{width}px;height:{height}px;background:linear-gradient(var(--mud-palette-lines-default) 0 0) 0 20%/100% 3px no-repeat,"
+        + "linear-gradient(var(--mud-palette-lines-default) 0 0) 0 50%/100% 3px no-repeat,linear-gradient(var(--mud-palette-primary) 0 0) 0 85%/100% 5px no-repeat";
 }

@@ -214,6 +214,8 @@ public partial class SignInConfiguration
     private void ApplyDesign(AppConfigurationValuesDto section)
     {
         _design = section.Values.Deserialize<SignInDesign>(JsonSerializerOptions.Web) ?? new SignInDesign();
+        // the former layouts Glass and Aurora as the card they became, not a change of its own
+        _design.Normalize();
         _designSaved = Json(_design);
     }
 

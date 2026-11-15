@@ -81,18 +81,32 @@ public sealed partial class AuthBrandingProvider(
             + $"@media (prefers-color-scheme: dark){{:root:not([data-mode=light]){{{dark}}}}}";
     }
 
-    // the layout name becomes a view path, the media address part of the page and of the content security policy
-    internal static SignInDesign Checked(SignInDesign design) => new()
+    // the layout name becomes a view path, the media address part of the page and of the content security policy, the fills part of its styles;
+    // the former layouts Glass and Aurora keep their name (an app's own view of that name wins) and bring the surface and animation they became
+    internal static SignInDesign Checked(SignInDesign design)
     {
-        Layout = design.Layout is { } layout && Name().IsMatch(layout) ? layout : null,
-        MediaUrl = SafeUrl(design.MediaUrl),
-        MediaSide = design.MediaSide,
-        BackgroundUrl = SafeUrl(design.BackgroundUrl),
-        BackgroundDim = design.BackgroundDim is { } dim ? Math.Clamp(dim, 0, 90) : null,
-        // plain text, encoded where the pages show it
-        ShowAppName = design.ShowAppName,
-        Texts = design.Texts ?? new SignInTexts(),
-    };
+        var look = new SignInDesign
+        {
+            Layout = design.Layout is { } layout && Name().IsMatch(layout) ? layout : null,
+            MediaUrl = SafeUrl(design.MediaUrl),
+            MediaSide = Defined(design.MediaSide),
+            BackgroundUrl = SafeUrl(design.BackgroundUrl),
+            BackgroundDim = design.BackgroundDim is { } dim ? Math.Clamp(dim, 0, 90) : null,
+            PageFill = SignInFills.Checked(design.PageFill),
+            PanelFill = SignInFills.Checked(design.PanelFill),
+            Surface = Defined(design.Surface),
+            Animation = Defined(design.Animation),
+            Tilt = design.Tilt is { } tilt ? Math.Clamp(tilt, 0, SignInLayoutOptions.MaxTilt) : null,
+            LogoSize = Defined(design.LogoSize),
+            // plain text, encoded where the pages show it
+            ShowAppName = design.ShowAppName,
+            Texts = design.Texts ?? new SignInTexts(),
+        };
+        look.Normalize(keepLayout: true);
+        return look;
+    }
+
+    private static T? Defined<T>(T? value) where T : struct, Enum => value is { } v && Enum.IsDefined(v) ? v : null;
 
     // a path on the auth server or an http(s) address: nothing that runs script or leaves for another host without saying so
     private static string? SafeUrl(string? url) =>

@@ -47,6 +47,16 @@ public sealed class SignInDesign : SignInLook
         return design;
     }
 
+    /// <inheritdoc />
+    public override void Normalize(bool keepLayout = false)
+    {
+        base.Normalize(keepLayout);
+        foreach (var design in Designs)
+        {
+            design.Normalize(keepLayout);
+        }
+    }
+
     /// <summary>The key of the design a theme names in its options (<see cref="ThemeOption"/>); null for the default design.</summary>
     public static string? KeyOf(JsonElement? themeOptions) =>
         themeOptions is { ValueKind: JsonValueKind.Object } options && options.TryGetProperty(ThemeOption, out var key) && key.ValueKind == JsonValueKind.String

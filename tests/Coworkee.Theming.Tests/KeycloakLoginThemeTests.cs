@@ -73,7 +73,7 @@ public sealed class KeycloakLoginThemeTests : IDisposable
     {
         Write(Content() with { LogoUrl = "javascript:alert(1)" });
 
-        Read("resources/css/coworkee.css").ShouldNotContain("kc-header-wrapper::before");
+        Read("resources/css/coworkee.css").ShouldNotContain("#kc-header-wrapper::before{content:");
     }
 
     [Theory]
@@ -113,41 +113,124 @@ public sealed class KeycloakLoginThemeTests : IDisposable
     }
 
     [Theory]
-    [InlineData("Glass", "glass")]
-    [InlineData("aurora", "aurora")]
-    public void The_glass_and_aurora_layouts_reach_the_script_and_have_their_styles(string layout, string expected)
+    [InlineData("Glass", true, false)]
+    [InlineData("aurora", false, true)]
+    [InlineData("Card", false, false)]
+    public void Stored_glass_and_aurora_designs_reach_the_script_as_the_card_with_surface_and_animation(string layout, bool glass, bool aurora)
     {
         Write(Content() with { Design = new SignInDesign { Layout = layout } });
 
         var script = Read("resources/js/coworkee.js");
         var css = Read("resources/css/coworkee.css");
-        Config(script).GetProperty("layout").GetString().ShouldBe(expected);
-        css.ShouldContain(".cw-layout-glass .pf-v5-c-login__main{background:color-mix(in srgb,var(--cw-surface) 62%,transparent)");
+        Config(script).ShouldSatisfyAllConditions(
+            c => c.GetProperty("layout").GetString().ShouldBe("card"),
+            c => c.GetProperty("glass").GetBoolean().ShouldBe(glass),
+            c => c.GetProperty("aurora").GetBoolean().ShouldBe(aurora));
+        css.ShouldContain(".cw-surface-glass .pf-v5-c-login__main,.cw-surface-glass.cw-layout-spotlight .pf-v5-c-login__container{background:color-mix(in srgb,var(--cw-surface) 62%,transparent)");
         css.ShouldContain("backdrop-filter:blur(22px)");
-        css.ShouldContain(".cw-aurora span:nth-child(3){background:var(--cw-tertiary)");
-        css.ShouldContain("@media (prefers-reduced-motion:reduce){.cw-aurora span{animation:none}}");
+        css.ShouldContain(".cw-aurora span:nth-child(3){background:var(--cw-aurora-3,var(--cw-tertiary))");
+        css.ShouldContain("@media (prefers-reduced-motion:reduce){.cw-aurora span,.cw-background,.cw-media");
         // the secondary and tertiary colors the backgrounds mix, light and dark
         css.ShouldContain("--cw-secondary:#00838f;--cw-tertiary:#1ec8a5;");
         css.ShouldContain("--cw-secondary:#4dd0e1;--cw-tertiary:#1ec8a5;");
         script.ShouldContain("aurora.className = \"cw-aurora\";");
-        // neither has the media panel of split and slide
-        script.ShouldContain("if (coworkee.layout !== \"split\" && coworkee.layout !== \"slide\") {");
     }
 
     [Fact]
     public void The_glass_card_lies_over_the_media_when_there_is_no_page_background()
     {
-        Write(Content() with { Design = new SignInDesign { Layout = SignInLayouts.Glass, MediaUrl = "https://app.example/media/sea.mp4" } });
+        Write(Content() with { Design = new SignInDesign { Layout = "Glass", MediaUrl = "https://app.example/media/sea.mp4" } });
         Config(Read("resources/js/coworkee.js")).ShouldSatisfyAllConditions(
             c => c.GetProperty("background").GetString().ShouldBe("https://app.example/media/sea.mp4"),
             c => c.GetProperty("backgroundVideo").GetBoolean().ShouldBeTrue());
 
-        Write(Content() with { Design = new SignInDesign { Layout = SignInLayouts.Glass, MediaUrl = "https://app.example/sea.jpg", BackgroundUrl = "https://app.example/sky.jpg" } });
+        Write(Content() with { Design = new SignInDesign { Layout = "Glass", MediaUrl = "https://app.example/sea.jpg", BackgroundUrl = "https://app.example/sky.jpg" } });
         Config(Read("resources/js/coworkee.js")).GetProperty("background").GetString().ShouldBe("https://app.example/sky.jpg");
 
-        // the other layouts keep the media in their panel
-        Write(Content() with { Design = new SignInDesign { Layout = SignInLayouts.Aurora, MediaUrl = "https://app.example/sea.jpg" } });
-        Config(Read("resources/js/coworkee.js")).GetProperty("background").ValueKind.ShouldBe(JsonValueKind.Null);
+        // the card has no media of its own
+        Write(Content() with { Design = new SignInDesign { Layout = "Aurora", MediaUrl = "https://app.example/sea.jpg" } });
+        Config(Read("resources/js/coworkee.js")).ShouldSatisfyAllConditions(
+            c => c.GetProperty("background").ValueKind.ShouldBe(JsonValueKind.Null),
+            c => c.GetProperty("media").ValueKind.ShouldBe(JsonValueKind.Null));
+    }
+
+    [Theory]
+    [InlineData("Spotlight", "right")]
+    [InlineData("Poster", "left")]
+    [InlineData("Stack", "left")]
+    [InlineData("Minimal", "left")]
+    public void Every_layout_reaches_the_script_and_has_its_styles(string layout, string side)
+    {
+        Write(Content() with { Design = new SignInDesign { Layout = layout, LogoSize = SignInLogoSize.Large } });
+
+        var config = Config(Read("resources/js/coworkee.js"));
+        var css = Read("resources/css/coworkee.css");
+        config.GetProperty("layout").GetString().ShouldBe(layout.ToLowerInvariant());
+        config.GetProperty("side").GetString().ShouldBe(side);
+        // only the minimal layout sizes the logo
+        config.GetProperty("logoSize").ValueKind.ShouldBe(layout == "Minimal" ? JsonValueKind.String : JsonValueKind.Null);
+        css.ShouldContain($".cw-layout-{layout.ToLowerInvariant()}");
+    }
+
+    [Fact]
+    public void The_script_adds_the_poster_spotlight_caption_and_stack_parts()
+    {
+        Write(Content() with { Design = new SignInDesign { Layout = SignInLayouts.Stack, MediaUrl = "https://app.example/cards.jpg" } });
+
+        var script = Read("resources/js/coworkee.js");
+
+        Config(script).GetProperty("media").GetString().ShouldBe("https://app.example/cards.jpg");
+        script.ShouldContain("caption.className = \"cw-caption\";");
+        script.ShouldContain("root.classList.add(\"cw-flipped\");");
+        script.ShouldContain("main.style.setProperty(\"--cw-media\"");
+        script.ShouldContain("var claim = coworkee.layout === \"poster\" ? pick(coworkee.title) : null;");
+    }
+
+    [Fact]
+    public void Fills_become_variables_of_the_styles_with_the_theme_colors_and_the_script_knows_of_them()
+    {
+        Write(Content() with
+        {
+            Design = new SignInDesign
+            {
+                Layout = SignInLayouts.Stack, Tilt = 30, Animation = SignInAnimation.Aurora,
+                PageFill = new SignInFill { Gradient = new SignInGradient { Kind = SignInGradientKind.Radial, Animated = true, Stops = [new() { Color = "#000000", Position = 0 }, new() { Color = "secondary", Position = 100 }] } },
+                PanelFill = new SignInFill { Color = "rgb(10, 20, 30)" },
+            },
+        });
+
+        var css = Read("resources/css/coworkee.css");
+        var config = Config(Read("resources/js/coworkee.js"));
+
+        css.ShouldContain(":root{--cw-page-fill:radial-gradient(circle at 50% 50%, #000000 0%, var(--cw-secondary) 100%);--cw-aurora-1:#000000;--cw-aurora-2:#000000;--cw-aurora-3:var(--cw-secondary);"
+            + "--cw-panel-fill:rgb(10, 20, 30);--cw-tilt:12deg;}");
+        config.GetProperty("fill").GetBoolean().ShouldBeTrue();
+        config.GetProperty("fillAnimated").GetBoolean().ShouldBeTrue();
+        config.GetProperty("aurora").GetBoolean().ShouldBeTrue();
+    }
+
+    [Theory]
+    [InlineData("red;}body{display:none}")]
+    [InlineData("url(https://evil.test/x.png)")]
+    [InlineData("rgb(1,2,3)}*{x:y")]
+    [InlineData("</style><script>alert(1)</script>")]
+    public void Hostile_fill_colors_never_reach_the_styles(string color)
+    {
+        Write(Content() with
+        {
+            Design = new SignInDesign
+            {
+                Layout = SignInLayouts.Slide, PageFill = new SignInFill { Color = color },
+                PanelFill = new SignInFill { Gradient = new SignInGradient { Stops = [new() { Color = color, Position = 0 }, new() { Color = color, Position = 100 }] } },
+            },
+        });
+
+        var css = Read("resources/css/coworkee.css");
+        css.ShouldNotContain("--cw-page-fill:");
+        css.ShouldNotContain("--cw-panel-fill:");
+        css.ShouldNotContain("evil.test");
+        css.ShouldNotContain("<script>");
+        Config(Read("resources/js/coworkee.js")).GetProperty("fill").GetBoolean().ShouldBeFalse();
     }
 
     [Fact]

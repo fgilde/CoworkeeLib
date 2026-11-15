@@ -61,7 +61,7 @@ public sealed class KeycloakThemeSyncTests(ThemeApp app) : IAsyncLifetime
     {
         try
         {
-            var design = new SignInDesign { Layout = "Split", Designs = [new NamedSignInDesign { Key = "night", Name = "Night", Layout = SignInLayouts.Aurora }] };
+            var design = new SignInDesign { Layout = "Split", Designs = [new NamedSignInDesign { Key = "night", Name = "Night", Layout = SignInLayouts.Poster }] };
             (await Admin.PutAsJsonAsync($"/api/v1/configuration/{SignInDesign.Section}", design, Ct)).EnsureSuccessStatusCode();
             await EventuallyAsync(() => Read("resources/js/coworkee.js").Contains("\"layout\":\"split\"", StringComparison.Ordinal));
 
@@ -71,7 +71,7 @@ public sealed class KeycloakThemeSyncTests(ThemeApp app) : IAsyncLifetime
             var theme = (await created.Content.ReadFromJsonAsync<ThemeDto>(Ct))!;
             (await Admin.PostAsync($"/api/v1/themes/{theme.Id}/default", null, Ct)).EnsureSuccessStatusCode();
 
-            await EventuallyAsync(() => Read("resources/js/coworkee.js").Contains("\"layout\":\"aurora\"", StringComparison.Ordinal));
+            await EventuallyAsync(() => Read("resources/js/coworkee.js").Contains("\"layout\":\"poster\"", StringComparison.Ordinal));
         }
         finally
         {

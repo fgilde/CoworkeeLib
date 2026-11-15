@@ -1,0 +1,20 @@
+@inject Coworkee.AuthServer.AuthBrandingProvider BrandingProvider
+@{
+  Layout = "_Layout";
+  ViewData["Design"] = Coworkee.Contracts.Theming.SignInLayouts.Spotlight;
+  var brand = await BrandingProvider.GetAsync(Context.RequestAborted);
+  // the panel floats at the right edge unless set otherwise; on phones it is a bottom sheet
+  var side = brand.Design.MediaSide == Coworkee.Contracts.Theming.SignInMediaSide.Left ? "panel-left" : "panel-right";
+}
+<div class="spotlight @side" data-design="spotlight">
+  <div class="spotlight-caption" aria-hidden="true">
+    @if (brand.Design.ShowAppName)
+    {
+      <h2>@brand.AppName</h2>
+    }
+  </div>
+  <main class="panel sheet@(brand.GlassSurface ? " glass" : null)@(ViewData["Wide"] is true ? " wide" : null)">
+    <partial name="_Brand" model="brand" />
+    @RenderBody()
+  </main>
+</div>

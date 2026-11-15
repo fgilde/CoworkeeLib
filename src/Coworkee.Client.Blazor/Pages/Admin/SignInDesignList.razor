@@ -31,7 +31,7 @@
             var layout = look.Layout is { Length: > 0 } chosen ? chosen : SignInLayouts.Default;
             <button type="button" role="option" aria-selected="@(selected ? "true" : "false")" class="cw-signin-design @(selected ? "selected" : null)" @onclick="() => Select(key)"
                     data-testid="sign-in-design-tile" data-key="@(key ?? string.Empty)">
-                <SignInLayoutThumb Layout="@(layout)" MediaSide="look.MediaSide" />
+                <SignInLayoutThumb Layout="@(layout)" MediaSide="look.MediaSide" PageFill="look.PageFill" PanelFill="look.PanelFill" Tilt="look.Tilt" />
                 <span class="cw-signin-design-text">
                     <MudText Typo="Typo.subtitle2">@name</MudText>
                     <MudText Typo="Typo.caption" Class="mud-text-secondary">@L[layout]</MudText>

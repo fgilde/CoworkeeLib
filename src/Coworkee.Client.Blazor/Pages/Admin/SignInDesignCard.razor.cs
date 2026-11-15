@@ -11,8 +11,9 @@ using MudBlazor.Extensions;
 namespace Coworkee.Client.Blazor.Pages.Admin;
 
 /// <summary>
-/// Edits a sign-in design on the page Sign-in, the default <see cref="SignInDesign"/> or a <see cref="NamedSignInDesign"/>: a thumbnail per layout, media, page
-/// background, the loading screen (default design only), and a preview of the real sign-in page with what shows now. The page loads and saves the designs
+/// Edits a sign-in design on the page Sign-in, the default <see cref="SignInDesign"/> or a <see cref="NamedSignInDesign"/>: a thumbnail per layout, then only
+/// what the chosen layout shows (<see cref="SignInLayoutOptions.For"/>): its one or two backgrounds (<see cref="Components.Editors.FillEditor"/>), side, surface,
+/// aurora, darkening, tilt, logo size; the loading screen (default design only), and a preview of the real sign-in page with what shows now. The page loads and saves the designs
 /// (one save bar for all its sections).
 /// </summary>
 public partial class SignInDesignCard
@@ -57,35 +58,51 @@ public partial class SignInDesignCard
         set => ((SignInDesign)Value!).LoadingScreen = value;
     }
 
-    // the glass card lies over the media when there is no page background
-    private bool UsesMedia => SignInLayouts.HasPanel(SelectedLayout) || IsSelected(SignInLayouts.Glass) || (Value is SignInDesign && LoadingScreen == LoadingScreenBackground.SignInMedia);
+    /// <summary>What the chosen layout shows (<see cref="SignInLayoutOptions.For"/>); the card leaves out the rest.</summary>
+    internal SignInLayoutOptions LayoutOptions => SignInLayoutOptions.For(SelectedLayout);
+
+    // the loading screen shows the media even when the layout has no second background
+    private bool ShowsLoadingMedia => Value is SignInDesign && LoadingScreen == LoadingScreenBackground.SignInMedia;
 
     protected override async Task OnInitializedAsync() => _canPickFiles = await Permissions.HasAsync(FilePermissions.View);
 
+    // a design stored with the former layouts Glass or Aurora shows as the card it became
+    protected override void OnParametersSet() => Value?.Normalize();
+
     private Task NotifyAsync() => Changed.InvokeAsync();
 
-    private Task ChooseAsync(string layout)
-    {
-        Value!.Layout = layout;
-        return NotifyAsync();
-    }
+    private Task ChooseAsync(string layout) => Set(() => Value!.Layout = layout);
 
     private async Task ChooseMediaAsync()
     {
         if (await PublicFileChooser.ChooseAsync(Dialogs, Files, Snackbar, L, Navigation, "image/*,video/*") is { } url)
         {
-            Value!.MediaUrl = url;
-            await NotifyAsync();
+            await Set(() => Value!.MediaUrl = url);
         }
     }
 
-    private async Task ChooseBackgroundAsync()
+    private Task SetBackgroundUrlAsync(string? url) => Set(() => Value!.BackgroundUrl = url);
+
+    private Task SetMediaUrlAsync(string? url) => Set(() => Value!.MediaUrl = url);
+
+    private Task SetPageFillAsync(SignInFill? fill) => Set(() => Value!.PageFill = fill);
+
+    private Task SetPanelFillAsync(SignInFill? fill) => Set(() => Value!.PanelFill = fill);
+
+    private Task SetSurfaceAsync(SignInSurface surface) => Set(() => Value!.Surface = surface == SignInSurface.Solid ? null : surface);
+
+    private Task SetAuroraAsync(bool on) => Set(() => Value!.Animation = on ? SignInAnimation.Aurora : null);
+
+    private Task SetDimAsync(int dim) => Set(() => Value!.BackgroundDim = dim == 0 ? null : dim);
+
+    private Task SetTiltAsync(int tilt) => Set(() => Value!.Tilt = tilt);
+
+    private Task SetLogoSizeAsync(SignInLogoSize size) => Set(() => Value!.LogoSize = size);
+
+    private Task Set(Action change)
     {
-        if (await PublicFileChooser.ChooseAsync(Dialogs, Files, Snackbar, L, Navigation, "image/*,video/*") is { } url)
-        {
-            Value!.BackgroundUrl = url;
-            await NotifyAsync();
-        }
+        change();
+        return NotifyAsync();
     }
 
     // the real sign-in page with what the card shows now, saved or not; a named design with the default design's texts, none with the list of designs (the address stays short)

@@ -1,8 +1,58 @@
-@* a small picture of a sign-in layout in the colors of the current theme *@
-<span style="@ThumbStyle" data-testid="sign-in-layout-thumb" data-thumb="@Layout">
-    @if (SignInLayouts.HasPanel(Layout))
+@* a small picture of a sign-in layout in the colors of the current theme and the design's fills *@
+<span style="@Frame" data-testid="sign-in-layout-thumb" data-thumb="@Layout">
+    @switch (Kind)
     {
-        <span style="@MediaStyle"></span>
+        case SignInLayouts.Split:
+            <span style="@($"position:absolute;top:0;bottom:0;{Side}:0;width:50%;background:{Panel}")"></span>
+            <span style="@($"position:absolute;top:0;bottom:0;{Other}:0;width:50%;display:grid;place-items:center;background:{(PageFillCss ?? "var(--mud-palette-surface)")}")">
+                <span style="@FormBlock(32, 34)"></span>
+            </span>
+            break;
+        case SignInLayouts.Slide:
+            <span style="position:absolute;inset:12px 14px;display:flex;overflow:hidden;border-radius:5px;background:var(--mud-palette-surface);box-shadow:0 2px 6px rgb(0 0 0 / .15);@(MediaRight ? null : "flex-direction:row-reverse")">
+                <span style="flex:1;display:grid;place-items:center"><span style="@FormBlock(26, 30)"></span></span>
+                <span style="@($"width:42%;background:{Panel};border-radius:{(MediaRight ? "40% 0 0 40% / 50% 0 0 50%" : "0 40% 40% 0 / 0 50% 50% 0")}")"></span>
+            </span>
+            break;
+        case SignInLayouts.Spotlight:
+            <span style="@($"position:absolute;top:6px;bottom:6px;{(MediaRight ? "right" : "left")}:6px;width:38%;display:grid;place-items:center;border-radius:6px;background:var(--mud-palette-surface);box-shadow:0 3px 10px rgb(0 0 0 / .25)")">
+                <span style="@FormBlock(30, 30)"></span>
+            </span>
+            <span style="@($"position:absolute;bottom:10px;{(MediaRight ? "left" : "right")}:10px;width:40px;height:9px;border-radius:2px;background:#fff;opacity:.9")"></span>
+            <span style="@($"position:absolute;bottom:22px;{(MediaRight ? "left" : "right")}:10px;width:26px;height:9px;border-radius:2px;background:#fff;opacity:.9")"></span>
+            break;
+        case SignInLayouts.Poster:
+            <span style="@($"position:absolute;top:0;bottom:0;{Side}:0;width:54%;overflow:hidden;background:{Panel}")">
+                <span style="position:absolute;width:90%;aspect-ratio:1;top:-40%;right:-35%;border-radius:50%;border:1px solid #fff;opacity:.35"></span>
+                <span style="position:absolute;left:8px;bottom:22px;width:48px;height:12px;border-radius:2px;background:#fff"></span>
+                <span style="position:absolute;left:8px;bottom:10px;width:34px;height:4px;border-radius:2px;background:#fff;opacity:.8"></span>
+            </span>
+            <span style="@($"position:absolute;top:0;bottom:0;{Other}:0;width:46%;display:flex;flex-direction:column;justify-content:center;gap:8px;padding:0 10px;background:{(PageFillCss ?? "var(--mud-palette-surface)")}")">
+                <span style="height:2px;background:var(--mud-palette-lines-default)"></span>
+                <span style="height:2px;background:var(--mud-palette-lines-default)"></span>
+                <span style="height:7px;border-radius:4px;background:var(--mud-palette-primary)"></span>
+            </span>
+            break;
+        case SignInLayouts.Stack:
+            <span style="@($"position:absolute;left:36%;top:16%;width:28%;height:68%;border-radius:4px;background:{Panel};opacity:.7;transform:rotate({Degrees(-1.5)}deg) translate(-14%,4%)")"></span>
+            <span style="@($"position:absolute;left:36%;top:16%;width:28%;height:68%;border-radius:4px;background:{Panel};transform:rotate({Degrees(1)}deg) translate(12%,2%)")"></span>
+            <span style="position:absolute;left:36%;top:16%;width:28%;height:68%;display:grid;place-items:center;border-radius:4px;background:var(--mud-palette-surface);box-shadow:0 3px 8px rgb(0 0 0 / .25)">
+                <span style="@FormBlock(22, 26)"></span>
+            </span>
+            break;
+        case SignInLayouts.Minimal:
+            <span style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px">
+                <span style="width:18px;height:18px;border-radius:50%;background:var(--mud-palette-primary)"></span>
+                <span style="width:36px;height:4px;border-radius:2px;background:var(--mud-palette-text-secondary);opacity:.5"></span>
+                <span style="width:36px;height:4px;border-radius:2px;background:var(--mud-palette-text-secondary);opacity:.5"></span>
+                <span style="width:36px;height:6px;border-radius:3px;background:var(--mud-palette-primary)"></span>
+            </span>
+            break;
+        default:
+            @* the card, and an app's own layout *@
+            <span style="position:absolute;left:27%;top:15%;width:46%;height:70%;display:grid;place-items:center;border-radius:4px;background:var(--mud-palette-surface);border:1px solid var(--mud-palette-lines-default)">
+                <span style="@FormBlock(30, 30)"></span>
+            </span>
+            break;
     }
-    <span style="@FormStyle"></span>
 </span>

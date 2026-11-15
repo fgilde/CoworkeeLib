@@ -1,0 +1,17 @@
+@inject Coworkee.AuthServer.AuthBrandingProvider BrandingProvider
+@using Coworkee.AuthServer.Pages.Account
+@{
+  Layout = "_Layout";
+  ViewData["Design"] = Coworkee.Contracts.Theming.SignInLayouts.Stack;
+  var brand = await BrandingProvider.GetAsync(Context.RequestAborted);
+  // the cards behind lean the other way for the registration, the browser flips the stack between the pages
+  var registering = ViewContext.ViewData.Model is RegisterModel;
+}
+<div class="stack@(registering ? " flipped" : null)@(ViewData["Wide"] is true ? " wide" : null)" data-design="stack">
+  <span class="stack-card back-2" aria-hidden="true"></span>
+  <span class="stack-card back-1@(brand.Design.MediaUrl is null ? null : " has-media")" aria-hidden="true"><partial name="_Media" model="brand" /></span>
+  <main class="panel">
+    <partial name="_Brand" model="brand" />
+    @RenderBody()
+  </main>
+</div>

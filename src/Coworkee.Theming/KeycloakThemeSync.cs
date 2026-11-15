@@ -96,8 +96,7 @@ internal sealed class KeycloakThemeSync : IHostedService, IDisposable
             {
                 Logo = theme.IsSuccess ? theme.Value.Logo : null,
                 LogoUrl = OnWeb(options.LogoUrl, options),
-                Design = new() { Layout = design.Layout, MediaSide = design.MediaSide, MediaUrl = OnWeb(design.MediaUrl, options),
-                    BackgroundUrl = OnWeb(design.BackgroundUrl, options), BackgroundDim = design.BackgroundDim, ShowAppName = design.ShowAppName, Texts = design.Texts },
+                Design = OnWeb(design, options),
             });
             (_writtenAt, _failed) = (_time.GetUtcNow(), false);
         }
@@ -138,6 +137,15 @@ internal sealed class KeycloakThemeSync : IHostedService, IDisposable
     private static Dictionary<string, string> Colors(JsonElement palette) => palette.ValueKind == JsonValueKind.Object
         ? palette.EnumerateObject().Where(p => p.Value.ValueKind == JsonValueKind.String).ToDictionary(p => p.Name, p => p.Value.GetString()!)
         : [];
+
+    // the look with its media addresses on the web
+    private static SignInDesign OnWeb(SignInDesign design, KeycloakThemeOptions options)
+    {
+        var look = design.With(design);
+        look.MediaUrl = OnWeb(design.MediaUrl, options);
+        look.BackgroundUrl = OnWeb(design.BackgroundUrl, options);
+        return look;
+    }
 
     private static string? OnWeb(string? url, KeycloakThemeOptions options) =>
         url is not null && url.StartsWith('/') && !url.StartsWith("//", StringComparison.Ordinal) && Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out var web)

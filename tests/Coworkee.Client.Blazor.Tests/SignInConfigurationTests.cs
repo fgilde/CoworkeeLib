@@ -227,13 +227,13 @@ public sealed class SignInConfigurationTests : ClientTestBase
 
         await page.InvokeAsync(() => page.Find("[data-testid='sign-in-design-add']").ClickAsync(new()));
         page.Find("[data-testid='sign-in-dirty']");
-        await page.InvokeAsync(() => page.Find("[data-testid='sign-in-design'] [data-layout='Aurora']").ClickAsync(new()));
+        await page.InvokeAsync(() => page.Find("[data-testid='sign-in-design'] [data-layout='Minimal']").ClickAsync(new()));
         await page.InvokeAsync(() => page.Find("[data-testid='sign-in-save']").ClickAsync(new()));
 
         await Api.Received(1).SaveAppConfigurationAsync(SignInDesign.Section, Arg.Is<JsonElement>(v =>
             v.GetProperty("layout").GetString() == SignInLayouts.Card
             && v.GetProperty("designs").GetArrayLength() == 1
-            && v.GetProperty("designs")[0].GetProperty("layout").GetString() == SignInLayouts.Aurora
+            && v.GetProperty("designs")[0].GetProperty("layout").GetString() == SignInLayouts.Minimal
             && v.GetProperty("designs")[0].GetProperty("name").GetString() == "New design"
             && v.GetProperty("designs")[0].GetProperty("key").GetString()!.StartsWith("design-")), Arg.Any<CancellationToken>());
     }
