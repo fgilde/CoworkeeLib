@@ -57,7 +57,7 @@
             <div class="cw-gradient-row" data-testid="gradient-selected-stop">
                 <span class="cw-gradient-swatch" style="--stop:@Show(selected.Color)"></span>
                 <MudExColorEdit ValueString="@(IsThemeColor(selected.Color) ? null : selected.Color)" ValueStringChanged="SetColorAsync" Label="@L["Color"]" ForceSelectOfMudColor="true"
-                                ShowCssColorVariables="false" Variant="Variant.Outlined" Margin="Density.Margin" Style="flex:1 1 180px" data-testid="gradient-stop-color" />
+                                ShowCssColorVariables="false" PreviewMode="ColorPreviewMode.Icon" Variant="Variant.Outlined" Margin="Density.Margin" Style="flex:1 1 180px" data-testid="gradient-stop-color" />
                 <MudNumericField T="int" Value="selected.Position" ValueChanged="SetPositionAsync" Label="@L["Position (%)"]" Min="0" Max="100" Variant="Variant.Outlined"
                                  Margin="Density.Margin" Style="width:120px" data-testid="gradient-stop-position" />
                 <MudTooltip Text="@L["Delete stop"]">

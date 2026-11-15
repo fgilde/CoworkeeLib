@@ -32,7 +32,7 @@
             <div class="cw-fill-color">
                 <span class="cw-fill-swatch" style="--fill:@(Css ?? "transparent")" data-testid="fill-preview"></span>
                 <MudExColorEdit ValueString="@(IsThemeColor ? null : Fill?.Color)" ValueStringChanged="SetColorAsync" Label="@L["Color"]" ForceSelectOfMudColor="true"
-                                ShowCssColorVariables="false" Variant="Variant.Outlined" Margin="Density.Margin" Style="flex:1 1 200px" data-testid="fill-color" />
+                                ShowCssColorVariables="false" PreviewMode="ColorPreviewMode.Icon" Variant="Variant.Outlined" Margin="Density.Margin" Style="flex:1 1 200px" data-testid="fill-color" />
                 <ThemeColorChips Value="@Fill?.Color" ValueChanged="SetColorAsync" ThemeColor="ThemeColor" />
             </div>
             break;
