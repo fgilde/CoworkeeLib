@@ -241,9 +241,9 @@ else
                                         <div class="cw-signin-card-head">
                                             <MudIcon Icon="@Icons.Material.Outlined.UploadFile" />
                                             <div>
-                                                <MudText Typo="Typo.h6">@L["Documents"]</MudText>
+                                                <MudText Typo="Typo.h6">@L["Documents at registration"]</MudText>
                                                 <MudText Typo="Typo.body2" Class="mud-text-secondary">
-                                                    @Hint(nameof(RegistrationOptions.Documents), L["Adds a step where new users upload the documents listed below."])
+                                                    @Hint(nameof(RegistrationOptions.Documents), L["New users upload these documents when they register, e.g. a passport or a trade licence. Here you only say what is asked for; you upload nothing yourself."])
                                                 </MudText>
                                             </div>
                                         </div>
@@ -253,12 +253,19 @@ else
                                                 @L["Uploading documents needs the Files module (or a document store of the app); without it the registration asks for none."]
                                             </MudAlert>
                                         }
-                                        <MudSwitch T="bool" @bind-Value="options.RequireDocuments" @bind-Value:after="Changed" Label="@L["Ask for documents"]" Color="Color.Primary"
+                                        <MudSwitch T="bool" @bind-Value="options.RequireDocuments" @bind-Value:after="Changed" Label="@L["Ask new users for documents"]" Color="Color.Primary"
                                                    Disabled="@(!DocumentsEditable || Locked(nameof(RegistrationOptions.RequireDocuments)))" Class="ma-0" data-testid="sign-in-require-documents" />
+                                        @if (options.RequireDocuments)
+                                        {
                                         <MudStack Spacing="2" Class="mt-2">
-                                            @foreach (var slot in options.Documents)
+                                            @foreach (var (slot, number) in options.Documents.Select((slot, index) => (slot, index + 1)))
                                             {
                                                 <MudPaper Outlined="true" Class="cw-signin-slot" data-testid="sign-in-document-slot">
+                                                    <div class="d-flex align-center gap-2 mb-2" data-testid="sign-in-document-title">
+                                                        <MudIcon Icon="@Icons.Material.Outlined.Description" Color="Color.Primary" Size="Size.Small" />
+                                                        <MudText Typo="Typo.subtitle1" Class="flex-grow-1">@(string.IsNullOrWhiteSpace(slot.Name) ? L["Document {0}", number] : slot.Name)</MudText>
+                                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(slot.Required ? Color.Primary : Color.Default)">@(slot.Required ? L["Required"] : L["Optional"])</MudChip>
+                                                    </div>
                                                     <div class="cw-signin-grid">
                                                         <MudTextField T="string" @bind-Value="slot.Name" @bind-Value:after="Changed" Label="@L["Name"]" Required="true" Disabled="@(!DocumentsEditable)"
                                                                       HelperText="@L["The label of the upload field, e.g. Passport; uploaded files are filed under this name."]" Variant="Variant.Outlined" Margin="Density.Margin" />
@@ -283,11 +290,14 @@ else
                                             }
                                             @if (options.Documents.Count == 0)
                                             {
-                                                <MudText Typo="Typo.body2" Class="mud-text-secondary" data-testid="sign-in-documents-none">@L["No documents yet."]</MudText>
+                                                <MudAlert Severity="Severity.Info" Dense="true" data-testid="sign-in-documents-none">
+                                                    @L["Nothing is requested yet, so the registration skips this step. Request a document new users have to upload."]
+                                                </MudAlert>
                                             }
                                         </MudStack>
                                         <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" Disabled="@(!DocumentsEditable)" Class="mt-3"
-                                                   OnClick="AddSlot" Size="Density.Size" data-testid="sign-in-document-add">@L["Add document"]</MudButton>
+                                                   OnClick="AddSlot" Size="Density.Size" data-testid="sign-in-document-add">@L["Request a document"]</MudButton>
+                                        }
                                     </MudPaper>
                                 }
                             }

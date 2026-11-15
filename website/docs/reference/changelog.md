@@ -6,6 +6,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixed
 
+- Admin page *Sign-in*, tab *Registration*: the documents card says what it is for. *Documents at registration* with a short explanation, the switch *Ask new users for documents* shows the requested documents (each a card with its name or *Document 1* and *Required*/*Optional*), the button reads *Request a document*, and an empty list says that the registration skips the step.
 - Admin page *Sign-in*: the tab *Appearance* has the card *Keycloak sign-in page* with the button *Apply to Keycloak* again (it stayed on the page Themes only when the design moved there). It shows wherever the API keeps a Keycloak login theme, i.e. in local runs.
 - Sign-in through Keycloak on Azure Container Apps: the auth server asked for the realm at `http://keycloak:8080`, which Container Apps does not resolve (an app name answers on port 80 only), and answered 500 after the timeout. It now takes Keycloak's endpoint as each target resolves it, like the migrations: `http://keycloak:8080` in Docker Compose and Kubernetes, the public address on Container Apps. Redeploy to take it over.
 
