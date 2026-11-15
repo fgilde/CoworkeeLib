@@ -87,17 +87,15 @@ public sealed class LoadingScreenAndPublicMediaTests : ClientTestBase
         Render<MudPopoverProvider>();
         var design = new SignInDesign { Layout = SignInLayouts.Card };
         var card = Render<SignInDesignCard>(p => p.Add(c => c.Value, design));
-        var dim = card.WaitForComponent<MudNumericField<int?>>();
-        // a stored section from before the field: empty, nothing to darken yet
-        dim.Instance.Disabled.ShouldBeTrue();
+        var background = card.WaitForComponent<Components.Editors.FillEditor>();
+        await card.InvokeAsync(() => background.Instance.SetModeAsync(Components.Editors.FillMode.File));
 
-        var choosing = card.InvokeAsync(() => card.Find("button[aria-label='Choose the page background from files']").ClickAsync(new()));
+        var choosing = card.InvokeAsync(() => card.Find("[data-testid='fill-editor'] button[aria-label='Choose from files']").ClickAsync(new()));
         await dialogs.WaitForElement($"[data-file-grid-key='{_video.Id}']").DoubleClickAsync(new());
         dialogs.WaitForAssertion(() => dialogs.FindAll("button").Any(b => b.TextContent.Trim() == "Make public").ShouldBeTrue());
         await dialogs.FindAll("button").First(b => b.TextContent.Trim() == "Make public").ClickAsync(new());
         await choosing;
-        card.WaitForAssertion(() => card.FindComponent<MudNumericField<int?>>().Instance.Disabled.ShouldBeFalse());
-        await card.InvokeAsync(() => card.FindComponent<MudNumericField<int?>>().Instance.ValueChanged.InvokeAsync(40));
+        await card.InvokeAsync(() => card.FindComponent<MudSlider<int>>().Instance.ValueChanged.InvokeAsync(40));
 
         design.BackgroundUrl.ShouldBe($"http://localhost/api/v1/files/public/{_video.Id}/welcome.mp4");
         design.BackgroundDim.ShouldBe(40);
@@ -112,8 +110,11 @@ public sealed class LoadingScreenAndPublicMediaTests : ClientTestBase
         var design = new SignInDesign { Layout = SignInLayouts.Card };
         var card = Render<SignInDesignCard>(p => p.Add(c => c.Value, design));
 
-        card.WaitForComponents<MudTextField<string>>().Single(f => f.Instance.Label == "Page background (image or video)").Instance.Adornment.ShouldBe(Adornment.None);
-        card.FindAll("button[aria-label='Choose the page background from files']").ShouldBeEmpty();
+        var background = card.WaitForComponent<Components.Editors.FillEditor>();
+        card.InvokeAsync(() => background.Instance.SetModeAsync(Components.Editors.FillMode.File));
+
+        card.WaitForComponents<MudTextField<string>>().Single(f => f.Instance.Label == "Image or video address").Instance.Adornment.ShouldBe(Adornment.None);
+        card.FindAll("button[aria-label='Choose from files']").ShouldBeEmpty();
     }
 
     [Fact]
@@ -123,8 +124,8 @@ public sealed class LoadingScreenAndPublicMediaTests : ClientTestBase
         Render<MudPopoverProvider>();
         var design = new SignInDesign { Layout = SignInLayouts.Card };
         var card = Render<SignInDesignCard>(p => p.Add(c => c.Value, design));
-        var background = card.WaitForComponents<MudTextField<string>>().Single(f => f.Instance.Label == "Page background (image or video)");
-        await card.InvokeAsync(() => background.Instance.ValueChanged.InvokeAsync("/media/sky.jpg"));
+        var background = card.WaitForComponent<Components.Editors.FillEditor>();
+        await card.InvokeAsync(() => background.Instance.UrlChanged.InvokeAsync("/media/sky.jpg"));
         await card.InvokeAsync(() => card.Find("[data-layout='Slide']").ClickAsync(new()));
 
         await card.InvokeAsync(() => card.Find("[data-testid='sign-in-preview']").ClickAsync(new()));

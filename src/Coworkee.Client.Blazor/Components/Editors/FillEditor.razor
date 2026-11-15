@@ -1,0 +1,43 @@
+@using MudBlazor.Extensions.Components
+@* one background of a sign-in design: the theme's, an image or video, a color or a gradient *@
+<style>
+    .cw-fill { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px 16px; border: 1px solid var(--mud-palette-lines-default); border-radius: calc(var(--mud-default-borderradius) * 2); }
+    .cw-fill-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+    .cw-fill-head .mud-toggle-group { flex-wrap: wrap; }
+    .cw-fill-color { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+    .cw-fill-swatch { flex: none; width: 56px; height: 40px; border-radius: var(--mud-default-borderradius); background: var(--fill); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .15); }
+</style>
+
+<div class="cw-fill" data-testid="fill-editor" data-mode="@_mode">
+    <div class="cw-fill-head">
+        <MudText Typo="Typo.subtitle2">@Label</MudText>
+        <MudToggleGroup T="FillMode" Value="_mode" ValueChanged="SetModeAsync" Color="Color.Primary" Size="Size.Small" Outlined="true" Delimiters="true" data-testid="fill-mode">
+            <MudToggleItem Value="FillMode.Theme" Text="@L["Theme default"]" />
+            @if (AllowFiles)
+            {
+                <MudToggleItem Value="FillMode.File" Text="@L["Image or video"]" />
+            }
+            <MudToggleItem Value="FillMode.Color" Text="@L["Color"]" />
+            <MudToggleItem Value="FillMode.Gradient" Text="@L["Gradient"]" />
+        </MudToggleGroup>
+    </div>
+    @switch (_mode)
+    {
+        case FillMode.File:
+            <MudTextField T="string" Value="Url" ValueChanged="SetUrlAsync" Label="@L["Image or video address"]" Clearable="true" Margin="Density.Margin" Variant="Variant.Outlined"
+                          HelperText="@L["For example /media/welcome.mp4"]" Adornment="@(_canPickFiles ? Adornment.End : Adornment.None)" AdornmentIcon="@Icons.Material.Outlined.FolderOpen"
+                          AdornmentAriaLabel="@L["Choose from files"]" OnAdornmentClick="ChooseFileAsync" data-testid="fill-url" />
+            break;
+        case FillMode.Color:
+            <div class="cw-fill-color">
+                <span class="cw-fill-swatch" style="--fill:@(Css ?? "transparent")" data-testid="fill-preview"></span>
+                <MudExColorEdit ValueString="@(IsThemeColor ? null : Fill?.Color)" ValueStringChanged="SetColorAsync" Label="@L["Color"]" ForceSelectOfMudColor="true"
+                                ShowCssColorVariables="false" Variant="Variant.Outlined" Margin="Density.Margin" Style="flex:1 1 200px" data-testid="fill-color" />
+                <ThemeColorChips Value="@Fill?.Color" ValueChanged="SetColorAsync" ThemeColor="ThemeColor" />
+            </div>
+            break;
+        case FillMode.Gradient:
+            <GradientEditor Value="Fill?.Gradient" ValueChanged="GradientChangedAsync" ThemeColor="ThemeColor" />
+            break;
+    }
+</div>

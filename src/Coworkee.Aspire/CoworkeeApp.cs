@@ -306,6 +306,52 @@ public sealed partial class CoworkeeApp
         {
             service.WithSetting(s => s.Coworkee.Auth.Design.BackgroundDim, dim);
         }
+
+        if (Options.SignIn.Surface is { } surface)
+        {
+            service.WithSetting(s => s.Coworkee.Auth.Design.Surface, surface.ToString());
+        }
+
+        if (Options.SignIn.Animation is { } animation)
+        {
+            service.WithSetting(s => s.Coworkee.Auth.Design.Animation, animation.ToString());
+        }
+
+        if (Options.SignIn.Tilt is { } tilt)
+        {
+            service.WithSetting(s => s.Coworkee.Auth.Design.Tilt, tilt);
+        }
+
+        if (Options.SignIn.LogoSize is { } logoSize)
+        {
+            service.WithSetting(s => s.Coworkee.Auth.Design.LogoSize, logoSize.ToString());
+        }
+
+        WithFill(service, SettingPath.Of(s => s.Coworkee.Auth.Design.PageFill), Options.SignIn.PageFill);
+        WithFill(service, SettingPath.Of(s => s.Coworkee.Auth.Design.PanelFill), Options.SignIn.PanelFill);
+    }
+
+    // a fill as configuration keys (PageFill__Gradient__Stops__0__Color, ...)
+    private static void WithFill(IResourceBuilder<ProjectResource> service, string prefix, Coworkee.Contracts.Theming.SignInFill? fill)
+    {
+        if (fill?.Color is { } color)
+        {
+            service.WithEnvironment($"{prefix}__Color", color);
+        }
+
+        if (fill?.Gradient is not { } gradient)
+        {
+            return;
+        }
+
+        service.WithEnvironment($"{prefix}__Gradient__Kind", gradient.Kind.ToString())
+            .WithEnvironment($"{prefix}__Gradient__Angle", gradient.Angle.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            .WithEnvironment($"{prefix}__Gradient__Animated", gradient.Animated ? "true" : "false");
+        for (var i = 0; i < gradient.Stops.Count; i++)
+        {
+            service.WithEnvironment($"{prefix}__Gradient__Stops__{i}__Color", gradient.Stops[i].Color)
+                .WithEnvironment($"{prefix}__Gradient__Stops__{i}__Position", gradient.Stops[i].Position.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
     }
 
     private IResourceBuilder<ProjectResource> Service<TProject>(string suffix)

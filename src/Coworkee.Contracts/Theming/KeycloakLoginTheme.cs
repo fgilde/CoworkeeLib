@@ -118,6 +118,11 @@ public static partial class KeycloakLoginTheme
         css.Append(":root{").Append(Declarations(content.Light, DefaultLight)).Append("}\n");
         css.Append(":root.pf-v5-theme-dark{").Append(Declarations(content.Dark, DefaultDark)).Append("}\n");
         css.Append(StaticCss);
+        if (Variables(Look(content.Design)) is { Length: > 0 } variables)
+        {
+            css.Append(":root{").Append(variables).Append("}\n");
+        }
+
         if (logoAddress is not null)
         {
             css.Append("#kc-header-wrapper::before{content:\"\";width:100%;height:4rem;background:url(\"").Append(logoAddress).Append("\") no-repeat center/contain}\n");
@@ -126,14 +131,63 @@ public static partial class KeycloakLoginTheme
         return css.ToString();
     }
 
+    // the former layouts Glass and Aurora as the card they became; an app's own layout name is unknown here and falls back to the default
+    private static SignInDesign Look(SignInDesign design)
+    {
+        var look = design.With(design);
+        look.Normalize();
+        look.Layout = SignInLayouts.All.FirstOrDefault(l => l.Equals(look.Layout, StringComparison.OrdinalIgnoreCase)) ?? SignInLayouts.Default;
+        return look;
+    }
+
+    // the fills, tilt and aurora colors as variables, built from checked values only (SignInFills)
+    private static string Variables(SignInDesign look)
+    {
+        var options = SignInLayoutOptions.For(look.Layout);
+        var variables = new StringBuilder();
+        if (WebAddress(look.BackgroundUrl) is null && SignInFills.Css(look.PageFill, ThemeColor) is { } page)
+        {
+            variables.Append("--cw-page-fill:").Append(page).Append(';');
+            if (options.Animation && look.Animation == SignInAnimation.Aurora)
+            {
+                var colors = SignInFills.ColorsOf(look.PageFill, ThemeColor);
+                for (var i = 0; i < 3; i++)
+                {
+                    variables.Append($"--cw-aurora-{i + 1}:").Append(colors[(i * Math.Max(colors.Count - 1, 1) / 2) % colors.Count]).Append(';');
+                }
+            }
+        }
+
+        if (options.PanelBackground is not null && WebAddress(look.MediaUrl) is null && SignInFills.Css(look.PanelFill, ThemeColor) is { } panel)
+        {
+            variables.Append("--cw-panel-fill:").Append(panel).Append(';');
+        }
+
+        if (options.Tilt)
+        {
+            variables.Append("--cw-tilt:").Append(Math.Clamp(look.Tilt ?? SignInLayoutOptions.DefaultTilt, 0, SignInLayoutOptions.MaxTilt)).Append("deg;");
+        }
+
+        return variables.ToString();
+    }
+
+    private static string ThemeColor(string color) => color switch
+    {
+        "primary" => "var(--cw-primary)",
+        "secondary" => "var(--cw-secondary)",
+        "tertiary" => "var(--cw-tertiary)",
+        "background" => "var(--cw-background)",
+        _ => "var(--cw-surface)",
+    };
+
     private static string Script(KeycloakLoginThemeContent content)
     {
-        var design = content.Design;
-        var layout = design.Layout is { } named && SignInLayouts.All.FirstOrDefault(l => l.Equals(named, StringComparison.OrdinalIgnoreCase)) is { } known ? known : SignInLayouts.Default;
-        var side = design.MediaSide ?? (layout == SignInLayouts.Slide ? SignInMediaSide.Right : SignInMediaSide.Left);
-        var media = WebAddress(design.MediaUrl);
-        // the glass card lies over the media when there is no page background
-        var background = WebAddress(design.BackgroundUrl) ?? (layout == SignInLayouts.Glass ? media : null);
+        var design = Look(content.Design);
+        var layout = design.Layout!;
+        var options = SignInLayoutOptions.For(layout);
+        var side = design.MediaSide ?? (layout is SignInLayouts.Slide or SignInLayouts.Spotlight ? SignInMediaSide.Right : SignInMediaSide.Left);
+        var media = options.PanelBackground is null ? null : WebAddress(design.MediaUrl);
+        var background = WebAddress(design.BackgroundUrl);
         var config = new JsonObject
         {
             ["layout"] = layout.ToLowerInvariant(),
@@ -142,7 +196,13 @@ public static partial class KeycloakLoginTheme
             ["video"] = IsVideo(media),
             ["background"] = background,
             ["backgroundVideo"] = IsVideo(background),
-            ["backgroundDim"] = Math.Clamp(design.BackgroundDim ?? 0, 0, 90),
+            ["backgroundDim"] = options.Dim ? Math.Clamp(design.BackgroundDim ?? 0, 0, 90) : 0,
+            ["fill"] = background is null && SignInFills.Checked(design.PageFill) is not null,
+            ["fillAnimated"] = background is null && SignInFills.IsAnimated(design.PageFill),
+            ["panelAnimated"] = media is null && options.PanelBackground is not null && SignInFills.IsAnimated(design.PanelFill),
+            ["glass"] = options.Surface && design.Surface == SignInSurface.Glass,
+            ["aurora"] = options.Animation && design.Animation == SignInAnimation.Aurora,
+            ["logoSize"] = options.LogoSize ? (design.LogoSize ?? SignInLogoSize.Medium).ToString().ToLowerInvariant() : null,
             ["appName"] = design.ShowAppName ? content.AppName : null,
             ["title"] = Texts(design.Texts.Title, design.Texts.Titles),
             ["subtitle"] = Texts(design.Texts.Subtitle, design.Texts.Subtitles),
@@ -226,41 +286,73 @@ public static partial class KeycloakLoginTheme
         #kc-header-wrapper{color:var(--cw-text)!important;text-transform:none;letter-spacing:0;display:flex;flex-direction:column;align-items:center;gap:.75rem}
         .cw-has-background{background:var(--cw-background)}
         .cw-has-background body,.cw-has-background .pf-v5-c-login{background:transparent}
-        .cw-background{position:fixed;inset:0;z-index:-1;overflow:hidden;background:center/cover no-repeat}
+        .cw-background{position:fixed;inset:0;z-index:-1;overflow:hidden;background:var(--cw-page-fill,transparent) center/cover no-repeat}
+        .cw-fill-animated .cw-background,.cw-panel-animated .cw-media,.cw-panel-animated.cw-layout-stack .pf-v5-c-login__main::before{background-size:300% 300%;animation:cw-fill 22s ease-in-out infinite alternate}
+        @keyframes cw-fill{from{background-position:0% 30%}to{background-position:100% 70%}}
         .cw-background video{width:100%;height:100%;object-fit:cover}
         .cw-background::after{content:"";position:absolute;inset:0;background:rgb(0 0 0 / var(--cw-dim,0%))}
         .cw-subtitle{margin:.25rem 0 0;color:var(--cw-text-2)}
         .cw-notice{margin:1rem 0 0;padding:.6rem .75rem;border-left:3px solid var(--cw-primary);white-space:pre-line;font-size:.875rem}
-        .cw-layout-glass{background:radial-gradient(60vmax 60vmax at 12% 18%,color-mix(in srgb,var(--cw-primary) 55%,transparent),transparent 70%),
+        .cw-transparent body,.cw-transparent .pf-v5-c-login{background:transparent}
+        .cw-surface-glass:not(.cw-has-background){background:radial-gradient(60vmax 60vmax at 12% 18%,color-mix(in srgb,var(--cw-primary) 55%,transparent),transparent 70%),
         radial-gradient(55vmax 55vmax at 88% 85%,color-mix(in srgb,var(--cw-tertiary) 45%,transparent),transparent 70%),
         linear-gradient(135deg,color-mix(in srgb,var(--cw-primary) 18%,var(--cw-background)),var(--cw-background));min-height:100%}
-        .cw-layout-glass body,.cw-layout-glass .pf-v5-c-login,.cw-layout-aurora body,.cw-layout-aurora .pf-v5-c-login{background:transparent}
-        .cw-layout-glass .pf-v5-c-login__main{background:color-mix(in srgb,var(--cw-surface) 62%,transparent);border:1px solid color-mix(in srgb,var(--cw-text) 12%,transparent);
+        .cw-surface-glass .pf-v5-c-login__main,.cw-surface-glass.cw-layout-spotlight .pf-v5-c-login__container{background:color-mix(in srgb,var(--cw-surface) 62%,transparent);border:1px solid color-mix(in srgb,var(--cw-text) 12%,transparent);
         border-radius:1.25rem;box-shadow:0 24px 60px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.18);-webkit-backdrop-filter:blur(22px) saturate(160%);backdrop-filter:blur(22px) saturate(160%)}
-        .cw-layout-glass .pf-v5-c-login__main .pf-v5-c-form-control{background:color-mix(in srgb,var(--cw-surface) 70%,transparent)}
-        .cw-layout-aurora{background:var(--cw-background);min-height:100%}
-        .cw-layout-aurora .pf-v5-c-login__main{border:1px solid var(--cw-lines);border-radius:1.25rem;box-shadow:0 30px 80px color-mix(in srgb,var(--cw-primary) 22%,rgba(0,0,0,.12))}
-        .cw-aurora{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none}
+        .cw-surface-glass.cw-layout-spotlight .pf-v5-c-login__main{background:transparent;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+        .cw-surface-glass .pf-v5-c-login__main .pf-v5-c-form-control{background:color-mix(in srgb,var(--cw-surface) 70%,transparent)}
+        .cw-with-aurora.cw-layout-card .pf-v5-c-login__main{border:1px solid var(--cw-lines);border-radius:1.25rem;box-shadow:0 30px 80px color-mix(in srgb,var(--cw-primary) 22%,rgba(0,0,0,.12))}
+        .cw-aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
         .cw-aurora span{position:absolute;width:64vmax;height:64vmax;border-radius:50%;filter:blur(80px);opacity:.45;will-change:transform}
-        .cw-aurora span:nth-child(1){background:var(--cw-primary);top:-26vmax;left:-18vmax;animation:cw-aurora-a 18s ease-in-out infinite alternate}
-        .cw-aurora span:nth-child(2){background:var(--cw-secondary);bottom:-30vmax;right:-22vmax;opacity:.3;animation:cw-aurora-b 23s ease-in-out infinite alternate}
-        .cw-aurora span:nth-child(3){background:var(--cw-tertiary);width:44vmax;height:44vmax;top:34%;left:38%;opacity:.35;animation:cw-aurora-c 27s ease-in-out infinite alternate}
+        .cw-aurora span:nth-child(1){background:var(--cw-aurora-1,var(--cw-primary));top:-26vmax;left:-18vmax;animation:cw-aurora-a 18s ease-in-out infinite alternate}
+        .cw-aurora span:nth-child(2){background:var(--cw-aurora-2,var(--cw-secondary));bottom:-30vmax;right:-22vmax;opacity:.3;animation:cw-aurora-b 23s ease-in-out infinite alternate}
+        .cw-aurora span:nth-child(3){background:var(--cw-aurora-3,var(--cw-tertiary));width:44vmax;height:44vmax;top:34%;left:38%;opacity:.35;animation:cw-aurora-c 27s ease-in-out infinite alternate}
         @keyframes cw-aurora-a{to{transform:translate(22vmax,14vmax) scale(1.15)}}
         @keyframes cw-aurora-b{to{transform:translate(-20vmax,-12vmax) scale(1.1)}}
         @keyframes cw-aurora-c{to{transform:translate(-16vmax,10vmax) scale(.85)}}
-        @media (prefers-reduced-motion:reduce){.cw-aurora span{animation:none}}
+        .cw-layout-spotlight:not(.cw-has-background){background:radial-gradient(90vmax 70vmax at 0% 100%,color-mix(in srgb,var(--cw-primary) 85%,transparent),transparent 62%),
+        radial-gradient(60vmax 60vmax at 55% -10%,color-mix(in srgb,var(--cw-tertiary) 55%,transparent),transparent 60%),
+        linear-gradient(150deg,color-mix(in srgb,var(--cw-primary) 45%,var(--cw-background)),color-mix(in srgb,var(--cw-secondary) 30%,var(--cw-background)));min-height:100%}
+        .cw-layout-spotlight .pf-v5-c-login__container{background:var(--cw-surface);border-radius:1.75rem;box-shadow:0 30px 90px rgba(0,0,0,.28);padding:2rem 1.5rem}
+        .cw-layout-spotlight .pf-v5-c-login__main{box-shadow:none;background:transparent}
+        .cw-caption{position:relative;margin:0;padding:15vh 1.5rem 1.5rem;color:#fff;font-size:2.75rem;font-weight:800;line-height:.95;letter-spacing:-.035em;text-shadow:0 2px 30px rgba(0,0,0,.35)}
+        .cw-layout-stack .pf-v5-c-login__main{position:relative;border-radius:1.25rem}
+        .cw-layout-stack .pf-v5-c-login__main::before,.cw-layout-stack .pf-v5-c-login__main::after{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;box-shadow:0 20px 50px rgba(0,0,0,.18);
+        background:var(--cw-media,var(--cw-panel-fill,linear-gradient(135deg,var(--cw-primary),var(--cw-tertiary)))) center/cover no-repeat;transform:rotate(var(--cw-tilt,6deg)) translate(5%,1%)}
+        .cw-layout-stack .pf-v5-c-login__main::after{background:var(--cw-panel-fill,linear-gradient(135deg,var(--cw-primary),var(--cw-tertiary)));z-index:-2;opacity:.7;filter:brightness(.8);transform:rotate(calc(var(--cw-tilt,6deg) * -1.5)) translate(-7%,3%)}
+        .cw-flipped.cw-layout-stack .pf-v5-c-login__main::before{transform:rotate(calc(var(--cw-tilt,6deg) * -1)) translate(-5%,1%)}
+        .cw-flipped.cw-layout-stack .pf-v5-c-login__main::after{transform:rotate(calc(var(--cw-tilt,6deg) * 1.5)) translate(7%,3%)}
+        .cw-layout-stack body{overflow-x:hidden}
+        .cw-layout-minimal .pf-v5-c-login__main{background:transparent;box-shadow:none;border:0}
+        .cw-layout-minimal #kc-header-wrapper::before{height:var(--cw-logo,5rem)!important}
+        .cw-logo-small{--cw-logo:3rem}.cw-logo-large{--cw-logo:7.5rem}
+        .cw-layout-poster .pf-v5-c-form-control{--pf-v5-c-form-control--BorderRadius:0;border-radius:0}
+        .cw-layout-poster .pf-v5-c-login__main{box-shadow:none;background:transparent}
         .cw-media{display:none}
         @media (min-width:768px){
-        .cw-layout-split .cw-media,.cw-layout-slide .cw-media{display:flex;position:fixed;inset:0 auto 0 0;width:50vw;overflow:hidden;align-items:center;justify-content:center;
-        background:var(--cw-primary) center/cover no-repeat;color:var(--cw-on-primary)}
-        .cw-layout-split .cw-media{background-color:var(--cw-background)}
+        .cw-layout-split .cw-media,.cw-layout-slide .cw-media,.cw-layout-poster .cw-media{display:flex;position:fixed;inset:0 auto 0 0;width:50vw;overflow:hidden;align-items:center;justify-content:center;
+        background:var(--cw-panel-fill,var(--cw-primary)) center/cover no-repeat;color:var(--cw-on-primary)}
+        .cw-layout-split .cw-media{background:var(--cw-panel-fill,var(--cw-background)) center/cover no-repeat}
+        .cw-layout-poster .cw-media{flex-direction:column;align-items:flex-start;justify-content:flex-end;padding:4rem;background:var(--cw-panel-fill,linear-gradient(160deg,var(--cw-primary),color-mix(in srgb,var(--cw-primary) 60%,#000))) center/cover no-repeat}
         .cw-side-right .cw-media{inset:0 0 0 auto}
         .cw-media video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
         .cw-media h2{position:relative;font-size:2.5rem;padding:2rem;text-align:center}
-        .cw-media.cw-has-media h2{color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.6)}
-        .cw-layout-split .pf-v5-c-login,.cw-layout-slide .pf-v5-c-login{margin-left:50vw}
-        .cw-side-right.cw-layout-split .pf-v5-c-login,.cw-side-right.cw-layout-slide .pf-v5-c-login{margin-left:0;margin-right:50vw}
+        .cw-layout-poster .cw-media h2{padding:0;text-align:left;font-size:clamp(3.5rem,8vw,9rem);font-weight:800;line-height:.88;letter-spacing:-.05em}
+        .cw-media p{position:relative;margin:1.5rem 0 0;max-width:20ch;padding-top:1.25rem;border-top:3px solid currentColor;font-size:1.75rem;font-weight:600;line-height:1.2}
+        .cw-media.cw-has-media h2,.cw-media.cw-has-media p{color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+        .cw-layout-split .pf-v5-c-login,.cw-layout-slide .pf-v5-c-login,.cw-layout-poster .pf-v5-c-login{margin-left:50vw}
+        .cw-side-right.cw-layout-split .pf-v5-c-login,.cw-side-right.cw-layout-slide .pf-v5-c-login,.cw-side-right.cw-layout-poster .pf-v5-c-login{margin-left:0;margin-right:50vw}
+        .cw-layout-spotlight .pf-v5-c-login{display:block;min-height:100vh}
+        .cw-layout-spotlight .pf-v5-c-login__container{position:fixed;top:24px;bottom:24px;right:24px;left:auto;width:min(480px,calc(100vw - 48px));margin:0;overflow:auto;
+        display:flex;flex-direction:column;justify-content:center;padding:3rem 2.5rem}
+        .cw-side-left.cw-layout-spotlight .pf-v5-c-login__container{right:auto;left:24px}
+        .cw-caption{position:fixed;left:3rem;bottom:3rem;max-width:11ch;padding:0;font-size:clamp(2.75rem,6vw,6.5rem)}
+        .cw-side-left .cw-caption{left:auto;right:3rem;text-align:right}
         }
+        @media (max-width:767px){
+        .cw-layout-spotlight .pf-v5-c-login__container{border-radius:1.75rem 1.75rem 0 0;min-height:70vh}
+        }
+        @media (prefers-reduced-motion:reduce){.cw-aurora span,.cw-background,.cw-media,.cw-layout-stack .pf-v5-c-login__main::before{animation:none!important}}
 
         """;
 
@@ -268,21 +360,45 @@ public static partial class KeycloakLoginTheme
         (function () {
           var root = document.documentElement;
           root.classList.add("cw-layout-" + coworkee.layout, "cw-side-" + coworkee.side);
-          if (coworkee.background) {
-            // behind the whole page, independent of the panel's media
+          if (coworkee.glass) {
+            root.classList.add("cw-surface-glass", "cw-transparent");
+          }
+
+          if (coworkee.aurora) {
+            root.classList.add("cw-with-aurora", "cw-transparent");
+          }
+
+          if (coworkee.logoSize) {
+            root.classList.add("cw-logo-" + coworkee.logoSize);
+          }
+
+          if (coworkee.layout === "spotlight") {
+            root.classList.add("cw-transparent");
+          }
+
+          if (coworkee.panelAnimated) {
+            root.classList.add("cw-panel-animated");
+          }
+
+          if (coworkee.background || coworkee.fill) {
+            // behind the whole page, independent of the panel's media: an image, a video or the page fill (--cw-page-fill)
             root.classList.add("cw-has-background");
+            if (coworkee.fillAnimated) {
+              root.classList.add("cw-fill-animated");
+            }
+
             document.addEventListener("DOMContentLoaded", function () {
               var back = document.createElement("div");
               back.className = "cw-background";
               back.setAttribute("aria-hidden", "true");
               back.style.setProperty("--cw-dim", coworkee.backgroundDim + "%");
-              if (coworkee.backgroundVideo) {
+              if (coworkee.background && coworkee.backgroundVideo) {
                 var clip = document.createElement("video");
                 clip.src = coworkee.background;
                 clip.muted = clip.loop = clip.playsInline = true;
                 clip.autoplay = !matchMedia("(prefers-reduced-motion: reduce)").matches;
                 back.appendChild(clip);
-              } else {
+              } else if (coworkee.background) {
                 back.style.backgroundImage = "url(" + JSON.stringify(coworkee.background) + ")";
               }
 
@@ -291,6 +407,10 @@ public static partial class KeycloakLoginTheme
           }
 
           // the administrators' own texts on the sign-in page, in the page's language
+          var lang = (document.documentElement.lang || "").toLowerCase();
+          var pick = function (texts) {
+            return texts ? texts[lang] || texts[lang.split("-")[0]] || texts[""] || null : null;
+          };
           if (coworkee.title || coworkee.subtitle || coworkee.notice) {
             document.addEventListener("DOMContentLoaded", function () {
               var heading = document.getElementById("kc-page-title");
@@ -298,10 +418,6 @@ public static partial class KeycloakLoginTheme
                 return;
               }
 
-              var lang = (document.documentElement.lang || "").toLowerCase();
-              var pick = function (texts) {
-                return texts ? texts[lang] || texts[lang.split("-")[0]] || texts[""] || null : null;
-              };
               var title = pick(coworkee.title);
               if (title) {
                 heading.textContent = title;
@@ -321,8 +437,8 @@ public static partial class KeycloakLoginTheme
             });
           }
 
-          if (coworkee.layout === "aurora") {
-            // soft fields of the theme colors behind the card, below a page background
+          if (coworkee.aurora) {
+            // soft fields of the fill's or the theme's colors above the page background
             document.addEventListener("DOMContentLoaded", function () {
               var aurora = document.createElement("div");
               aurora.className = "cw-aurora";
@@ -331,11 +447,41 @@ public static partial class KeycloakLoginTheme
                 aurora.appendChild(document.createElement("span"));
               }
 
-              document.body.prepend(aurora);
+              var back = document.querySelector(".cw-background");
+              if (back) {
+                back.insertAdjacentElement("afterend", aurora);
+              } else {
+                document.body.prepend(aurora);
+              }
             });
           }
 
-          if (coworkee.layout !== "split" && coworkee.layout !== "slide") {
+          if (coworkee.layout === "spotlight" && coworkee.appName) {
+            // the app name in big letters on the open side of the page
+            document.addEventListener("DOMContentLoaded", function () {
+              var caption = document.createElement("h2");
+              caption.className = "cw-caption";
+              caption.setAttribute("aria-hidden", "true");
+              caption.textContent = coworkee.appName;
+              document.body.prepend(caption);
+            });
+          }
+
+          if (coworkee.layout === "stack") {
+            // the cards behind the form show the media and lean the other way for the registration
+            document.addEventListener("DOMContentLoaded", function () {
+              if (document.body.dataset.pageId === "login-register") {
+                root.classList.add("cw-flipped");
+              }
+
+              var main = document.querySelector(".pf-v5-c-login__main");
+              if (main && coworkee.media && !coworkee.video) {
+                main.style.setProperty("--cw-media", "url(" + JSON.stringify(coworkee.media) + ")");
+              }
+            });
+          }
+
+          if (coworkee.layout !== "split" && coworkee.layout !== "slide" && coworkee.layout !== "poster") {
             return;
           }
 
@@ -357,10 +503,18 @@ public static partial class KeycloakLoginTheme
               aside.style.backgroundImage = "url(" + JSON.stringify(coworkee.media) + ")";
             }
 
-            if (coworkee.layout === "slide" && coworkee.appName) {
+            if (coworkee.layout !== "split" && coworkee.appName) {
               var name = document.createElement("h2");
               name.textContent = coworkee.appName;
               aside.appendChild(name);
+            }
+
+            // the poster's claim: the sign-in title
+            var claim = coworkee.layout === "poster" ? pick(coworkee.title) : null;
+            if (claim) {
+              var line = document.createElement("p");
+              line.textContent = claim;
+              aside.appendChild(line);
             }
 
             document.body.prepend(aside);

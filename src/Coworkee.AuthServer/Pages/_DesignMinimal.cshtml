@@ -1,0 +1,11 @@
+@inject Coworkee.AuthServer.AuthBrandingProvider BrandingProvider
+@{
+  Layout = "_Layout";
+  ViewData["Design"] = Coworkee.Contracts.Theming.SignInLayouts.Minimal;
+  var brand = await BrandingProvider.GetAsync(Context.RequestAborted);
+  var size = (brand.Design.LogoSize ?? Coworkee.Contracts.Theming.SignInLogoSize.Medium).ToString().ToLowerInvariant();
+}
+<main class="panel minimal logo-@size@(ViewData["Wide"] is true ? " wide" : null)" data-design="minimal">
+  <partial name="_Brand" model="brand" />
+  @RenderBody()
+</main>

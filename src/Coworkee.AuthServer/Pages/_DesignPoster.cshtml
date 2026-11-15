@@ -1,0 +1,36 @@
+@inject Coworkee.AuthServer.AuthBrandingProvider BrandingProvider
+@{
+  Layout = "_Layout";
+  ViewData["Design"] = Coworkee.Contracts.Theming.SignInLayouts.Poster;
+  var brand = await BrandingProvider.GetAsync(Context.RequestAborted);
+  var culture = System.Globalization.CultureInfo.CurrentUICulture;
+  // the poster stands left unless set otherwise; the default design's sign-in title and subtitle are its claim
+  var side = brand.Design.MediaSide == Coworkee.Contracts.Theming.SignInMediaSide.Right ? "poster-right" : "poster-left";
+  var claim = brand.Design.Texts.TitleIn(culture);
+  var subline = brand.Design.Texts.SubtitleIn(culture);
+}
+<div class="poster @side" data-design="poster">
+  <aside class="poster-art@(brand.Design.MediaUrl is null ? null : " has-media")" aria-hidden="true">
+    <partial name="_Media" model="brand" />
+    <div class="poster-text">
+      @if (brand.Design.ShowAppName)
+      {
+        <h2 class="poster-name">@brand.AppName</h2>
+      }
+      @if (claim is not null)
+      {
+        <p class="poster-claim" data-testid="poster-claim">@claim</p>
+      }
+      @if (subline is not null)
+      {
+        <p class="poster-subline">@subline</p>
+      }
+    </div>
+  </aside>
+  <div class="form">
+    <main class="panel@(ViewData["Wide"] is true ? " wide" : null)">
+      <partial name="_Brand" model="brand" />
+      @RenderBody()
+    </main>
+  </div>
+</div>

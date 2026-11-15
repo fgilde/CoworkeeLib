@@ -93,10 +93,10 @@ button.last-used { outline: 2px solid color-mix(in srgb, var(--signal) 40%, tran
 .app-text strong { font-size: 18px; overflow-wrap: anywhere; }
 .app-text .hint { margin: 2px 0 0; font-size: 14px; }
 
-/* media and the colored panel of the split and slide layouts */
+/* media and the colored panel of the split and slide layouts; --panel-fill is background 2 as color or gradient */
 .media { position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; padding: 48px; color: var(--on-signal);
-  background: linear-gradient(135deg, var(--signal), color-mix(in srgb, var(--signal) 45%, var(--accent))); }
-.media > img, .media > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  background: var(--panel-fill, linear-gradient(135deg, var(--signal), color-mix(in srgb, var(--signal) 45%, var(--accent)))); }
+.media > img, .media > video, .poster-art > img, .poster-art > video, .stack-card > img, .stack-card > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .media.has-media::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgb(0 0 0 / .55), transparent 60%); }
 .media.has-media { color: #fff; }
 .media > :not(img, video) { position: relative; z-index: 1; }
@@ -105,16 +105,54 @@ button.last-used { outline: 2px solid color-mix(in srgb, var(--signal) 40%, tran
 .media a.cta { align-self: flex-start; padding: 10px 28px; border: 2px solid currentColor; border-radius: 999px; color: inherit; font-weight: 600; text-decoration: none; transition: background .15s; }
 .media a.cta:hover { background: rgb(255 255 255 / .15); }
 
-/* image or video behind the whole page (Design:BackgroundUrl); the form keeps its own surface */
-.page-background { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+/* background 1 behind the whole page (Design:BackgroundUrl or PageFill as --page-fill); the form keeps its own surface */
+.page-background { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: var(--page-fill, transparent); }
 .page-background > img, .page-background > video { width: 100%; height: 100%; object-fit: cover; }
 .page-background::after { content: ""; position: absolute; inset: 0; background: rgb(0 0 0 / var(--dim, 0%)); }
-body.has-background .split > .form { background: transparent; }
+body.has-background .split > .form, body.has-background .poster > .form { background: transparent; }
 body.has-background .split > .form > .panel { padding: 32px; background: var(--surface); border: 1px solid var(--rule); border-radius: calc(var(--radius) * 2); box-shadow: 0 12px 40px rgb(0 0 0 / .14); }
+
+/* text right on a fill follows the fill's brightness (minimal form, poster form side, spotlight caption, panels) */
+body.page-dark :is(.panel.minimal, .poster > .form) { --ink: #f4f6fa; --ink-2: rgb(255 255 255 / .74); --rule: rgb(255 255 255 / .3); --surface: rgb(255 255 255 / .1); color: var(--ink); }
+body.page-light :is(.panel.minimal, .poster > .form) { --ink: #15171c; --ink-2: rgb(0 0 0 / .62); --rule: rgb(0 0 0 / .2); --surface: rgb(255 255 255 / .55); color: var(--ink); }
+body.page-dark :is(.panel.minimal, .poster > .form) a { color: color-mix(in srgb, var(--signal) 45%, #fff); }
+body.page-light .spotlight-caption { color: #15171c; text-shadow: 0 1px 18px rgb(255 255 255 / .4); }
+body.panel-dark :is(.media, .poster-art) { color: #fff; }
+body.panel-light :is(.media, .poster-art) { color: #15171c; }
+
+/* a gradient fill that shifts slowly */
+body.page-fill-animated .page-background, body.panel-fill-animated :is(.media, .poster-art, .stack-card) { background-size: 300% 300%; animation: fill-shift 22s ease-in-out infinite alternate; }
+@keyframes fill-shift { from { background-position: 0% 30%; } to { background-position: 100% 70%; } }
+
+/* Aurora: blurred fields of the page fill's colors (else the theme's) drifting above background 1 */
+.aurora { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.aurora span { position: absolute; width: 64vmax; height: 64vmax; border-radius: 50%; filter: blur(80px); opacity: .45; will-change: transform; }
+.aurora span:nth-child(1) { background: var(--aurora-1, var(--signal)); top: -26vmax; left: -18vmax; animation: aurora-a 18s ease-in-out infinite alternate; }
+.aurora span:nth-child(2) { background: var(--aurora-2, var(--accent)); bottom: -30vmax; right: -22vmax; opacity: .3; animation: aurora-b 23s ease-in-out infinite alternate; }
+.aurora span:nth-child(3) { background: var(--aurora-3, var(--tertiary)); width: 44vmax; height: 44vmax; top: 34%; left: 38%; opacity: .35; animation: aurora-c 27s ease-in-out infinite alternate; }
+@keyframes aurora-a { to { transform: translate(22vmax, 14vmax) scale(1.15); } }
+@keyframes aurora-b { to { transform: translate(-20vmax, -12vmax) scale(1.1); } }
+@keyframes aurora-c { to { transform: translate(-16vmax, 10vmax) scale(.85); } }
+
+/* Glass surface (card, spotlight): frosted over background 1, over a gradient of the theme colors without one */
+body.surface-glass:not(.has-background) {
+  background: radial-gradient(60vmax 60vmax at 12% 18%, color-mix(in srgb, var(--signal) 55%, transparent), transparent 70%),
+    radial-gradient(55vmax 55vmax at 88% 85%, color-mix(in srgb, var(--tertiary) 45%, transparent), transparent 70%),
+    linear-gradient(135deg, color-mix(in srgb, var(--signal) 18%, var(--paper)), var(--paper)) fixed; }
+.panel.glass { background: color-mix(in srgb, var(--surface) 62%, transparent); border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  box-shadow: 0 24px 60px rgb(0 0 0 / .18), inset 0 1px 0 rgb(255 255 255 / .18);
+  -webkit-backdrop-filter: blur(22px) saturate(160%); backdrop-filter: blur(22px) saturate(160%); }
+.panel.glass :is(input[type=email], input[type=password], input[type=text], input[type=tel], input[type=file]) { background: color-mix(in srgb, var(--surface) 70%, transparent); }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .panel.glass { background: var(--surface); }
+}
 
 /* Card */
 body.layout-card { display: grid; place-items: center; padding: 24px 16px; }
-body.layout-card .panel { padding: 32px; background: var(--surface); border: 1px solid var(--rule); border-radius: calc(var(--radius) * 2); box-shadow: 0 12px 40px rgb(0 0 0 / .08); }
+body.layout-card .panel { padding: 36px 32px; background: var(--surface); border: 1px solid var(--rule); border-radius: calc(var(--radius) * 2); box-shadow: 0 12px 40px rgb(0 0 0 / .08); animation: rise .45s ease-out both; }
+body.layout-card .panel.glass { background: color-mix(in srgb, var(--surface) 62%, transparent); border-color: color-mix(in srgb, var(--ink) 12%, transparent); border-radius: calc(var(--radius) * 3);
+  box-shadow: 0 24px 60px rgb(0 0 0 / .18), inset 0 1px 0 rgb(255 255 255 / .18); }
+body.layout-card.with-aurora .panel:not(.glass) { border-radius: calc(var(--radius) * 3); box-shadow: 0 30px 80px color-mix(in srgb, var(--signal) 22%, rgb(0 0 0 / .12)); }
 
 /* Split */
 .split { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); min-height: 100vh; }
@@ -134,58 +172,134 @@ body.layout-slide { display: grid; place-items: center; padding: 24px 16px; }
 @keyframes rise { from { opacity: 0; transform: translateY(16px); } }
 ::view-transition-group(account-panel), ::view-transition-group(account-form) { animation-duration: .6s; animation-timing-function: cubic-bezier(.7, 0, .2, 1); }
 
-/* Glass: a frosted card over the page background, the media or a gradient of the theme colors */
-body.layout-glass { display: grid; place-items: center; padding: 24px 16px;
-  background: radial-gradient(60vmax 60vmax at 12% 18%, color-mix(in srgb, var(--signal) 55%, transparent), transparent 70%),
-    radial-gradient(55vmax 55vmax at 88% 85%, color-mix(in srgb, var(--tertiary) 45%, transparent), transparent 70%),
-    linear-gradient(135deg, color-mix(in srgb, var(--signal) 18%, var(--paper)), var(--paper)); }
-body.layout-glass .panel { padding: 36px 32px; background: color-mix(in srgb, var(--surface) 62%, transparent); border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
-  border-radius: calc(var(--radius) * 3); box-shadow: 0 24px 60px rgb(0 0 0 / .18), inset 0 1px 0 rgb(255 255 255 / .18);
-  -webkit-backdrop-filter: blur(22px) saturate(160%); backdrop-filter: blur(22px) saturate(160%); }
-body.layout-glass .panel :is(input[type=email], input[type=password], input[type=text], input[type=tel], input[type=file]) { background: color-mix(in srgb, var(--surface) 70%, transparent); }
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  body.layout-glass .panel { background: var(--surface); }
-}
+/* Spotlight: background 1 fills the screen, the form floats in a full-height panel at one edge, the app name in big letters on the open side */
+body.layout-spotlight:not(.has-background) {
+  background: radial-gradient(90vmax 70vmax at 0% 100%, color-mix(in srgb, var(--signal) 85%, transparent), transparent 62%),
+    radial-gradient(60vmax 60vmax at 55% -10%, color-mix(in srgb, var(--tertiary) 55%, transparent), transparent 60%),
+    linear-gradient(150deg, color-mix(in srgb, var(--signal) 45%, var(--paper)), color-mix(in srgb, var(--accent) 30%, var(--paper))) fixed; }
+.spotlight { display: flex; gap: 24px; min-height: 100vh; padding: 24px; }
+.spotlight.panel-left { flex-direction: row-reverse; }
+.spotlight-caption { flex: 1; align-self: flex-end; min-width: 0; padding: 0 24px 24px; color: #fff; text-shadow: 0 2px 30px rgb(0 0 0 / .35); }
+.spotlight.panel-left .spotlight-caption { text-align: right; }
+.spotlight-caption h2 { margin: 0; max-width: 11ch; font-size: clamp(44px, 6.4vw, 104px); font-weight: 800; line-height: .95; letter-spacing: -.035em; overflow-wrap: break-word; animation: rise .8s .15s ease-out both; }
+.spotlight.panel-left .spotlight-caption h2 { margin-left: auto; }
+.spotlight > .sheet { flex: none; position: sticky; top: 24px; display: flex; flex-direction: column; justify-content: center; width: min(480px, 100%); min-height: calc(100vh - 48px);
+  padding: 48px 44px; background: var(--surface); border-radius: calc(var(--radius) * 2 + 12px); box-shadow: 0 30px 90px rgb(0 0 0 / .28), 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
+  animation: sheet-right .7s cubic-bezier(.2, .8, .2, 1) both; }
+.spotlight > .sheet.wide { width: min(760px, 100%); }
+.spotlight.panel-left > .sheet { animation-name: sheet-left; }
+.spotlight > .sheet.glass { background: color-mix(in srgb, var(--surface) 62%, transparent); box-shadow: 0 30px 90px rgb(0 0 0 / .25), inset 0 1px 0 rgb(255 255 255 / .2); }
+@keyframes sheet-right { from { opacity: 0; transform: translateX(48px); } }
+@keyframes sheet-left { from { opacity: 0; transform: translateX(-48px); } }
+@keyframes sheet-up { from { opacity: 0; transform: translateY(64px); } }
 
-/* Aurora: a clean card over soft fields of the theme's primary, secondary and tertiary color that drift slowly */
-body.layout-aurora { display: grid; place-items: center; padding: 24px 16px; }
-.aurora { position: fixed; inset: 0; z-index: -2; overflow: hidden; pointer-events: none; }
-.aurora span { position: absolute; width: 64vmax; height: 64vmax; border-radius: 50%; filter: blur(80px); opacity: .45; will-change: transform; }
-.aurora span:nth-child(1) { background: var(--signal); top: -26vmax; left: -18vmax; animation: aurora-a 18s ease-in-out infinite alternate; }
-.aurora span:nth-child(2) { background: var(--accent); bottom: -30vmax; right: -22vmax; opacity: .3; animation: aurora-b 23s ease-in-out infinite alternate; }
-.aurora span:nth-child(3) { background: var(--tertiary); width: 44vmax; height: 44vmax; top: 34%; left: 38%; opacity: .35; animation: aurora-c 27s ease-in-out infinite alternate; }
-@keyframes aurora-a { to { transform: translate(22vmax, 14vmax) scale(1.15); } }
-@keyframes aurora-b { to { transform: translate(-20vmax, -12vmax) scale(1.1); } }
-@keyframes aurora-c { to { transform: translate(-16vmax, 10vmax) scale(.85); } }
-body.layout-aurora .panel { padding: 36px 32px; background: var(--surface); border: 1px solid var(--rule); border-radius: calc(var(--radius) * 3);
-  box-shadow: 0 30px 80px color-mix(in srgb, var(--signal) 22%, rgb(0 0 0 / .12)); }
+/* Poster: no card; the poster side carries the app name in big letters and the sign-in title as claim, the form side stays calm with line inputs */
+.poster { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); min-height: 100vh; }
+.poster.poster-right { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); }
+.poster.poster-right > .poster-art { order: 2; }
+.poster-art { position: relative; overflow: hidden; isolation: isolate; container-type: inline-size; display: flex; flex-direction: column; justify-content: flex-end; padding: clamp(32px, 6vw, 88px);
+  color: var(--on-signal); background: var(--panel-fill, linear-gradient(160deg, var(--signal), color-mix(in srgb, var(--signal) 60%, #000))); }
+.poster-art::before, .poster-art::after { content: ""; position: absolute; z-index: -1; aspect-ratio: 1; border-radius: 50%; border: 1px solid currentColor; opacity: .22; pointer-events: none; }
+.poster-art::before { width: 115%; top: -55%; right: -45%; }
+.poster-art::after { width: 70%; top: -20%; right: -20%; opacity: .14; }
+.poster-art.has-media { color: #fff; }
+.poster-art.has-media::after { inset: 0; width: auto; aspect-ratio: auto; border: 0; border-radius: 0; opacity: 1; z-index: 0; background: linear-gradient(to top, rgb(0 0 0 / .7), rgb(0 0 0 / .1) 65%); }
+.poster-art.has-media::before { display: none; }
+.poster-text { position: relative; z-index: 1; }
+.poster-name { margin: 0; font-size: clamp(44px, 16cqi, 148px); font-weight: 800; line-height: .88; letter-spacing: -.05em; overflow-wrap: break-word; animation: rise .8s ease-out both; }
+.poster-claim { max-width: 20ch; margin: 28px 0 0; padding-top: 20px; border-top: 3px solid currentColor; font-size: clamp(20px, 2.1vw, 30px); font-weight: 600; line-height: 1.2; animation: rise .8s .12s ease-out both; }
+.poster-subline { max-width: 38ch; margin: 12px 0 0; opacity: .85; animation: rise .8s .2s ease-out both; }
+.poster > .form { display: grid; place-items: center; padding: 56px clamp(24px, 5vw, 80px); background: var(--surface); }
+.poster > .form > .panel { animation: rise .5s .1s ease-out both; }
+body.layout-poster h1 { font-size: 34px; font-weight: 700; letter-spacing: -.02em; }
+body.layout-poster .panel :is(input[type=email], input[type=password], input[type=text], input[type=tel]) { padding: 12px 2px; border: 0; border-bottom: 2px solid var(--rule); border-radius: 0; background: transparent; }
+body.layout-poster .panel :is(input[type=email], input[type=password], input[type=text], input[type=tel]):focus-visible { border-bottom-color: var(--signal); box-shadow: 0 2px 0 0 var(--signal); }
+body.layout-poster .panel button:not(.reveal) { border-radius: 999px; padding: 14px; }
+
+/* Stack: the form card in front of two tilted cards (background 2) that flip between sign-in and registration */
+body.layout-stack { display: grid; place-items: center; padding: 56px 20px; overflow-x: clip; }
+body.layout-stack:not(.has-background) { background: radial-gradient(70vmax 60vmax at 50% 45%, color-mix(in srgb, var(--signal) 14%, var(--paper)), var(--paper) 70%) fixed; }
+.stack { position: relative; width: min(440px, 100%); view-transition-name: account-stack; }
+.stack.wide { width: min(760px, 100%); }
+.stack > .panel { position: relative; z-index: 2; width: 100%; padding: 38px 34px; background: var(--surface); border: 1px solid var(--rule); border-radius: calc(var(--radius) * 2 + 8px);
+  box-shadow: 0 30px 70px rgb(0 0 0 / .22); animation: rise .5s .1s ease-out both; }
+.stack-card { position: absolute; inset: 0; overflow: hidden; border-radius: calc(var(--radius) * 2 + 8px); box-shadow: 0 20px 50px rgb(0 0 0 / .18);
+  background: var(--panel-fill, linear-gradient(135deg, var(--signal), color-mix(in srgb, var(--tertiary) 70%, var(--signal)))); transition: transform .6s cubic-bezier(.7, 0, .2, 1);
+  animation: fan .9s cubic-bezier(.2, .8, .2, 1) both; }
+.stack-card.back-1 { z-index: 1; transform: rotate(var(--tilt, 6deg)) translate(5%, 1%); }
+.stack-card.back-2 { z-index: 0; transform: rotate(calc(var(--tilt, 6deg) * -1.5)) translate(-7%, 3%); filter: saturate(.8) brightness(.8); opacity: .75; }
+.stack.flipped .stack-card.back-1 { transform: rotate(calc(var(--tilt, 6deg) * -1)) translate(-5%, 1%); }
+.stack.flipped .stack-card.back-2 { transform: rotate(calc(var(--tilt, 6deg) * 1.5)) translate(7%, 3%); }
+@keyframes fan { from { transform: none; opacity: 0; } }
+::view-transition-old(account-stack) { animation: stack-out .3s cubic-bezier(.7, 0, 1, 1) both; }
+::view-transition-new(account-stack) { animation: stack-in .45s .28s cubic-bezier(0, 0, .2, 1) both; }
+@keyframes stack-out { to { transform: perspective(1400px) rotateY(90deg); opacity: .4; } }
+@keyframes stack-in { from { transform: perspective(1400px) rotateY(-90deg); opacity: .4; } }
+
+/* Minimal: no card, no border; a large logo and the form right on background 1 */
+body.layout-minimal { display: grid; place-items: center; padding: 48px 20px; }
+.panel.minimal { width: min(380px, 100%); --logo: 64px; }
+.panel.minimal.logo-small { --logo: 40px; }
+.panel.minimal.logo-large { --logo: 112px; }
+.panel.minimal > * { animation: rise .55s ease-out both; }
+.panel.minimal > :nth-child(2) { animation-delay: .06s; }
+.panel.minimal > :nth-child(3) { animation-delay: .12s; }
+.panel.minimal > :nth-child(n+4) { animation-delay: .18s; }
+.panel.minimal .brand { flex-direction: column; justify-content: center; gap: 16px; margin: 0 0 40px; font-size: calc(14px + var(--logo) / 6); letter-spacing: -.01em; text-align: center; }
+.panel.minimal .brand img { height: var(--logo); max-width: min(100%, calc(var(--logo) * 4)); }
+.panel.minimal > h1, .panel.minimal > .subtitle { text-align: center; }
+.panel.minimal > h1 { font-size: 26px; }
+.panel.minimal :is(input[type=email], input[type=password], input[type=text], input[type=tel]) { border-color: transparent; background: color-mix(in srgb, var(--ink) 6%, var(--surface)); }
+.panel.minimal :is(input[type=email], input[type=password], input[type=text], input[type=tel]):focus-visible { border-color: var(--signal); }
+/* over an image or video the form gets a soft frosted backdrop, still without a border */
+body.layout-minimal.has-image .panel.minimal { padding: 40px 32px; border-radius: calc(var(--radius) * 3); background: color-mix(in srgb, var(--surface) 74%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(150%); backdrop-filter: blur(20px) saturate(150%); }
 
 @media (max-width: 860px) {
-  .split { grid-template-columns: 1fr; grid-template-rows: 200px 1fr; }
-  .split.media-right .media { order: 0; }
+  .split, .poster, .poster.poster-right { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .split { grid-template-rows: 200px 1fr; }
+  .split.media-right .media, .poster.poster-right > .poster-art { order: 0; }
   .media { padding: 24px; }
   .media h2 { font-size: 24px; }
   .slide { grid-template-columns: 1fr; min-height: 0; }
   .slide > .media, .slide.media-left > .media, .slide.media-right > .media { order: -1; border-radius: 0; padding: 28px 24px; }
   .slide > .form { padding: 32px 20px; }
+  .poster-art { min-height: 38vh; padding: calc(32px + env(safe-area-inset-top)) 24px 32px; }
+  .poster-claim { margin-top: 18px; padding-top: 14px; }
+  .poster > .form { padding: 36px 20px calc(36px + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 640px) {
+  /* spotlight: the panel becomes a bottom sheet under the open background */
+  .spotlight, .spotlight.panel-left { flex-direction: column; gap: 0; min-height: 100dvh; padding: 0; }
+  .spotlight-caption, .spotlight.panel-left .spotlight-caption { display: flex; align-items: flex-end; align-self: stretch; min-height: 22vh; padding: calc(28px + env(safe-area-inset-top)) 24px 24px; text-align: left; }
+  .spotlight-caption h2 { font-size: clamp(40px, 12vw, 64px); }
+  .spotlight > .sheet, .spotlight.panel-left > .sheet { position: static; width: 100%; min-height: 0; flex: 1 0 auto; justify-content: flex-start;
+    padding: 32px 20px calc(32px + env(safe-area-inset-bottom)); border-radius: calc(var(--radius) * 2 + 16px) calc(var(--radius) * 2 + 16px) 0 0; animation-name: sheet-up; }
 }
 @media (max-width: 480px) {
   /* phones: the form fills the screen like an app, inside the safe area of notched devices; 16px inputs keep iOS from zooming in */
-  body.layout-card, body.layout-slide { display: block; padding: 0; }
-  /* glass and aurora keep a floating card, their background is the point */
-  body.layout-glass, body.layout-aurora { padding: calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom)); }
-  body.layout-glass .panel, body.layout-aurora .panel { padding: 28px 20px; border-radius: calc(var(--radius) * 2); }
-  body.layout-card .panel { min-height: 100dvh; padding: calc(24px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom)); border: 0; border-radius: 0; box-shadow: none; }
+  body.layout-card:not(.has-background, .surface-glass, .with-aurora), body.layout-slide { display: block; padding: 0; }
+  /* a card over a background, glass or aurora floats, the background is the point */
+  body.layout-card:is(.has-background, .surface-glass, .with-aurora) { padding: calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom)); }
+  body.layout-card:is(.has-background, .surface-glass, .with-aurora) .panel { padding: 28px 20px; border-radius: calc(var(--radius) * 2); }
+  body.layout-card:not(.has-background, .surface-glass, .with-aurora) .panel { min-height: 100dvh; padding: calc(24px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom)); border: 0; border-radius: 0; box-shadow: none; }
   .slide, .slide.wide { width: 100%; min-height: 100dvh; border-radius: 0; box-shadow: none; }
   .slide > .media, .slide.media-left > .media, .slide.media-right > .media { padding-top: calc(28px + env(safe-area-inset-top)); }
   .slide > .form, .split > .form { padding-bottom: calc(32px + env(safe-area-inset-bottom)); }
+  body.layout-stack { padding: calc(40px + env(safe-area-inset-top)) 18px calc(32px + env(safe-area-inset-bottom)); }
+  .stack > .panel { padding: 30px 22px; }
+  .stack-card.back-1 { transform: rotate(calc(var(--tilt, 6deg) * .6)) translate(3%, -1%); }
+  .stack-card.back-2 { transform: rotate(calc(var(--tilt, 6deg) * -.9)) translate(-3%, 2%); }
+  .stack.flipped .stack-card.back-1 { transform: rotate(calc(var(--tilt, 6deg) * -.6)) translate(-3%, -1%); }
+  .stack.flipped .stack-card.back-2 { transform: rotate(calc(var(--tilt, 6deg) * .9)) translate(3%, 2%); }
+  body.layout-minimal { padding: calc(40px + env(safe-area-inset-top)) 20px calc(32px + env(safe-area-inset-bottom)); place-items: start center; }
   .row { grid-template-columns: 1fr; }
   input[type=email], input[type=password], input[type=text], input[type=tel] { font-size: 16px; }
   .check input { width: 22px; height: 22px; }
   .links a { display: inline-block; padding: 10px 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after, ::view-transition-group(*) { animation: none !important; transition: none !important; }
+  *, *::before, *::after, ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; transition: none !important; }
 }
 
 /* passkeys (passkey.js) */

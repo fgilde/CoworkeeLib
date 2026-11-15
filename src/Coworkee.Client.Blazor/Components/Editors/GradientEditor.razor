@@ -1,0 +1,103 @@
+@using MudBlazor.Extensions.Components
+@* a gradient of up to SignInFills.MaxStops stops: live preview, the stops as handles on a track, the selected stop's color and position, kind, angle, motion and presets *@
+<style>
+    .cw-gradient { display: flex; flex-direction: column; gap: 14px; }
+    .cw-gradient-preview { position: relative; height: 132px; border-radius: calc(var(--mud-default-borderradius) * 2); border: 1px solid var(--mud-palette-lines-default);
+        box-shadow: inset 0 0 0 1px rgb(255 255 255 / .06), 0 8px 24px rgb(0 0 0 / .08); transition: background .25s; }
+    .cw-gradient-preview.animated { background-size: 300% 300% !important; animation: cw-gradient-shift 8s ease-in-out infinite alternate; }
+    @@keyframes cw-gradient-shift { from { background-position: 0% 30%; } to { background-position: 100% 70%; } }
+    .cw-gradient-preview-badge { position: absolute; right: 10px; bottom: 10px; padding: 2px 10px; border-radius: 999px; font-size: .75rem; font-weight: 600;
+        color: #fff; background: rgb(0 0 0 / .38); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+    .cw-gradient-track { position: relative; height: 30px; margin: 4px 12px 14px; border-radius: 999px; cursor: copy; touch-action: none;
+        box-shadow: inset 0 0 0 1px rgb(0 0 0 / .12); }
+    .cw-gradient-track::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit;
+        background: repeating-conic-gradient(#cfcfcf 0 25%, #fff 0 50%) 0 0 / 12px 12px; }
+    .cw-gradient-stop { position: absolute; top: 50%; width: 24px; height: 24px; padding: 0; transform: translate(-50%, -50%); border-radius: 50%; cursor: grab; touch-action: none;
+        background: var(--stop); border: 3px solid #fff; box-shadow: 0 0 0 1px rgb(0 0 0 / .25), 0 3px 8px rgb(0 0 0 / .3); transition: transform .15s, box-shadow .15s; }
+    .cw-gradient-stop::after { content: ""; position: absolute; left: 50%; top: calc(100% + 5px); width: 2px; height: 8px; transform: translateX(-50%); border-radius: 1px; background: var(--mud-palette-text-secondary); opacity: 0; }
+    .cw-gradient-stop:hover { transform: translate(-50%, -50%) scale(1.1); }
+    .cw-gradient-stop:active { cursor: grabbing; }
+    .cw-gradient-stop.selected { transform: translate(-50%, -50%) scale(1.22); box-shadow: 0 0 0 2px var(--mud-palette-primary), 0 4px 12px rgb(0 0 0 / .35); }
+    .cw-gradient-stop.selected::after { opacity: 1; }
+    .cw-gradient-stop:focus-visible { outline: 2px solid var(--mud-palette-primary); outline-offset: 3px; }
+    .cw-gradient-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+    .cw-gradient-row > .mud-input-control { margin: 0; }
+    .cw-gradient-swatch { flex: none; width: 36px; height: 36px; border-radius: var(--mud-default-borderradius); background: var(--stop); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .15); }
+    .cw-gradient-dial { flex: none; position: relative; width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--mud-palette-lines-default); }
+    .cw-gradient-dial::after { content: ""; position: absolute; left: 50%; top: 3px; width: 3px; height: 14px; margin-left: -1.5px; border-radius: 2px; background: var(--mud-palette-primary);
+        transform-origin: 50% 13px; transform: rotate(var(--angle)); transition: transform .15s; }
+    .cw-gradient-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+    .cw-gradient-preset { width: 44px; height: 28px; padding: 0; border-radius: 999px; cursor: pointer; border: 2px solid transparent; box-shadow: inset 0 0 0 1px rgb(0 0 0 / .12); transition: transform .15s, border-color .15s; }
+    .cw-gradient-preset:hover, .cw-gradient-preset:focus-visible { transform: translateY(-2px); border-color: var(--mud-palette-primary); outline: none; }
+    .cw-theme-colors { display: flex; flex-wrap: wrap; gap: 6px; }
+    .cw-theme-color { width: 22px; height: 22px; padding: 0; border-radius: 50%; cursor: pointer; background: var(--stop); border: 2px solid var(--mud-palette-surface); box-shadow: 0 0 0 1px var(--mud-palette-lines-default); }
+    .cw-theme-color[aria-pressed=true] { box-shadow: 0 0 0 2px var(--mud-palette-primary); }
+    @@media (prefers-reduced-motion: reduce) { .cw-gradient-preview.animated { animation: none; } .cw-gradient-stop, .cw-gradient-preset, .cw-gradient-dial::after { transition: none; } }
+</style>
+
+@if (Value is not null)
+{
+    <div class="cw-gradient" data-testid="gradient-editor">
+        <div class="cw-gradient-preview @(Value.Animated ? "animated" : null)" style="background:@(Css ?? "none")" data-testid="gradient-preview">
+            <span class="cw-gradient-preview-badge">@L[Value.Kind.ToString()]@(Value.Kind == SignInGradientKind.Radial ? null : $" · {Value.Angle}°")</span>
+        </div>
+        <div class="cw-gradient-track" @ref="_track" style="background:@TrackCss" title="@L["Click to add a stop, drag a stop to move it"]" data-testid="gradient-track">
+            @for (var i = 0; i < Value.Stops.Count; i++)
+            {
+                var index = i;
+                var stop = Value.Stops[i];
+                <button type="button" class="cw-gradient-stop @(index == Selected ? "selected" : null)" style="left:@(stop.Position)%;--stop:@Show(stop.Color)" data-stop="@index"
+                        aria-label="@L["Stop {0} at {1} %", index + 1, stop.Position]" aria-pressed="@(index == Selected ? "true" : "false")"
+                        @onclick="() => SelectStop(index)" @onkeydown="e => KeyAsync(e, index)" data-testid="gradient-stop"></button>
+            }
+        </div>
+
+        @if (SelectedStop is { } selected)
+        {
+            <div class="cw-gradient-row" data-testid="gradient-selected-stop">
+                <span class="cw-gradient-swatch" style="--stop:@Show(selected.Color)"></span>
+                <MudExColorEdit ValueString="@(IsThemeColor(selected.Color) ? null : selected.Color)" ValueStringChanged="SetColorAsync" Label="@L["Color"]" ForceSelectOfMudColor="true"
+                                ShowCssColorVariables="false" Variant="Variant.Outlined" Margin="Density.Margin" Style="flex:1 1 180px" data-testid="gradient-stop-color" />
+                <MudNumericField T="int" Value="selected.Position" ValueChanged="SetPositionAsync" Label="@L["Position (%)"]" Min="0" Max="100" Variant="Variant.Outlined"
+                                 Margin="Density.Margin" Style="width:120px" data-testid="gradient-stop-position" />
+                <MudTooltip Text="@L["Delete stop"]">
+                    <MudIconButton Icon="@Icons.Material.Outlined.Delete" Color="Color.Error" Disabled="Value.Stops.Count <= 2" OnClick="() => RemoveStopAsync(Selected)"
+                                   aria-label="@L["Delete stop"]" data-testid="gradient-stop-delete" />
+                </MudTooltip>
+                <MudTooltip Text="@L["Add stop"]">
+                    <MudIconButton Icon="@Icons.Material.Outlined.AddCircleOutline" Disabled="Value.Stops.Count >= SignInFills.MaxStops" OnClick="AddInGapAsync"
+                                   aria-label="@L["Add stop"]" data-testid="gradient-stop-add" />
+                </MudTooltip>
+            </div>
+            <div class="cw-gradient-row">
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["Theme colors"]</MudText>
+                <ThemeColorChips Value="@selected.Color" ValueChanged="SetColorAsync" ThemeColor="ThemeColor" />
+            </div>
+        }
+
+        <div class="cw-gradient-row">
+            <MudToggleGroup T="SignInGradientKind" Value="Value.Kind" ValueChanged="SetKindAsync" Color="Color.Primary" Size="Size.Small" Outlined="true" data-testid="gradient-kind">
+                <MudToggleItem Value="SignInGradientKind.Linear" Text="@L["Linear"]" />
+                <MudToggleItem Value="SignInGradientKind.Radial" Text="@L["Radial"]" />
+                <MudToggleItem Value="SignInGradientKind.Conic" Text="@L["Conic"]" />
+            </MudToggleGroup>
+            <span class="cw-gradient-dial" style="--angle:@(Value.Angle)deg" aria-hidden="true"></span>
+            <MudSlider T="int" Value="Value.Angle" ValueChanged="SetAngleAsync" Min="0" Max="359" Step="1" Disabled="Value.Kind == SignInGradientKind.Radial" Color="Color.Primary"
+                       Style="flex:1 1 160px;min-width:140px" aria-label="@L["Angle"]" data-testid="gradient-angle">@L["Angle"]: @(Value.Angle)°</MudSlider>
+            <MudSwitch T="bool" Value="Value.Animated" ValueChanged="SetAnimatedAsync" Color="Color.Primary" Label="@L["Animated"]" data-testid="gradient-animated" />
+        </div>
+
+        <div class="cw-gradient-row">
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["Presets"]</MudText>
+            <div class="cw-gradient-presets">
+                @foreach (var (name, preset) in Presets)
+                {
+                    <MudTooltip Text="@L[name]">
+                        <button type="button" class="cw-gradient-preset" style="background:@SignInFills.Css(new SignInFill { Gradient = preset }, ThemeColor)" aria-label="@L[name]"
+                                @onclick="() => UsePresetAsync(preset)" data-testid="gradient-preset"></button>
+                    </MudTooltip>
+                }
+            </div>
+        </div>
+    </div>
+}

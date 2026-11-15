@@ -1,3 +1,4 @@
+@using Coworkee.Client.Blazor.Components.Editors
 @if (Value is not null)
 {
     <MudCard Outlined="true" Class="mb-4" data-testid="sign-in-design">
@@ -14,35 +15,86 @@
                     var selected = IsSelected(layout);
                     <button type="button" role="radio" aria-checked="@(selected ? "true" : "false")" style="@TileStyle(selected)"
                             @onclick="() => ChooseAsync(layout)" data-testid="sign-in-layout" data-layout="@(layout)">
-                        <SignInLayoutThumb Layout="@(layout)" MediaSide="Value.MediaSide" />
+                        <SignInLayoutThumb Layout="@(layout)" MediaSide="Value.MediaSide" PageFill="Value.PageFill" PanelFill="Value.PanelFill" Tilt="Value.Tilt" />
                         <MudText Typo="Typo.body2" Class="mt-1">@L[layout]</MudText>
                     </button>
                 }
             </div>
             <MudGrid Spacing="2">
-                <MudItem xs="12" sm="8">
-                    <MudTextField T="string" @bind-Value="Value.MediaUrl" @bind-Value:after="NotifyAsync" Label="@L["Image or video address"]" Clearable="true" Margin="Density.Margin"
-                                  Variant="Variant.Outlined" Disabled="!UsesMedia" HelperText="@L["For the split and slide layouts, for example /media/welcome.mp4"]"
-                                  Adornment="@(_canPickFiles ? Adornment.End : Adornment.None)" AdornmentIcon="@Icons.Material.Outlined.FolderOpen"
-                                  AdornmentAriaLabel="@L["Choose from files"]" OnAdornmentClick="ChooseMediaAsync" data-testid="sign-in-media" />
+                <MudItem xs="12" md="@(LayoutOptions.PanelBackground is null && !ShowsLoadingMedia ? 12 : 6)">
+                    <FillEditor Label="@L[LayoutOptions.PageBackground ?? "Page background"]" Url="@Value.BackgroundUrl" UrlChanged="SetBackgroundUrlAsync"
+                                Fill="Value.PageFill" FillChanged="SetPageFillAsync" />
                 </MudItem>
-                <MudItem xs="12" sm="4">
-                    <MudSelect T="SignInMediaSide?" @bind-Value="Value.MediaSide" @bind-Value:after="NotifyAsync" Label="@L["Image side"]" Clearable="true" Margin="Density.Margin"
-                               Variant="Variant.Outlined" Disabled="!SignInLayouts.HasPanel(SelectedLayout)">
-                        <MudSelectItem T="SignInMediaSide?" Value="SignInMediaSide.Left">@L["Left"]</MudSelectItem>
-                        <MudSelectItem T="SignInMediaSide?" Value="SignInMediaSide.Right">@L["Right"]</MudSelectItem>
-                    </MudSelect>
-                </MudItem>
-                <MudItem xs="12" sm="8">
-                    <MudTextField T="string" @bind-Value="Value.BackgroundUrl" @bind-Value:after="NotifyAsync" Label="@L["Page background (image or video)"]" Clearable="true" Margin="Density.Margin"
-                                  Variant="Variant.Outlined" HelperText="@L["Behind the whole page in every layout; empty keeps the theme's background."]"
-                                  Adornment="@(_canPickFiles ? Adornment.End : Adornment.None)" AdornmentIcon="@Icons.Material.Outlined.FolderOpen"
-                                  AdornmentAriaLabel="@L["Choose the page background from files"]" OnAdornmentClick="ChooseBackgroundAsync" data-testid="sign-in-background" />
-                </MudItem>
-                <MudItem xs="12" sm="4">
-                    <MudNumericField T="int?" @bind-Value="Value.BackgroundDim" @bind-Value:after="NotifyAsync" Label="@L["Darken background (%)"]" Min="0" Max="90" Step="10" Clearable="true"
-                                     Margin="Density.Margin" Variant="Variant.Outlined" Disabled="@string.IsNullOrWhiteSpace(Value.BackgroundUrl)" data-testid="sign-in-background-dim" />
-                </MudItem>
+                @if (LayoutOptions.PanelBackground is { } panel)
+                {
+                    <MudItem xs="12" md="6">
+                        <FillEditor Label="@L[panel]" Url="@Value.MediaUrl" UrlChanged="SetMediaUrlAsync" Fill="Value.PanelFill" FillChanged="SetPanelFillAsync" />
+                    </MudItem>
+                }
+                else if (ShowsLoadingMedia)
+                {
+                    @* the loading screen shows the media even when the layout does not *@
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" @bind-Value="Value.MediaUrl" @bind-Value:after="NotifyAsync" Label="@L["Image or video of the loading screen"]" Clearable="true"
+                                      Margin="Density.Margin" Variant="Variant.Outlined" Adornment="@(_canPickFiles ? Adornment.End : Adornment.None)"
+                                      AdornmentIcon="@Icons.Material.Outlined.FolderOpen" AdornmentAriaLabel="@L["Choose from files"]" OnAdornmentClick="ChooseMediaAsync" data-testid="sign-in-media" />
+                    </MudItem>
+                }
+                @if (LayoutOptions.MediaSide is { } sideLabel)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudSelect T="SignInMediaSide?" @bind-Value="Value.MediaSide" @bind-Value:after="NotifyAsync" Label="@L[sideLabel]" Clearable="true" Margin="Density.Margin"
+                                   Variant="Variant.Outlined" data-testid="sign-in-side">
+                            <MudSelectItem T="SignInMediaSide?" Value="SignInMediaSide.Left">@L["Left"]</MudSelectItem>
+                            <MudSelectItem T="SignInMediaSide?" Value="SignInMediaSide.Right">@L["Right"]</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                }
+                @if (LayoutOptions.Surface)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mb-1">@L["Surface"]</MudText>
+                        <MudToggleGroup T="SignInSurface" Value="Value.Surface ?? SignInSurface.Solid" ValueChanged="SetSurfaceAsync" Color="Color.Primary" Size="Size.Small" Outlined="true"
+                                        Delimiters="true" data-testid="sign-in-surface">
+                            <MudToggleItem Value="SignInSurface.Solid" Text="@L["Solid"]" />
+                            <MudToggleItem Value="SignInSurface.Glass" Text="@L["Glass"]" />
+                        </MudToggleGroup>
+                    </MudItem>
+                }
+                @if (LayoutOptions.Animation)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudSwitch T="bool" Value="Value.Animation == SignInAnimation.Aurora" ValueChanged="SetAuroraAsync" Color="Color.Primary" Label="@L["Aurora (drifting color fields)"]"
+                                   data-testid="sign-in-aurora" />
+                    </MudItem>
+                }
+                @if (LayoutOptions.Dim)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudSlider T="int" Value="Value.BackgroundDim ?? 0" ValueChanged="SetDimAsync" Min="0" Max="90" Step="5" Color="Color.Primary" data-testid="sign-in-background-dim">
+                            @L["Darken background"]: @(Value.BackgroundDim ?? 0) %
+                        </MudSlider>
+                    </MudItem>
+                }
+                @if (LayoutOptions.Tilt)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudSlider T="int" Value="Value.Tilt ?? SignInLayoutOptions.DefaultTilt" ValueChanged="SetTiltAsync" Min="0" Max="SignInLayoutOptions.MaxTilt" Step="1" Color="Color.Primary"
+                                   data-testid="sign-in-tilt">@L["Tilt of the cards"]: @(Value.Tilt ?? SignInLayoutOptions.DefaultTilt)°</MudSlider>
+                    </MudItem>
+                }
+                @if (LayoutOptions.LogoSize)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mb-1">@L["Logo size"]</MudText>
+                        <MudToggleGroup T="SignInLogoSize" Value="Value.LogoSize ?? SignInLogoSize.Medium" ValueChanged="SetLogoSizeAsync" Color="Color.Primary" Size="Size.Small"
+                                        Outlined="true" Delimiters="true" data-testid="sign-in-logo-size">
+                            <MudToggleItem Value="SignInLogoSize.Small" Text="@L["Small"]" />
+                            <MudToggleItem Value="SignInLogoSize.Medium" Text="@L["Medium"]" />
+                            <MudToggleItem Value="SignInLogoSize.Large" Text="@L["Large"]" />
+                        </MudToggleGroup>
+                    </MudItem>
+                }
                 @if (Value is SignInDesign)
                 {
                     <MudItem xs="12" sm="8">

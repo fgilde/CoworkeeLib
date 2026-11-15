@@ -327,3 +327,45 @@ export function placeholderKeys(root) {
         }
     }, true);
 }
+
+// the stop track of GradientEditor: a press on the track adds a stop there, a stop follows the pointer while dragged (one call per frame);
+// positions in whole percent of the track's width
+export function gradientTrack(track, dotnet) {
+    let frame = 0;
+    let pending = null;
+    const position = e => {
+        const box = track.getBoundingClientRect();
+        return Math.round(Math.min(Math.max((e.clientX - box.left) / box.width, 0), 1) * 100);
+    };
+    const down = e => {
+        if (e.button !== 0) return;
+        const stop = e.target.closest('[data-stop]');
+        if (!stop) {
+            dotnet.invokeMethodAsync('AddStop', position(e));
+            return;
+        }
+
+        e.preventDefault();
+        stop.focus();
+        stop.setPointerCapture(e.pointerId);
+        const index = Number(stop.dataset.stop);
+        dotnet.invokeMethodAsync('SelectStop', index);
+        const move = m => {
+            pending = position(m);
+            frame ||= requestAnimationFrame(() => {
+                frame = 0;
+                dotnet.invokeMethodAsync('DragStop', pending);
+            });
+        };
+        const up = () => {
+            stop.removeEventListener('pointermove', move);
+            stop.removeEventListener('pointerup', up);
+            stop.removeEventListener('pointercancel', up);
+        };
+        stop.addEventListener('pointermove', move);
+        stop.addEventListener('pointerup', up);
+        stop.addEventListener('pointercancel', up);
+    };
+    track.addEventListener('pointerdown', down);
+    return { dispose: () => { cancelAnimationFrame(frame); track.removeEventListener('pointerdown', down); } };
+}

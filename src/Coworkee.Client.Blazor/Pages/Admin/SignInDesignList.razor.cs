@@ -68,7 +68,7 @@ public partial class SignInDesignList
 
     private void Select(string? key) => _selected = key;
 
-    private Task AddAsync() => AddAsync(new NamedSignInDesign { Layout = SignInLayouts.Glass }, L["New design"]);
+    private Task AddAsync() => AddAsync(new NamedSignInDesign { Layout = SignInLayouts.Card, Surface = SignInSurface.Glass }, L["New design"]);
 
     private Task DuplicateAsync()
     {
