@@ -2210,5 +2210,22 @@
   "days": "днів",
   "min": "хв",
   "passwords": "паролів",
-  "sessions": "сеансів"
+  "sessions": "сеансів",
+  "Sign-in design": "Дизайн входу",
+  "What the sign-in page looks like for users of this theme.": "Так виглядає сторінка входу для користувачів цієї теми.",
+  "Default design": "Типовий дизайн",
+  "{0} (not found, default design)": "{0} (не знайдено, типовий дизайн)",
+  "Sign-in designs": "Дизайни входу",
+  "A theme can name one of these designs in the theme editor; every other theme shows the default design. The Keycloak sign-in page shows the design of the default theme.": "Тема може вибрати один із цих дизайнів у редакторі тем; усі інші теми показують типовий дизайн. Сторінка входу Keycloak показує дизайн типової теми.",
+  "Add design": "Додати дизайн",
+  "For the themes that name this design; texts and the app name are those of the default design.": "Для тем, що вибрали цей дизайн; тексти й назва застосунку беруться з типового дизайну.",
+  "For every theme that names no design of its own.": "Для кожної теми, що не вибрала власного дизайну.",
+  "Used by {0}": "Використовує: {0}",
+  "No theme uses it": "Жодна тема його не використовує",
+  "Unnamed design": "Дизайн без назви",
+  "New design": "Новий дизайн",
+  "{0} use this design and show the default design once it is deleted (after saving).": "{0} використовують цей дизайн і після його видалення (під час збереження) показуватимуть типовий дизайн.",
+  "No theme uses this design. It goes away when the page is saved.": "Жодна тема не використовує цей дизайн. Він зникне після збереження сторінки.",
+  "Glass": "Скло",
+  "Aurora": "Аврора"
 }

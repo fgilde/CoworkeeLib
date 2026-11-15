@@ -2210,5 +2210,22 @@
   "days": "日",
   "min": "分",
   "passwords": "個",
-  "sessions": "セッション"
+  "sessions": "セッション",
+  "Sign-in design": "サインインのデザイン",
+  "What the sign-in page looks like for users of this theme.": "このテーマのユーザーに表示されるサインインページの見た目です。",
+  "Default design": "既定のデザイン",
+  "{0} (not found, default design)": "{0} (見つかりません、既定のデザイン)",
+  "Sign-in designs": "サインインのデザイン一覧",
+  "A theme can name one of these designs in the theme editor; every other theme shows the default design. The Keycloak sign-in page shows the design of the default theme.": "テーマはテーマエディターでこれらのデザインのいずれかを選べます。それ以外のテーマには既定のデザインが表示されます。Keycloak のサインインページには既定のテーマのデザインが表示されます。",
+  "Add design": "デザインを追加",
+  "For the themes that name this design; texts and the app name are those of the default design.": "このデザインを選んだテーマ用です。テキストとアプリ名は既定のデザインのものです。",
+  "For every theme that names no design of its own.": "独自のデザインを選んでいないすべてのテーマ用です。",
+  "Used by {0}": "使用中: {0}",
+  "No theme uses it": "使用しているテーマはありません",
+  "Unnamed design": "名前のないデザイン",
+  "New design": "新しいデザイン",
+  "{0} use this design and show the default design once it is deleted (after saving).": "{0} がこのデザインを使用しています。削除後 (保存時) は既定のデザインが表示されます。",
+  "No theme uses this design. It goes away when the page is saved.": "このデザインを使用しているテーマはありません。ページを保存すると削除されます。",
+  "Glass": "ガラス",
+  "Aurora": "オーロラ"
 }

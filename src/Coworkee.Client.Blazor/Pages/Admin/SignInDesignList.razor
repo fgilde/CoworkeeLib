@@ -1,0 +1,60 @@
+<RealtimeSubscription Topic="type:ThemeDefinition" OnEvent="_ => LoadThemesAsync()" />
+
+<style>
+    .cw-signin-designs { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); }
+    .cw-signin-design { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 10px 10px; min-width: 0; text-align: center; font: inherit; color: inherit; cursor: pointer;
+        background: var(--mud-palette-surface); border: 2px solid var(--mud-palette-lines-default); border-radius: var(--mud-default-borderradius); transition: border-color .15s, box-shadow .15s, transform .15s; }
+    .cw-signin-design:hover { border-color: color-mix(in srgb, var(--mud-palette-primary) 50%, var(--mud-palette-lines-default)); transform: translateY(-1px); }
+    .cw-signin-design:focus-visible { outline: 2px solid var(--mud-palette-primary); outline-offset: 2px; }
+    .cw-signin-design.selected { border-color: var(--mud-palette-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--mud-palette-primary) 18%, transparent); }
+    .cw-signin-design-text { display: flex; flex-direction: column; align-items: center; width: 100%; min-width: 0; }
+    .cw-signin-design-text > * { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cw-signin-design-themes { font-size: .75rem; color: var(--mud-palette-text-secondary); }
+    .cw-signin-design-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; }
+    .cw-signin-design-bar .mud-input-control { flex: 1 1 240px; max-width: 420px; margin: 0; }
+    @@media (prefers-reduced-motion: reduce) { .cw-signin-design { transition: none; } .cw-signin-design:hover { transform: none; } }
+</style>
+
+<MudPaper Outlined="true" Class="cw-signin-card" data-testid="sign-in-designs">
+    <div class="cw-signin-card-head">
+        <MudIcon Icon="@Icons.Material.Outlined.Style" />
+        <div class="flex-grow-1">
+            <MudText Typo="Typo.h6">@L["Sign-in designs"]</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["A theme can name one of these designs in the theme editor; every other theme shows the default design. The Keycloak sign-in page shows the design of the default theme."]</MudText>
+        </div>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" OnClick="AddAsync" Size="Density.Size" data-testid="sign-in-design-add">@L["Add design"]</MudButton>
+    </div>
+    <div class="cw-signin-designs" role="listbox" aria-label="@L["Sign-in designs"]">
+        @foreach (var (key, name, look) in Tiles)
+        {
+            var selected = key == SelectedKey;
+            var layout = look.Layout is { Length: > 0 } chosen ? chosen : SignInLayouts.Default;
+            <button type="button" role="option" aria-selected="@(selected ? "true" : "false")" class="cw-signin-design @(selected ? "selected" : null)" @onclick="() => Select(key)"
+                    data-testid="sign-in-design-tile" data-key="@(key ?? string.Empty)">
+                <SignInLayoutThumb Layout="@(layout)" MediaSide="look.MediaSide" />
+                <span class="cw-signin-design-text">
+                    <MudText Typo="Typo.subtitle2">@name</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@L[layout]</MudText>
+                    <span class="cw-signin-design-themes" title="@UsedBy(key)" data-testid="sign-in-design-themes">@UsedBy(key)</span>
+                </span>
+            </button>
+        }
+    </div>
+    <div class="cw-signin-design-bar">
+        @if (Selected is NamedSignInDesign named)
+        {
+            <MudTextField T="string" @bind-Value="named.Name" @bind-Value:after="NotifyAsync" Label="@L["Name"]" Required="true" MaxLength="100" Margin="Density.Margin" Variant="Variant.Outlined"
+                          data-testid="sign-in-design-name" />
+        }
+        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.ContentCopy" OnClick="DuplicateAsync" Size="Density.Size" data-testid="sign-in-design-duplicate">@L["Duplicate"]</MudButton>
+        @if (Selected is NamedSignInDesign)
+        {
+            <MudButton Variant="Variant.Text" Color="Color.Error" StartIcon="@Icons.Material.Outlined.Delete" OnClick="DeleteAsync" Size="Density.Size" data-testid="sign-in-design-delete">@L["Delete"]</MudButton>
+        }
+    </div>
+</MudPaper>
+
+<SignInDesignCard @key="SelectedKey" Value="Selected" Defaults="Design" Changed="NotifyAsync" Title="@SelectedName"
+                  Description="@(Selected is NamedSignInDesign ? L["For the themes that name this design; texts and the app name are those of the default design."] : L["For every theme that names no design of its own."])">
+    <Actions>@Actions</Actions>
+</SignInDesignCard>

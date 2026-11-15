@@ -101,6 +101,8 @@ public sealed class AuthDesignTests(AuthApp app) : IAsyncLifetime
     [InlineData(SignInLayouts.Card, "https://media.test/sky.webm", 40)]
     [InlineData(SignInLayouts.Split, "https://media.test/sky.jpg", null)]
     [InlineData(SignInLayouts.Slide, "https://media.test/sky.jpg", 200)]
+    [InlineData(SignInLayouts.Glass, "https://media.test/sky.jpg", 20)]
+    [InlineData(SignInLayouts.Aurora, "https://media.test/sky.webm", null)]
     public async Task The_page_background_lies_behind_every_layout_independent_of_the_panel_media(string layout, string background, int? dim)
     {
         Options.Design = new SignInDesign { Layout = layout, MediaUrl = "/media/welcome.jpg", BackgroundUrl = background, BackgroundDim = dim };
@@ -113,9 +115,14 @@ public sealed class AuthDesignTests(AuthApp app) : IAsyncLifetime
         html.ShouldContain(background.EndsWith(".webm", StringComparison.Ordinal)
             ? $"<video src=\"{background}\" autoplay muted loop playsinline></video>"
             : $"<img src=\"{background}\" alt=\"\" />");
-        if (layout != SignInLayouts.Card)
+        if (SignInLayouts.HasPanel(layout))
         {
             html.ShouldContain("<img src=\"/media/welcome.jpg\" alt=\"\" data-testid=\"design-media\"");
+        }
+        else
+        {
+            // glass shows the media only without a page background, card and aurora never
+            html.ShouldNotContain("data-testid=\"design-media\"");
         }
 
         var policy = response.Headers.GetValues("Content-Security-Policy").Single();
@@ -175,6 +182,8 @@ public sealed class AuthDesignTests(AuthApp app) : IAsyncLifetime
     [InlineData(SignInLayouts.Card)]
     [InlineData(SignInLayouts.Split)]
     [InlineData(SignInLayouts.Slide)]
+    [InlineData(SignInLayouts.Glass)]
+    [InlineData(SignInLayouts.Aurora)]
     public async Task Without_the_app_name_the_logo_stands_alone_in_every_layout(string layout)
     {
         Options.Design = new SignInDesign { Layout = layout, ShowAppName = false };
@@ -247,6 +256,142 @@ public sealed class AuthDesignTests(AuthApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_glass_layout_shows_a_frosted_card_over_the_media_when_there_is_no_page_background()
+    {
+        Options.Design = new SignInDesign { Layout = SignInLayouts.Glass, MediaUrl = "https://media.test/sea.mp4" };
+
+        using var response = await app.Browser().GetAsync("/Account/Login", Ct);
+        var html = await response.Content.ReadAsStringAsync(Ct);
+
+        html.ShouldContain("class=\"layout-glass\"");
+        html.ShouldContain("<main class=\"panel glass");
+        html.ShouldContain("data-design=\"glass\"");
+        html.ShouldContain("<div class=\"page-background\" aria-hidden=\"true\">");
+        html.ShouldContain("<video src=\"https://media.test/sea.mp4\" autoplay muted loop playsinline aria-hidden=\"true\" data-testid=\"design-media\"></video>");
+        html.ShouldContain("data-sign-in=\"password\"");
+        response.Headers.GetValues("Content-Security-Policy").Single().ShouldContain("media-src 'self' https://media.test;");
+        (await GetAsync("/Account/ForgotPassword")).ShouldContain("data-design=\"glass\"");
+    }
+
+    [Fact]
+    public async Task The_aurora_layout_lays_the_theme_color_fields_behind_a_card_also_for_the_registration()
+    {
+        await app.SetSettingAsync("Account.AllowRegistration", "true");
+        await app.App.Services.GetRequiredService<HybridCache>().RemoveByTagAsync("coworkee:settings", Ct);
+        Options.Design = new SignInDesign { Layout = SignInLayouts.Aurora };
+
+        var login = await GetAsync("/Account/Login");
+        var register = await GetAsync("/Account/Register");
+
+        login.ShouldContain("class=\"layout-aurora\"");
+        login.ShouldContain("<div class=\"aurora\" aria-hidden=\"true\" data-testid=\"design-aurora\"><span></span><span></span><span></span></div>");
+        login.ShouldContain("data-design=\"aurora\"");
+        register.ShouldContain("data-design=\"aurora\"");
+    }
+
+    [Fact]
+    public async Task The_style_sheet_has_the_glass_and_aurora_layouts_without_motion_for_those_who_ask()
+    {
+        var css = await GetAsync(AuthAssets.Url("auth.css"));
+
+        css.ShouldContain("backdrop-filter: blur(22px) saturate(160%)");
+        css.ShouldContain("@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)))");
+        css.ShouldContain(".aurora span:nth-child(3) { background: var(--tertiary);");
+        css.ShouldContain("*, *::before, *::after, ::view-transition-group(*) { animation: none !important;");
+        css.ShouldContain("body.layout-glass, body.layout-aurora { padding: calc(12px + env(safe-area-inset-top))");
+    }
+
+    [Fact]
+    public async Task The_default_theme_shows_the_named_design_it_names_with_the_texts_of_the_default_design()
+    {
+        Options.Design = new SignInDesign
+        {
+            Layout = SignInLayouts.Card,
+            Texts = new SignInTexts { Title = "Hello" },
+            Designs = [new NamedSignInDesign { Key = "night", Name = "Night", Layout = SignInLayouts.Aurora }],
+        };
+        await CreateThemeAsync("Night", "night", makeDefault: true);
+
+        var html = await GetAsync("/Account/Login");
+
+        html.ShouldContain("data-design=\"aurora\"");
+        html.ShouldContain("<h1>Hello</h1>");
+    }
+
+    [Fact]
+    public async Task A_theme_naming_a_deleted_design_shows_the_default_design()
+    {
+        Options.Design = new SignInDesign { Layout = SignInLayouts.Split };
+        await CreateThemeAsync("Gone", "gone", makeDefault: true);
+
+        (await GetAsync("/Account/Login")).ShouldContain("data-design=\"split\"");
+    }
+
+    [Fact]
+    public async Task The_theme_the_browser_used_last_picks_its_design_and_colors_once_the_web_app_names_it_in_the_authorization()
+    {
+        Options.Design = new SignInDesign
+        {
+            Layout = SignInLayouts.Card,
+            Designs = [new NamedSignInDesign { Key = "frost", Name = "Frost", Layout = SignInLayouts.Glass }],
+        };
+        var theme = await CreateThemeAsync("Frost", "frost", makeDefault: false, primary: "#0a7d5a");
+        var flow = new OidcFlow(app);
+
+        using var authorize = await flow.Browser.GetAsync(flow.AuthorizeUrl + $"&{SignInDesign.ThemeParameter}={theme}", Ct);
+        using var login = await flow.Browser.GetAsync("/Account/Login", Ct);
+        var html = await login.Content.ReadAsStringAsync(Ct);
+
+        authorize.Headers.GetValues("Set-Cookie").ShouldContain(c => c.StartsWith($"{AuthBrandingProvider.ThemeCookie}={theme}", StringComparison.Ordinal)
+            && c.Contains("httponly", StringComparison.OrdinalIgnoreCase) && c.Contains("samesite=lax", StringComparison.OrdinalIgnoreCase));
+        html.ShouldContain("data-design=\"glass\"");
+        html.ShouldContain("--signal:#0a7d5a;");
+        // other browsers keep the default theme and its design
+        (await GetAsync("/Account/Login")).ShouldContain("data-design=\"card\"");
+    }
+
+    [Theory]
+    [InlineData("not-a-guid")]
+    [InlineData("00000000-0000-0000-0000-000000000001")]
+    public async Task A_theme_cookie_of_no_theme_the_page_may_show_falls_back_to_the_default_theme(string cookie)
+    {
+        Options.Design = new SignInDesign { Layout = SignInLayouts.Split, Designs = [new NamedSignInDesign { Key = "frost", Layout = SignInLayouts.Glass }] };
+
+        (await GetWithThemeCookieAsync(cookie)).ShouldContain("data-design=\"split\"");
+    }
+
+    [Fact]
+    public async Task An_unpublished_theme_of_the_browser_does_not_count()
+    {
+        Options.Design = new SignInDesign { Layout = SignInLayouts.Split, Designs = [new NamedSignInDesign { Key = "frost", Layout = SignInLayouts.Glass }] };
+        var theme = await CreateThemeAsync("Hidden", "frost", makeDefault: false, published: false);
+
+        (await GetWithThemeCookieAsync(theme.ToString())).ShouldContain("data-design=\"split\"");
+    }
+
+    [Fact]
+    public async Task A_published_theme_of_the_browser_shows_its_design_on_every_account_page()
+    {
+        Options.Design = new SignInDesign { Layout = SignInLayouts.Split, Designs = [new NamedSignInDesign { Key = "frost", Layout = SignInLayouts.Glass }] };
+        var theme = await CreateThemeAsync("Shown", "frost", makeDefault: false);
+
+        (await GetWithThemeCookieAsync(theme.ToString())).ShouldContain("data-design=\"glass\"");
+        (await GetWithThemeCookieAsync(theme.ToString(), "/Account/ForgotPassword")).ShouldContain("data-design=\"glass\"");
+    }
+
+    [Fact]
+    public async Task The_preview_of_a_named_design_shows_its_look()
+    {
+        Options.Design = new SignInDesign { Layout = SignInLayouts.Card };
+        using var request = new HttpRequestMessage(HttpMethod.Get, SignInPreview.Path + "?design=" + Uri.EscapeDataString("""{"layout":"Aurora"}"""));
+        request.Headers.Add("Sec-Fetch-Dest", "iframe");
+
+        using var response = await app.Browser().SendAsync(request, Ct);
+
+        (await response.Content.ReadAsStringAsync(Ct)).ShouldContain("data-design=\"aurora\"");
+    }
+
+    [Fact]
     public async Task An_unknown_layout_falls_back_to_the_default()
     {
         Options.Design = new SignInDesign { Layout = "Missing" };
@@ -282,6 +427,31 @@ public sealed class AuthDesignTests(AuthApp app) : IAsyncLifetime
         await ForgetBrandingAsync();
 
         (await GetAsync("/Account/Login")).ShouldContain($"<img src=\"{shown}\"");
+    }
+
+    private async Task<Guid> CreateThemeAsync(string name, string design, bool makeDefault, string primary = "#123456", bool published = true)
+    {
+        var palette = JsonSerializer.SerializeToElement(new { Primary = primary });
+        var options = JsonSerializer.SerializeToElement(new Dictionary<string, string> { [SignInDesign.ThemeOption] = design });
+        var created = await OidcFlow.SendAsync(app, _setup.AdminUserId, _setup.TenantId,
+            new CreateTheme(new ThemeRequest(name, palette, palette, null, null, null, null, Options: options, IsPublished: published)));
+        created.IsSuccess.ShouldBeTrue();
+        if (makeDefault)
+        {
+            (await OidcFlow.SendAsync(app, _setup.AdminUserId, _setup.TenantId, new SetDefaultTheme(created.Value.Id))).IsSuccess.ShouldBeTrue();
+        }
+
+        await ForgetBrandingAsync();
+        return created.Value.Id;
+    }
+
+    private async Task<string> GetWithThemeCookieAsync(string theme, string path = "/Account/Login")
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, path);
+        request.Headers.Add("Cookie", $"{AuthBrandingProvider.ThemeCookie}={theme}");
+        using var response = await app.Browser().SendAsync(request, Ct);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        return await response.Content.ReadAsStringAsync(Ct);
     }
 
     // a theme that still carries the former per theme design: it no longer counts

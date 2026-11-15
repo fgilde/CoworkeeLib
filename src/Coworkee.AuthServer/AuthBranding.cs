@@ -26,3 +26,6 @@ public sealed record AuthBranding(string AppName, string? LogoUrl, string? Css, 
 
     private static bool IsVideo(string? url) => url is not null && VideoExtensions.Any(e => url.Split('?', '#')[0].EndsWith(e, StringComparison.OrdinalIgnoreCase));
 }
+
+/// <summary>A theme the sign-in page may show: its logo as data URL, its colors as <see cref="AuthBranding.Css"/> and the key of the sign-in design it names.</summary>
+public sealed record AuthTheme(Guid Id, bool IsDefault, string? Logo, string? Css, string? Design);

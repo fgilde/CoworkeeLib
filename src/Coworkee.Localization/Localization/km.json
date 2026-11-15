@@ -2210,5 +2210,22 @@
   "days": "ថ្ងៃ",
   "min": "នាទី",
   "passwords": "ពាក្យសម្ងាត់",
-  "sessions": "វគ្គ"
+  "sessions": "វគ្គ",
+  "Sign-in design": "រចនាការចូល",
+  "What the sign-in page looks like for users of this theme.": "របៀបដែលទំព័រចូលគណនីបង្ហាញសម្រាប់អ្នកប្រើស្បែកនេះ។",
+  "Default design": "រចនាលំនាំដើម",
+  "{0} (not found, default design)": "{0} (រកមិនឃើញ រចនាលំនាំដើម)",
+  "Sign-in designs": "រចនាការចូលទាំងអស់",
+  "A theme can name one of these designs in the theme editor; every other theme shows the default design. The Keycloak sign-in page shows the design of the default theme.": "ស្បែកអាចជ្រើសរើសរចនាមួយក្នុងចំណោមរចនាទាំងនេះនៅក្នុងកម្មវិធីកែស្បែក ស្បែកផ្សេងទៀតទាំងអស់បង្ហាញរចនាលំនាំដើម។ ទំព័រចូលរបស់ Keycloak បង្ហាញរចនារបស់ស្បែកលំនាំដើម។",
+  "Add design": "បន្ថែមរចនា",
+  "For the themes that name this design; texts and the app name are those of the default design.": "សម្រាប់ស្បែកដែលជ្រើសរើសរចនានេះ អត្ថបទ និងឈ្មោះកម្មវិធីគឺជារបស់រចនាលំនាំដើម។",
+  "For every theme that names no design of its own.": "សម្រាប់ស្បែកនីមួយៗដែលមិនជ្រើសរើសរចនាផ្ទាល់ខ្លួន។",
+  "Used by {0}": "ប្រើដោយ {0}",
+  "No theme uses it": "គ្មានស្បែកណាប្រើវាទេ",
+  "Unnamed design": "រចនាគ្មានឈ្មោះ",
+  "New design": "រចនាថ្មី",
+  "{0} use this design and show the default design once it is deleted (after saving).": "{0} ប្រើរចនានេះ ហើយនឹងបង្ហាញរចនាលំនាំដើមបន្ទាប់ពីវាត្រូវបានលុប (ពេលរក្សាទុក)។",
+  "No theme uses this design. It goes away when the page is saved.": "គ្មានស្បែកណាប្រើរចនានេះទេ។ វានឹងបាត់នៅពេលរក្សាទុកទំព័រ។",
+  "Glass": "កញ្ចក់",
+  "Aurora": "អូរ៉ូរ៉ា"
 }

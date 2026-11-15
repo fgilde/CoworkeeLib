@@ -1,0 +1,8 @@
+@* a small picture of a sign-in layout in the colors of the current theme *@
+<span style="@ThumbStyle" data-testid="sign-in-layout-thumb" data-thumb="@Layout">
+    @if (SignInLayouts.HasPanel(Layout))
+    {
+        <span style="@MediaStyle"></span>
+    }
+    <span style="@FormStyle"></span>
+</span>

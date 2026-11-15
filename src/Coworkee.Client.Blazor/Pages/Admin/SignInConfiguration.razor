@@ -308,12 +308,12 @@ else
                 {
                     <MudTabPanel Text="@L["Appearance"]" Icon="@Icons.Material.Outlined.Palette" data-testid="sign-in-tab-appearance">
                         <div class="cw-signin-section" data-testid="sign-in-appearance">
-                            <SignInDesignCard Value="design" Changed="Changed">
+                            <SignInDesignList Design="design" Changed="Changed">
                                 <Actions>
                                     <MudButton StartIcon="@Icons.Material.Outlined.SettingsBackupRestore" OnClick="ResetDesignAsync" data-testid="sign-in-reset">@L["Restore defaults"]</MudButton>
                                 </Actions>
-                            </SignInDesignCard>
-                            @* Keycloak's sign-in page takes this design too; the button writes it at once (hidden without a theme folder) *@
+                            </SignInDesignList>
+                            @* Keycloak's sign-in page takes the default theme's design; the button writes it at once (hidden without a theme folder) *@
                             <KeycloakThemeCard />
                         </div>
                     </MudTabPanel>

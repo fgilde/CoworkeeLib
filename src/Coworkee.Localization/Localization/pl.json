@@ -2210,5 +2210,22 @@
   "days": "dni",
   "min": "min",
   "passwords": "haseł",
-  "sessions": "sesji"
+  "sessions": "sesji",
+  "Sign-in design": "Projekt logowania",
+  "What the sign-in page looks like for users of this theme.": "Tak wygląda strona logowania dla użytkowników tego motywu.",
+  "Default design": "Projekt domyślny",
+  "{0} (not found, default design)": "{0} (nie znaleziono, projekt domyślny)",
+  "Sign-in designs": "Projekty logowania",
+  "A theme can name one of these designs in the theme editor; every other theme shows the default design. The Keycloak sign-in page shows the design of the default theme.": "Motyw może wybrać jeden z tych projektów w edytorze motywów; wszystkie inne motywy pokazują projekt domyślny. Strona logowania Keycloak pokazuje projekt motywu domyślnego.",
+  "Add design": "Dodaj projekt",
+  "For the themes that name this design; texts and the app name are those of the default design.": "Dla motywów, które wybierają ten projekt; teksty i nazwa aplikacji pochodzą z projektu domyślnego.",
+  "For every theme that names no design of its own.": "Dla każdego motywu, który nie wybiera własnego projektu.",
+  "Used by {0}": "Używany przez {0}",
+  "No theme uses it": "Żaden motyw go nie używa",
+  "Unnamed design": "Projekt bez nazwy",
+  "New design": "Nowy projekt",
+  "{0} use this design and show the default design once it is deleted (after saving).": "{0} używają tego projektu i po jego usunięciu (przy zapisie) pokażą projekt domyślny.",
+  "No theme uses this design. It goes away when the page is saved.": "Żaden motyw nie używa tego projektu. Zniknie po zapisaniu strony.",
+  "Glass": "Szkło",
+  "Aurora": "Zorza"
 }

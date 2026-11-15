@@ -2210,5 +2210,22 @@
   "days": "gün",
   "min": "dk",
   "passwords": "parola",
-  "sessions": "oturum"
+  "sessions": "oturum",
+  "Sign-in design": "Oturum açma tasarımı",
+  "What the sign-in page looks like for users of this theme.": "Bu temanın kullanıcıları için oturum açma sayfasının görünümü.",
+  "Default design": "Varsayılan tasarım",
+  "{0} (not found, default design)": "{0} (bulunamadı, varsayılan tasarım)",
+  "Sign-in designs": "Oturum açma tasarımları",
+  "A theme can name one of these designs in the theme editor; every other theme shows the default design. The Keycloak sign-in page shows the design of the default theme.": "Bir tema, tema düzenleyicisinde bu tasarımlardan birini seçebilir; diğer tüm temalar varsayılan tasarımı gösterir. Keycloak oturum açma sayfası varsayılan temanın tasarımını gösterir.",
+  "Add design": "Tasarım ekle",
+  "For the themes that name this design; texts and the app name are those of the default design.": "Bu tasarımı seçen temalar için; metinler ve uygulama adı varsayılan tasarımınkilerdir.",
+  "For every theme that names no design of its own.": "Kendi tasarımını seçmeyen her tema için.",
+  "Used by {0}": "Kullanan: {0}",
+  "No theme uses it": "Hiçbir tema kullanmıyor",
+  "Unnamed design": "Adsız tasarım",
+  "New design": "Yeni tasarım",
+  "{0} use this design and show the default design once it is deleted (after saving).": "{0} bu tasarımı kullanıyor ve silindikten sonra (kaydederken) varsayılan tasarımı gösterecek.",
+  "No theme uses this design. It goes away when the page is saved.": "Hiçbir tema bu tasarımı kullanmıyor. Sayfa kaydedildiğinde kaybolur.",
+  "Glass": "Cam",
+  "Aurora": "Aurora"
 }

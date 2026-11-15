@@ -198,6 +198,20 @@ public sealed class ThemesPageTests : ClientTestBase
     }
 
     [Fact]
+    public void The_theme_editor_chooses_the_sign_in_design_of_the_theme()
+    {
+        Api.GetThemesAsync(Arg.Any<CancellationToken>()).Returns([BuiltIn, Own with { Options = JsonSerializer.SerializeToElement(new Dictionary<string, string> { [SignInDesign.ThemeOption] = "night" }) }]);
+        var dialogs = Render<MudDialogProvider>();
+        Render<MudPopoverProvider>();
+        var page = Render<Themes>();
+        page.WaitForElement("[data-theme='Brand'] [data-testid='theme-edit']");
+
+        _ = page.Find("[data-theme='Brand'] [data-testid='theme-edit']").ClickAsync(new());
+
+        dialogs.WaitForAssertion(() => dialogs.FindComponent<SignInDesignSelect>().Instance.Value.ShouldBe("night"), TimeSpan.FromSeconds(10));
+    }
+
+    [Fact]
     public async Task Tiles_follow_the_theme_density()
     {
         var page = Render<Themes>();

@@ -21,6 +21,7 @@ public class CoworkeeThemeEditMeta<TTheme>(CoworkeeLocalizer l) : IObjectMetaCon
         // MudEx gives the properties of CoworkeeTheme and of the app's class no grid item: in the grid of their panel the first row slid under the
         // panel above and its labels were cut off. One group, each in a grid item; logo and CSS take the whole width below.
         meta.Properties(OwnProperties).WithGroup(L["Appearance"]).WrapInMudItem(i => { i.xs = 12; i.sm = 6; i.md = 4; });
+        meta.Property(t => t.SignInDesign).WithLabel(L["Sign-in design"]).RenderWith<SignInDesignSelect, string?>(f => f.Value);
         meta.Property(t => t.Logo).RenderWith<ThemeLogoEdit, string?>(f => f.Value).WrapInMudItem(i => { i.xs = 12; i.sm = 12; i.md = 12; });
         meta.Property(t => t.CustomCss).WithLabel(L["Custom CSS"]).RenderWith<CssRulesEditor, string?>(f => f.Value, f => f.HelperText = L["Plain CSS for the whole app, applied after the theme"]).WrapInMudItem(i => { i.xs = 12; i.sm = 12; i.md = 12; });
         return Task.CompletedTask;

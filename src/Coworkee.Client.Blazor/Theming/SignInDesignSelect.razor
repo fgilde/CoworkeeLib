@@ -1,0 +1,16 @@
+@if (Options.AllowSignInDesign)
+{
+    <MudSelect T="string" Value="Value" ValueChanged="SetAsync" Label="@(Label ?? L["Sign-in design"])" Margin="Density.Margin" Variant="Variant.Outlined" Disabled="ReadOnly"
+               HelperText="@L["What the sign-in page looks like for users of this theme."]" data-testid="theme-sign-in-design">
+        <MudSelectItem T="string" Value="@null">@L["Default design"]</MudSelectItem>
+        @foreach (var design in _designs)
+        {
+            <MudSelectItem T="string" Value="@design.Key">@design.Name</MudSelectItem>
+        }
+        @if (Value is { Length: > 0 } key && _designs.All(d => !string.Equals(d.Key, key, StringComparison.OrdinalIgnoreCase)))
+        {
+            @* deleted meanwhile or not readable here: the sign-in page shows the default design for it *@
+            <MudSelectItem T="string" Value="@key">@L["{0} (not found, default design)", key]</MudSelectItem>
+        }
+    </MudSelect>
+}

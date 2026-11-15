@@ -1,0 +1,12 @@
+@inject Coworkee.AuthServer.AuthBrandingProvider BrandingProvider
+@{
+  Layout = "_Layout";
+  ViewData["Design"] = Coworkee.Contracts.Theming.SignInLayouts.Aurora;
+  var brand = await BrandingProvider.GetAsync(Context.RequestAborted);
+}
+@* soft fields of the theme's primary, secondary and tertiary color; a page background lies above them *@
+<div class="aurora" aria-hidden="true" data-testid="design-aurora"><span></span><span></span><span></span></div>
+<main class="panel @(ViewData["Wide"] is true ? "wide" : null)" data-design="aurora">
+  <partial name="_Brand" model="brand" />
+  @RenderBody()
+</main>
