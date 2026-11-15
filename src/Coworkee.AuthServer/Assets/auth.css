@@ -1,19 +1,19 @@
 /* Account pages of the Coworkee auth server. The theme sets the variables inline; these are the built-in theme's values. */
 :root {
   --paper: #f3efe6; --surface: #fbf9f4; --ink: #16140f; --ink-2: #4a463d; --rule: #d6cfbf;
-  --signal: #d0471e; --on-signal: #ffffff; --accent: #16140f; --error: #c62828; --success: #2e7d32;
+  --signal: #d0471e; --on-signal: #ffffff; --accent: #16140f; --tertiary: #1ec8a5; --error: #c62828; --success: #2e7d32;
   --radius: 6px; --font: "Inter", "Segoe UI", system-ui, sans-serif;
   color-scheme: light;
 }
 :root[data-mode=dark] {
   --paper: #14130f; --surface: #1f1d18; --ink: #efe9dc; --ink-2: #bdb6a6; --rule: #34312a;
-  --signal: #f06a43; --on-signal: #14130f; --accent: #efe9dc; --error: #ef5350; --success: #66bb6a;
+  --signal: #f06a43; --on-signal: #14130f; --accent: #efe9dc; --tertiary: #1ec8a5; --error: #ef5350; --success: #66bb6a;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-mode=light]) {
     --paper: #14130f; --surface: #1f1d18; --ink: #efe9dc; --ink-2: #bdb6a6; --rule: #34312a;
-    --signal: #f06a43; --on-signal: #14130f; --accent: #efe9dc; --error: #ef5350; --success: #66bb6a;
+    --signal: #f06a43; --on-signal: #14130f; --accent: #efe9dc; --tertiary: #1ec8a5; --error: #ef5350; --success: #66bb6a;
     color-scheme: dark;
   }
 }
@@ -134,6 +134,32 @@ body.layout-slide { display: grid; place-items: center; padding: 24px 16px; }
 @keyframes rise { from { opacity: 0; transform: translateY(16px); } }
 ::view-transition-group(account-panel), ::view-transition-group(account-form) { animation-duration: .6s; animation-timing-function: cubic-bezier(.7, 0, .2, 1); }
 
+/* Glass: a frosted card over the page background, the media or a gradient of the theme colors */
+body.layout-glass { display: grid; place-items: center; padding: 24px 16px;
+  background: radial-gradient(60vmax 60vmax at 12% 18%, color-mix(in srgb, var(--signal) 55%, transparent), transparent 70%),
+    radial-gradient(55vmax 55vmax at 88% 85%, color-mix(in srgb, var(--tertiary) 45%, transparent), transparent 70%),
+    linear-gradient(135deg, color-mix(in srgb, var(--signal) 18%, var(--paper)), var(--paper)); }
+body.layout-glass .panel { padding: 36px 32px; background: color-mix(in srgb, var(--surface) 62%, transparent); border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  border-radius: calc(var(--radius) * 3); box-shadow: 0 24px 60px rgb(0 0 0 / .18), inset 0 1px 0 rgb(255 255 255 / .18);
+  -webkit-backdrop-filter: blur(22px) saturate(160%); backdrop-filter: blur(22px) saturate(160%); }
+body.layout-glass .panel :is(input[type=email], input[type=password], input[type=text], input[type=tel], input[type=file]) { background: color-mix(in srgb, var(--surface) 70%, transparent); }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  body.layout-glass .panel { background: var(--surface); }
+}
+
+/* Aurora: a clean card over soft fields of the theme's primary, secondary and tertiary color that drift slowly */
+body.layout-aurora { display: grid; place-items: center; padding: 24px 16px; }
+.aurora { position: fixed; inset: 0; z-index: -2; overflow: hidden; pointer-events: none; }
+.aurora span { position: absolute; width: 64vmax; height: 64vmax; border-radius: 50%; filter: blur(80px); opacity: .45; will-change: transform; }
+.aurora span:nth-child(1) { background: var(--signal); top: -26vmax; left: -18vmax; animation: aurora-a 18s ease-in-out infinite alternate; }
+.aurora span:nth-child(2) { background: var(--accent); bottom: -30vmax; right: -22vmax; opacity: .3; animation: aurora-b 23s ease-in-out infinite alternate; }
+.aurora span:nth-child(3) { background: var(--tertiary); width: 44vmax; height: 44vmax; top: 34%; left: 38%; opacity: .35; animation: aurora-c 27s ease-in-out infinite alternate; }
+@keyframes aurora-a { to { transform: translate(22vmax, 14vmax) scale(1.15); } }
+@keyframes aurora-b { to { transform: translate(-20vmax, -12vmax) scale(1.1); } }
+@keyframes aurora-c { to { transform: translate(-16vmax, 10vmax) scale(.85); } }
+body.layout-aurora .panel { padding: 36px 32px; background: var(--surface); border: 1px solid var(--rule); border-radius: calc(var(--radius) * 3);
+  box-shadow: 0 30px 80px color-mix(in srgb, var(--signal) 22%, rgb(0 0 0 / .12)); }
+
 @media (max-width: 860px) {
   .split { grid-template-columns: 1fr; grid-template-rows: 200px 1fr; }
   .split.media-right .media { order: 0; }
@@ -146,6 +172,9 @@ body.layout-slide { display: grid; place-items: center; padding: 24px 16px; }
 @media (max-width: 480px) {
   /* phones: the form fills the screen like an app, inside the safe area of notched devices; 16px inputs keep iOS from zooming in */
   body.layout-card, body.layout-slide { display: block; padding: 0; }
+  /* glass and aurora keep a floating card, their background is the point */
+  body.layout-glass, body.layout-aurora { padding: calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom)); }
+  body.layout-glass .panel, body.layout-aurora .panel { padding: 28px 20px; border-radius: calc(var(--radius) * 2); }
   body.layout-card .panel { min-height: 100dvh; padding: calc(24px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom)); border: 0; border-radius: 0; box-shadow: none; }
   .slide, .slide.wide { width: 100%; min-height: 100dvh; border-radius: 0; box-shadow: none; }
   .slide > .media, .slide.media-left > .media, .slide.media-right > .media { padding-top: calc(28px + env(safe-area-inset-top)); }

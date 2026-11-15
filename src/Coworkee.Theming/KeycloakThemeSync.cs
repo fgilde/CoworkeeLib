@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 namespace Coworkee.Theming;
 
 /// <summary>
-/// Keeps the Keycloak login theme (<see cref="KeycloakThemeOptions"/>) in the design of the system organisation's default theme and the sign-in design:
+/// Keeps the Keycloak login theme (<see cref="KeycloakThemeOptions"/>) in the design of the system organisation's default theme and the sign-in design it names:
 /// written at start and shortly after either changes, or at once on request.
 /// </summary>
 internal sealed class KeycloakThemeSync : IHostedService, IDisposable
@@ -87,7 +87,8 @@ internal sealed class KeycloakThemeSync : IHostedService, IDisposable
             using var system = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
             await using var scope = _scopes.CreateAsyncScope();
             var theme = await scope.ServiceProvider.GetRequiredService<IDispatcher>().SendAsync(new GetCurrentTheme(), cancellationToken);
-            var design = _design.CurrentValue;
+            // Keycloak cannot know the browser's theme: the design the default theme names
+            var design = _design.CurrentValue.For(theme.IsSuccess ? SignInDesign.KeyOf(theme.Value.Options) : null);
             KeycloakLoginTheme.Write(options.ThemeDirectory!, options.ThemeName!, new(
                 options.AppName ?? options.ThemeName!,
                 theme.IsSuccess ? Colors(theme.Value.PaletteLight) : KeycloakLoginTheme.DefaultLight,

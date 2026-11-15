@@ -2204,5 +2204,22 @@
   "days": "أيام",
   "min": "دقيقة",
   "passwords": "كلمات مرور",
-  "sessions": "جلسات"
+  "sessions": "جلسات",
+  "Sign-in design": "تصميم تسجيل الدخول",
+  "What the sign-in page looks like for users of this theme.": "هكذا تبدو صفحة تسجيل الدخول لمستخدمي هذا المظهر.",
+  "Default design": "التصميم الافتراضي",
+  "{0} (not found, default design)": "{0} (غير موجود، التصميم الافتراضي)",
+  "Sign-in designs": "تصاميم تسجيل الدخول",
+  "A theme can name one of these designs in the theme editor; every other theme shows the default design. The Keycloak sign-in page shows the design of the default theme.": "يمكن للمظهر اختيار أحد هذه التصاميم في محرر المظاهر؛ وتعرض كل المظاهر الأخرى التصميم الافتراضي. تعرض صفحة تسجيل الدخول في Keycloak تصميم المظهر الافتراضي.",
+  "Add design": "إضافة تصميم",
+  "For the themes that name this design; texts and the app name are those of the default design.": "للمظاهر التي تختار هذا التصميم؛ النصوص واسم التطبيق هي نفسها في التصميم الافتراضي.",
+  "For every theme that names no design of its own.": "لكل مظهر لا يختار تصميمًا خاصًا به.",
+  "Used by {0}": "مستخدم في {0}",
+  "No theme uses it": "لا يستخدمه أي مظهر",
+  "Unnamed design": "تصميم بلا اسم",
+  "New design": "تصميم جديد",
+  "{0} use this design and show the default design once it is deleted (after saving).": "{0} تستخدم هذا التصميم وستعرض التصميم الافتراضي بعد حذفه (عند الحفظ).",
+  "No theme uses this design. It goes away when the page is saved.": "لا يستخدم أي مظهر هذا التصميم. سيختفي عند حفظ الصفحة.",
+  "Glass": "زجاج",
+  "Aurora": "شفق"
 }

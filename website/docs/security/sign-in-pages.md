@@ -1,16 +1,20 @@
 # Sign-in pages and designs
 
-The account pages of the auth server (sign-in, registration, two-step verification, forgotten and new password, consent, sign-out, the app launcher and the account security pages) follow the app's theme: the default theme of the system organisation gives them colors for light and dark mode, the font, the border radius and the logo, the configuration the app name. The color mode setting (`Theme.Mode`: system, light or dark, the user's or the installation's) applies as well.
+The account pages of the auth server (sign-in, registration, two-step verification, forgotten and new password, consent, sign-out, the app launcher and the account security pages) follow the app's theme: the theme the browser used last, else the default theme of the system organisation, gives them colors for light and dark mode, the font, the border radius, the logo and the sign-in design it names (see [Designs per theme](#designs-per-theme)); the configuration gives the app name. The color mode setting (`Theme.Mode`: system, light or dark, the user's or the installation's) applies as well.
 
 ## Layouts
 
-Three layouts ship with the library:
+Five layouts ship with the library:
 
 | Layout | Look |
 |---|---|
 | `Card` | a centered card |
 | `Split` | full page: image or video on one side, the form on the other |
 | `Slide` (default) | a card with a colored panel next to the form. On the sign-in page the panel invites to create an account (when registration is on); on the registration page it moves to the other side and links back to sign-in. Browsers with cross-document view transitions animate the move. |
+| `Glass` | a frosted-glass card (translucent surface, blur, a fine border and shadow) over the page background, else over the image or video of `MediaUrl`, else over a soft gradient of the theme's primary and tertiary color. Browsers without `backdrop-filter` get the plain surface. |
+| `Aurora` | a clean card over soft fields of the theme's primary, secondary and tertiary color that drift slowly; with reduced motion they stand still. A page background lies above them. |
+
+All five work in light and dark mode, with registration, passkeys, external providers, the texts and without the app name. On phones `Card` and `Slide` fill the screen like an app, `Glass` and `Aurora` keep a floating card with a small margin, since their background is the point.
 
 The pages work without script. A small script adds what a browser alone cannot: a button that shows the password, a hint while Caps Lock is on, a *Last used* badge on the sign-in method chosen the last time (only when there are external providers) and one submit per form. Passkeys need a second small script, `passkey.js`; without it their button stays hidden (see [Passkeys](passkeys.md)). Animations stop and videos stand still when the system asks for reduced motion.
 
@@ -18,7 +22,7 @@ The pages work without script. A small script adds what a browser alone cannot: 
 
 ## Configuration
 
-The design applies to the whole installation, whichever theme is the default. The configuration sets the starting point:
+The design applies to the whole installation unless a theme names one of the named designs (see [Designs per theme](#designs-per-theme)). The configuration sets the starting point:
 
 ```json
 "Coworkee": {
@@ -52,9 +56,44 @@ The design applies to the whole installation, whichever theme is the default. Th
 | `Design:ShowAppName` | `true` (default) shows the app name next to the logo and on the media panel of `Split` and `Slide`; `false` leaves the logo alone |
 | `Design:Texts:Title`, `Subtitle`, `Notice` | own heading, a line under it and a notice above the form of the sign-in page, for every language; empty keeps the built-in heading *Sign in* and shows neither line nor notice |
 | `Design:Texts:Titles`, `Subtitles`, `Notices` | the same per language (`"de"`, `"de-AT"`): the visitor's language (`de-AT`, then `de`) wins over the text for every language |
+| `Design:Designs` | further, named designs themes can choose: each with `Key`, `Name` and the look values `Layout`, `MediaUrl`, `MediaSide`, `BackgroundUrl`, `BackgroundDim`; see [Designs per theme](#designs-per-theme) |
 | `AllowDesignChanges` | `true` (default) lets administrators change the design on the page *Sign-in*; `false` keeps the configuration. Set it for the service that hosts the API, where the change is saved. |
 
 The Aspire app host sets the same values with `options.SignIn` and serves a media path from the web app, see [Aspire app host](../hosting/aspire.md).
+
+## Designs per theme
+
+The values above are the **default design**. `Design:Designs` adds named designs, and a theme names the one it wants: in the theme editor (*Sign-in design*, default *Default design*), or in the theme's options as `SignInDesign` with the design's key. A named design brings its own look (layout, media and its side, page background and darkening); the texts, *Show the app name* and the loading screen stay those of the default design, so a notice reaches everyone whichever theme they use.
+
+```json
+"Coworkee": {
+  "Auth": {
+    "Design": {
+      "Layout": "Slide",
+      "Designs": [
+        { "Key": "frost", "Name": "Frost", "Layout": "Glass", "MediaUrl": "/media/sea.mp4" },
+        { "Key": "night", "Name": "Night", "Layout": "Aurora" }
+      ]
+    }
+  }
+}
+```
+
+```csharp
+// a theme of the app that shows the design "night"
+builder.Services.Configure<ThemingOptions>(o => o.Themes.Add(new AppTheme("Night", "Ocean", new Dictionary<string, string> { ["Primary"] = "#5e35b1" })
+{
+    Options = new Dictionary<string, object> { [SignInDesign.ThemeOption] = "night" },
+}));
+```
+
+Which design a sign-in page shows:
+
+1. the design the theme this browser used last names: the web app remembers the applied theme in its cookie `coworkee-loading` and names it in the authorization request (`coworkee_theme`); the auth server keeps it in its own cookie `coworkee-theme` (HttpOnly, SameSite Lax, one year) for every account page of that browser. Only a built-in or published theme of the system organisation counts; any other id, or none, falls through. That theme's colors, font and logo apply as well.
+2. else the design the default theme of the system organisation names,
+3. else the default design; also when a theme names a design that no longer exists.
+
+The Keycloak sign-in page cannot know the browser's theme: it shows the design the default theme names. An existing configuration without `Designs` looks exactly as before; nothing needs to change.
 
 ## Texts
 
@@ -69,7 +108,7 @@ The texts change the sign-in page only (`/Account/Login`); the other account pag
 | *Methods* | *Password*, *External provider* or *Both* as a segmented choice; the switch *Passkeys* | settings `Auth.LoginMode`, `Account.Passkeys.Enabled` |
 | *Security* | password rules (length and different characters in characters, expiry in days, history in passwords, four switches), lockout (attempts, minutes), sessions (sessions per user, what happens beyond the limit), *More settings* | the setting groups *Sign-in security* and *Accounts* |
 | *Registration* | switches for self registration, activation, email confirmation and the address; allowed emails as chips; the documents as a list (name, hint, required, accepted file types, largest file, translations) | the settings `Account.AllowRegistration`, `Account.RegistrationRequiresActivation`, `Account.RegistrationRequiresEmailConfirmation` and the part `Registration` of the app settings |
-| *Appearance* | the card *Sign-in page* described below | the app configuration section `Coworkee:Auth:Design` |
+| *Appearance* | the card *Sign-in designs* and below it the card of the selected design, both described below | the app configuration section `Coworkee:Auth:Design` |
 | *Texts* | *Show the app name*; title, subtitle and notice for every language and, after picking a language, for that language (the text for every language shows as placeholder) | `ShowAppName` and `Texts` of the same section |
 
 One save bar in the sticky tab bar saves all tabs: it shows *Unsaved changes* while something differs from what was loaded, *Discard* restores that, *Save* sends only what changed, in the same form the generic pages use: the changed settings in one call, the app settings with their part `Registration` replaced and all other parts as they came, the design as a whole. A failing part reports its error and keeps its changes; the others are saved.
@@ -78,13 +117,15 @@ The page arranges the settings it knows; any other setting of the two groups (an
 
 The page needs `Settings.Manage`; the menu shows it to the system organisation. Other organisations get only the tab *Security* with their own session settings and no app configuration. The page follows changes of others at once: a saved setting or configuration value reloads its part, unless that part holds unsaved changes. *Administration > Themes* links to the page.
 
-The card *Sign-in page* shows a thumbnail per layout to pick from, the image or video address and its side, the page background with its darkening, and the background of the app's [loading screen](../modules/theming.md#loading-screen). The folder buttons in the address fields pick the image or video from the app's files; a private file is made public first (after a question), and the field gets its absolute public address, which the auth server, Keycloak and the loading screen can load without sign-in. The save bar stores the values as the app configuration section `Coworkee:Auth:Design` (table `cw.ConfigurationEntries`, see [App configuration](../modules/settings.md)); *Restore defaults* drops them after a question, so the configured values apply again.
+The card *Sign-in designs* shows the default design and the named ones as tiles: a thumbnail of the layout in the current theme's colors, the name, the layout and the themes that show it (for the default design: the themes naming none, or a design that is gone). *Add design* starts a named design (layout `Glass`), *Duplicate* copies the look of the selected design under a new name and key, the field *Name* renames it (the key that themes store stays), *Delete* asks first and names the themes using the design, which then show the default design. The page follows theme changes of others at once. Like every other change on the page, these wait for the save bar.
 
-*Preview* opens the real sign-in page of the auth server with the values the card shows now, saved or not, in a full screen dialog. The dialog frames `/bff/sign-in-preview?design={json}`, which sends the frame on to the auth server's `/Account/Preview`; that address renders the sign-in page with the given design after the same checks as a saved one. It answers only a `GET` that the browser marks as frame load (`Sec-Fetch-Dest: iframe`), and only the origins of registered clients may frame it (`frame-ancestors`), so a link or another site cannot show a crafted design under the auth server's address. The frame runs without forms (`sandbox`), nobody signs in there, and the admin's own session stays as it is. The web app's policy allows the auth server's origin in `frame-src` for this. With Keycloak as sign-in the preview shows the Coworkee auth server's page, which Keycloak does not have; there the Keycloak card applies the design.
+The card below edits the selected design. For the default design it shows a thumbnail per layout to pick from, the image or video address and its side, the page background with its darkening, and the background of the app's [loading screen](../modules/theming.md#loading-screen). The folder buttons in the address fields pick the image or video from the app's files; a private file is made public first (after a question), and the field gets its absolute public address, which the auth server, Keycloak and the loading screen can load without sign-in. The save bar stores the values as the app configuration section `Coworkee:Auth:Design` (table `cw.ConfigurationEntries`, see [App configuration](../modules/settings.md)); *Restore defaults* drops them after a question, so the configured values apply again.
+
+*Preview* opens the real sign-in page of the auth server with the values the card shows now, saved or not, in a full screen dialog; for a named design with the texts of the default design. The dialog frames `/bff/sign-in-preview?design={json}`, which sends the frame on to the auth server's `/Account/Preview`; that address renders the sign-in page with the given design after the same checks as a saved one. It answers only a `GET` that the browser marks as frame load (`Sec-Fetch-Dest: iframe`), and only the origins of registered clients may frame it (`frame-ancestors`), so a link or another site cannot show a crafted design under the auth server's address. The frame runs without forms (`sandbox`), nobody signs in there, and the admin's own session stays as it is. The web app's policy allows the auth server's origin in `frame-src` for this. With Keycloak as sign-in the preview shows the Coworkee auth server's page, which Keycloak does not have; there the Keycloak card applies the design.
 
 The card shows for administrators of the system organisation who may manage settings (`Settings.Manage`), because the section applies to every organisation. It stays hidden for everyone else and while `AllowDesignChanges` is off.
 
-**How fast the auth server follows.** The auth server reads the design from its configuration on every request. It sees a change once its database configuration source reloads: `AddCoworkeeDatabaseConfiguration` checks every 15 seconds by default (the auth host of the template adds it). A host in the same process as the API sees the change at once. Colors, font and logo come from the default theme and are cached for one minute.
+**How fast the auth server follows.** The auth server reads the design from its configuration on every request. It sees a change once its database configuration source reloads: `AddCoworkeeDatabaseConfiguration` checks every 15 seconds by default (the auth host of the template adds it). A host in the same process as the API sees the change at once. Colors, font, logo and the design key of the themes the pages may show are cached for one minute.
 
 The client options control the card:
 
@@ -92,39 +133,39 @@ The client options control the card:
 builder.Services.AddCoworkeeClient(baseAddress, options =>
 {
     options.AllowSignInDesign = false;        // hides the card
-    options.SignInLayouts.Add("Aurora");      // offers an own layout
+    options.SignInLayouts.Add("Ribbon");      // offers an own layout
 });
 ```
 
-An own layout gets a generic thumbnail with its name. Themes saved with the former per theme value (`SignIn` in the theme options) are ignored; set the design once on the page *Sign-in*.
+An own layout gets a generic thumbnail with its name. Themes saved with the former per theme value (`SignIn` in the theme options) are ignored; give them a named design instead.
 
 ## Own designs
 
-The layouts are Razor layouts next to the pages of the library: `Pages/_DesignCard.cshtml`, `Pages/_DesignSplit.cshtml` and `Pages/_DesignSlide.cshtml`, all inside `Pages/_Layout.cshtml`, which renders the head, the theme variables, the style sheet and the script. As with every Razor class library, a view of the auth host at the same path wins:
+The layouts are Razor layouts next to the pages of the library: `Pages/_DesignCard.cshtml`, `Pages/_DesignSplit.cshtml`, `Pages/_DesignSlide.cshtml`, `Pages/_DesignGlass.cshtml` and `Pages/_DesignAurora.cshtml`, all inside `Pages/_Layout.cshtml`, which renders the head, the theme variables, the style sheet and the script. As with every Razor class library, a view of the auth host at the same path wins:
 
-- **Own layout**: add `Pages/_DesignAurora.cshtml` to the auth host and set `Design:Layout` to `Aurora` (or choose it on the page *Sign-in*).
+- **Own layout**: add `Pages/_DesignRibbon.cshtml` to the auth host and set `Design:Layout` to `Ribbon` (or choose it on the page *Sign-in*).
 - **Replace a built-in one**: add `Pages/_DesignCard.cshtml` to the auth host.
 - **Replace everything**: add `Pages/_Layout.cshtml`; then the style sheet and the script are yours as well.
 
 ```cshtml
-@* Pages/_DesignAurora.cshtml in the auth host *@
+@* Pages/_DesignRibbon.cshtml in the auth host *@
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @inject Coworkee.AuthServer.AuthBrandingProvider Branding
 @{
   Layout = "_Layout";
-  ViewData["Design"] = "Aurora";
+  ViewData["Design"] = "Ribbon";
   var brand = await Branding.GetAsync(Context.RequestAborted);
 }
-<div class="aurora">
+<div class="ribbon">
   <main class="panel">
     <partial name="_Brand" model="brand" />
     @RenderBody()
   </main>
 </div>
 <style>
-  body.layout-aurora { display: grid; place-items: center; background: radial-gradient(circle at top, var(--signal), var(--paper) 60%); }
-  .aurora .panel { padding: 40px; background: var(--surface); border-radius: calc(var(--radius) * 3); }
+  body.layout-ribbon { display: grid; place-items: center; background: radial-gradient(circle at top, var(--signal), var(--paper) 60%); }
+  .ribbon .panel { padding: 40px; background: var(--surface); border-radius: calc(var(--radius) * 3); }
 </style>
 ```
 
-`AuthBranding` carries the app name, the logo, the theme's CSS and the resolved `Design`; the partial `_Media` renders its image or video. The page model is `ViewContext.ViewData.Model` (`LoginModel`, `RegisterModel`, ...), so a layout can tell the pages apart. The style sheet defines these variables, which the theme fills: `--paper`, `--surface`, `--ink`, `--ink-2`, `--rule`, `--signal`, `--on-signal`, `--accent`, `--error`, `--success`, `--radius` and `--font`. The content security policy allows inline styles, but scripts only from the auth server itself.
+`AuthBranding` carries the app name, the logo, the theme's CSS and the resolved `Design`; the partial `_Media` renders its image or video. The page model is `ViewContext.ViewData.Model` (`LoginModel`, `RegisterModel`, ...), so a layout can tell the pages apart. The style sheet defines these variables, which the theme fills: `--paper`, `--surface`, `--ink`, `--ink-2`, `--rule`, `--signal`, `--on-signal`, `--accent`, `--tertiary`, `--error`, `--success`, `--radius` and `--font`. The content security policy allows inline styles, but scripts only from the auth server itself.

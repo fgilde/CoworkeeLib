@@ -112,6 +112,52 @@ public sealed class KeycloakLoginThemeTests : IDisposable
         Read("resources/css/coworkee.css").ShouldContain(".cw-background{position:fixed");
     }
 
+    [Theory]
+    [InlineData("Glass", "glass")]
+    [InlineData("aurora", "aurora")]
+    public void The_glass_and_aurora_layouts_reach_the_script_and_have_their_styles(string layout, string expected)
+    {
+        Write(Content() with { Design = new SignInDesign { Layout = layout } });
+
+        var script = Read("resources/js/coworkee.js");
+        var css = Read("resources/css/coworkee.css");
+        Config(script).GetProperty("layout").GetString().ShouldBe(expected);
+        css.ShouldContain(".cw-layout-glass .pf-v5-c-login__main{background:color-mix(in srgb,var(--cw-surface) 62%,transparent)");
+        css.ShouldContain("backdrop-filter:blur(22px)");
+        css.ShouldContain(".cw-aurora span:nth-child(3){background:var(--cw-tertiary)");
+        css.ShouldContain("@media (prefers-reduced-motion:reduce){.cw-aurora span{animation:none}}");
+        // the secondary and tertiary colors the backgrounds mix, light and dark
+        css.ShouldContain("--cw-secondary:#00838f;--cw-tertiary:#1ec8a5;");
+        css.ShouldContain("--cw-secondary:#4dd0e1;--cw-tertiary:#1ec8a5;");
+        script.ShouldContain("aurora.className = \"cw-aurora\";");
+        // neither has the media panel of split and slide
+        script.ShouldContain("if (coworkee.layout !== \"split\" && coworkee.layout !== \"slide\") {");
+    }
+
+    [Fact]
+    public void The_glass_card_lies_over_the_media_when_there_is_no_page_background()
+    {
+        Write(Content() with { Design = new SignInDesign { Layout = SignInLayouts.Glass, MediaUrl = "https://app.example/media/sea.mp4" } });
+        Config(Read("resources/js/coworkee.js")).ShouldSatisfyAllConditions(
+            c => c.GetProperty("background").GetString().ShouldBe("https://app.example/media/sea.mp4"),
+            c => c.GetProperty("backgroundVideo").GetBoolean().ShouldBeTrue());
+
+        Write(Content() with { Design = new SignInDesign { Layout = SignInLayouts.Glass, MediaUrl = "https://app.example/sea.jpg", BackgroundUrl = "https://app.example/sky.jpg" } });
+        Config(Read("resources/js/coworkee.js")).GetProperty("background").GetString().ShouldBe("https://app.example/sky.jpg");
+
+        // the other layouts keep the media in their panel
+        Write(Content() with { Design = new SignInDesign { Layout = SignInLayouts.Aurora, MediaUrl = "https://app.example/sea.jpg" } });
+        Config(Read("resources/js/coworkee.js")).GetProperty("background").ValueKind.ShouldBe(JsonValueKind.Null);
+    }
+
+    [Fact]
+    public void Palette_secondary_and_tertiary_colors_replace_the_defaults()
+    {
+        Write(Content() with { Light = new Dictionary<string, string> { ["Secondary"] = "#111111", ["Tertiary"] = "#222222" } });
+
+        Read("resources/css/coworkee.css").ShouldContain("--cw-secondary:#111111;--cw-tertiary:#222222;");
+    }
+
     [Fact]
     public void The_header_title_is_the_app_name_as_escaped_html_message()
     {
@@ -184,4 +230,6 @@ public sealed class KeycloakLoginThemeTests : IDisposable
     private void Write(KeycloakLoginThemeContent content) => KeycloakLoginTheme.Write(_root, "coworkee-myapp", content);
 
     private string Read(string path) => File.ReadAllText(Path.Combine(Login, path));
+
+    private static JsonElement Config(string script) => JsonDocument.Parse(script["var coworkee = ".Length..script.IndexOf(";\n", StringComparison.Ordinal)]).RootElement;
 }

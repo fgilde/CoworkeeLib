@@ -2204,5 +2204,22 @@
   "days": "dagen",
   "min": "min",
   "passwords": "wachtwoorden",
-  "sessions": "sessies"
+  "sessions": "sessies",
+  "Sign-in design": "Inlogontwerp",
+  "What the sign-in page looks like for users of this theme.": "Zo ziet de inlogpagina eruit voor gebruikers van dit thema.",
+  "Default design": "Standaardontwerp",
+  "{0} (not found, default design)": "{0} (niet gevonden, standaardontwerp)",
+  "Sign-in designs": "Inlogontwerpen",
+  "A theme can name one of these designs in the theme editor; every other theme shows the default design. The Keycloak sign-in page shows the design of the default theme.": "Een thema kan in de thema-editor een van deze ontwerpen kiezen; alle andere thema's tonen het standaardontwerp. De Keycloak-inlogpagina toont het ontwerp van het standaardthema.",
+  "Add design": "Ontwerp toevoegen",
+  "For the themes that name this design; texts and the app name are those of the default design.": "Voor de thema's die dit ontwerp kiezen; teksten en de app-naam zijn die van het standaardontwerp.",
+  "For every theme that names no design of its own.": "Voor elk thema dat geen eigen ontwerp kiest.",
+  "Used by {0}": "Gebruikt door {0}",
+  "No theme uses it": "Geen thema gebruikt het",
+  "Unnamed design": "Naamloos ontwerp",
+  "New design": "Nieuw ontwerp",
+  "{0} use this design and show the default design once it is deleted (after saving).": "{0} gebruiken dit ontwerp en tonen na het verwijderen (bij opslaan) het standaardontwerp.",
+  "No theme uses this design. It goes away when the page is saved.": "Geen thema gebruikt dit ontwerp. Het verdwijnt wanneer de pagina wordt opgeslagen.",
+  "Glass": "Glas",
+  "Aurora": "Aurora"
 }

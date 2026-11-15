@@ -46,6 +46,7 @@ internal static class AuthEndpoints
     private static async Task<IResult> AuthorizeAsync(HttpContext context, CoworkeeDbContext db, IOptions<AuthServerOptions> options, PasswordPolicy policy, TimeProvider clock)
     {
         var request = context.GetOpenIddictServerRequest() ?? throw new InvalidOperationException("No OpenID Connect request.");
+        AuthBrandingProvider.RememberTheme(context, (string?)request.GetParameter(Contracts.Theming.SignInDesign.ThemeParameter));
         var cookie = await context.AuthenticateAsync(IdentityConstants.ApplicationScheme);
         if (!cookie.Succeeded || request.HasPromptValue(PromptValues.Login))
         {

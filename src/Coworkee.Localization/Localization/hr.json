@@ -2204,5 +2204,22 @@
   "days": "dana",
   "min": "min",
   "passwords": "lozinki",
-  "sessions": "sesija"
+  "sessions": "sesija",
+  "Sign-in design": "Dizajn prijave",
+  "What the sign-in page looks like for users of this theme.": "Ovako izgleda stranica za prijavu za korisnike ove teme.",
+  "Default design": "Zadani dizajn",
+  "{0} (not found, default design)": "{0} (nije pronađeno, zadani dizajn)",
+  "Sign-in designs": "Dizajni prijave",
+  "A theme can name one of these designs in the theme editor; every other theme shows the default design. The Keycloak sign-in page shows the design of the default theme.": "Tema u uređivaču tema može odabrati jedan od ovih dizajna; sve ostale teme prikazuju zadani dizajn. Stranica za prijavu Keycloak prikazuje dizajn zadane teme.",
+  "Add design": "Dodaj dizajn",
+  "For the themes that name this design; texts and the app name are those of the default design.": "Za teme koje odaberu ovaj dizajn; tekstovi i naziv aplikacije su iz zadanog dizajna.",
+  "For every theme that names no design of its own.": "Za svaku temu koja ne odabere vlastiti dizajn.",
+  "Used by {0}": "Koristi {0}",
+  "No theme uses it": "Nijedna tema ga ne koristi",
+  "Unnamed design": "Neimenovani dizajn",
+  "New design": "Novi dizajn",
+  "{0} use this design and show the default design once it is deleted (after saving).": "{0} koriste ovaj dizajn i nakon brisanja (pri spremanju) prikazat će zadani dizajn.",
+  "No theme uses this design. It goes away when the page is saved.": "Nijedna tema ne koristi ovaj dizajn. Nestaje kada se stranica spremi.",
+  "Glass": "Staklo",
+  "Aurora": "Aurora"
 }

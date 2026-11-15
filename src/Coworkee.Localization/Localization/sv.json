@@ -2204,5 +2204,22 @@
   "days": "dagar",
   "min": "min",
   "passwords": "lösenord",
-  "sessions": "sessioner"
+  "sessions": "sessioner",
+  "Sign-in design": "Inloggningsdesign",
+  "What the sign-in page looks like for users of this theme.": "Så ser inloggningssidan ut för användare av detta tema.",
+  "Default design": "Standarddesign",
+  "{0} (not found, default design)": "{0} (hittades inte, standarddesign)",
+  "Sign-in designs": "Inloggningsdesigner",
+  "A theme can name one of these designs in the theme editor; every other theme shows the default design. The Keycloak sign-in page shows the design of the default theme.": "Ett tema kan välja en av dessa designer i temaredigeraren; alla andra teman visar standarddesignen. Keycloaks inloggningssida visar standardtemats design.",
+  "Add design": "Lägg till design",
+  "For the themes that name this design; texts and the app name are those of the default design.": "För de teman som väljer denna design; texter och appnamn är standarddesignens.",
+  "For every theme that names no design of its own.": "För varje tema som inte väljer en egen design.",
+  "Used by {0}": "Används av {0}",
+  "No theme uses it": "Inget tema använder den",
+  "Unnamed design": "Namnlös design",
+  "New design": "Ny design",
+  "{0} use this design and show the default design once it is deleted (after saving).": "{0} använder denna design och visar standarddesignen när den har tagits bort (vid sparande).",
+  "No theme uses this design. It goes away when the page is saved.": "Inget tema använder denna design. Den försvinner när sidan sparas.",
+  "Glass": "Glas",
+  "Aurora": "Aurora"
 }

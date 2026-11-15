@@ -3,8 +3,8 @@
     <MudCard Outlined="true" Class="mb-4" data-testid="sign-in-design">
         <MudCardHeader>
             <CardHeaderContent>
-                <MudText Typo="Typo.h6">@L["Sign-in page"]</MudText>
-                <MudText Typo="Typo.body2">@L["How the sign-in and registration pages look for everyone, whichever theme is the default."]</MudText>
+                <MudText Typo="Typo.h6">@(Title ?? L["Sign-in page"])</MudText>
+                <MudText Typo="Typo.body2">@(Description ?? L["How the sign-in and registration pages look for everyone, whichever theme is the default."])</MudText>
             </CardHeaderContent>
         </MudCardHeader>
         <MudCardContent>
@@ -14,13 +14,7 @@
                     var selected = IsSelected(layout);
                     <button type="button" role="radio" aria-checked="@(selected ? "true" : "false")" style="@TileStyle(selected)"
                             @onclick="() => ChooseAsync(layout)" data-testid="sign-in-layout" data-layout="@(layout)">
-                        <span style="@ThumbStyle(layout)">
-                            @if (HasMedia(layout))
-                            {
-                                <span style="@MediaStyle(layout)"></span>
-                            }
-                            <span style="@FormStyle(layout)"></span>
-                        </span>
+                        <SignInLayoutThumb Layout="@(layout)" MediaSide="Value.MediaSide" />
                         <MudText Typo="Typo.body2" Class="mt-1">@L[layout]</MudText>
                     </button>
                 }
@@ -34,7 +28,7 @@
                 </MudItem>
                 <MudItem xs="12" sm="4">
                     <MudSelect T="SignInMediaSide?" @bind-Value="Value.MediaSide" @bind-Value:after="NotifyAsync" Label="@L["Image side"]" Clearable="true" Margin="Density.Margin"
-                               Variant="Variant.Outlined" Disabled="!HasMedia(SelectedLayout)">
+                               Variant="Variant.Outlined" Disabled="!SignInLayouts.HasPanel(SelectedLayout)">
                         <MudSelectItem T="SignInMediaSide?" Value="SignInMediaSide.Left">@L["Left"]</MudSelectItem>
                         <MudSelectItem T="SignInMediaSide?" Value="SignInMediaSide.Right">@L["Right"]</MudSelectItem>
                     </MudSelect>
@@ -49,14 +43,17 @@
                     <MudNumericField T="int?" @bind-Value="Value.BackgroundDim" @bind-Value:after="NotifyAsync" Label="@L["Darken background (%)"]" Min="0" Max="90" Step="10" Clearable="true"
                                      Margin="Density.Margin" Variant="Variant.Outlined" Disabled="@string.IsNullOrWhiteSpace(Value.BackgroundUrl)" data-testid="sign-in-background-dim" />
                 </MudItem>
-                <MudItem xs="12" sm="8">
-                    <MudSelect T="LoadingScreenBackground" @bind-Value="LoadingScreen" @bind-Value:after="NotifyAsync" Label="@L["Loading screen"]" Margin="Density.Margin" Variant="Variant.Outlined"
-                               HelperText="@L["Shown while the app loads, in the colours and with the logo of the default theme."]" data-testid="loading-screen">
-                        <MudSelectItem T="LoadingScreenBackground" Value="LoadingScreenBackground.Animated">@L["Animated background"]</MudSelectItem>
-                        <MudSelectItem T="LoadingScreenBackground" Value="LoadingScreenBackground.SignInMedia">@L["Image or video of the sign-in page"]</MudSelectItem>
-                        <MudSelectItem T="LoadingScreenBackground" Value="LoadingScreenBackground.Plain">@L["Plain background"]</MudSelectItem>
-                    </MudSelect>
-                </MudItem>
+                @if (Value is SignInDesign)
+                {
+                    <MudItem xs="12" sm="8">
+                        <MudSelect T="LoadingScreenBackground" @bind-Value="LoadingScreen" @bind-Value:after="NotifyAsync" Label="@L["Loading screen"]" Margin="Density.Margin" Variant="Variant.Outlined"
+                                   HelperText="@L["Shown while the app loads, in the colours and with the logo of the default theme."]" data-testid="loading-screen">
+                            <MudSelectItem T="LoadingScreenBackground" Value="LoadingScreenBackground.Animated">@L["Animated background"]</MudSelectItem>
+                            <MudSelectItem T="LoadingScreenBackground" Value="LoadingScreenBackground.SignInMedia">@L["Image or video of the sign-in page"]</MudSelectItem>
+                            <MudSelectItem T="LoadingScreenBackground" Value="LoadingScreenBackground.Plain">@L["Plain background"]</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                }
             </MudGrid>
         </MudCardContent>
         <MudCardActions>

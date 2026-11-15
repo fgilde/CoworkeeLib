@@ -2204,5 +2204,22 @@
   "days": "días",
   "min": "min",
   "passwords": "contraseñas",
-  "sessions": "sesiones"
+  "sessions": "sesiones",
+  "Sign-in design": "Diseño de inicio de sesión",
+  "What the sign-in page looks like for users of this theme.": "Así se ve la página de inicio de sesión para los usuarios de este tema.",
+  "Default design": "Diseño predeterminado",
+  "{0} (not found, default design)": "{0} (no encontrado, diseño predeterminado)",
+  "Sign-in designs": "Diseños de inicio de sesión",
+  "A theme can name one of these designs in the theme editor; every other theme shows the default design. The Keycloak sign-in page shows the design of the default theme.": "Un tema puede elegir uno de estos diseños en el editor de temas; todos los demás temas muestran el diseño predeterminado. La página de inicio de sesión de Keycloak muestra el diseño del tema predeterminado.",
+  "Add design": "Añadir diseño",
+  "For the themes that name this design; texts and the app name are those of the default design.": "Para los temas que eligen este diseño; los textos y el nombre de la aplicación son los del diseño predeterminado.",
+  "For every theme that names no design of its own.": "Para cada tema que no elige un diseño propio.",
+  "Used by {0}": "Usado por {0}",
+  "No theme uses it": "Ningún tema lo usa",
+  "Unnamed design": "Diseño sin nombre",
+  "New design": "Nuevo diseño",
+  "{0} use this design and show the default design once it is deleted (after saving).": "{0} usan este diseño y mostrarán el diseño predeterminado una vez eliminado (al guardar).",
+  "No theme uses this design. It goes away when the page is saved.": "Ningún tema usa este diseño. Desaparece al guardar la página.",
+  "Glass": "Cristal",
+  "Aurora": "Aurora"
 }

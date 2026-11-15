@@ -215,6 +215,27 @@ public sealed class SignInConfigurationTests : ClientTestBase
     }
 
     [Fact]
+    public async Task A_new_named_design_is_saved_in_the_design_section_next_to_the_unchanged_default_design()
+    {
+        Api.GetThemesAsync(Arg.Any<CancellationToken>()).Returns([]);
+        var page = RenderPage();
+        page.WaitForAssertion(() => Tabs(page).ShouldContain("Appearance"));
+        Open(page, "Appearance");
+
+        await page.InvokeAsync(() => page.Find("[data-testid='sign-in-design-add']").ClickAsync(new()));
+        page.Find("[data-testid='sign-in-dirty']");
+        await page.InvokeAsync(() => page.Find("[data-testid='sign-in-design'] [data-layout='Aurora']").ClickAsync(new()));
+        await page.InvokeAsync(() => page.Find("[data-testid='sign-in-save']").ClickAsync(new()));
+
+        await Api.Received(1).SaveAppConfigurationAsync(SignInDesign.Section, Arg.Is<JsonElement>(v =>
+            v.GetProperty("layout").GetString() == SignInLayouts.Card
+            && v.GetProperty("designs").GetArrayLength() == 1
+            && v.GetProperty("designs")[0].GetProperty("layout").GetString() == SignInLayouts.Aurora
+            && v.GetProperty("designs")[0].GetProperty("name").GetString() == "New design"
+            && v.GetProperty("designs")[0].GetProperty("key").GetString()!.StartsWith("design-")), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public void Discarding_restores_what_was_loaded()
     {
         var page = RenderPage();

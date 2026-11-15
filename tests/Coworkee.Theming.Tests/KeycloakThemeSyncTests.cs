@@ -57,6 +57,29 @@ public sealed class KeycloakThemeSyncTests(ThemeApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Keycloak_shows_the_sign_in_design_the_default_theme_names()
+    {
+        try
+        {
+            var design = new SignInDesign { Layout = "Split", Designs = [new NamedSignInDesign { Key = "night", Name = "Night", Layout = SignInLayouts.Aurora }] };
+            (await Admin.PutAsJsonAsync($"/api/v1/configuration/{SignInDesign.Section}", design, Ct)).EnsureSuccessStatusCode();
+            await EventuallyAsync(() => Read("resources/js/coworkee.js").Contains("\"layout\":\"split\"", StringComparison.Ordinal));
+
+            var palette = JsonSerializer.SerializeToElement(new Dictionary<string, string> { ["Primary"] = "#123456" });
+            var options = JsonSerializer.SerializeToElement(new Dictionary<string, string> { [SignInDesign.ThemeOption] = "night" });
+            var created = await Admin.PostAsJsonAsync("/api/v1/themes", new ThemeRequest("Night", palette, palette, null, null, null, null, Options: options), Ct);
+            var theme = (await created.Content.ReadFromJsonAsync<ThemeDto>(Ct))!;
+            (await Admin.PostAsync($"/api/v1/themes/{theme.Id}/default", null, Ct)).EnsureSuccessStatusCode();
+
+            await EventuallyAsync(() => Read("resources/js/coworkee.js").Contains("\"layout\":\"aurora\"", StringComparison.Ordinal));
+        }
+        finally
+        {
+            await Admin.DeleteAsync($"/api/v1/configuration/{SignInDesign.Section}", Ct);
+        }
+    }
+
+    [Fact]
     public async Task Admins_see_the_status_and_write_the_theme_at_once()
     {
         if (Directory.Exists(Path.Combine(app.KeycloakThemes, "coworkee-test")))

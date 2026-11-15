@@ -2204,5 +2204,22 @@
   "days": "hari",
   "min": "mnt",
   "passwords": "kata sandi",
-  "sessions": "sesi"
+  "sessions": "sesi",
+  "Sign-in design": "Desain masuk",
+  "What the sign-in page looks like for users of this theme.": "Tampilan halaman masuk bagi pengguna tema ini.",
+  "Default design": "Desain default",
+  "{0} (not found, default design)": "{0} (tidak ditemukan, desain default)",
+  "Sign-in designs": "Desain masuk",
+  "A theme can name one of these designs in the theme editor; every other theme shows the default design. The Keycloak sign-in page shows the design of the default theme.": "Tema dapat memilih salah satu desain ini di editor tema; semua tema lain menampilkan desain default. Halaman masuk Keycloak menampilkan desain tema default.",
+  "Add design": "Tambah desain",
+  "For the themes that name this design; texts and the app name are those of the default design.": "Untuk tema yang memilih desain ini; teks dan nama aplikasi mengikuti desain default.",
+  "For every theme that names no design of its own.": "Untuk setiap tema yang tidak memilih desainnya sendiri.",
+  "Used by {0}": "Digunakan oleh {0}",
+  "No theme uses it": "Tidak ada tema yang menggunakannya",
+  "Unnamed design": "Desain tanpa nama",
+  "New design": "Desain baru",
+  "{0} use this design and show the default design once it is deleted (after saving).": "{0} menggunakan desain ini dan akan menampilkan desain default setelah dihapus (saat disimpan).",
+  "No theme uses this design. It goes away when the page is saved.": "Tidak ada tema yang menggunakan desain ini. Desain hilang saat halaman disimpan.",
+  "Glass": "Kaca",
+  "Aurora": "Aurora"
 }

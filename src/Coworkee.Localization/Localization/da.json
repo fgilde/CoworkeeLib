@@ -2204,5 +2204,22 @@
   "days": "dage",
   "min": "min",
   "passwords": "adgangskoder",
-  "sessions": "sessioner"
+  "sessions": "sessioner",
+  "Sign-in design": "Login-design",
+  "What the sign-in page looks like for users of this theme.": "Sådan ser loginsiden ud for brugere af dette tema.",
+  "Default design": "Standarddesign",
+  "{0} (not found, default design)": "{0} (ikke fundet, standarddesign)",
+  "Sign-in designs": "Login-designs",
+  "A theme can name one of these designs in the theme editor; every other theme shows the default design. The Keycloak sign-in page shows the design of the default theme.": "Et tema kan vælge et af disse designs i temaeditoren; alle andre temaer viser standarddesignet. Keycloaks loginside viser standardtemaets design.",
+  "Add design": "Tilføj design",
+  "For the themes that name this design; texts and the app name are those of the default design.": "Til de temaer, der vælger dette design; tekster og appnavn er standarddesignets.",
+  "For every theme that names no design of its own.": "Til hvert tema, der ikke vælger sit eget design.",
+  "Used by {0}": "Bruges af {0}",
+  "No theme uses it": "Intet tema bruger det",
+  "Unnamed design": "Unavngivet design",
+  "New design": "Nyt design",
+  "{0} use this design and show the default design once it is deleted (after saving).": "{0} bruger dette design og viser standarddesignet, når det er slettet (ved gem).",
+  "No theme uses this design. It goes away when the page is saved.": "Intet tema bruger dette design. Det forsvinder, når siden gemmes.",
+  "Glass": "Glas",
+  "Aurora": "Aurora"
 }

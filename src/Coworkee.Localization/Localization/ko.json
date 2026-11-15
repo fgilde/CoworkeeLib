@@ -2204,5 +2204,22 @@
   "days": "일",
   "min": "분",
   "passwords": "개",
-  "sessions": "세션"
+  "sessions": "세션",
+  "Sign-in design": "로그인 디자인",
+  "What the sign-in page looks like for users of this theme.": "이 테마 사용자에게 보이는 로그인 페이지의 모습입니다.",
+  "Default design": "기본 디자인",
+  "{0} (not found, default design)": "{0} (찾을 수 없음, 기본 디자인)",
+  "Sign-in designs": "로그인 디자인 목록",
+  "A theme can name one of these designs in the theme editor; every other theme shows the default design. The Keycloak sign-in page shows the design of the default theme.": "테마는 테마 편집기에서 이 디자인 중 하나를 선택할 수 있으며, 다른 모든 테마에는 기본 디자인이 표시됩니다. Keycloak 로그인 페이지에는 기본 테마의 디자인이 표시됩니다.",
+  "Add design": "디자인 추가",
+  "For the themes that name this design; texts and the app name are those of the default design.": "이 디자인을 선택한 테마용입니다. 텍스트와 앱 이름은 기본 디자인의 것을 사용합니다.",
+  "For every theme that names no design of its own.": "자체 디자인을 선택하지 않은 모든 테마용입니다.",
+  "Used by {0}": "사용 중: {0}",
+  "No theme uses it": "사용하는 테마가 없습니다",
+  "Unnamed design": "이름 없는 디자인",
+  "New design": "새 디자인",
+  "{0} use this design and show the default design once it is deleted (after saving).": "{0}에서 이 디자인을 사용하며, 삭제 후(저장 시) 기본 디자인이 표시됩니다.",
+  "No theme uses this design. It goes away when the page is saved.": "이 디자인을 사용하는 테마가 없습니다. 페이지를 저장하면 사라집니다.",
+  "Glass": "유리",
+  "Aurora": "오로라"
 }

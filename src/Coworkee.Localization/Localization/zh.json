@@ -2204,5 +2204,22 @@
   "days": "天",
   "min": "分钟",
   "passwords": "个",
-  "sessions": "个会话"
+  "sessions": "个会话",
+  "Sign-in design": "登录设计",
+  "What the sign-in page looks like for users of this theme.": "此主题的用户看到的登录页面外观。",
+  "Default design": "默认设计",
+  "{0} (not found, default design)": "{0}（未找到，使用默认设计）",
+  "Sign-in designs": "登录设计列表",
+  "A theme can name one of these designs in the theme editor; every other theme shows the default design. The Keycloak sign-in page shows the design of the default theme.": "主题可以在主题编辑器中选择其中一个设计；其他所有主题显示默认设计。Keycloak 登录页面显示默认主题的设计。",
+  "Add design": "添加设计",
+  "For the themes that name this design; texts and the app name are those of the default design.": "用于选择此设计的主题；文本和应用名称沿用默认设计。",
+  "For every theme that names no design of its own.": "用于未选择自有设计的每个主题。",
+  "Used by {0}": "使用者：{0}",
+  "No theme uses it": "没有主题使用它",
+  "Unnamed design": "未命名设计",
+  "New design": "新设计",
+  "{0} use this design and show the default design once it is deleted (after saving).": "{0} 使用此设计，删除后（保存时）将显示默认设计。",
+  "No theme uses this design. It goes away when the page is saved.": "没有主题使用此设计。保存页面后它将消失。",
+  "Glass": "玻璃",
+  "Aurora": "极光"
 }
