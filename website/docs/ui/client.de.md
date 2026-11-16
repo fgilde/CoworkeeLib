@@ -144,6 +144,10 @@ Jede Methode liefert eine neue Instanz. Eigene Dialoge bekommen dieselben Option
 
 Mit `public override bool AdminEditable => true;` bekommt die Navigation *Administration → Benutzeroberfläche → Dialogoptionen* (`/admin/dialog-options`, `Settings.Manage`, nur Systemorganisation): ein Tab je Teil mit allen Optionen in einem Objekteditor, *Vorschau* öffnet einen Dialog damit, *Auf die Optionen der App zurücksetzen*. Gespeichert werden nur Teile, die von der App abweichen, in der globalen Einstellung `Dialogs.Options` (JSON je Teil, z. B. `{"Small":{"maxWidth":"Large"}}`); ein gespeicherter Teil ersetzt den Teil der App ganz, ein Side-Sheet öffnet sich trotzdem auf der geklickten Seite. Gespeicherte Werte erreichen offene Seiten sofort. Ohne `AdminEditable` (Standard) ist die Seite nicht gelistet und die Einstellung wird ignoriert.
 
+### Lokale Kopien für Administratoren
+
+Apps mit [Client-Entities](client-entities.de.md) bekommen *Administration → System → Lokale Kopien* (`/admin/local-copies`, Seitenschlüssel `local-copies`, `Settings.Manage`, nur Systemorganisation): jede Entitätsmenge, die eine Kopie im Browser haben könnte, mit Kopie (nur Server, Speicher, SQLite), Zeilenlimit, Paketgröße, parallelen Seiten, Aktualisierungsintervall und Standardmodus, jeweils mit dem, was sie entschieden hat, je Set bearbeitbar und auf den Code zurücksetzbar. Siehe [Zur Laufzeit ändern](client-entities.de.md#zur-laufzeit-andern-die-seite-lokale-kopien).
+
 ## Head-Skript
 
 Mit `AddCoworkeeHeadScript()` auf dem Server pflegen Administratoren ein Skript wie einen Tag-Manager in einer Einstellung ([Einstellungen](../modules/settings.md#head-skript)), und `CoworkeeLayout` setzt es in die Seite; der Client braucht nichts. Sobald die App gestartet ist (Theme und Client-Einstellungen geladen) und wenn `HeadScript.Enabled` an und `HeadScript.Value` nicht leer ist, übergibt das Layout das HTML einmal pro Seitenaufruf an `coworkee.js`:

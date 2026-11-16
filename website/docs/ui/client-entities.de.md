@@ -64,7 +64,7 @@ Eine Entity, die das Attribut nicht tragen kann (eine Klasse einer anderen Bibli
 
 ## Schritt 2: Einstellungen (optional)
 
-Jedes Set startet mit den Standardwerten, dann wirken das Attribut, die Optionen und zuletzt sein Anwendungsdienst:
+Jedes Set startet mit den Standardwerten, dann wirken das Attribut, die Optionen und sein Anwendungsdienst; zuletzt die [Überschreibung](#zur-laufzeit-andern-die-seite-lokale-kopien) eines Administrators:
 
 | Einstellung | Standard | |
 |---|---|---|
@@ -76,6 +76,8 @@ Jedes Set startet mit den Standardwerten, dann wirken das Attribut, die Optionen
 | `Enabled` | `true` | `false` lässt eine markierte Entity auf dem Server |
 | `ChangedAt` | keine | Datumseigenschaften, die sagen, wann eine Zeile angelegt oder geändert wurde, für Entities ohne `IAuditable` (Tabellen einer [externen Datenbank](../fundamentals/persistence.md#externe-datenbanken)); ohne sie lädt ein solches Set bei jeder Aktualisierung vollständig |
 | `Overlap` | 5 Sekunden | wie weit vor die letzte Aktualisierung jede Aktualisierung erneut schaut, für späte Commits und abweichende Uhren |
+| `Copy` | keine | `Memory` oder `Sqlite` verlangt diese Engine von den Clients (SQLite fällt in einer App ohne sie auf den Speicher zurück); keine lässt die Client-App entscheiden; `Off` ist `Enabled = false` |
+| `DefaultMode` | `Client` | wo Abfragen für Benutzer laufen, die im Schalter der Tabelle nicht gewählt haben (`Client` oder `Server`) |
 
 === "Optionen"
 
@@ -113,6 +115,45 @@ Jedes Set startet mit den Standardwerten, dann wirken das Attribut, die Optionen
     ```
 
     `ClientEntity<TEntity>()` allein spiegelt das Set wie `o.For<TEntity>()`; seine Einstellungen wirken zuletzt. Ein Attribut am Dienst-Interface gibt es bewusst nicht: Das Interface liegt in den Contracts, die die Entity nicht kennen.
+
+## Zur Laufzeit ändern: die Seite Lokale Kopien
+
+Alles oben entscheidet der Code. Ein Administrator kann es danach ohne Deployment unter *Administration → System → Lokale Kopien* ändern (`/admin/local-copies`, `Settings.Manage`, nur Systemorganisation; sie kommt mit `AddCoworkeeClientEntities`). Die Seite listet **jedes** Set, das eine Kopie haben könnte (jedes OData-Set mit einer `Guid`-`Id`), ob im Code markiert oder nicht, mit:
+
+| Spalte | |
+|---|---|
+| Lokale Kopie | *Nur Server* (keine Kopie), *Speicher* (Spalten im Speicher, in IndexedDB aufbewahrt), *SQLite* (eine Datenbank im Browser) oder *Automatisch* (gespiegelt, die Client-App wählt die Engine wie bisher), mit einem Abzeichen, was das entschieden hat: *Standard* (der Code markiert das Set nicht), *Attribut*, *Code* (`o.For<T>()`), *Service* (`ClientEntity<T>()`) oder *Überschrieben* |
+| Zeilenlimit, Paketgröße, Parallele Seiten, Aktualisierungsintervall | die Werte, die Clients bekommen (die Paketgröße begrenzt durch `Coworkee:OData:MaxTop`); ein Abzeichen, wenn etwas anderes als die Standardwerte sie bestimmt hat |
+| Standardmodus | wo Abfragen für Benutzer laufen, die im Schalter der Tabelle nicht selbst eine Seite gewählt haben: *Browser* oder *Server*; die eigene Wahl eines Benutzers gewinnt weiterhin |
+
+*Bearbeiten* öffnet ein Sheet mit denselben Feldern; ein leeres Feld behält, was der Code sagt (der Hilfetext zeigt den aktuellen Wert). *Zurück zu dem, was der Code sagt* entfernt die Überschreibung des Sets. Steht ein Set auf SQLite, die App hat aber keine [SQLite-Engine](#sqlite-im-browser-optional) (kein `AddCoworkeeClientEntitiesSqlite` oder ein Client ohne natives SQLite), zeigt die Seite *SQLite ist in dieser App nicht verfügbar* und die Clients halten diese Kopie im Speicher.
+
+Die Überschreibungen sind der App-Konfigurationsabschnitt `Coworkee:ClientEntities:Sets`, ein Eintrag je Entitätsmenge, gespeichert in `cw.ConfigurationEntries` wie bei den anderen [Einstellungsseiten](../modules/settings.md) (gespeichert wird nur, was von appsettings abweicht). Derselbe Abschnitt funktioniert in `appsettings.json`:
+
+```json
+{
+  "Coworkee": {
+    "ClientEntities": {
+      "Sets": {
+        "Products": { "Copy": "Sqlite", "MaxRows": 100000, "RefreshInterval": "00:01:00" },
+        "Brands": { "Copy": "Off" },
+        "AuditEntries": { "Copy": "Memory", "DefaultMode": "Server", "BatchSize": 500, "ParallelPages": 2 }
+      }
+    }
+  }
+}
+```
+
+| Schlüssel | Werte |
+|---|---|
+| `Copy` | `Off` lässt ein markiertes Set auf dem Server; `Memory` oder `Sqlite` spiegelt auch ein Set, das der Code nicht markiert, in dieser Engine; fehlt er: wie im Code |
+| `MaxRows`, `BatchSize`, `ParallelPages` | Zahlen über 0 |
+| `RefreshInterval` | ein `TimeSpan` (`"00:00:30"`) |
+| `DefaultMode` | `Client` oder `Server` |
+
+Die Überschreibung wirkt nach Attribut, Optionen und Dienst. Berechtigungen, versteckte Properties und Zeilenfilter bleiben wie bei jeder Kopie auf dem Server: eine Überschreibung entscheidet nur, ob und wie Clients kopieren, was ein Benutzer ohnehin lesen darf. Die API liest den Abschnitt live (`IOptionsMonitor`): ein Speichern wirkt sofort auf dem Server, der es bearbeitet hat, und innerhalb des Neuladeintervalls der Konfiguration (15 Sekunden) auf den anderen. Jeder offene Client erfährt es (Topic `global:client-entities`), lädt das Manifest neu und beginnt nur die Kopien neu, deren Einstellungen sich geändert haben; eine Tabelle, die so ein Set zeigt, fragt erneut, lokal mit den neuen Einstellungen oder auf dem Server. Auch Code kann Engine und Standardmodus nennen: `o.For<Product>(s => (s.Copy, s.DefaultMode) = (ClientEntityCopy.Sqlite, ClientEntityDefaultMode.Server))`.
+
+Ohne Überschreibungen ändert sich nichts: das Manifest nennt keine Engine, die Engine der Client-App entscheidet wie bisher je Zeilentyp.
 
 ## Schritt 3: der Client, eine Zeile
 
@@ -400,6 +441,7 @@ Der Server beantwortete dieselbe Abfrage in 210 ms. Deshalb bleiben solche Zeile
 | `GET /api/v1/client-entities` | die Sets, die dieser Benutzer spiegeln darf, mit ihren Einstellungen und `Fields` (was `query_data` vom Set für diesen Benutzer liefert), ein Partitionsschlüssel pro Benutzer, Mandant und Gruppenauswahl und ein Besitzerschlüssel pro Benutzer und Mandant |
 | `GET /api/v1/client-entities/{set}/changes?since=…&skip=…` | neue Version, Zahl der sichtbaren Zeilen, geänderte und gelöschte Ids und die Partition des Aufrufers; mit `skip` kommen die geänderten Ids in Seiten von `BatchSize × 10` (`more`), ohne antwortet mehr als das mit `reset`; auch `reset`, wenn `since` älter als `ChangeLogLifetime` ist |
 | `GET /api/v1/client-entities/{set}/ids` | alle sichtbaren Ids, um unbemerkt verschwundene Zeilen zu finden |
+| `GET /api/v1/client-entities/admin` | `Settings.Manage`: jedes Set, das gespiegelt werden könnte, mit seinen wirksamen Einstellungen, der Quelle jedes Werts und seiner Überschreibung (die Seite [Lokale Kopien](#zur-laufzeit-andern-die-seite-lokale-kopien)) |
 | `POST /api/v1/client-entities/{set}/snapshot` | mit [SQLite im Browser](#sqlite-im-browser-optional): die sichtbaren Zeilen als SQLite-Datei (gzip) in den Spalten, die der Body nennt, die Version in `X-Coworkee-Version`; 400 für eine versteckte Property, 403 ohne Berechtigung, 413 über `MaxRows` |
 
 ## Dateien der Demo

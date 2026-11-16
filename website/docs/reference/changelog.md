@@ -4,6 +4,14 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Added
+
+- Page **Local copies** (`/admin/local-copies`, page key `local-copies`, `Settings.Manage`, system organisation only, comes with `AddCoworkeeClientEntities`): every entity set that could be mirrored (OData sets with a `Guid` `Id`), marked in code or not, with copy (server only, memory, SQLite or automatic), row limit, batch, parallel pages, refresh interval and default mode, each with the source that decided it (default, attribute, code, service, override); edit per set in a sheet, reset to the code. Changes apply live: the API reads the overrides with `IOptionsMonitor`, open clients are told (`global:client-entities`), load the manifest again and restart only the copies whose settings changed. See [Change it at runtime](../ui/client-entities.md#change-it-at-runtime-the-page-local-copies).
+- Configuration `Coworkee:ClientEntities:Sets:{EntitySet}` with `Copy` (`Off`, `Memory`, `Sqlite`), `MaxRows`, `BatchSize`, `ParallelPages`, `RefreshInterval` and `DefaultMode` (`Client`, `Server`), applied after attribute, options and service: `Off` keeps a marked set on the server, `Memory`/`Sqlite` also mirrors an unmarked one. The page saves it as app configuration (section registered by the Settings module).
+- `ClientEntitySettings.Copy` and `ClientEntitySettings.DefaultMode`; the manifest carries both (`ClientEntitySetInfo.Copy`, `.DefaultMode`). The client keeps a set in the engine the server names; `Sqlite` without the SQLite package or native SQLite stays in memory and logs a warning. Without a value the client app decides as before.
+- `IClientEntityEngine.OpenRequested<T>(key)` (a store whatever the engine's own row type choice) and `IClientEntityEngine.IsAvailable`; both have defaults, own engines need no change. `ClientEntities.Reconfigured` tells tables that a set's settings changed.
+- `GET /api/v1/client-entities/admin` (`GetClientEntityAdmin`, `Settings.Manage`).
+
 ### Fixed
 
 - A burst of realtime changes (one event per changed row, e.g. a sync job updating 40 shipments) no longer renders an open `CoworkeeDataTable` twice per event: the events only start the settle delay and the table renders once after its one reload. In CoShipee that took 1.5 to 3.4 seconds of a blocked browser every minute on the shipments page; requests and clicks during it waited.
