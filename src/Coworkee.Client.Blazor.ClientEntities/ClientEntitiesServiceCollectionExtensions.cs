@@ -41,6 +41,8 @@ public static class ClientEntitiesServiceCollectionExtensions
             provider.GetService<IClientEntityEngine>()));
         services.AddScoped<IClientDataCache>(provider => provider.GetRequiredService<ClientEntities>());
         services.AddSingleton(new DataTableToolbarItem(typeof(ClientEntitySwitch)));
+        services.AddSingleton<INavigationContributor, ClientEntityNavigation>();
+        services.AddSingleton(new Navigation.CoworkeePage("local-copies", typeof(Pages.LocalCopies), "admin/local-copies"));
         Coworkee.Client.Blazor.CommandPalette.CommandPaletteServiceCollectionExtensions.AddCommandPaletteProvider<LocalSearchPaletteProvider>(services);
         return services;
     }

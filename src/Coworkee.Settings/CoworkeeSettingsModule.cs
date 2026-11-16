@@ -45,6 +45,9 @@ public sealed class CoworkeeSettingsModule : CoworkeeModule, IWebModule
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IServiceSource, AspireUIServiceSource>());
         services.TryAddScoped<IServiceDirectory, ServiceDirectory>();
         services.AddSystemStatus<VersionsStatus>().AddSystemStatus<DatabaseStatus>();
+        // the overrides of the Local copies page (Coworkee.OData reads them live); no Settings tab, the page has its own table
+        services.AddSingleton(new AppConfigurationRegistration(Contracts.Data.ClientEntitySetOverride.Section, "Local copies",
+            typeof(Dictionary<string, Contracts.Data.ClientEntitySetOverride>)));
         if (!services.HasAppSettings())
         {
             services.AddCoworkeeSettings<CoworkeeAppSettings>(context.Configuration);

@@ -5,11 +5,13 @@ using Microsoft.Extensions.Options;
 
 namespace Coworkee.OData.ClientEntities;
 
-internal sealed class ClientEntityChangeLog(CoworkeeDbContext db, ICurrentUser currentUser, TimeProvider clock, IOptions<ClientEntityOptions> options) : IClientEntityChangeLog
+internal sealed class ClientEntityChangeLog(CoworkeeDbContext db, ICurrentUser currentUser, TimeProvider clock, IOptionsMonitor<ClientEntityOptions> options, ODataEntityRegistry registry) : IClientEntityChangeLog
 {
     public void Touch(Type entityType, IEnumerable<Guid> ids)
     {
-        if (options.Value.Resolve(entityType) is null)
+        // the set's name only matters with overrides
+        var current = options.CurrentValue;
+        if (current.Resolve(entityType, current.Sets.Count > 0 ? registry.Find(entityType)?.EntitySet : null) is null)
         {
             return;
         }

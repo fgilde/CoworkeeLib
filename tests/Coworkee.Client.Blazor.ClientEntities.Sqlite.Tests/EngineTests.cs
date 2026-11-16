@@ -30,6 +30,17 @@ public sealed class EngineTests
         store.ShouldNotBeNull();
     }
 
+    [Fact]
+    public async Task A_copy_the_server_asks_sqlite_for_goes_there_whatever_the_row_type()
+    {
+        var engine = Engine(null);
+
+        engine.IsAvailable.ShouldBeTrue();
+        await using var store = engine.OpenRequested<Simple>("simple");
+        store.ShouldNotBeNull();
+        engine.Open<Simple>("simple").ShouldBeNull();
+    }
+
     private static IClientEntityEngine Engine(Action<SqliteClientEntityOptions>? configure)
     {
         var services = new ServiceCollection().AddLogging().AddSingleton<IClientEntityStorage, NoClientEntityStorage>();

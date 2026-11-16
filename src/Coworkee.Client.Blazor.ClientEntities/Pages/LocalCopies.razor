@@ -1,0 +1,76 @@
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = Coworkee.Client.Blazor.Security.PermissionPolicy.Prefix + Coworkee.Contracts.Settings.SettingsPermissions.Manage)]
+@using Coworkee.Client.Blazor.Components
+@using Coworkee.Contracts.Data
+
+<PageHeader Title="Local copies" Description="Which data the browsers keep a copy of and search locally, and how they keep it in sync. Changes reach every open client at once, without a deployment." />
+@if (!_sqlite && _sets.Any(s => s.Copy == ClientEntityCopy.Sqlite))
+{
+    <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-2" data-testid="sqlite-missing">@L["SQLite is not available in this app: sets set to SQLite stay in memory."]</MudAlert>
+}
+<MudDataGrid T="ClientEntityAdminSetDto" Items="_sets" Loading="_busy" Dense="true" Hover="true" Striped="true" Elevation="0" Outlined="true" data-testid="local-copies">
+    <Columns>
+        <PropertyColumn Property="s => s.EntitySet" Title="@L["Entity set"]">
+            <CellTemplate>
+                <MudText Typo="Typo.body2">@context.Item.EntitySet</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">@context.Item.EntityType</MudText>
+            </CellTemplate>
+        </PropertyColumn>
+        <TemplateColumn T="ClientEntityAdminSetDto" Title="@L["Local copy"]" Sortable="false">
+            <CellTemplate>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" data-testid="@($"copy-{context.Item.EntitySet}")" data-copy="@(context.Item.Copy?.ToString() ?? "Auto")">
+                    <MudChip T="string" Size="Size.Small" Color="@CopyColor(context.Item.Copy)" Icon="@CopyIcon(context.Item.Copy)">@CopyText(context.Item.Copy)</MudChip>
+                    @if (context.Item.Copy == ClientEntityCopy.Sqlite && !_sqlite)
+                    {
+                        <MudTooltip Text="@L["SQLite not available in this app"]">
+                            <MudIcon Icon="@Icons.Material.Outlined.WarningAmber" Color="Color.Warning" Size="Size.Small" data-testid="sqlite-fallback" />
+                        </MudTooltip>
+                    }
+                    @Source(context.Item, nameof(ClientEntityAdminSetDto.Copy), always: true)
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn T="ClientEntityAdminSetDto" Title="@L["Row limit"]" Sortable="false">
+            <CellTemplate>@Value(context.Item, nameof(ClientEntityAdminSetDto.MaxRows), context.Item.MaxRows.ToString("N0", Culture))</CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn T="ClientEntityAdminSetDto" Title="@L["Batch"]" Sortable="false">
+            <CellTemplate>@Value(context.Item, nameof(ClientEntityAdminSetDto.BatchSize), context.Item.BatchSize.ToString("N0", Culture))</CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn T="ClientEntityAdminSetDto" Title="@L["Parallel pages"]" Sortable="false">
+            <CellTemplate>@Value(context.Item, nameof(ClientEntityAdminSetDto.ParallelPages), context.Item.ParallelPages.ToString(Culture))</CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn T="ClientEntityAdminSetDto" Title="@L["Refresh interval"]" Sortable="false">
+            <CellTemplate>@Value(context.Item, nameof(ClientEntityAdminSetDto.RefreshInterval), Interval(context.Item.RefreshInterval))</CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn T="ClientEntityAdminSetDto" Title="@L["Default mode"]" Sortable="false">
+            <CellTemplate>@Value(context.Item, nameof(ClientEntityAdminSetDto.DefaultMode), ModeText(context.Item.DefaultMode))</CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn T="ClientEntityAdminSetDto" Sortable="false" CellStyle="text-align:right;white-space:nowrap">
+            <CellTemplate>
+                <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" aria-label="@L["Edit"]" Disabled="_busy" OnClick="() => EditAsync(context.Item)"
+                               data-testid="@($"edit-{context.Item.EntitySet}")" />
+                <MudTooltip Text="@L["Back to what the code says"]">
+                    <MudIconButton Icon="@Icons.Material.Outlined.SettingsBackupRestore" Size="Size.Small" aria-label="@L["Reset"]" Disabled="@(_busy || context.Item.Override is null)"
+                                   OnClick="() => ResetAsync(context.Item)" data-testid="@($"reset-{context.Item.EntitySet}")" />
+                </MudTooltip>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <NoRecordsContent>
+        <MudText Class="mud-text-secondary pa-4">@L["No entity set can have a local copy: only OData sets with a Guid Id can."]</MudText>
+    </NoRecordsContent>
+</MudDataGrid>
+
+@code {
+    private RenderFragment Value(ClientEntityAdminSetDto set, string property, string text) => @<span>@text @Source(set, property)</span>;
+
+    // what decided a value; values of the defaults show none, except the copy, where Default tells that the code does not mark the set
+    private RenderFragment Source(ClientEntityAdminSetDto set, string property, bool always = false) => __builder =>
+    {
+        var source = set.Sources.GetValueOrDefault(property);
+        if (always || source != ClientEntitySettingSource.Default)
+        {
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(source == ClientEntitySettingSource.Override ? Color.Secondary : Color.Default)"
+                     data-testid="source" data-source="@source">@SourceText(source)</MudChip>
+        }
+    };
+}

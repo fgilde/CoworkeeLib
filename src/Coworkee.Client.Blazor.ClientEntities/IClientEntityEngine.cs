@@ -11,6 +11,15 @@ public interface IClientEntityEngine
 {
     /// <summary>The store of one copy (<paramref name="key"/>: partition, set and expand), or null when the engine does not take rows of <typeparamref name="T"/>.</summary>
     IClientEntityStore<T>? Open<T>(string key);
+
+    /// <summary>
+    /// The store of one copy the server asked this engine for (Copy Sqlite on the Local copies page), whatever the engine's own choice of row types;
+    /// null when it cannot keep it, then the copy stays in memory.
+    /// </summary>
+    IClientEntityStore<T>? OpenRequested<T>(string key) => Open<T>(key);
+
+    /// <summary>Whether the engine works in this client; SQLite needs a client built with native SQLite.</summary>
+    bool IsAvailable => true;
 }
 
 /// <summary>One copy in an <see cref="IClientEntityEngine"/>; the sync decides what it holds, the store answers queries on it.</summary>

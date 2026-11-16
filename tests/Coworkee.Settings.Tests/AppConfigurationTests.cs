@@ -42,7 +42,8 @@ public sealed class AppConfigurationTests(SettingsApp app) : IAsyncLifetime
     [Fact]
     public async Task Lists_the_registered_sections() =>
         (await Admin.GetFromJsonAsync<AppConfigurationDto[]>("/api/v1/configuration", Ct))!.ShouldBe(
-            [new AppConfigurationDto("TestApp", "Test app"), new AppConfigurationDto("Masked", "Masked"), new AppConfigurationDto("Rules", "Rules"), new AppConfigurationDto(CoworkeeAppSettings.Section, "App settings")], ignoreOrder: true);
+            [new AppConfigurationDto("TestApp", "Test app"), new AppConfigurationDto("Masked", "Masked"), new AppConfigurationDto("Rules", "Rules"), new AppConfigurationDto(CoworkeeAppSettings.Section, "App settings"),
+                new AppConfigurationDto(Contracts.Data.ClientEntitySetOverride.Section, "Local copies")], ignoreOrder: true);
 
     [Fact]
     public async Task Shows_the_section_typed_with_secrets_masked()
@@ -147,5 +148,30 @@ public sealed class AppConfigurationTests(SettingsApp app) : IAsyncLifetime
         (await app.As(plain, _setup.TenantId).GetAsync("/api/v1/configuration/TestApp", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await app.As(otherAdmin, otherTenant).GetAsync("/api/v1/configuration/TestApp", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await app.As(otherAdmin, otherTenant).DeleteAsync("/api/v1/configuration/TestApp", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task The_local_copies_overrides_save_as_app_configuration_and_bind_typed()
+    {
+        var section = Contracts.Data.ClientEntitySetOverride.Section;
+        var values = new Dictionary<string, Contracts.Data.ClientEntitySetOverride>
+        {
+            ["Products"] = new() { Copy = Contracts.Data.ClientEntityCopy.Sqlite, RefreshInterval = TimeSpan.FromSeconds(90), DefaultMode = Contracts.Data.ClientEntityDefaultMode.Server },
+            ["Orders"] = new() { MaxRows = 500 },
+        };
+
+        (await Admin.PutAsJsonAsync($"/api/v1/configuration/{section}", values, JsonSerializerOptions.Web, Ct)).EnsureSuccessStatusCode();
+
+        var bound = app.App.Services.GetRequiredService<IConfiguration>().GetSection(section).Get<Dictionary<string, Contracts.Data.ClientEntitySetOverride>>()!;
+        (bound["Products"].Copy, bound["Products"].RefreshInterval, bound["Products"].DefaultMode, bound["Orders"].MaxRows)
+            .ShouldBe((Contracts.Data.ClientEntityCopy.Sqlite, TimeSpan.FromSeconds(90), Contracts.Data.ClientEntityDefaultMode.Server, 500));
+        var stored = await app.InDbAsync(db => db.Set<ConfigurationEntry>().Where(e => e.Key.StartsWith(section)).Select(e => e.Key).ToListAsync(Ct));
+        // only the values set: the empty ones keep what the code says
+        stored.Order().ShouldBe([$"{section}:Orders:MaxRows", $"{section}:Products:Copy", $"{section}:Products:DefaultMode", $"{section}:Products:RefreshInterval"]);
+
+        values.Remove("Orders");
+        (await Admin.PutAsJsonAsync($"/api/v1/configuration/{section}", values, JsonSerializerOptions.Web, Ct)).EnsureSuccessStatusCode();
+
+        app.App.Services.GetRequiredService<IConfiguration>().GetSection($"{section}:Orders:MaxRows").Value.ShouldBeNull();
     }
 }

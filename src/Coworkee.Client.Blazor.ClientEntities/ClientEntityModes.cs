@@ -16,10 +16,11 @@ internal sealed class ClientEntityModes(ICoworkeeApi api, ILogger<ClientEntityMo
     // choices made while the stored ones could not be read: saving then would overwrite them
     private readonly Dictionary<string, ClientEntityMode> _unsaved = new(StringComparer.OrdinalIgnoreCase);
 
-    public async Task<ClientEntityMode> GetAsync(string entitySet)
+    /// <param name="fallback">The mode of users who did not choose: the server's default mode of the set.</param>
+    public async Task<ClientEntityMode> GetAsync(string entitySet, ClientEntityMode fallback = default)
     {
         var all = await AllAsync();
-        return _unsaved.TryGetValue(entitySet, out var mode) ? mode : all?.GetValueOrDefault(entitySet) ?? default;
+        return _unsaved.TryGetValue(entitySet, out var mode) ? mode : all is not null && all.TryGetValue(entitySet, out var stored) ? stored : fallback;
     }
 
     public async Task SetAsync(string entitySet, ClientEntityMode mode)

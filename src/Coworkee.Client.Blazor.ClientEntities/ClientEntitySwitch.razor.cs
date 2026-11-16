@@ -39,6 +39,7 @@ public partial class ClientEntitySwitch : IDisposable
 
         Track(entities.Find(Table.EntitySet));
         entities.Changed += OnChanged;
+        entities.Reconfigured += OnReconfigured;
     }
 
     public void Dispose()
@@ -46,6 +47,21 @@ public partial class ClientEntitySwitch : IDisposable
         if (Entities is { } entities)
         {
             entities.Changed -= OnChanged;
+            entities.Reconfigured -= OnReconfigured;
+        }
+    }
+
+    // the settings of the set changed: the table asks again, which starts the copy with the new settings or goes to the server
+    private void OnReconfigured(string entitySet)
+    {
+        if (string.Equals(entitySet, Table.EntitySet, StringComparison.OrdinalIgnoreCase))
+        {
+            Track(null);
+            _ = InvokeAsync(async () =>
+            {
+                StateHasChanged();
+                await Table.ReloadAsync();
+            });
         }
     }
 

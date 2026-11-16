@@ -37,4 +37,14 @@ public sealed class SettingValueTopicsTests
 
         services.ShouldContain(d => d.ServiceType == typeof(IRealtimeTopicMapper) && d.ImplementationType == typeof(SettingValueTopics));
     }
+
+    [Fact]
+    public void A_saved_client_entity_override_reaches_every_client()
+    {
+        var topics = new ClientEntityConfigurationTopics();
+
+        topics.TopicsFor(new ConfigurationEntry { Key = "Coworkee:ClientEntities:Sets:Products:Copy" }).ShouldBe([Contracts.Data.ClientEntityTopics.Changed]);
+        topics.TopicsFor(new ConfigurationEntry { Key = "Coworkee:Mail:Host" }).ShouldBeEmpty();
+        topics.TopicsFor(new SettingValue { Name = "Ai.Enabled", Scope = SettingScope.Global }).ShouldBeEmpty();
+    }
 }
