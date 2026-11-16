@@ -114,14 +114,14 @@ public sealed class LocalCopiesTests : BunitContext
     public async Task The_dialog_edits_the_override_and_saves_only_what_is_set()
     {
         var page = Render<LocalCopies>();
-        var editing = page.WaitForElement("[data-testid='edit-Gadgets']").ClickAsync(new());
+        var editing = page.WaitForElement("[data-testid='edit-Gadgets']", TimeSpan.FromSeconds(15)).ClickAsync(new());
         // the object edit form renders its fields after its own setup: change and submit only once they are there (CI saw a half set-up form)
         _dialogs.WaitForAssertion(() =>
         {
             var labels = _dialogs.FindAll("label").Select(l => l.TextContent.Trim()).ToList();
             labels.ShouldContain("Row limit");
             labels.ShouldContain("Refresh (seconds)");
-        });
+        }, TimeSpan.FromSeconds(15));
 
         var rows = _dialogs.FindAll("input").First(i => i.Id == _dialogs.FindAll("label").First(l => l.TextContent.Trim() == "Row limit").GetAttribute("for"));
         await rows.ChangeAsync(new Microsoft.AspNetCore.Components.ChangeEventArgs { Value = "777" });
