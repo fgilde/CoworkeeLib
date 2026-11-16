@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixed
+
+- A burst of realtime changes (one event per changed row, e.g. a sync job updating 40 shipments) no longer renders an open `CoworkeeDataTable` twice per event: the events only start the settle delay and the table renders once after its one reload. In CoShipee that took 1.5 to 3.4 seconds of a blocked browser every minute on the shipments page; requests and clicks during it waited.
+
 ## 0.0.1.91 (2026-11-15)
 
 ### Added

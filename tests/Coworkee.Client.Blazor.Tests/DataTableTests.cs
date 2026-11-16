@@ -78,6 +78,38 @@ public sealed class DataTableTests : ClientTestBase
     }
 
     [Fact]
+    public async Task A_burst_of_changes_does_not_render_the_table_once_per_change()
+    {
+        // the hub sends one event per changed row: forty in a row rendered the whole table eighty times (seconds of a blocked browser)
+        var clock = new Microsoft.Extensions.Time.Testing.FakeTimeProvider();
+        Services.AddSingleton<TimeProvider>(clock);
+        var realtime = Services.GetRequiredService<FakeRealtimeConnection>();
+        var table = Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.Columns, Columns()));
+        table.WaitForAssertion(() => realtime.Invocations.ShouldContain(("Subscribe", "type:Gadget")));
+        table.WaitForAssertion(() => _odata.Loads.ShouldBe(1));
+        var renders = table.RenderCount;
+
+        for (var i = 0; i < 40; i++)
+        {
+            realtime.Push("type:Gadget", Contracts.Realtime.RealtimeEventTypes.EntityChanged, new Contracts.Realtime.EntityChangedPayload("Gadget", i.ToString(System.Globalization.CultureInfo.InvariantCulture), "Updated", []));
+        }
+
+        // the pushes reach the table asynchronously: let them all arrive while the clock stands, so the burst is still settling
+        await Task.Delay(300, Xunit.TestContext.Current.CancellationToken);
+        _odata.Loads.ShouldBe(1, "the burst is still settling");
+        (table.RenderCount - renders).ShouldBeLessThan(5, "an event only starts the settle delay, it does not render the table");
+
+        // nothing renders while the burst settles, so nothing wakes a WaitForAssertion: step the clock until the one reload
+        for (var i = 0; i < 100 && _odata.Loads < 2; i++)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            await Task.Delay(20, Xunit.TestContext.Current.CancellationToken);
+        }
+
+        _odata.Loads.ShouldBe(2);
+    }
+
+    [Fact]
     public void An_empty_realtime_topic_keeps_the_table_quiet()
     {
         var realtime = Services.GetRequiredService<FakeRealtimeConnection>();

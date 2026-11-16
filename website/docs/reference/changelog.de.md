@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Behoben
+
+- Ein Schwall von Realtime-Änderungen (ein Ereignis je geänderter Zeile, etwa ein Sync-Job, der 40 Sendungen aktualisiert) rendert eine offene `CoworkeeDataTable` nicht mehr zweimal je Ereignis: die Ereignisse starten nur die Wartezeit, die Tabelle rendert einmal nach ihrem einen Neuladen. In CoShipee kostete das auf der Sendungsseite jede Minute 1,5 bis 3,4 Sekunden blockierten Browser; Anfragen und Klicks warteten so lange.
+
 ## 0.0.1.91 (2026-11-15)
 
 ### Hinzugefügt

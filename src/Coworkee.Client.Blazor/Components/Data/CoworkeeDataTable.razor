@@ -183,7 +183,7 @@
         <QueryBuilder Fields="Fields" Value="_advanced" ValueChanged="AdvancedChangedAsync" Localize="L10n" Dense="Dense" />
     </div>
 }
-<RealtimeSubscription Topic="@LiveTopic" OnEvent="_ => LiveChangedAsync()" />
+<RealtimeSubscription Topic="@LiveTopic" OnEvent="LiveEvent" />
 <div class="@(PanelLayout ? "cw-table-layout cw-table-paneled" : "cw-table-layout")">
 @if (PanelLayout)
 {

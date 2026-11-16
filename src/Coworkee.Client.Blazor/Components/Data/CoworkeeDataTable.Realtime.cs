@@ -21,6 +21,12 @@ public partial class CoworkeeDataTable<T>
 
     private static string EntityName => typeof(T).Name.EndsWith("Dto", StringComparison.Ordinal) ? typeof(T).Name[..^3] : typeof(T).Name;
 
+    // without a receiver: an event does not render the table, a burst of them (one per changed row) would render it twice per event
+    private EventCallback<RealtimeEnvelope> _liveEvent;
+
+    private EventCallback<RealtimeEnvelope> LiveEvent =>
+        _liveEvent.HasDelegate ? _liveEvent : _liveEvent = new EventCallback<RealtimeEnvelope>(null, (Func<RealtimeEnvelope, Task>)(_ => LiveChangedAsync()));
+
     // a bulk delete sends one event per row; one reload for the burst
     private async Task LiveChangedAsync()
     {
@@ -36,5 +42,6 @@ public partial class CoworkeeDataTable<T>
         }
 
         await ReloadAsync();
+        StateHasChanged();
     }
 }
