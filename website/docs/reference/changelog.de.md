@@ -4,6 +4,13 @@
 
 ## Unveröffentlicht
 
+### Hinzugefügt
+
+- Virenscan der Uploads (`Coworkee.Storage`): `IVirusScanner` mit `ScanAsync(content, fileName)` und `VirusScanResult` (`Clean`, `NotScanned`, `Infected` mit dem Fund, `Failed`; `RefusalFor(fileName)`). Der Standard `ClamAvVirusScanner` fragt clamd (`INSTREAM`) unter `ConnectionStrings:antivirus`; ohne diesen Connection String geht jede Datei durch (einmal auf Information geloggt), mit ihm lehnt ein Fund die Datei mit seinem Namen ab und ein clamd ohne Urteil lehnt sie als nicht geprüft ab. Dateien, Datensatz-Anhänge, Chat-Dateien und Registrierungsdokumente rufen ihn, bevor sie eine Datei speichern; ein eigener `IVirusScanner` ersetzt den Standard. Kein Handlungsbedarf: Ohne `ConnectionStrings:antivirus` ändert sich nichts. Siehe [Virenscan](../modules/storage.md#virenscan).
+- AppHost: `options.UseAntivirus()` fügt einen ClamAV-Container `clamav` hinzu (`clamav/clamav:1.4`, Streams bis 2 GB, lokal mit den Signaturen des Images), der in Deployments mitgeht (1,5 CPU, 3 GiB und TCP-Ingress innerhalb der Umgebung auf Container Apps), und gibt jedem Dienst mit `Coworkee.Storage` außer den Migrationen `ConnectionStrings:antivirus`; `options.UseAntivirus(clamd)` nimmt einen eigenen clamd, `builder.AddClamAv()` den Container ohne `AddCoworkeeApp`.
+- CLI, Template und Studio: die Option `antivirus` (`coworkee new --antivirus`, `coworkee add antivirus`, `coworkee remove antivirus`, die Karte *Virenscan* bei der Infrastruktur im Studio; das Preset *SaaS platform* hat sie an).
+- Seite Dienste: Health Checks mit dem Tag `CoworkeeServicesOptions.HealthCheckTag` sind Kacheln mit Zustand und Beschreibung (ClamAV als `antivirus`: *Läuft* mit Version und Signaturdatum, *Eingeschränkt*, solange er seine Signaturen lädt). `ServiceHealth.Degraded` und `ServiceDto.Description` sind neu; Code, der über `ServiceHealth` verzweigt, behandelt `Degraded`.
+
 ### Behoben
 
 - `ApiException.Message` ist der lesbare Grund: die Validierungsmeldungen, sonst der Titel des Problems, sonst sein Code, sonst der Status. Komponenten, die nur die Meldung zeigen, nannten bisher den Code: Ein abgelehnter Upload auf der Seite **Dateien** hieß *ApiException: validation*, jetzt *ApiException: Could not complete the security scan on the uploaded file.* (oder die Größen- oder Typregel). `SnackbarApiExtensions.Describe` liefert dieselbe Meldung. Code, der `exception.Message` mit einem Code verglich, vergleicht `exception.Code`. Siehe [Die eigene API aufrufen](../ui/client.md#die-eigene-api-aufrufen).

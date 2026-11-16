@@ -110,7 +110,7 @@ public sealed class OptionDependencyTests
         foreach (var (id, url) in new Dictionary<string, string>
         {
             ["airworks"] = "https://fgilde.github.io/AirWorks/", ["aspireUI"] = "https://fgilde.github.io/AspireUI/", ["webDataStudio"] = "https://fgilde.github.io/WebDataStudio/",
-            ["grafana"] = "https://grafana.com/", ["keycloak"] = "https://www.keycloak.org/", ["redis"] = "https://redis.io/", ["elasticsearch"] = "https://www.elastic.co/elasticsearch",
+            ["grafana"] = "https://grafana.com/", ["keycloak"] = "https://www.keycloak.org/", ["redis"] = "https://redis.io/", ["antivirus"] = "https://www.clamav.net/", ["elasticsearch"] = "https://www.elastic.co/elasticsearch",
         })
         {
             OptionCatalog.Find(id)!.InfoUrl.ShouldBe(url);

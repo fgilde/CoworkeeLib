@@ -13,7 +13,7 @@ public sealed class AddTemplateTests(TemplateFixture template)
     {
         string[] options =
         [
-            "--samples", "false", "--reports", "false", "--chat", "false", "--files", "true", "--eventBus", "rabbitMq", "--database", "sqlite", "--keycloak", "true", "--redis", "false",
+            "--samples", "false", "--reports", "false", "--chat", "false", "--files", "true", "--eventBus", "rabbitMq", "--database", "sqlite", "--keycloak", "true", "--redis", "false", "--antivirus", "true",
             "--languages", "en,fr", "--defaultLanguage", "fr", "--theme", "Forest", "--primaryColor", "#112233", "--title", "Acme Shop", "--aiProvider", "openAI",
             "--storage", "azureBlob", "--colorMode", "dark", "--registration", "false", "--translationProvider", "deepL", "--signInLayout", "Card",
         ];
@@ -54,6 +54,30 @@ public sealed class AddTemplateTests(TemplateFixture template)
         File.ReadAllText(appHost).ShouldStartWith("// my own line");
         SpecOptions.Resolve(AppState.Read(solution).Spec)["reports"].ShouldBe("true");
         Directory.EnumerateFiles(app, "*.rej", SearchOption.AllDirectories).ShouldBeEmpty();
+        TemplateTests.ShouldHaveNoLeftovers(app);
+    }
+
+    [Fact]
+    public async Task Add_and_remove_antivirus_switch_the_clamav_container_of_the_app_host()
+    {
+        var app = await template.CreateAsync("add-antivirus", "--samples", "false", "--tests", "false");
+        var solution = Solution.Find(app);
+        var appHost = Path.Combine(app, "src/Shop.AppHost/AppHost.cs");
+        File.ReadAllText(appHost).ShouldNotContain("UseAntivirus");
+        var current = AppState.Read(solution).Spec;
+
+        (await AddCommand.RunAsync(solution, current, OptionChanges.Apply(current, ["antivirus"], remove: false), "AddAntivirus",
+            new ApplyOptions(DryRun: false, RequireClean: true, Hive: template.Hive, Migration: false), Ct)).ShouldBe(0);
+
+        File.ReadAllText(appHost).ShouldContain("options.UseAntivirus();");
+        var added = AppState.Read(solution).Spec;
+        SpecOptions.Resolve(added)["antivirus"].ShouldBe("true");
+
+        (await AddCommand.RunAsync(solution, added, OptionChanges.Apply(added, ["antivirus"], remove: true), "RemoveAntivirus",
+            new ApplyOptions(DryRun: false, RequireClean: true, Hive: template.Hive, Migration: false), Ct)).ShouldBe(0);
+
+        File.ReadAllText(appHost).ShouldNotContain("UseAntivirus");
+        SpecOptions.Resolve(AppState.Read(solution).Spec)["antivirus"].ShouldBe("false");
         TemplateTests.ShouldHaveNoLeftovers(app);
     }
 

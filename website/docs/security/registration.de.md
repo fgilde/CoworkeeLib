@@ -65,7 +65,7 @@ Das Kennzeichen ist eine Spalte von `cw.Roles`. Apps mit eigenen Migrationen leg
 
 ## Wohin die Dokumente gehen
 
-Der Auth-Server gibt jede Datei an einen `IRegistrationDocumentStore` (in `Coworkee.Application.Registration`). Er läuft als der neue Benutzer in derselben Arbeitseinheit, die das Konto anlegt:
+Bevor das Konto entsteht, geht jedes Dokument durch den [Virenscan](../modules/storage.md#virenscan) des Auth-Hosts: Ein Fund (*„Reisepass“ wurde abgelehnt: Der Virenscan hat Eicar-Test-Signature gefunden.*) oder ein Scanner ohne Urteil hält den Benutzer mit der Meldung im Dokumenten-Schritt. Der Auth-Server gibt jede Datei an einen `IRegistrationDocumentStore` (in `Coworkee.Application.Registration`). Er läuft als der neue Benutzer in derselben Arbeitseinheit, die das Konto anlegt:
 
 ```csharp
 public interface IRegistrationDocumentStore

@@ -62,6 +62,7 @@ public static class ExistingApp
             ["storage"] = appHost.Contains("AddAzureStorage(", StringComparison.Ordinal) ? "azureBlob" : "fileSystem",
             ["keycloak"] = Flag(appHost.Contains("options.UseKeycloak(", StringComparison.Ordinal)),
             ["redis"] = Flag(!appHost.Contains("options.WithoutRedis();", StringComparison.Ordinal)),
+            ["antivirus"] = Flag(appHost.Contains("options.UseAntivirus(", StringComparison.Ordinal)),
             ["grafana"] = Flag(appHost.Contains("options.UseGrafana();", StringComparison.Ordinal)),
             ["webDataStudio"] = Flag(appHost.Contains("options.UseWebDataStudio();", StringComparison.Ordinal)),
             ["kibana"] = Flag(appHost.Contains("options.UseKibana();", StringComparison.Ordinal)),

@@ -282,6 +282,12 @@
       "defaultValue": "true",
       "description": "Redis container: SignalR backplane, shared presence, cache invalidation and sign-in sessions across instances."
     },
+    "antivirus": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "ClamAV container, also deployed: every upload is scanned before it is stored (ConnectionStrings:antivirus of the services with Coworkee.Storage)."
+    },
     "grafana": {
       "type": "parameter",
       "datatype": "bool",

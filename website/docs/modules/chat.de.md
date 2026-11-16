@@ -68,10 +68,10 @@ Eine Erwähnung benachrichtigt nur **Mitglieder** des Chats (Typ `chat.mention`,
 | Personen pro Anlegen oder Hinzufügen | weniger als 100 |
 | Nachrichten pro Seite | 50 |
 
-Ein Virenscanner oder eine andere Prüfung klinkt sich als `IChatAttachmentScanner` ein; sagt ein Scanner nein, wird der Upload abgelehnt:
+Jede Datei geht zuerst durch den [Virenscan](storage.md#virenscan) (`IVirusScanner`); ein Fund lehnt sie mit seinem Namen ab. Andere Prüfungen klinken sich als `IChatAttachmentScanner` ein; sagt ein Scanner nein, wird der Upload abgelehnt:
 
 ```csharp
-services.AddScoped<IChatAttachmentScanner, ClamAvScanner>();
+services.AddScoped<IChatAttachmentScanner, NoExecutablesScanner>();
 ```
 
 ## API

@@ -5,7 +5,7 @@ public sealed record Preset(string Name, string Description, string Icon, IReadO
 {
     private static readonly string[] ModuleSwitches =
         ["samples", "auditing", "notifications", "chat", "reports", "ai", "backup", "retention", "files", "features", "social", "workflows", "elsa", "elsaStudio", "webhooks", "extendedAttributes", "elasticsearch", "kibana", "clientEntities", "keycloak",
-         "registration", "githubActions", "devcontainer", "redis", "grafana", "webDataStudio", "aspireUI", "openWebUI", "airworks"];
+         "registration", "githubActions", "devcontainer", "redis", "antivirus", "grafana", "webDataStudio", "aspireUI", "openWebUI", "airworks"];
 
     public static IReadOnlyList<Preset> All { get; } =
     [
@@ -15,12 +15,12 @@ public sealed record Preset(string Name, string Description, string Icon, IReadO
             Switches(["auditing", "notifications", "reports", "backup", "files", "extendedAttributes", "clientEntities", "registration", "githubActions", "redis", "grafana", "webDataStudio"], ("eventBus", "inProcess"), ("storage", "fileSystem"))),
         new("Collaboration", "Chat, notifications, files, comments and ratings, and the AI assistant with Claude; Redis carries chat and presence across instances.", "Icon.AccountGroup",
             Switches(["auditing", "notifications", "chat", "ai", "files", "social", "backup", "registration", "redis", "grafana", "webDataStudio"], ("eventBus", "inProcess"), ("storage", "fileSystem"))),
-        new("SaaS platform", "Tenants with features and editions, self registration, Keycloak sign-in, Azure OpenAI, RabbitMQ events, Azure Blob storage, Redis and CI.", "Icon.Cloud",
-            Switches(["auditing", "notifications", "reports", "features", "keycloak", "files", "ai", "registration", "githubActions", "redis", "grafana", "webDataStudio"], ("eventBus", "rabbitMq"), ("storage", "azureBlob"),
+        new("SaaS platform", "Tenants with features and editions, self registration, Keycloak sign-in, Azure OpenAI, RabbitMQ events, Azure Blob storage, a virus scan of uploads, Redis and CI.", "Icon.Cloud",
+            Switches(["auditing", "notifications", "reports", "features", "keycloak", "files", "ai", "registration", "githubActions", "redis", "antivirus", "grafana", "webDataStudio"], ("eventBus", "rabbitMq"), ("storage", "azureBlob"),
                 ("aiProvider", "azureOpenAI"))),
         new("Local demo", "SQLite file, a local model in Ollama, no Redis: runs offline on one machine without keys. One writer at a time and no backups, so not for production.", "Icon.Monitor",
             Switches(["samples", "notifications", "chat", "reports", "ai", "files", "registration", "webDataStudio"], ("eventBus", "none"), ("storage", "fileSystem"), ("database", "sqlite"), ("aiProvider", "ollama"))),
-        new("Everything", "Every module and every container: Postgres, Redis, Ollama with Open WebUI, search with Kibana, RabbitMQ, Azurite, Keycloak, the samples, CI and a dev container.", "Icon.Rocket",
+        new("Everything", "Every module and every container: Postgres, Redis, ClamAV, Ollama with Open WebUI, search with Kibana, RabbitMQ, Azurite, Keycloak, the samples, CI and a dev container.", "Icon.Rocket",
             Switches([.. ModuleSwitches], ("eventBus", "rabbitMq"), ("storage", "azureBlob"), ("aiProvider", "ollama"))),
     ];
 

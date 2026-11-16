@@ -47,6 +47,10 @@ var app = builder.AddCoworkeeApp("myapp", options =>
 #if (!redis)
     options.WithoutRedis();
 #endif
+#if (antivirus)
+    // ClamAV scans every upload before it is stored, here and in a deployment; after a start it loads its signatures for a minute or two
+    options.UseAntivirus();
+#endif
 #if (database == "sqlServer")
     options.UseSqlServer();
 #elif (database == "sqlite")

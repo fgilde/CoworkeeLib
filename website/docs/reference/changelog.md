@@ -4,6 +4,13 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Added
+
+- Virus scan of uploads (`Coworkee.Storage`): `IVirusScanner` with `ScanAsync(content, fileName)` and `VirusScanResult` (`Clean`, `NotScanned`, `Infected` with the finding, `Failed`; `RefusalFor(fileName)`). The default `ClamAvVirusScanner` asks clamd (`INSTREAM`) at `ConnectionStrings:antivirus`; without that connection string every file passes (logged once at Information), with it a finding refuses the file with its name and a clamd that gives no verdict refuses it as not checked. The files, record attachments, chat files and registration documents call it before they store a file; an own `IVirusScanner` replaces the default. No action needed: without `ConnectionStrings:antivirus` nothing changes. See [Virus scan](../modules/storage.md#virus-scan).
+- App host: `options.UseAntivirus()` adds a ClamAV container `clamav` (`clamav/clamav:1.4`, streams up to 2 GB, locally with the signatures of the image) that goes along into deployments (1.5 CPU, 3 GiB and TCP ingress inside the environment on Container Apps) and gives every service with `Coworkee.Storage` but the migrations `ConnectionStrings:antivirus`; `options.UseAntivirus(clamd)` takes a clamd of your own, `builder.AddClamAv()` the container without `AddCoworkeeApp`.
+- CLI, template and Studio: the option `antivirus` (`coworkee new --antivirus`, `coworkee add antivirus`, `coworkee remove antivirus`, the card *Virus scan* among the infrastructure of the Studio; the preset *SaaS platform* has it on).
+- Services page: health checks tagged `CoworkeeServicesOptions.HealthCheckTag` are tiles with their state and description (ClamAV as `antivirus`: *Healthy* with version and signature date, *Degraded* while it loads its signatures). `ServiceHealth.Degraded` and `ServiceDto.Description` are new; code that switches over `ServiceHealth` handles `Degraded`.
+
 ### Fixed
 
 - `ApiException.Message` is the readable reason: the validation messages, else the problem's title, else its code, else the status. Components that show only the message named the code before: a refused upload on the page **Files** read *ApiException: validation*, now *ApiException: Could not complete the security scan on the uploaded file.* (or the size or type rule). `SnackbarApiExtensions.Describe` returns the same message. Code that compared `exception.Message` with a code compares `exception.Code` instead. See [Calling your API](../ui/client.md#calling-your-api).

@@ -38,6 +38,7 @@ public static class OptionLooks
         ["aiModel"] = "Icon.Brain",
         ["aiEndpoint"] = "Icon.Link",
         ["redis"] = "Icon.Memory",
+        ["antivirus"] = "Icon.Shield",
         ["grafana"] = "Icon.ChartLine",
         ["webDataStudio"] = "Icon.DatabaseEye",
         ["kibana"] = "Icon.DatabaseSearch",
