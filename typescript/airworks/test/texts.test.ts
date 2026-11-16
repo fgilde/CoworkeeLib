@@ -8,7 +8,7 @@ const languages = join(import.meta.dirname, '..', '..', '..', 'src', 'Coworkee.L
 
 /** Texts the apps translate that come from values, not literals: statuses, presets and the administration sections. */
 const dynamic = [
-  'Draft', 'Scheduled', 'Sending', 'Sent', 'Failed', 'Cancelled', 'Queued', 'Skipped', 'Healthy', 'Unhealthy',
+  'Draft', 'Scheduled', 'Sending', 'Sent', 'Failed', 'Cancelled', 'Queued', 'Skipped', 'Healthy', 'Unhealthy', 'Degraded',
   'All active users', 'Not signed in for more than N days', 'Never signed in', 'Signed up in the last N days', 'E-mail not confirmed', 'Members of roles', 'Deactivated users',
   'Identity', 'System', 'Communication', 'Localization', 'Monitoring', 'Online', 'Offline', 'Confirm to run:', 'Confirmed:', 'Declined:',
 ];

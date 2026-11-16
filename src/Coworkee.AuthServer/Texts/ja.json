@@ -88,6 +88,8 @@
   "Add the document \"{0}\".": "書類「{0}」を追加してください。",
   "\"{0}\" has a file type that is not accepted.": "「{0}」のファイル形式は受け付けられません。",
   "\"{0}\" is larger than {1}.": "「{0}」のサイズが{1}を超えています。",
+  "\"{0}\" was refused: the virus scan found {1}.": "「{0}」は拒否されました: ウイルススキャンで {1} が検出されました。",
+  "\"{0}\" could not be checked for viruses. Try again in a few minutes.": "「{0}」のウイルスチェックができませんでした。数分後にもう一度お試しください。",
   "Account security": "アカウントのセキュリティ",
   "Current password": "現在のパスワード",
   "Repeat new password": "新しいパスワードを再入力",

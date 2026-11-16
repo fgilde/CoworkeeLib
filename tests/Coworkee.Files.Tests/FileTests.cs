@@ -58,6 +58,23 @@ public sealed class FileTests(FilesApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_virus_scanner_refuses_an_infected_upload_or_one_it_could_not_check()
+    {
+        var folder = await CreateFolderAsync(null, "Virus scanned");
+
+        var infected = await Upload(Admin, folder.Id, "invoice.pdf", "X5O EICAR");
+        infected.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await infected.Content.ReadAsStringAsync(Ct)).ShouldContain("The file 'invoice.pdf' was refused: the virus scan found Eicar-Test-Signature.");
+
+        var unchecked_ = await Upload(Admin, folder.Id, "report.pdf", "OFFLINE");
+        unchecked_.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await unchecked_.Content.ReadAsStringAsync(Ct)).ShouldContain("could not be checked for viruses");
+
+        (await ContentAsync(Admin, folder.Id)).Files.ShouldBeEmpty();
+        (await UploadAsync(Admin, folder.Id, "clean.txt", "fine")).Name.ShouldBe("clean.txt");
+    }
+
+    [Fact]
     public async Task A_public_file_is_served_anonymously_until_it_is_private_again()
     {
         var file = await UploadAsync(Admin, null, "welcome.mp4", "video", "video/mp4");

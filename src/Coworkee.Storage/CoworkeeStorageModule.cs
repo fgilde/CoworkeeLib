@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Coworkee.Storage;
 
-/// <summary>Blob storage on the file system, S3 (MinIO) or Azure Blob, chosen by <c>Coworkee:Storage:Provider</c>.</summary>
+/// <summary>Blob storage on the file system, S3 (MinIO) or Azure Blob, chosen by <c>Coworkee:Storage:Provider</c>, and the virus scan of uploads (<see cref="IVirusScanner"/>).</summary>
 public sealed class CoworkeeStorageModule : CoworkeeModule
 {
     public override void ConfigureServices(ModuleServiceContext context)
@@ -23,5 +23,6 @@ public sealed class CoworkeeStorageModule : CoworkeeModule
         services.AddDataProtection();
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddSingleton<BlobLinks>();
+        services.AddCoworkeeVirusScanner(context.Configuration);
     }
 }

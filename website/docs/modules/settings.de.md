@@ -319,6 +319,12 @@ public sealed class Links(IOptionsMonitor<CoworkeeServicesOptions> services)
 
 **Administration > System > Dienste** zeigt sie als Kacheln mit Symbol, Adresse und aktuellem Zustand, gruppiert nach Quelle (**App** für `Coworkee:Services`, **AspireUI** für die Apps eines AspireUI); ein Klick öffnet den Dienst in einem neuen Tab, Dienste mit mehreren Adressen listen alle als Links. Eine Quelle, die nicht erreichbar war, zeigt einen Hinweis, die anderen Quellen erscheinen trotzdem. Der Browser fragt die API (`GET /api/v1/services`, Einstellungs-Berechtigung, System-Organisation, Antwort `{ services, unavailableSources }`), die jeden Dienst alle zehn Sekunden prüft: Mit `HealthPath` zählt ein Erfolgsstatus als läuft, ohne jede Antwort unter 500.
 
+Health Checks der API mit dem Tag `CoworkeeServicesOptions.HealthCheckTag` (`coworkee-service`) sind ebenfalls Kacheln, ohne Adresse: ihr Zustand (*Läuft*, *Eingeschränkt* in der Warnfarbe, *Gestört*) und darunter, was der Check sagt. Der Virenscanner fügt so `antivirus` hinzu ([Virenscan](storage.md#auf-der-seite-dienste)); eigene Checks kommen mit dem Tag dazu:
+
+```csharp
+context.Services.AddHealthChecks().AddCheck<PaymentGatewayCheck>("payments", tags: [CoworkeeServicesOptions.HealthCheckTag]);
+```
+
 ### Dienstverzeichnis
 
 `IServiceDirectory` verbindet die konfigurierten Dienste (`Coworkee:Services`) mit denen weiterer Quellen, sodass Backend-Code einen Dienst über den Namen findet, ohne zu wissen, wo er eingetragen ist. Es liegt im Namespace `Coworkee.Settings` und wird vom Settings-Modul registriert: Jeder Host, der das Modul einbindet, kann es injizieren. Es ist *scoped*, wie die anderen Settings-Dienste; ein Singleton oder ein Hosted Service legt zuerst einen Scope an. Es gibt keine Benutzerprüfung, es ist Backend-Code.

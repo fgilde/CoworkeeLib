@@ -21,7 +21,7 @@ namespace Coworkee.AuthServer.Pages.Account;
 public sealed class RegisterModel(
     AccountRegistration registration, UserManager<User> users, SignInManager<User> signIn, ExternalSignIn external, CoworkeeDbContext db, ISettingProvider settings, ISettingDefinitionManager definitions,
     ITenantDirectory tenants, IOptions<RegistrationOptions> options, IOptions<AuthServerOptions> auth, IDataProtectionProvider protection,
-    IEnumerable<IRegistrationDocumentStore> stores) : PageModel
+    IEnumerable<IRegistrationDocumentStore> stores, Storage.IVirusScanner virusScanner) : PageModel
 {
     private readonly ITimeLimitedDataProtector _protector = protection.CreateProtector("Coworkee.Registration").ToTimeLimitedDataProtector();
     private Guid _tenantId;
@@ -153,6 +153,10 @@ public sealed class RegisterModel(
             if (step == RegistrationSteps.Documents)
             {
                 Errors.AddRange(RegistrationDocuments.Validate(Options.Documents, Request.Form.Files));
+                if (Errors.Count == 0)
+                {
+                    Errors.AddRange(await RegistrationDocuments.ScanAsync(virusScanner, Options.Documents, Request.Form.Files, HttpContext.RequestAborted));
+                }
             }
 
             if (Errors.Count > 0)

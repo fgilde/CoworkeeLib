@@ -88,6 +88,8 @@
   "Add the document \"{0}\".": "សូមបន្ថែមឯកសារ “{0}”។",
   "\"{0}\" has a file type that is not accepted.": "“{0}” មានប្រភេទឯកសារដែលមិនត្រូវបានទទួលយក។",
   "\"{0}\" is larger than {1}.": "“{0}” ធំជាង {1}។",
+  "\"{0}\" was refused: the virus scan found {1}.": "“{0}” ត្រូវបានបដិសេធ៖ ការស្កេនមេរោគបានរកឃើញ {1}។",
+  "\"{0}\" could not be checked for viruses. Try again in a few minutes.": "មិនអាចពិនិត្យមេរោគលើ “{0}” បានទេ។ សូមព្យាយាមម្ដងទៀតក្នុងរយៈពេលពីរបីនាទី។",
   "Account security": "សុវត្ថិភាពគណនី",
   "Current password": "ពាក្យសម្ងាត់បច្ចុប្បន្ន",
   "Repeat new password": "វាយពាក្យសម្ងាត់ថ្មីម្តងទៀត",

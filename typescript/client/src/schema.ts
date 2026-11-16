@@ -16569,9 +16569,10 @@ export interface components {
             /** @default app */
             source: string;
             urls?: null | string[];
+            description?: null | string;
         };
         /** @enum {unknown} */
-        ServiceHealth: "Healthy" | "Unhealthy" | "Unreachable" | "Unknown";
+        ServiceHealth: "Healthy" | "Unhealthy" | "Unreachable" | "Unknown" | "Degraded";
         SetActiveRoleRequest: {
             /** Format: uuid */
             roleId: null | string;

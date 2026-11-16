@@ -65,7 +65,7 @@ The flag is a column of `cw.Roles`. Apps with their own migrations add one after
 
 ## Where documents go
 
-The auth server hands every file to an `IRegistrationDocumentStore` (in `Coworkee.Application.Registration`). It runs as the new user in the same unit of work that creates the account:
+Before the account is created, every document goes through the [virus scan](../modules/storage.md#virus-scan) of the auth host: a finding (*"Passport" was refused: the virus scan found Eicar-Test-Signature.*) or a scanner that gave no verdict keeps the user on the documents step with the message. The auth server hands every file to an `IRegistrationDocumentStore` (in `Coworkee.Application.Registration`). It runs as the new user in the same unit of work that creates the account:
 
 ```csharp
 public interface IRegistrationDocumentStore

@@ -9,4 +9,7 @@ public enum ServiceHealth
     Unhealthy,
     Unreachable,
     Unknown,
+
+    /// <summary>Up, but not fully working yet or any more, e.g. ClamAV while it loads its signatures.</summary>
+    Degraded,
 }

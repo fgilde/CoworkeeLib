@@ -43,6 +43,7 @@ public sealed class CoworkeeSettingsModule : CoworkeeModule, IWebModule
         services.AddHttpClient(ConfiguredServiceSource.Client).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IServiceSource, ConfiguredServiceSource>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IServiceSource, AspireUIServiceSource>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IServiceSource, HealthCheckServiceSource>());
         services.TryAddScoped<IServiceDirectory, ServiceDirectory>();
         services.AddSystemStatus<VersionsStatus>().AddSystemStatus<DatabaseStatus>();
         // the overrides of the Local copies page (Coworkee.OData reads them live); no Settings tab, the page has its own table

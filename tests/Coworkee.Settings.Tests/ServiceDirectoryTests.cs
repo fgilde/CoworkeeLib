@@ -34,6 +34,29 @@ public sealed class ServiceDirectoryTests
     }
 
     [Fact]
+    public async Task Tagged_health_checks_are_services_without_an_address_with_their_state_and_description()
+    {
+        using var provider = Build(new FakeHandler(_ => Json("[]")), configure: services =>
+        {
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IServiceSource, HealthCheckServiceSource>());
+            services.AddHealthChecks()
+                .AddCheck("antivirus", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Degraded("loading its signatures"), [CoworkeeServicesOptions.HealthCheckTag])
+                .AddCheck("queue", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy("down"), [CoworkeeServicesOptions.HealthCheckTag])
+                .AddCheck("database", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy());
+        });
+
+        var directory = Dir(provider);
+        var services = (await directory.GetAllAsync(Ct)).Services;
+
+        services.Select(s => (s.Name, s.Url, s.Health, s.Source, s.Description)).ShouldBe(
+        [
+            ("antivirus", "", ServiceHealth.Degraded, "app", "loading its signatures"),
+            ("queue", "", ServiceHealth.Unhealthy, "app", "down"),
+        ]);
+        (await directory.ResolveAsync("antivirus", Ct)).ShouldBeNull(); // nothing to open
+    }
+
+    [Fact]
     public async Task The_api_key_goes_into_the_header_only_when_set()
     {
         var withKey = new FakeHandler(_ => Json(Apps));

@@ -10,7 +10,7 @@ namespace Coworkee.Files.Attachments;
 
 internal sealed class RecordAttachments(
     CoworkeeDbContext db, RecordAttachmentOptions options, IBlobStorage storage, AttachmentBlobs blobs, ICurrentUser currentUser, TimeProvider clock,
-    IEnumerable<IAttachmentScanner> scanners) : IRecordAttachments
+    IVirusScanner virusScanner, IEnumerable<IAttachmentScanner> scanners) : IRecordAttachments
 {
     private const string FallbackContentType = "application/octet-stream";
 
@@ -49,6 +49,12 @@ internal sealed class RecordAttachments(
         if (buffer.Length == 0)
         {
             return Error.Validation("content", "The file is empty.");
+        }
+
+        buffer.Position = 0;
+        if ((await virusScanner.ScanAsync(buffer, name, cancellationToken)).RefusalFor(name) is { } refusal)
+        {
+            return Error.Validation("content", refusal);
         }
 
         var upload = new AttachmentUpload(entityType, entityId, slot, name, type, buffer.Length);

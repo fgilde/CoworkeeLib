@@ -88,6 +88,8 @@
   "Add the document \"{0}\".": "Voeg het document “{0}” toe.",
   "\"{0}\" has a file type that is not accepted.": "“{0}” heeft een bestandstype dat niet wordt geaccepteerd.",
   "\"{0}\" is larger than {1}.": "“{0}” is groter dan {1}.",
+  "\"{0}\" was refused: the virus scan found {1}.": "“{0}” is geweigerd: de virusscan vond {1}.",
+  "\"{0}\" could not be checked for viruses. Try again in a few minutes.": "“{0}” kon niet op virussen worden gecontroleerd. Probeer het over een paar minuten opnieuw.",
   "Account security": "Accountbeveiliging",
   "Current password": "Huidig wachtwoord",
   "Repeat new password": "Nieuw wachtwoord herhalen",

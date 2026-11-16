@@ -652,6 +652,7 @@
   "Unhealthy": "Störd",
   "Unreachable": "Inte nåbar",
   "Unknown": "Okänd",
+  "Degraded": "Begränsad",
   "App": "App",
   "{0} did not answer, its services are missing.": "{0} svarade inte, dess tjänster saknas.",
   "Require address": "Kräv adress",

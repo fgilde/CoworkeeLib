@@ -43,6 +43,8 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         services.Configure<IdentityPasskeyOptions>(passkeys => passkeys.UserVerificationRequirement = "required");
         services.Configure<IdentityPasskeyOptions>(context.Configuration.GetSection(Passkeys.Section));
         services.AddScoped<Registration.AccountRegistration>();
+        // the registration documents are scanned like every upload (ConnectionStrings:antivirus)
+        Storage.VirusScanServiceCollectionExtensions.AddCoworkeeVirusScanner(services, context.Configuration);
         services.AddScoped<AuthBrandingProvider>();
         services.AddSingleton<Application.Localization.ITextTranslator, AuthTextTranslator>();
         services.AddSingleton<AuthClientSeeder>();

@@ -58,10 +58,10 @@ await attachments.DeleteAllAsync("LeaveRequests", request.Id, ct);
 
 The calls join the caller's unit of work like any other change: `PutAsync` writes the blob and adds the row, `DeleteAsync`/`DeleteAllAsync` remove rows, and the pipeline saves after the command (code outside a command saves with `IUnitOfWork`). Reads see saved rows only. When the command fails, throws or never saves, the rows are not written and the blobs written for them are deleted at the end of the scope; blobs of removed or replaced rows are deleted only after the commit, so a rollback keeps the files.
 
-A virus scanner (or any other check of the content) is an `IAttachmentScanner`: it gets the upload with name, type and size and the buffered content, and returns why the file is refused, or null. Every registered scanner runs before the blob is stored, also for uploads to the [files](files.md) (`upload.EntityType == FileUploads.EntityType`).
+Every upload goes through the [virus scan](storage.md#virus-scan) (`IVirusScanner`) first; an infected file, or one the scanner could not check, answers 400 with the reason. Other checks of the content are an `IAttachmentScanner`: it gets the upload with name, type and size and the buffered content, and returns why the file is refused, or null. Every registered scanner runs after the virus scan and before the blob is stored, also for uploads to the [files](files.md) (`upload.EntityType == FileUploads.EntityType`).
 
 ```csharp
-services.AddSingleton<IAttachmentScanner, ClamAvScanner>();
+services.AddSingleton<IAttachmentScanner, PdfOnlyScanner>();
 ```
 
 ## Deleting with the record

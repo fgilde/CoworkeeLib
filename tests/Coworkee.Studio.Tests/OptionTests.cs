@@ -31,7 +31,7 @@ public sealed class OptionTests
         var main = Studio.Create(folder);
         main.Architecture.ApplyPreset(main.Architecture.Presets.Single(p => p.Preset.Name == "Everything"));
 
-        main.Architecture.Summary.Containers.ShouldBe(["PostgreSQL", "Redis", "Mailpit", "Elasticsearch", "RabbitMQ", "Azurite", "Keycloak", "Ollama", "Open WebUI", "LibreTranslate", "Grafana", "Prometheus", "Loki", "Tempo", "OpenTelemetry Collector", "postgres_exporter", "WebDataStudio", "Kibana", "oauth2-proxy", "AspireUI"]);
+        main.Architecture.Summary.Containers.ShouldBe(["PostgreSQL", "Redis", "Mailpit", "Elasticsearch", "RabbitMQ", "Azurite", "Keycloak", "ClamAV", "Ollama", "Open WebUI", "LibreTranslate", "Grafana", "Prometheus", "Loki", "Tempo", "OpenTelemetry Collector", "postgres_exporter", "WebDataStudio", "Kibana", "oauth2-proxy", "AspireUI"]);
         main.Architecture.Summary.Packages.ShouldContain("Coworkee.EventBus.RabbitMq");
         main.Architecture.Summary.Projects.ShouldContain("MyApp.Catalog");
         var modules = main.Architecture.Groups.Single(g => g.Name == OptionCatalog.Modules).Options.Select(o => o.Id).ToList();
@@ -87,6 +87,22 @@ public sealed class OptionTests
         main.Option("database").Value = "sqlite";
         main.Architecture.Summary.Containers.ShouldBe(["Redis", "Mailpit", "LibreTranslate", "Grafana", "Prometheus", "Loki", "Tempo", "OpenTelemetry Collector", "WebDataStudio"]);
         main.ToSpec().Options["database"]!.GetValue<string>().ShouldBe("sqlite");
+    }
+
+    [Fact]
+    public void Virus_scan_is_a_card_of_the_infrastructure_that_adds_the_clamav_container()
+    {
+        using var folder = new TempFolder();
+        var main = Studio.Create(folder);
+
+        main.Architecture.InfrastructureGroup.Options.Select(o => o.Id).ShouldContain("antivirus");
+        OptionLooks.Icon("antivirus").ShouldBe("Icon.Shield");
+        main.Architecture.Summary.Containers.ShouldNotContain("ClamAV");
+
+        main.Option("antivirus").Value = "true";
+
+        main.Architecture.Summary.Containers.ShouldContain("ClamAV");
+        main.ToSpec().Options["antivirus"]!.GetValue<bool>().ShouldBeTrue();
     }
 
     [Fact]

@@ -138,6 +138,7 @@ public class AuthApp : DatabaseFixture
             jwt.MapInboundClaims = false;
             jwt.BackchannelHttpHandler = App.GetTestServer().CreateHandler();
         });
+        builder.Services.AddSingleton<Coworkee.Storage.IVirusScanner, FileNameVirusScanner>();
         builder.Services.RemoveAll<Coworkee.Mailing.IMailSender>();
         builder.Services.AddSingleton<Coworkee.Mailing.IMailSender>(Mails);
         if (!FileStore)
@@ -269,6 +270,15 @@ public sealed class ShiftedClock : TimeProvider
     public TimeSpan Shift { get; set; }
 
     public override DateTimeOffset GetUtcNow() => base.GetUtcNow() + Shift;
+}
+
+/// <summary>An app's own virus scanner, registered after the default: a file named infected* is a finding, offline* one it could not check.</summary>
+public sealed class FileNameVirusScanner : Coworkee.Storage.IVirusScanner
+{
+    public Task<Coworkee.Storage.VirusScanResult> ScanAsync(Stream content, string fileName, CancellationToken cancellationToken) => Task.FromResult(
+        fileName.StartsWith("infected", StringComparison.Ordinal) ? Coworkee.Storage.VirusScanResult.Infected("Eicar-Test-Signature")
+        : fileName.StartsWith("offline", StringComparison.Ordinal) ? Coworkee.Storage.VirusScanResult.Failed("unreachable")
+        : Coworkee.Storage.VirusScanResult.Clean);
 }
 
 public sealed record CapturedMail(string To, string Template, object Model);

@@ -652,6 +652,7 @@
   "Unhealthy": "Сбой",
   "Unreachable": "Недоступна",
   "Unknown": "Неизвестно",
+  "Degraded": "Ограниченно",
   "App": "Приложение",
   "{0} did not answer, its services are missing.": "{0} не ответило, соответствующие службы отсутствуют.",
   "Require address": "Требовать адрес",

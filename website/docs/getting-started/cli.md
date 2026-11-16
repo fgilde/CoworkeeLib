@@ -77,6 +77,7 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--ai-model` | `aiModel` | text | | Model of the provider (Azure OpenAI: the deployment name); empty takes the provider's default |
 | `--ai-endpoint` | `aiEndpoint` | http(s) address | | Base address for Azure OpenAI, `openAICompatible` or a provider behind a proxy; the key goes to the user secrets of the app host (`Parameters:ai-apikey`), never into the spec |
 | `--redis` | `redis` | bool | `true` | Redis container for backplane, presence, cache invalidation and sessions across instances ([Redis](../hosting/redis.md)) |
+| `--antivirus` | `antivirus` | bool | `false` | ClamAV container, also deployed: every upload is scanned before it is stored, an infected file is refused with the finding ([Virus scan](../modules/storage.md#virus-scan)) |
 | `--grafana` | `grafana` | bool | `true` | Grafana with Prometheus, Loki, Tempo and a collector: telemetry of every service, the app database and dashboards ([Grafana and WebDataStudio](../hosting/observability.md)) |
 | `--web-data-studio` | `webDataStudio` | bool | `true` | WebDataStudio connected to the app database ([Grafana and WebDataStudio](../hosting/observability.md)) |
 | `--open-web-ui` | `openWebUI` | bool | `false` | Open WebUI next to Ollama (with `--ai-provider ollama`), a chat over the local models; administrators of the system organisation sign in at the auth server ([Open WebUI](../hosting/aspire.md#open-webui)) |

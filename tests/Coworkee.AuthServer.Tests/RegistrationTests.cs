@@ -150,6 +150,20 @@ public sealed partial class RegistrationTests(AuthApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_virus_scan_refuses_infected_documents_and_ones_it_could_not_check_before_the_account_exists()
+    {
+        var wizard = await new RegistrationWizard(app.Browser()).FillAsync("scan@acme.test");
+
+        await wizard.SubmitAsync(("Document0", "infected.pdf", "application/pdf", 10));
+        wizard.Errors.ShouldBe(["\"Passport\" was refused: the virus scan found Eicar-Test-Signature."]);
+        await wizard.SubmitAsync(("Document0", "passport.pdf", "application/pdf", 10), ("Document1", "offline.pdf", "application/pdf", 10));
+        wizard.Errors.ShouldBe(["\"Certificate\" could not be checked for viruses. Try again in a few minutes."]);
+
+        (await app.InDbAsync(db => db.Set<User>().AnyAsync(u => u.Email == "scan@acme.test", Ct))).ShouldBeFalse();
+        app.Documents.Saved.ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task Without_activation_and_confirmation_the_new_account_signs_in_right_away()
     {
         await app.SetSettingAsync(AccountSettings.RegistrationRequiresActivation, "false");

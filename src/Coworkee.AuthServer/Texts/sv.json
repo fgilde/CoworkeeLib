@@ -88,6 +88,8 @@
   "Add the document \"{0}\".": "Lägg till dokumentet ”{0}”.",
   "\"{0}\" has a file type that is not accepted.": "”{0}” har en filtyp som inte godkänns.",
   "\"{0}\" is larger than {1}.": "”{0}” är större än {1}.",
+  "\"{0}\" was refused: the virus scan found {1}.": "”{0}” avvisades: virussökningen hittade {1}.",
+  "\"{0}\" could not be checked for viruses. Try again in a few minutes.": "”{0}” kunde inte kontrolleras för virus. Försök igen om några minuter.",
   "Account security": "Kontosäkerhet",
   "Current password": "Nuvarande lösenord",
   "Repeat new password": "Upprepa det nya lösenordet",

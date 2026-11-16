@@ -20,6 +20,8 @@ public static class ServiceIcons
         ("elastic", Icons.Material.Outlined.ManageSearch),
         ("kibana", Icons.Material.Outlined.ManageSearch),
         ("worker", Icons.Material.Outlined.Engineering),
+        ("antivirus", Icons.Material.Outlined.GppGood),
+        ("clamav", Icons.Material.Outlined.GppGood),
     ];
 
     public static string For(string name) =>

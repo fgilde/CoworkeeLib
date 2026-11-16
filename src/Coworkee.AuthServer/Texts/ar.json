@@ -88,6 +88,8 @@
   "Add the document \"{0}\".": "أضف المستند “{0}”.",
   "\"{0}\" has a file type that is not accepted.": "نوع الملف “{0}” غير مقبول.",
   "\"{0}\" is larger than {1}.": "“{0}” أكبر من {1}.",
+  "\"{0}\" was refused: the virus scan found {1}.": "تم رفض “{0}”: عثر فحص الفيروسات على {1}.",
+  "\"{0}\" could not be checked for viruses. Try again in a few minutes.": "تعذر فحص “{0}” بحثًا عن الفيروسات. حاول مرة أخرى بعد بضع دقائق.",
   "Account security": "أمان الحساب",
   "Current password": "كلمة المرور الحالية",
   "Repeat new password": "تكرار كلمة المرور الجديدة",

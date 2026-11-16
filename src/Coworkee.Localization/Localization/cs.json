@@ -652,6 +652,7 @@
   "Unhealthy": "Porucha",
   "Unreachable": "Nedostupné",
   "Unknown": "Neznámé",
+  "Degraded": "Omezeno",
   "App": "Aplikace",
   "{0} did not answer, its services are missing.": "{0} neodpověděla, její služby chybí.",
   "Require address": "Vyžadovat adresu",

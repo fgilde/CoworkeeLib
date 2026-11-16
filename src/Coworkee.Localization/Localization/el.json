@@ -652,6 +652,7 @@
   "Unhealthy": "Με προβλήματα",
   "Unreachable": "Μη προσβάσιμο",
   "Unknown": "Άγνωστο",
+  "Degraded": "Περιορισμένη",
   "App": "Εφαρμογή",
   "{0} did not answer, its services are missing.": "Το {0} δεν απάντησε, οι υπηρεσίες του λείπουν.",
   "Require address": "Απαίτηση διεύθυνσης",

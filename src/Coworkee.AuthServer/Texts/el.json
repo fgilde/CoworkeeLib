@@ -88,6 +88,8 @@
   "Add the document \"{0}\".": "Προσθέστε το έγγραφο «{0}».",
   "\"{0}\" has a file type that is not accepted.": "Το «{0}» έχει τύπο αρχείου που δεν γίνεται δεκτός.",
   "\"{0}\" is larger than {1}.": "Το «{0}» είναι μεγαλύτερο από {1}.",
+  "\"{0}\" was refused: the virus scan found {1}.": "Το «{0}» απορρίφθηκε: ο έλεγχος για ιούς εντόπισε {1}.",
+  "\"{0}\" could not be checked for viruses. Try again in a few minutes.": "Το «{0}» δεν ήταν δυνατό να ελεγχθεί για ιούς. Δοκιμάστε ξανά σε λίγα λεπτά.",
   "Account security": "Ασφάλεια λογαριασμού",
   "Current password": "Τρέχων κωδικός πρόσβασης",
   "Repeat new password": "Επανάληψη νέου κωδικού πρόσβασης",

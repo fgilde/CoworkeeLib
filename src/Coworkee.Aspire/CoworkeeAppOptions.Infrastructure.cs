@@ -30,6 +30,13 @@ public sealed partial class CoworkeeAppOptions
 
     internal HashSet<string> Disabled { get; } = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>True after <see cref="UseAntivirus(Action{IResourceBuilder{ClamAvResource}}?)"/> or <see cref="UseAntivirus(IResourceBuilder{IResourceWithConnectionString})"/>.</summary>
+    public bool Antivirus { get; private set; }
+
+    internal IResourceBuilder<IResourceWithConnectionString>? AntivirusServer { get; private set; }
+
+    internal Action<IResourceBuilder<ClamAvResource>>? ClamAv { get; private set; }
+
     /// <summary>The app database instead of the Postgres container, e.g. <c>builder.AddConnectionString("myapp")</c> in production; it is not awaited.</summary>
     public CoworkeeAppOptions UseDatabase(IResourceBuilder<IResourceWithConnectionString> database) => Set(() => Database = database);
 
@@ -49,6 +56,15 @@ public sealed partial class CoworkeeAppOptions
 
     /// <summary>Elasticsearch instead of the Elasticsearch container; it is not awaited.</summary>
     public CoworkeeAppOptions UseSearch(IResourceBuilder<IResourceWithConnectionString> search) => Set(() => Search = search);
+
+    /// <summary>
+    /// The virus scan of uploads: a ClamAV container (<see cref="ClamAvResourceExtensions.AddClamAv"/>), locally and in a deployment, whose address every
+    /// service with Coworkee.Storage (api, auth server, workers) gets as <c>ConnectionStrings:antivirus</c>. Without it nothing is scanned.
+    /// </summary>
+    public CoworkeeAppOptions UseAntivirus(Action<IResourceBuilder<ClamAvResource>>? configure = null) => Set(() => (Antivirus, ClamAv) = (true, ClamAv + configure));
+
+    /// <summary>A clamd of your own instead of the container, e.g. <c>builder.AddConnectionString("antivirus")</c> with <c>tcp://host:3310</c>; it is not awaited.</summary>
+    public CoworkeeAppOptions UseAntivirus(IResourceBuilder<IResourceWithConnectionString> clamd) => Set(() => (Antivirus, AntivirusServer) = (true, clamd));
 
     /// <summary>The SMTP endpoint that becomes the default mail server instead of Mailpit.</summary>
     public CoworkeeAppOptions UseMail(EndpointReference smtp) => Set(() => Smtp = smtp);

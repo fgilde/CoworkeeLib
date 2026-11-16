@@ -68,10 +68,10 @@ A mention notifies only **members** of the chat (type `chat.mention`, link `/cha
 | People per create or add | fewer than 100 |
 | Messages per page | 50 |
 
-A virus scanner or other check plugs in as `IChatAttachmentScanner`; any scanner that says no rejects the upload:
+Every file goes through the [virus scan](storage.md#virus-scan) (`IVirusScanner`) first; a finding refuses it with its name. Other checks plug in as `IChatAttachmentScanner`; any scanner that says no rejects the upload:
 
 ```csharp
-services.AddScoped<IChatAttachmentScanner, ClamAvScanner>();
+services.AddScoped<IChatAttachmentScanner, NoExecutablesScanner>();
 ```
 
 ## API

@@ -48,6 +48,11 @@ public sealed record SolutionSummary(IReadOnlyList<string> Projects, IReadOnlyLi
             containers.Add("Keycloak");
         }
 
+        if (On("antivirus"))
+        {
+            containers.Add("ClamAV");
+        }
+
         if (On("ai") && values["aiProvider"] == "ollama")
         {
             containers.AddRange(["Ollama", .. On("openWebUI") ? new[] { "Open WebUI" } : []]);

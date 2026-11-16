@@ -4,4 +4,7 @@ namespace Coworkee.Contracts.Configuration;
 public sealed class CoworkeeServicesOptions() : Dictionary<string, CoworkeeServiceOptions>(StringComparer.OrdinalIgnoreCase)
 {
     public const string Section = "Coworkee:Services";
+
+    /// <summary>Health checks with this tag are listed as services too (e.g. "antivirus"), with their state and description.</summary>
+    public const string HealthCheckTag = "coworkee-service";
 }

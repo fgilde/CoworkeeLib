@@ -114,12 +114,12 @@ Bevor Coworkee einen Dienst verdrahtet, liest es dessen `obj/project.assets.json
 | `Coworkee.Infrastructure` | Connection-String der App-Datenbank und `Coworkee:Database:Provider`, wartet, bis die Migrationen fertig sind |
 | `Coworkee.Realtime` | Redis für die SignalR-Backplane, Anwesenheit, Cache-Invalidierung und Sitzungsänderungen zwischen Instanzen ([Skalieren mit Redis](redis.md)); `options.WithoutRedis()` lässt es weg |
 | `Coworkee.Mailing` | Mailpit als Standard-SMTP-Server; im Deployment der Mailserver aus den Deploy-Parametern (siehe [Deployment](deployment.md#mail)) |
-| `Coworkee.Storage` | den gemeinsamen Blob-Ordner `.data/blobs` (`options.BlobRoot` für einen anderen); im Deployment das Volume `{name}-files` |
+| `Coworkee.Storage` | den gemeinsamen Blob-Ordner `.data/blobs` (`options.BlobRoot` für einen anderen); im Deployment das Volume `{name}-files`; mit `options.UseAntivirus()` die ClamAV-Adresse `ConnectionStrings:antivirus` (nicht die Migrationen), siehe [Virenscan](../modules/storage.md#virenscan) |
 | `Coworkee.Search.Elasticsearch` | Elasticsearch |
 | `Coworkee.Notifications` | Links in Zusammenfassungsmails zeigen auf die Web-App; mit `options.UsePush()` das Web-Push-Schlüsselpaar (Parameter `{name}-push-public-key` und `-private-key`, beim ersten Start erzeugt, siehe [Smartphones und Push](../ui/phones-and-pwa.md)) |
 | `Coworkee.Localization` | der Übersetzungsdienst aus `options.UseTranslation(...)` oder `options.UseLibreTranslate([...])` (ein LibreTranslate-Container) und `options.TranslationSource` als Vorgaben der Einstellungen, siehe [Lokalisierung](../modules/localization.md) |
 
-Grafana (mit Prometheus, Loki, Tempo und Collector) und WebDataStudio kommen mit `options.UseGrafana()` und `options.UseWebDataStudio()` dazu, siehe [Grafana und WebDataStudio](observability.md). Kibana kommt mit `options.UseKibana()`, siehe [Kibana](#kibana).
+Grafana (mit Prometheus, Loki, Tempo und Collector) und WebDataStudio kommen mit `options.UseGrafana()` und `options.UseWebDataStudio()` dazu, siehe [Grafana und WebDataStudio](observability.md). Kibana kommt mit `options.UseKibana()`, siehe [Kibana](#kibana). ClamAV, das jeden Upload prüft, kommt mit `options.UseAntivirus()` (ein Container `clamav`, auch im Deployment) oder `options.UseAntivirus(builder.AddConnectionString("antivirus"))` für einen eigenen clamd, siehe [Virenscan](../modules/storage.md#clamav-im-apphost).
 
 Container entstehen nur, wenn ein Dienst sie braucht. Postgres, SQL Server, Redis, Elasticsearch und Keycloak halten ihre Daten in Volumes; `--Coworkee:EphemeralInfrastructure=true` startet sie leer, das nutzen die Tests.
 

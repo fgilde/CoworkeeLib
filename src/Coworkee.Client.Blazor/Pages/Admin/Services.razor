@@ -48,6 +48,10 @@ else
                                 {
                                     <MudLink Href="@url" Target="_blank" Typo="Typo.body2" Style="word-break:break-all;display:block" @onclick:stopPropagation="true">@url</MudLink>
                                 }
+                                @if (service.Description is { Length: > 0 } description)
+                                {
+                                    <MudText Typo="Typo.body2" Class="mud-text-secondary" data-service-description>@description</MudText>
+                                }
                             </MudCardContent>
                         </MudCard>
                     </MudItem>

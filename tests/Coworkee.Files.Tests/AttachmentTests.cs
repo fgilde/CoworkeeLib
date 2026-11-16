@@ -72,6 +72,17 @@ public sealed class AttachmentTests(FilesApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_virus_scanner_refuses_infected_attachments_with_the_finding()
+    {
+        var infected = await Upload(Admin, _ticket, "docs", "scan.txt", "EICAR");
+
+        infected.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await infected.Content.ReadAsStringAsync(Ct)).ShouldContain("the virus scan found Eicar-Test-Signature");
+        (await Upload(Admin, _ticket, "docs", "later.txt", "OFFLINE")).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await Admin.GetFromJsonAsync<AttachmentSlotDto>(Slot(_ticket, "docs"), Ct))!.Items.ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task Reading_follows_the_row_filter_of_the_set_and_writing_needs_the_write_permission()
     {
         var hidden = await app.AddTicketAsync(_setup.AdminUserId, _setup.TenantId, Ticket.Private);

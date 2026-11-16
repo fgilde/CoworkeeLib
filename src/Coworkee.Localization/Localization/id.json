@@ -652,6 +652,7 @@
   "Unhealthy": "Bermasalah",
   "Unreachable": "Tidak dapat dijangkau",
   "Unknown": "Tidak diketahui",
+  "Degraded": "Menurun",
   "App": "Aplikasi",
   "{0} did not answer, its services are missing.": "{0} tidak merespons, layanan terkaitnya tidak tersedia.",
   "Require address": "Wajibkan alamat",

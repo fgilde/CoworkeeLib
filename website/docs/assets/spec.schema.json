@@ -210,6 +210,11 @@
           "type": "boolean",
           "default": true
         },
+        "antivirus": {
+          "description": "A ClamAV container in the app host and in a deployment: every upload (files, attachments, chat files, registration documents) is scanned before it is stored, an infected file is refused with the name of the finding. Without it uploads are stored unscanned.",
+          "type": "boolean",
+          "default": false
+        },
         "grafana": {
           "description": "Grafana with Prometheus, Loki, Tempo and an OpenTelemetry collector in the app host: metrics, logs and traces of every service, the app database and ready dashboards. Sign-in with the app's administrator, or at the app's auth server for administrators of the system organisation.",
           "type": "boolean",

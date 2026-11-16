@@ -652,6 +652,7 @@
   "Unhealthy": "Sorunlu",
   "Unreachable": "Erişilemiyor",
   "Unknown": "Bilinmiyor",
+  "Degraded": "Kısıtlı",
   "App": "Uygulama",
   "{0} did not answer, its services are missing.": "{0} yanıt vermedi, ilgili hizmetler eksik.",
   "Require address": "Adres iste",
