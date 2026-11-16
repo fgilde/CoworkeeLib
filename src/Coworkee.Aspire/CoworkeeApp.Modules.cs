@@ -71,9 +71,15 @@ public sealed partial class CoworkeeApp
         ("Mail.From", DeployParameter($"{Name}-smtp-from").WithDescription("The sender address of the app's mails")),
     ];
 
-    // a host path means nothing inside a published container; there the files go to a volume shared by the services
+    // a host path means nothing inside a published container; there the files go to a volume shared by the services. The services that take uploads
+    // get the virus scanner (not the migrations: the seed stores files without a scan); it is not awaited, clamd needs a minute or two to load its signatures
     private void WireStorage(IResourceBuilder<ProjectResource> service)
     {
+        if (Options.Antivirus && service.Resource != Migrations?.Resource)
+        {
+            service.WithReference(Options.AntivirusServer ?? (IResourceBuilder<IResourceWithConnectionString>)ClamAv, ClamAvResource.ConnectionStringName);
+        }
+
         if (Builder.ExecutionContext.IsRunMode)
         {
             service.WithSetting(s => s.Coworkee.Storage.FileSystem.Root, BlobRoot);

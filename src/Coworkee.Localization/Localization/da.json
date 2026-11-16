@@ -652,6 +652,7 @@
   "Unhealthy": "Forstyrret",
   "Unreachable": "Ikke tilgængelig",
   "Unknown": "Ukendt",
+  "Degraded": "Begrænset",
   "App": "App",
   "{0} did not answer, its services are missing.": "{0} svarede ikke, de tilhørende tjenester mangler.",
   "Require address": "Kræv adresse",

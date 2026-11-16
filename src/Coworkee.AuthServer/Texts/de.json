@@ -88,6 +88,8 @@
   "Add the document \"{0}\".": "Fügen Sie das Dokument „{0}“ hinzu.",
   "\"{0}\" has a file type that is not accepted.": "„{0}“ hat einen Dateityp, der nicht angenommen wird.",
   "\"{0}\" is larger than {1}.": "„{0}“ ist größer als {1}.",
+  "\"{0}\" was refused: the virus scan found {1}.": "„{0}“ wurde abgelehnt: Der Virenscan hat {1} gefunden.",
+  "\"{0}\" could not be checked for viruses. Try again in a few minutes.": "„{0}“ konnte nicht auf Viren geprüft werden. Versuchen Sie es in ein paar Minuten erneut.",
   "Account security": "Kontosicherheit",
   "Current password": "Aktuelles Passwort",
   "Repeat new password": "Neues Passwort wiederholen",

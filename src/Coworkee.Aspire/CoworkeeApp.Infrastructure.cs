@@ -12,6 +12,7 @@ public sealed partial class CoworkeeApp
     private IResourceBuilder<RedisResource>? _redis;
     private IResourceBuilder<MailPitContainerResource>? _mail;
     private IResourceBuilder<ElasticsearchResource>? _search;
+    private IResourceBuilder<ClamAvResource>? _clamAv;
 
     /// <summary>Wait for the server, not the database: the migrations create a missing database, and Aspire 13.6 lost the database state after restarts.</summary>
     public IResourceBuilder<PostgresServerResource> Server => _server ??= AddPostgres();
@@ -28,6 +29,9 @@ public sealed partial class CoworkeeApp
     public IResourceBuilder<MailPitContainerResource> Mail => _mail ??= AddMail();
 
     public IResourceBuilder<ElasticsearchResource> Search => _search ??= AddSearch();
+
+    /// <summary>The ClamAV container of <see cref="CoworkeeAppOptions.UseAntivirus(Action{IResourceBuilder{ClamAvResource}}?)"/>.</summary>
+    public IResourceBuilder<ClamAvResource> ClamAv => _clamAv ??= Configured(Builder.AddClamAv(), Options.ClamAv);
 
     private string SqlitePath => Options.SqlitePath ?? (Persistent
         ? Path.GetFullPath(Path.Combine(Builder.AppHostDirectory, "..", "..", ".data", $"{Name}.db"))

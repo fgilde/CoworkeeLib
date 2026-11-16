@@ -88,6 +88,8 @@
   "Add the document \"{0}\".": "Tambahkan dokumen “{0}”.",
   "\"{0}\" has a file type that is not accepted.": "“{0}” memiliki jenis file yang tidak diterima.",
   "\"{0}\" is larger than {1}.": "“{0}” lebih besar dari {1}.",
+  "\"{0}\" was refused: the virus scan found {1}.": "“{0}” ditolak: pemindaian virus menemukan {1}.",
+  "\"{0}\" could not be checked for viruses. Try again in a few minutes.": "“{0}” tidak dapat diperiksa dari virus. Coba lagi dalam beberapa menit.",
   "Account security": "Keamanan akun",
   "Current password": "Kata sandi saat ini",
   "Repeat new password": "Ulangi kata sandi baru",

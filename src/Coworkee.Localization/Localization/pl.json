@@ -652,6 +652,7 @@
   "Unhealthy": "Awaria",
   "Unreachable": "Niedostępna",
   "Unknown": "Nieznany",
+  "Degraded": "Ograniczone",
   "App": "Aplikacja",
   "{0} did not answer, its services are missing.": "Brak odpowiedzi od {0}, powiązane usługi są niedostępne.",
   "Require address": "Wymagaj adresu",

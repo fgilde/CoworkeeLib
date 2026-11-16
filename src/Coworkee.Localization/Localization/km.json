@@ -652,6 +652,7 @@
   "Unhealthy": "មានបញ្ហា",
   "Unreachable": "មិនអាចទាក់ទងបាន",
   "Unknown": "មិនស្គាល់",
+  "Degraded": "ថយចុះ",
   "App": "កម្មវិធី",
   "{0} did not answer, its services are missing.": "{0} មិនបានឆ្លើយតបទេ សេវាកម្មដែលពាក់ព័ន្ធមិនមាន។",
   "Require address": "តម្រូវឱ្យមានអាសយដ្ឋាន",

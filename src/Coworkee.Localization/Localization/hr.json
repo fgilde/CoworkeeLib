@@ -652,6 +652,7 @@
   "Unhealthy": "Neispravno",
   "Unreachable": "Nedostupno",
   "Unknown": "Nepoznato",
+  "Degraded": "Ograničeno",
   "App": "Aplikacija",
   "{0} did not answer, its services are missing.": "{0} nije odgovorio, pripadajuće usluge nedostaju.",
   "Require address": "Zahtijevaj adresu",

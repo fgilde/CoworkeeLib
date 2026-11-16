@@ -86,12 +86,14 @@ public sealed partial class CoworkeeApp
     }
 
     /// <summary>
-    /// Container Apps give every container 0.5 CPU and 1 GiB by default. SQL Server needs 2 GB at least: with 1 GiB it ran out of memory under load
+    /// Container Apps give every container 0.5 CPU and 1 GiB by default; ClamAV needs about 3 GiB. SQL Server needs 2 GB at least: with 1 GiB it ran out of memory under load
     /// ("insufficient system memory in resource pool 'internal'"), refused connections in the pre-login handshake and every sign-in failed.
     /// </summary>
     internal static (double Cpu, string Memory)? SizeOf(IResource resource) => resource switch
     {
         SqlServerServerResource => (1.0, "2Gi"),
+        // the signatures take more than 1 GiB in memory, and a reload briefly more
+        ClamAvResource => (1.5, "3Gi"),
         _ => null,
     };
 

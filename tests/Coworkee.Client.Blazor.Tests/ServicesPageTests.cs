@@ -84,7 +84,25 @@ public sealed class ServicesPageTests : ClientTestBase
         page.Find("[data-service='billing']").ClassList.ShouldContain("cursor-pointer");
     }
 
+    [Fact]
+    public void A_degraded_service_shows_a_warning_and_what_its_health_check_says()
+    {
+        Api.GetServicesAsync(Arg.Any<CancellationToken>()).Returns(new ServiceDirectoryResult(
+            [new ServiceDto("antivirus", "antivirus", "", ServiceHealth.Degraded, Description: "clamd does not answer yet; it loads its signatures")], []));
+        var auth = AddAuthorization();
+        auth.SetAuthorized("admin");
+        auth.SetPolicies("perm:" + SettingsPermissions.Manage);
+
+        var page = Render<Services>();
+
+        page.WaitForAssertion(() => page.Find("[data-service='antivirus'] [data-health]").GetAttribute("data-health").ShouldBe("Degraded"));
+        page.Find("[data-service='antivirus'] .mud-chip").ClassList.ShouldContain("mud-chip-color-warning");
+        page.Find("[data-service='antivirus'] [data-service-description]").TextContent.ShouldBe("clamd does not answer yet; it loads its signatures");
+        page.FindAll("[data-service='antivirus'] a").ShouldBeEmpty();
+    }
+
     [Theory]
+    [InlineData("antivirus", "GppGood")]
     [InlineData("myapp-api", "Api")]
     [InlineData("pgadmin", "Storage")]
     [InlineData("something", "Cloud")]

@@ -652,6 +652,7 @@
   "Unhealthy": "Неизправна",
   "Unreachable": "Недостъпна",
   "Unknown": "Неизвестно",
+  "Degraded": "Ограничено",
   "App": "Приложение",
   "{0} did not answer, its services are missing.": "{0} не отговори, свързаните с него услуги липсват.",
   "Require address": "Изискване на адрес",

@@ -88,6 +88,8 @@
   "Add the document \"{0}\".": "Добавете документа „{0}“.",
   "\"{0}\" has a file type that is not accepted.": "„{0}“ е от тип файл, който не се приема.",
   "\"{0}\" is larger than {1}.": "„{0}“ е по-голям от {1}.",
+  "\"{0}\" was refused: the virus scan found {1}.": "„{0}“ е отхвърлен: антивирусната проверка откри {1}.",
+  "\"{0}\" could not be checked for viruses. Try again in a few minutes.": "„{0}“ не можа да бъде проверен за вируси. Опитайте отново след няколко минути.",
   "Account security": "Сигурност на акаунта",
   "Current password": "Текуща парола",
   "Repeat new password": "Повторете новата парола",

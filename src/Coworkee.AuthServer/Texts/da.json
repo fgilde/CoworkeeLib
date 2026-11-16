@@ -88,6 +88,8 @@
   "Add the document \"{0}\".": "Tilføj dokumentet »{0}«.",
   "\"{0}\" has a file type that is not accepted.": "»{0}« har en filtype, der ikke accepteres.",
   "\"{0}\" is larger than {1}.": "»{0}« er større end {1}.",
+  "\"{0}\" was refused: the virus scan found {1}.": "»{0}« blev afvist: virusscanningen fandt {1}.",
+  "\"{0}\" could not be checked for viruses. Try again in a few minutes.": "»{0}« kunne ikke scannes for virus. Prøv igen om et par minutter.",
   "Account security": "Kontosikkerhed",
   "Current password": "Nuværende adgangskode",
   "Repeat new password": "Gentag ny adgangskode",

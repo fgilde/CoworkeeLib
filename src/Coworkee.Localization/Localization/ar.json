@@ -652,6 +652,7 @@
   "Unhealthy": "معطّلة",
   "Unreachable": "لا يمكن الوصول إليها",
   "Unknown": "غير معروفة",
+  "Degraded": "متدهور",
   "App": "التطبيق",
   "{0} did not answer, its services are missing.": "لم يستجب {0}، والخدمات التابعة له غير متوفرة.",
   "Require address": "طلب العنوان",

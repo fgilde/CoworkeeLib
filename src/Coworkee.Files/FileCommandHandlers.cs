@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Coworkee.Files;
 
 internal sealed class FileCommandHandlers(
-    CoworkeeDbContext db, FolderAccess access, ICurrentUser currentUser, IBlobStorage storage, TimeProvider clock, IEnumerable<IAttachmentScanner> scanners)
+    CoworkeeDbContext db, FolderAccess access, ICurrentUser currentUser, IBlobStorage storage, TimeProvider clock, IVirusScanner virusScanner, IEnumerable<IAttachmentScanner> scanners)
     : IHandler<CreateFolder, Result<FolderDto>>,
       IHandler<RenameFolder, Result<FolderDto>>,
       IHandler<RenameFile, Result<StoredFileDto>>,
@@ -198,7 +198,13 @@ internal sealed class FileCommandHandlers(
         var contentType = MediaTypeHeaderValue.TryParse(command.ContentType, out var parsed) && parsed.MediaType is { Length: <= 200 } mediaType
             ? mediaType
             : FallbackContentType;
-        // the scanners of record attachments check these uploads too; a refused file is never stored
+        // the virus scanner and the scanners of record attachments check these uploads too; a refused file is never stored
+        buffer.Position = 0;
+        if ((await virusScanner.ScanAsync(buffer, name, cancellationToken)).RefusalFor(name) is { } refusal)
+        {
+            return Error.Validation("content", refusal);
+        }
+
         var upload = new AttachmentUpload(FileUploads.EntityType, command.FolderId ?? Guid.Empty, FileUploads.Slot, name, contentType, buffer.Length);
         foreach (var scanner in scanners)
         {

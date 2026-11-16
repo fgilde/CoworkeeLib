@@ -652,6 +652,7 @@
   "Unhealthy": "Verstoord",
   "Unreachable": "Onbereikbaar",
   "Unknown": "Onbekend",
+  "Degraded": "Beperkt",
   "App": "App",
   "{0} did not answer, its services are missing.": "{0} heeft niet geantwoord, de bijbehorende services ontbreken.",
   "Require address": "Adres verplicht stellen",

@@ -86,7 +86,7 @@ public partial class Services : IDisposable
     private static Color HealthColor(ServiceHealth health) => health switch
     {
         ServiceHealth.Healthy => Color.Success,
-        ServiceHealth.Unhealthy => Color.Warning,
+        ServiceHealth.Unhealthy or ServiceHealth.Degraded => Color.Warning,
         ServiceHealth.Unknown => Color.Default,
         _ => Color.Error,
     };

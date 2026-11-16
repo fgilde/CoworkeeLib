@@ -132,7 +132,17 @@ public sealed class TestChatModule : CoworkeeModule
         context.Services.AddCoworkeeDbContext<ChatTestDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
         context.Services.AddGlobalSearchProvider<TestRecordProvider>();
+        context.Services.AddSingleton<Coworkee.Storage.IVirusScanner, EicarScanner>();
     }
+}
+
+/// <summary>An app's own virus scanner: content with EICAR is a finding.</summary>
+public sealed class EicarScanner : Coworkee.Storage.IVirusScanner
+{
+    public async Task<Coworkee.Storage.VirusScanResult> ScanAsync(Stream content, string fileName, CancellationToken cancellationToken) =>
+        (await new StreamReader(content).ReadToEndAsync(cancellationToken)).Contains("EICAR", StringComparison.Ordinal)
+            ? Coworkee.Storage.VirusScanResult.Infected("Eicar-Test-Signature")
+            : Coworkee.Storage.VirusScanResult.Clean;
 }
 
 /// <summary>Records only their reader may find: the provider "records" knows each id's single reader.</summary>

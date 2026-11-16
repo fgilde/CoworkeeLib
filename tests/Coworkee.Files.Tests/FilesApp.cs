@@ -168,6 +168,18 @@ internal sealed class NameScanner : IAttachmentScanner
     }
 }
 
+/// <summary>The app's own virus scanner (registered after the default, so it wins): EICAR in the content is a finding, OFFLINE a scanner that gives no verdict.</summary>
+internal sealed class ContentVirusScanner : Coworkee.Storage.IVirusScanner
+{
+    public async Task<Coworkee.Storage.VirusScanResult> ScanAsync(Stream content, string fileName, CancellationToken cancellationToken)
+    {
+        var text = await new StreamReader(content).ReadToEndAsync(cancellationToken);
+        return text.Contains("EICAR", StringComparison.Ordinal) ? Coworkee.Storage.VirusScanResult.Infected("Eicar-Test-Signature")
+            : text.Contains("OFFLINE", StringComparison.Ordinal) ? Coworkee.Storage.VirusScanResult.Failed("unreachable")
+            : Coworkee.Storage.VirusScanResult.Clean;
+    }
+}
+
 internal sealed class TicketModelContributor : IModelContributor
 {
     public void Apply(ModelBuilder modelBuilder) => modelBuilder.Entity<Ticket>(ticket => ticket.ToTable("Tickets"));
@@ -182,6 +194,7 @@ public sealed class TestFilesModule : CoworkeeModule
         context.Services.AddODataEntity<Ticket>("Tickets");
         context.Services.AddScoped<IODataEntityFilter<Ticket>, PrivateTickets>();
         context.Services.AddSingleton<IAttachmentScanner, NameScanner>();
+        context.Services.AddSingleton<Coworkee.Storage.IVirusScanner, ContentVirusScanner>();
         context.Services.AddScoped<IHandler<AttachToTicket, Result>, AttachToTicketHandler>();
         context.Services.AddRecordAttachments<Ticket>("Tickets", a => a
             .Slot("proof", 1024, "application/pdf", "image/*")

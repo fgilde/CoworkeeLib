@@ -88,6 +88,8 @@
   "Add the document \"{0}\".": "Додайте документ «{0}».",
   "\"{0}\" has a file type that is not accepted.": "Тип файлу «{0}» не приймається.",
   "\"{0}\" is larger than {1}.": "Розмір «{0}» перевищує {1}.",
+  "\"{0}\" was refused: the virus scan found {1}.": "Файл «{0}» відхилено: антивірусна перевірка виявила {1}.",
+  "\"{0}\" could not be checked for viruses. Try again in a few minutes.": "Не вдалося перевірити «{0}» на віруси. Спробуйте ще раз за кілька хвилин.",
   "Account security": "Безпека облікового запису",
   "Current password": "Поточний пароль",
   "Repeat new password": "Повторіть новий пароль",

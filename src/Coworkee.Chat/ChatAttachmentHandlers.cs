@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Coworkee.Chat;
 
 internal sealed class ChatAttachmentHandlers(
-    CoworkeeDbContext db, ChatViews views, IBlobStorage storage, IEnumerable<IChatAttachmentScanner> scanners, IServiceProvider services, TimeProvider clock)
+    CoworkeeDbContext db, ChatViews views, IBlobStorage storage, IVirusScanner virusScanner, IEnumerable<IChatAttachmentScanner> scanners, IServiceProvider services, TimeProvider clock)
     : IHandler<UploadChatAttachmentCommand, Result<ChatAttachmentDto>>,
       IHandler<OpenChatAttachmentQuery, Result<ChatAttachmentContent>>
 {
@@ -42,6 +42,12 @@ internal sealed class ChatAttachmentHandlers(
         }
 
         var contentType = MediaTypeHeaderValue.TryParse(command.ContentType, out var parsed) && parsed.MediaType is { Length: <= 200 } mediaType ? mediaType : FallbackContentType;
+        buffer.Position = 0;
+        if ((await virusScanner.ScanAsync(buffer, name, cancellationToken)).RefusalFor(name) is { } refusal)
+        {
+            return Error.Validation("chat.rejected", refusal);
+        }
+
         foreach (var scanner in scanners)
         {
             buffer.Position = 0;

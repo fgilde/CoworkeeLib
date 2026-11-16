@@ -1,6 +1,7 @@
 using Coworkee.Application.Registration;
 using Coworkee.Contracts.Configuration;
 using Coworkee.Identity.Domain;
+using Coworkee.Storage;
 using Microsoft.AspNetCore.Http;
 using static Coworkee.AuthServer.AuthTexts;
 
@@ -71,6 +72,30 @@ public static class RegistrationDocuments
                 yield return T("\"{0}\" is larger than {1}.", slot.DisplayName, Size(max));
             }
         }
+    }
+
+    /// <summary>The virus scan of every uploaded document; a finding or a scanner that gave no verdict refuses the document.</summary>
+    public static async Task<IReadOnlyList<string>> ScanAsync(IVirusScanner scanner, IReadOnlyList<RegistrationDocumentSlot> slots, IFormFileCollection files, CancellationToken cancellationToken)
+    {
+        var errors = new List<string>();
+        for (var index = 0; index < slots.Count; index++)
+        {
+            if (files.GetFile(Field(index)) is { Length: > 0 } file)
+            {
+                await using var content = file.OpenReadStream();
+                var result = await scanner.ScanAsync(content, Path.GetFileName(file.FileName), cancellationToken);
+                if (result.Outcome == VirusScanOutcome.Infected)
+                {
+                    errors.Add(T("\"{0}\" was refused: the virus scan found {1}.", slots[index].DisplayName, result.Detail ?? string.Empty));
+                }
+                else if (result.Outcome == VirusScanOutcome.Failed)
+                {
+                    errors.Add(T("\"{0}\" could not be checked for viruses. Try again in a few minutes.", slots[index].DisplayName));
+                }
+            }
+        }
+
+        return errors;
     }
 
     public static async Task SaveAsync(

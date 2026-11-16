@@ -652,6 +652,7 @@
   "Unhealthy": "异常",
   "Unreachable": "无法访问",
   "Unknown": "未知",
+  "Degraded": "降级",
   "App": "应用",
   "{0} did not answer, its services are missing.": "{0} 未响应，其服务缺失。",
   "Require address": "要求填写地址",

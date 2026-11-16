@@ -92,6 +92,20 @@ public sealed class ChatAttachmentTests(ChatApp app) : IAsyncLifetime
         return await action(scope.ServiceProvider.GetRequiredService<ChatTestDbContext>());
     }
 
+    [Fact]
+    public async Task The_virus_scanner_refuses_an_infected_file_with_the_finding()
+    {
+        var chat = await OpenDirectAsync();
+        var body = new ByteArrayContent("X5O EICAR"u8.ToArray());
+        body.Headers.ContentType = new MediaTypeHeaderValue("text/plain");
+
+        var refused = await Admin.PostAsync($"/api/v1/chat/chats/{chat}/attachments?name=bad.txt", body, Ct);
+
+        refused.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await refused.Content.ReadAsStringAsync(Ct)).ShouldContain("The file 'bad.txt' was refused: the virus scan found Eicar-Test-Signature.");
+        (await InDbAsync(db => db.Set<ChatAttachment>().IgnoreQueryFilters().AnyAsync(a => a.Name == "bad.txt", Ct))).ShouldBeFalse();
+    }
+
     private async Task<Guid> OpenDirectAsync() =>
         (await (await Admin.PostAsync($"/api/v1/chat/chats/direct/{_bob.Id}", null, Ct)).EnsureSuccessStatusCode().Content.ReadFromJsonAsync<ChatConversationDto>(Ct))!.Id;
 
