@@ -64,7 +64,7 @@ An entity that cannot carry the attribute (a class of another library, the table
 
 ## Step 2: settings (optional)
 
-Each set starts from the defaults, then the attribute, then the options, then its application service apply:
+Each set starts from the defaults, then the attribute, then the options, then its application service apply; last an administrator's [override](#change-it-at-runtime-the-page-local-copies):
 
 | Setting | Default | |
 |---|---|---|
@@ -76,6 +76,8 @@ Each set starts from the defaults, then the attribute, then the options, then it
 | `Enabled` | `true` | `false` keeps an attributed entity on the server |
 | `ChangedAt` | none | date properties that tell when a row was created or changed, for entities without `IAuditable` (tables of an [external database](../fundamentals/persistence.md#external-databases)); without them such a set downloads completely on every refresh |
 | `Overlap` | 5 seconds | how far before the last refresh each refresh looks again, for late commits and clock skew |
+| `Copy` | none | `Memory` or `Sqlite` asks clients for that engine (SQLite falls back to memory in an app without it); none lets the client app decide; `Off` is `Enabled = false` |
+| `DefaultMode` | `Client` | where queries run for users who did not choose in the table's switch (`Client` or `Server`) |
 
 === "Options"
 
@@ -113,6 +115,45 @@ Each set starts from the defaults, then the attribute, then the options, then it
     ```
 
     `ClientEntity<TEntity>()` alone mirrors the set like `o.For<TEntity>()`; its settings apply last. There is no attribute for the service interface on purpose: the interface lives in the contracts, which do not know the entity.
+
+## Change it at runtime: the page Local copies
+
+Everything above is decided in code. An administrator can change it afterwards without a deployment under *Administration → System → Local copies* (`/admin/local-copies`, `Settings.Manage`, system organisation only; it comes with `AddCoworkeeClientEntities`). The page lists **every** set that could have a copy (every OData set with a `Guid` `Id`), marked in code or not, with:
+
+| Column | |
+|---|---|
+| Local copy | *Server only* (no copy), *Memory* (columns in memory, kept in IndexedDB), *SQLite* (a database in the browser) or *Automatic* (mirrored, the client app picks the engine as before), with a badge saying what decided it: *Default* (the code does not mark the set), *Attribute*, *Code* (`o.For<T>()`), *Service* (`ClientEntity<T>()`) or *Override* |
+| Row limit, Batch, Parallel pages, Refresh interval | the values clients get (the batch capped by `Coworkee:OData:MaxTop`); a badge when something other than the defaults decided them |
+| Default mode | where queries run for users who did not pick a side in the table's switch themselves: *Browser* or *Server*; a user's own choice still wins |
+
+*Edit* opens a sheet with the same fields; an empty field keeps what the code says (the helper text shows the current value). *Back to what the code says* removes the override of the set. When a set is set to SQLite but the app has no [SQLite engine](#sqlite-in-the-browser-optional) (no `AddCoworkeeClientEntitiesSqlite`, or a client built without native SQLite), the page says *SQLite not available in this app* and the clients keep that copy in memory.
+
+The overrides are the app configuration section `Coworkee:ClientEntities:Sets`, one entry per entity set, saved in `cw.ConfigurationEntries` like the other [settings pages](../modules/settings.md) (only what differs from appsettings is stored). The same section works in `appsettings.json`:
+
+```json
+{
+  "Coworkee": {
+    "ClientEntities": {
+      "Sets": {
+        "Products": { "Copy": "Sqlite", "MaxRows": 100000, "RefreshInterval": "00:01:00" },
+        "Brands": { "Copy": "Off" },
+        "AuditEntries": { "Copy": "Memory", "DefaultMode": "Server", "BatchSize": 500, "ParallelPages": 2 }
+      }
+    }
+  }
+}
+```
+
+| Key | Values |
+|---|---|
+| `Copy` | `Off` keeps a marked set on the server; `Memory` or `Sqlite` also mirrors a set the code did not mark, in that engine; missing: as the code says |
+| `MaxRows`, `BatchSize`, `ParallelPages` | numbers above 0 |
+| `RefreshInterval` | a `TimeSpan` (`"00:00:30"`) |
+| `DefaultMode` | `Client` or `Server` |
+
+The override applies after the attribute, the options and the service. Permissions, hidden properties and row filters stay on the server as for every copy: an override only decides whether and how clients copy what a user may read anyway. The API reads the section live (`IOptionsMonitor`): a save takes effect at once on the server that handled it and within the configuration's reload interval (15 seconds) on the others. Every open client is told (topic `global:client-entities`), loads the manifest again and starts over only the copies whose settings changed; a table showing such a set asks again, locally with the new settings or on the server. Code can name the engine and the default mode too: `o.For<Product>(s => (s.Copy, s.DefaultMode) = (ClientEntityCopy.Sqlite, ClientEntityDefaultMode.Server))`.
+
+Without overrides nothing changes: the manifest carries no engine, the client app's engine decides per row type as before.
 
 ## Step 3: the client, one line
 
@@ -400,6 +441,7 @@ The server answered the same query in 210 ms. That is why such row types stay in
 | `GET /api/v1/client-entities` | the sets this user may mirror with their settings and `Fields` (what `query_data` returns of the set for this user), a partition key per user, tenant and group selection and an owner key per user and tenant |
 | `GET /api/v1/client-entities/{set}/changes?since=…&skip=…` | new version, visible row count, changed and deleted ids and the caller's partition; with `skip` the changed ids come in pages of `BatchSize × 10` (`more`), without it more than that answers `reset`; also `reset` when `since` is older than `ChangeLogLifetime` |
 | `GET /api/v1/client-entities/{set}/ids` | all visible ids, to find rows that vanished unseen |
+| `GET /api/v1/client-entities/admin` | `Settings.Manage`: every set that could be mirrored with its effective settings, the source of each value and its override (the page [Local copies](#change-it-at-runtime-the-page-local-copies)) |
 | `POST /api/v1/client-entities/{set}/snapshot` | with [SQLite in the browser](#sqlite-in-the-browser-optional): the visible rows as a SQLite file (gzip) in the columns the body names, the version in `X-Coworkee-Version`; 400 for a hidden property, 403 without the permission, 413 above `MaxRows` |
 
 ## Files of the demo

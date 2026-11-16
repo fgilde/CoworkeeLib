@@ -4,6 +4,14 @@
 
 ## Unveröffentlicht
 
+### Hinzugefügt
+
+- Seite **Lokale Kopien** (`/admin/local-copies`, Seitenschlüssel `local-copies`, `Settings.Manage`, nur Systemorganisation, kommt mit `AddCoworkeeClientEntities`): jede Entitätsmenge, die gespiegelt werden könnte (OData-Sets mit einer `Guid`-`Id`), im Code markiert oder nicht, mit Kopie (nur Server, Speicher, SQLite oder automatisch), Zeilenlimit, Paketgröße, parallelen Seiten, Aktualisierungsintervall und Standardmodus, jeweils mit der Quelle, die entschieden hat (Standard, Attribut, Code, Service, Überschreibung); je Set in einem Sheet bearbeitbar, auf den Code zurücksetzbar. Änderungen wirken live: die API liest die Überschreibungen mit `IOptionsMonitor`, offene Clients erfahren es (`global:client-entities`), laden das Manifest neu und beginnen nur die Kopien neu, deren Einstellungen sich geändert haben. Siehe [Zur Laufzeit ändern](../ui/client-entities.de.md#zur-laufzeit-andern-die-seite-lokale-kopien).
+- Konfiguration `Coworkee:ClientEntities:Sets:{EntitySet}` mit `Copy` (`Off`, `Memory`, `Sqlite`), `MaxRows`, `BatchSize`, `ParallelPages`, `RefreshInterval` und `DefaultMode` (`Client`, `Server`), angewendet nach Attribut, Optionen und Dienst: `Off` lässt ein markiertes Set auf dem Server, `Memory`/`Sqlite` spiegelt auch ein nicht markiertes. Die Seite speichert sie als App-Konfiguration (Abschnitt vom Settings-Modul registriert).
+- `ClientEntitySettings.Copy` und `ClientEntitySettings.DefaultMode`; das Manifest trägt beide (`ClientEntitySetInfo.Copy`, `.DefaultMode`). Der Client hält ein Set in der Engine, die der Server nennt; `Sqlite` ohne SQLite-Paket oder natives SQLite bleibt im Speicher und schreibt eine Warnung ins Log. Ohne Wert entscheidet die Client-App wie bisher.
+- `IClientEntityEngine.OpenRequested<T>(key)` (ein Store unabhängig von der eigenen Zeilentyp-Wahl der Engine) und `IClientEntityEngine.IsAvailable`; beide haben Standardimplementierungen, eigene Engines brauchen keine Änderung. `ClientEntities.Reconfigured` meldet Tabellen, dass sich die Einstellungen eines Sets geändert haben.
+- `GET /api/v1/client-entities/admin` (`GetClientEntityAdmin`, `Settings.Manage`).
+
 ### Behoben
 
 - `ApiException.Message` ist der lesbare Grund: die Validierungsmeldungen, sonst der Titel des Problems, sonst sein Code, sonst der Status. Komponenten, die nur die Meldung zeigen, nannten bisher den Code: Ein abgelehnter Upload auf der Seite **Dateien** hieß *ApiException: validation*, jetzt *ApiException: Could not complete the security scan on the uploaded file.* (oder die Größen- oder Typregel). `SnackbarApiExtensions.Describe` liefert dieselbe Meldung. Code, der `exception.Message` mit einem Code verglich, vergleicht `exception.Code`. Siehe [Die eigene API aufrufen](../ui/client.md#die-eigene-api-aufrufen).

@@ -27,8 +27,9 @@ public sealed class ClientEntities : IClientDataCache, IAsyncDisposable
     private readonly ClientEntityModes? _modes;
     private readonly IClientEntityEngine? _engine;
     private readonly Dictionary<string, ClientEntitySet> _sets = new(StringComparer.OrdinalIgnoreCase);
-    private readonly List<Task<IAsyncDisposable>> _subscriptions = [];
+    private readonly Dictionary<string, Task<IAsyncDisposable>> _subscriptions = new(StringComparer.OrdinalIgnoreCase);
     private Task<ClientEntityManifest?>? _manifest;
+    private Task<IAsyncDisposable>? _settingsSubscription;
 
     internal ClientEntities(ClientEntityApi api, IODataClient server, IClientEntityStorage storage, RealtimeClient? realtime, ClientEntitySignal signal, ILogger<ClientEntities> logger,
         ClientEntityModes? modes = null, IClientEntityEngine? engine = null)
@@ -46,6 +47,15 @@ public sealed class ClientEntities : IClientDataCache, IAsyncDisposable
 
     /// <summary>A set's status or rows changed.</summary>
     public event Action<ClientEntitySet>? Changed;
+
+    /// <summary>
+    /// An administrator changed the settings of the set (Local copies page): its copy went and the next query starts it again with the new settings, or
+    /// asks the server when it is off now. Tables showing the set reload.
+    /// </summary>
+    public event Action<string>? Reconfigured;
+
+    /// <summary>How long a settings change waits before it loads the manifest: the server reads its configuration again right after the save that sent it.</summary>
+    internal static TimeSpan SettingsDelay { get; set; } = TimeSpan.FromSeconds(1);
 
     public IReadOnlyCollection<ClientEntitySet> Sets => _sets.Values;
 
@@ -85,16 +95,19 @@ public sealed class ClientEntities : IClientDataCache, IAsyncDisposable
         _sets[entitySet] = set;
         set.Changed += s => Changed?.Invoke(s);
         set.Rescoped += () => _ = ScopeChangedAsync();
+        // users without an own choice start where the server says; the stored choice follows (ApplyModeAsync)
+        var fallback = info.DefaultMode == ClientEntityDefaultMode.Server ? ClientEntityMode.Server : ClientEntityMode.Client;
+        set.Mode = fallback;
         set.Start();
-        _ = ApplyModeAsync(set);
+        _ = ApplyModeAsync(set, fallback);
         if (info.RealtimeTopic is { } topic && _realtime is not null)
         {
             // connecting to the hub must not hold back the first query
-            _subscriptions.Add(_realtime.SubscribeAsync(topic, _ =>
+            _subscriptions[entitySet] = _realtime.SubscribeAsync(topic, _ =>
             {
                 set.Nudge();
                 return Task.CompletedTask;
-            }));
+            });
         }
 
         return set;
@@ -131,6 +144,12 @@ public sealed class ClientEntities : IClientDataCache, IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         _signal.Mutated -= NudgeAll;
+        if (_settingsSubscription is { } settings)
+        {
+            _settingsSubscription = null;
+            await (await settings).DisposeAsync();
+        }
+
         await DisposeSetsAsync();
     }
 
@@ -143,13 +162,60 @@ public sealed class ClientEntities : IClientDataCache, IAsyncDisposable
     }
 
     // the copy downloads meanwhile, so the stored choice is there before the first local query
-    private async Task ApplyModeAsync(ClientEntitySet set)
+    private async Task ApplyModeAsync(ClientEntitySet set, ClientEntityMode fallback)
     {
         if (_modes is not null)
         {
-            set.Mode = await _modes.GetAsync(set.EntitySet);
+            set.Mode = await _modes.GetAsync(set.EntitySet, fallback);
         }
     }
+
+    /// <summary>
+    /// The client entity settings changed on the server: the manifest loads again, sets whose settings changed (or that are off now) go and start over
+    /// on their next query, the others keep syncing. Another partition or owner starts every set over.
+    /// </summary>
+    internal async Task SettingsChangedAsync()
+    {
+        await Task.Delay(SettingsDelay);
+        ClientEntityManifest manifest;
+        try
+        {
+            manifest = await _api.ManifestAsync(CancellationToken.None);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogDebug(exception, "The changed client entity settings did not load");
+            return;
+        }
+
+        if (_manifest is not { IsCompletedSuccessfully: true, Result: { } known } || known.Partition != manifest.Partition || known.Owner != manifest.Owner)
+        {
+            await DisposeSetsAsync();
+            return;
+        }
+
+        _manifest = Task.FromResult<ClientEntityManifest?>(manifest);
+        foreach (var set in _sets.Values.ToList())
+        {
+            var info = manifest.Sets.FirstOrDefault(s => string.Equals(s.EntitySet, set.EntitySet, StringComparison.OrdinalIgnoreCase));
+            if (info is not null && Same(info, set.Info))
+            {
+                continue;
+            }
+
+            _sets.Remove(set.EntitySet);
+            if (_subscriptions.Remove(set.EntitySet, out var subscription))
+            {
+                await (await subscription).DisposeAsync();
+            }
+
+            await set.DisposeAsync();
+            Reconfigured?.Invoke(set.EntitySet);
+        }
+    }
+
+    private static bool Same(ClientEntitySetInfo a, ClientEntitySetInfo b) =>
+        a with { Fields = null } == b with { Fields = null } && (a.Fields ?? []).SequenceEqual(b.Fields ?? [], StringComparer.Ordinal);
 
     // a failed manifest (signed out, server without client entities) is kept: tables then simply ask the server
     private Task<ClientEntityManifest?> ManifestAsync() => _manifest ??= LoadManifestAsync();
@@ -168,6 +234,12 @@ public sealed class ClientEntities : IClientDataCache, IAsyncDisposable
         }
 
         await KeepAsync(manifest);
+        // an administrator changing the settings reaches the open clients (Local copies page)
+        _settingsSubscription ??= _realtime?.SubscribeAsync(ClientEntityTopics.Changed, envelope =>
+        {
+            _ = SettingsChangedAsync();
+            return Task.CompletedTask;
+        });
         return manifest;
     }
 
@@ -208,7 +280,7 @@ public sealed class ClientEntities : IClientDataCache, IAsyncDisposable
     private async Task DisposeSetsAsync()
     {
         _manifest = null;
-        List<Task<IAsyncDisposable>> subscriptions = [.. _subscriptions];
+        List<Task<IAsyncDisposable>> subscriptions = [.. _subscriptions.Values];
         List<ClientEntitySet> sets = [.. _sets.Values];
         _subscriptions.Clear();
         _sets.Clear();

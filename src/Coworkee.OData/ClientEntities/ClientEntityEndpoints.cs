@@ -29,6 +29,8 @@ internal static class ClientEntityEndpoints
     {
         var sync = app.MapCoworkeeApi("/api/v1/client-entities").WithTags("Data").RequireAuthorization();
         sync.MapGet("/", ManifestAsync);
+        // every set that could be mirrored with its settings and their sources, for the Local copies page
+        sync.MapGet("/admin", (Coworkee.Application.Messaging.IDispatcher d, CancellationToken ct) => d.SendAsync(new GetClientEntityAdmin(), ct).ToHttpResult());
         // with a skip the changed ids come in pages (More); without, more than ten pages of them ask for a reset as before
         sync.MapGet("/{entitySet}/changes", (string entitySet, DateTimeOffset? since, int? skip, HttpContext http) =>
             DispatchAsync(entitySet, http, nameof(ChangesAsync), new Feed(since, skip is { } s ? Math.Max(0, s) : null)));
@@ -40,14 +42,14 @@ internal static class ClientEntityEndpoints
     private static async Task<IResult> ManifestAsync(HttpContext http, ICurrentUser user)
     {
         var services = http.RequestServices;
-        var options = services.GetRequiredService<IOptions<ClientEntityOptions>>().Value;
+        var options = services.GetRequiredService<IOptionsMonitor<ClientEntityOptions>>().CurrentValue;
         var maxTop = services.GetRequiredService<IOptions<CoworkeeODataOptions>>().Value.MaxTop;
         var sets = new List<ClientEntitySetInfo>();
         var model = services.GetRequiredService<Microsoft.OData.Edm.IEdmModel>();
         // the copy tracks rows by their Guid Id: sets keyed otherwise stay on the server
         foreach (var entity in services.GetRequiredService<ODataEntityRegistry>().Entities.Where(e => e.HasGuidId))
         {
-            if (options.Resolve(entity.EntityType) is { } settings && await ODataEntityAccess.IsGrantedAsync(services, entity.EntityType, http.RequestAborted))
+            if (options.Resolve(entity.EntityType, entity.EntitySet) is { } settings && await ODataEntityAccess.IsGrantedAsync(services, entity.EntityType, http.RequestAborted))
             {
                 // a [Realtime] entity or a watched set (RealtimeEntityRegistration): the copy updates when the server reports a change
                 var realtime = entity.EntityType.GetCustomAttribute<RealtimeAttribute>(inherit: false) is not null
@@ -56,7 +58,8 @@ internal static class ClientEntityEndpoints
                     : null;
                 sets.Add(new ClientEntitySetInfo(entity.EntitySet, Math.Min(settings.BatchSize, maxTop), settings.MaxRows, settings.RefreshInterval, realtime,
                     string.IsNullOrWhiteSpace(settings.Expand) ? null : settings.Expand, Math.Max(1, settings.ParallelPages),
-                    [.. Transfer.DataExport.Columns(entity.EntityType, model, await ODataEntityAccess.DeniedPropertiesAsync(services, entity.EntityType, http.RequestAborted)).Select(c => c.Name)]));
+                    [.. Transfer.DataExport.Columns(entity.EntityType, model, await ODataEntityAccess.DeniedPropertiesAsync(services, entity.EntityType, http.RequestAborted)).Select(c => c.Name)],
+                    settings.Copy, settings.DefaultMode));
             }
         }
 
@@ -90,7 +93,7 @@ internal static class ClientEntityEndpoints
         var services = http.RequestServices;
         var entity = services.GetRequiredService<ODataEntityRegistry>().Entities
             .FirstOrDefault(e => string.Equals(e.EntitySet, entitySet, StringComparison.OrdinalIgnoreCase));
-        if (entity is not { HasGuidId: true } || services.GetRequiredService<IOptions<ClientEntityOptions>>().Value.Resolve(entity.EntityType) is not { } settings)
+        if (entity is not { HasGuidId: true } || services.GetRequiredService<IOptionsMonitor<ClientEntityOptions>>().CurrentValue.Resolve(entity.EntityType, entity.EntitySet) is not { } settings)
         {
             return Results.NotFound();
         }
@@ -119,7 +122,7 @@ internal static class ClientEntityEndpoints
         }
 
         // touches older than the change log's lifetime are gone: such a copy cannot tell which rows they were
-        var log = services.GetRequiredService<IOptions<ClientEntityOptions>>().Value.ChangeLogLifetime;
+        var log = services.GetRequiredService<IOptionsMonitor<ClientEntityOptions>>().CurrentValue.ChangeLogLifetime;
         if (since < version - log)
         {
             return Results.Ok(new ClientEntityChanges(version, count, [], [], Reset: true, Partition: partition));

@@ -7,6 +7,9 @@ public abstract class ClientEntitySet : IAsyncDisposable
 {
     public abstract string EntitySet { get; }
 
+    /// <summary>What the server's manifest said of the set when the copy started.</summary>
+    internal abstract Contracts.Data.ClientEntitySetInfo Info { get; }
+
     public ClientEntityStatus Status { get; private set; } = ClientEntityStatus.Initial;
 
     /// <summary>The status, the mode or the rows changed.</summary>

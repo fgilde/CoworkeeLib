@@ -144,6 +144,10 @@ Each method returns a new instance. Own dialogs get the same options with `EditD
 
 With `public override bool AdminEditable => true;` the navigation gets *Administration → User interface → Dialog options* (`/admin/dialog-options`, `Settings.Manage`, system organisation only): one tab per part with all options in an object editor, *Preview* to open a dialog with them and *Reset to the app's options*. Only parts that differ from the app are saved, in the global setting `Dialogs.Options` (JSON per part, e.g. `{"Small":{"maxWidth":"Large"}}`); a saved part replaces the app's part as a whole, and a side sheet still opens on the clicked side. Saved values reach open pages at once. Without `AdminEditable` (the default) the page is not listed and the setting is ignored.
 
+### Local copies for administrators
+
+Apps with [client entities](client-entities.md) get *Administration → System → Local copies* (`/admin/local-copies`, page key `local-copies`, `Settings.Manage`, system organisation only): every entity set that could have a copy in the browser, with copy (server only, memory, SQLite), row limit, batch, parallel pages, refresh interval and default mode, each with what decided it, editable per set and reset to the code. See [Change it at runtime](client-entities.md#change-it-at-runtime-the-page-local-copies).
+
 ## Head script
 
 With `AddCoworkeeHeadScript()` on the server, administrators keep a script such as a tag manager in a setting ([Settings](../modules/settings.md#head-script)), and `CoworkeeLayout` puts it into the page; the client needs nothing. Once the app has started (theme and client settings loaded) and when `HeadScript.Enabled` is on and `HeadScript.Value` is not empty, the layout hands the HTML to `coworkee.js` once per page load:

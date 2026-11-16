@@ -48,7 +48,20 @@ internal sealed class FakeServer : HttpMessageHandler, IODataClient
     /// <summary>The fields the server's query_data returns of the set; null: a server that does not name them.</summary>
     public IReadOnlyList<string>? Fields { get; set; }
 
-    public ClientEntitySetInfo Info => new("Gadgets", BatchSize, MaxRows, TimeSpan.Zero, RealtimeTopic, Expand, ParallelPages, Fields);
+    /// <summary>The engine the server asks for (Local copies page); null: the app's own choice.</summary>
+    public ClientEntityCopy? Copy { get; set; }
+
+    public ClientEntityDefaultMode DefaultMode { get; set; }
+
+    /// <summary>The sets the Local copies page lists.</summary>
+    public List<ClientEntityAdminSetDto> AdminSets { get; } = [];
+
+    /// <summary>The sets of the manifest; null: only <see cref="Info"/>.</summary>
+    public List<ClientEntitySetInfo>? ManifestSets { get; set; }
+
+    public int ManifestRequests { get; private set; }
+
+    public ClientEntitySetInfo Info => new("Gadgets", BatchSize, MaxRows, TimeSpan.Zero, RealtimeTopic, Expand, ParallelPages, Fields, Copy, DefaultMode);
 
     public ClientEntitySet<Gadget> Set(IClientEntityStorage? storage = null, string partition = "p1", IClientEntityEngine? engine = null) =>
         new(Info, "Brand", partition, this, Api, storage ?? new NoClientEntityStorage(), NullLogger.Instance, engine);
@@ -148,6 +161,11 @@ internal sealed class FakeServer : HttpMessageHandler, IODataClient
             IdsRequests++;
         }
 
+        if (path == "/api/v1/client-entities")
+        {
+            ManifestRequests++;
+        }
+
         if (path.EndsWith("/snapshot", StringComparison.Ordinal))
         {
             SnapshotRequests++;
@@ -165,7 +183,8 @@ internal sealed class FakeServer : HttpMessageHandler, IODataClient
 
         object body = path switch
         {
-            "/api/v1/client-entities" => new ClientEntityManifest(Partition, [Info], Owner),
+            "/api/v1/client-entities" => new ClientEntityManifest(Partition, ManifestSets ?? [Info], Owner),
+            "/api/v1/client-entities/admin" => AdminSets,
             _ when path.EndsWith("/ids", StringComparison.Ordinal) => Rows.Select(r => r.Id).ToArray(),
             _ when query.Contains("skip=", StringComparison.Ordinal) && !query.Contains("skip=0", StringComparison.Ordinal) => MoreChanges.Dequeue() with { Partition = Partition },
             _ when query.Contains("since", StringComparison.Ordinal) => (NextChanges ?? new ClientEntityChanges(Now, Rows.Count, [], [], false)) with { Partition = Partition },

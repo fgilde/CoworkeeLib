@@ -308,7 +308,8 @@ public sealed class ClientEntitySetTests
             await Task.Delay(50, Ct);
         }
 
-        realtime.Subscribed.ShouldBe(["type:Gadget"]);
+        // the settings topic: an administrator changing the Local copies page
+        realtime.Subscribed.ShouldBe([Contracts.Data.ClientEntityTopics.Changed, "type:Gadget"], ignoreOrder: true);
         set.Items.Count.ShouldBe(4);
     }
 }

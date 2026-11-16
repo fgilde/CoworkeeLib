@@ -9,6 +9,10 @@ internal sealed class ClientEntityApi(HttpClient http) : ApiClientBase(http)
 
     public Task<ClientEntityManifest> ManifestAsync(CancellationToken cancellationToken) => GetAsync<ClientEntityManifest>(Root, cancellationToken);
 
+    /// <summary>Every set that could be mirrored with its settings and their sources (Local copies page).</summary>
+    public async Task<IReadOnlyList<ClientEntityAdminSetDto>> AdminAsync(CancellationToken cancellationToken) =>
+        await GetAsync<ClientEntityAdminSetDto[]>($"{Root}/admin", cancellationToken);
+
     /// <summary>With a <paramref name="skip"/> the changed ids come in pages (<see cref="ClientEntityChanges.More"/>) instead of a reset.</summary>
     public Task<ClientEntityChanges> ChangesAsync(string entitySet, DateTimeOffset? since, int? skip, CancellationToken cancellationToken)
     {

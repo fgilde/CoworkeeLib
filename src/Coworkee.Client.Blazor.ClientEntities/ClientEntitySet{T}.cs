@@ -74,7 +74,17 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         _api = api;
         _storage = storage;
         _logger = logger;
-        _store = engine?.Open<T>(StorageKey);
+        // the server may name the engine (Local copies page); without, the app's engine decides as before
+        _store = info.Copy switch
+        {
+            ClientEntityCopy.Memory => null,
+            ClientEntityCopy.Sqlite => engine?.OpenRequested<T>(StorageKey),
+            _ => engine?.Open<T>(StorageKey),
+        };
+        if (info.Copy is ClientEntityCopy.Sqlite && _store is null)
+        {
+            logger.LogWarning("{EntitySet} should be kept in SQLite, which this app lacks (AddCoworkeeClientEntitiesSqlite, native build); it stays in memory", info.EntitySet);
+        }
     }
 
     internal static bool CanMirror => IdOf is not null;
@@ -83,6 +93,8 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     internal static Func<Task> Pause { get; set; } = () => Task.Delay(1);
 
     public override string EntitySet => _info.EntitySet;
+
+    internal override ClientEntitySetInfo Info => _info;
 
     /// <summary>The navigation properties each row carries, as in $expand.</summary>
     public string? Expand { get; }

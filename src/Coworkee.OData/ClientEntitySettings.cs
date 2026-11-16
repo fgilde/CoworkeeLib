@@ -1,3 +1,5 @@
+using Coworkee.Contracts.Data;
+
 namespace Coworkee.OData;
 
 public sealed record ClientEntitySettings
@@ -34,4 +36,13 @@ public sealed record ClientEntitySettings
 
     /// <summary>How far before the last refresh each refresh looks again, for commits that land after their timestamp; raise it for tables another system writes with its own clock.</summary>
     public TimeSpan Overlap { get; set; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>
+    /// Memory or Sqlite asks clients for that engine (SQLite falls back to memory in an app without it); null (the default) leaves the choice to the client
+    /// app as before. Off is the same as <see cref="Enabled"/> false.
+    /// </summary>
+    public ClientEntityCopy? Copy { get; set; }
+
+    /// <summary>Where queries run for users who did not choose themselves (the switch in the table toolbar).</summary>
+    public ClientEntityDefaultMode DefaultMode { get; set; }
 }

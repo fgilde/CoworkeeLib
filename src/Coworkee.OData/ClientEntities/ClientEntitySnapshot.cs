@@ -23,7 +23,7 @@ internal static class ClientEntitySnapshot
         var services = http.RequestServices;
         var entity = services.GetRequiredService<ODataEntityRegistry>().Entities
             .FirstOrDefault(e => string.Equals(e.EntitySet, entitySet, StringComparison.OrdinalIgnoreCase));
-        if (entity is not { HasGuidId: true } || services.GetRequiredService<IOptions<ClientEntityOptions>>().Value.Resolve(entity.EntityType) is not { } settings)
+        if (entity is not { HasGuidId: true } || services.GetRequiredService<IOptionsMonitor<ClientEntityOptions>>().CurrentValue.Resolve(entity.EntityType, entity.EntitySet) is not { } settings)
         {
             return Results.NotFound();
         }

@@ -23,8 +23,15 @@ internal sealed class SqliteClientEntityEngine(IClientEntityStorage storage, IOp
 {
     private static bool? _available;
 
-    public IClientEntityStore<T>? Open<T>(string key) =>
-        typeof(T).IsClass && typeof(T).GetProperty("Id")?.PropertyType == typeof(Guid) && (options.Value.AllRowTypes || RowShape.Of(typeof(T)) is null) && Available(logger)
+    public IClientEntityStore<T>? Open<T>(string key) => Store<T>(key, options.Value.AllRowTypes || RowShape.Of(typeof(T)) is null);
+
+    // the server asked for SQLite: every row type
+    public IClientEntityStore<T>? OpenRequested<T>(string key) => Store<T>(key, true);
+
+    public bool IsAvailable => Available(logger);
+
+    private IClientEntityStore<T>? Store<T>(string key, bool takes) =>
+        typeof(T).IsClass && typeof(T).GetProperty("Id")?.PropertyType == typeof(Guid) && takes && Available(logger)
             ? (IClientEntityStore<T>)Activator.CreateInstance(typeof(SqliteClientEntityStore<>).MakeGenericType(typeof(T)), key, storage, logger, null)!
             : null;
 

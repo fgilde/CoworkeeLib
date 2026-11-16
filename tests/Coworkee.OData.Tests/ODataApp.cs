@@ -247,8 +247,12 @@ internal sealed class GadgetModelContributor : IModelContributor
 
 internal sealed class GadgetPermissions : Coworkee.Application.Authorization.IPermissionDefinitionContributor
 {
-    public void Define(Coworkee.Application.Authorization.PermissionDefinitionContext context) =>
+    public void Define(Coworkee.Application.Authorization.PermissionDefinitionContext context)
+    {
         context.Group("Gadgets", "Gadgets").Add(ODataApp.ViewGadgets, "View gadgets").Add(ODataApp.SeeCategories, "See categories").Add(ODataApp.ViewBins, "View bins");
+        // the Local copies list asks for it; the Settings module, which defines it in apps, is not part of these tests
+        context.Group(Contracts.Settings.SettingsPermissions.GroupName, "Settings").Add(Contracts.Settings.SettingsPermissions.Manage, "Manage settings");
+    }
 }
 
 [DependsOn(typeof(CoworkeeODataModule), typeof(CoworkeeIdentityModule))]
