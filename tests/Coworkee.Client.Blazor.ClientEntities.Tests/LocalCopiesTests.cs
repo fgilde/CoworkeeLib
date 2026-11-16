@@ -115,10 +115,13 @@ public sealed class LocalCopiesTests : BunitContext
     {
         var page = Render<LocalCopies>();
         var editing = page.WaitForElement("[data-testid='edit-Gadgets']").ClickAsync(new());
-        _dialogs.WaitForElement("form");
-        var labels = _dialogs.FindAll("label").Select(l => l.TextContent.Trim()).ToList();
-        labels.ShouldContain("Row limit");
-        labels.ShouldContain("Refresh (seconds)");
+        // the object edit form renders its fields after its own setup: change and submit only once they are there (CI saw a half set-up form)
+        _dialogs.WaitForAssertion(() =>
+        {
+            var labels = _dialogs.FindAll("label").Select(l => l.TextContent.Trim()).ToList();
+            labels.ShouldContain("Row limit");
+            labels.ShouldContain("Refresh (seconds)");
+        });
 
         var rows = _dialogs.FindAll("input").First(i => i.Id == _dialogs.FindAll("label").First(l => l.TextContent.Trim() == "Row limit").GetAttribute("for"));
         await rows.ChangeAsync(new Microsoft.AspNetCore.Components.ChangeEventArgs { Value = "777" });
