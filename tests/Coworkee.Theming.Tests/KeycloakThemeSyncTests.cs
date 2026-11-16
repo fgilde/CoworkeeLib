@@ -34,7 +34,10 @@ public sealed class KeycloakThemeSyncTests(ThemeApp app) : IAsyncLifetime
 
         (await Admin.PostAsync($"/api/v1/themes/{theme.Id}/default", null, Ct)).EnsureSuccessStatusCode();
 
-        await EventuallyAsync(() => Read("resources/css/coworkee.css").Contains("--cw-primary:#123456", StringComparison.Ordinal));
+        // the sync writes in the background, the colors can land before the logo: wait for all of it
+        await EventuallyAsync(() => Read("resources/css/coworkee.css") is var css
+            && css.Contains("--cw-primary:#123456", StringComparison.Ordinal) && css.Contains("url(\"data:image/svg+xml;base64,", StringComparison.Ordinal)
+            && Read("messages/messages_en.properties").Contains("Acme App", StringComparison.Ordinal));
         Read("resources/css/coworkee.css").ShouldContain("url(\"data:image/svg+xml;base64,");
         Read("messages/messages_en.properties").ShouldContain("Acme App");
     }
