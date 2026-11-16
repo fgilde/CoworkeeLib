@@ -90,6 +90,22 @@ public sealed class OptionTests
     }
 
     [Fact]
+    public void Virus_scan_is_a_card_of_the_infrastructure_that_adds_the_clamav_container()
+    {
+        using var folder = new TempFolder();
+        var main = Studio.Create(folder);
+
+        main.Architecture.InfrastructureGroup.Options.Select(o => o.Id).ShouldContain("antivirus");
+        OptionLooks.Icon("antivirus").ShouldBe("Icon.Shield");
+        main.Architecture.Summary.Containers.ShouldNotContain("ClamAV");
+
+        main.Option("antivirus").Value = "true";
+
+        main.Architecture.Summary.Containers.ShouldContain("ClamAV");
+        main.ToSpec().Options["antivirus"]!.GetValue<bool>().ShouldBeTrue();
+    }
+
+    [Fact]
     public void Infrastructure_choices_explain_what_they_rule_out()
     {
         using var folder = new TempFolder();
