@@ -16,7 +16,7 @@ Für einen Download-Link in einer Mail signiert `BlobLinks` einen Link mit Ablau
 
 ## Die Seite Dateien
 
-Das Files-Modul setzt das Laufwerk einer Organisation obendrauf: Ordnerbaum, Kacheln oder Details, Hochladen und Verschieben per Drag and Drop, ein Doppelklick öffnet die Vorschau in einem Seitenblatt. Rollen lassen sich pro Ordner berechtigen, die Freigabe gilt für alles darunter. Uploads fließen direkt in die Ablage, standardmäßig bis 2 GB pro Datei. Eine hochgeladene HTML- oder SVG-Datei kannst du ansehen, Skripte führt sie aber nicht aus.
+Das Files-Modul setzt das Laufwerk einer Organisation obendrauf: Ordnerbaum, Kacheln oder Details, Hochladen und Verschieben per Drag and Drop, ein Doppelklick öffnet die Vorschau in einem Seitenblatt. Rollen lassen sich pro Ordner berechtigen, die Freigabe gilt für alles darunter. Uploads fließen direkt in die Ablage, standardmäßig bis 2 GB pro Datei. Eine hochgeladene HTML- oder SVG-Datei kannst du ansehen, Skripte führt sie aber nicht aus. Die Seite ist live: Eine Datei oder ein Ordner, den jemand anderes hochlädt, umbenennt, verschiebt oder löscht, erscheint nach einem Moment, und der Ordner, in dem du bist, bleibt offen. Ein abgelehnter Upload nennt den Grund, etwa den des Virenscanners.
 
 In Formularen wählst du Dateien mit `CoworkeeFilePicker`:
 

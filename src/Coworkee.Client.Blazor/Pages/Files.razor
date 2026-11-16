@@ -21,7 +21,9 @@
     <MudButton Variant="Variant.Text" Size="Size.Small" Disabled="Selected is null" StartIcon="@Icons.Material.Outlined.Timer"
                OnClick="CopyTemporaryLinkAsync" data-testid="file-copy-temporary-link">@L["Copy temporary link"]</MudButton>
 </MudStack>
-<MudExFileManager Manager="_manager" Panels="MudExFileManagerPanels.Tree | MudExFileManagerPanels.Files | MudExFileManagerPanels.Meta" Height="@("75vh")"
+<RealtimeSubscription Topic="@Coworkee.Contracts.Realtime.RealtimeTopics.Type("StoredFile")" OnEvent="_ => LiveChangedAsync()" />
+<RealtimeSubscription Topic="@Coworkee.Contracts.Realtime.RealtimeTopics.Type("FileFolder")" OnEvent="_ => LiveChangedAsync()" />
+<MudExFileManager @ref="_files" Manager="_manager" Panels="MudExFileManagerPanels.Tree | MudExFileManagerPanels.Files | MudExFileManagerPanels.Meta" Height="@("75vh")"
                   CurrentDirectoryChanged="Enter" OnFileOpened="PreviewAsync" SelectedNodesChanged="Select" data-testid="files">
     <FileItemTemplate Context="node">
         <span class="d-inline-flex align-center gap-1" style="min-width:0">

@@ -109,6 +109,50 @@ public sealed class FilesTests : ClientTestBase
         manager.Capabilities.HasFlag(MudExFileManagerCapabilities.Delete).ShouldBeFalse();
     }
 
+    [Fact]
+    public async Task Files_page_follows_changes_of_other_sessions_and_stays_in_the_folder()
+    {
+        AddAuthorization().SetAuthorized("Ada").SetPolicies(Security.PermissionPolicy.For(FilePermissions.View));
+        _files.GetContentAsync(_docs.Id, Arg.Any<CancellationToken>()).Returns(new FolderContentDto([], [], true, false));
+        var page = Render<Pages.Files>();
+        page.WaitForAssertion(() => page.Markup.ShouldContain("report.pdf"));
+        var drive = page.FindComponent<MudExFileManager>();
+        await page.InvokeAsync(() => drive.Instance.NavigateToAsync(drive.Instance.RootItems.Single(n => n.Name == "Docs")));
+
+        var added = _report with { Id = Guid.CreateVersion7(), FolderId = _docs.Id, Name = "added-elsewhere.pdf" };
+        _files.GetContentAsync(_docs.Id, Arg.Any<CancellationToken>()).Returns(new FolderContentDto([], [added], true, false));
+        var realtime = Services.GetRequiredService<FakeRealtimeConnection>();
+        realtime.Invocations.ShouldContain(("Subscribe", "type:StoredFile"));
+        realtime.Invocations.ShouldContain(("Subscribe", "type:FileFolder"));
+        await page.InvokeAsync(() => realtime.Push("type:StoredFile"));
+
+        page.WaitForAssertion(() => page.Markup.ShouldContain("added-elsewhere.pdf"));
+        drive.Instance.CurrentDirectory!.Name.ShouldBe("Docs");
+        ((FilesStructureManager)drive.Instance.Manager).CurrentFolderId.ShouldBe(_docs.Id);
+    }
+
+    [Fact]
+    public async Task A_refused_upload_shows_the_rule_not_only_the_code()
+    {
+        AddAuthorization().SetAuthorized("Ada").SetPolicies(Security.PermissionPolicy.For(FilePermissions.View));
+        const string reason = "Could not complete the security scan on the uploaded file.";
+        _files.UploadAsync(null, "clip.mp4", "video/mp4", Arg.Any<Stream>(), Arg.Any<CancellationToken>())
+            .Returns<StoredFileDto>(_ => throw new Api.ApiException(400, "validation", new Dictionary<string, string[]> { ["content"] = [reason] }, reason));
+        var clip = Substitute.For<Microsoft.AspNetCore.Components.Forms.IBrowserFile>();
+        clip.Name.Returns("clip.mp4");
+        clip.ContentType.Returns("video/mp4");
+        clip.Size.Returns(12L * 1024 * 1024);
+        clip.OpenReadStream(Arg.Any<long>(), Arg.Any<CancellationToken>()).Returns(_ => new MemoryStream(new byte[16]));
+        var page = Render<Pages.Files>();
+        page.WaitForAssertion(() => page.Markup.ShouldContain("report.pdf"));
+        var drive = page.FindComponent<MudExFileManager>();
+
+        await page.InvokeAsync(() => drive.Instance.UploadFilesAsync(null!, [clip]));
+
+        page.WaitForAssertion(() => page.Markup.ShouldContain(reason));
+        page.Markup.ShouldNotContain("ApiException: validation");
+    }
+
     [Theory]
     [InlineData("image/*", "a.png", "image/png", true)]
     [InlineData("image/*", "a.pdf", "application/pdf", false)]

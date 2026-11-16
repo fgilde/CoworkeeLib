@@ -6,6 +6,8 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixed
 
+- `ApiException.Message` is the readable reason: the validation messages, else the problem's title, else its code, else the status. Components that show only the message named the code before: a refused upload on the page **Files** read *ApiException: validation*, now *ApiException: Could not complete the security scan on the uploaded file.* (or the size or type rule). `SnackbarApiExtensions.Describe` returns the same message. Code that compared `exception.Message` with a code compares `exception.Code` instead. See [Calling your API](../ui/client.md#calling-your-api).
+- The page **Files** is live: uploads, new folders, renames, moves and deletions of other sessions (`type:StoredFile`, `type:FileFolder`) reload the drive once per burst, and the folder the user is in stays open. See [Files](../features/files.md#the-files-page).
 - A burst of realtime changes (one event per changed row, e.g. a sync job updating 40 shipments) no longer renders an open `CoworkeeDataTable` twice per event: the events only start the settle delay and the table renders once after its one reload. In CoShipee that took 1.5 to 3.4 seconds of a blocked browser every minute on the shipments page; requests and clicks during it waited.
 
 ## 0.0.1.91 (2026-11-15)

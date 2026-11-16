@@ -6,6 +6,8 @@
 
 ### Behoben
 
+- `ApiException.Message` ist der lesbare Grund: die Validierungsmeldungen, sonst der Titel des Problems, sonst sein Code, sonst der Status. Komponenten, die nur die Meldung zeigen, nannten bisher den Code: Ein abgelehnter Upload auf der Seite **Dateien** hieß *ApiException: validation*, jetzt *ApiException: Could not complete the security scan on the uploaded file.* (oder die Größen- oder Typregel). `SnackbarApiExtensions.Describe` liefert dieselbe Meldung. Code, der `exception.Message` mit einem Code verglich, vergleicht `exception.Code`. Siehe [Die eigene API aufrufen](../ui/client.md#die-eigene-api-aufrufen).
+- Die Seite **Dateien** ist live: Uploads, neue Ordner, Umbenennungen, Verschiebungen und Löschungen anderer Sitzungen (`type:StoredFile`, `type:FileFolder`) laden das Laufwerk einmal je Schwall neu, und der Ordner, in dem der Benutzer ist, bleibt offen. Siehe [Dateien](../features/files.md#die-seite-dateien).
 - Ein Schwall von Realtime-Änderungen (ein Ereignis je geänderter Zeile, etwa ein Sync-Job, der 40 Sendungen aktualisiert) rendert eine offene `CoworkeeDataTable` nicht mehr zweimal je Ereignis: die Ereignisse starten nur die Wartezeit, die Tabelle rendert einmal nach ihrem einen Neuladen. In CoShipee kostete das auf der Sendungsseite jede Minute 1,5 bis 3,4 Sekunden blockierten Browser; Anfragen und Klicks warteten so lange.
 
 ## 0.0.1.91 (2026-11-15)

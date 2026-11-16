@@ -178,6 +178,8 @@ Bodies gehen mit `CoworkeeJson.Web` hinaus und kommen damit zurück: Enums werde
 
 `Snackbar.RunAsync(() => api.SaveAsync(...), "Saved")` führt einen Aufruf aus und zeigt Erfolg oder die Validierungsmeldungen eines Fehlers.
 
+Die Meldung einer `ApiException` ist so, wie sie ist, lesbar: die Validierungsmeldungen (`errors`), sonst der `title` des Problems, sonst sein `code`, sonst der Status (*Request failed with status 413.*). Eine Komponente, die nur `exception.Message` zeigt, wie die Fehlerzeile von `MudExFileManager`, nennt die Regel, die den Aufruf abgelehnt hat, etwa *The file is larger than 10 MB.* statt *validation*. `Code`, `Errors`, `Title` und `Status` bleiben für Code, der danach entscheidet.
+
 ## Aktueller Benutzer
 
 `ClientUser.From(user)` liest den angemeldeten Benutzer aus einem `ClaimsPrincipal` (`IsAuthenticated`, `UserId`, `TenantId`, `Email`, `DisplayName`); mit dem kaskadierenden Authentifizierungszustand braucht eine Seite nicht mehr. Dienste und Seiten ohne ihn injizieren das scoped `CurrentUserInfo` (registriert von `AddCoworkeeClient`):

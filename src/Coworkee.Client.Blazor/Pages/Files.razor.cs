@@ -6,14 +6,20 @@ using Coworkee.Contracts.Files;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using MudBlazor;
+using MudBlazor.Extensions.Components;
 using MudBlazor.Extensions.Core.FileManager;
+using Nextended.Core.Types;
 
 namespace Coworkee.Client.Blazor.Pages;
 
 public partial class Files
 {
+    private static readonly TimeSpan LiveSettle = TimeSpan.FromMilliseconds(250);
     private FilesStructureManager _manager = null!;
+    private MudExFileManager _files = null!;
+    private MudExFileStructureNode? _directory;
     private MudExFileStructureNode? _node;
+    private CancellationTokenSource? _live;
 
     [Inject] private IFilesApi Api { get; set; } = null!;
 
@@ -50,7 +56,52 @@ public partial class Files
         }
     }
 
-    private void Enter(MudExFileStructureNode? directory) => _manager.CurrentFolderId = FilesStructureManager.IdOf(directory);
+    private void Enter(MudExFileStructureNode? directory)
+    {
+        _directory = directory;
+        _manager.CurrentFolderId = FilesStructureManager.IdOf(directory);
+    }
+
+    /// <summary>
+    /// A file or folder changed in any session: the drive reloads once per burst (a drop of twenty files sends twenty events) and opens the folder
+    /// the user was in again, as far as it still exists.
+    /// </summary>
+    private async Task LiveChangedAsync()
+    {
+        _live?.Cancel();
+        var live = _live = new CancellationTokenSource();
+        try
+        {
+            await Task.Delay(LiveSettle, live.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        var path = _directory?.Path().Select(n => n.FullPath).ToList() ?? [];
+        await _files.RefreshAsync();
+        Enter(null);
+        _node = null;
+        MudExFileStructureNode? folder = null;
+        IEnumerable<MudExFileStructureNode> level = _files.RootItems;
+        foreach (var id in path)
+        {
+            if (level.FirstOrDefault(n => n.IsDirectory && n.FullPath == id) is not { } next)
+            {
+                break;
+            }
+
+            folder = next;
+            await folder.LoadChildren();
+            level = folder.GetLoadedChildren();
+        }
+
+        if (folder is not null)
+        {
+            await _files.NavigateToAsync(folder);
+        }
+    }
 
     private void Select(IReadOnlyCollection<MudExFileStructureNode> nodes) => _node = nodes.Count == 1 && nodes.First() is { IsDirectory: false } node ? node : null;
 

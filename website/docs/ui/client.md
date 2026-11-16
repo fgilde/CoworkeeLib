@@ -178,6 +178,8 @@ Bodies go out and come back with `CoworkeeJson.Web`: enums are written by name a
 
 `Snackbar.RunAsync(() => api.SaveAsync(...), "Saved")` runs a call and shows success or the validation messages of a failure.
 
+The message of an `ApiException` is readable as it is: the validation messages (`errors`), else the problem's `title`, else its `code`, else the status (*Request failed with status 413.*). A component that shows only `exception.Message`, like the error line of `MudExFileManager`, names the rule that refused the call, for example *The file is larger than 10 MB.* instead of *validation*. `Code`, `Errors`, `Title` and `Status` stay for code that decides by them.
+
 ## Current user
 
 `ClientUser.From(user)` reads the signed-in user from a `ClaimsPrincipal` (`IsAuthenticated`, `UserId`, `TenantId`, `Email`, `DisplayName`); with the cascading authentication state that is all a page needs. Services and pages without it inject the scoped `CurrentUserInfo` (registered by `AddCoworkeeClient`):

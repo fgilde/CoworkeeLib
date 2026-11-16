@@ -24,6 +24,6 @@ public static class SnackbarApiExtensions
         }
     }
 
-    public static string Describe(ApiException exception) =>
-        exception.Errors is { Count: > 0 } errors ? string.Join(" ", errors.SelectMany(e => e.Value)) : exception.Title ?? exception.Message;
+    /// <summary>The validation messages, else the problem's title, else its code (<see cref="ApiException"/>'s message).</summary>
+    public static string Describe(ApiException exception) => exception.Message;
 }
