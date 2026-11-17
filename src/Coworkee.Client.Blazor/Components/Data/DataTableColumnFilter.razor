@@ -2,6 +2,19 @@
 @using MudBlazor.Extensions.Components
 
 <div class="cw-column-filter" data-testid="column-filter" data-column="@Column.PropertyName">
+    @if (OnSort is not null)
+    {
+        <MudText Typo="Typo.subtitle2" Class="mb-1">@L["Sort"]</MudText>
+        <div data-testid="column-sort">
+            <div data-sort="asc">
+                <MudCheckBox T="bool" Value="@(_sort == false)" ValueChanged="on => SortAsync(on ? false : null)" Size="Size.Small" Dense="true" Label="@L["Ascending"]" />
+            </div>
+            <div data-sort="desc">
+                <MudCheckBox T="bool" Value="@(_sort == true)" ValueChanged="on => SortAsync(on ? true : null)" Size="Size.Small" Dense="true" Label="@L["Descending"]" />
+            </div>
+        </div>
+        <MudDivider Class="my-2" />
+    }
     @if (Facet is { ValueKind: FacetValueKind.Date, Min: not null, Max: not null })
     {
         <MudText Typo="Typo.subtitle2" Class="mb-1">@L[Facet.Label]</MudText>

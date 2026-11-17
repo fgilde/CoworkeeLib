@@ -2311,5 +2311,8 @@
   "{0} s": "{0} 秒",
   "{0} min": "{0} 分钟",
   "{0} h": "{0} 小时",
-  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "浏览器保留哪些数据的副本（关闭、内存或 SQLite），以及每个实体集的行数上限和同步。"
+  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "浏览器保留哪些数据的副本（关闭、内存或 SQLite），以及每个实体集的行数上限和同步。",
+  "Sort": "排序",
+  "Ascending": "升序",
+  "Load more": "加载更多"
 }

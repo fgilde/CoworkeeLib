@@ -2311,5 +2311,8 @@
   "{0} s": "{0} s",
   "{0} min": "{0} min",
   "{0} h": "{0} h",
-  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Vilka data webbläsarna håller en kopia av (av, minne eller SQLite), med radgränser och synkronisering, per entitetsmängd."
+  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Vilka data webbläsarna håller en kopia av (av, minne eller SQLite), med radgränser och synkronisering, per entitetsmängd.",
+  "Sort": "Sortering",
+  "Ascending": "Stigande",
+  "Load more": "Läs in fler"
 }

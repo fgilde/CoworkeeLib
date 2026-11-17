@@ -2311,5 +2311,8 @@
   "{0} s": "{0} s",
   "{0} min": "{0} min",
   "{0} h": "{0} h",
-  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Která data si prohlížeče uchovávají jako kopii (vypnuto, paměť nebo SQLite), s limity řádků a synchronizací, pro každou sadu entit."
+  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Která data si prohlížeče uchovávají jako kopii (vypnuto, paměť nebo SQLite), s limity řádků a synchronizací, pro každou sadu entit.",
+  "Sort": "Řazení",
+  "Ascending": "Vzestupně",
+  "Load more": "Načíst další"
 }

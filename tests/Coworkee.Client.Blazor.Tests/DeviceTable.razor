@@ -2,7 +2,7 @@
 @using MudBlazor
 @using static Coworkee.Client.Blazor.Tests.DataTableColumnFilterTests
 
-<CoworkeeDataTable T="Device" EntitySet="Devices" ColumnFilters="ColumnFilters">
+<CoworkeeDataTable T="Device" EntitySet="Devices" ColumnFilters="ColumnFilters" ColumnFilterSort="ColumnFilterSort">
     <Columns>
         <PropertyColumn Property="d => d.Name" Title="Name" Filterable="NameFilterable" />
         <PropertyColumn Property="d => d.Category" Title="Category" />
@@ -19,4 +19,6 @@
     [Parameter] public bool? ColumnFilters { get; set; }
 
     [Parameter] public bool? NameFilterable { get; set; }
+
+    [Parameter] public bool ColumnFilterSort { get; set; }
 }

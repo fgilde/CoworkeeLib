@@ -52,9 +52,14 @@
     .cw-table-total { padding: 10px 16px; text-align: right; color: var(--mud-palette-text-secondary); font-size: .875rem; }
     .cw-table-hint { display: block; padding: 8px 16px 0; color: var(--mud-palette-text-secondary); }
     .cw-advanced-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .cw-table-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--cw-card-width, 320px), 1fr)); gap: 16px; }
+    .cw-table-cards-end { display: flex; justify-content: center; min-height: 1px; padding: 8px; }
+    .cw-table-hidden { display: none; }
 </style>
 <FacetStyles />
 
+@if (Toolbar)
+{
 <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-1">
     @if (Searched.Count > 0)
     {
@@ -100,7 +105,11 @@
                 <DataTableGroupMenu T="T" Grid="_grid" GroupingChanged="GroupingChangedAsync" />
             </MudTooltip>
         }
-        @if (ColumnChooser)
+        @if (ColumnChooser && ColumnChooserContent is not null)
+        {
+            @ColumnChooserContent(this)
+        }
+        else if (ColumnChooser)
         {
             <MudTooltip Text="@L["Columns"]">
                 <DataTableColumnChooser T="T" Grid="_grid" Changed="StateHasChanged" />
@@ -114,7 +123,11 @@
                            aria-label="@(Dense ? L["Comfortable rows"] : L["Compact rows"])" OnClick="() => _dense = !Dense" data-testid="density" />
         </MudTooltip>
     }
-    @if (SavedViews)
+    @if (SavedViews && ViewMenuContent is not null)
+    {
+        @ViewMenuContent(this)
+    }
+    else if (SavedViews)
     {
         <DataTableViewMenu Table="@EntitySet" Current="() => CurrentState" Link="ShareLink" OnApply="ApplyStateAsync" OnReset="() => ApplyStateAsync(DataTableState.Empty)"
                            @bind-Active="_activeView" />
@@ -168,7 +181,7 @@
         </PermissionGate>
     }
 </MudStack>
-@if (ShowAdvanced && _advancedOpen)
+if (ShowAdvanced && _advancedOpen)
 {
     <div class="cw-advanced" data-testid="advanced-panel">
         <div class="cw-advanced-head">
@@ -183,6 +196,7 @@
         <QueryBuilder Fields="Fields" Value="_advanced" ValueChanged="AdvancedChangedAsync" Localize="L10n" Dense="Dense" />
     </div>
 }
+}
 <RealtimeSubscription Topic="@LiveTopic" OnEvent="LiveEvent" />
 <div class="@(PanelLayout ? "cw-table-layout cw-table-paneled" : "cw-table-layout")">
 @if (PanelLayout)
@@ -192,7 +206,14 @@
     </aside>
 }
 <div class="cw-table-main" @ref="_main">
-<FacetChips Selection="_selection" Filters="FilterChips" OnRemove="RemoveFilterAsync" OnClear="ClearFilters" />
+@if (Toolbar)
+{
+    <FacetChips Selection="_selection" Filters="FilterChips" OnRemove="RemoveFilterAsync" OnClear="ClearFilters" />
+}
+@if (CardsShown)
+{
+    @Cards
+}
 <DataTableRowsGate Hold="_holdRows">
 <MudDataGrid @ref="_grid" T="T" ServerData="PagedLoader" VirtualizeServerData="EndlessLoader" Virtualize="Endless" Height="@(Endless ? ScrollHeight : null)"
              FixedHeader="Endless" ItemSize="RowHeight" OverscanCount="10" MultiSelection="MultiSelection" SelectedItemsChanged="SelectionChangedAsync" RowsPerPage="PageSize"
@@ -244,6 +265,26 @@
 </div>
 
 @code {
+    // the rows as cards (ItemTemplate); more come when the end of the cards shows
+    private RenderFragment Cards => @<text>
+    <div class="cw-table-cards" data-testid="table-cards">
+        @foreach (var item in _cards)
+        {
+            <div class="@(RowOpens ? "cw-table-card cw-clickable" : "cw-table-card")" @onclick="() => CardClickedAsync(item)" data-testid="table-card">@ItemTemplate!(item)</div>
+        }
+    </div>
+    <div class="cw-table-cards-end" @ref="_cardsEnd">
+        @if (_cardsLoaded && _cards.Count == 0)
+        {
+            <MudText Class="mud-text-secondary pa-4">@L[NoRecordsText]</MudText>
+        }
+        else if (_cards.Count < _count)
+        {
+            <MudButton Variant="Variant.Text" OnClick="MoreCardsAsync" data-testid="cards-more">@L["Load more"]</MudButton>
+        }
+    </div>
+    </text>;
+
     /// <summary>The columns of the rows, also of the rows of open groups (DataTableGroupRows).</summary>
     internal RenderFragment GridColumns => @<text>
     @if (ChildRowContent is not null)

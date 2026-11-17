@@ -48,6 +48,8 @@
 | `QueryFields` | die Felder des Query-Builders; standardmäßig die Eigenschaftsspalten und die Referenz-Facetten |
 | `SavedViews`, `ColumnChooser`, `UrlState`, `StateKey` | das Ansichtenmenü, das Spaltenmenü, der Zustand in der Adressleiste (alle `true`) und der Name seines Parameters (standardmäßig der Set-Name in Kleinbuchstaben), siehe [Spalten, Gruppierung und Ansichten](#spalten-gruppierung-und-ansichten) |
 | `RowHref`, `OnRowClick` | eine Zeile per Klick öffnen, siehe [Zeilen-Links](#zeilen-links) |
+| `RowActions` | `false` lässt die Aktionsspalte weg (Öffnen, Bearbeiten, Löschen, Verlauf); Zeilen öffnen weiter per Klick, siehe [Zeilen-Links](#zeilen-links) |
+| `Toolbar`, `ColumnChooserContent`, `ViewMenuContent`, `SearchText`, `Sort`, `FacetsLoaded`, `TotalCountChanged`, `ColumnFilterSort`, `ItemTemplate`, `View` | für einen eigenen Listen-Look der Seite, siehe [Ein eigener Listen-Look](#ein-eigener-listen-look) |
 | `ChildRowContent` | Inhalt unter einer Zeile, den ein Umschalter davor öffnet |
 | `RealtimeTopic` | das Thema, das die Tabelle neu lädt; standardmäßig `type:{T ohne Dto}` (`BrandDto` folgt `Brand`), `""` schaltet es ab; Tabellen über einer `DataSource` bleiben still |
 | `SelectedItemsChanged`, `OnLoaded` | die Auswahl hat sich geändert; eine Seite Zeilen ist angekommen |
@@ -357,7 +359,7 @@ Gruppiert scrollt jede offene Gruppe für sich (siehe [Gruppen des ganzen Ergebn
 
 ## Zeilen-Links
 
-`RowHref` lässt jede Zeile auf eine Adresse führen, `OnRowClick` führt stattdessen Code aus. Ein Klick auf die Zeile öffnet sie, Klicks auf ihre Buttons und ihre Checkbox nicht. Jede solche Zeile bekommt in der Aktionsspalte einen Öffnen-Button, den Tastaturnutzer mit Tab und Enter erreichen; mit `RowHref` ist er ein echter Link (mittlere Maustaste, in neuem Tab öffnen).
+`RowHref` lässt jede Zeile auf eine Adresse führen, `OnRowClick` führt stattdessen Code aus. Ein Klick auf die Zeile öffnet sie, Klicks auf ihre Buttons und ihre Checkbox nicht. Jede solche Zeile bekommt in der Aktionsspalte einen Öffnen-Button, den Tastaturnutzer mit Tab und Enter erreichen; mit `RowHref` ist er ein echter Link (mittlere Maustaste, in neuem Tab öffnen). `RowActions="false"` lässt die Aktionsspalte weg; der Klick auf die Zeile bleibt.
 
 ```razor
 <CoworkeeDataTable T="EmployeeDto" EntitySet="Employees" RowHref="@(e => $"/people/{e.Id}")">
@@ -427,6 +429,73 @@ meta.Property(f => f.Scopes).RenderAsChips(e =>
 Die Eigenschaft muss eine `IReadOnlyList<string>` sein. Die Konfigurationsaktion setzt Komponentenparameter direkt, der Aufruf steht deshalb zwischen `#pragma warning disable BL0005` und `restore`.
 
 `ShowSideSheetAsync<TDialog>` öffnet eine eigene Dialogkomponente genauso, `ConfirmAsync` fragt vor etwas, das sich nicht rückgängig machen lässt.
+
+## Ein eigener Listen-Look
+
+Werkzeugleiste, Menüs und Aktionsspalte sind der Standard-Look der Tabelle. Eine Seite, die einen anderen braucht (eine eigene Filterleiste über den Zeilen, einen Layout-Dialog, Kopfzeilenmenüs zum Sortieren und Filtern, Karten), behält die Tabelle für Zeilen, Seiten, Abfragen und Zustand und ersetzt nur die Teile. Jeder Parameter unten ist optional; ohne sie sieht die Tabelle aus und verhält sich wie bisher.
+
+**Eigene Spaltenauswahl.** `ColumnChooserContent` ersetzt das Spaltenmenü in der Werkzeugleiste; sein Kontext ist die Tabelle. `LayoutColumns` listet die benannten Spalten in ihrer Reihenfolge (`Key`, `Title`, `Visible`), `SetColumnsAsync(keys)` zeigt diese Spalten in dieser Reihenfolge und blendet den Rest aus. Ein Dialog mit Live-Vorschau rendert eine zweite Tabelle desselben Sets (`Toolbar="false"`, `SavedViews="false"`, `UrlState="false"`, kleine `PageSize`) und übergibt deren Spalten bei *Übernehmen*:
+
+```razor
+<CoworkeeDataTable T="ShipmentDto" EntitySet="Shipments">
+    <ColumnChooserContent>
+        <MudButton OnClick="() => ChooseColumnsAsync(context)">@L["Columns"]</MudButton>
+    </ColumnChooserContent>
+    <Columns>...</Columns>
+</CoworkeeDataTable>
+
+@code {
+    private async Task ChooseColumnsAsync(CoworkeeDataTable<ShipmentDto> table)
+    {
+        // der Dialog zeigt table.LayoutColumns als Pillen und liefert die sichtbaren Schlüssel in ihrer Reihenfolge
+        if (await LayoutDialog.ShowAsync(Dialogs, table.LayoutColumns) is { } visible)
+        {
+            await table.SetColumnsAsync(visible);
+        }
+    }
+}
+```
+
+**Eigenes Ansichtenmenü.** `ViewMenuContent` ersetzt das Lesezeichenmenü; `CurrentState` liest den ganzen Zustand (Suche, Facetten, Filter, Spalten, Sortierung), `ApplyStateAsync(state)` stellt einen wieder her, auch aus Code (vor dem ersten Rendern wird er angewendet, sobald das Grid existiert). Layouts, die woanders liegen, etwa in den eigenen Einstellungen der App, gehen so; *Standard wiederherstellen* ist `ApplyStateAsync(DataTableState.Empty)`.
+
+```razor
+<ViewMenuContent>
+    <LayoutSelect Layouts="_layouts" Current="context.CurrentState" OnSelect="layout => context.ApplyStateAsync(layout.State)" />
+</ViewMenuContent>
+```
+
+**Spalten per Drag and Drop.** `ReorderableColumns` (standardmäßig an) lässt Benutzer einen Spaltenkopf an eine andere Stelle ziehen; die neue Reihenfolge gehört wie jede andere Layoutänderung zu `CurrentState` (`ColumnOrder`), Ansichten und `ApplyStateAsync` behalten sie.
+
+**Eigene Filterleiste.** `Toolbar="false"` entfernt die Werkzeugleiste und die Filterchips über den Zeilen. Die Seite rendert Suche, Sortierung und Facetten selbst und bindet sie: `@bind-SearchText` (die Tabelle meldet auch einen Text, den sie selbst gesetzt hat: ihr Feld, eine Ansicht, die Adresse), `@bind-Sort` (eine Liste von `DataTableSort`; ein Klick in den Kopf meldet zurück), `FacetGroups` mit `Selection` für eine `FacetBar` oder ein `FacetPanel`, `FacetsLoaded`, wenn neue Zahlen da sind, und `TotalCount` / `TotalCountChanged` für „15.258 Sendungen“:
+
+```razor
+<MudTextField @bind-Value="_search" Placeholder="@L["Search"]" DebounceInterval="500" />
+<MudSelect T="DataTableSort" Value="_sort.FirstOrDefault()" ValueChanged="s => _sort = [s]">...</MudSelect>
+@if (_table is not null)
+{
+    <FacetBar Groups="_table.FacetGroups" Selection="_table.Selection" />
+}
+<MudText>@L["{0:N0} shipments", _count]</MudText>
+
+<CoworkeeDataTable T="ShipmentDto" EntitySet="Shipments" @ref="_table" Toolbar="false" @bind-SearchText="_search" @bind-Sort="_sort"
+                   FacetsLoaded="_ => StateHasChanged()" TotalCountChanged="c => _count = c">
+```
+
+**Kopfzeilenmenüs mit Sortierung und Facetten.** `ColumnFilterSort="true"` setzt *Sortierung* (*Aufsteigend*, *Absteigend*) oben in jeden Spaltenfilter. Eine Spalte mit Facette listet in ihrem Filter schon die Werte der Facette mit ihren Zahlen (siehe [Spaltenfilter](#spaltenfilter)), vom Server oder aus der Browser-Kopie einer [Client-Entity](client-entities.md), so sortiert und filtert das Kopfzeilenmenü an einer Stelle.
+
+**Keine Aktionsspalte.** `RowActions="false"` lässt die Spalte mit den Knöpfen Öffnen, Bearbeiten, Löschen und Verlauf weg. Zeilen mit `RowHref` oder `OnRowClick` öffnen weiter per Klick; sie verlieren den Tastatur-Link des Öffnen-Knopfs, also bekommt die Zeile oder ihre erste Zelle einen eigenen Link, wo Tastaturnutzer einen brauchen.
+
+**Karten.** `ItemTemplate` rendert eine Karte je Zeile, `View` schaltet zwischen `Table` (Standard) und `Cards`. Die Karten nutzen die Abfrage der Tabelle (Filter, Suche, Facetten, Sortierung) in Seiten von `PageSize`; die nächste Seite lädt, sobald das Ende der Karten ins Bild scrollt (oder per *Mehr laden*). Ein Klick auf eine Karte öffnet sie wie eine Zeile. Das Grid bleibt verborgen hinter den Karten, Spalten und Sortierung behalten also ihren Zustand, wenn die Seite zurückschaltet. Die Karten liegen in einem responsiven Raster; `--cw-card-width` (Standard `320px`) setzt die kleinste Breite einer Karte.
+
+```razor
+<MudToggleGroup T="DataTableView" @bind-Value="_view">...</MudToggleGroup>
+<CoworkeeDataTable T="ShipmentDto" EntitySet="Shipments" View="_view" PageSize="20" RowHref="@(s => $"/shipments/{s.Id}")">
+    <ItemTemplate>
+        <ShipmentCard Shipment="context" />
+    </ItemTemplate>
+    <Columns>...</Columns>
+</CoworkeeDataTable>
+```
 
 ## Einträge der Werkzeugleiste
 

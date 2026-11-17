@@ -2311,5 +2311,8 @@
   "{0} s": "{0} ث",
   "{0} min": "{0} د",
   "{0} h": "{0} س",
-  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "البيانات التي تحتفظ المتصفحات بنسخة منها (متوقفة أو في الذاكرة أو SQLite)، مع حدود الصفوف والمزامنة، لكل مجموعة كيانات."
+  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "البيانات التي تحتفظ المتصفحات بنسخة منها (متوقفة أو في الذاكرة أو SQLite)، مع حدود الصفوف والمزامنة، لكل مجموعة كيانات.",
+  "Sort": "فرز",
+  "Ascending": "تصاعدي",
+  "Load more": "تحميل المزيد"
 }

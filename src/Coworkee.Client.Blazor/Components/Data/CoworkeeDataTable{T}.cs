@@ -79,6 +79,11 @@ public partial class CoworkeeDataTable<T>
                 if (!cancel.IsCancellationRequested)
                 {
                     ShowFacets(page.Facets);
+                    if (FacetsLoaded.HasDelegate)
+                    {
+                        await FacetsLoaded.InvokeAsync(_facets);
+                    }
+
                     // inside the grid only the filter icons, open column filters and group heads show the facets
                     RenderOutsideRows(!MarkFacetColumns() && _shownFilters == 0 && !GroupsTheResult);
                 }

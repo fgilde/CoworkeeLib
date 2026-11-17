@@ -2311,5 +2311,8 @@
   "{0} s": "{0} dtk",
   "{0} min": "{0} mnt",
   "{0} h": "{0} jam",
-  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Data mana yang disimpan peramban sebagai salinan (mati, memori, atau SQLite), dengan batas baris dan sinkronisasi, per set entitas."
+  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Data mana yang disimpan peramban sebagai salinan (mati, memori, atau SQLite), dengan batas baris dan sinkronisasi, per set entitas.",
+  "Sort": "Urutkan",
+  "Ascending": "Naik",
+  "Load more": "Muat lebih banyak"
 }

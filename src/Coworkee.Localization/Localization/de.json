@@ -2311,5 +2311,8 @@
   "{0} s": "{0} s",
   "{0} min": "{0} min",
   "{0} h": "{0} h",
-  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Welche Daten die Browser als Kopie halten (aus, Speicher oder SQLite), mit Zeilenlimits und Synchronisierung, je Entitätsmenge."
+  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Welche Daten die Browser als Kopie halten (aus, Speicher oder SQLite), mit Zeilenlimits und Synchronisierung, je Entitätsmenge.",
+  "Sort": "Sortierung",
+  "Ascending": "Aufsteigend",
+  "Load more": "Mehr laden"
 }

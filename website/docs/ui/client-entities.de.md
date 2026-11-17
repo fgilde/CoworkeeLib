@@ -187,6 +187,12 @@ Jede Tabelle über einem gespiegelten Set bekommt ein Bedienelement in ihrer Wer
 
 Die Wahl bleibt je Set in der Benutzereinstellung `Table.ClientEntityModes` und folgt dem Benutzer so auf jedes Gerät. Auch bei der Suche auf dem Server gleicht die Kopie weiter ab, der Wechsel zurück geht also sofort. Ändern sich die lokalen Zeilen, lädt der Schalter seine Tabelle neu. Auch Code kann wählen: `ClientEntities.SetModeAsync("SalesOrders", ClientEntityMode.Server)`.
 
+Der Schalter geht auch außerhalb einer Tabelle, etwa in der eigenen Werkzeugleiste oder im Kopf der Seite: `EntitySet` nennt das Set, `Table` (optional) ist die Tabelle, die er neu lädt und deren Abfrage er vergleicht (ohne vergleicht er die erste Seite des ganzen Sets).
+
+```razor
+<ClientEntitySwitch EntitySet="Shipments" Table="_table" />
+```
+
 Die Kopie aktualisiert sich
 
 - direkt nachdem dieser Client etwas gespeichert hat (jedes erfolgreiche `POST`, `PUT`, `PATCH` oder `DELETE` über einen `HttpClient` der App, die generierten Proxies der Anwendungsdienste eingeschlossen),

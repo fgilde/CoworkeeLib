@@ -2311,5 +2311,8 @@
   "{0} s": "{0} sn",
   "{0} min": "{0} dk",
   "{0} h": "{0} sa",
-  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Tarayıcıların hangi verilerin kopyasını tuttuğu (kapalı, bellek veya SQLite), satır sınırları ve eşitleme ile, varlık kümesi başına."
+  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Tarayıcıların hangi verilerin kopyasını tuttuğu (kapalı, bellek veya SQLite), satır sınırları ve eşitleme ile, varlık kümesi başına.",
+  "Sort": "Sıralama",
+  "Ascending": "Artan",
+  "Load more": "Daha fazla yükle"
 }

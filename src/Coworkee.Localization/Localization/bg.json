@@ -2311,5 +2311,8 @@
   "{0} s": "{0} с",
   "{0} min": "{0} мин",
   "{0} h": "{0} ч",
-  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Кои данни браузърите пазят като копие (изключено, памет или SQLite), с лимити на редовете и синхронизация, за всеки набор от обекти."
+  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Кои данни браузърите пазят като копие (изключено, памет или SQLite), с лимити на редовете и синхронизация, за всеки набор от обекти.",
+  "Sort": "Сортиране",
+  "Ascending": "Възходящо",
+  "Load more": "Зареди още"
 }

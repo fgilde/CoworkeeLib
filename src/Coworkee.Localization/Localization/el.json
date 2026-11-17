@@ -2311,5 +2311,8 @@
   "{0} s": "{0} δευτ.",
   "{0} min": "{0} λεπ.",
   "{0} h": "{0} ώρ.",
-  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Ποια δεδομένα κρατούν οι φυλλομετρητές ως αντίγραφο (ανενεργό, μνήμη ή SQLite), με όρια γραμμών και συγχρονισμό, ανά σύνολο οντοτήτων."
+  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Ποια δεδομένα κρατούν οι φυλλομετρητές ως αντίγραφο (ανενεργό, μνήμη ή SQLite), με όρια γραμμών και συγχρονισμό, ανά σύνολο οντοτήτων.",
+  "Sort": "Ταξινόμηση",
+  "Ascending": "Αύξουσα",
+  "Load more": "Φόρτωση περισσότερων"
 }

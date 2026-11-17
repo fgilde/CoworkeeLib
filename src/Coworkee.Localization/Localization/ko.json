@@ -2311,5 +2311,8 @@
   "{0} s": "{0}초",
   "{0} min": "{0}분",
   "{0} h": "{0}시간",
-  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "브라우저가 어떤 데이터의 복사본을 보관할지 (끄기, 메모리 또는 SQLite), 행 제한과 동기화를 엔터티 세트별로 설정합니다."
+  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "브라우저가 어떤 데이터의 복사본을 보관할지 (끄기, 메모리 또는 SQLite), 행 제한과 동기화를 엔터티 세트별로 설정합니다.",
+  "Sort": "정렬",
+  "Ascending": "오름차순",
+  "Load more": "더 불러오기"
 }

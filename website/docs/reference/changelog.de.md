@@ -9,6 +9,13 @@
 - `CoworkeeAppShell`: Start und Provider von Coworkee ohne den Admin-Rahmen (Setup-Prüfung, Weiterleitung zur Anmeldung, Einstellungen, Theme, Sprache, Head-Skript, MudBlazor-Provider, Sitzungswächter, Live-Einstellungen, Ende des Ladebildschirms) um ein eigenes Layout der App; `Theme` legt ein `MudTheme` statt des Themes der Organisation fest, `DarkMode` den Farbmodus. `CoworkeeLayout` rendert jetzt darin, kein Handlungsbedarf. Siehe [Ein eigenes Layout](../ui/customizing.de.md#ein-eigenes-layout).
 - `options.Pages.Only(params string[] keys)`: behält nur die genannten Seiten der Bibliothek und schaltet alle anderen ab (`Only()` behält keine), für einen Client, der die Administration nicht erreichen darf. Ein unbekannter Schlüssel stoppt die App beim Start. Siehe [Seiten der Bibliothek](../ui/customizing.de.md#seiten-der-bibliothek).
 - App-Host: `app.AddBffClient<T>(suffix, displayName, allowImpersonation, forwardedPrefixes)` fügt einen weiteren Blazor-Client mit eigenem Host hinzu: der nächste OIDC-Client des Auth-Servers, ein eigenes Sitzungscookie `{name}-{suffix}`, `/hubs` standardmäßig weitergeleitet, übernommene Sitzungen mit `allowImpersonation: true`; im Deployment ein eigener Container. Siehe [Ein weiterer Blazor-Client](../hosting/aspire.de.md#ein-weiterer-blazor-client).
+- `CoworkeeDataTable` für einen eigenen Listen-Look der Seite (alles optional, ohne ändert sich nichts; siehe [Ein eigener Listen-Look](../ui/data-table.de.md#ein-eigener-listen-look)):
+    - `ColumnChooserContent` und `ViewMenuContent` (`RenderFragment<CoworkeeDataTable<T>>`) ersetzen Spalten- und Ansichtenmenü; `LayoutColumns` (`DataTableColumn`: `Key`, `Title`, `Visible`) und `SetColumnsAsync(keys)` lesen und setzen die Spalten, `ApplyStateAsync(DataTableState)` ist öffentlich und geht auch vor dem ersten Rendern.
+    - `Toolbar="false"` blendet Werkzeugleiste und Filterchips aus; `@bind-SearchText`, `@bind-Sort` (`IReadOnlyList<DataTableSort>`), `FacetGroups` (mit `Selection`), `FacetsLoaded`, `TotalCount` und `TotalCountChanged` speisen eine Filterleiste der Seite.
+    - `ColumnFilterSort="true"`: Einträge *Sortierung* (aufsteigend, absteigend) oben in jedem Spaltenfilter, neben den Facettenwerten mit ihren Zahlen (Server oder lokale Kopie).
+    - `RowActions="false"` lässt die Aktionsspalte weg; Zeilen öffnen weiter per Klick.
+    - `ItemTemplate` und `View` (`DataTableView.Table`, `Cards`): die Zeilen als Karten mit der Abfrage der Tabelle, die nächste Seite, sobald das Ende der Karten ins Bild scrollt.
+- `ClientEntitySwitch` außerhalb einer Tabelle: `EntitySet` nennt das Set, `Table` ist jetzt optional. Siehe [Der Schalter in der Tabelle](../ui/client-entities.de.md#der-schalter-in-der-tabelle).
 
 ### Geändert
 

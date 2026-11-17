@@ -174,8 +174,11 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     protected override void OnParametersSet()
     {
-        // a new filter from the page reloads the rows
-        if (_lastFilter != Filter && _grid is not null)
+        // a new filter, search or view from the page reloads the rows
+        var reload = _lastFilter != Filter && _grid is not null;
+        reload |= FollowBindings();
+        reload |= FollowView();
+        if (reload)
         {
             Reload();
         }
@@ -185,6 +188,8 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     protected override async Task OnInitializedAsync()
     {
+        // a bound search is the start; the address or the default view win over it
+        (_search, _searchParam, _sortParam) = (SearchText, SearchText, Sort);
         if (UrlState && DataTableState.Decode(HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query)[Key]) is { } state)
         {
             ApplyFilters(state);
@@ -195,6 +200,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
             ApplyFilters(view.State);
         }
 
+        await NotifySearchAsync();
         _selection.Changed += Reload;
         if (Themes is { } themes)
         {
@@ -261,7 +267,14 @@ public partial class CoworkeeDataTable<T> : IDisposable
             await ApplyLayoutAsync(layout);
         }
 
+        // a bound sort is the start, unless the address or a view brought one
+        if (firstRender && Sort is { Count: > 0 } && _grid is { SortDefinitions.Count: 0 })
+        {
+            await DataGridLayout<T>.SortAsync(_grid, Sort);
+        }
+
         await FollowPageModeAsync();
+        await ObserveCardsEndAsync();
     }
 
     private void ApplyFilters(DataTableState state)
@@ -270,16 +283,6 @@ public partial class CoworkeeDataTable<T> : IDisposable
         RestoreFacets(state);
         _selection.Restore(state.Facets);
         _pendingLayout = state.HasLayout || state.HiddenColumns.Count > 0 || state.ColumnFilters is { Count: > 0 } ? state : null;
-    }
-
-    private async Task ApplyStateAsync(DataTableState state)
-    {
-        _selection.Changed -= Reload;
-        ApplyFilters(state);
-        _selection.Changed += Reload;
-        _pendingLayout = null;
-        await ApplyLayoutAsync(state);
-        WriteUrl();
     }
 
     private async Task ApplyLayoutAsync(DataTableState state)
@@ -330,6 +333,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
     public void Dispose()
     {
         _selection.Changed -= Reload;
+        DisposeCards();
         _live?.Cancel();
         _facetLoad?.Cancel();
         if (Themes is { } themes)
@@ -451,11 +455,12 @@ public partial class CoworkeeDataTable<T> : IDisposable
         }
     }
 
-    private Task SearchAsync(string? text)
+    private async Task SearchAsync(string? text)
     {
         _search = text;
         WriteUrl();
-        return ReloadAsync();
+        await NotifySearchAsync();
+        await ReloadAsync();
     }
 
     private async Task<GridData<T>> LoadAsync(GridState<T> state, CancellationToken cancellationToken)
@@ -480,12 +485,18 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     private async Task<GridData<T>> LoadRowsAsync(GridState<T> state, CancellationToken cancellationToken)
     {
+        if (CardsShown)
+        {
+            return await LoadCardsAsync(state.SortDefinitions, cancellationToken);
+        }
+
         if (GroupsTheResult)
         {
             return await LoadGroupsAsync(state, cancellationToken);
         }
 
         _orderBy = OrderBy(state.SortDefinitions);
+        NotifySort();
         var filter = CurrentFilter;
         var context = Facets ? _selection.Context(BaseFilter, _facets) : null;
         // another page of the same rows: its first row shows (the rows scroll inside the table)
@@ -502,6 +513,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
         // after the rows: a local copy answers synchronously, counting first would keep the last page on the screen
         LoadFacets(filter, context);
         await OnLoaded.InvokeAsync(page.Items);
+        Counted(page.Count ?? page.Items.Count);
         return new GridData<T> { Items = page.Items, TotalItems = (int)(page.Count ?? page.Items.Count) };
     }
 

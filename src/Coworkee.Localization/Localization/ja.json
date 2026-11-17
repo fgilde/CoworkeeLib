@@ -2311,5 +2311,8 @@
   "{0} s": "{0} 秒",
   "{0} min": "{0} 分",
   "{0} h": "{0} 時間",
-  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "ブラウザーがどのデータのコピーを保持するか (オフ、メモリ、SQLite)、行数の上限と同期をエンティティセットごとに設定します。"
+  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "ブラウザーがどのデータのコピーを保持するか (オフ、メモリ、SQLite)、行数の上限と同期をエンティティセットごとに設定します。",
+  "Sort": "並べ替え",
+  "Ascending": "昇順",
+  "Load more": "さらに読み込む"
 }

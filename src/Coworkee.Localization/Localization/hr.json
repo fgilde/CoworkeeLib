@@ -2311,5 +2311,8 @@
   "{0} s": "{0} s",
   "{0} min": "{0} min",
   "{0} h": "{0} h",
-  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Koje podatke preglednici čuvaju kao kopiju (isključeno, memorija ili SQLite), s ograničenjima redaka i sinkronizacijom, po skupu entiteta."
+  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Koje podatke preglednici čuvaju kao kopiju (isključeno, memorija ili SQLite), s ograničenjima redaka i sinkronizacijom, po skupu entiteta.",
+  "Sort": "Sortiranje",
+  "Ascending": "Uzlazno",
+  "Load more": "Učitaj više"
 }

@@ -2311,5 +2311,8 @@
   "{0} s": "{0} s",
   "{0} min": "{0} min",
   "{0} h": "{0} h",
-  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Les données dont les navigateurs gardent une copie (désactivée, mémoire ou SQLite), avec limites de lignes et synchronisation, par ensemble d\u0027entités."
+  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Les données dont les navigateurs gardent une copie (désactivée, mémoire ou SQLite), avec limites de lignes et synchronisation, par ensemble d\u0027entités.",
+  "Sort": "Tri",
+  "Ascending": "Croissant",
+  "Load more": "Charger plus"
 }

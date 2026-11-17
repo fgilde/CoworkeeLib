@@ -30,7 +30,7 @@ public partial class CoworkeeDataTable<T>
 
     private bool Fills => FillHeight && !Endless;
 
-    private string GridClass => $"{(GroupsTheResult ? "cw-grouped-result " : null)}{(Fills ? "cw-table-fill" : null)}".Trim();
+    private string GridClass => $"{(GroupsTheResult ? "cw-grouped-result " : null)}{(Fills ? "cw-table-fill " : null)}{(CardsShown ? "cw-table-hidden" : null)}".Trim();
 
     private string? GridStyle => Fills ? $"--cw-table-height:{ScrollHeight}" : null;
 
@@ -44,7 +44,7 @@ public partial class CoworkeeDataTable<T>
 
     // MudDataGrid cannot virtualize groups: grouped, the grid has pages (the groups of the whole result scroll inside each group); a grouping still to be
     // restored counts already, so the grid does not start scrolling and load rows the groups hide
-    private bool Endless => ResolvedPageMode == DataTablePageMode.EndlessScroll && !IsGrouped && _pendingLayout?.GroupBy is not { Count: > 0 };
+    private bool Endless => !CardsShown && ResolvedPageMode == DataTablePageMode.EndlessScroll && !IsGrouped && _pendingLayout?.GroupBy is not { Count: > 0 };
 
     // only where the grid groups the loaded page (a data source, a client that cannot group): groups of the whole result scroll inside each group
     private bool GroupedInPages => ResolvedPageMode == DataTablePageMode.EndlessScroll && IsGrouped && !GroupsTheResult;
@@ -92,6 +92,7 @@ public partial class CoworkeeDataTable<T>
     private async Task<GridData<T>> LoadEndlessAsync(GridStateVirtualize<T> state, CancellationToken cancellationToken)
     {
         _orderBy = OrderBy(state.SortDefinitions);
+        NotifySort();
         var filter = CurrentFilter;
         var context = Facets ? _selection.Context(BaseFilter, _facets) : null;
         var key = string.Join('\n', filter, _orderBy, Expand, System.Text.Json.JsonSerializer.Serialize(context));
@@ -111,6 +112,7 @@ public partial class CoworkeeDataTable<T>
         {
             // the total below the rows; the rows render when the grid gets them
             _total?.Refresh();
+            Counted(pages.Total);
         }
 
         return new GridData<T> { Items = items, TotalItems = (int)pages.Total };

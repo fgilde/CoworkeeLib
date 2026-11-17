@@ -2311,5 +2311,8 @@
   "{0} s": "{0} វិនាទី",
   "{0} min": "{0} នាទី",
   "{0} h": "{0} ម៉ោង",
-  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "ទិន្នន័យណាដែលកម្មវិធីរុករករក្សាទុកច្បាប់ចម្លង (បិទ អង្គចងចាំ ឬ SQLite) ជាមួយដែនកំណត់ជួរ និងសមកាលកម្ម តាមសំណុំអង្គភាពនីមួយៗ។"
+  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "ទិន្នន័យណាដែលកម្មវិធីរុករករក្សាទុកច្បាប់ចម្លង (បិទ អង្គចងចាំ ឬ SQLite) ជាមួយដែនកំណត់ជួរ និងសមកាលកម្ម តាមសំណុំអង្គភាពនីមួយៗ។",
+  "Sort": "តម្រៀប",
+  "Ascending": "លំដាប់ឡើង",
+  "Load more": "ផ្ទុកបន្ថែម"
 }

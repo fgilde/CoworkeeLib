@@ -2311,5 +2311,8 @@
   "{0} s": "{0} s",
   "{0} min": "{0} min",
   "{0} h": "{0} h",
-  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Quali dati i browser conservano in copia (disattivata, memoria o SQLite), con limiti di righe e sincronizzazione, per insieme di entità."
+  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Quali dati i browser conservano in copia (disattivata, memoria o SQLite), con limiti di righe e sincronizzazione, per insieme di entità.",
+  "Sort": "Ordinamento",
+  "Ascending": "Crescente",
+  "Load more": "Carica altro"
 }

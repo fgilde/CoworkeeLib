@@ -41,6 +41,14 @@ public partial class DataTableColumnFilter<T> : IDisposable
     /// <summary>Told when the filter opens (true) and closes (false).</summary>
     [Parameter] public Action<bool>? Shown { get; set; }
 
+    /// <summary>The column's sort: <c>false</c> ascending, <c>true</c> descending, <c>null</c> unsorted.</summary>
+    [Parameter] public bool? SortDescending { get; set; }
+
+    /// <summary>Sorts by the column (<c>null</c>: not); set, the filter starts with the sort entries.</summary>
+    [Parameter] public Func<bool?, Task>? OnSort { get; set; }
+
+    private bool? _sort;
+
 
     private IRange<decimal>? NumberBounds =>
         _bounds is { Min: { } min, Max: { } max } && ToDecimal(min) < ToDecimal(max) ? new MudExRange<decimal>(ToDecimal(min), ToDecimal(max)) : null;
@@ -121,6 +129,7 @@ public partial class DataTableColumnFilter<T> : IDisposable
 
     protected override void OnParametersSet()
     {
+        _sort = SortDescending;
         var current = Current;
         var loaded = string.Join(",", current.Select(d => d.Id));
         if (loaded != _loaded)
@@ -143,6 +152,12 @@ public partial class DataTableColumnFilter<T> : IDisposable
 
         _operator = current.FirstOrDefault()?.Operator ?? Operators.FirstOrDefault() ?? string.Empty;
         (_value, _to) = (current.FirstOrDefault()?.Value, null);
+    }
+
+    private Task SortAsync(bool? descending)
+    {
+        _sort = descending;
+        return OnSort!(descending);
     }
 
     private void Choose(object choice, bool chosen)

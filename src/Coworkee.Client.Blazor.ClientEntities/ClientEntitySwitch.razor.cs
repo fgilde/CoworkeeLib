@@ -8,6 +8,7 @@ namespace Coworkee.Client.Blazor.ClientEntities;
 /// <summary>
 /// The client entity control of a data table (added to every table by AddCoworkeeClientEntities): an icon for where searching runs with the
 /// sync state as a ring around it; its menu switches between browser and server and compares both on the current query.
+/// Placed elsewhere (page tool bar, header) it takes the set by <see cref="EntitySet"/>; with a <see cref="Table"/> it also reloads that table.
 /// </summary>
 public partial class ClientEntitySwitch : IDisposable
 {
@@ -28,7 +29,15 @@ public partial class ClientEntitySwitch : IDisposable
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
-    [Parameter, EditorRequired] public IDataTable Table { get; set; } = null!;
+    /// <summary>The table the switch belongs to: its set, its query to compare, reloaded when the rows arrive or the choice changes.</summary>
+    [Parameter] public IDataTable? Table { get; set; }
+
+    /// <summary>The set to show without a table (or another one than the table's).</summary>
+    [Parameter] public string? EntitySet { get; set; }
+
+    private string Set => EntitySet ?? Table?.EntitySet ?? string.Empty;
+
+    private Task ReloadTableAsync() => Table?.ReloadAsync() ?? Task.CompletedTask;
 
     protected override void OnInitialized()
     {
@@ -37,7 +46,7 @@ public partial class ClientEntitySwitch : IDisposable
             return;
         }
 
-        Track(entities.Find(Table.EntitySet));
+        Track(entities.Find(Set));
         entities.Changed += OnChanged;
         entities.Reconfigured += OnReconfigured;
     }
@@ -54,13 +63,13 @@ public partial class ClientEntitySwitch : IDisposable
     // the settings of the set changed: the table asks again, which starts the copy with the new settings or goes to the server
     private void OnReconfigured(string entitySet)
     {
-        if (string.Equals(entitySet, Table.EntitySet, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(entitySet, Set, StringComparison.OrdinalIgnoreCase))
         {
             Track(null);
             _ = InvokeAsync(async () =>
             {
                 StateHasChanged();
-                await Table.ReloadAsync();
+                await ReloadTableAsync();
             });
         }
     }
@@ -74,13 +83,13 @@ public partial class ClientEntitySwitch : IDisposable
 
     private void OnChanged(ClientEntitySet set)
     {
-        if (!string.Equals(set.EntitySet, Table.EntitySet, StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(set.EntitySet, Set, StringComparison.OrdinalIgnoreCase))
         {
             return;
         }
 
         // a set of an earlier scope still reports while it is disposed: the set of the current one wins once it exists
-        set = Entities?.Find(Table.EntitySet) ?? set;
+        set = Entities?.Find(Set) ?? set;
         var reload = _set is not null && (set.Status.Revision != _revision || set.Mode != _mode);
         Track(set);
         _ = InvokeAsync(async () =>
@@ -88,12 +97,12 @@ public partial class ClientEntitySwitch : IDisposable
             StateHasChanged();
             if (reload)
             {
-                await Table.ReloadAsync();
+                await ReloadTableAsync();
             }
         });
     }
 
-    private Task ChooseAsync(ClientEntityMode mode) => Entities!.SetModeAsync(Table.EntitySet, mode);
+    private Task ChooseAsync(ClientEntityMode mode) => Entities!.SetModeAsync(Set, mode);
 
     private void TogglePause()
     {
@@ -129,7 +138,9 @@ public partial class ClientEntitySwitch : IDisposable
             (long? Client, long? Server) counts = default;
             for (var round = 0; round < Rounds; round++)
             {
-                var query = Table.CurrentQuery with { Filter = Data.ODataFilter.And(Table.CurrentQuery.Filter, $"Id ne {Guid.NewGuid()}") };
+                // without a table: the first page of the whole set
+                var current = Table?.CurrentQuery ?? new Data.ODataQuery { Top = 25 };
+                var query = current with { Filter = Data.ODataFilter.And(current.Filter, $"Id ne {Guid.NewGuid()}") };
                 var local = await set.MeasureAsync(query, ClientEntityMode.Client);
                 var remote = await set.MeasureAsync(query, ClientEntityMode.Server);
                 client.Add(local.Elapsed);

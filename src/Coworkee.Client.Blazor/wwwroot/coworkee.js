@@ -184,6 +184,28 @@ export function observeStuck(sentinel, root) {
     };
 }
 
+// the end of a list scrolled into view: asks .NET for more (true while more may come) and asks again while the end stays in view
+export function observeEnd(element, dotnet, method) {
+    let busy = false;
+    const observer = new IntersectionObserver(async entries => {
+        if (busy || !entries.some(e => e.isIntersecting)) {
+            return;
+        }
+        busy = true;
+        try {
+            if (await dotnet.invokeMethodAsync(method)) {
+                // a fresh observation reports whether the end is still in view
+                observer.unobserve(element);
+                observer.observe(element);
+            }
+        } finally {
+            busy = false;
+        }
+    });
+    observer.observe(element);
+    return { dispose: () => observer.disconnect() };
+}
+
 export function submitOnEnter(element, dotnet) {
     if (!element) {
         return;

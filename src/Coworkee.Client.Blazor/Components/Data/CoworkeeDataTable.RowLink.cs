@@ -11,9 +11,12 @@ public partial class CoworkeeDataTable<T>
     /// <summary>Called for a click on a row (not on its buttons or checkbox) and for its open button; rows with a <see cref="RowHref"/> navigate instead.</summary>
     [Parameter] public EventCallback<T> OnRowClick { get; set; }
 
+    /// <summary>Off: no action column; rows still open by a click (<see cref="RowHref"/>, <see cref="OnRowClick"/>), edit, delete and history need their own buttons then.</summary>
+    [Parameter] public bool RowActions { get; set; } = true;
+
     private bool RowOpens => RowHref is not null || OnRowClick.HasDelegate;
 
-    private bool HasRowActions => RowOpens || OnEdit.HasDelegate || OnDelete is not null || History;
+    private bool HasRowActions => RowActions && (RowOpens || OnEdit.HasDelegate || OnDelete is not null || History);
 
     private string? RowClass(T item, int index) => OnRowClick.HasDelegate || RowHref?.Invoke(item) is not null ? "cw-clickable" : null;
 

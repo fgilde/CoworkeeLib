@@ -187,6 +187,12 @@ Every table over a mirrored set gets one control in its tool bar (`ClientEntityS
 
 The choice is kept per set in the user setting `Table.ClientEntityModes`, so it follows the user to every device. On the server side the copy keeps syncing, so switching back is instant. When the local rows change, the switch reloads its table. Code can choose as well: `ClientEntities.SetModeAsync("SalesOrders", ClientEntityMode.Server)`.
 
+The switch also works outside a table, e.g. in the page's own tool bar or header: `EntitySet` names the set, `Table` (optional) is the table it reloads and whose query it compares (without one it compares the first page of the whole set).
+
+```razor
+<ClientEntitySwitch EntitySet="Shipments" Table="_table" />
+```
+
 The copy refreshes
 
 - right after this client saved something (any successful `POST`, `PUT`, `PATCH` or `DELETE` through an `HttpClient` of the app, the generated proxies of application services included),

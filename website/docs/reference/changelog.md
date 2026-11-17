@@ -9,6 +9,13 @@ Changes that need action in apps built on Coworkee. Newest first.
 - `CoworkeeAppShell`: Coworkee's startup and providers without the admin chrome (setup check, sign-in redirect, preferences, theme, language, head script, MudBlazor providers, session guard, live settings, end of the loading screen) around a layout of the app's own; `Theme` fixes a `MudTheme` instead of the organisation's theme, `DarkMode` fixes the colour mode. `CoworkeeLayout` now renders inside it, no action needed. See [A layout of your own](../ui/customizing.md#a-layout-of-your-own).
 - `options.Pages.Only(params string[] keys)`: keeps only the listed library pages and turns off all others (`Only()` keeps none), for a client that must not reach the administration. An unknown key stops the app at start. See [Pages of the library](../ui/customizing.md#pages-of-the-library).
 - App host: `app.AddBffClient<T>(suffix, displayName, allowImpersonation, forwardedPrefixes)` adds another Blazor client with its own host: the next OIDC client of the auth server, its own session cookie `{name}-{suffix}`, `/hubs` forwarded by default, impersonated sessions with `allowImpersonation: true`; its own container in a deployment. See [Another Blazor client](../hosting/aspire.md#another-blazor-client).
+- `CoworkeeDataTable` for a list look of the page's own (all optional, without them nothing changes; see [a list look of your own](../ui/data-table.md#a-list-look-of-your-own)):
+    - `ColumnChooserContent` and `ViewMenuContent` (`RenderFragment<CoworkeeDataTable<T>>`) replace the column menu and the views menu; `LayoutColumns` (`DataTableColumn`: `Key`, `Title`, `Visible`) and `SetColumnsAsync(keys)` read and set the columns, `ApplyStateAsync(DataTableState)` is public and works before the first render.
+    - `Toolbar="false"` hides the tool bar and the filter chips; `@bind-SearchText`, `@bind-Sort` (`IReadOnlyList<DataTableSort>`), `FacetGroups` (with `Selection`), `FacetsLoaded`, `TotalCount` and `TotalCountChanged` feed a filter bar of the page.
+    - `ColumnFilterSort="true"`: *Sort* entries (ascending, descending) on top of every column filter, beside the facet values with their counts (server or local copy).
+    - `RowActions="false"` drops the action column; rows still open by a click.
+    - `ItemTemplate` and `View` (`DataTableView.Table`, `Cards`): the rows as cards with the table's query, the next page when the end of the cards scrolls into view.
+- `ClientEntitySwitch` outside a table: `EntitySet` names the set, `Table` is optional now. See [the switch in the table](../ui/client-entities.md#the-switch-in-the-table).
 
 ### Changed
 

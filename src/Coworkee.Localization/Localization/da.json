@@ -2311,5 +2311,8 @@
   "{0} s": "{0} s",
   "{0} min": "{0} min",
   "{0} h": "{0} t",
-  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Hvilke data browserne gemmer en kopi af (fra, hukommelse eller SQLite), med rækkegrænser og synkronisering, pr. entitetssæt."
+  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Hvilke data browserne gemmer en kopi af (fra, hukommelse eller SQLite), med rækkegrænser og synkronisering, pr. entitetssæt.",
+  "Sort": "Sortering",
+  "Ascending": "Stigende",
+  "Load more": "Indlæs flere"
 }

@@ -149,6 +149,24 @@ public sealed class DataTableColumnFilterTests : ClientTestBase
     }
 
     [Fact]
+    public async Task With_sort_entries_the_header_menu_sorts_and_lists_the_facet_values_with_counts()
+    {
+        var table = RenderTable(p => p.Add(t => t.ColumnFilterSort, true));
+
+        await OpenFilterAsync(table, "Category");
+        var menu = _popovers.Find("[data-testid='column-filter']");
+        menu.QuerySelector("[data-testid='column-sort']").ShouldNotBeNull();
+        menu.QuerySelectorAll("[data-option]").Select(o => string.Concat(o.TextContent.Where(c => !char.IsWhiteSpace(c)))).ShouldBe(["Tools2", "Light1"]);
+        await _popovers.Find("[data-sort='desc'] input").ChangeAsync(new() { Value = true });
+
+        table.WaitForAssertion(() => _queries.Last().OrderBy.ShouldBe("Category desc"), TimeSpan.FromSeconds(15));
+        Table(table).CurrentState.Sort.ShouldBe([new DataTableSort("Category", true)]);
+
+        await _popovers.Find("[data-sort='desc'] input").ChangeAsync(new() { Value = false });
+        table.WaitForAssertion(() => _queries.Last().OrderBy.ShouldBeNull(), TimeSpan.FromSeconds(15));
+    }
+
+    [Fact]
     public async Task An_open_facet_filter_shows_the_counts_of_facets_that_arrive()
     {
         var table = RenderTable();

@@ -20,6 +20,9 @@ public partial class CoworkeeDataTable<T>
     /// </summary>
     [Parameter] public bool? ColumnFilters { get; set; }
 
+    /// <summary>Sort entries (ascending, descending) on top of every column filter, so a header menu sorts and filters in one place.</summary>
+    [Parameter] public bool ColumnFilterSort { get; set; }
+
     private bool Filterable => ColumnFilters ?? Options.DataTable.ColumnFilters;
 
     private IReadOnlyList<FilterChip> FilterChips => _grid is null ? [] :
@@ -40,8 +43,20 @@ public partial class CoworkeeDataTable<T>
         builder.AddComponentParameter(4, nameof(DataTableColumnFilter<T>.Operators), OperatorsOf(column));
         builder.AddComponentParameter(5, nameof(DataTableColumnFilter<T>.LoadBounds), (Func<Task<(object? Min, object? Max)>>)(() => BoundsAsync(column)));
         builder.AddComponentParameter(6, nameof(DataTableColumnFilter<T>.Shown), (Action<bool>)(shown => _shownFilters += shown ? 1 : -1));
+        if (ColumnFilterSort && column.PropertyName is { } property && column.Sortable != false)
+        {
+            builder.AddComponentParameter(7, nameof(DataTableColumnFilter<T>.SortDescending),
+                _grid!.SortDefinitions.TryGetValue(property, out var sort) ? sort.Descending : (bool?)null);
+            builder.AddComponentParameter(8, nameof(DataTableColumnFilter<T>.OnSort), (Func<bool?, Task>)(descending => SortColumnAsync(column, descending)));
+        }
+
         builder.CloseComponent();
     };
+
+    // the header menu's sort: this column only, or none
+    private Task SortColumnAsync(Column<T> column, bool? descending) => descending is { } down
+        ? _grid!.SetSortAsync(column.PropertyName!, down ? SortDirection.Descending : SortDirection.Ascending, column.SortBy)
+        : _grid!.RemoveSortAsync(column.PropertyName!);
 
     // template columns have no property to filter; property columns get the editor unless they bring their own
     private void FitFilter(Column<T> column)

@@ -2311,5 +2311,8 @@
   "{0} s": "{0} с",
   "{0} min": "{0} мин",
   "{0} h": "{0} ч",
-  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Какие данные браузеры хранят в виде копии (выкл., память или SQLite), с лимитами строк и синхронизацией, для каждого набора сущностей."
+  "Which data the browsers keep a copy of (off, memory or SQLite), with row limits and sync, per entity set.": "Какие данные браузеры хранят в виде копии (выкл., память или SQLite), с лимитами строк и синхронизацией, для каждого набора сущностей.",
+  "Sort": "Сортировка",
+  "Ascending": "По возрастанию",
+  "Load more": "Загрузить ещё"
 }

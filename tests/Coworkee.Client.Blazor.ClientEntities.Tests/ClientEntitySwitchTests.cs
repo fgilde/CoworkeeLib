@@ -136,6 +136,25 @@ public sealed class ClientEntitySwitchTests : BunitContext
         popovers.WaitForAssertion(() => Checked(popovers).ShouldBe(("Search in the browser", false, true)));
     }
 
+    [Fact]
+    public async Task Without_a_table_the_switch_shows_the_set_it_names_and_switches_it()
+    {
+        var wait = TimeSpan.FromSeconds(15);
+        var popovers = Render<MudPopoverProvider>();
+        var control = Render<ClientEntitySwitch>(p => p.Add(c => c.EntitySet, "Gadgets"));
+        control.FindAll("[data-testid='client-entity-state']").ShouldBeEmpty();
+        var set = (await _entities.SetAsync<Gadget>("Gadgets", cancellationToken: Ct))!;
+        await set.WhenLocalAsync(Ct);
+        control.WaitForAssertion(() => control.Find("[data-testid='client-entity-state']").GetAttribute("data-state").ShouldBe("synced"), wait);
+
+        await control.Find("[data-testid='client-entity-state']").ClickAsync(new());
+        await popovers.WaitForElement("[data-choice='Server']", wait).ClickAsync(new());
+
+        control.WaitForAssertion(() => control.Find("[data-testid='client-entity-state']").GetAttribute("data-mode").ShouldBe("Server"), wait);
+        set.Mode.ShouldBe(ClientEntityMode.Server);
+        _table.Reloads.ShouldBe(0, "no table to reload");
+    }
+
     // the browser item's text and which of the two items carries the check
     private static (string Browser, bool BrowserChecked, bool ServerChecked) Checked(IRenderedComponent<MudPopoverProvider> popovers) =>
         (popovers.Find("[data-choice='Client']").TextContent.Trim(), popovers.FindAll("[data-choice='Client'] .cw-ce-check").Count == 1,

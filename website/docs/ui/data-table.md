@@ -48,6 +48,8 @@
 | `QueryFields` | the fields of the query builder; by default the property columns and the reference facets |
 | `SavedViews`, `ColumnChooser`, `UrlState`, `StateKey` | the views menu, the column menu, the state in the address bar (all `true`) and the name of its parameter (default the set name in lower case), see [columns, grouping and views](#columns-grouping-and-views) |
 | `RowHref`, `OnRowClick` | open a row by clicking it, see [row links](#row-links) |
+| `RowActions` | `false` drops the action column (open, edit, delete, history); rows still open by a click, see [row links](#row-links) |
+| `Toolbar`, `ColumnChooserContent`, `ViewMenuContent`, `SearchText`, `Sort`, `FacetsLoaded`, `TotalCountChanged`, `ColumnFilterSort`, `ItemTemplate`, `View` | for a list look of the page's own, see [a list look of your own](#a-list-look-of-your-own) |
 | `ChildRowContent` | content under a row, opened by a toggle in front of it |
 | `RealtimeTopic` | the topic that reloads the table; by default `type:{T without Dto}` (`BrandDto` follows `Brand`), `""` turns it off; tables over a `DataSource` stay quiet |
 | `SelectedItemsChanged`, `OnLoaded` | the selection changed; a page of rows arrived |
@@ -357,7 +359,7 @@ Grouped, each open group scrolls on its own (see [groups of the whole result](#c
 
 ## Row links
 
-`RowHref` makes each row lead somewhere, `OnRowClick` runs code instead. A click on the row opens it, clicks on the row's buttons and its checkbox do not. Every such row gets an open button in the action column, so keyboard users reach it with Tab and Enter, and with `RowHref` it is a real link (middle click, open in a new tab).
+`RowHref` makes each row lead somewhere, `OnRowClick` runs code instead. A click on the row opens it, clicks on the row's buttons and its checkbox do not. Every such row gets an open button in the action column, so keyboard users reach it with Tab and Enter, and with `RowHref` it is a real link (middle click, open in a new tab). `RowActions="false"` drops the action column; the row click stays.
 
 ```razor
 <CoworkeeDataTable T="EmployeeDto" EntitySet="Employees" RowHref="@(e => $"/people/{e.Id}")">
@@ -427,6 +429,73 @@ meta.Property(f => f.Scopes).RenderAsChips(e =>
 The property has to be an `IReadOnlyList<string>`. The configuring action sets component parameters directly, so the call sits between `#pragma warning disable BL0005` and `restore`.
 
 `ShowSideSheetAsync<TDialog>` opens your own dialog component the same way, `ConfirmAsync` asks before something that cannot be undone.
+
+## A list look of your own
+
+The table's tool bar, menus and action column are its default look. A page that needs another one (its own filter bar above the rows, a layout dialog, header menus that sort and filter, cards) keeps the table for rows, paging, queries and state and replaces only the parts. Every parameter below is optional; without them the table looks and behaves as before.
+
+**Own column chooser.** `ColumnChooserContent` replaces the column menu in the tool bar; its context is the table. `LayoutColumns` lists the named columns in their order (`Key`, `Title`, `Visible`), `SetColumnsAsync(keys)` shows these columns in this order and hides the rest. A dialog with a live preview renders a second table of the same set (`Toolbar="false"`, `SavedViews="false"`, `UrlState="false"`, a small `PageSize`) and hands its columns over on *Apply*:
+
+```razor
+<CoworkeeDataTable T="ShipmentDto" EntitySet="Shipments">
+    <ColumnChooserContent>
+        <MudButton OnClick="() => ChooseColumnsAsync(context)">@L["Columns"]</MudButton>
+    </ColumnChooserContent>
+    <Columns>...</Columns>
+</CoworkeeDataTable>
+
+@code {
+    private async Task ChooseColumnsAsync(CoworkeeDataTable<ShipmentDto> table)
+    {
+        // the dialog shows table.LayoutColumns as pills and returns the visible keys in their order
+        if (await LayoutDialog.ShowAsync(Dialogs, table.LayoutColumns) is { } visible)
+        {
+            await table.SetColumnsAsync(visible);
+        }
+    }
+}
+```
+
+**Own views menu.** `ViewMenuContent` replaces the bookmark menu; `CurrentState` reads the whole state (search, facets, filters, columns, sort), `ApplyStateAsync(state)` brings one back, also from code (before the first render it is applied once the grid exists). Layouts kept elsewhere, e.g. in the app's own settings, work this way; *Restore defaults* is `ApplyStateAsync(DataTableState.Empty)`.
+
+```razor
+<ViewMenuContent>
+    <LayoutSelect Layouts="_layouts" Current="context.CurrentState" OnSelect="layout => context.ApplyStateAsync(layout.State)" />
+</ViewMenuContent>
+```
+
+**Columns by drag and drop.** `ReorderableColumns` (on by default) lets users drag a column header to another place; the new order is part of `CurrentState` (`ColumnOrder`) like every other layout change, so views and `ApplyStateAsync` keep it.
+
+**Own filter bar.** `Toolbar="false"` removes the tool bar and the filter chips above the rows. The page renders search, sort and facets itself and binds them: `@bind-SearchText` (the table also reports a text it set itself: its box, a view, the address), `@bind-Sort` (a list of `DataTableSort`; a header click reports back), `FacetGroups` with `Selection` for a `FacetBar` or `FacetPanel`, `FacetsLoaded` when new counts arrived and `TotalCount` / `TotalCountChanged` for "15,258 shipments":
+
+```razor
+<MudTextField @bind-Value="_search" Placeholder="@L["Search"]" DebounceInterval="500" />
+<MudSelect T="DataTableSort" Value="_sort.FirstOrDefault()" ValueChanged="s => _sort = [s]">...</MudSelect>
+@if (_table is not null)
+{
+    <FacetBar Groups="_table.FacetGroups" Selection="_table.Selection" />
+}
+<MudText>@L["{0:N0} shipments", _count]</MudText>
+
+<CoworkeeDataTable T="ShipmentDto" EntitySet="Shipments" @ref="_table" Toolbar="false" @bind-SearchText="_search" @bind-Sort="_sort"
+                   FacetsLoaded="_ => StateHasChanged()" TotalCountChanged="c => _count = c">
+```
+
+**Header menus with sort and facets.** `ColumnFilterSort="true"` puts *Sort* (*Ascending*, *Descending*) on top of every column filter. A column with a facet already lists the facet's values with their counts in its filter (see [column filters](#column-filters)), from the server or from the browser's copy of a [client entity](client-entities.md), so the header menu sorts and filters in one place.
+
+**No action column.** `RowActions="false"` drops the column with the open, edit, delete and history buttons. Rows with `RowHref` or `OnRowClick` still open by a click; they lose the keyboard link of the open button, so give the row or its first cell a link of its own where keyboard users need one.
+
+**Cards.** `ItemTemplate` renders one card per row and `View` switches between `Table` (default) and `Cards`. The cards use the table's query (filter, search, facets, sort) in pages of `PageSize`; the next page loads when the end of the cards scrolls into view (or by *Load more*). A click on a card opens it like a row. The grid stays hidden behind the cards, so columns and sort keep their state when the page switches back. The cards sit in a responsive grid; `--cw-card-width` (default `320px`) sets the smallest width of a card.
+
+```razor
+<MudToggleGroup T="DataTableView" @bind-Value="_view">...</MudToggleGroup>
+<CoworkeeDataTable T="ShipmentDto" EntitySet="Shipments" View="_view" PageSize="20" RowHref="@(s => $"/shipments/{s.Id}")">
+    <ItemTemplate>
+        <ShipmentCard Shipment="context" />
+    </ItemTemplate>
+    <Columns>...</Columns>
+</CoworkeeDataTable>
+```
 
 ## Tool bar items
 
