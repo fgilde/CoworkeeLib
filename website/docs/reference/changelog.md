@@ -16,6 +16,8 @@ Changes that need action in apps built on Coworkee. Newest first.
     - `RowActions="false"` drops the action column; rows still open by a click.
     - `ItemTemplate` and `View` (`DataTableView.Table`, `Cards`): the rows as cards with the table's query, the next page when the end of the cards scrolls into view; switching from endless scrolling to cards loads the first page at once.
 - `ClientEntitySwitch` outside a table: `EntitySet` names the set, `Table` is optional now. See [the switch in the table](../ui/client-entities.md#the-switch-in-the-table).
+- Global search pages and totals: `GET /api/v1/search` and `/stream` take `skip` (leave out a provider's first hits, at most `Coworkee:GlobalSearch:MaxSkip`, default 1000) and `totals=true` (`GlobalSearchProviderStatus.Total`, `GlobalSearchEvent.Total`); `IGlobalSearchApi.SearchAsync(text, types, limit, skip, totals)`, `GlobalSearcher.SearchAsync`/`StreamAsync` overloads with `skip` and `totals`. `IGlobalSearchProvider.CountAsync` (default null) counts the matches; sets of `AddGlobalSearch` count. Own `IGlobalSearchApi` fakes keep compiling (default member). See [Pages and totals](../web/global-search.md#pages-and-totals).
+- Notifications: `category` takes several categories separated by commas, `oldestFirst=true` turns the order (`NotificationFilter.OldestFirst`, `GetNotifications.OldestFirst`). See [Notifications](../modules/realtime.md#notifications).
 
 ### Changed
 

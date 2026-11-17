@@ -27,4 +27,7 @@ public interface IGlobalSearchProvider
 
     /// <summary>Hits as they are found, best first per batch; scores from 0 to 1 (<see cref="SearchMatch"/>). The searcher stops at the limit.</summary>
     IAsyncEnumerable<GlobalSearchHit> SearchAsync(GlobalSearchQuery query, GlobalSearchContext context, CancellationToken cancellationToken);
+
+    /// <summary>How many records match in all, for a results page that shows totals and pages (<c>totals=true</c>); null when the provider cannot tell.</summary>
+    Task<long?> CountAsync(GlobalSearchQuery query, GlobalSearchContext context, CancellationToken cancellationToken) => Task.FromResult<long?>(null);
 }

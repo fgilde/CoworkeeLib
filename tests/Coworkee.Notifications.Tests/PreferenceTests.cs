@@ -150,6 +150,20 @@ public sealed class PreferenceTests(NotificationApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_inbox_filters_by_several_categories_and_lists_the_oldest_first_on_request()
+    {
+        await app.PublishAsync(_setup.AdminUserId, _setup.TenantId, Message(TestNotificationModule.Eta) with { Recipients = [_bob.Id] });
+        await app.NotifyAsync(_setup.AdminUserId, _setup.TenantId, _bob.Id);
+        var eta = (await InboxAsync(Bob)).Single(n => n.Type == TestNotificationModule.Eta);
+
+        (await Bob.GetFromJsonAsync<PagedResult<NotificationDto>>("/api/v1/notifications?category=Booking,Shipment", Ct))!.ShouldSatisfyAllConditions(
+            p => p.Items.Single().Id.ShouldBe(eta.Id), p => p.TotalCount.ShouldBe(1));
+        (await Bob.GetFromJsonAsync<PagedResult<NotificationDto>>("/api/v1/notifications?category=Booking,Comment", Ct))!.Items.ShouldBeEmpty();
+        (await Bob.GetFromJsonAsync<PagedResult<NotificationDto>>("/api/v1/notifications", Ct))!.Items[^1].Id.ShouldBe(eta.Id);
+        (await Bob.GetFromJsonAsync<PagedResult<NotificationDto>>("/api/v1/notifications?oldestFirst=true", Ct))!.Items[0].Id.ShouldBe(eta.Id);
+    }
+
+    [Fact]
     public async Task Delayed_mails_wait_and_a_newer_change_of_the_same_entity_replaces_the_waiting_one()
     {
         var clock = new FakeTimeProvider(DateTimeOffset.UtcNow);

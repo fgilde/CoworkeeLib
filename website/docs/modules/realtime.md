@@ -164,7 +164,7 @@ The bell shows the unread count and the latest ten; a notification that arrives 
 
 | Endpoint | |
 |---|---|
-| `GET /api/v1/notifications?unreadOnly=&type=&category=&done=&search=&page=&pageSize=` | newest first (at most 100 per page); filters: unread, type, category, open (`done=false`) or done, text in title or body |
+| `GET /api/v1/notifications?unreadOnly=&type=&category=&done=&search=&oldestFirst=&page=&pageSize=` | newest first, `oldestFirst=true` the other way (at most 100 per page); filters: unread, type, category (several separated by commas: `category=Shipment,Booking`), open (`done=false`) or done, text in title or body. In Blazor: `ICoworkeeApi.GetNotificationsAsync(new NotificationFilter(Category: "Shipment,Booking", OldestFirst: true), page)` |
 | `GET /api/v1/notifications/unread-count` | |
 | `GET /api/v1/notifications/counts` | open, unread and open per category |
 | `POST /api/v1/notifications/{id}/read`, `/{id}/unread` | |

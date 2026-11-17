@@ -17,6 +17,9 @@
     - `ItemTemplate` und `View` (`DataTableView.Table`, `Cards`): die Zeilen als Karten mit der Abfrage der Tabelle, die nächste Seite, sobald das Ende der Karten ins Bild scrollt; der Wechsel vom endlosen Scrollen zu den Karten lädt die erste Seite sofort.
 - `ClientEntitySwitch` außerhalb einer Tabelle: `EntitySet` nennt das Set, `Table` ist jetzt optional. Siehe [Der Schalter in der Tabelle](../ui/client-entities.de.md#der-schalter-in-der-tabelle).
 
+- Seiten und Gesamtzahlen der globalen Suche: `GET /api/v1/search` und `/stream` nehmen `skip` (lässt die ersten Treffer eines Providers aus, höchstens `Coworkee:GlobalSearch:MaxSkip`, Standard 1000) und `totals=true` (`GlobalSearchProviderStatus.Total`, `GlobalSearchEvent.Total`); `IGlobalSearchApi.SearchAsync(text, types, limit, skip, totals)`, Überladungen von `GlobalSearcher.SearchAsync`/`StreamAsync` mit `skip` und `totals`. `IGlobalSearchProvider.CountAsync` (Vorgabe null) zählt die Treffer; Sets aus `AddGlobalSearch` zählen. Eigene `IGlobalSearchApi`-Fakes kompilieren weiter (Standard-Member). Siehe [Seiten und Gesamtzahlen](../web/global-search.de.md#seiten-und-gesamtzahlen).
+- Benachrichtigungen: `category` nimmt mehrere Kategorien durch Kommas getrennt, `oldestFirst=true` dreht die Reihenfolge (`NotificationFilter.OldestFirst`, `GetNotifications.OldestFirst`). Siehe [Benachrichtigungen](../modules/realtime.de.md#benachrichtigungen).
+
 ### Geändert
 
 - Mit `?embed=1` geöffnete Seiten (Fenster von AirWorks) folgen Änderungen der Einstellungen jetzt live wie die volle App (`SettingsLiveUpdates` ist vom Rahmen in die Shell gewandert).

@@ -57,6 +57,17 @@ public sealed class GlobalSearchODataTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_page_skips_the_hits_before_it_and_totals_count_every_visible_match()
+    {
+        var page = await Admin.GetFromJsonAsync<GlobalSearchResult>("/api/v1/search?types=gadgets&q=lamp&limit=1&skip=1&totals=true", Ct);
+
+        page!.Hits.Select(h => h.Title).ShouldBe(["Lamp shade"]);
+        page.Providers.ShouldHaveSingleItem().ShouldSatisfyAllConditions(p => p.Count.ShouldBe(1), p => p.Total.ShouldBe(3));
+        (await SearchAsync(Admin, "lamp"))!.Providers.Single().Total.ShouldBeNull();
+        (await Admin.GetFromJsonAsync<GlobalSearchResult>("/api/v1/search?types=gadgets&q=%22Lamp%22&totals=true", Ct))!.Providers.Single().Total.ShouldBe(1);
+    }
+
+    [Fact]
     public async Task Quotes_find_exact_values_and_an_id_finds_its_row()
     {
         (await SearchAsync(Admin, "\"lamp\""))!.Hits.Select(h => h.Title).ShouldBe(["Lamp"]);

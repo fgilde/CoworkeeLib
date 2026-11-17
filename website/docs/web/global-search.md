@@ -95,6 +95,8 @@ public sealed class TicketSearch : IGlobalSearchProvider
 services.AddGlobalSearchProvider<TicketSearch>();
 ```
 
+For [totals](#pages-and-totals) a provider also implements `Task<long?> CountAsync(GlobalSearchQuery query, GlobalSearchContext context, CancellationToken ct)` (the interface's default answers null).
+
 ## Search index (Elasticsearch)
 
 With the [search module](../modules/search.md) an index alias becomes a provider. The index cannot apply the rules of the database: each document carries its organisation (`tenantId`, set another field with `TenantField`), and `Where` adds the filters a user needs.
@@ -110,12 +112,23 @@ services.AddGlobalSearchIndex("myapp-products", s => s
 
 | Endpoint | Answer |
 |---|---|
-| `GET /api/v1/search?q=&types=&limit=` | all hits best first and how each provider ended (`GlobalSearchResult`) |
-| `GET /api/v1/search/stream?q=&types=&limit=` | JSON lines (`application/x-ndjson`): each hit as soon as it is found, then one line per provider with `Done`, `TimedOut` or `Failed` |
+| `GET /api/v1/search?q=&types=&limit=&skip=&totals=` | all hits best first and how each provider ended (`GlobalSearchResult`) |
+| `GET /api/v1/search/stream?q=&types=&limit=&skip=&totals=` | JSON lines (`application/x-ndjson`): each hit as soon as it is found, then one line per provider with `Done`, `TimedOut` or `Failed` |
 | `GET /api/v1/search/providers` | the providers the user may use, with `Local` for searching a local copy |
 | `GET /api/v1/search/fields` | the declared search fields of every set the user may read, as OData paths, for [data tables](../ui/data-table.md#search-fields) |
 
 `types` is a comma list of provider names, `limit` the hits per provider (`Coworkee:GlobalSearch:DefaultLimit`, default 5, at most `MaxLimit`, default 50). A provider still busy after `Coworkee:GlobalSearch:ProviderTimeout` (3 s) ends as `timedOut` without holding up the others; a request the browser cancels stops all of them. Hits pass the [response filters](response-filters.md) like any answer of the API, so a `ResponseFilter<GlobalSearchHit>` can hide subtitles from some users.
+
+### Pages and totals
+
+A results page that shows a table per type with a pager asks for one type at a time: `skip` leaves out the provider's first hits (at most `Coworkee:GlobalSearch:MaxSkip`, default 1000; each page reads the hits before it), `totals=true` adds how many records match in all, `GlobalSearchProviderStatus.Total` (in the stream `Total` on the provider's last line). Sets searched with `AddGlobalSearch` count the rows the search can find (every word in one of the fields, the same rows and organisations as the hits); an own provider counts by implementing `CountAsync`, without it `Total` stays null.
+
+```csharp
+// page 3 of the shipments, 5 per page, with the total for "x-y of n"
+var result = await search.SearchAsync("S0522", ["shipment"], limit: 5, skip: 10, totals: true);
+var shown = result.Hits;                                  // hits 11 to 15
+var total = result.Providers.Single().Total;              // e.g. 42
+```
 
 The stream goes through the BFF line by line (it does not buffer) and sends `X-Accel-Buffering: no` for nginx; other proxies in front of the app must not buffer `application/x-ndjson` either.
 

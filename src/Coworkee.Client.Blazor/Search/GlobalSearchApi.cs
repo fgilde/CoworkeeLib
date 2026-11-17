@@ -11,6 +11,14 @@ internal sealed class GlobalSearchApi(HttpClient http) : Api.ApiClientBase(http)
             + (types is { Count: > 0 } ? $"&types={Uri.EscapeDataString(string.Join(',', types))}" : string.Empty)
             + (limit is { } top ? $"&limit={top}" : string.Empty), cancellationToken);
 
+    public Task<GlobalSearchResult> SearchAsync(string text, IReadOnlyCollection<string>? types = null, int? limit = null, int skip = 0, bool totals = false,
+        CancellationToken cancellationToken = default) =>
+        GetAsync<GlobalSearchResult>($"{Root}?q={Uri.EscapeDataString(text)}"
+            + (types is { Count: > 0 } ? $"&types={Uri.EscapeDataString(string.Join(',', types))}" : string.Empty)
+            + (limit is { } top ? $"&limit={top}" : string.Empty)
+            + (skip > 0 ? $"&skip={skip}" : string.Empty)
+            + (totals ? "&totals=true" : string.Empty), cancellationToken);
+
     public Task<IReadOnlyList<GlobalSearchProviderDto>> GetProvidersAsync(CancellationToken cancellationToken = default) =>
         GetAsync<IReadOnlyList<GlobalSearchProviderDto>>($"{Root}/providers", cancellationToken);
 

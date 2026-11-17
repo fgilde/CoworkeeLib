@@ -11,4 +11,7 @@ public sealed class GlobalSearchOptions
     public int DefaultLimit { get; set; } = 5;
 
     public int MaxLimit { get; set; } = 50;
+
+    /// <summary>The deepest page: hits of a provider a caller may skip (each page reads the hits before it).</summary>
+    public int MaxSkip { get; set; } = 1000;
 }

@@ -164,7 +164,7 @@ Die Glocke zeigt die Zahl der ungelesenen und die letzten zehn; eine neu eintref
 
 | Endpunkt | |
 |---|---|
-| `GET /api/v1/notifications?unreadOnly=&type=&category=&done=&search=&page=&pageSize=` | neueste zuerst (höchstens 100 pro Seite); Filter: ungelesen, Typ, Kategorie, offen (`done=false`) oder erledigt, Text in Titel oder Inhalt |
+| `GET /api/v1/notifications?unreadOnly=&type=&category=&done=&search=&oldestFirst=&page=&pageSize=` | neueste zuerst, mit `oldestFirst=true` umgekehrt (höchstens 100 pro Seite); Filter: ungelesen, Typ, Kategorie (mehrere durch Kommas getrennt: `category=Shipment,Booking`), offen (`done=false`) oder erledigt, Text in Titel oder Inhalt. In Blazor: `ICoworkeeApi.GetNotificationsAsync(new NotificationFilter(Category: "Shipment,Booking", OldestFirst: true), page)` |
 | `GET /api/v1/notifications/unread-count` | |
 | `GET /api/v1/notifications/counts` | offene, ungelesene und offene pro Kategorie |
 | `POST /api/v1/notifications/{id}/read`, `/{id}/unread` | |

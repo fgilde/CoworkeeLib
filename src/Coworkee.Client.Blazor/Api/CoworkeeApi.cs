@@ -414,7 +414,8 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
             $"api/v1/notifications?unreadOnly={filter.UnreadOnly.ToString().ToLowerInvariant()}&page={page.Page}&pageSize={page.PageSize}"
             + (filter.Category is { } category ? $"&category={Uri.EscapeDataString(category)}" : string.Empty)
             + (filter.Done is { } done ? $"&done={done.ToString().ToLowerInvariant()}" : string.Empty)
-            + (string.IsNullOrWhiteSpace(filter.Search) ? string.Empty : $"&search={Uri.EscapeDataString(filter.Search)}"), cancellationToken);
+            + (string.IsNullOrWhiteSpace(filter.Search) ? string.Empty : $"&search={Uri.EscapeDataString(filter.Search)}")
+            + (filter.OldestFirst ? "&oldestFirst=true" : string.Empty), cancellationToken);
 
     public Task<NotificationCountsDto> GetNotificationCountsAsync(CancellationToken cancellationToken = default) =>
         GetAsync<NotificationCountsDto>("api/v1/notifications/counts", cancellationToken);

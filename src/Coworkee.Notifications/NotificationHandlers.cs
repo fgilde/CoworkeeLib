@@ -32,9 +32,9 @@ internal sealed class NotificationHandlers(CoworkeeDbContext db, ICurrentUser cu
             mine = mine.Where(n => n.Type == type);
         }
 
-        if (query.Category is { Length: > 0 } category)
+        if (query.Category?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) is { Length: > 0 } categories)
         {
-            mine = mine.Where(n => n.Category == category);
+            mine = categories.Length == 1 ? mine.Where(n => n.Category == categories[0]) : mine.Where(n => categories.Contains(n.Category!));
         }
 
         if (query.Done is { } done)
@@ -51,7 +51,8 @@ internal sealed class NotificationHandlers(CoworkeeDbContext db, ICurrentUser cu
         var page = Math.Max(1, query.Page.Page);
         var pageSize = Math.Clamp(query.Page.PageSize, 1, 100);
         var total = await mine.CountAsync(cancellationToken);
-        var items = await mine.OrderByDescending(n => n.CreatedAt).ThenByDescending(n => n.Id)
+        var sorted = query.OldestFirst ? mine.OrderBy(n => n.CreatedAt).ThenBy(n => n.Id) : mine.OrderByDescending(n => n.CreatedAt).ThenByDescending(n => n.Id);
+        var items = await sorted
             .Skip((page - 1) * pageSize).Take(pageSize)
             .Select(n => new NotificationDto(n.Id, n.Type, n.Title, n.Body, n.Link, n.CreatedAt, n.ReadAt, n.Arguments, n.Category, n.DoneAt))
             .ToListAsync(cancellationToken);

@@ -14,13 +14,15 @@ internal static class GlobalSearchEndpoints
     public static void MapGlobalSearchEndpoints(this IEndpointRouteBuilder app)
     {
         var search = app.MapCoworkeeApi("/api/v1/search").WithTags("Search").RequireAuthorization();
-        search.MapGet("/", (string? q, string? types, int? limit, GlobalSearcher searcher, CancellationToken ct) => searcher.SearchAsync(q, Split(types), limit, ct));
+        // skip and totals: a results page that pages through one type and shows how many records match
+        search.MapGet("/", (string? q, string? types, int? limit, int? skip, bool? totals, GlobalSearcher searcher, CancellationToken ct) =>
+            searcher.SearchAsync(q, Split(types), limit, skip ?? 0, totals == true, ct));
         search.MapGet("/providers", async (GlobalSearcher searcher, CancellationToken ct) =>
             (await searcher.AvailableAsync(ct)).Select(p => new GlobalSearchProviderDto(p.Name, p.Group, p.Icon) { Local = p.Local }).ToList());
         // the search box of a data table that names no fields of its own
         search.MapGet("/fields", SearchFieldsAsync);
-        search.MapGet("/stream", (string? q, string? types, int? limit, GlobalSearcher searcher, CancellationToken ct) =>
-                new GlobalSearchStream(searcher.StreamAsync(q, Split(types), limit, ct)))
+        search.MapGet("/stream", (string? q, string? types, int? limit, int? skip, bool? totals, GlobalSearcher searcher, CancellationToken ct) =>
+                new GlobalSearchStream(searcher.StreamAsync(q, Split(types), limit, skip ?? 0, totals == true, ct)))
             .Produces<GlobalSearchEvent>(contentType: NdJson);
     }
 

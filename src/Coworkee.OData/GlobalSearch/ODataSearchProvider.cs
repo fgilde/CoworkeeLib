@@ -105,6 +105,27 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
         }
     }
 
+    // every row the two rounds can find: a prefix of the text contains each of its words, so the second round's rows hold the first round's
+    public async Task<long?> CountAsync(GlobalSearchQuery query, GlobalSearchContext context, CancellationToken cancellationToken)
+    {
+        var visible = await ODataEntityAccess.VisibleAsync<T>(context.Services, cancellationToken);
+        var denied = await ODataEntityAccess.DeniedPropertiesAsync(context.Services, typeof(T), cancellationToken);
+        var fields = Enumerable.Range(0, _options.SearchFields.Count).Where(i => !denied.Contains(MemberName(_options.SearchFields[i]))).ToList();
+        if (fields.Count == 0)
+        {
+            return 0;
+        }
+
+        var rows = query.Id is { } id
+            ? _id.PropertyType == typeof(Guid) ? visible.Where(IdIs(id)) : visible.Where(_ => false)
+            : query.Exact
+                ? visible.Where(AnyField(fields, value => Expression.Equal(value, Parameter(query.Text.ToLowerInvariant()))))
+                : query.Words.Aggregate(visible, (found, word) =>
+                    found.Where(AnyField(fields, value => Expression.Call(value, Contains, Parameter(word.ToLowerInvariant())))));
+        var scoped = await ODataNavigationScope.For(context.Services, typeof(T)).ApplyAsync(rows, cancellationToken);
+        return await scoped.LongCountAsync(cancellationToken);
+    }
+
     // search fields may read through navigations: the scope keeps them to rows the user may see, and their values come from the query, so a
     // field through a navigation shows a hidden row's value neither in the match nor in the title
     private async Task<IEnumerable<GlobalSearchHit>> HitsAsync(
