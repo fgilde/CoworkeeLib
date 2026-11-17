@@ -38,6 +38,8 @@ public partial class Reports
 
     [Inject] private State.ReportDrafts Drafts { get; set; } = null!;
 
+    [Inject] private ReportingOptions Options { get; set; } = null!;
+
     private IEnumerable<ReportSummaryDto> Shown => (_reports ?? [])
         .Where(r => _scope switch
         {
@@ -53,13 +55,17 @@ public partial class Reports
     protected override async Task OnInitializedAsync()
     {
         await ReloadAsync();
-        await RunAsync(async () => _dashboard = await Api.GetDashboardAsync());
+        if (Options.Dashboards)
+        {
+            await RunAsync(async () => _dashboard = await Api.GetDashboardAsync());
+        }
+
         _ai = await Permissions.HasAsync(ReportPermissions.Manage) && await Api.IsAiAvailableAsync();
     }
 
     private async Task ReloadAsync() => _reports = [.. await Api.GetReportsAsync()];
 
-    private void Open(ReportSummaryDto report) => Nav.NavigateTo($"reports/{report.Id}");
+    private void Open(ReportSummaryDto report) => Nav.NavigateTo(Options.Path(report.Id.ToString()));
 
     private string Owner(ReportSummaryDto report) => report.IsOwner ? L["by you"] : L["by {0}", report.OwnerName ?? "?"];
 
@@ -90,7 +96,7 @@ public partial class Reports
         {
             var report = await Api.CreateAsync(new SaveReportRequest(settings.Name, settings.Description, settings.Icon, settings.Visibility, settings.RoleIds,
                 new ReportDefinition { RefreshSeconds = settings.RefreshSeconds }, settings.GroupIds));
-            Nav.NavigateTo($"reports/{report.Id}?edit=true");
+            Nav.NavigateTo(Options.Path($"{report.Id}?edit=true"));
         });
     }
 
@@ -100,7 +106,7 @@ public partial class Reports
         if (await ReportAiDialog.ShowAsync(Dialogs, L["Create with AI"], null) is { } definition)
         {
             Drafts.Set(new SaveReportRequest(L["New report"], null, null, ReportVisibility.Private, [], definition));
-            Nav.NavigateTo("reports/new");
+            Nav.NavigateTo(Options.Path("new"));
         }
     }
 
@@ -113,7 +119,7 @@ public partial class Reports
     private async Task DuplicateAsync(ReportSummaryDto report) => await RunAsync(async () =>
     {
         var copy = await Api.DuplicateAsync(report.Id);
-        Nav.NavigateTo($"reports/{copy.Id}?edit=true");
+        Nav.NavigateTo(Options.Path($"{copy.Id}?edit=true"));
     });
 
     private async Task ExportAsync(ReportSummaryDto summary) => await RunAsync(async () =>
@@ -148,7 +154,7 @@ public partial class Reports
             var imported = await JsonSerializer.DeserializeAsync<ReportFile>(stream, Json) ?? throw new JsonException();
             var report = await Api.CreateAsync(new SaveReportRequest(imported.Name, imported.Description, imported.Icon, ReportVisibility.Private, [], imported.Definition));
             Snackbar.Add(L["{0} imported.", report.Name], Severity.Success);
-            Nav.NavigateTo($"reports/{report.Id}");
+            Nav.NavigateTo(Options.Path(report.Id.ToString()));
         });
     }
 

@@ -24,7 +24,7 @@ else
         <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["Open a report and choose it as your dashboard."]</MudText>
         @if (_canView)
         {
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.SpaceDashboard" Href="reports" Class="mt-2" data-testid="dashboard-choose">@L["Choose a report"]</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.SpaceDashboard" Href="@Options.Path()" Class="mt-2" data-testid="dashboard-choose">@L["Choose a report"]</MudButton>
         }
     </div>
 }

@@ -27,6 +27,8 @@ public partial class ReportSubscriptions
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
+    [Inject] private ReportingOptions Options { get; set; } = null!;
+
     protected override async Task OnInitializedAsync()
     {
         _canSeeAll = await Permissions.HasAsync(ReportPermissions.Subscriptions);

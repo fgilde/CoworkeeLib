@@ -26,6 +26,8 @@ public partial class ReportDashboard
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
+    [Inject] private ReportingOptions Options { get; set; } = null!;
+
     /// <summary>Shown while no report is the dashboard, e.g. the app's dashboard without reports.</summary>
     [Parameter] public RenderFragment? ChildContent { get; set; }
 

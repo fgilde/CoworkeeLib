@@ -14,6 +14,8 @@ public partial class ChartWidget
 
     [Inject] private ReportTheme Theme { get; set; } = null!;
 
+    [Inject] private ReportingOptions Reporting { get; set; } = null!;
+
     // ApexCharts keeps markers on area and line charts whatever the options say; many points read better without
     private string Markers => Widget.Options.Chart == ChartKind.Line && _series.FirstOrDefault()?.Points.Count <= 24 ? "true" : "false";
 
@@ -79,6 +81,7 @@ public partial class ChartWidget
             ChartOptions.TimeAxis(options, Query!.GroupBy!.Bucket);
         }
 
+        Reporting.ConfigureChart?.Invoke(options, Widget.Options);
         return options;
     }
 

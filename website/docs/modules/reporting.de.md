@@ -21,6 +21,34 @@ builder.Services.AddCoworkeeReporting(baseAddress, reports => reports
 
 Nimm `typeof(Coworkee.Client.Blazor.Reporting.ReportingOptions).Assembly` in die `AdditionalAssemblies` des Routers auf (in `Routes.razor` und in `AddAdditionalAssemblies` des Web-Hosts) und erzeuge eine Migration für die Tabellen `cw.Reports`, `cw.ReportFavorites`, `cw.DashboardReports` und `cw.ReportSubscriptions`. Das Modul hängt vom [Mailing-Modul](mailing.md) ab (Abo-Mails), das `cw.OutgoingMailAttachments` mitbringt. Neue Apps bekommen das alles mit der Template-Option `--reports` (standardmäßig an).
 
+## Berichte in einer anderen App
+
+Ein zweiter Client (ein Kundenportal neben der internen App) kann die Berichte unter eigenem Pfad und im eigenen Look anbieten oder `ReportPage` in einer eigenen Seite rendern:
+
+```csharp
+builder.Services.AddCoworkeeReporting(baseAddress, reports =>
+{
+    reports.BasePath = "dynamic-reports";   // /reports gehört in dieser App etwas anderem
+    reports.Dashboards = false;             // keine Coworkee-Startseite: kein "Als mein Dashboard festlegen"
+    reports.Subscriptions = false;          // hier keine Abo-Seite: kein "Per Mail abonnieren"
+    reports.DataPages = false;              // Drill-down nur auf Seiten aus DrillDown
+    reports.Colors = ["#002C61", "#00B6E8", "#D3D800", "#E89A00"];   // Reihenfarben statt der des Themes
+    reports.ConfigureChart = (chart, widget) =>                       // die ApexCharts-Optionen jedes Diagramms, zuletzt
+    {
+        chart.Grid!.StrokeDashArray = 0;
+        chart.PlotOptions!.Bar!.BorderRadius = 0;
+    };
+});
+```
+
+```razor
+@page "/dynamic-reports/{Id:guid}"
+@* die Seite der Bibliothek in der Seite der App; AllowEdit="false" lässt sie nur lesend, auch für den Besitzer *@
+<ReportPage Id="Id" AllowEdit="_canEdit" />
+```
+
+`BasePath` ändert die Routen der Bibliotheksseiten, die Links zwischen ihnen (zurück zur Liste, ein neuer oder kopierter Bericht, die Abos) und den Navigationseintrag. Die eigene Palette eines Widgets geht `Colors` weiter vor.
+
 ## Deine Entitätsmengen als Datenquellen
 
 Berichte nutzen, was du ohnehin für OData registriert hast, sonst nichts:

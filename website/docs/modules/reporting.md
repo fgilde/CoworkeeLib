@@ -21,6 +21,34 @@ builder.Services.AddCoworkeeReporting(baseAddress, reports => reports
 
 Add `typeof(Coworkee.Client.Blazor.Reporting.ReportingOptions).Assembly` to the router's `AdditionalAssemblies` (in `Routes.razor` and in `AddAdditionalAssemblies` of the web host) and create a migration for the tables `cw.Reports`, `cw.ReportFavorites`, `cw.DashboardReports` and `cw.ReportSubscriptions`. The module depends on the [mailing module](mailing.md) (subscription mails), which brings `cw.OutgoingMailAttachments`. New apps get all of this with the template option `--reports` (on by default).
 
+## Reports in another app
+
+A second client (a customer portal next to the internal app) can host the reports with its own path and look, or render `ReportPage` inside a page of its own:
+
+```csharp
+builder.Services.AddCoworkeeReporting(baseAddress, reports =>
+{
+    reports.BasePath = "dynamic-reports";   // /reports belongs to something else in this app
+    reports.Dashboards = false;             // no Coworkee home page: no "Set as my dashboard"
+    reports.Subscriptions = false;          // no subscriptions page here: no "Subscribe by mail"
+    reports.DataPages = false;              // drill down only to pages registered with DrillDown
+    reports.Colors = ["#002C61", "#00B6E8", "#D3D800", "#E89A00"];   // series colours instead of the theme's
+    reports.ConfigureChart = (chart, widget) =>                       // every chart's ApexCharts options, last
+    {
+        chart.Grid!.StrokeDashArray = 0;
+        chart.PlotOptions!.Bar!.BorderRadius = 0;
+    };
+});
+```
+
+```razor
+@page "/dynamic-reports/{Id:guid}"
+@* the library page inside the app's page; AllowEdit="false" keeps it read-only, also for its owner *@
+<ReportPage Id="Id" AllowEdit="_canEdit" />
+```
+
+`BasePath` changes the routes of the library pages, the links between them (back to the list, a new or duplicated report, the subscriptions) and the navigation entry. A widget's own palette still wins over `Colors`.
+
 ## Your entity sets as data sources
 
 Reports use what you already registered for OData, nothing else:

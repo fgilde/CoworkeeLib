@@ -9,12 +9,14 @@ public sealed class ReportTheme : IDisposable
 {
     private readonly IJSRuntime _js;
     private readonly ThemeService? _themes;
+    private readonly IReadOnlyList<string>? _colors;
     private Task<ChartPalette>? _palette;
 
-    public ReportTheme(IJSRuntime js, ThemeService? themes = null)
+    public ReportTheme(IJSRuntime js, ThemeService? themes = null, ReportingOptions? options = null)
     {
         _js = js;
         _themes = themes;
+        _colors = options?.Colors is { Count: > 0 } colors ? colors : null;
         if (_themes is not null)
         {
             _themes.Changed += Reset;
@@ -23,7 +25,14 @@ public sealed class ReportTheme : IDisposable
 
     public event Action? Changed;
 
-    public Task<ChartPalette> GetAsync() => _palette ??= LoadAsync();
+    /// <summary>The theme's colours; <see cref="ReportingOptions.Colors"/> replace its series colours.</summary>
+    public Task<ChartPalette> GetAsync() => _palette ??= WithColorsAsync();
+
+    private async Task<ChartPalette> WithColorsAsync()
+    {
+        var palette = await LoadAsync();
+        return _colors is null ? palette : palette with { Colors = [.. _colors] };
+    }
 
     /// <summary>After the app bar toggled dark mode: the variables change on the next render.</summary>
     public void Reset()

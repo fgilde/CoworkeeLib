@@ -20,7 +20,7 @@ else
 {
     <div class="cw-report-page @(_editing ? "cw-report-editing" : null)" data-testid="report-page">
         <div class="cw-report-header">
-            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="reports" aria-label="@L["Reports"]" Class="cw-no-print" />
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="@Options.Path()" aria-label="@L["Reports"]" Class="cw-no-print" />
             <div class="cw-report-card-icon"><MudIcon Icon="@(_report.Icon ?? Icons.Material.Outlined.SpaceDashboard)" /></div>
             <div class="cw-report-heading">
                 <div class="cw-report-name">
@@ -68,21 +68,27 @@ else
                         </MudTooltip>
                     }
                     <MudTooltip Text="@L["Refresh"]"><MudIconButton Icon="@Icons.Material.Outlined.Refresh" OnClick="_state.Refresh" data-testid="report-refresh" /></MudTooltip>
-                    <MudTooltip Text="@L["Subscribe by mail"]"><MudIconButton Icon="@Icons.Material.Outlined.ForwardToInbox" OnClick="SubscribeAsync" data-testid="report-subscribe" /></MudTooltip>
+                    @if (Options.Subscriptions)
+                    {
+                        <MudTooltip Text="@L["Subscribe by mail"]"><MudIconButton Icon="@Icons.Material.Outlined.ForwardToInbox" OnClick="SubscribeAsync" data-testid="report-subscribe" /></MudTooltip>
+                    }
                     <MudTooltip Text="@L["Presentation"]"><MudIconButton Icon="@Icons.Material.Outlined.Fullscreen" OnClick="PresentAsync" /></MudTooltip>
                     <MudMenu Icon="@Icons.Material.Outlined.FileDownload" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense" aria-label="@L["Export"]" data-testid="report-export">
                         <MudMenuItem Icon="@Icons.Material.Outlined.Image" OnClick="PngAsync">@L["Image (PNG)"]</MudMenuItem>
                         <MudMenuItem Icon="@Icons.Material.Outlined.PictureAsPdf" OnClick="PrintAsync">@L["PDF or print"]</MudMenuItem>
                         <MudMenuItem Icon="@Icons.Material.Outlined.DataObject" OnClick="ExportJsonAsync">@L["Report file (JSON)"]</MudMenuItem>
                     </MudMenu>
-                    <MudMenu Icon="@(_dashboard?.ReportId == _report.Id ? Icons.Material.Filled.Dashboard : Icons.Material.Outlined.Dashboard)" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight"
-                             Dense="Density.Dense" aria-label="@L["Dashboard"]" data-testid="report-dashboard">
-                        <DashboardMenuItems ReportId="_report.Id" @bind-Dashboard="_dashboard" />
-                    </MudMenu>
+                    @if (Options.Dashboards)
+                    {
+                        <MudMenu Icon="@(_dashboard?.ReportId == _report.Id ? Icons.Material.Filled.Dashboard : Icons.Material.Outlined.Dashboard)" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight"
+                                 Dense="Density.Dense" aria-label="@L["Dashboard"]" data-testid="report-dashboard">
+                            <DashboardMenuItems ReportId="_report.Id" @bind-Dashboard="_dashboard" />
+                        </MudMenu>
+                    }
                     <PermissionGate Permission="@ReportPermissions.Manage">
                         <MudTooltip Text="@L["Duplicate"]"><MudIconButton Icon="@Icons.Material.Outlined.ContentCopy" OnClick="DuplicateAsync" /></MudTooltip>
                     </PermissionGate>
-                    @if (_report.CanEdit)
+                    @if (CanEdit)
                     {
                         <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Edit" OnClick="StartEdit" data-testid="report-edit">@L["Edit"]</MudButton>
                     }
@@ -111,7 +117,7 @@ else
                                 }
                             </div>
                         }
-                        else if (_report.CanEdit)
+                        else if (CanEdit)
                         {
                             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Edit" OnClick="StartEdit">@L["Edit"]</MudButton>
                         }

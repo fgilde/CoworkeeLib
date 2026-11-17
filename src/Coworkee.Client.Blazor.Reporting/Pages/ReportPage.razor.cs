@@ -50,9 +50,16 @@ public partial class ReportPage : IAsyncDisposable
 
     [Inject] private ReportDrafts Drafts { get; set; } = null!;
 
+    [Inject] private ReportingOptions Options { get; set; } = null!;
+
     [Parameter] public Guid Id { get; set; }
 
     [SupplyParameterFromQuery(Name = "edit")] public bool Edit { get; set; }
+
+    /// <summary>False shows the report read-only, also to its owner (e.g. while a feature of the host app keeps editing off).</summary>
+    [Parameter] public bool AllowEdit { get; set; } = true;
+
+    private bool CanEdit => AllowEdit && _report?.CanEdit == true;
 
     // reports/new: a draft that exists only here until it is saved
     private bool IsNew => Id == Guid.Empty;
@@ -68,7 +75,7 @@ public partial class ReportPage : IAsyncDisposable
             _report = draft is null ? await Api.GetReportAsync(Id) : new ReportDto(Id, draft.Name, draft.Description, draft.Icon, draft.Visibility, draft.RoleIds, null, true, false, new ReportDefinition(), null, draft.GroupIds);
             _definition = Clone(_report.Definition);
             _state = new ReportState(_definition, await sources);
-            _editing = (Edit || IsNew) && _report.CanEdit;
+            _editing = (Edit || IsNew) && CanEdit;
             _snapshot = Serialize();
             if (draft is not null)
             {
@@ -76,7 +83,7 @@ public partial class ReportPage : IAsyncDisposable
                 Apply(draft.Definition);
             }
 
-            _ai = _report.CanEdit && await Api.IsAiAvailableAsync();
+            _ai = CanEdit && await Api.IsAiAvailableAsync();
             StartTimer();
         }
         catch (ApiException exception)
@@ -87,7 +94,7 @@ public partial class ReportPage : IAsyncDisposable
 
         try
         {
-            _dashboard = IsNew ? null : await Api.GetDashboardAsync();
+            _dashboard = IsNew || !Options.Dashboards ? null : await Api.GetDashboardAsync();
         }
         catch (ApiException)
         {
@@ -106,7 +113,7 @@ public partial class ReportPage : IAsyncDisposable
     {
         if (IsNew)
         {
-            Nav.NavigateTo("reports");
+            Nav.NavigateTo(Options.Path());
             return;
         }
 
@@ -125,7 +132,7 @@ public partial class ReportPage : IAsyncDisposable
             {
                 var created = await Api.CreateAsync(request);
                 Snackbar.Add(L["Report saved."], Severity.Success);
-                Nav.NavigateTo($"reports/{created.Id}", replace: true);
+                Nav.NavigateTo(Options.Path(created.Id.ToString()), replace: true);
                 return;
             }
 
@@ -285,7 +292,7 @@ public partial class ReportPage : IAsyncDisposable
         }
         catch (ApiException)
         {
-            Nav.NavigateTo("reports");
+            Nav.NavigateTo(Options.Path());
         }
     }
 
@@ -336,7 +343,7 @@ public partial class ReportPage : IAsyncDisposable
                 options.Action = L["My subscriptions"];
                 options.OnClick = _ =>
                 {
-                    Nav.NavigateTo("reports/subscriptions");
+                    Nav.NavigateTo(Options.Path("subscriptions"));
                     return Task.CompletedTask;
                 };
             });
@@ -356,7 +363,7 @@ public partial class ReportPage : IAsyncDisposable
     private async Task DuplicateAsync()
     {
         var copy = await Api.DuplicateAsync(_report!.Id);
-        Nav.NavigateTo($"reports/{copy.Id}?edit=true");
+        Nav.NavigateTo(Options.Path($"{copy.Id}?edit=true"));
     }
 
     private async Task PngAsync()

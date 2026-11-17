@@ -2,7 +2,7 @@
 
 <ReportStyles />
 <PageHeader Title="Report subscriptions" Description="Reports that come by mail on a schedule, with the data each subscriber may see.">
-    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.SpaceDashboard" Href="reports">@L["Reports"]</MudButton>
+    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.SpaceDashboard" Href="@Options.Path()">@L["Reports"]</MudButton>
 </PageHeader>
 
 @if (_canSeeAll)
@@ -40,7 +40,7 @@ else
             <MudTh />
         </HeaderContent>
         <RowTemplate>
-            <MudTd><MudLink Href="@($"reports/{context.ReportId}")">@L.Stored(context.ReportName)</MudLink></MudTd>
+            <MudTd><MudLink Href="@Options.Path(context.ReportId.ToString())">@L.Stored(context.ReportName)</MudLink></MudTd>
             @if (_all)
             {
                 <MudTd>@context.UserName</MudTd>

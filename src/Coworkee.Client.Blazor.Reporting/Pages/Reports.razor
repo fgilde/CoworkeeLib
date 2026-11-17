@@ -2,7 +2,10 @@
 
 <ReportStyles />
 <PageHeader Title="Reports" Description="Dashboards over the data of the app: arrange widgets, filter them together and share them with your team.">
-    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.ForwardToInbox" Class="mr-2" Href="reports/subscriptions" data-testid="report-subscriptions">@L["Subscriptions"]</MudButton>
+    @if (Options.Subscriptions)
+    {
+        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.ForwardToInbox" Class="mr-2" Href="@Options.Path("subscriptions")" data-testid="report-subscriptions">@L["Subscriptions"]</MudButton>
+    }
     <PermissionGate Permission="@ReportPermissions.Manage">
         <MudFileUpload T="IBrowserFile" Accept=".json" FilesChanged="ImportAsync" data-testid="report-import">
             <CustomContent Context="upload">
@@ -62,7 +65,10 @@ else
                                 <MudMenuItem Icon="@Icons.Material.Outlined.ContentCopy" OnClick="() => DuplicateAsync(report)">@L["Duplicate"]</MudMenuItem>
                             </PermissionGate>
                             <MudMenuItem Icon="@Icons.Material.Outlined.FileDownload" OnClick="() => ExportAsync(report)">@L["Export"]</MudMenuItem>
-                            <DashboardMenuItems ReportId="report.Id" @bind-Dashboard="_dashboard" />
+                            @if (Options.Dashboards)
+                            {
+                                <DashboardMenuItems ReportId="report.Id" @bind-Dashboard="_dashboard" />
+                            }
                             @if (report.IsOwner)
                             {
                                 <MudMenuItem Icon="@Icons.Material.Outlined.Delete" IconColor="Color.Error" OnClick="() => DeleteAsync(report)">@L["Delete"]</MudMenuItem>
