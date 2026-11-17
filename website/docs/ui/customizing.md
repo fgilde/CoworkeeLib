@@ -23,6 +23,7 @@ The layout is split so you can replace a part instead of the whole:
 | Component | Part |
 |---|---|
 | `CoworkeeLayout` | the whole page frame |
+| `CoworkeeAppShell` | startup and providers without the chrome, see [A layout of your own](#a-layout-of-your-own) |
 | `CoworkeeAppBar` | top bar |
 | `CoworkeeBrand` | logo and title in the top bar |
 | `CoworkeeNavMenu` | navigation drawer content |
@@ -34,6 +35,28 @@ The layout is split so you can replace a part instead of the whole:
 | `AboutDialog` | about dialog |
 
 Pages work the same way: replace `Profile` with your own profile page and every link to it opens yours.
+
+## A layout of your own
+
+For an app that must not look like the admin app at all (a customer portal next to the internal app, say), replacing parts is not enough: write your own layout and put `CoworkeeAppShell` around it. The shell does everything `CoworkeeLayout` does besides the chrome: setup check, sign-in redirect (`AllowAnonymous`), user preferences, theme, language, head script, the MudBlazor providers (theme, dialogs, popovers, snackbars), the session guard (impersonation ended, signed out elsewhere), live settings and hiding the loading screen. `CoworkeeLayout` is the admin chrome inside the same shell.
+
+```razor title="AppLayout.razor"
+@inherits LayoutComponentBase
+<CoworkeeAppShell Theme="PortalTheme.Value" DarkMode="false">
+    <div class="portal">
+        <PortalSidebar />
+        <main>@Body</main>
+    </div>
+</CoworkeeAppShell>
+```
+
+| Parameter | |
+|---|---|
+| `ChildContent` | your layout; it gets the shell as `context` (`context.Dark`, `context.ToggleDarkAsync()`) |
+| `Theme` | a fixed `MudTheme` instead of the organisation's Coworkee theme (Administration, Themes); its custom CSS and logo (favicon) then do not apply |
+| `DarkMode` | `true`/`false` fixes the colour mode, `null` (default) follows the user's choice or the system |
+
+Several layouts (a main layout and an admin layout, say) share one shell when they name the same outer layout (`@layout AppLayout`): switching between them keeps theme, providers and the started state. Combine it with `Pages.Only()` (below) so that none of the library's pages is reachable in such an app.
 
 ## About dialog
 
@@ -63,6 +86,15 @@ builder.Services.AddCoworkeeClient(baseAddress, options =>
         .Disable("backups");                            // menu entry and address are gone
 });
 ```
+
+An app of its own that must not reach the administration (a customer frontend) keeps only the pages it lists and turns off all others; `Only()` without keys keeps none:
+
+```csharp
+options.Pages.Only("profile");   // only the library's profile page; /cw/admin/... and the rest find nothing, their links and menu entries go
+options.Pages.Only();            // no library page at all
+```
+
+Leaving the library's assembly out of the router's `AdditionalAssemblies` (and out of `AddAdditionalAssemblies` of the host) removes the catch-all route as well: then even the address of a kept page finds nothing, the router shows its `NotFound`.
 
 Old addresses keep working: `/admin/users/…` in a bookmark, a mail or a push notification goes on to the current address. The menu, the command palette and the links between the pages ask the same registry (`CoworkeePages.Href(path)`), so a replaced or turned off page is replaced or gone everywhere. Server links (notifications, mails) use the old address; the client resolves it.
 

@@ -9,6 +9,9 @@ public sealed class PageOptions
 
     internal HashSet<string> Disabled { get; } = new(StringComparer.OrdinalIgnoreCase);
 
+    // null: every page not disabled; set by Only
+    internal HashSet<string>? Allowed { get; private set; }
+
     /// <summary>Renders <paramref name="component"/> at the library's address; it gets the same route parameters (e.g. Id).</summary>
     public PageOptions Replace(string key, Type component)
     {
@@ -30,6 +33,16 @@ public sealed class PageOptions
     public PageOptions Disable(string key)
     {
         Disabled.Add(key);
+        return this;
+    }
+
+    /// <summary>
+    /// Keeps only these pages and removes all others, e.g. Only("profile") or Only() for none: for a client of its own (a customer frontend) that must not
+    /// reach the administration. The catch-all route then finds no other address, links and navigation entries of the others go.
+    /// </summary>
+    public PageOptions Only(params string[] keys)
+    {
+        Allowed = new HashSet<string>(keys, StringComparer.OrdinalIgnoreCase);
         return this;
     }
 }

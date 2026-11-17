@@ -125,6 +125,48 @@ public sealed class CoworkeeAppTests : IDisposable
     }
 
     [Fact]
+    public async Task A_bff_client_is_a_second_client_of_the_auth_server_with_its_own_cookie_hub_forwarding_and_impersonation()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo", o => o.DisplayName = "Demo");
+
+        app.AddMigrations<FakeProjects.Migrations>();
+        var auth = app.AddAuthServer<FakeProjects.Auth>();
+        app.AddApi<FakeProjects.Api>();
+        app.AddWeb<FakeProjects.Web>();
+        var frontend = app.AddBffClient<FakeProjects.Web>("frontend", "Demo customers", allowImpersonation: true);
+        var other = app.AddBffClient<FakeProjects.Web>("kiosk", forwardedPrefixes: ["/hubs", "/files"]);
+
+        frontend.Resource.Name.ShouldBe("demo-frontend");
+        app.Web!.Resource.Name.ShouldBe("demo-web");
+        var settings = await Environment(auth.Resource);
+        settings["Coworkee__Auth__Clients__1__ClientId"].ShouldBe("demo-frontend");
+        settings["Coworkee__Auth__Clients__1__DisplayName"].ShouldBe("Demo customers");
+        settings["Coworkee__Auth__Clients__1__AllowImpersonation"].ShouldBe("true");
+        settings["Coworkee__Auth__Clients__1__RedirectUris__0"].ShouldBe("{demo-frontend.bindings.https.url}/signin-oidc");
+        settings["Coworkee__Auth__Clients__2__ClientId"].ShouldBe("demo-kiosk");
+        settings["Coworkee__Auth__Clients__2__DisplayName"].ShouldBe("Demo (kiosk)");
+        settings.ShouldNotContainKey("Coworkee__Auth__Clients__2__AllowImpersonation");
+        var bff = await Environment(frontend.Resource);
+        bff["Coworkee__Bff__ClientId"].ShouldBe("demo-frontend");
+        bff["Coworkee__Bff__ApiAddress"].ShouldBe("https+http://demo-api");
+        bff["Coworkee__Bff__CookieName"].ShouldBe("demo-frontend");
+        bff["Coworkee__Bff__ForwardedPrefixes__0"].ShouldBe("/hubs");
+        bff.ShouldNotContainKey("Coworkee__Bff__ForwardedPrefixes__1");
+        var kiosk = await Environment(other.Resource);
+        kiosk["Coworkee__Bff__ForwardedPrefixes__1"].ShouldBe("/files");
+    }
+
+    [Fact]
+    public void A_bff_client_needs_the_api()
+    {
+        var app = DistributedApplication.CreateBuilder().AddCoworkeeApp("demo");
+        app.AddAuthServer<FakeProjects.Auth>();
+
+        Should.Throw<InvalidOperationException>(() => app.AddBffClient<FakeProjects.Web>("frontend")).Message.ShouldContain("AddApi");
+    }
+
+    [Fact]
     public async Task Elsa_studio_is_a_client_of_the_auth_server_that_calls_the_elsa_api_and_the_designer_link_leads_there()
     {
         var builder = DistributedApplication.CreateBuilder();

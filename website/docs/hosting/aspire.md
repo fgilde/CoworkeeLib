@@ -74,9 +74,29 @@ Explicit calls still work and win: a project added before `AddProjects()` is not
 | `AddWorker<T>(suffix)` | `{name}-{suffix}` | infrastructure only, no public endpoints |
 | `AddWeb<T>()` | `{name}-web` | BFF settings, OIDC client at the auth server with redirect URIs, reference to the API, links to Swagger and the jobs dashboard |
 | `AddAirWorks<T>()` | `{name}-airworks` | like `AddWeb`: BFF settings, the next OIDC client at the auth server, its own session cookie name; for the [AirWorks client](../web/airworks.md) |
+| `AddBffClient<T>(suffix)` | `{name}-{suffix}` | another Blazor client with its own host (Coworkee.Bff), e.g. a customer frontend next to the web app: the next OIDC client at the auth server (same users, groups, permissions), its own session cookie `{name}-{suffix}`, the first api behind it, `/hubs` forwarded (or the `forwardedPrefixes` you pass), with `allowImpersonation: true` impersonated sessions work there and `/bff/stop-impersonation` ends them; its own container in a deployment, see [Another Blazor client](#another-blazor-client) |
 | `AddElsaStudio<T>()` | `{name}-elsastudio` | the next OIDC client at the auth server, its own session cookie, the Elsa API of the first api, `Coworkee:Workflows:Elsa:StudioUrl` of the apis; for the [workflow designer](../modules/workflows-elsa.md#elsa-studio) |
 
 Call them in this order (`AddProjects()` does). Calling `AddWeb` before `AddAuthServer` throws and says so.
+
+### Another Blazor client
+
+A second Blazor WebAssembly app of the same system with a host of its own, for example a customer frontend in a different look next to the internal web app. Add it after the api:
+
+```csharp
+app.AddWeb<Projects.Shop_Web>();
+app.AddBffClient<Projects.Shop_Portal_Host>("portal", "Shop (customer portal)", allowImpersonation: true);
+```
+
+| What | Value |
+|---|---|
+| Resource and client id | `{name}-{suffix}` (`shop-portal`); display name `displayName`, default `{Title} ({suffix})` |
+| Cookie | `{name}-{suffix}`: browsers send cookies to every port of localhost, the web app's session stays apart |
+| Forwarded | `/api`, `/odata` and `forwardedPrefixes` (default `/hubs`, the realtime hub) to the first api with the user's token |
+| Impersonation | `allowImpersonation: true`: a session started with [Log in as](../features/identity.md#log-in-as-another-user) in the web app works there too, `/bff/stop-impersonation` ends it; without it the client turns an impersonator away |
+| Deployment | its own container (on Azure Container Apps its own app with its own address); the redirect addresses follow `PublicUrl` |
+
+The client app keeps Coworkee's startup with a layout of its own ([`CoworkeeAppShell`](../ui/customizing.md#a-layout-of-your-own)) and can keep all library pages out (`options.Pages.Only()`).
 
 ### Single-page apps
 

@@ -1,65 +1,36 @@
-using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Layout;
 using Coworkee.Client.Blazor.Navigation;
 using Coworkee.Client.Blazor.Theming;
-using Coworkee.Contracts.Settings;
-using Coworkee.Contracts.Theming;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Components;
 
+/// <summary>The admin chrome (app bars, navigation drawer, assistant) inside <see cref="CoworkeeAppShell"/>, which does startup and providers.</summary>
 public partial class CoworkeeLayout : IAsyncDisposable
 {
-    private IJSObjectReference? _module;
     private bool _drawer = true;
-    private bool _dark;
-    private bool _visible;
-    private bool _systemDark;
-    private MudThemeProvider? _provider;
-    private string? _logo;
-    private bool _started;
-    private (string Mode, Guid? Id, string Culture)? _shown;
     private readonly Guid _viewport = Guid.NewGuid();
     private bool _phone;
-    private IReadOnlyDictionary<string, string?>? _settings;
 
     // the layout lives on while the user navigates, so the first address decides: ?embed=1 shows the page without app bar, menu and assistant
     private bool _embedded;
 
     [Inject] private IBrowserViewportService Viewport { get; set; } = null!;
 
-    [Inject] private IJSRuntime JS { get; set; } = null!;
-
-    [Inject] private ICoworkeeApi Api { get; set; } = null!;
-
     [Inject] private NavigationManager Nav { get; set; } = null!;
-
-    // created with the layout, so links to server addresses after the first page are loaded from the server
-    [Inject] private Navigation.LinkNavigation Links { get; set; } = null!;
 
     [Inject] private ThemeService ThemeService { get; set; } = null!;
 
     [Inject] private LayoutPreferences Preferences { get; set; } = null!;
 
-    [Inject] private Dialogs.CoworkeeDialogOptions DialogOptions { get; set; } = null!;
-
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
-
-    [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
-
-    [Inject] private MudBlazor.Extensions.Options.MudExConfiguration MudEx { get; set; } = null!;
-
-    [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; } = null!;
 
     protected override void OnInitialized()
     {
         _embedded = System.Web.HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query)["embed"] == "1";
         ThemeService.Changed += Refresh;
         Preferences.Changed += FollowPin;
-        L.Changed += Refresh;
         Nav.LocationChanged += CloseOnPhone;
     }
 
@@ -92,104 +63,11 @@ public partial class CoworkeeLayout : IAsyncDisposable
 
     private void ToggleDrawer() => _drawer = !_drawer;
 
-    protected override async Task OnInitializedAsync()
-    {
-        _visible = Options.AllowAnonymous;
-        if (Nav.Uri.Contains("/setup", StringComparison.Ordinal))
-        {
-            return;
-        }
-
-        try
-        {
-            if (!(await Api.GetSetupStatusAsync()).IsInitialized)
-            {
-                Nav.NavigateTo("/setup");
-                return;
-            }
-        }
-        catch (ApiException)
-        {
-        }
-
-        if (!_visible && (await AuthenticationState).User.Identity?.IsAuthenticated != true)
-        {
-            Nav.NavigateTo(Options.SignInHref(Nav.ToBaseRelativePath(Nav.Uri)), forceLoad: true);
-            return;
-        }
-
-        _visible = true;
-    }
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await StartAsync();
-        }
-
-        await ApplyFaviconAsync();
-        var shown = (ThemeService.Mode, ThemeService.Current?.Id, L.Culture);
-        if (_visible && _started && shown != _shown)
-        {
-            _shown = shown;
-            await JS.HideLoadingScreenAsync(shown.Mode, shown.Id, shown.Culture);
-        }
-    }
-
-    private async Task StartAsync()
-    {
-        await Preferences.LoadAsync();
-        await ThemeService.LoadAsync();
-        await InjectHeadScriptAsync();
-        // ponytail: upload fields of the first page rendered before this keep no pickers until they render again
-        Blazor.Files.CloudFilePickers.Apply(MudEx, ThemeService.ClientSettings);
-        await Data.DialogPlacement.StartAsync(JS);
-        Dialogs.CoworkeeDialogOptions.Current = DialogOptions;
-        await Viewport.SubscribeAsync(_viewport, FollowViewport, new MudBlazor.Services.ResizeOptions { NotifyOnBreakpointOnly = true }, fireImmediately: true);
-        _settings = ThemeService.ClientSettings;
-        await L.InitializeAsync(_settings.GetValueOrDefault(Contracts.Localization.LocalizationSettings.Culture));
-        _systemDark = _provider is not null && await _provider.GetSystemDarkModeAsync();
-        _started = true;
-        Refresh();
-    }
-
-    // the head script setting (AddCoworkeeHeadScript on the server), once per page load; a new value applies after a reload
-    private async Task InjectHeadScriptAsync()
-    {
-        var settings = ThemeService.ClientSettings;
-        if (settings.GetValueOrDefault(HeadScriptSettings.Enabled) != "true" || settings.GetValueOrDefault(HeadScriptSettings.Value) is not { Length: > 0 } html)
-        {
-            return;
-        }
-
-        try
-        {
-            _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
-            await _module.InvokeVoidAsync("injectHeadScript", html);
-        }
-        catch (JSException)
-        {
-        }
-    }
-
-    // the favicon follows the theme logo; without one the page keeps its own icon
-    private async Task ApplyFaviconAsync()
-    {
-        if (ThemeService.Logo == _logo)
-        {
-            return;
-        }
-
-        var logo = ThemeService.Logo;
-        try
-        {
-            _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
-            await _module.InvokeVoidAsync("setFavicon", ThemeLogo.ToDataUrl(logo));
-            _logo = logo;
-        }
-        catch (JSDisconnectedException)
-        {
+            await Viewport.SubscribeAsync(_viewport, FollowViewport, new MudBlazor.Services.ResizeOptions { NotifyOnBreakpointOnly = true }, fireImmediately: true);
         }
     }
 
@@ -197,17 +75,12 @@ public partial class CoworkeeLayout : IAsyncDisposable
     {
         ThemeService.Changed -= Refresh;
         Preferences.Changed -= FollowPin;
-        L.Changed -= Refresh;
         Nav.LocationChanged -= CloseOnPhone;
         try
         {
             await Viewport.UnsubscribeAsync(_viewport);
-            if (_module is not null)
-            {
-                await _module.DisposeAsync();
-            }
         }
-        catch (JSDisconnectedException)
+        catch (Microsoft.JSInterop.JSDisconnectedException)
         {
         }
     }
@@ -246,39 +119,6 @@ public partial class CoworkeeLayout : IAsyncDisposable
         StateHasChanged();
     });
 
-    private void Refresh() => InvokeAsync(() =>
-    {
-        // reloaded settings may carry a language the user chose elsewhere
-        if (_started && !ReferenceEquals(_settings, ThemeService.ClientSettings))
-        {
-            _settings = ThemeService.ClientSettings;
-            _ = L.InitializeAsync(_settings.GetValueOrDefault(Contracts.Localization.LocalizationSettings.Culture));
-        }
-
-        _dark = ThemeService.Mode switch
-        {
-            "dark" => true,
-            "light" => false,
-            _ => _systemDark,
-        };
-        StateHasChanged();
-    });
-
-    private async Task ToggleDarkAsync()
-    {
-        var mode = _dark ? "light" : "dark";
-        ThemeService.SetMode(mode);
-        if ((await AuthenticationState).User.Identity?.IsAuthenticated != true)
-        {
-            return;
-        }
-
-        try
-        {
-            await Api.SetSettingsAsync(SettingScope.User, new Dictionary<string, string?> { [ThemeSettings.Mode] = mode });
-        }
-        catch (ApiException)
-        {
-        }
-    }
+    // the bars and the drawer follow the header settings and the theme
+    private void Refresh() => InvokeAsync(StateHasChanged);
 }

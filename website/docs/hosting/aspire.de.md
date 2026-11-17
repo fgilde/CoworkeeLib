@@ -74,9 +74,29 @@ Explizite Aufrufe funktionieren weiter und haben Vorrang: Ein Projekt, das vor `
 | `AddWorker<T>(suffix)` | `{name}-{suffix}` | nur Infrastruktur, keine öffentlichen Endpunkte |
 | `AddWeb<T>()` | `{name}-web` | BFF-Einstellungen, OIDC-Client am Auth-Server mit Redirect-URIs, Referenz auf die API, Links zu Swagger und zum Job-Dashboard |
 | `AddAirWorks<T>()` | `{name}-airworks` | wie `AddWeb`: BFF-Einstellungen, der nächste OIDC-Client am Auth-Server, ein eigener Name des Sitzungs-Cookies; für den [AirWorks-Client](../web/airworks.md) |
+| `AddBffClient<T>(suffix)` | `{name}-{suffix}` | ein weiterer Blazor-Client mit eigenem Host (Coworkee.Bff), etwa ein Kunden-Frontend neben der Web-App: der nächste OIDC-Client am Auth-Server (dieselben Benutzer, Gruppen, Berechtigungen), ein eigenes Sitzungscookie `{name}-{suffix}`, die erste API dahinter, `/hubs` weitergeleitet (oder die übergebenen `forwardedPrefixes`), mit `allowImpersonation: true` funktionieren übernommene Sitzungen dort und `/bff/stop-impersonation` beendet sie; im Deployment ein eigener Container, siehe [Ein weiterer Blazor-Client](#ein-weiterer-blazor-client) |
 | `AddElsaStudio<T>()` | `{name}-elsastudio` | der nächste OIDC-Client am Auth-Server, ein eigenes Sitzungscookie, die Elsa-API der ersten API, `Coworkee:Workflows:Elsa:StudioUrl` der APIs; für den [Workflow-Designer](../modules/workflows-elsa.md#elsa-studio) |
 
 Ruf sie in dieser Reihenfolge auf (`AddProjects()` tut das). `AddWeb` vor `AddAuthServer` wirft eine Exception, die genau das sagt.
+
+### Ein weiterer Blazor-Client
+
+Eine zweite Blazor-WebAssembly-App desselben Systems mit eigenem Host, zum Beispiel ein Kunden-Frontend in anderem Aussehen neben der internen Web-App. Füge sie nach der API hinzu:
+
+```csharp
+app.AddWeb<Projects.Shop_Web>();
+app.AddBffClient<Projects.Shop_Portal_Host>("portal", "Shop (Kundenportal)", allowImpersonation: true);
+```
+
+| Was | Wert |
+|---|---|
+| Ressource und Client-ID | `{name}-{suffix}` (`shop-portal`); Anzeigename `displayName`, Standard `{Title} ({suffix})` |
+| Cookie | `{name}-{suffix}`: Browser schicken Cookies an jeden Port von localhost, die Sitzung der Web-App bleibt getrennt |
+| Weitergeleitet | `/api`, `/odata` und `forwardedPrefixes` (Standard `/hubs`, der Realtime-Hub) an die erste API mit dem Token des Benutzers |
+| Übernahme | `allowImpersonation: true`: eine mit [Anmelden als](../features/identity.md#als-anderer-benutzer-anmelden) in der Web-App begonnene Sitzung funktioniert auch dort, `/bff/stop-impersonation` beendet sie; ohne weist der Client einen Übernehmenden ab |
+| Deployment | ein eigener Container (auf Azure Container Apps eine eigene App mit eigener Adresse); die Redirect-Adressen folgen `PublicUrl` |
+
+Die Client-App behält den Start von Coworkee mit einem eigenen Layout ([`CoworkeeAppShell`](../ui/customizing.md#ein-eigenes-layout)) und kann alle Seiten der Bibliothek draußen lassen (`options.Pages.Only()`).
 
 ### Single-Page-Apps
 

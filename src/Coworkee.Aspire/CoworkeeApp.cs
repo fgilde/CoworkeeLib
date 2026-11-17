@@ -211,6 +211,23 @@ public sealed partial class CoworkeeApp
     }
 
     /// <summary>
+    /// Another Blazor client of the app with a host of its own (Coworkee.Bff), e.g. a customer frontend next to the web app: the next client
+    /// <c>{app}-{suffix}</c> of the auth server (same users, groups and permissions), its own session cookie <c>{app}-{suffix}</c> (browsers send cookies
+    /// to every port of localhost), the first api behind it and <paramref name="forwardedPrefixes"/> (default <c>/hubs</c>, the realtime hub) forwarded
+    /// to it besides /api and /odata. <paramref name="allowImpersonation"/>: a session of someone signed in as another user works there too, and
+    /// <c>/bff/stop-impersonation</c> ends it. Gets its own container in a deployment (on Azure Container Apps its own app). Add it after the api.
+    /// </summary>
+    public IResourceBuilder<ProjectResource> AddBffClient<TProject>(
+        string suffix, string? displayName = null, bool allowImpersonation = false, IEnumerable<string>? forwardedPrefixes = null)
+        where TProject : IProjectMetadata, new()
+    {
+        var client = BffClient<TProject>(suffix, displayName ?? $"{Title} ({suffix})", nameof(AddBffClient), allowImpersonation)
+            .WithSettings(s => s.Coworkee.Bff.ForwardedPrefixes, [.. forwardedPrefixes ?? ["/hubs"]])
+            .WithSetting(s => s.Coworkee.Bff.CookieName, $"{Name}-{suffix}");
+        return Added<TProject>(client, suffix);
+    }
+
+    /// <summary>
     /// Elsa Studio, the workflow designer (<c>MyApp.ElsaStudio</c> with Coworkee.Workflows.Elsa.Studio): a client of its own of the auth server that calls
     /// the Elsa API of the first api with the user's token. The apis' <c>Coworkee:Workflows:Elsa:StudioUrl</c> (the designer link) leads there. Add it after the api.
     /// </summary>

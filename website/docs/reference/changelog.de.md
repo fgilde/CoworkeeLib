@@ -2,6 +2,18 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- `CoworkeeAppShell`: Start und Provider von Coworkee ohne den Admin-Rahmen (Setup-Prüfung, Weiterleitung zur Anmeldung, Einstellungen, Theme, Sprache, Head-Skript, MudBlazor-Provider, Sitzungswächter, Live-Einstellungen, Ende des Ladebildschirms) um ein eigenes Layout der App; `Theme` legt ein `MudTheme` statt des Themes der Organisation fest, `DarkMode` den Farbmodus. `CoworkeeLayout` rendert jetzt darin, kein Handlungsbedarf. Siehe [Ein eigenes Layout](../ui/customizing.de.md#ein-eigenes-layout).
+- `options.Pages.Only(params string[] keys)`: behält nur die genannten Seiten der Bibliothek und schaltet alle anderen ab (`Only()` behält keine), für einen Client, der die Administration nicht erreichen darf. Ein unbekannter Schlüssel stoppt die App beim Start. Siehe [Seiten der Bibliothek](../ui/customizing.de.md#seiten-der-bibliothek).
+- App-Host: `app.AddBffClient<T>(suffix, displayName, allowImpersonation, forwardedPrefixes)` fügt einen weiteren Blazor-Client mit eigenem Host hinzu: der nächste OIDC-Client des Auth-Servers, ein eigenes Sitzungscookie `{name}-{suffix}`, `/hubs` standardmäßig weitergeleitet, übernommene Sitzungen mit `allowImpersonation: true`; im Deployment ein eigener Container. Siehe [Ein weiterer Blazor-Client](../hosting/aspire.de.md#ein-weiterer-blazor-client).
+
+### Geändert
+
+- Mit `?embed=1` geöffnete Seiten (Fenster von AirWorks) folgen Änderungen der Einstellungen jetzt live wie die volle App (`SettingsLiveUpdates` ist vom Rahmen in die Shell gewandert).
+
 ## 0.0.1.94 (2026-11-16)
 
 ### Hinzugefügt

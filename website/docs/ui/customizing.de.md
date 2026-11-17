@@ -23,6 +23,7 @@ Das Layout ist aufgeteilt, damit du einen Teil statt des Ganzen ersetzt:
 | Komponente | Teil |
 |---|---|
 | `CoworkeeLayout` | der gesamte Seitenrahmen |
+| `CoworkeeAppShell` | Start und Provider ohne den Rahmen, siehe [Ein eigenes Layout](#ein-eigenes-layout) |
 | `CoworkeeAppBar` | obere Leiste |
 | `CoworkeeBrand` | Logo und Titel in der oberen Leiste |
 | `CoworkeeNavMenu` | Inhalt der Navigationsleiste |
@@ -34,6 +35,28 @@ Das Layout ist aufgeteilt, damit du einen Teil statt des Ganzen ersetzt:
 | `AboutDialog` | Info-Dialog |
 
 Seiten funktionieren genauso: Ersetze `Profile` durch eine eigene Profilseite, und jeder Link dorthin öffnet deine.
+
+## Ein eigenes Layout
+
+Für eine App, die gar nicht wie die Admin-App aussehen soll (etwa ein Kundenportal neben der internen App), reicht das Ersetzen von Teilen nicht: Schreib ein eigenes Layout und leg `CoworkeeAppShell` darum. Die Shell erledigt alles, was `CoworkeeLayout` außer dem Rahmen tut: Setup-Prüfung, Weiterleitung zur Anmeldung (`AllowAnonymous`), Benutzereinstellungen, Theme, Sprache, Head-Skript, die MudBlazor-Provider (Theme, Dialoge, Popover, Snackbars), den Sitzungswächter (Übernahme beendet, anderswo abgemeldet), Live-Einstellungen und das Ausblenden des Ladebildschirms. `CoworkeeLayout` ist der Admin-Rahmen in derselben Shell.
+
+```razor title="AppLayout.razor"
+@inherits LayoutComponentBase
+<CoworkeeAppShell Theme="PortalTheme.Value" DarkMode="false">
+    <div class="portal">
+        <PortalSidebar />
+        <main>@Body</main>
+    </div>
+</CoworkeeAppShell>
+```
+
+| Parameter | |
+|---|---|
+| `ChildContent` | dein Layout; es bekommt die Shell als `context` (`context.Dark`, `context.ToggleDarkAsync()`) |
+| `Theme` | ein festes `MudTheme` statt des Coworkee-Themes der Organisation (Administration, Themes); dessen eigenes CSS und Logo (Favicon) gelten dann nicht |
+| `DarkMode` | `true`/`false` legt den Farbmodus fest, `null` (Standard) folgt der Wahl des Benutzers oder dem System |
+
+Mehrere Layouts (etwa ein Haupt- und ein Admin-Layout) teilen sich eine Shell, wenn sie dasselbe äußere Layout nennen (`@layout AppLayout`): Beim Wechsel bleiben Theme, Provider und der gestartete Zustand erhalten. Kombiniere es mit `Pages.Only()` (unten), damit in so einer App keine Seite der Bibliothek erreichbar ist.
 
 ## Info-Dialog
 
@@ -63,6 +86,15 @@ builder.Services.AddCoworkeeClient(baseAddress, options =>
         .Disable("backups");                            // Menüeintrag und Adresse sind weg
 });
 ```
+
+Eine eigene App, die die Administration nicht erreichen darf (ein Kunden-Frontend), behält nur die Seiten, die sie nennt, und schaltet alle anderen ab; `Only()` ohne Schlüssel behält keine:
+
+```csharp
+options.Pages.Only("profile");   // nur die Profilseite der Bibliothek; /cw/admin/... und der Rest finden nichts, ihre Links und Menüeinträge verschwinden
+options.Pages.Only();            // gar keine Seite der Bibliothek
+```
+
+Lässt du die Assembly der Bibliothek aus den `AdditionalAssemblies` des Routers (und aus `AddAdditionalAssemblies` des Hosts) heraus, fällt auch die Sammelroute weg: Dann findet selbst die Adresse einer behaltenen Seite nichts, der Router zeigt sein `NotFound`.
 
 Alte Adressen funktionieren weiter: `/admin/users/…` in einem Lesezeichen, einer Mail oder einer Push-Benachrichtigung leitet auf die aktuelle Adresse weiter. Menü, Befehlspalette und die Links zwischen den Seiten fragen dieselbe Registrierung (`CoworkeePages.Href(path)`), eine ersetzte oder abgeschaltete Seite ist also überall ersetzt oder weg. Links vom Server (Benachrichtigungen, Mails) nutzen die alte Adresse, der Client löst sie auf.
 

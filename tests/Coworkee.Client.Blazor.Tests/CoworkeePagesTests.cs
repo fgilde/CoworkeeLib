@@ -81,6 +81,35 @@ public sealed class CoworkeePagesTests
     }
 
     [Fact]
+    public void Only_keeps_the_listed_pages_and_turns_off_all_others()
+    {
+        var pages = Pages(o => o.Pages.Only("profile"));
+
+        pages.Href("/profile").ShouldBe("/profile");
+        pages.Match("profile").ShouldNotBeNull();
+        pages.Href("/admin/users").ShouldBeNull();
+        pages.Match("cw/admin/users").ShouldBeNull();
+        pages.Match("admin/users").ShouldBeNull();
+        pages.Match("settings").ShouldBeNull();
+        pages.IsEnabled("users").ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Only_without_keys_leaves_no_library_page()
+    {
+        var pages = Pages(o => o.Pages.Only());
+
+        pages.All.ShouldAllBe(p => !pages.IsEnabled(p.Key));
+        pages.Match("search").ShouldBeNull();
+    }
+
+    [Fact]
+    public void Only_with_an_unknown_key_fails_at_start()
+    {
+        Should.Throw<InvalidOperationException>(() => Pages(o => o.Pages.Only("nope")));
+    }
+
+    [Fact]
     public void An_unknown_key_fails_at_start()
     {
         Should.Throw<InvalidOperationException>(() => Pages(o => o.Pages.Disable("nope")));

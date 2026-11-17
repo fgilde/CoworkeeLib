@@ -2,6 +2,18 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- `CoworkeeAppShell`: Coworkee's startup and providers without the admin chrome (setup check, sign-in redirect, preferences, theme, language, head script, MudBlazor providers, session guard, live settings, end of the loading screen) around a layout of the app's own; `Theme` fixes a `MudTheme` instead of the organisation's theme, `DarkMode` fixes the colour mode. `CoworkeeLayout` now renders inside it, no action needed. See [A layout of your own](../ui/customizing.md#a-layout-of-your-own).
+- `options.Pages.Only(params string[] keys)`: keeps only the listed library pages and turns off all others (`Only()` keeps none), for a client that must not reach the administration. An unknown key stops the app at start. See [Pages of the library](../ui/customizing.md#pages-of-the-library).
+- App host: `app.AddBffClient<T>(suffix, displayName, allowImpersonation, forwardedPrefixes)` adds another Blazor client with its own host: the next OIDC client of the auth server, its own session cookie `{name}-{suffix}`, `/hubs` forwarded by default, impersonated sessions with `allowImpersonation: true`; its own container in a deployment. See [Another Blazor client](../hosting/aspire.md#another-blazor-client).
+
+### Changed
+
+- Pages opened with `?embed=1` (windows of AirWorks) now follow setting changes live like the full app (`SettingsLiveUpdates` moved from the chrome into the shell).
+
 ## 0.0.1.94 (2026-11-16)
 
 ### Added

@@ -1,65 +1,52 @@
 @inherits LayoutComponentBase
 
-@* the loading screen waits for this layout to hide it once the theme is applied *@
-<span data-coworkee-loading-claim hidden></span>
-@if (!_visible)
-{
-    return;
-}
-<MudThemeProvider @ref="_provider" Theme="ThemeService.Theme" IsDarkMode="_dark" />
-@if (ThemeService.CustomCss is { Length: > 0 } css)
-{
-    <style>@css</style>
-}
-<style>@Layout.ShellStyles.Css</style>
-<style>@Layout.MobileStyles.Css</style>
-<style>@Layout.HeaderStyles.Css</style>
-<MudPopoverProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
-<SessionGuard />
-@if (!_embedded)
-{
-    <PwaPrompts />
-}
+@* startup and providers (theme, language, sign-in, loading screen) live in the shell; this layout is the admin chrome around the page *@
+<CoworkeeAppShell Context="shell">
+    <style>@Layout.MobileStyles.Css</style>
+    <style>@Layout.HeaderStyles.Css</style>
+    @if (!_embedded)
+    {
+        <PwaPrompts />
+    }
 
-<MudRTLProvider RightToLeft="Preferences.RightToLeft">
-    <MudLayout @key="L.Revision" Class="@LayoutClass">
-        @* ?embed=1: only the page, for windows of another client (AirWorks) *@
-        @if (!_embedded)
-        {
-            <CoworkeeAppBar Dark="_dark" Compact="_phone" Position="Bars.Position" ShowBrand="@(Bars.BrandBar == 0)" ShowMenuButton="@(!DrawerHead && Bars.BrandBar != 1)"
-                            ToggleDrawer="ToggleDrawer" ToggleDark="ToggleDarkAsync" />
-            @if (Bars.Second is { } second)
+    <MudRTLProvider RightToLeft="Preferences.RightToLeft">
+        <MudLayout @key="L.Revision" Class="@LayoutClass">
+            @* ?embed=1: only the page, for windows of another client (AirWorks) *@
+            @if (!_embedded)
             {
-                <CoworkeeAppBar Second="true" Dark="_dark" Position="second" ShowBrand="@(Bars.BrandBar == 1)" ShowMenuButton="@(!DrawerHead && Bars.BrandBar == 1)"
-                                ToggleDrawer="ToggleDrawer" ToggleDark="ToggleDarkAsync" />
-            }
-            @* pinned: a mini icon strip under the app bar (or beside it) that the toggle widens; unpinned and on phones: an overlay that hides when closed *@
-            <MudDrawer @bind-Open="_drawer" Elevation="1" Variant="@(Pinned ? DrawerVariant.Mini : DrawerVariant.Temporary)" ClipMode="ClipMode" data-testid="nav-drawer">
-                @if (DrawerHead)
+                <CoworkeeAppBar Dark="shell.Dark" Compact="_phone" Position="Bars.Position" ShowBrand="@(Bars.BrandBar == 0)" ShowMenuButton="@(!DrawerHead && Bars.BrandBar != 1)"
+                                ToggleDrawer="ToggleDrawer" ToggleDark="shell.ToggleDarkAsync" />
+                @if (Bars.Second is { } second)
                 {
-                    @* the navigation beside the app bar carries the app's name and the menu button *@
-                    <div class="cw-drawer-head" data-testid="drawer-head">
-                        @if (_drawer)
-                        {
-                            <div class="cw-drawer-brand"><CoworkeeBrand InNav="true" /></div>
-                        }
-                        <MudIconButton Icon="@(_drawer ? Icons.Material.Filled.MenuOpen : Icons.Material.Filled.Menu)" OnClick="ToggleDrawer" aria-label="@L["Navigation"]"
-                                       data-testid="drawer-toggle" />
-                    </div>
+                    <CoworkeeAppBar Second="true" Dark="shell.Dark" Position="second" ShowBrand="@(Bars.BrandBar == 1)" ShowMenuButton="@(!DrawerHead && Bars.BrandBar == 1)"
+                                    ToggleDrawer="ToggleDrawer" ToggleDark="shell.ToggleDarkAsync" />
                 }
-                <CoworkeeNavMenu Mini="@(Pinned && !_drawer)" ShowLogo="@(!DrawerHead)" />
-            </MudDrawer>
-        }
-        <MudMainContent Style="@(_embedded ? "padding-top: 0" : null)">
-            <MudContainer MaxWidth="MaxWidth.False" Class="@(_embedded ? "pt-2 pb-2" : "pt-4 pb-6")">@Body</MudContainer>
-        </MudMainContent>
-        @if (!_embedded)
-        {
-            <AuthorizeView>
-                <Authorized><SettingsLiveUpdates /><ChatDockHost /><AssistantLauncher /></Authorized>
-            </AuthorizeView>
-        }
-    </MudLayout>
-</MudRTLProvider>
+                @* pinned: a mini icon strip under the app bar (or beside it) that the toggle widens; unpinned and on phones: an overlay that hides when closed *@
+                <MudDrawer @bind-Open="_drawer" Elevation="1" Variant="@(Pinned ? DrawerVariant.Mini : DrawerVariant.Temporary)" ClipMode="ClipMode" data-testid="nav-drawer">
+                    @if (DrawerHead)
+                    {
+                        @* the navigation beside the app bar carries the app's name and the menu button *@
+                        <div class="cw-drawer-head" data-testid="drawer-head">
+                            @if (_drawer)
+                            {
+                                <div class="cw-drawer-brand"><CoworkeeBrand InNav="true" /></div>
+                            }
+                            <MudIconButton Icon="@(_drawer ? Icons.Material.Filled.MenuOpen : Icons.Material.Filled.Menu)" OnClick="ToggleDrawer" aria-label="@L["Navigation"]"
+                                           data-testid="drawer-toggle" />
+                        </div>
+                    }
+                    <CoworkeeNavMenu Mini="@(Pinned && !_drawer)" ShowLogo="@(!DrawerHead)" />
+                </MudDrawer>
+            }
+            <MudMainContent Style="@(_embedded ? "padding-top: 0" : null)">
+                <MudContainer MaxWidth="MaxWidth.False" Class="@(_embedded ? "pt-2 pb-2" : "pt-4 pb-6")">@Body</MudContainer>
+            </MudMainContent>
+            @if (!_embedded)
+            {
+                <AuthorizeView>
+                    <Authorized><ChatDockHost /><AssistantLauncher /></Authorized>
+                </AuthorizeView>
+            }
+        </MudLayout>
+    </MudRTLProvider>
+</CoworkeeAppShell>

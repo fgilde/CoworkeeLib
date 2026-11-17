@@ -15,7 +15,7 @@ public sealed class CoworkeePages
         _pages = pages.ToList();
         _options = options.Pages;
         _prefix = options.PagePrefix.Trim('/');
-        var unknown = _options.Components.Keys.Concat(_options.Hrefs.Keys).Concat(_options.Disabled)
+        var unknown = _options.Components.Keys.Concat(_options.Hrefs.Keys).Concat(_options.Disabled).Concat(_options.Allowed ?? [])
             .Where(key => _pages.All(p => !p.Key.Equals(key, StringComparison.OrdinalIgnoreCase))).ToList();
         if (unknown.Count > 0)
         {
@@ -25,7 +25,7 @@ public sealed class CoworkeePages
 
     public IReadOnlyList<CoworkeePage> All => _pages;
 
-    public bool IsEnabled(string key) => !_options.Disabled.Contains(key);
+    public bool IsEnabled(string key) => !_options.Disabled.Contains(key) && _options.Allowed?.Contains(key) != false;
 
     /// <summary>The current link for <paramref name="path"/> (old or current address of a library page, query kept); null for a turned off page.</summary>
     public string? Href(string path)
