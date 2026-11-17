@@ -14,7 +14,7 @@
     - `Toolbar="false"` blendet Werkzeugleiste und Filterchips aus; `@bind-SearchText`, `@bind-Sort` (`IReadOnlyList<DataTableSort>`), `FacetGroups` (mit `Selection`), `FacetsLoaded`, `TotalCount` und `TotalCountChanged` speisen eine Filterleiste der Seite.
     - `ColumnFilterSort="true"`: Einträge *Sortierung* (aufsteigend, absteigend) oben in jedem Spaltenfilter, neben den Facettenwerten mit ihren Zahlen (Server oder lokale Kopie).
     - `RowActions="false"` lässt die Aktionsspalte weg; Zeilen öffnen weiter per Klick.
-    - `ItemTemplate` und `View` (`DataTableView.Table`, `Cards`): die Zeilen als Karten mit der Abfrage der Tabelle, die nächste Seite, sobald das Ende der Karten ins Bild scrollt.
+    - `ItemTemplate` und `View` (`DataTableView.Table`, `Cards`): die Zeilen als Karten mit der Abfrage der Tabelle, die nächste Seite, sobald das Ende der Karten ins Bild scrollt; der Wechsel vom endlosen Scrollen zu den Karten lädt die erste Seite sofort.
 - `ClientEntitySwitch` außerhalb einer Tabelle: `EntitySet` nennt das Set, `Table` ist jetzt optional. Siehe [Der Schalter in der Tabelle](../ui/client-entities.de.md#der-schalter-in-der-tabelle).
 
 ### Geändert

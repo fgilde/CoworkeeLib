@@ -14,7 +14,7 @@ Changes that need action in apps built on Coworkee. Newest first.
     - `Toolbar="false"` hides the tool bar and the filter chips; `@bind-SearchText`, `@bind-Sort` (`IReadOnlyList<DataTableSort>`), `FacetGroups` (with `Selection`), `FacetsLoaded`, `TotalCount` and `TotalCountChanged` feed a filter bar of the page.
     - `ColumnFilterSort="true"`: *Sort* entries (ascending, descending) on top of every column filter, beside the facet values with their counts (server or local copy).
     - `RowActions="false"` drops the action column; rows still open by a click.
-    - `ItemTemplate` and `View` (`DataTableView.Table`, `Cards`): the rows as cards with the table's query, the next page when the end of the cards scrolls into view.
+    - `ItemTemplate` and `View` (`DataTableView.Table`, `Cards`): the rows as cards with the table's query, the next page when the end of the cards scrolls into view; switching from endless scrolling to cards loads the first page at once.
 - `ClientEntitySwitch` outside a table: `EntitySet` names the set, `Table` is optional now. See [the switch in the table](../ui/client-entities.md#the-switch-in-the-table).
 
 ### Changed

@@ -197,6 +197,33 @@ public sealed class DataTableExtensionTests : ClientTestBase
         table.Find("[data-testid='data-table']").ClassList.ShouldNotContain("cw-table-hidden");
     }
 
+    [Fact]
+    public async Task Endless_rows_switched_to_cards_load_the_first_page_of_cards_at_once()
+    {
+        RenderFragment<Gadget> card = g => builder =>
+        {
+            builder.OpenElement(0, "b");
+            builder.AddContent(1, g.Name);
+            builder.CloseElement();
+        };
+        var table = Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.Columns, Columns()).Add(t => t.PageSize, 2)
+            .Add(t => t.ItemTemplate, card).Add(t => t.PageMode, DataTablePageMode.EndlessScroll));
+        table.WaitForAssertion(() => table.Markup.ShouldContain("Drill"), Wait);
+        var before = RowQueries.Count;
+
+        table.Render(p => p.Add(t => t.View, DataTableView.Cards));
+
+        // the hidden grid still holds the scrolling loader in this render: the cards ask for their first page themselves, once
+        table.WaitForAssertion(() => Cards(table).ShouldBe(["Drill", "Lamp"]), Wait);
+        RowQueries.Skip(before).Count(q => q.Skip == 0 && q.Top == 2).ShouldBe(1);
+        await table.InvokeAsync(() => table.Instance.ReloadAsync());
+        table.WaitForAssertion(() => Cards(table).ShouldBe(["Drill", "Lamp"]), Wait);
+
+        table.Render(p => p.Add(t => t.View, DataTableView.Table));
+        table.WaitForAssertion(() => table.FindAll("tbody tr.mud-table-row").Count.ShouldBeGreaterThan(0), Wait);
+        table.FindAll("[data-testid='table-cards']").ShouldBeEmpty();
+    }
+
     private IRenderedComponent<CoworkeeDataTable<Gadget>> RenderTable(Action<ComponentParameterCollectionBuilder<CoworkeeDataTable<Gadget>>>? parameters = null)
     {
         var table = Render<CoworkeeDataTable<Gadget>>(p =>

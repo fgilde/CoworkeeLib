@@ -48,7 +48,8 @@ public partial class CoworkeeDataTable<T>
         }
 
         _cardsWere = CardsShown;
-        return _grid is not null && _wasEndless == Endless;
+        // to the cards: they load at once (ReloadAsync); back to the rows: a switch between pages and scrolling reloads after the render by itself
+        return _grid is not null && (CardsShown || _wasEndless == Endless);
     }
 
     // the grid's load in cards mode: the first page of cards; the hidden grid gets no rows

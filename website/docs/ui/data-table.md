@@ -485,7 +485,7 @@ The table's tool bar, menus and action column are its default look. A page that 
 
 **No action column.** `RowActions="false"` drops the column with the open, edit, delete and history buttons. Rows with `RowHref` or `OnRowClick` still open by a click; they lose the keyboard link of the open button, so give the row or its first cell a link of its own where keyboard users need one.
 
-**Cards.** `ItemTemplate` renders one card per row and `View` switches between `Table` (default) and `Cards`. The cards use the table's query (filter, search, facets, sort) in pages of `PageSize`; the next page loads when the end of the cards scrolls into view (or by *Load more*). A click on a card opens it like a row. The grid stays hidden behind the cards, so columns and sort keep their state when the page switches back. The cards sit in a responsive grid; `--cw-card-width` (default `320px`) sets the smallest width of a card.
+**Cards.** `ItemTemplate` renders one card per row and `View` switches between `Table` (default) and `Cards`. The cards use the table's query (filter, search, facets, sort) in pages of `PageSize`, the first page as soon as the view switches (also from endless scrolling); the next page loads when the end of the cards scrolls into view (or by *Load more*). A click on a card opens it like a row. The grid stays hidden behind the cards, so columns and sort keep their state when the page switches back. The cards sit in a responsive grid; `--cw-card-width` (default `320px`) sets the smallest width of a card.
 
 ```razor
 <MudToggleGroup T="DataTableView" @bind-Value="_view">...</MudToggleGroup>

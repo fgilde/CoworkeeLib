@@ -82,7 +82,8 @@ public partial class CoworkeeDataTable<T>
 
         var switched = _wasEndless is not null;
         _wasEndless = Endless;
-        if (switched)
+        // the cards loaded themselves when they were switched on (FollowView)
+        if (switched && !CardsShown)
         {
             _modeSwitched = true;
             StateHasChanged();

@@ -351,6 +351,12 @@ public partial class CoworkeeDataTable<T> : IDisposable
     {
         _pages?.Clear();
         _facetKey = null; // rows changed, or the group selection: the counts too
+        // cards load themselves: right after a switch from endless rows the hidden grid still holds the loader of the scrolling rows and would load nothing
+        if (CardsShown && _grid is { } grid)
+        {
+            return LoadCardsAsync(grid.SortDefinitions.Values.OrderBy(s => s.Index), CancellationToken.None);
+        }
+
         return _grid?.ReloadServerData() ?? Task.CompletedTask;
     }
 
