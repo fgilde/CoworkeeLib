@@ -20,8 +20,9 @@ internal sealed class SettingsModelContributor : IModelContributor
         {
             value.ToTable("ClientValues", "cw");
             value.Property(v => v.Key).HasMaxLength(ClientValue.KeyLength);
-            // one own value per user and key, and one global value (no user) per organisation and key
-            value.HasIndex(v => new { v.TenantId, v.Key, v.UserId }).IsUnique().AreNullsDistinct(false);
+            // one own value per user and key, and one global value (no user) per organisation and key: no filter, so SQL Server treats null users as
+            // equal (it would add "UserId IS NOT NULL"), and PostgreSQL likewise with NULLS NOT DISTINCT
+            value.HasIndex(v => new { v.TenantId, v.Key, v.UserId }).IsUnique().HasFilter(null).AreNullsDistinct(false);
         });
     }
 }
