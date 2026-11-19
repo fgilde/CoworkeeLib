@@ -48,6 +48,20 @@ public sealed class CoworkeeLocalizer(ILocalizationApi api, IJSRuntime js) : IDi
     public bool IsInitialized { get; private set; }
 
     /// <summary>
+    /// Adjusts the culture the app formats with, after every language switch: gets a writable copy of the language's culture and returns the one to use
+    /// (a user's own date pattern, time pattern, ...). Call <see cref="ApplyCulture"/> when what it reads changed.
+    /// </summary>
+    public Func<CultureInfo, CultureInfo>? CustomizeCulture { get; set; }
+
+    /// <summary>Sets the current culture again through <see cref="CustomizeCulture"/> and re-renders the layout, so every formatted value follows at once.</summary>
+    public void ApplyCulture()
+    {
+        SetCulture();
+        Revision++;
+        Changed?.Invoke();
+    }
+
+    /// <summary>
     /// Picks the language: the choice made on this device, then the user setting, then the browser, then the default. The first call runs before
     /// the first render; later calls bring a changed user setting (saved on another device or in the settings) live: it replaces the choice of
     /// this device.
@@ -136,13 +150,23 @@ public sealed class CoworkeeLocalizer(ILocalizationApi api, IJSRuntime js) : IDi
         // re-rendering the whole layout resets inputs being typed into, so only when something changed
         var changed = culture != Culture || !Same(texts, _texts);
         (_texts, Culture) = (texts, culture);
-        var info = CultureInfo.GetCultureInfo(culture);
-        CultureInfo.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = info;
+        SetCulture();
         if (changed)
         {
             Revision++;
             Changed?.Invoke();
         }
+    }
+
+    private void SetCulture()
+    {
+        var info = CultureInfo.GetCultureInfo(Culture);
+        if (CustomizeCulture is { } customize)
+        {
+            info = customize((CultureInfo)info.Clone());
+        }
+
+        CultureInfo.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = info;
     }
 
     private static bool Same(IReadOnlyDictionary<string, string> a, IReadOnlyDictionary<string, string> b) =>

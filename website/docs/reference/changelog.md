@@ -20,6 +20,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 - Reports hosted in another app: `ReportingOptions.BasePath` (default `reports`) moves the report pages, their links and the navigation entry; `Dashboards`, `Subscriptions` and `DataPages` (all default `true`) turn off *Set as my dashboard*, *Subscribe by mail* and drill-down to the generic data page; `ReportPage.AllowEdit` (default `true`) shows a report read-only also to its owner. See [Reports in another app](../modules/reporting.md#reports-in-another-app).
 - Chart look of the reports: `ReportingOptions.Colors` replaces the theme's series colours, `ReportingOptions.ConfigureChart` changes every chart's ApexCharts options after the module built them (square bars, solid grid lines). See [Reports in another app](../modules/reporting.md#reports-in-another-app).
 - Notifications: `category` takes several categories separated by commas, `oldestFirst=true` turns the order (`NotificationFilter.OldestFirst`, `GetNotifications.OldestFirst`). See [Notifications](../modules/realtime.md#notifications).
+- `CoworkeeLocalizer.CustomizeCulture` adjusts the culture the client formats with after every language switch (a user's date pattern, a 24-hour clock); `ApplyCulture()` applies it again and re-renders. See [Formats of your own](../modules/localization.md#formats-of-your-own).
 
 ### Changed
 

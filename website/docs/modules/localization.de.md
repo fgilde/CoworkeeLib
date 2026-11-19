@@ -115,6 +115,32 @@ await host.Services.InitializeCoworkeeClientAsync();
 await host.RunAsync();
 ```
 
+### Eigene Formate
+
+Die Kultur folgt der Sprache. Um mit eigenen Mustern des Benutzers zu formatieren (ein gewähltes Datumsformat, eine 24-Stunden-Uhr), setze `CustomizeCulture`: Es bekommt nach jedem Sprachwechsel eine beschreibbare Kopie der Kultur der Sprache und gibt die Kultur zurück, die gelten soll. Rufe `ApplyCulture()` auf, wenn sich geändert hat, was es liest; das Layout rendert neu, so folgen jedes `ToString("d")`, jede Spalte mit `Format="d"` und jeder Datumswähler sofort.
+
+```csharp
+public sealed class UserFormats(CoworkeeLocalizer localizer, ThemeService themes)
+{
+    public void Start()
+    {
+        localizer.CustomizeCulture = culture =>
+        {
+            if (themes.ClientSettings.GetValueOrDefault("App.DateFormat") is { Length: > 0 } pattern)
+            {
+                culture.DateTimeFormat.ShortDatePattern = pattern;
+            }
+
+            culture.DateTimeFormat.ShortTimePattern = "HH:mm";
+            return culture;
+        };
+        // eine gespeicherte Einstellung lädt die Client-Einstellungen live neu
+        themes.Changed += localizer.ApplyCulture;
+        localizer.ApplyCulture();
+    }
+}
+```
+
 ## Verwaltung
 
 - *Sprachen* (*Administration > Lokalisierung > Sprachen*, `/cw/admin/languages`): alle Kulturen, nach Sprache gruppiert, mit einem Schalter. Beim Einschalten werden fehlende Texte mit dem [Übersetzungsdienst](#maschinelle-ubersetzung) der Einstellungen übersetzt; ein Knopf übersetzt später noch Fehlendes. Der Stern markiert die Standardsprache, die sich nicht abschalten lässt.

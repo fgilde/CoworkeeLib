@@ -45,6 +45,47 @@ public sealed class LocalizationTests : ClientTestBase
     }
 
     [Fact]
+    public async Task A_customized_culture_formats_after_every_language_switch_and_applies_again_on_demand()
+    {
+        var before = (System.Globalization.CultureInfo.CurrentCulture, System.Globalization.CultureInfo.DefaultThreadCurrentCulture);
+        try
+        {
+            var pattern = "dd.MM.yyyy";
+            var localizer = new Blazor.Localization.CoworkeeLocalizer(Localization, JSInterop.JSRuntime)
+            {
+                CustomizeCulture = culture =>
+                {
+                    culture.DateTimeFormat.ShortDatePattern = pattern;
+                    return culture;
+                },
+            };
+            var changes = 0;
+            localizer.Changed += () => changes++;
+
+            await localizer.InitializeAsync("de");
+            var date = new DateTime(2026, 3, 25);
+            // set inside the awaited call: the default culture shows it (the caller's own culture does not flow back out of an async method)
+            var current = System.Globalization.CultureInfo.DefaultThreadCurrentCulture!;
+            current.Name.ShouldBe("de");
+            date.ToString("d", current).ShouldBe("25.03.2026");
+            // the language's own culture stays untouched
+            System.Globalization.CultureInfo.GetCultureInfo("de").DateTimeFormat.ShortDatePattern.ShouldNotBe("yyyy-MM-dd");
+
+            pattern = "yyyy-MM-dd";
+            var seen = changes;
+            localizer.ApplyCulture();
+
+            date.ToString("d", System.Globalization.CultureInfo.DefaultThreadCurrentCulture).ShouldBe("2026-03-25");
+            date.ToString("d").ShouldBe("2026-03-25");
+            changes.ShouldBe(seen + 1);
+        }
+        finally
+        {
+            (System.Globalization.CultureInfo.CurrentCulture, System.Globalization.CultureInfo.DefaultThreadCurrentCulture) = before;
+        }
+    }
+
+    [Fact]
     public void Translations_are_edited_per_key_and_an_empty_value_restores_the_default()
     {
         Localization.GetTranslationRowsAsync("de", Arg.Any<CancellationToken>())
