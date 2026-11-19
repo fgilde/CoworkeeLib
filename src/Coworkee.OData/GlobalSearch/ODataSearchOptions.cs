@@ -26,6 +26,26 @@ public sealed class ODataSearchOptions<T>
 
     internal double Boost { get; private set; } = 1;
 
+    internal List<Expression<Func<T, string?>>> LeadSearchFields { get; } = [];
+
+    internal Func<IServiceProvider, CancellationToken, Task<bool>>? LeadWhen { get; private set; }
+
+    /// <summary>
+    /// Fields an index of the database answers at once (a number or key column), searched alone before <see cref="Fields"/> whenever
+    /// <paramref name="when"/> says so, e.g. for a user who sees millions of rows: their hits (prefix, then anywhere) come first and the fields of
+    /// <see cref="Fields"/> fill up the rest of the limit. Over a large set a search of many columns reads every row; the lead hits arrive before it
+    /// ends or the provider times out. A lead field may stand in for a search field no index answers (<c>a</c> for <c>a ?? b</c> when <c>b</c> is
+    /// searched too). Each round costs one more query while the lead fields find fewer hits than the limit, so let <paramref name="when"/> say false
+    /// for small sets. Totals still count the matches of <see cref="Fields"/>.
+    /// </summary>
+    /// <param name="when">Asked once per search, with the provider's scope (signed in as the user).</param>
+    public ODataSearchOptions<T> LeadFields(Func<IServiceProvider, CancellationToken, Task<bool>> when, params Expression<Func<T, string?>>[] fields)
+    {
+        LeadWhen = when;
+        LeadSearchFields.AddRange(fields);
+        return this;
+    }
+
     /// <summary>
     /// The text columns searched: exact and prefix first, then anywhere. The first one is the title unless <see cref="Title"/> says otherwise.
     /// <c>$search</c> on the OData set and its data tables look in these fields only (unless the entity names its own with ISearchable or the set declares

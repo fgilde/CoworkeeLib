@@ -49,6 +49,20 @@ context.Services.AddGlobalSearch<Product>(s => s.Subtitle(p => p.Barcode).Url(p 
 | `Name`, `Group` | the entity set in lower case, the entity set |
 | `Icon("Person")` | a Material icon name (or SVG markup) |
 | `Weight(0.8)` | 1 |
+| `LeadFields(when, ...)` | none; see [lead fields](#lead-fields-for-large-sets) |
+
+### Lead fields for large sets
+
+A search over several text columns reads every row the user may see: no database index answers `LOWER(column) LIKE` over a handful of columns. Over a few thousand rows that takes milliseconds, over millions it outlasts the provider timeout (`Coworkee:GlobalSearch:ProviderTimeout`, 3 s), and the user gets nothing. `LeadFields` names columns an index does answer (a number, a key) and searches them alone first, whenever its condition holds:
+
+```csharp title="MyApp.Shipping/ShippingModule.cs"
+context.Services.AddGlobalSearch<Shipment>(s => s
+    .Fields(x => x.DisplayNumber, x => x.HouseBill, x => x.ContainerNumber)
+    // a user who sees every shipment: the number column first, it is in an index
+    .LeadFields((scope, ct) => scope.GetRequiredService<IShipmentScope>().SeesAllAsync(ct), x => x.Number));
+```
+
+When `when` answers true (it runs once per search, in the provider's scope, signed in as the user), each round searches the lead fields first and streams their hits; the other fields fill up the rest of the limit after them. With five lead hits the slow rounds never run; with fewer they still run, and if they time out the lead hits are already out (the provider ends as `TimedOut` with them). A lead field may stand in for a search field no index can answer: `x.Number` for `x.Number ?? x.HouseBill` when `HouseBill` is searched too. Lead fields are no search fields of their own for `$search`, the data tables or local copies, and totals (`totals=true`) still count the matches of `Fields`. Each round costs one more query while the lead fields find fewer hits than the limit, so let the condition answer false for small sets.
 
 ### Local copies first
 

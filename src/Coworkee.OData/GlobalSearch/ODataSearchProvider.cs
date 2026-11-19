@@ -11,7 +11,8 @@ namespace Coworkee.OData.GlobalSearch;
 
 /// <summary>
 /// Searches the rows of an OData set the user may read (<see cref="ODataEntityAccess.VisibleAsync{TEntity}"/>) in two rounds: values that start
-/// with the text (or the record with a typed id) come at once, values that contain every word follow.
+/// with the text (or the record with a typed id) come at once, values that contain every word follow. Lead fields (<see cref="ODataSearchOptions{T}.LeadFields"/>),
+/// when their condition holds, run both rounds alone before the search fields.
 /// </summary>
 internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
     where T : class
@@ -31,7 +32,7 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
         _registry = registry;
         _options = options;
         _id = typeof(T).GetProperty(Registration.Key) ?? throw new InvalidOperationException($"{typeof(T).Name} needs a {Registration.Key} property for the global search.");
-        var hidden = options.SearchFields.Select(MemberName).Intersect(Registration.HiddenProperties).ToList();
+        var hidden = options.SearchFields.Concat(options.LeadSearchFields).Select(MemberName).Intersect(Registration.HiddenProperties).ToList();
         if (hidden.Count > 0)
         {
             throw new InvalidOperationException($"The global search of {Registration.EntitySet} searches the hidden properties {string.Join(", ", hidden)}.");
@@ -77,31 +78,64 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
             yield break;
         }
 
-        var text = query.Text.ToLowerInvariant();
-        var first = query.Id is { } id
-            ? _id.PropertyType == typeof(Guid) ? visible.Where(IdIs(id)) : null
-            : visible.Where(AnyField(fields, value => query.Exact ? Expression.Equal(value, Parameter(text)) : Expression.Call(value, StartsWith, Parameter(text))));
-        var sent = new HashSet<string>(StringComparer.Ordinal);
-        if (first is not null)
+        var searched = fields.Select(i => _options.SearchFields[i]).ToList();
+        if (query.Id is { } id)
         {
-            foreach (var hit in await HitsAsync(scope, first, query, fields, context.Limit, cancellationToken))
+            if (_id.PropertyType == typeof(Guid))
             {
-                sent.Add(hit.Id!);
-                yield return hit;
+                foreach (var hit in await HitsAsync(scope, visible.Where(IdIs(id)), query, fields, searched[0], context.Limit, cancellationToken))
+                {
+                    yield return hit;
+                }
             }
-        }
 
-        if (query.Exact || query.Id is not null || sent.Count >= context.Limit)
-        {
             yield break;
         }
 
-        // ponytail: the second round reads the first round's rows again and drops them here; a NOT IN of their ids if limits grow
-        var rest = query.Words.Aggregate(visible, (rows, word) =>
-            rows.Where(AnyField(fields, value => Expression.Call(value, Contains, Parameter(word.ToLowerInvariant())))));
-        foreach (var hit in (await HitsAsync(scope, rest, query, fields, context.Limit + sent.Count, cancellationToken)).Where(h => !sent.Contains(h.Id!)).Take(context.Limit - sent.Count))
+        var lead = _options.LeadWhen is { } when && await when(context.Services, cancellationToken)
+            ? _options.LeadSearchFields.Where(f => !denied.Contains(MemberName(f))).ToList()
+            : [];
+        var text = query.Text.ToLowerInvariant();
+        var sent = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var (on, anywhere) in Rounds(lead, searched, query.Exact))
         {
-            yield return hit;
+            var rows = anywhere
+                ? query.Words.Aggregate(visible, (found, word) => found.Where(AnyField(on, value => Expression.Call(value, Contains, Parameter(word.ToLowerInvariant())))))
+                : visible.Where(AnyField(on, value => query.Exact ? Expression.Equal(value, Parameter(text)) : Expression.Call(value, StartsWith, Parameter(text))));
+            // ponytail: a later round reads the earlier rounds' rows again and drops them here; a NOT IN of their ids if limits grow
+            var room = context.Limit - sent.Count;
+            foreach (var hit in await HitsAsync(scope, rows, query, fields, on[0], context.Limit + sent.Count, cancellationToken))
+            {
+                if (room == 0)
+                {
+                    break;
+                }
+
+                if (sent.Add(hit.Id!))
+                {
+                    room--;
+                    yield return hit;
+                }
+            }
+
+            if (sent.Count >= context.Limit)
+            {
+                yield break;
+            }
+        }
+    }
+
+    // the lead fields alone first (LeadFields), then every field; each exact or prefix first, then every word anywhere
+    private static IEnumerable<(List<Expression<Func<T, string?>>> On, bool Anywhere)> Rounds(
+        List<Expression<Func<T, string?>>> lead, List<Expression<Func<T, string?>>> searched, bool exact)
+    {
+        foreach (var on in lead.Count > 0 ? [lead, searched] : new[] { searched })
+        {
+            yield return (on, false);
+            if (!exact)
+            {
+                yield return (on, true);
+            }
         }
     }
 
@@ -116,12 +150,13 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
             return 0;
         }
 
+        var searched = fields.Select(i => _options.SearchFields[i]).ToList();
         var rows = query.Id is { } id
             ? _id.PropertyType == typeof(Guid) ? visible.Where(IdIs(id)) : visible.Where(_ => false)
             : query.Exact
-                ? visible.Where(AnyField(fields, value => Expression.Equal(value, Parameter(query.Text.ToLowerInvariant()))))
+                ? visible.Where(AnyField(searched, value => Expression.Equal(value, Parameter(query.Text.ToLowerInvariant()))))
                 : query.Words.Aggregate(visible, (found, word) =>
-                    found.Where(AnyField(fields, value => Expression.Call(value, Contains, Parameter(word.ToLowerInvariant())))));
+                    found.Where(AnyField(searched, value => Expression.Call(value, Contains, Parameter(word.ToLowerInvariant())))));
         var scoped = await ODataNavigationScope.For(context.Services, typeof(T)).ApplyAsync(rows, cancellationToken);
         return await scoped.LongCountAsync(cancellationToken);
     }
@@ -129,11 +164,12 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
     // search fields may read through navigations: the scope keeps them to rows the user may see, and their values come from the query, so a
     // field through a navigation shows a hidden row's value neither in the match nor in the title
     private async Task<IEnumerable<GlobalSearchHit>> HitsAsync(
-        ODataNavigationScope scope, IQueryable<T> rows, GlobalSearchQuery query, List<int> fields, int take, CancellationToken cancellationToken)
+        ODataNavigationScope scope, IQueryable<T> rows, GlobalSearchQuery query, List<int> fields, Expression<Func<T, string?>> order, int take,
+        CancellationToken cancellationToken)
     {
         var row = Expression.Parameter(typeof(T), "row");
         var values = Expression.NewArrayInit(typeof(string), fields.Select(i => ReplacingExpressionVisitor.Replace(_options.SearchFields[i].Parameters[0], row, _options.SearchFields[i].Body)));
-        var found = rows.OrderBy(_options.SearchFields[fields[0]]).Take(take)
+        var found = rows.OrderBy(order).Take(take)
             .Select(Expression.Lambda<Func<T, Found>>(Expression.New(typeof(Found).GetConstructors()[0], row, values), row));
         return (await (await scope.ApplyAsync(found, cancellationToken)).ToListAsync(cancellationToken)).Select(f => Hit(f.Row, f.Values, query)).OrderByDescending(h => h.Score);
     }
@@ -238,10 +274,10 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
         return (row, [.. markers]);
     }
 
-    private Expression<Func<T, bool>> AnyField(List<int> fields, Func<Expression, Expression> test)
+    private static Expression<Func<T, bool>> AnyField(List<Expression<Func<T, string?>>> fields, Func<Expression, Expression> test)
     {
         var row = Expression.Parameter(typeof(T), "row");
-        var body = fields.Select(i => _options.SearchFields[i])
+        var body = fields
             .Select(field => test(Expression.Call(ReplacingExpressionVisitor.Replace(field.Parameters[0], row, field.Body), ToLower)))
             .Aggregate(Expression.OrElse);
         return Expression.Lambda<Func<T, bool>>(body, row);

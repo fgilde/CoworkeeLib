@@ -49,6 +49,20 @@ context.Services.AddGlobalSearch<Product>(s => s.Subtitle(p => p.Barcode).Url(p 
 | `Name`, `Group` | das Entity-Set in Kleinbuchstaben, das Entity-Set |
 | `Icon("Person")` | ein Material-Icon-Name (oder SVG-Markup) |
 | `Weight(0.8)` | 1 |
+| `LeadFields(when, ...)` | keine; siehe [Leitfelder](#leitfelder-für-große-sets) |
+
+### Leitfelder für große Sets
+
+Eine Suche über mehrere Textspalten liest jede Zeile, die der Benutzer sehen darf: kein Datenbankindex beantwortet `LOWER(spalte) LIKE` über eine Handvoll Spalten. Bei ein paar tausend Zeilen dauert das Millisekunden, bei Millionen länger als der Timeout des Providers (`Coworkee:GlobalSearch:ProviderTimeout`, 3 s), und der Benutzer bekommt nichts. `LeadFields` nennt Spalten, die ein Index beantwortet (eine Nummer, ein Schlüssel), und durchsucht sie zuerst allein, wann immer die Bedingung gilt:
+
+```csharp title="MyApp.Shipping/ShippingModule.cs"
+context.Services.AddGlobalSearch<Shipment>(s => s
+    .Fields(x => x.DisplayNumber, x => x.HouseBill, x => x.ContainerNumber)
+    // ein Benutzer, der jede Sendung sieht: zuerst die Nummernspalte, sie liegt in einem Index
+    .LeadFields((scope, ct) => scope.GetRequiredService<IShipmentScope>().SeesAllAsync(ct), x => x.Number));
+```
+
+Antwortet `when` mit true (es läuft einmal pro Suche, im Scope des Providers, angemeldet als der Benutzer), durchsucht jede Runde zuerst die Leitfelder und schickt ihre Treffer sofort; die übrigen Felder füllen danach den Rest des Limits. Mit fünf Leittreffern laufen die langsamen Runden gar nicht; mit weniger laufen sie trotzdem, und laufen sie in den Timeout, sind die Leittreffer schon unterwegs (der Provider endet mit ihnen als `TimedOut`). Ein Leitfeld darf für ein Suchfeld einspringen, das kein Index beantwortet: `x.Number` für `x.Number ?? x.HouseBill`, wenn `HouseBill` auch durchsucht wird. Leitfelder sind keine eigenen Suchfelder für `$search`, die Datentabellen oder lokale Kopien, und Gesamtzahlen (`totals=true`) zählen weiter die Treffer von `Fields`. Jede Runde kostet eine Abfrage mehr, solange die Leitfelder weniger Treffer finden als das Limit; die Bedingung sollte für kleine Sets also false antworten.
 
 ### Zuerst die lokalen Kopien
 

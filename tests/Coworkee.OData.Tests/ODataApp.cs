@@ -258,6 +258,9 @@ internal sealed class GadgetPermissions : Coworkee.Application.Authorization.IPe
 [DependsOn(typeof(CoworkeeODataModule), typeof(CoworkeeIdentityModule))]
 public sealed class GadgetModule : CoworkeeModule
 {
+    /// <summary>A request with this header has the parcel search start with the owner (<c>LeadFields</c>).</summary>
+    public const string LeadSearchHeader = "X-Lead-Search";
+
     public override void ConfigureServices(ModuleServiceContext context)
     {
         context.Services.AddSingleton<IModelContributor, GadgetModelContributor>();
@@ -328,7 +331,9 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddODataEntity<Parcel>("Parcels", ODataApp.ViewGadgets);
         context.Services.AddScoped<IODataEntityFilter<Parcel>, HideSecretParcels>();
         context.Services.AddSingleton<Coworkee.OData.Computed.IODataComputedPropertySource, ParcelLabel>();
-        context.Services.AddGlobalSearch<Parcel>(s => s.Fields(p => p.Name).Page("/parcels"));
+        // the owner leads the search when a request asks for it (GlobalSearchODataTests): a stand-in for "the user sees millions of rows"
+        context.Services.AddGlobalSearch<Parcel>(s => s.Fields(p => p.Name).Page("/parcels").LeadFields((services, _) => Task.FromResult(
+            services.GetRequiredService<Microsoft.AspNetCore.Http.IHttpContextAccessor>().HttpContext?.Request.Headers.ContainsKey(LeadSearchHeader) == true), p => p.Owner));
         context.Services.AddODataEntity<Consignment>("Consignments", ODataApp.ViewGadgets, o => o.Hide(c => c.Memo));
         context.Services.AddODataEntity<Locket>("Lockets", ODataApp.ViewGadgets, o => o.Hide(l => l.Note).HideUnless(l => l.Code, ODataApp.SeeCategories));
         context.Services.AddSingleton<Coworkee.OData.Computed.IODataComputedPropertySource, LocketPeek>();

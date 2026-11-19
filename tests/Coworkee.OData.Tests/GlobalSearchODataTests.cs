@@ -97,6 +97,46 @@ public sealed class GlobalSearchODataTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Lead_fields_are_searched_alone_first_when_the_condition_says_so_and_the_fields_fill_up_the_rest()
+    {
+        var mark = "lead" + Guid.NewGuid().ToString("N")[..8];
+        await using (var scope = app.App.Services.CreateAsyncScope())
+        {
+            var parcels = scope.ServiceProvider.GetRequiredService<ParcelDbContext>();
+            parcels.AddRange(new Parcel { Name = $"{mark} box", Owner = "Acme" }, new Parcel { Name = "Crate", Owner = $"{mark} owner" },
+                new Parcel { Name = "Tin", Owner = $"the {mark}" }, new Parcel { Name = "Safe", Owner = "Secret" });
+            await parcels.SaveChangesAsync(Ct);
+        }
+
+        async Task<List<string>> TitlesAsync(string url, bool lead)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            if (lead)
+            {
+                request.Headers.Add(GadgetModule.LeadSearchHeader, "1");
+            }
+
+            using var response = await Admin.SendAsync(request, Ct);
+            var lines = (await response.Content.ReadAsStringAsync(Ct)).Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                .Select(l => JsonSerializer.Deserialize<GlobalSearchEvent>(l, JsonSerializerOptions.Web)!).ToList();
+            lines[^1].State.ShouldBe(GlobalSearchProviderState.Done);
+            return [.. lines.Where(l => l.Hit is not null).Select(l => l.Hit!.Title)];
+        }
+
+        // lead prefix, lead anywhere, then the fields (prefix); the owner is no search field of its own, so without the condition it finds nothing
+        (await TitlesAsync($"/api/v1/search/stream?types=parcels&q={mark}", lead: true)).ShouldBe(["Crate", "Tin", $"{mark} box"]);
+        (await TitlesAsync($"/api/v1/search/stream?types=parcels&q={mark}", lead: false)).ShouldBe([$"{mark} box"]);
+        // the lead hits fill the limit: no round over the fields
+        (await TitlesAsync($"/api/v1/search/stream?types=parcels&q={mark}&limit=2", lead: true)).ShouldBe(["Crate", "Tin"]);
+        // pages skip the same hits in the same order; totals count the fields' matches
+        var page = await Admin.GetFromJsonAsync<GlobalSearchResult>($"/api/v1/search?types=parcels&q={mark}&limit=1&skip=1&totals=true", Ct);
+        page!.Hits.ShouldBeEmpty();
+        page.Providers.Single().Total.ShouldBe(1);
+        (await TitlesAsync($"/api/v1/search/stream?types=parcels&q={mark}&limit=1&skip=1", lead: true)).ShouldBe(["Tin"]);
+        (await TitlesAsync($"/api/v1/search/stream?types=parcels&q=secret", lead: true)).ShouldBeEmpty("the set's row filter holds for the lead round too");
+    }
+
+    [Fact]
     public async Task Without_the_permission_of_the_set_its_provider_is_left_out()
     {
         var email = $"viewer-{Guid.NewGuid():N}@acme.test";
