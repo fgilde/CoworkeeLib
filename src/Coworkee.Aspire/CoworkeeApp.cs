@@ -62,7 +62,7 @@ public sealed partial class CoworkeeApp
     public IResourceBuilder<ProjectResource> AddMigrations<TProject>(string suffix = "migrations")
         where TProject : IProjectMetadata, new()
     {
-        Migrations = WithAppDatabase(Builder.AddProject<TProject>($"{Name}-{suffix}"), awaitServer: true);
+        Migrations = WithAppDatabase(Project<TProject>(suffix), awaitServer: true);
         AsDeployJob(Migrations);
         WithInitialAdmin(Migrations);
         if (LocalDevelopment)
@@ -354,10 +354,20 @@ public sealed partial class CoworkeeApp
         }
     }
 
+    // Aspire 17 marks AddProject obsolete; AddDotnetProject returns a DotnetProjectResource (no ProjectResource, no watch yet), which would change every
+    // signature of this class for the apps. Until that move AddProject stays, behind this one suppression.
+    private IResourceBuilder<ProjectResource> Project<TProject>(string suffix)
+        where TProject : IProjectMetadata, new()
+    {
+#pragma warning disable CS0618
+        return Builder.AddProject<TProject>($"{Name}-{suffix}");
+#pragma warning restore CS0618
+    }
+
     private IResourceBuilder<ProjectResource> Service<TProject>(string suffix)
         where TProject : IProjectMetadata, new()
     {
-        var service = Builder.AddProject<TProject>($"{Name}-{suffix}").WithHttpHealthCheck(Health);
+        var service = Project<TProject>(suffix).WithHttpHealthCheck(Health);
         WithSetupToken(service);
         WireServices(service);
         WireGrafanaTelemetry(service);
