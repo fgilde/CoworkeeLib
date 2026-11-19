@@ -9,7 +9,7 @@ dotnet tool install -g Coworkee.Cli
 coworkee doctor
 ```
 
-`coworkee doctor` prüft das .NET SDK (mindestens die Version aus `global.json`), ob Docker läuft und ob `dotnet-ef` installiert ist. In einer App vergleicht es auch Versionen: `dotnet-ef` mit dem EF Core der App, die Aspire-CLI mit dem Aspire-SDK des App-Hosts (eine ältere CLI, etwa 13.6 mit einem 17.0-App-Host, kann in `aspire run` hängen), die coworkee-CLI mit der `CoworkeeVersion` der App, und es warnt, wenn ein Port der Startprofile schon belegt ist. Zu jedem Befund nennt es den Befehl, der ihn behebt; der Exit-Code ist 1, wenn etwas fehlschlägt. Die Aspire-CLI ist optional; `coworkee run` nutzt `dotnet run`.
+`coworkee doctor` prüft das .NET SDK (mindestens die Version aus `global.json`), ob Docker läuft und ob `dotnet-ef` installiert ist. In einer App vergleicht es auch Versionen: `dotnet-ef` mit dem EF Core der App, die Aspire-CLI mit dem Aspire-SDK des App-Hosts (eine ältere CLI, etwa 13.6 mit einem 17.0-App-Host, kann in `aspire run` hängen), die coworkee-CLI mit der `CoworkeeVersion` der App, und es warnt, wenn ein Port der Startprofile schon belegt ist. Zu jedem Befund nennt es den Befehl, der ihn behebt; der Exit-Code ist 1, wenn etwas fehlschlägt. Die Aspire-CLI ist optional; `coworkee run` nutzt `dotnet run`. Seit Aspire 17 übergibt ein einfaches `dotnet run` (und F5 in der IDE) des App-Hosts an `aspire run`; `coworkee run`, `coworkee deploy` und das Studio schalten das ab (`ASPIRE_SUPPRESS_CLI_RUN_HOOK=1`) und starten den App-Host selbst, mit seinem eigenen Log.
 
 ## Eine neue Anwendung
 
