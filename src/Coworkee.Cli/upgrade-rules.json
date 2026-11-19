@@ -924,5 +924,31 @@
       "manual": [
         { "text": "Documents at registration need a store in the auth server, which loads no Coworkee.Files on its own: with Coworkee.Files add typeof(Coworkee.Files.CoworkeeFileRegistrationDocumentsModule) to the DependsOn of the auth module (or register an own IRegistrationDocumentStore). Without a store the registration skips the documents and logs an error.", "find": "CoworkeeAuthServerModule", "files": [ "src/*.Auth/**/*.cs" ], "unless": "RegistrationDocuments" }
       ]
-    }  ]
+    },
+    {
+      "version": "0.0.1.95",
+      "breaking": [
+        "Aspire 17.0.0: the app host SDK, Aspire.Hosting.Testing and the Aspire packages of the app move to 17.0.0 (net10.0 only). Aspire.AppHost.Sdk is obsolete in 17 (ASPIRE012, an error with TreatWarningsAsErrors); the app host keeps it with SuppressAspireAppHostSdkObsoleteWarning, coworkee update adds the property. Its build needs the Aspire CLI bundle: an installed Aspire CLI 17, or the build fetches it through dotnet dnx aspire.cli into ~/.aspire.",
+        "Aspire 17 marks AddProject obsolete (CS0618) in favour of AddDotnetProject; app hosts that call builder.AddProject themselves suppress CS0618 there. AddMigrations, AddApi, AddWeb and the other CoworkeeApp methods are unchanged."
+      ],
+      "needsMigration": false,
+      "insertions": [
+        { "insertAfter": "<OutputType>Exe</OutputType>", "line": "<SuppressAspireAppHostSdkObsoleteWarning>true</SuppressAspireAppHostSdkObsoleteWarning>", "files": [ "src/*.AppHost/*.AppHost.csproj" ], "unless": "SuppressAspireAppHostSdkObsoleteWarning", "description": "SuppressAspireAppHostSdkObsoleteWarning in the app host (ASPIRE012 of Aspire 17)" }
+      ],
+      "packages": [
+        { "id": "Aspire.AppHost.Sdk", "version": "17.0.0" },
+        { "id": "Aspire.Hosting.Testing", "version": "17.0.0" },
+        { "id": "Aspire.Hosting.Azure.Storage", "version": "17.0.0" },
+        { "id": "Aspire.Hosting.RabbitMQ", "version": "17.0.0" },
+        { "id": "Aspire.Hosting.JavaScript", "version": "17.0.0" },
+        { "id": "Aspire.Hosting.Redis", "version": "17.0.0" },
+        { "id": "Aspire.Hosting.PostgreSQL", "version": "17.0.0" },
+        { "id": "Aspire.Hosting.SqlServer", "version": "17.0.0" },
+        { "id": "Aspire.StackExchange.Redis", "version": "17.0.0" }
+      ],
+      "manual": [
+        { "text": "Aspire 17 marks AddProject obsolete (CS0618): put #pragma warning disable CS0618 around the call or move it to AddDotnetProject (package Aspire.Hosting.Dotnet; it returns a DotnetProjectResource).", "find": "\\.AddProject<", "files": [ "src/*.AppHost/**/*.cs" ] }
+      ]
+    }
+  ]
 }

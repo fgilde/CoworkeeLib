@@ -2,6 +2,15 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Breaking changes
+
+- **Aspire 17.0.0** (from 13.6.5): `Coworkee.Aspire` and the template use Aspire 17.0.0, `Aspire.Hosting.Kubernetes` 17.0.0 (now stable) and `Aspire.Hosting.Keycloak` 17.0.0-preview.1.26567.5. The Aspire 17 packages target `net10.0` only. `CommunityToolkit.Aspire.Hosting.MailPit` and `.Ollama` stay on 13.6.1 (their 17 builds are betas so far). `coworkee update` moves `Aspire.AppHost.Sdk`, `Aspire.Hosting.Testing` and the other Aspire packages of the app to 17.0.0.
+- `Aspire.AppHost.Sdk` is obsolete in Aspire 17 (`ASPIRE012`, an error under `TreatWarningsAsErrors`). The app host keeps it with `<SuppressAspireAppHostSdkObsoleteWarning>true</SuppressAspireAppHostSdkObsoleteWarning>`; `coworkee update` adds the property. `Coworkee.Aspire` still adds the services as `ProjectResource` from the `Projects.*` types, so `AddMigrations`, `AddApi`, `AddWeb` and the other `CoworkeeApp` methods are unchanged.
+- The build of an Aspire 17 app host needs the Aspire CLI bundle (dashboard and orchestrator, no longer NuGet packages): an installed [Aspire CLI](https://get.aspire.dev) 17, or the build fetches it once through `dotnet dnx aspire.cli` into `~/.aspire`. `AspireUseCliBundle=false` is an error now (`ASPIRE013`); the template's `NoWarn` for `ASPIRE010` is gone.
+- Aspire 17 marks `AddProject` obsolete (`CS0618`) in favour of `AddDotnetProject` (package `Aspire.Hosting.Dotnet`, returns a `DotnetProjectResource`). App hosts that call `builder.AddProject<...>` themselves suppress `CS0618` there or move the call; `coworkee update` lists the places.
+
 ## 0.0.1.94 (2026-11-16)
 
 ### Added
