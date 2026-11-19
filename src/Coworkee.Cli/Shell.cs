@@ -91,9 +91,16 @@ internal static class Shell
         await source.CopyToAsync(file, cancellationToken);
     }
 
-    private static ProcessStartInfo Start(IReadOnlyList<string> args, string? workingDirectory)
+    /// <summary>
+    /// Since Aspire 17 dotnet run of an app host hands over to aspire run (the Aspire CLI): that refuses the publish operation of coworkee deploy
+    /// ("use aspire publish") and replaces the app host's log with its own screen. The CLI runs the app host itself, as before.
+    /// </summary>
+    public const string SuppressAspireRunHook = "ASPIRE_SUPPRESS_CLI_RUN_HOOK";
+
+    internal static ProcessStartInfo Start(IReadOnlyList<string> args, string? workingDirectory)
     {
         var start = new ProcessStartInfo(args[0]) { WorkingDirectory = workingDirectory ?? Environment.CurrentDirectory };
+        start.Environment[SuppressAspireRunHook] = "1";
         foreach (var arg in args.Skip(1))
         {
             start.ArgumentList.Add(arg);

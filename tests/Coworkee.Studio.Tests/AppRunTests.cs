@@ -113,6 +113,22 @@ public sealed class AppRunTests
     }
 
     [Fact]
+    public async Task The_app_host_runs_itself_not_through_the_aspire_cli_whose_screen_has_no_login_line()
+    {
+        ProcessStartInfo? started = null;
+        var generator = new Generator((start, _, _) =>
+        {
+            started = start;
+            return Task.FromResult(0);
+        });
+
+        await generator.RunAppAsync(Path.Combine(Path.GetTempPath(), "Shop.AppHost", "Shop.AppHost.csproj"), new Coworkee.Studio.Model.StudioSettings(), (_, _) => { }, CancellationToken.None);
+
+        started.ShouldNotBeNull().Environment["ASPIRE_SUPPRESS_CLI_RUN_HOOK"].ShouldBe("1");
+        started.ArgumentList.ShouldBe(["run", "--project", Path.Combine(Path.GetTempPath(), "Shop.AppHost", "Shop.AppHost.csproj")]);
+    }
+
+    [Fact]
     public async Task Without_an_app_host_it_says_so()
     {
         using var folder = new TempFolder();
