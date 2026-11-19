@@ -54,6 +54,7 @@ Der Verlauf beantwortet, *was mit welchem Datensatz wann geschah, und ob eine Pe
 | `apiKeys` | Identity | [API-Schlüssel](api-keys.md) (Name, Präfix, Berechtigungen, Daten, letzte Nutzung), nie der Hash | seine Schlüssel gelöscht; Schlüssel anderer, die er widerrufen hat, behalten den Widerruf mit dem Platzhalter |
 | `signIns` | Auth-Server | freigegebene Clients | Freigaben und Tokens gelöscht, jede Sitzung endet |
 | `settings` | Einstellungen | Werte mit Benutzerbereich (Geheimnisse als `***`) | gelöscht |
+| `clientValues` | Einstellungen | seine eigenen [Client-Werte](../modules/settings.de.md#client-werte) (Schlüssel, Wert, letzte Änderung) | gelöscht, in jeder Organisation; globale Werte bleiben |
 | `notifications` | Benachrichtigungen | Benachrichtigungen, Geräte mit Web Push, Einstellungen, gefolgte Datensätze, auf ihre Verzögerung wartende Mails, letzter Digest | gelöscht, in jeder Organisation |
 | `mails` | Mailversand | Mails an die Adresse in seiner Organisation, ohne Inhalt | samt Anhängen gelöscht, in seiner Organisation |
 | `chat` | Chat | `messages` (überall gesendet, in Direkt-Chats empfangen), `memberships`, `reactions`, `attachments` (aufgelistet, ohne Inhalt) | gesendete Nachrichten samt Dateien, Reaktionen und Mitgliedschaften gelöscht; Direkt-Chats mit beiden Seiten gelöscht; Gruppen-Chats, die er angelegt hat, bleiben mit dem Platzhalter als Ersteller |

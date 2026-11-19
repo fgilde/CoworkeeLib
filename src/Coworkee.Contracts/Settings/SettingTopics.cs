@@ -8,4 +8,7 @@ public static class SettingTopics
 
     /// <summary>A setting of the organisation changed.</summary>
     public const string Tenant = "tenant:settings";
+
+    /// <summary>A global client value of the organisation changed; a user's own client values go to the user's topic.</summary>
+    public const string ClientValues = "tenant:client-values";
 }

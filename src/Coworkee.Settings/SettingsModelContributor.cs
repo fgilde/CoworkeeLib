@@ -16,5 +16,12 @@ internal sealed class SettingsModelContributor : IModelContributor
             setting.Property(s => s.Value).IsSensitive();
             setting.HasIndex(s => new { s.Name, s.Scope, s.ScopeKey }).IsUnique().AreNullsDistinct(false);
         });
+        modelBuilder.Entity<ClientValue>(value =>
+        {
+            value.ToTable("ClientValues", "cw");
+            value.Property(v => v.Key).HasMaxLength(ClientValue.KeyLength);
+            // one own value per user and key, and one global value (no user) per organisation and key
+            value.HasIndex(v => new { v.TenantId, v.Key, v.UserId }).IsUnique().AreNullsDistinct(false);
+        });
     }
 }

@@ -37,6 +37,8 @@ public sealed class CoworkeeSettingsModule : CoworkeeModule, IWebModule
         services.AddSingleton<SettingProtector>();
         services.AddScoped<SettingWriter>();
         services.AddScoped<Application.Privacy.IPersonalDataContributor, SettingPersonalData>();
+        services.AddScoped<Application.Privacy.IPersonalDataContributor, ClientValuePersonalData>();
+        services.Configure<ClientValueOptions>(context.Configuration.GetSection(ClientValueOptions.Section));
         services.AddScoped<Coworkee.Application.Setup.ISetupStep, SettingsSetupStep>();
         services.AddScoped<IInterceptor, SettingCacheInterceptor>();
         services.AddHybridCache();
@@ -66,6 +68,14 @@ public sealed class CoworkeeSettingsModule : CoworkeeModule, IWebModule
         api.MapGet("/head-script", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetHeadScript(), ct).ToHttpResult()).AllowAnonymous();
         api.MapPut("/head-script", (SetHeadScriptRequest body, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new SetHeadScript(body.Enabled, body.Value), ct).ToHttpResult());
+        var values = app.MapCoworkeeApi("/api/v1/client-values").WithTags("Client values").RequireAuthorization();
+        values.MapGet("/", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetClientValues(), ct).ToHttpResult());
+        values.MapGet("/keys", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetClientValueKeys(), ct).ToHttpResult());
+        values.MapGet("/value", (string? key, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetClientValue(key ?? string.Empty), ct).ToHttpResult());
+        values.MapPut("/", (SetClientValueRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new SetClientValue(body.Key, body.Value, body.Scope), ct).ToHttpResult());
+        values.MapDelete("/", (string? key, ClientValueScope? scope, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new DeleteClientValue(key ?? string.Empty, scope ?? ClientValueScope.User), ct).ToHttpResult());
         var configuration = app.MapCoworkeeApi("/api/v1/configuration").WithTags("Configuration").RequireAuthorization();
         configuration.MapGet("/", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetAppConfigurations(), ct).ToHttpResult());
         configuration.MapGet("/{section}", (string section, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetAppConfiguration(section), ct).ToHttpResult());

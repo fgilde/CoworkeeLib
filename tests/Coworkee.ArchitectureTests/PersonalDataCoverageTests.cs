@@ -30,6 +30,7 @@ public sealed partial class PersonalDataCoverageTests
         ["ChatMessage.FromUserId"] = "ChatPersonalData",
         ["ChatMessage.ToUserId"] = "ChatPersonalData",
         ["ChatReaction.UserId"] = "ChatPersonalData",
+        ["ClientValue.UserId"] = "ClientValuePersonalData",
         ["Comment.AuthorId"] = "SocialPersonalData",
         ["DashboardReport.UserId"] = "ReportPersonalData",
         ["DataTransferJob.UserId"] = "DataTransferPersonalData",

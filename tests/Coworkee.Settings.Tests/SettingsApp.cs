@@ -53,6 +53,8 @@ public sealed class SettingsApp : DatabaseFixture
         builder.Configuration["Coworkee:Services:probed:Url"] = "http://localhost/";
         builder.Configuration["Coworkee:Services:probed:HealthPath"] = "/probe";
         builder.Configuration["Coworkee:AspireUI:Url"] = "http://localhost/";
+        builder.Configuration["Coworkee:ClientValues:MaxKeysPerUser"] = "2";
+        builder.Configuration["Coworkee:ClientValues:MaxValueBytes"] = "1024";
         builder.Configuration.AddCoworkeeAppConfigurationDefaults(
             new MemoryStream("""{ "Name": "FromFile", "Mode": "file" /* comments are fine */ }"""u8.ToArray()), "TestApp");
         builder.Configuration.AddCoworkeeDatabaseConfiguration("test", TimeSpan.FromHours(1));

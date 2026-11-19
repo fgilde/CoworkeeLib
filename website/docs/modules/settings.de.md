@@ -157,6 +157,55 @@ Die Content-Security-Policy der Web-App erlaubt keine Inline-Skripte. Das Layout
 
 Lesende Aufrufe listen jede Definition des Bereichs mit `hasValue`; Geheimnisse kommen nie zurück. Schreibende prüfen den Typ (`Expected true or false.`, `Expected a whole number.`, `Expected one of: ...`) und die eigene Berechtigung einer Definition und stehen im Audit-Log.
 
+## Client-Werte
+
+Mancher Zustand eines Clients braucht keine Definition: die Layouts einer Liste, die Vorlagen eines Formulars, die Voreinstellungen eines Filters. **Client-Werte** speichern solchen freien Text unter einem Schlüssel, für den Benutzer (`ClientValueScope.User`) oder für alle Benutzer der Organisation (`ClientValueScope.Global`). Beim Lesen werden beide zusammengeführt: der eigene Wert des Benutzers gewinnt, `isUserValue` sagt, welcher galt. Der Wert wird unverändert gespeichert, meist JSON.
+
+```razor
+@inject IClientValues Values   @* Coworkee.Client.Blazor.Data *@
+
+@code {
+    private OrderLayout? _layout;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _layout = await Values.GetAsync<OrderLayout>("layout.orders");   // JSON, oder null
+        Values.Changed += OnChanged;                                     // ein anderer Tab, ein anderes Gerät, ein neuer globaler Wert
+    }
+
+    private Task SaveAsync() => Values.SetAsync("layout.orders", _layout);                  // der eigene des Benutzers, als JSON
+    private Task ResetAsync() => Values.DeleteAsync("layout.orders");                      // der globale Wert gilt wieder
+    private Task ShareAsync() => Values.SetAsync("layout.orders", _layout, ClientValueScope.Global);
+
+    private void OnChanged(ClientValueDto value)
+    {
+        if (value.Key == "layout.orders")
+        {
+            _layout = value.Value is { } json ? JsonSerializer.Deserialize<OrderLayout>(json, CoworkeeJson.Web) : null;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+}
+```
+
+`IClientValues` lädt alle Werte des Benutzers einmal (eine Anfrage, geteilt von allen Komponenten) und hält sie live: eine Änderung der eigenen Werte kommt über das Realtime-Topic des Benutzers, ein globaler Wert über `tenant:client-values` (`SettingTopics.ClientValues`); `Changed` feuert einmal je geändertem Schlüssel, mit dem Wert, der jetzt gilt (`Value` null: keiner mehr). `GetAllAsync()` listet die Werte nach Schlüssel sortiert, `FindAsync(key)` liefert einen wie gespeichert. `SetAsync(key, string)` speichert Text unverändert, `SetAsync<T>` und `GetAsync<T>` schreiben und lesen JSON (`CoworkeeJson.Web`). Eine Komponente, die `Changed` abonniert, meldet sich in `Dispose` wieder ab.
+
+| Route | Wer |
+|---|---|
+| `GET /api/v1/client-values` | jeder angemeldete Benutzer: seine Werte und die globalen der Organisation, zusammengeführt (`key`, `value`, `isUserValue`), nach Schlüssel sortiert |
+| `GET /api/v1/client-values/keys` | die Schlüssel derselben Liste |
+| `GET /api/v1/client-values/value?key=` | ein Wert; `value: null`, wenn es keinen gibt |
+| `PUT /api/v1/client-values` | `{ key, value, scope }`: `User` (Standard) für den eigenen Wert des Aufrufers; `Global` braucht `Settings.ClientValues.ManageGlobal` |
+| `DELETE /api/v1/client-values?key=&scope=` | den eigenen Wert des Aufrufers (Standard), oder mit `scope=Global` und der Berechtigung den globalen; nichts zu löschen ist kein Fehler |
+
+Ein Schlüssel hat bis zu 256 druckbare Zeichen (keine Zeilenumbrüche oder anderen Steuerzeichen; Leerzeichen, `/` und `&` sind erlaubt, deshalb stehen Schlüssel in der Query). Grenzen in `Coworkee:ClientValues`: `MaxValueBytes` (Standard 65536, UTF-8) und `MaxKeysPerUser` (Standard 1000 eigene Schlüssel je Benutzer und Organisation; vorhandene Schlüssel ändern sich weiter). Eine verletzte Regel antwortet mit 400. Die Zeilen liegen in `cw.ClientValues` (die nächste Migration der App legt die Tabelle an), gehören der Organisation und werden auditiert; die eigenen Werte eines Benutzers gehören zu seinen [personenbezogenen Daten](../security/privacy.de.md) (Abschnitt `clientValues`) und werden mit ihm gelöscht. Kein anderer Benutzer, auch kein Administrator, liest sie über die API.
+
+```json
+{ "Coworkee": { "ClientValues": { "MaxValueBytes": 1048576, "MaxKeysPerUser": 2000 } } }
+```
+
+Die Requests sind `GetClientValues`, `GetClientValueKeys`, `GetClientValue`, `SetClientValue` und `DeleteClientValue` (Namespace `Coworkee.Settings`), für einen eigenen Endpunkt der App, etwa unter einer anderen Route; der Assistent bietet sie nicht an.
+
 ## Typisierte App-Einstellungen
 
 Die App beschreibt ihre Einstellungen als Klassen. Werte kommen aus appsettings und der Umgebung; was Administratoren ändern, liegt in `cw.ConfigurationEntries` und gilt darüber für jeden Dienst der App. Die Einstellungsseite zeigt jede Klasse mit `MudExObjectEditForm`, wie die klassische Einstellungsseite, und Dienste lesen `IOptionsMonitor<T>` und sehen Änderungen nach höchstens 15 Sekunden (`reloadInterval` von `AddCoworkeeDatabaseConfiguration`). Werte, die nur beim Start gelesen werden, gelten nach einem Neustart.

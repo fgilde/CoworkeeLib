@@ -35,6 +35,7 @@ public static class CoworkeeClientExtensions
         services.AddScoped<Workflows.WorkflowCommands>();
         services.AddScoped<Workflows.WorkflowStates>();
         services.AddHttpClient<Features.IFeaturesApi, Features.FeaturesApi>(client => client.BaseAddress = baseAddress);
+        services.AddHttpClient<Data.ClientValuesApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Security.IClientsApi, Security.ClientsApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Security.IApiKeysApi, Security.ApiKeysApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Security.ISessionsApi, Security.SessionsApi>(client => client.BaseAddress = baseAddress);
@@ -97,6 +98,7 @@ public static class CoworkeeClientExtensions
         services.AddScoped<Navigation.NavigationBadges>();
         services.AddScoped<PermissionStore>();
         services.AddScoped<Features.FeatureStore>();
+        services.AddScoped<Data.IClientValues, Data.ClientValues>();
         services.AddScoped<Theming.ThemeService>();
         services.AddCascadingValue(sp => sp.GetRequiredService<Theming.ThemeService>().DensitySource);
         // an app's AddSingleton<DialogOptionsContributor, MyDialogOptions>() wins, before or after this call

@@ -157,6 +157,55 @@ The web app's Content-Security-Policy allows no inline scripts. The layout there
 
 Reads list every definition of the scope with `hasValue`; secrets never come back. Writes check the type (`Expected true or false.`, `Expected a whole number.`, `Expected one of: ...`) and a definition's own permission, and are kept in the audit log.
 
+## Client values
+
+Some state of a client needs no definition: the layouts of a list, the templates of a form, the presets of a filter. **Client values** store such free text under a key, for the user (`ClientValueScope.User`) or for every user of the organisation (`ClientValueScope.Global`). Reads merge both: the user's own value wins, `isUserValue` tells which one applied. The value is stored as it is, usually JSON.
+
+```razor
+@inject IClientValues Values   @* Coworkee.Client.Blazor.Data *@
+
+@code {
+    private OrderLayout? _layout;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _layout = await Values.GetAsync<OrderLayout>("layout.orders");   // JSON, or null
+        Values.Changed += OnChanged;                                     // another tab, another device, a new global value
+    }
+
+    private Task SaveAsync() => Values.SetAsync("layout.orders", _layout);                  // the user's own, as JSON
+    private Task ResetAsync() => Values.DeleteAsync("layout.orders");                      // the global value applies again
+    private Task ShareAsync() => Values.SetAsync("layout.orders", _layout, ClientValueScope.Global);
+
+    private void OnChanged(ClientValueDto value)
+    {
+        if (value.Key == "layout.orders")
+        {
+            _layout = value.Value is { } json ? JsonSerializer.Deserialize<OrderLayout>(json, CoworkeeJson.Web) : null;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+}
+```
+
+`IClientValues` loads every value of the user once (one request, shared by all components) and keeps them live: a change of the user's own values arrives on the user's realtime topic, a global value on `tenant:client-values` (`SettingTopics.ClientValues`); `Changed` fires once per key that changed, with the value that applies now (`Value` null: none left). `GetAllAsync()` lists the values ordered by key, `FindAsync(key)` returns one as stored. `SetAsync(key, string)` stores text as it is, `SetAsync<T>` and `GetAsync<T>` write and read JSON (`CoworkeeJson.Web`). A component that subscribes to `Changed` unsubscribes in `Dispose`.
+
+| Route | Who |
+|---|---|
+| `GET /api/v1/client-values` | every signed-in user: his values and the organisation's global ones, merged (`key`, `value`, `isUserValue`), ordered by key |
+| `GET /api/v1/client-values/keys` | the keys of the same list |
+| `GET /api/v1/client-values/value?key=` | one value; `value: null` when there is none |
+| `PUT /api/v1/client-values` | `{ key, value, scope }`: `User` (default) for the caller's own value; `Global` needs `Settings.ClientValues.ManageGlobal` |
+| `DELETE /api/v1/client-values?key=&scope=` | the caller's own value (default), or with `scope=Global` and the permission the global one; nothing to delete is no error |
+
+A key holds up to 256 printable characters (no line breaks or other control characters; spaces, `/` and `&` are fine, so keys go in the query). Limits in `Coworkee:ClientValues`: `MaxValueBytes` (default 65536, UTF-8) and `MaxKeysPerUser` (default 1000 own keys per user and organisation; existing keys still change). A broken rule answers 400. The rows live in `cw.ClientValues` (the app's next migration creates the table), belong to the organisation and are audited; a user's own values are part of his [personal data](../security/privacy.md) (section `clientValues`) and are deleted with him. No other user, not even an administrator, reads them through the API.
+
+```json
+{ "Coworkee": { "ClientValues": { "MaxValueBytes": 1048576, "MaxKeysPerUser": 2000 } } }
+```
+
+The requests are `GetClientValues`, `GetClientValueKeys`, `GetClientValue`, `SetClientValue` and `DeleteClientValue` (namespace `Coworkee.Settings`), for an endpoint of the app's own, for example one under another route; the assistant does not offer them.
+
 ## Typed app settings
 
 The app describes its settings as classes. Values come from appsettings and the environment; what administrators change is stored in `cw.ConfigurationEntries` and lies on top for every service of the app. The Settings page renders each class with `MudExObjectEditForm`, the way the classic settings page did, and services read `IOptionsMonitor<T>` and see changes within 15 seconds (`reloadInterval` of `AddCoworkeeDatabaseConfiguration`). Values read once at startup apply after a restart.

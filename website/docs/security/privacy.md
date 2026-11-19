@@ -54,6 +54,7 @@ The trail answers *what happened to which record, when, and done by a person or 
 | `apiKeys` | Identity | [API keys](api-keys.md) (name, prefix, permissions, dates, last use), never the hash | his keys deleted; keys of others he revoked keep the revocation with the tombstone |
 | `signIns` | Auth server | granted clients | grants and tokens deleted, every session ends |
 | `settings` | Settings | values with user scope (secrets as `***`) | deleted |
+| `clientValues` | Settings | his own [client values](../modules/settings.md#client-values) (key, value, last change) | deleted, in every organisation; global values stay |
 | `notifications` | Notifications | notifications, Web Push devices, preferences, followed records, mails waiting for their delay, last digest | deleted, in every organisation |
 | `mails` | Mailing | mails queued for the address in his organisation, without bodies | deleted with their attachments, in his organisation |
 | `chat` | Chat | `messages` (sent anywhere, received in direct chats), `memberships`, `reactions`, `attachments` (listed, without content) | sent messages with their files, reactions and memberships deleted; direct chats deleted with both sides; group chats he created stay with the tombstone as creator |
