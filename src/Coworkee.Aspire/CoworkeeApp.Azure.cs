@@ -72,7 +72,8 @@ public sealed partial class CoworkeeApp
         public TokenCredential TokenCredential { get; } = new AzureCliCredential(new AzureCliCredentialOptions { Subscription = subscription, AdditionallyAllowedTenants = { "*" } });
     }
 
-    // the app host's own parameters too: without a value in the configuration (an empty one counts as none) the publisher waits for one, silently
+    // the app host's own parameters too: without a value in the configuration (an empty one counts as none) the publisher waits for one, silently.
+    // Since Aspire 17 a required parameter rejects the empty value and the pipeline prompts for it (forever without the Aspire CLI): optional it takes it
     private void StartParametersEmpty()
     {
         foreach (var parameter in Builder.Resources.OfType<ParameterResource>().Where(p => p.Default is null))
@@ -81,6 +82,7 @@ public sealed partial class CoworkeeApp
             if (string.IsNullOrEmpty(Builder.Configuration[key]))
             {
                 parameter.Default = new EmptyParameterDefault();
+                Builder.CreateResourceBuilder(parameter).AsOptional();
             }
         }
     }

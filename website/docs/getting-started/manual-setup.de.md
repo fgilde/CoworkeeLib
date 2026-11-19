@@ -130,13 +130,13 @@ dotnet add src/Shop.Web.Client package Microsoft.AspNetCore.Components.WebAssemb
 `Shop.AppHost` entstand als Konsolen-App. Gib ihm das Aspire-SDK (die Version der Aspire-Pakete, die `Coworkee.Aspire` nutzt) und eine User-Secrets-Id, unter der Aspire das generierte Datenbankpasswort ablegt. Ersetze in `src/Shop.AppHost/Shop.AppHost.csproj` die erste Zeile und ergänze die beiden Eigenschaften nach `<Nullable>`:
 
 ```xml title="Shop.AppHost.csproj"
-<Project Sdk="Aspire.AppHost.Sdk/13.6.5">
+<Project Sdk="Aspire.AppHost.Sdk/17.0.0">
   ...
     <UserSecretsId>shop-apphost</UserSecretsId>
-    <NoWarn>$(NoWarn);ASPIRE010</NoWarn>
+    <SuppressAspireAppHostSdkObsoleteWarning>true</SuppressAspireAppHostSdkObsoleteWarning>
 ```
 
-`ASPIRE010` meldet nur, dass der App-Host ohne das Aspire-CLI-Bundle läuft, das diese App nicht braucht.
+Aspire 17 markiert dieses SDK als veraltet (`ASPIRE012`) zugunsten von `AddDotnetProject`; es funktioniert weiter, und `Coworkee.Aspire` fügt die Dienste weiterhin aus den `Projects.*`-Typen hinzu, die das SDK erzeugt, deshalb schaltet die Eigenschaft die Warnung ab. Der Build des App-Hosts braucht das Aspire-CLI-Bundle (Dashboard und Orchestrator): Ist die [Aspire-CLI](https://get.aspire.dev) 17 installiert, nimmt er ihr Bundle, sonst holt er beim ersten Build eines über `dotnet dnx aspire.cli` nach `~/.aspire`.
 
 Der App-Host braucht ein Startprofil mit den Adressen des Aspire-Dashboards. Nimm Ports, die auf deinem Rechner sonst niemand nutzt; zwei App-Hosts mit denselben Ports starten nicht nebeneinander.
 

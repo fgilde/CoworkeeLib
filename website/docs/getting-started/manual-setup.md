@@ -130,13 +130,13 @@ dotnet add src/Shop.Web.Client package Microsoft.AspNetCore.Components.WebAssemb
 `Shop.AppHost` was created as a console app. Give it the Aspire SDK (the version of the Aspire packages that `Coworkee.Aspire` uses) and a user secrets id, where Aspire keeps the generated database password. In `src/Shop.AppHost/Shop.AppHost.csproj` replace the first line and add the two properties after `<Nullable>`:
 
 ```xml title="Shop.AppHost.csproj"
-<Project Sdk="Aspire.AppHost.Sdk/13.6.5">
+<Project Sdk="Aspire.AppHost.Sdk/17.0.0">
   ...
     <UserSecretsId>shop-apphost</UserSecretsId>
-    <NoWarn>$(NoWarn);ASPIRE010</NoWarn>
+    <SuppressAspireAppHostSdkObsoleteWarning>true</SuppressAspireAppHostSdkObsoleteWarning>
 ```
 
-`ASPIRE010` only says the app host runs without the Aspire CLI bundle, which this app does not need.
+Aspire 17 marks this SDK obsolete (`ASPIRE012`) in favour of `AddDotnetProject`; it keeps working, and `Coworkee.Aspire` still adds the services from the `Projects.*` types the SDK generates, so the property silences the warning. The build of the app host needs the Aspire CLI bundle (dashboard and orchestrator): with the [Aspire CLI](https://get.aspire.dev) 17 installed it takes its bundle, otherwise it fetches one through `dotnet dnx aspire.cli` into `~/.aspire` on the first build.
 
 The app host needs a launch profile with the addresses of the Aspire dashboard. Pick ports nothing else on your machine uses; two app hosts with the same ports do not start side by side.
 

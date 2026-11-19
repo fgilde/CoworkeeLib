@@ -1,4 +1,5 @@
 using Aspire.Hosting;
+using Aspire.Hosting.ApplicationModel;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Aspire.Tests;
@@ -184,6 +185,31 @@ public sealed class PublishTests
     }
 
     [Fact]
+    public async Task On_azure_parameters_without_a_value_start_empty_and_optional_so_the_publish_does_not_wait_for_them()
+    {
+        var output = Directory.CreateTempSubdirectory("coworkee-publish").FullName;
+        var builder = DistributedApplication.CreateBuilder(["--operation", "publish", "--step", "publish", "--output-path", output, $"--{CoworkeeApp.DeployTargetSetting}=azure",
+            "--Parameters:demo-smtp-host=smtp.example.com"]);
+        var app = builder.AddCoworkeeApp("demo", _ => { });
+        app.AddMigrations<FakeProjects.Migrations>();
+        app.AddAuthServer<FakeProjects.Auth>();
+        app.AddApi<FakeProjects.Api>();
+        app.AddWeb<FakeProjects.Web>();
+
+        using (var host = builder.Build())
+        {
+            // Aspire 17 prompts for a required parameter whose value is empty; without the Aspire CLI nobody answers and the publish never ends
+            await host.RunAsync(TestContext.Current.CancellationToken).WaitAsync(TimeSpan.FromMinutes(2), TestContext.Current.CancellationToken);
+        }
+
+        var parameters = builder.Resources.OfType<ParameterResource>().ToDictionary(p => p.Name);
+        parameters["demo-admin-email"].Required.ShouldBeFalse();
+        (await parameters["demo-admin-email"].GetValueAsync(TestContext.Current.CancellationToken)).ShouldBe(string.Empty);
+        parameters["demo-smtp-host"].Required.ShouldBeTrue("a value from the configuration stays required");
+        Directory.EnumerateFiles(output, "*.bicep", SearchOption.AllDirectories).ShouldNotBeEmpty();
+    }
+
+    [Fact]
     public void Runs_without_compose_environment_unless_asked()
     {
         var builder = DistributedApplication.CreateBuilder();
@@ -228,7 +254,7 @@ public sealed class PublishTests
         app.AddWeb<FakeProjects.Web>();
 
         using var host = builder.Build();
-        await host.RunAsync(TestContext.Current.CancellationToken);
+        await host.RunAsync(TestContext.Current.CancellationToken).WaitAsync(TimeSpan.FromMinutes(2), TestContext.Current.CancellationToken);
         return output;
     }
 }

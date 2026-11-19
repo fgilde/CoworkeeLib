@@ -132,5 +132,32 @@ public sealed class UpgradeTests
         UpgradeRules.Apply(folder.Path, rules, dryRun: false).ShouldBeEmpty();
     }
 
+    [Fact]
+    public void Update_to_aspire_17_bumps_the_app_host_sdk_and_silences_its_obsolete_warning_once()
+    {
+        using var folder = new TempFolder();
+        File.WriteAllText(folder.File("Directory.Packages.props"), """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="Aspire.Hosting.Testing" Version="13.6.5" />
+                <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="13.6.5" />
+              </ItemGroup>
+            </Project>
+            """);
+        File.WriteAllText(folder.File("src/Shop.AppHost/Shop.AppHost.csproj"),
+            "<Project Sdk=\"Aspire.AppHost.Sdk/13.6.5\">\r\n  <PropertyGroup>\r\n    <OutputType>Exe</OutputType>\r\n    <UserSecretsId>shop-apphost</UserSecretsId>\r\n  </PropertyGroup>\r\n</Project>\r\n");
+        File.WriteAllText(folder.File("src/Shop.AppHost/AppHost.cs"), "builder.AddProject<Projects.Shop_Mailer>(\"mailer\");\n");
+        var rules = UpgradeRules.Between("0.0.1.94", "0.0.1.95");
+
+        UpgradeRules.Apply(folder.Path, rules, dryRun: false);
+
+        Read(folder.Path, "src/Shop.AppHost/Shop.AppHost.csproj").ShouldBe(
+            "<Project Sdk=\"Aspire.AppHost.Sdk/17.0.0\">\r\n  <PropertyGroup>\r\n    <OutputType>Exe</OutputType>\r\n    <SuppressAspireAppHostSdkObsoleteWarning>true</SuppressAspireAppHostSdkObsoleteWarning>\r\n    <UserSecretsId>shop-apphost</UserSecretsId>\r\n  </PropertyGroup>\r\n</Project>\r\n");
+        Read(folder.Path, "Directory.Packages.props").ShouldContain("""Include="Aspire.Hosting.Testing" Version="17.0.0" """.TrimEnd());
+        Read(folder.Path, "Directory.Packages.props").ShouldContain("""Include="Aspire.Hosting.RabbitMQ" Version="17.0.0" """.TrimEnd());
+        UpgradeRules.Manual(folder.Path, rules.Single().Manual!.Single()).Select(h => h.File).ShouldBe(["src/Shop.AppHost/AppHost.cs"]);
+        UpgradeRules.Apply(folder.Path, rules, dryRun: false).ShouldBeEmpty();
+    }
+
     private static string Read(string root, string path) => File.ReadAllText(Path.Combine(root, path));
 }

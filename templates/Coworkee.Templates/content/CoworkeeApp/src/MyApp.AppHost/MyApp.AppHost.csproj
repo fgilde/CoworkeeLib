@@ -1,8 +1,9 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.6.5">
+<Project Sdk="Aspire.AppHost.Sdk/17.0.0">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <UserSecretsId>myapp-apphost</UserSecretsId>
-    <NoWarn>$(NoWarn);ASPIRE010</NoWarn>
+    <!-- ASPIRE012: Aspire 17 deprecates this SDK in favour of AddDotnetProject; Coworkee.Aspire still adds the services as ProjectResource from the Projects.* types it generates -->
+    <SuppressAspireAppHostSdkObsoleteWarning>true</SuppressAspireAppHostSdkObsoleteWarning>
   </PropertyGroup>
   <ItemGroup>
     <CoworkeePackage Include="Coworkee.Aspire" />

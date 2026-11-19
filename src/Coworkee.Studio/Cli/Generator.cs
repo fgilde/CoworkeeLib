@@ -149,6 +149,8 @@ public sealed class Generator(ProcessRunner run)
     public Task<int> RunAppAsync(string appHostProject, StudioSettings settings, Action<string, bool> output, CancellationToken cancellationToken)
     {
         var start = new System.Diagnostics.ProcessStartInfo("dotnet") { ArgumentList = { "run", "--project", appHostProject }, WorkingDirectory = Path.GetDirectoryName(appHostProject) };
+        // since Aspire 17 dotnet run hands over to aspire run, whose screen has neither the dashboard login line nor the started line AspireOutput reads
+        start.Environment["ASPIRE_SUPPRESS_CLI_RUN_HOOK"] = "1";
         if (!string.IsNullOrWhiteSpace(settings.PackageFeed))
         {
             start.Environment["RestoreAdditionalProjectSources"] = settings.PackageFeed;

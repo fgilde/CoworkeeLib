@@ -4,6 +4,17 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Breaking changes
+
+- **Nextended 10.1.66**: its Aspire packages use Aspire 17.0.0 and target net10.0 only; apps that pin Nextended packages move up (`coworkee update` does it).
+- **Client values** need a migration of the app: the new table `cw.ClientValues` (`coworkee migrations add AddClientValues`).
+- **Aspire 17.0.0** (from 13.6.5): `Coworkee.Aspire` and the template use Aspire 17.0.0, `Aspire.Hosting.Kubernetes` 17.0.0 (now stable) and `Aspire.Hosting.Keycloak` 17.0.0-preview.1.26567.5. The Aspire 17 packages target `net10.0` only. `CommunityToolkit.Aspire.Hosting.MailPit` and `.Ollama` stay on 13.6.1 (their 17 builds are betas so far). `coworkee update` moves `Aspire.AppHost.Sdk`, `Aspire.Hosting.Testing` and the other Aspire packages of the app to 17.0.0.
+- `Aspire.AppHost.Sdk` is obsolete in Aspire 17 (`ASPIRE012`, an error under `TreatWarningsAsErrors`). The app host keeps it with `<SuppressAspireAppHostSdkObsoleteWarning>true</SuppressAspireAppHostSdkObsoleteWarning>`; `coworkee update` adds the property. `Coworkee.Aspire` still adds the services as `ProjectResource` from the `Projects.*` types, so `AddMigrations`, `AddApi`, `AddWeb` and the other `CoworkeeApp` methods are unchanged.
+- The build of an Aspire 17 app host needs the Aspire CLI bundle (dashboard and orchestrator, no longer NuGet packages): an installed [Aspire CLI](https://get.aspire.dev) 17, or the build fetches it once through `dotnet dnx aspire.cli` into `~/.aspire`. `AspireUseCliBundle=false` is an error now (`ASPIRE013`); the template's `NoWarn` for `ASPIRE010` is gone.
+- Aspire 17 marks `AddProject` obsolete (`CS0618`) in favour of `AddDotnetProject` (package `Aspire.Hosting.Dotnet`, returns a `DotnetProjectResource`). App hosts that call `builder.AddProject<...>` themselves suppress `CS0618` there or move the call; `coworkee update` lists the places.
+- Since Aspire 17 `dotnet run` of an app host hands over to `aspire run` (the Aspire CLI), which refuses the publish operation (*use aspire publish instead*) and shows its own screen instead of the app host's log. `coworkee run`, `coworkee deploy` and the Studio set `ASPIRE_SUPPRESS_CLI_RUN_HOOK=1` and run the app host themselves as before; a plain `dotnet run` or F5 goes through the Aspire CLI and writes an `aspire.config.json` next to the app host.
+
+
 ### Added
 
 - `CoworkeeAppShell`: Coworkee's startup and providers without the admin chrome (setup check, sign-in redirect, preferences, theme, language, head script, MudBlazor providers, session guard, live settings, end of the loading screen) around a layout of the app's own; `Theme` fixes a `MudTheme` instead of the organisation's theme, `DarkMode` fixes the colour mode. `CoworkeeLayout` now renders inside it, no action needed. See [A layout of your own](../ui/customizing.md#a-layout-of-your-own).
@@ -27,6 +38,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 ### Changed
 
 - Pages opened with `?embed=1` (windows of AirWorks) now follow setting changes live like the full app (`SettingsLiveUpdates` moved from the chrome into the shell).
+
+### Fixed
+
+- `coworkee deploy azure` (and every publish to Azure Container Apps or Kubernetes) no longer hangs on Aspire 17: deploy parameters without a value (public addresses, administrator, mail server) are optional now, because Aspire 17 prompts for an empty required parameter and nobody answers without the Aspire CLI. They still start empty, as before.
 
 ## 0.0.1.94 (2026-11-16)
 

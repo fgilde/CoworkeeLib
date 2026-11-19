@@ -316,7 +316,7 @@ helm lint deploy/k8s
 helm template deploy/k8s | kubeconform -strict -summary
 ```
 
-writes a Helm chart (`Chart.yaml`, `values.yaml`, `templates/`) with a deployment and a service per service. Aspire's Kubernetes publisher is a preview; `coworkee deploy` repairs two things in its output: setting names with a dot are read with `index`, and the migrations become a Job that Helm runs after each install and upgrade.
+writes a Helm chart (`Chart.yaml`, `values.yaml`, `templates/`) with a deployment and a service per service. Aspire's Kubernetes publisher is stable since Aspire 17; `coworkee deploy` still repairs two things in its output: setting names with a dot are read with `index`, and the migrations become a Job that Helm runs after each install and upgrade.
 
 Fill `values.yaml`: the public addresses (`shop_web_url`, `shop_auth_url`, `shop_keycloak_url`, ..., repeated per service), the administrator, the mail server, the secrets (connection strings, passwords, certificates, setup token) and the images, which you push to your registry (`dotnet publish -t:PublishContainer -p:ContainerRegistry=...`, `docker build` for the tools). Ingress and TLS are your cluster's: point the public addresses at the web app, the auth server and the tools.
 

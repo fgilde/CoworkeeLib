@@ -108,6 +108,15 @@ public sealed class CommandTests
     }
 
     [Fact]
+    public void Commands_run_the_app_host_themselves_because_aspire_run_refuses_the_publish_of_deploy()
+    {
+        var start = Shell.Start(["dotnet", "run", "--project", "src/Shop.AppHost/Shop.AppHost.csproj"], null);
+
+        start.Environment[Shell.SuppressAspireRunHook].ShouldBe("1");
+        start.FileName.ShouldBe("dotnet");
+    }
+
+    [Fact]
     public void Doctor_reads_the_versions_and_ports_of_the_app()
     {
         DoctorCommand.AspireSdk("""<Project Sdk="Aspire.AppHost.Sdk/13.6.1">""").ShouldBe("13.6.1");
