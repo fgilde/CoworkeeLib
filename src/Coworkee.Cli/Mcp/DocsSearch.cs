@@ -41,6 +41,8 @@ internal static partial class DocsSearch
         ("Persistence", "fundamentals/persistence/"),
         ("DTOs and mapping", "fundamentals/dtos/"),
         ("Events and locks", "fundamentals/events/"),
+        ("Events and targets", "fundamentals/event-targets/"),
+        ("Entity changes", "fundamentals/entity-changes/"),
         ("HTTP APIs", "web/http-api/"),
         ("Application services", "web/application-services/"),
         ("OData and facets", "web/odata/"),
