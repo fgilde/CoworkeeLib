@@ -179,6 +179,38 @@ public sealed class RealtimeTests(RealtimeApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_client_that_reconnects_automatically_reconnects_when_its_token_expires()
+    {
+        // Abort() sent allowReconnect: false, and SignalR clients then stop for good: realtime went quiet after the token lifetime
+        var server = app.App.GetTestServer();
+        await using var connection = new Microsoft.AspNetCore.SignalR.Client.HubConnectionBuilder()
+            .WithUrl(new Uri(server.BaseAddress, "hubs/realtime"), options =>
+            {
+                options.HttpMessageHandlerFactory = _ => server.CreateHandler();
+                options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.LongPolling;
+                options.Headers["Authorization"] = $"{TestAuthHandler.SchemeName} {_setup.AdminUserId};{_setup.TenantId};{DateTimeOffset.UtcNow.AddSeconds(2).ToUnixTimeSeconds()}";
+            })
+            .WithAutomaticReconnect([TimeSpan.FromMinutes(1)])
+            .Build();
+        var reconnecting = new TaskCompletionSource();
+        var closed = false;
+        connection.Reconnecting += _ =>
+        {
+            reconnecting.TrySetResult();
+            return Task.CompletedTask;
+        };
+        connection.Closed += _ =>
+        {
+            closed = true;
+            return Task.CompletedTask;
+        };
+        await connection.StartAsync(Ct);
+
+        await reconnecting.Task.WaitAsync(TimeSpan.FromSeconds(20), Ct);
+        closed.ShouldBeFalse();
+    }
+
+    [Fact]
     public async Task Ending_a_users_sessions_tells_and_closes_his_connections_only()
     {
         var bob = await app.AsActorAsync(null, null, async db =>

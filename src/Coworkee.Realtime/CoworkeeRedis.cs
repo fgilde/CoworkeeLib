@@ -30,7 +30,7 @@ public static class CoworkeeRedis
             return services;
         }
 
-        services.TryAddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redis));
+        services.TryAddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(Reconnecting(redis)));
         DecorateHybridCache(services);
         if (!services.Any(d => d.ServiceType == typeof(IDistributedCache)))
         {
@@ -53,6 +53,17 @@ public static class CoworkeeRedis
         }
 
         return services;
+    }
+
+    /// <summary>
+    /// The connection keeps trying while Redis does not answer (also at the start) instead of throwing: the subscriptions made meanwhile (session and
+    /// permission signals, cache invalidation) are made on the server once it answers. With a throwing connect they were lost for the life of the process.
+    /// </summary>
+    internal static ConfigurationOptions Reconnecting(string redis)
+    {
+        var options = ConfigurationOptions.Parse(redis);
+        options.AbortOnConnectFail = false;
+        return options;
     }
 
     private static void DecorateHybridCache(IServiceCollection services)

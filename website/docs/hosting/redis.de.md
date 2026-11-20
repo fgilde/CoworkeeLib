@@ -35,7 +35,30 @@ builder.AddCoworkeeApp("shop", options =>
 - **Anwesenheit.** Jede Instanz schreibt die Benutzer, für die sie Verbindungen hält, in einen eigenen Hash `coworkee:presence:<instanz>`, der nach 30 Sekunden abläuft, wenn die Instanz ihn nicht erneut schreibt (alle 10 Sekunden). Ein Benutzer, der sich verbindet, wird nur gemeldet, wenn keine andere Instanz ihn online hat; ein Benutzer, der geht, wird nur offline gemeldet, wenn keine andere Instanz noch eine Verbindung hält. Die Benutzer einer abgestürzten Instanz fallen mit ihrem Hash heraus.
 - **Web-App.** Die Data-Protection-Schlüssel des Sitzungs-Cookies liegen unter `coworkee:bff:data-protection`, sodass jede Instanz ein Cookie liest, das eine andere geschrieben hat.
 
-Ein Redis, das nicht antwortet, ist nicht fatal: Die Dienste protokollieren eine Warnung und arbeiten mit dem, was sie lokal wissen.
+Ein Redis, das nicht antwortet, ist nicht fatal: Die Dienste protokollieren eine Warnung und arbeiten mit dem, was sie lokal wissen. Einem Redis, das erst nach dem Start des Dienstes antwortet (Container Apps und Kubernetes starten beide nebeneinander), treten sie bei, sobald es antwortet: Die Verbindung versucht es weiter und legt die inzwischen angeforderten Abonnements dann an.
+
+## Deployments
+
+| Ziel | Redis | Replikate der Dienste |
+|---|---|---|
+| Lokal (`coworkee run`) | Container des AppHosts | eines pro Dienst |
+| Docker Compose (`coworkee deploy compose`) | Container `redis` | eines pro Dienst |
+| Kubernetes (`coworkee deploy k8s`) | Container `redis` | eines pro Dienst; mehr sind hinter Redis in Ordnung |
+| Azure Container Apps (`coworkee deploy azure`) | Container-App `redis` (ein Replikat, Volume auf Azure Files) | skalieren unter Last (Standard von Container Apps, bis zu 10) hinter Redis; **eines** ohne Redis |
+
+Ohne Redis (`options.WithoutRedis()`) hielte ein zweites Replikat eigene Hub-Verbindungen, Caches und Anmeldesitzungen: Ein Ereignis erreichte nur die Clients des eigenen Replikats. Auf Container Apps läuft dann jeder Dienst als ein Replikat; auf Kubernetes bleibt es bei einem Replikat pro Dienst.
+
+Die Hub-Verbindung ist ein WebSocket, ohne Negotiate-Anfrage geöffnet: Sie braucht keine Sticky Sessions, auch hinter mehreren Replikaten. Nur wo ein Proxy keine WebSockets durchlässt, weicht der Client auf die ausgehandelte Verbindung aus (Server-Sent Events, Long Polling); deren Anfragen müssen dann dasselbe Replikat erreichen (Session-Affinität am Ingress). Ein eigener Proxy vor der Web-App reicht das Upgrade durch (Header `Upgrade`/`Connection`) und hält ruhende Verbindungen länger offen als die 15 Sekunden zwischen den Pings von SignalR.
+
+Ein anderes Redis, z. B. Azure Cache for Redis, statt des Containers:
+
+```csharp
+builder.AddCoworkeeApp("shop", options =>
+{
+    // ConnectionStrings:redis des AppHosts, z. B. "myapp.redis.cache.windows.net:6380,ssl=true,password=..."
+    options.UseRedis(builder.AddConnectionString("redis"));
+});
+```
 
 !!! note "Grenzen"
     Die Anwesenheitsabfrage liest den Hash jeder Instanz; für eine Handvoll Instanzen ist das in Ordnung. Benutzer einer abgestürzten Instanz verschwinden aus der Anwesenheitsliste, ein Offline-Ereignis wird für sie aber nicht gesendet.

@@ -2,6 +2,14 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unreleased
+
+### Behoben
+
+- **Echtzeit verstummte nach der Token-Lebensdauer.** Der Hub schloss eine Verbindung mit abgelaufenem Access Token per `Abort()`, was SignalR-Clients sagt, sich nicht wieder zu verbinden (`allowReconnect: false`): Live-Aktualisierungen blieben nach 15 Minuten (die Standard-Lebensdauer des Tokens) aus, bis die Seite neu geladen wurde, in jedem Deployment und lokal. Der Hub schließt sie jetzt so, wie es ein Herunterfahren des Servers tut; die Clients (Blazor, `@coworkee/client`, eigene SignalR-Clients mit automatischem Reconnect) verbinden sich sofort mit einem frischen Token neu und abonnieren ihre Topics wieder. Kein Handlungsbedarf. Siehe [Topics](../modules/realtime.de.md#themen).
+- **Ein Redis, das erst nach dem Dienst antwortet.** Container Apps und Kubernetes starten Redis und die Dienste nebeneinander; die gemeinsame Redis-Verbindung warf eine Ausnahme, solange Redis noch nicht antwortete, und Präsenz, Sitzungsänderungen, Nachprüfungen der Berechtigungen und die Cache-Invalidierung blieben bis zum Neustart des Dienstes pro Instanz. Die Verbindung versucht es jetzt weiter und legt ihre Abonnements an, sobald Redis antwortet. Siehe [Skalieren mit Redis](../hosting/redis.de.md#wie-es-funktioniert).
+- **Azure Container Apps ohne Redis** (`options.WithoutRedis()`): Die Dienste liefen mit der Standard-Skalierungsregel von Container Apps (bis zu 10 Replikate); ein Ereignis erreichte nur die Clients des eigenen Replikats, ein Anmelde-Cookie nur das eigene Replikat. Ohne Redis läuft jetzt jeder Dienst als ein Replikat; mit Redis (Standard) skalieren sie wie bisher. Siehe [Skalieren mit Redis](../hosting/redis.de.md#deployments).
+
 ## 0.0.1.95 (2026-11-19)
 
 ### Breaking Changes

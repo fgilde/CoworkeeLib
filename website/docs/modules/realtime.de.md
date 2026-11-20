@@ -97,7 +97,7 @@ Mit mehreren API-Instanzen setzt du den Connection-String `redis` für die Signa
 
 ## Themen
 
-Clients verbinden sich mit dem Hub unter `/hubs/realtime` (angemeldet; die Verbindung endet, wenn ihr Token abläuft) und rufen `Subscribe(topic)` und `Unsubscribe(topic)`; jede Nachricht kommt über `OnEvent` als `RealtimeEnvelope(Topic, Type, Payload)` an. Der Server lässt eine Verbindung einem Thema nur beitreten, wenn ein `IRealtimeTopicAuthorizer`, der dessen Präfix behandelt, zustimmt:
+Clients verbinden sich mit dem Hub unter `/hubs/realtime` (angemeldet; läuft ihr Token ab, schließt der Server die Verbindung so, dass der Client sich neu verbindet, über die Web-App mit frischem Token, und seine Themen wieder abonniert) und rufen `Subscribe(topic)` und `Unsubscribe(topic)`; jede Nachricht kommt über `OnEvent` als `RealtimeEnvelope(Topic, Type, Payload)` an. Der Server lässt eine Verbindung einem Thema nur beitreten, wenn ein `IRealtimeTopicAuthorizer`, der dessen Präfix behandelt, zustimmt:
 
 | Thema | Wer ihm folgen darf | Was dort ankommt |
 |---|---|---|

@@ -184,6 +184,27 @@ public sealed class PublishTests
         bicep.ShouldMatch(@"cpu: 1\s");
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task On_azure_services_scale_out_behind_redis_and_run_as_one_replica_without_it(bool redis)
+    {
+        // without Redis every replica kept its own hub connections: an event reached the clients of its own replica only
+        var output = await PublishFolderAsync("azure", o =>
+        {
+            if (!redis)
+            {
+                o.WithoutRedis();
+            }
+        });
+
+        foreach (var service in new[] { "demo-api", "demo-web" })
+        {
+            var bicep = await File.ReadAllTextAsync(Directory.EnumerateFiles(output, $"{service}.bicep", SearchOption.AllDirectories).Single(), TestContext.Current.CancellationToken);
+            bicep.Contains("maxReplicas: 1").ShouldBe(!redis, service);
+        }
+    }
+
     [Fact]
     public async Task On_azure_parameters_without_a_value_start_empty_and_optional_so_the_publish_does_not_wait_for_them()
     {
