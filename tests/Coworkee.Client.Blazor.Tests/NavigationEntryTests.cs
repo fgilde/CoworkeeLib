@@ -44,7 +44,7 @@ public sealed class NavigationEntryTests
 
         var admin = tree.Single(e => e.Text == NavigationGroups.Administration);
         admin.Children!.Single(e => e.Text == "Communication").Children!.Select(e => e.Href)
-            .ShouldBe(["/admin/mail/templates", "/admin/mail/log", "/admin/mail-settings", "/admin/mail/campaigns"]);
+            .ShouldBe(["/admin/mail/templates", "/admin/mail/log", "/admin/mail-settings", "/admin/mail/campaigns", "/admin/notifications/send"]);
         admin.Children!.Single(e => e.Text == "System").Children!.Select(e => e.Href).ShouldNotContain("/admin/mail-settings");
     }
 }
