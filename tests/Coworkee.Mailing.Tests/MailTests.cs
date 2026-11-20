@@ -206,7 +206,15 @@ public sealed class MailTests(MailApp app) : IAsyncLifetime
         var id = await app.InDbAsync(db => db.Set<OutgoingMail>().Where(m => m.To == to).Select(m => m.Id).SingleAsync(Ct));
         await app.AsActorAsync(null, null, async sp => { await ActivatorUtilities.CreateInstance<SendMailJob>(sp).ExecuteAsync(id, Ct); return 0; });
 
-        await MailApp.Eventually(async () => await StatusAsync(to) == OutgoingMailStatus.Sent && (await app.MessagesToAsync(to)).Count == 1);
+        try
+        {
+            await MailApp.Eventually(async () => await StatusAsync(to) == OutgoingMailStatus.Sent && (await app.MessagesToAsync(to)).Count == 1);
+        }
+        catch (ShouldAssertException)
+        {
+            var mail = await app.InDbAsync(db => db.Set<OutgoingMail>().IgnoreQueryFilters().AsNoTracking().SingleAsync(m => m.Id == id, Ct));
+            throw new ShouldAssertException($"mail {mail.Status}, attempts {mail.Attempts}, error '{mail.LastError}', messages {(await app.MessagesToAsync(to)).Count}");
+        }
         (await app.MessagesToAsync(to)).Count.ShouldBe(1);
     }
 
