@@ -204,7 +204,7 @@ public sealed class MailTests(MailApp app) : IAsyncLifetime
             m => m.Status.ShouldBeOneOf(OutgoingMailStatus.Queued, OutgoingMailStatus.Sending, OutgoingMailStatus.Sent),
             m => m.LastError.ShouldBeOneOf(StuckMailSweep.RetryMessage, null));
         var id = await app.InDbAsync(db => db.Set<OutgoingMail>().Where(m => m.To == to).Select(m => m.Id).SingleAsync(Ct));
-        await app.AsActorAsync(null, null, async sp => { await ActivatorUtilities.CreateInstance<SendMailJob>(sp).ExecuteAsync(id, Ct); return 0; });
+        await app.AsActorAsync(null, _setup.TenantId, async sp => { await ActivatorUtilities.CreateInstance<SendMailJob>(sp).ExecuteAsync(id, Ct); return 0; });
 
         try
         {
@@ -216,6 +216,37 @@ public sealed class MailTests(MailApp app) : IAsyncLifetime
             throw new ShouldAssertException($"mail {mail.Status}, attempts {mail.Attempts}, error '{mail.LastError}', messages {(await app.MessagesToAsync(to)).Count}");
         }
         (await app.MessagesToAsync(to)).Count.ShouldBe(1);
+    }
+
+    // the sweep runs without an organisation; the job it queues sends in the mail's organisation (its mail connection, not the system's)
+    [Fact]
+    public async Task A_requeued_stuck_mail_is_sent_in_its_own_organisation()
+    {
+        var to = Recipient();
+        await AddSendingAsync(to, DateTimeOffset.UtcNow.AddHours(-1));
+        var jobs = new TenantRecordingJobs();
+
+        await app.AsActorAsync(null, null, async sp =>
+        {
+            await ActivatorUtilities.CreateInstance<StuckMailSweep>(sp, Microsoft.Extensions.Options.Options.Create(new MailOptions { RetryStuckSending = true }), (Coworkee.BackgroundJobs.IBackgroundJobs)jobs).ExecuteAsync(Ct);
+            return 0;
+        });
+
+        jobs.Tenants.ShouldBe([_setup.TenantId]);
+    }
+
+    private sealed class TenantRecordingJobs : Coworkee.BackgroundJobs.IBackgroundJobs
+    {
+        public List<Guid?> Tenants { get; } = [];
+
+        public string Enqueue<TJob, TArgs>(TArgs args, string queue = "default") where TJob : Coworkee.BackgroundJobs.IBackgroundJob<TArgs>
+        {
+            Tenants.Add(Coworkee.Core.Security.CurrentUserScope.Current?.TenantId);
+            return "1";
+        }
+
+        public string Schedule<TJob, TArgs>(TArgs args, TimeSpan delay, string queue = "default") where TJob : Coworkee.BackgroundJobs.IBackgroundJob<TArgs> =>
+            throw new NotSupportedException();
     }
 
     private Task<Guid> AddSendingAsync(string to, DateTimeOffset since) => app.InDbAsync(async db =>

@@ -1,5 +1,6 @@
 using Coworkee.BackgroundJobs;
 using Coworkee.Contracts.Mailing;
+using Coworkee.Core.Security;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -25,13 +26,17 @@ internal sealed class StuckMailSweep(CoworkeeDbContext db, IBackgroundJobs jobs,
             return;
         }
 
-        foreach (var id in await stuck.Select(m => m.Id).ToListAsync(cancellationToken))
+        foreach (var (id, tenantId) in (await stuck.Select(m => new { m.Id, m.TenantId }).ToListAsync(cancellationToken)).Select(m => (m.Id, m.TenantId)))
         {
             // a sender that finished meanwhile keeps its result
             if (await db.Set<OutgoingMail>().IgnoreQueryFilters().Where(m => m.Id == id && m.Status == OutgoingMailStatus.Sending)
                     .ExecuteUpdateAsync(update => update.SetProperty(m => m.Status, OutgoingMailStatus.Queued).SetProperty(m => m.LastError, RetryMessage), cancellationToken) == 1)
             {
-                jobs.Enqueue<SendMailJob, Guid>(id, "mail");
+                // the sweep runs for every organisation: the job sends in the mail's own one, with its mail connection (not the system's)
+                using (CurrentUserScope.BeginSystem(tenantId))
+                {
+                    jobs.Enqueue<SendMailJob, Guid>(id, "mail");
+                }
             }
         }
     }
