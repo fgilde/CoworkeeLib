@@ -15,7 +15,7 @@ namespace Aspire.Hosting;
 /// <summary>
 /// What Azure Container Apps needs beyond Aspire's defaults, found in the first real deployment: every parameter starts empty (the publisher would
 /// wait for a value), the services that keep files share one file share, secret names lose their dots, containers with state run as one replica,
-/// services too when the app has no Redis, and Azure Files mounts skip byte-range locks (SQLite on SMB never gets its lock otherwise).
+/// services too when the app has no Redis (with Redis they scale out with sticky sessions), and Azure Files mounts skip byte-range locks (SQLite on SMB never gets its lock otherwise).
 /// </summary>
 public sealed partial class CoworkeeApp
 {
@@ -120,6 +120,13 @@ public sealed partial class CoworkeeApp
         {
             app.Template.Scale.MinReplicas = 1;
             app.Template.Scale.MaxReplicas = 1;
+        }
+        else if (app.Configuration.Ingress is IBicepValue { IsEmpty: false })
+        {
+            // a SignalR client that negotiates (@coworkee/client, a frontend of the app's own) sends the negotiate request and then opens the connection
+            // with the id it got; on another replica that id is unknown (404). The affinity cookie of the ingress keeps both on one replica, also through
+            // the web app's forwarder. The Blazor client opens its WebSocket without negotiating
+            app.Configuration.Ingress.StickySessionsAffinity = StickySessionAffinity.Sticky;
         }
     }
 

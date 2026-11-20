@@ -44,11 +44,11 @@ Ein Redis, das nicht antwortet, ist nicht fatal: Die Dienste protokollieren eine
 | Lokal (`coworkee run`) | Container des AppHosts | eines pro Dienst |
 | Docker Compose (`coworkee deploy compose`) | Container `redis` | eines pro Dienst |
 | Kubernetes (`coworkee deploy k8s`) | Container `redis` | eines pro Dienst; mehr sind hinter Redis in Ordnung |
-| Azure Container Apps (`coworkee deploy azure`) | Container-App `redis` (ein Replikat, Volume auf Azure Files) | skalieren unter Last (Standard von Container Apps, bis zu 10) hinter Redis; **eines** ohne Redis |
+| Azure Container Apps (`coworkee deploy azure`) | Container-App `redis` (ein Replikat, Volume auf Azure Files) | skalieren unter Last (Standard von Container Apps, bis zu 10) hinter Redis, mit Sticky Sessions; **eines** ohne Redis |
 
 Ohne Redis (`options.WithoutRedis()`) hielte ein zweites Replikat eigene Hub-Verbindungen, Caches und Anmeldesitzungen: Ein Ereignis erreichte nur die Clients des eigenen Replikats. Auf Container Apps läuft dann jeder Dienst als ein Replikat; auf Kubernetes bleibt es bei einem Replikat pro Dienst.
 
-Die Hub-Verbindung ist ein WebSocket, ohne Negotiate-Anfrage geöffnet: Sie braucht keine Sticky Sessions, auch hinter mehreren Replikaten. Nur wo ein Proxy keine WebSockets durchlässt, weicht der Client auf die ausgehandelte Verbindung aus (Server-Sent Events, Long Polling); deren Anfragen müssen dann dasselbe Replikat erreichen (Session-Affinität am Ingress). Ein eigener Proxy vor der Web-App reicht das Upgrade durch (Header `Upgrade`/`Connection`) und hält ruhende Verbindungen länger offen als die 15 Sekunden zwischen den Pings von SignalR.
+Der Blazor-Client öffnet die Hub-Verbindung als WebSocket ohne Negotiate-Anfrage und braucht deshalb keine Sticky Sessions. Ein Client, der aushandelt (`@coworkee/client`, sein Ausweichen auf Server-Sent Events oder Long Polling, wo ein Proxy WebSockets sperrt, ein eigenes Frontend), schickt die Negotiate-Anfrage und dann die Verbindung, und beide müssen dasselbe Replikat erreichen: Auf Container Apps bekommen die Dienste hinter Redis die Sticky Sessions des Ingress (ein Affinitäts-Cookie, es geht auch durch den Forwarder der Web-App); auf Kubernetes gibst du dem Ingress Session-Affinität, wenn mehr als ein Replikat läuft. Ein eigener Proxy vor der Web-App reicht das Upgrade durch (Header `Upgrade`/`Connection`) und hält ruhende Verbindungen länger offen als die 15 Sekunden zwischen den Pings von SignalR.
 
 Ein anderes Redis, z. B. Azure Cache for Redis, statt des Containers:
 

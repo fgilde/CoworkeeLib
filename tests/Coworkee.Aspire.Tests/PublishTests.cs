@@ -187,7 +187,7 @@ public sealed class PublishTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task On_azure_services_scale_out_behind_redis_and_run_as_one_replica_without_it(bool redis)
+    public async Task On_azure_services_scale_out_behind_redis_with_sticky_sessions_and_run_as_one_replica_without_it(bool redis)
     {
         // without Redis every replica kept its own hub connections: an event reached the clients of its own replica only
         var output = await PublishFolderAsync("azure", o =>
@@ -202,6 +202,8 @@ public sealed class PublishTests
         {
             var bicep = await File.ReadAllTextAsync(Directory.EnumerateFiles(output, $"{service}.bicep", SearchOption.AllDirectories).Single(), TestContext.Current.CancellationToken);
             bicep.Contains("maxReplicas: 1").ShouldBe(!redis, service);
+            // clients that negotiate reach the replica that answered the negotiate request
+            bicep.Contains("stickySessions").ShouldBe(redis, service);
         }
     }
 

@@ -44,11 +44,11 @@ A Redis that does not answer is not fatal: the services log a warning and fall b
 | Local (`coworkee run`) | container of the app host | one per service |
 | Docker Compose (`coworkee deploy compose`) | container `redis` | one per service |
 | Kubernetes (`coworkee deploy k8s`) | container `redis` | one per service; more are fine behind Redis |
-| Azure Container Apps (`coworkee deploy azure`) | container app `redis` (one replica, volume on Azure Files) | scale out under load (Container Apps' default, up to 10) behind Redis; **one** without Redis |
+| Azure Container Apps (`coworkee deploy azure`) | container app `redis` (one replica, volume on Azure Files) | scale out under load (Container Apps' default, up to 10) behind Redis, with sticky sessions; **one** without Redis |
 
 Without Redis (`options.WithoutRedis()`) a second replica would hold its own hub connections, caches and sign-in sessions: an event reached the clients of its own replica only. So on Container Apps every service then runs as one replica; on Kubernetes keep one replica per service.
 
-The hub connection is a WebSocket, opened without a negotiate request: it needs no sticky sessions, also behind several replicas. Only where a proxy does not let WebSockets through does the client fall back to the negotiated connection (server-sent events, long polling); its requests must then reach the same replica (session affinity at the ingress). A proxy of your own in front of the web app passes the upgrade (`Upgrade`/`Connection` headers) and keeps idle connections open longer than the 15 seconds between SignalR's pings.
+The Blazor client opens the hub connection as a WebSocket without a negotiate request, so it needs no sticky sessions. A client that negotiates (`@coworkee/client`, its fallback to server-sent events or long polling where a proxy blocks WebSockets, a frontend of your own) sends the negotiate request and then the connection, and both must reach the same replica: on Container Apps the services behind Redis get the ingress' sticky sessions (an affinity cookie, it passes through the web app's forwarder too); on Kubernetes give the ingress session affinity when you run more than one replica. A proxy of your own in front of the web app passes the upgrade (`Upgrade`/`Connection` headers) and keeps idle connections open longer than the 15 seconds between SignalR's pings.
 
 Another Redis, e.g. Azure Cache for Redis, in place of the container:
 
