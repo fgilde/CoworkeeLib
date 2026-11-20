@@ -98,6 +98,7 @@ plugins:
             DTOs and mapping: DTOs und Mapping
             Events and locks: Events und Sperren
             Events and targets: Events und Ziele
+            Entity changes: Änderungen an Entities
             Web: Web
             HTTP APIs: HTTP-APIs
             Application services: Anwendungsdienste
@@ -218,6 +219,7 @@ nav:
       - DTOs and mapping: fundamentals/dtos.md
       - Events and locks: fundamentals/events.md
       - Events and targets: fundamentals/event-targets.md
+      - Entity changes: fundamentals/entity-changes.md
   - Web:
       - HTTP APIs: web/http-api.md
       - Application services: web/application-services.md

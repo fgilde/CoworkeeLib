@@ -14,7 +14,7 @@ public sealed class ChangePerformanceTests(DatabaseFixture database) : IAsyncLif
 {
     private const int Count = 1_000;
 
-    /// <summary>Best of three, insert + update of 1,000 documents, measured before the collector (Postgres container, dev machine).</summary>
+    /// <summary>Best of three, insert + update of 1,000 documents, measured before the collector (Postgres container, dev machine: 896-941 ms; after: 808-925 ms).</summary>
     private static readonly TimeSpan Baseline = TimeSpan.FromMilliseconds(BaselineMilliseconds);
 
     private const int BaselineMilliseconds = 900;
@@ -38,7 +38,6 @@ public sealed class ChangePerformanceTests(DatabaseFixture database) : IAsyncLif
 
         var line = $"insert + update of {Count} documents: best {best.TotalMilliseconds:0} ms (baseline {BaselineMilliseconds} ms)";
         TestContext.Current.TestOutputHelper?.WriteLine(line);
-        await File.AppendAllTextAsync(Path.Combine(Path.GetTempPath(), "coworkee-change-performance.txt"), $"{DateTimeOffset.Now:O} {line}{Environment.NewLine}", TestContext.Current.CancellationToken);
         best.ShouldBeLessThan(Baseline * 2.5);
     }
 

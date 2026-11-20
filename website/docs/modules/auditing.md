@@ -9,6 +9,7 @@ The audit trail records every change of the app's entities field by field: who (
 - Every added, changed and deleted entity is recorded, except owned types, [anonymous records](#anonymous-records) and what is excluded: `[NotAudited]` on a type or property (or `IsNotAudited()` in a model contributor) leaves it out, `[Sensitive]` (or `IsSensitive()`) records that a property changed without its value (`***`).
 - The **Audit log** page (*Administration > Monitoring > Audit log*, `/cw/admin/audit`) lists the changes of the own organisation (the system organisation also sees entries without one) as a data table with search, the period, *Only my changes* and who signed in as the actor (*impersonated by*).
 - `<AuditTimeline EntityType="Brand" EntityId="@brand.Id.ToString()" />` shows the history of one entity on its own page.
+- Why a change was made: `using (ChangeReason.Begin("Import from CW1")) { ... }` or a request with `IHasChangeReason` stores the reason with every entry (`Reason`, also in `GET /api/v1/audit` and the record history), see [Entity changes](../fundamentals/entity-changes.md#why-the-change-reason).
 - Entities with `IVersioned` also keep full snapshots (`cw.EntitySnapshots`, a `Revision` per save). A module or app registers a type with an `IVersionedTypeContributor` (`context.Add<Theme>("Theme", permission)`); `<VersionHistory Type="Theme" Id="..." />` then lists the revisions and restores an older one for holders of that permission.
 
 | Endpoint | |
