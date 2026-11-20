@@ -1,5 +1,6 @@
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Localization;
+using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Settings;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -71,6 +72,12 @@ public partial class Services : IDisposable
         "aspireui" => "AspireUI",
         _ => source,
     };
+
+    // the Aspire dashboard of the app host goes on top, and only while it answers (the server asks it at most every 30 seconds)
+    private ServiceDto? Dashboard => _services?.FirstOrDefault(IsDashboard) is { Health: not ServiceHealth.Unreachable, Url.Length: > 0 } dashboard ? dashboard : null;
+
+    private static bool IsDashboard(ServiceDto service) =>
+        service.Source == "app" && string.Equals(service.Name, CoworkeeServicesOptions.Dashboard, StringComparison.OrdinalIgnoreCase);
 
     private static IEnumerable<string> Urls(ServiceDto service) =>
         (service.Urls is { Count: > 0 } ? service.Urls : [service.Url]).Where(u => u.Length > 0);

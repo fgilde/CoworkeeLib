@@ -13,7 +13,7 @@ public sealed class ServicesPageTests : ClientTestBase
     {
         Api.GetServicesAsync(Arg.Any<CancellationToken>()).Returns(new ServiceDirectoryResult(
         [
-            new ServiceDto("dashboard", "dashboard", "https://localhost:17001", ServiceHealth.Healthy),
+            new ServiceDto("grafana", "grafana", "https://localhost:17001", ServiceHealth.Healthy),
             new ServiceDto("mail", "mail", "http://localhost:8025", ServiceHealth.Unreachable),
         ], []));
         var auth = AddAuthorization();
@@ -24,8 +24,46 @@ public sealed class ServicesPageTests : ClientTestBase
 
         page.WaitForAssertion(() => page.FindAll("[data-service]").Count.ShouldBe(2));
         page.Find("[data-service='mail'] [data-health]").GetAttribute("data-health").ShouldBe("Unreachable");
-        var link = page.Find("[data-service='dashboard'] a");
+        var link = page.Find("[data-service='grafana'] a");
         (link.GetAttribute("href"), link.GetAttribute("target")).ShouldBe(("https://localhost:17001", "_blank"));
+    }
+
+    [Fact]
+    public void The_aspire_dashboard_stands_on_top_with_its_sign_in_link_and_not_among_the_tiles()
+    {
+        Api.GetServicesAsync(Arg.Any<CancellationToken>()).Returns(new ServiceDirectoryResult(
+        [
+            new ServiceDto("api", "api", "https://localhost:7001", ServiceHealth.Healthy),
+            new ServiceDto("dashboard", "dashboard", "https://localhost:17100/login?t=abc", ServiceHealth.Healthy),
+            new ServiceDto("dashboard", "dashboard", "https://other", ServiceHealth.Healthy, "aspireui"),
+        ], []));
+        var auth = AddAuthorization();
+        auth.SetAuthorized("admin");
+        auth.SetPolicies("perm:" + SettingsPermissions.Manage);
+
+        var page = Render<Services>();
+
+        page.WaitForAssertion(() => page.Find("[data-dashboard-link]").GetAttribute("href").ShouldBe("https://localhost:17100/login?t=abc"));
+        page.Find("[data-dashboard-link]").GetAttribute("target").ShouldBe("_blank");
+        page.Find("[data-dashboard]").TextContent.ShouldContain("Aspire dashboard");
+        page.FindAll("[data-source='app'] [data-service]").Select(s => s.GetAttribute("data-service")).ShouldBe(["api"]);
+        page.Find("[data-source='aspireui'] [data-service='dashboard']").ShouldNotBeNull("an app of an AspireUI with that name is no dashboard");
+    }
+
+    [Fact]
+    public void A_dashboard_that_does_not_answer_is_not_shown()
+    {
+        Api.GetServicesAsync(Arg.Any<CancellationToken>()).Returns(new ServiceDirectoryResult(
+            [new ServiceDto("dashboard", "dashboard", "https://aspire-dashboard.ext.example.io", ServiceHealth.Unreachable), new ServiceDto("api", "api", "https://api", ServiceHealth.Healthy)], []));
+        var auth = AddAuthorization();
+        auth.SetAuthorized("admin");
+        auth.SetPolicies("perm:" + SettingsPermissions.Manage);
+
+        var page = Render<Services>();
+
+        page.WaitForAssertion(() => page.Find("[data-service='api']").ShouldNotBeNull());
+        page.FindAll("[data-dashboard]").ShouldBeEmpty();
+        page.FindAll("[data-service='dashboard']").ShouldBeEmpty();
     }
 
     [Fact]

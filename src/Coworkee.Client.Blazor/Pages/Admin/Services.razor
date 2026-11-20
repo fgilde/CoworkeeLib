@@ -18,12 +18,24 @@ else if (_services.Count == 0 && _unavailable.Count == 0)
 }
 else
 {
+    @if (Dashboard is { } dashboard)
+    {
+        <MudPaper Elevation="0" Class="pa-4 mb-4 d-flex align-center flex-wrap gap-4" Style="border:1px solid var(--mud-palette-primary);background:var(--mud-palette-primary-hover)" data-dashboard>
+            <MudAvatar Color="Color.Primary" Variant="Variant.Filled"><MudIcon Icon="@Icons.Material.Outlined.Insights" /></MudAvatar>
+            <div class="flex-grow-1">
+                <MudText Typo="Typo.h6">@L["Aspire dashboard"]</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["Logs, traces and metrics of every service of the app."]</MudText>
+            </div>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.OpenInNew" Href="@dashboard.Url" Target="_blank" rel="noopener" data-dashboard-link>@L["Open dashboard"]</MudButton>
+        </MudPaper>
+    }
+
     @foreach (var source in _unavailable)
     {
         <MudAlert Severity="Severity.Warning" Dense="Density.Dense" Class="mb-4" data-source-unavailable="@source">@L["{0} did not answer, its services are missing.", SourceName(source)]</MudAlert>
     }
 
-    @foreach (var group in _services.GroupBy(s => s.Source).OrderBy(g => g.Key != "app").ThenBy(g => g.Key))
+    @foreach (var group in _services.Where(s => !IsDashboard(s)).GroupBy(s => s.Source).OrderBy(g => g.Key != "app").ThenBy(g => g.Key))
     {
         <section data-source="@group.Key">
             <MudText Typo="Typo.h5" Class="mb-2 mt-4">@SourceName(group.Key)</MudText>
