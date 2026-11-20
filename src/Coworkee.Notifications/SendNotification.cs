@@ -11,6 +11,7 @@ namespace Coworkee.Notifications;
 
 [RequiresPermission(NotificationPermissions.Send)]
 [RequiresPermission(IdentityPermissions.Users.View)]
+[AiTool(Exclude = true)]
 [Description("Sends a notification (inbox, toast, mail) to users chosen by a filter of the Users set, added or left out by hand.")]
 public sealed record SendNotification(SendNotificationRequest Request) : ICommand<Result>;
 

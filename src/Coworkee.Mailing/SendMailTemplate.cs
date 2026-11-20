@@ -15,6 +15,7 @@ namespace Coworkee.Mailing;
 /// <summary>Sends a template for real: one mail per recipient through the mail log; returns how many were queued.</summary>
 [RequiresPermission(MailPermissions.Templates.Manage)]
 [RequiresPermission(MailPermissions.Campaigns.Send)]
+[AiTool(Exclude = true)]
 [Description("Sends a mail template for real to users chosen by a filter of the Users set, added or left out by hand, with the given model values.")]
 public sealed record SendMailTemplate(string Name, SendMailTemplateRequest Request) : ICommand<Result<int>>;
 
