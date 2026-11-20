@@ -59,6 +59,12 @@ public sealed class CoworkeeClientOptions
     /// <summary>Replaces or turns off pages of the library by key, e.g. Pages.Replace&lt;MyUsers&gt;("users").Disable("backups").</summary>
     public Navigation.PageOptions Pages { get; } = new();
 
+    /// <summary>
+    /// Shows toasts (<c>INotifier.ToastAsync</c>, <c>Delivery.Toast</c>) as snackbars in every layout on <see cref="Components.CoworkeeAppShell"/>; false
+    /// leaves them to the app (<see cref="Components.ToastNotifier"/> placed elsewhere, or its own handler of <c>ToastPayload.Event</c>).
+    /// </summary>
+    public bool ShowToasts { get; set; } = true;
+
     public string LoginPath { get; set; } = "/bff/login";
 
     public string LogoutPath { get; set; } = "/bff/logout";

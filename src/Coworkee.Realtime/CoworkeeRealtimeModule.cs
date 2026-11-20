@@ -39,7 +39,9 @@ public sealed class CoworkeeRealtimeModule : CoworkeeModule, IWebModule
         services.AddHostedService(provider => provider.GetRequiredService<RealtimePresence>());
         services.AddSingleton<RealtimeAccessSignal>();
         services.AddHostedService(provider => provider.GetRequiredService<RealtimeAccessSignal>());
-        services.AddScoped<IInterceptor, RealtimeChangeInterceptor>();
+        services.AddScoped<RealtimeChangeInterceptor>();
+        services.AddScoped<IInterceptor>(provider => provider.GetRequiredService<RealtimeChangeInterceptor>());
+        services.AddScoped<RealtimeEvents>();
         services.AddScoped<IRealtimeTopicAuthorizer, UserTopicAuthorizer>();
         services.AddScoped<IRealtimeTopicAuthorizer, GlobalTopicAuthorizer>();
         services.AddScoped<IRealtimeTopicAuthorizer, TenantTopicAuthorizer>();

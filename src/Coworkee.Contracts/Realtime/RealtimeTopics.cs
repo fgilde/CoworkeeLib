@@ -13,6 +13,12 @@ public static class RealtimeTopics
 
     public const string SessionPrefix = "session:";
 
+    /// <summary>Events for every user of the organisation (<c>EventTarget.All</c>); every signed-in user may follow it.</summary>
+    public const string TenantEvents = "tenant:events";
+
+    /// <summary>Events for every user of every organisation (<c>EventTarget.Global</c>); every signed-in user may follow it.</summary>
+    public const string GlobalEvents = "global:events";
+
     /// <summary>Roles, grants, memberships or the active role changed in the organisation: every client reloads its permissions.</summary>
     public const string TenantPermissions = "tenant:permissions";
 

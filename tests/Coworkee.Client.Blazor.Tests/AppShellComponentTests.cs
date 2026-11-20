@@ -38,6 +38,19 @@ public sealed class AppShellComponentTests : ClientTestBase
     }
 
     [Fact]
+    public void The_shell_shows_toasts_of_signed_in_users_unless_the_app_turns_them_off()
+    {
+        AddAuthorization().SetAuthorized("Ada");
+        var shell = RenderShell();
+        shell.WaitForAssertion(() => shell.FindComponents<ToastNotifier>().ShouldHaveSingleItem());
+
+        Services.GetRequiredService<CoworkeeClientOptions>().ShowToasts = false;
+        var without = RenderShell();
+        without.WaitForAssertion(() => without.Find("#own"));
+        without.FindComponents<ToastNotifier>().ShouldBeEmpty();
+    }
+
+    [Fact]
     public void A_fixed_theme_and_colour_mode_win_over_the_users_choice()
     {
         Api.GetClientSettingsAsync(Arg.Any<CancellationToken>())

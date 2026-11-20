@@ -55,6 +55,7 @@ public sealed class IdentityApp : DatabaseFixture
         builder.Services.AddTransient<Coworkee.Application.Setup.ISeedContributor, HostSeed>();
         builder.Services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, RaceInjector>();
         builder.Services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, CommandGate>();
+        builder.Services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, SqlRecorder>();
         builder.Services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, SelectionGate>();
         builder.Services.AddSingleton<Coworkee.Realtime.IRealtimePublisher>(RecordingRealtimePublisher.Instance);
         builder.Services.AddComputedPermission(ComputedPermissionTests.Permission, (c, _) => Task.FromResult(ComputedPermissionTests.Leaders.ContainsKey(c.UserId)));
@@ -181,6 +182,24 @@ public sealed class RaceInjector : Microsoft.EntityFrameworkCore.Diagnostics.Sav
 }
 
 /// <summary>Holds the next query that has <see cref="Held.Parameter"/> among its parameters until the test releases it: a slow load other requests wait on.</summary>
+/// <summary>Records the SQL of every query while <see cref="Start"/> is active on the calling flow.</summary>
+public sealed class SqlRecorder : Microsoft.EntityFrameworkCore.Diagnostics.DbCommandInterceptor
+{
+    private static readonly AsyncLocal<List<string>?> Current = new();
+
+    public static List<string> Start() => Current.Value = [];
+
+    public static void Stop() => Current.Value = null;
+
+    public override ValueTask<Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult<System.Data.Common.DbDataReader>> ReaderExecutingAsync(
+        System.Data.Common.DbCommand command, Microsoft.EntityFrameworkCore.Diagnostics.CommandEventData eventData,
+        Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult<System.Data.Common.DbDataReader> result, CancellationToken cancellationToken = default)
+    {
+        Current.Value?.Add(command.CommandText);
+        return ValueTask.FromResult(result);
+    }
+}
+
 public sealed class CommandGate : Microsoft.EntityFrameworkCore.Diagnostics.DbCommandInterceptor
 {
     private static Held? _next;

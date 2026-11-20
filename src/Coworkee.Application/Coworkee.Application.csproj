@@ -9,4 +9,9 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- the event target's parts: the user directory resolves them, the notifier asks who is addressed directly -->
+    <InternalsVisibleTo Include="Coworkee.Identity" />
+    <InternalsVisibleTo Include="Coworkee.Notifications" />
+  </ItemGroup>
 </Project>

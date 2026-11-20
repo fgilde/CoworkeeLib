@@ -107,6 +107,19 @@ public sealed class NotificationApp : DatabaseFixture
         await ProcessOutboxAsync();
     }
 
+    /// <summary>Sends as <paramref name="actor"/> in a unit of work that is saved, then runs the outbox.</summary>
+    public async Task SendAsync(Guid? actor, Guid? tenantId, NotificationRequest request, TimeProvider? clock = null)
+    {
+        using var scopeActor = CurrentUserScope.Begin(new ImpersonatedUser(actor, tenantId));
+        await using var scope = App.Services.CreateAsyncScope();
+        var notifier = clock is null
+            ? scope.ServiceProvider.GetRequiredService<INotifier>()
+            : ActivatorUtilities.CreateInstance<Notifier>(scope.ServiceProvider, clock);
+        await notifier.SendAsync(request);
+        await scope.ServiceProvider.GetRequiredService<NotificationTestDbContext>().SaveChangesAsync();
+        await ProcessOutboxAsync();
+    }
+
     /// <summary>Hands the committed domain events to their handlers, as the outbox service of the API host does.</summary>
     public Task<int> ProcessOutboxAsync() => App.Services.GetRequiredService<OutboxProcessor<NotificationTestDbContext>>().ProcessBatchAsync(100, CancellationToken.None);
 

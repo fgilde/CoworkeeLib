@@ -20,6 +20,8 @@ internal sealed partial class Notifier(
         IEnumerable<Guid> userIds, string type, string title, string? body, IReadOnlyList<string> arguments, string? link = null, CancellationToken cancellationToken = default) =>
         PublishAsync(new NotificationMessage(type, title, body) { Arguments = arguments, Link = link, Recipients = [.. userIds] }, cancellationToken);
 
+    public Task SendAsync(NotificationRequest request, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+
     public async Task PublishAsync(NotificationMessage message, CancellationToken cancellationToken = default)
     {
         var type = services.GetService<NotificationTypeOptions>()?.Find(message.Type);
