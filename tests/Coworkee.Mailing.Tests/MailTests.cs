@@ -198,7 +198,8 @@ public sealed class MailTests(MailApp app) : IAsyncLifetime
             return 0;
         });
 
-        await MailApp.Eventually(async () => await StatusAsync(to) == OutgoingMailStatus.Sent);
+        // the mail queue is shared with the other tests of the collection (template sends queue many mails), so the job may wait behind them on a small runner
+        await MailApp.Eventually(async () => await StatusAsync(to) == OutgoingMailStatus.Sent, TimeSpan.FromMinutes(2));
         (await app.MessagesToAsync(to)).Count.ShouldBe(1);
     }
 
