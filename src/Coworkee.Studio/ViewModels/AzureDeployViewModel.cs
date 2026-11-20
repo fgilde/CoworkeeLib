@@ -248,7 +248,7 @@ public sealed partial class AzureDeployViewModel : ObservableObject
         : Run.ExitCode is { } code and not 0 ? L.Format("coworkee deploy ended with exit code {0}", code)
         : string.Empty;
 
-    public IReadOnlyList<AppEndpoint> Links => Result is null ? [] : [.. Result.Urls.Select(u => new AppEndpoint(u.Key, u.Value))];
+    public IReadOnlyList<AppEndpoint> Links => Result is null ? [] : AppEndpoint.Of(Result.Urls);
 
     /// <summary>Where the generated administrator password is; the Studio shows the file, never the password.</summary>
     public string PasswordText => L.Format("The administrator's password is in {0} (not in git).", Deployments.SecretsPath(Overview.App.Path, Name.Trim()));

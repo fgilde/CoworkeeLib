@@ -65,7 +65,7 @@ public sealed record DeploymentItem(DeploymentRecord Record)
 
     public string Details => L.Format("{0} · last deployed {1}", Record.Account, Record.DeployedAt.LocalDateTime.ToString("g", CultureInfo.CurrentCulture));
 
-    public IReadOnlyList<AppEndpoint> Links => [.. Record.Urls.Select(u => new AppEndpoint(u.Key, u.Value))];
+    public IReadOnlyList<AppEndpoint> Links => AppEndpoint.Of(Record.Urls);
 
     public bool CanUpdate => Record.Target == "azure";
 }

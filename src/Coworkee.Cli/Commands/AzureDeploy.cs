@@ -73,6 +73,7 @@ internal static partial class AzureDeploy
         }
 
         var urls = await AddressesAsync(target, account);
+        AddDashboard(urls, published);
         await Deployments.WriteAsync(solution.Root,
             new DeploymentRecord(target.Name, "azure", account.SubscriptionId, account.TenantId, target.ResourceGroup, target.Location, account.User, DateTimeOffset.Now, urls)
             {
@@ -301,6 +302,20 @@ internal static partial class AzureDeploy
         }
 
         return urls;
+    }
+
+    /// <summary>
+    /// The Aspire dashboard, when the published Bicep deploys it (Aspire's environment component <c>aspire-dashboard</c>, on unless <c>WithDashboard(false)</c>):
+    /// <c>https://aspire-dashboard.ext.{default domain}</c>, the domain every external app's address ends with.
+    /// </summary>
+    internal static void AddDashboard(IDictionary<string, string> urls, string published)
+    {
+        var deployed = Directory.Exists(published) && Directory.EnumerateFiles(published, "*.bicep", SearchOption.AllDirectories)
+            .Any(f => File.ReadAllText(f).Contains("componentType: 'AspireDashboard'", StringComparison.Ordinal));
+        if (deployed && urls.Values.Select(u => new Uri(u).Host).FirstOrDefault(h => h.Contains('.')) is { } host)
+        {
+            urls[Deployments.DashboardKey] = $"https://aspire-dashboard.ext.{host[(host.IndexOf('.') + 1)..]}";
+        }
     }
 
     private static bool Confirm(string question)

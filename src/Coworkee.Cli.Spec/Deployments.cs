@@ -52,6 +52,9 @@ public static class Deployments
         return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".coworkee", "azure", $"{Path.GetFileName(full)}-{hash}");
     }
 
+    /// <summary>The entry of <see cref="DeploymentRecord.Urls"/> with the Aspire dashboard of the deployment (Container Apps run it as a component of the environment).</summary>
+    public const string DashboardKey = "aspire-dashboard";
+
     public static string Folder(string root) => Path.Combine(root, ".coworkee", "deployments");
 
     public static string RecordPath(string root, string name) => Path.Combine(Folder(root), $"{name}.json");

@@ -93,6 +93,25 @@ public sealed class DeployCommandTests
         DeploySummary.Known(["SHOP_ADMIN_EMAIL"], new Dictionary<string, string>(), _ => null, "grace@example.com", null)["SHOP_ADMIN_EMAIL"].ShouldBe("grace@example.com");
     }
 
+    [Theory]
+    [InlineData("componentType: 'AspireDashboard'", "https://aspire-dashboard.ext.happy-hill-1a2b.germanywestcentral.azurecontainerapps.io")]
+    [InlineData("componentType: 'Other'", null)]
+    public void The_record_of_a_container_apps_deployment_names_its_dashboard_when_the_bicep_deploys_one(string component, string? expected)
+    {
+        using var folder = new TempFolder();
+        File.WriteAllText(folder.File("aca/aca.bicep"), $@"resource aspireDashboard 'Microsoft.App/managedEnvironments/dotNetComponents@2025-10-02-preview' = {{
+  properties: {{
+    {component}
+  }}
+}}");
+        var urls = new SortedDictionary<string, string>(StringComparer.Ordinal) { ["shop-web"] = "https://shop-web.happy-hill-1a2b.germanywestcentral.azurecontainerapps.io" };
+
+        AzureDeploy.AddDashboard(urls, folder.Path);
+
+        urls.GetValueOrDefault(Deployments.DashboardKey).ShouldBe(expected);
+        urls.Count.ShouldBe(expected is null ? 1 : 2);
+    }
+
     [Fact]
     public async Task Empty_parameters_stay_out_of_the_deployment_state_because_aspire_would_wait_for_them()
     {

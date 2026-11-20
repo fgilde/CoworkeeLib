@@ -1033,6 +1033,7 @@ public static class Polish
         ["as the app uses them"] = "tak, jak używa ich aplikacja",
         ["Deploying to {0}: building, pushing and deploying takes a few minutes…"] = "Wdrażanie do {0}: kompilacja, wypychanie i wdrażanie trwa kilka minut…",
         ["Deployed to {0}."] = "Wdrożono do {0}.",
+        ["Aspire dashboard"] = "Pulpit Aspire",
         ["The administrator's password is in {0} (not in git)."] = "Hasło administratora znajduje się w {0} (nie w git).",
         ["The app's own sign-in is kept in {0}; the global sign-in of the Azure CLI stays as it is."] = "Własne logowanie aplikacji jest przechowywane w {0}; globalne logowanie Azure CLI pozostaje bez zmian.",
         ["own sign-in of this app"] = "własne logowanie tej aplikacji",

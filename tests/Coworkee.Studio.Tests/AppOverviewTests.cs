@@ -23,6 +23,7 @@ public sealed class AppOverviewTests
           "account": "me@example.com",
           "deployedAt": "2026-11-08T10:15:00.0000000+01:00",
           "urls": {
+            "aspire-dashboard": "https://aspire-dashboard.ext.example.io",
             "shop-api": "https://shop-api.example.io",
             "shop-web": "https://shop-web.example.io"
           }
@@ -52,7 +53,10 @@ public sealed class AppOverviewTests
         deployment.TargetText.ShouldBe("Azure Container Apps");
         deployment.Where.ShouldBe("Resource group rg-shop in germanywestcentral");
         deployment.Details.ShouldStartWith("me@example.com · last deployed ");
-        deployment.Links.ShouldBe([new AppEndpoint("shop-api", "https://shop-api.example.io"), new AppEndpoint("shop-web", "https://shop-web.example.io")]);
+        deployment.Links.ShouldBe([
+            new AppEndpoint(Coworkee.Studio.Localization.L.Get("Aspire dashboard"), "https://aspire-dashboard.ext.example.io"),
+            new AppEndpoint("shop-api", "https://shop-api.example.io"), new AppEndpoint("shop-web", "https://shop-web.example.io"),
+        ]);
         deployment.Record.Tools.ShouldBeEmpty();
         deployment.CanUpdate.ShouldBeTrue();
         main.Welcome.Recent.First().Path.ShouldBe(root);

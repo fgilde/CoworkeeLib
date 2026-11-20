@@ -1033,6 +1033,7 @@ public static class Dutch
         ["as the app uses them"] = "zoals de app ze gebruikt",
         ["Deploying to {0}: building, pushing and deploying takes a few minutes…"] = "Deployen naar {0}: bouwen, pushen en deployen duurt een paar minuten…",
         ["Deployed to {0}."] = "Gedeployd naar {0}.",
+        ["Aspire dashboard"] = "Aspire-dashboard",
         ["The administrator's password is in {0} (not in git)."] = "Het wachtwoord van de beheerder staat in {0} (niet in git).",
         ["The app's own sign-in is kept in {0}; the global sign-in of the Azure CLI stays as it is."] = "De eigen aanmelding van de app staat in {0}; de globale aanmelding van de Azure CLI blijft zoals hij is.",
         ["own sign-in of this app"] = "eigen aanmelding van deze app",

@@ -1108,6 +1108,7 @@ public static class German
         ["as the app uses them"] = "wie die App sie nutzt",
         ["Deploying to {0}: building, pushing and deploying takes a few minutes…"] = "Deployment nach {0}: Bauen, Pushen und Deployen dauert ein paar Minuten …",
         ["Deployed to {0}."] = "Nach {0} deployt.",
+        ["Aspire dashboard"] = "Aspire-Dashboard",
         ["The administrator's password is in {0} (not in git)."] = "Das Passwort des Administrators steht in {0} (nicht in git).",
         ["The app's own sign-in is kept in {0}; the global sign-in of the Azure CLI stays as it is."] = "Die eigene Anmeldung der App liegt in {0}; die globale Anmeldung der Azure CLI bleibt, wie sie ist.",
         ["own sign-in of this app"] = "eigene Anmeldung dieser App",

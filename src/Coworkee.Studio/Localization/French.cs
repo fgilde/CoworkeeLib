@@ -1028,6 +1028,7 @@ public static class French
         ["as the app uses them"] = "selon l'usage de l'app",
         ["Deploying to {0}: building, pushing and deploying takes a few minutes…"] = "Déploiement vers {0} : le build, le push et le déploiement prennent quelques minutes…",
         ["Deployed to {0}."] = "Déployé vers {0}.",
+        ["Aspire dashboard"] = "Tableau de bord Aspire",
         ["The administrator's password is in {0} (not in git)."] = "Le mot de passe de l'administrateur se trouve dans {0} (pas dans git).",
         ["The app's own sign-in is kept in {0}; the global sign-in of the Azure CLI stays as it is."] = "La connexion propre de l'app est conservée dans {0} ; la connexion globale de l'Azure CLI reste inchangée.",
         ["own sign-in of this app"] = "connexion propre de cette app",
