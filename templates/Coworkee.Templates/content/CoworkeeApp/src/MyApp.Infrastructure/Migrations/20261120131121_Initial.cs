@@ -124,6 +124,7 @@ namespace MyApp.Infrastructure.Migrations
                     ImpersonatorId = table.Column<Guid>(type: "uuid", nullable: true),
                     CorrelationId = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     OccurredAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    Reason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     Changes = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
@@ -263,6 +264,26 @@ namespace MyApp.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ClientEntityTouches", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ClientValues",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Key = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    ModifiedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ModifiedBy = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ClientValues", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -1822,6 +1843,14 @@ namespace MyApp.Infrastructure.Migrations
                 columns: new[] { "EntityType", "TouchedAt" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_ClientValues_TenantId_Key_UserId",
+                schema: "cw",
+                table: "ClientValues",
+                columns: new[] { "TenantId", "Key", "UserId" },
+                unique: true)
+                .Annotation("Npgsql:NullsDistinct", false);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CustomMailTemplates_TenantId_Name",
                 schema: "cw",
                 table: "CustomMailTemplates",
@@ -2417,6 +2446,10 @@ namespace MyApp.Infrastructure.Migrations
                 schema: "cw");
 
             migrationBuilder.DropTable(
+                name: "ClientValues",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
                 name: "ConfigurationEntries",
                 schema: "cw");
 
@@ -2785,6 +2818,7 @@ namespace MyApp.Infrastructure.Migrations
                     ImpersonatorId = table.Column<Guid>(type: "uuid", nullable: true),
                     CorrelationId = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     OccurredAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    Reason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     Changes = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
@@ -2904,6 +2938,26 @@ namespace MyApp.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ClientEntityTouches", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ClientValues",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Key = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    ModifiedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ModifiedBy = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ClientValues", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -4342,6 +4396,14 @@ namespace MyApp.Infrastructure.Migrations
                 columns: new[] { "EntityType", "TouchedAt" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_ClientValues_TenantId_Key_UserId",
+                schema: "cw",
+                table: "ClientValues",
+                columns: new[] { "TenantId", "Key", "UserId" },
+                unique: true)
+                .Annotation("Npgsql:NullsDistinct", false);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CustomMailTemplates_TenantId_Name",
                 schema: "cw",
                 table: "CustomMailTemplates",
@@ -4902,6 +4964,10 @@ namespace MyApp.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "ClientEntityTouches",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "ClientValues",
                 schema: "cw");
 
             migrationBuilder.DropTable(
