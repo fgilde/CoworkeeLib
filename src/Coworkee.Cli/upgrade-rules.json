@@ -955,6 +955,16 @@
       "manual": [
         { "text": "Aspire 17 marks AddProject obsolete (CS0618): put #pragma warning disable CS0618 around the call or move it to AddDotnetProject (package Aspire.Hosting.Dotnet; it returns a DotnetProjectResource).", "find": "\\.AddProject<", "files": [ "src/*.AppHost/**/*.cs" ] }
       ]
+    },
+    {
+      "version": "0.0.1.96",
+      "breaking": [
+        "INotifier gained SendAsync (event targets, toasts, mail modes) and ToastAsync with default implementations: decorators of INotifier forward SendAsync to the notifier they wrap, else toasts and targets other than user ids throw NotSupportedException through them."
+      ],
+      "needsMigration": false,
+      "manual": [
+        { "text": "INotifier has SendAsync (event targets, toasts, mail modes) and ToastAsync: a decorator of INotifier forwards SendAsync to the notifier it wraps, public Task SendAsync(NotificationRequest request, CancellationToken cancellationToken = default) => inner.SendAsync(request, cancellationToken). Without it the interface's default passes stored requests to user ids on to PublishAsync and throws NotSupportedException for toasts and other targets.", "find": "[:,]\\s*INotifier\\b", "files": [ "src/**/*.cs" ], "unless": "SendAsync" }
+      ]
     }
   ]
 }

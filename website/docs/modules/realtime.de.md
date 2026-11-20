@@ -97,17 +97,17 @@ Mit mehreren API-Instanzen setzt du den Connection-String `redis` für die Signa
 
 ## Themen
 
-Clients verbinden sich mit dem Hub unter `/hubs/realtime` (angemeldet; läuft ihr Token ab, schließt der Server die Verbindung so, dass der Client sich neu verbindet, über die Web-App mit frischem Token, und seine Themen wieder abonniert) und rufen `Subscribe(topic)` und `Unsubscribe(topic)`; jede Nachricht kommt über `OnEvent` als `RealtimeEnvelope(Topic, Type, Payload)` an. Der Server lässt eine Verbindung einem Thema nur beitreten, wenn ein `IRealtimeTopicAuthorizer`, der dessen Präfix behandelt, zustimmt:
+Clients verbinden sich mit dem Hub unter `/hubs/realtime` (angemeldet; läuft ihr Token ab, schließt der Server die Verbindung so, dass der Client sich neu verbindet, über die Web-App mit frischem Token, und seine Themen wieder abonniert) und rufen `Subscribe(topic)` und `Unsubscribe(topic)`; jede Nachricht kommt über `OnEvent` als `RealtimeEnvelope(Topic, Type, Payload)` mit `Id`, `At`, `Actor` und `CorrelationId` an (siehe [Wer, wann, warum](../fundamentals/event-targets.md#wer-wann-warum)). Der Server lässt eine Verbindung einem Thema nur beitreten, wenn ein `IRealtimeTopicAuthorizer`, der dessen Präfix behandelt, zustimmt:
 
 | Thema | Wer ihm folgen darf | Was dort ankommt |
 |---|---|---|
 | `type:{Entity}`, `entity:{Entity}:{id}` | wer die Berechtigung des `[Realtime]`-Attributs der Entity hat; bei `entity:` auch, wer sie auf dieser Ressource hat (`[Realtime(permission, ResourceType = ...)]`) | `EntityChanged` |
 | `user:{id}` | dieser Benutzer | seine Benachrichtigungen, Chat, `SessionRevoked` |
 | `session:{sid}` (`RealtimeTopics.Session`) | Verbindungen, deren Token diese `sid` trägt | `ImpersonationEnded` (`ImpersonationEndedPayload`), wenn ein *Anmelden als* endet, siehe [Identity](../features/identity.md#als-anderer-benutzer-anmelden) |
-| `tenant:...` | jeder angemeldete Benutzer der Organisation | z. B. `tenant:permissions`, `tenant:presence` |
-| `global:...` | jeder angemeldete Benutzer | z. B. `global:permissions` |
+| `tenant:...` | jeder angemeldete Benutzer der Organisation | z. B. `tenant:permissions`, `tenant:presence`; `tenant:events` für `EventTarget.All` |
+| `global:...` | jeder angemeldete Benutzer | z. B. `global:permissions`; `global:events` für `EventTarget.Global` |
 
-Andere Präfixe werden abgelehnt, außer eine App registriert einen eigenen `IRealtimeTopicAuthorizer` (`Handles(topic)`, `AuthorizeAsync(topic, ct)`), wie es die Module Social, Workflows und Datensatz-Anhänge für ihre Themen tun. `IRealtimePublisher.PublishAsync(tenantId, topic, type, payload)` sendet an ein Thema; Apps können ihn dekorieren, um Nachrichten an eigene Hubs weiterzugeben. `SessionRevoked` (`SessionRevokedPayload`: Grund, `KeptSessionId`, `EndedSessionId`, wenn nur eine [Sitzung](../security/clients.md#sitzungen) endete) läuft pro Sitzungsänderung auf jeder Instanz durch den Publisher, `RealtimePublisher` schickt es aber an keine Gruppe: Das Identity-Modul beendet genau die Hub-Verbindungen dieser Sitzung (siehe [Clients und Sitzungen](../security/clients.md#uberall-abmelden-und-sperren)).
+Andere Präfixe werden abgelehnt, außer eine App registriert einen eigenen `IRealtimeTopicAuthorizer` (`Handles(topic)`, `AuthorizeAsync(topic, ct)`), wie es die Module Social, Workflows und Datensatz-Anhänge für ihre Themen tun. `IRealtimePublisher.PublishAsync(tenantId, topic, type, payload)` sendet an ein Thema, `RealtimeEvents.PublishAsync(target, type, payload)` an ein [Event-Ziel](../fundamentals/event-targets.md#realtime-events-fur-ein-ziel) (Berechtigung, Rolle, Gruppe, IDs; nur angemeldete Benutzer, nach dem Commit); Apps können ihn dekorieren, um Nachrichten an eigene Hubs weiterzugeben. `SessionRevoked` (`SessionRevokedPayload`: Grund, `KeptSessionId`, `EndedSessionId`, wenn nur eine [Sitzung](../security/clients.md#sitzungen) endete) läuft pro Sitzungsänderung auf jeder Instanz durch den Publisher, `RealtimePublisher` schickt es aber an keine Gruppe: Das Identity-Modul beendet genau die Hub-Verbindungen dieser Sitzung (siehe [Clients und Sitzungen](../security/clients.md#uberall-abmelden-und-sperren)).
 
 ## Berechtigungen
 
@@ -157,6 +157,27 @@ Lokalisierbare Benachrichtigungen nehmen die englischen Texte als Schlüssel mit
 ```csharp
 await notifier.NotifyLocalizedAsync(adminIds, "account.registration", "New registration", "{0} ({1}) waits for activation.", [name, email], $"/admin/users/{id}", ct);
 ```
+
+`SendAsync` nimmt ein [Event-Ziel](../fundamentals/event-targets.md) statt Benutzer-IDs und sagt, wie zugestellt wird: gespeichert im Posteingang (Standard), als Toast (eine Snackbar für jeden aus dem Ziel, der angemeldet ist, keine Zeile) und wann eine Mail hinausgeht:
+
+```csharp
+await notifier.SendAsync(new NotificationRequest(EventTarget.Permission(OrderPermissions.View), "Order {0} shipped")
+{
+    Type = "orders.shipped", Arguments = [order.Number], Link = $"/orders/{order.Id}",
+    Delivery = Delivery.Stored | Delivery.Toast, Severity = NotificationSeverity.Success,
+    Mail = MailDelivery.WhenOffline,   // ByPreference (Standard) | Never | Always | WhenOffline
+}, ct);
+await notifier.ToastAsync(EventTarget.All, "Maintenance at 18:00", NotificationSeverity.Warning, ct);
+```
+
+| `Mail` | Wer eine Mail bekommt (die Verzögerung des Typs gilt für alle) |
+|---|---|
+| `ByPreference` | wie die Einstellung jedes Empfängers für den Typ sagt (Standard; so arbeiten `NotifyAsync` und `PublishAsync`) |
+| `Never` | niemand |
+| `Always` | jeder Empfänger, dessen Einstellung nicht *Aus* ist |
+| `WhenOffline` | jeder Empfänger ohne Realtime-Verbindung beim Senden |
+
+Empfänger einer gespeicherten Benachrichtigung oder Mail sind die Benutzer des Ziels und die Verfolger von `EntityType`/`EntityId` (wie bei `NotificationMessage`); die Einstellungen gelten, *Aus* gewinnt. Der Handelnde bekommt sie nur, wenn das Ziel ihn per ID oder als `EventTarget.Current` nennt. Ein Toast geht nach dem Commit der offenen Unit of Work hinaus, sofort, wenn nichts offen ist. `NotifyAsync`, `NotifyLocalizedAsync` und `PublishAsync` arbeiten wie bisher. Ein Dekorierer von `INotifier` gibt `SendAsync` an den Notifier weiter, den er umhüllt; einer von vorher gibt gespeicherte Anfragen an Benutzer-IDs an `PublishAsync` weiter und lehnt den Rest ab.
 
 Benutzer sehen sie in der Glocke der App-Leiste und auf der Benachrichtigungsseite, live über SignalR (Thema `user:{id}`). Eine tägliche Zusammenfassung verschickt die ungelesenen per Mail (siehe [Tägliche Zusammenfassung](#tagliche-zusammenfassung)).
 

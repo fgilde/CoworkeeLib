@@ -29,6 +29,7 @@ public sealed class RealtimeEvents(
             return;
         }
 
+        // ponytail: one send per online user the target names; a group send with per-connection topics if thousands are online at once
         foreach (var topic in topics)
         {
             await publisher.PublishAsync(tenantId, topic, type, payload, cancellationToken);

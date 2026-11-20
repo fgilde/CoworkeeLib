@@ -97,6 +97,7 @@ plugins:
             Persistence: Persistenz
             DTOs and mapping: DTOs und Mapping
             Events and locks: Events und Sperren
+            Events and targets: Events und Ziele
             Web: Web
             HTTP APIs: HTTP-APIs
             Application services: Anwendungsdienste
@@ -216,6 +217,7 @@ nav:
       - Persistence: fundamentals/persistence.md
       - DTOs and mapping: fundamentals/dtos.md
       - Events and locks: fundamentals/events.md
+      - Events and targets: fundamentals/event-targets.md
   - Web:
       - HTTP APIs: web/http-api.md
       - Application services: web/application-services.md

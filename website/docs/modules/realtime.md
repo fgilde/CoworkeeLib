@@ -97,17 +97,17 @@ With several API instances, set the connection string `redis` for the SignalR ba
 
 ## Topics
 
-Clients connect to the hub at `/hubs/realtime` (signed in; when its token expires the server closes the connection so that the client reconnects, through the web app with a fresh token, and subscribes its topics again) and call `Subscribe(topic)` and `Unsubscribe(topic)`; every message arrives through `OnEvent` as a `RealtimeEnvelope(Topic, Type, Payload)`. The server lets a connection join a topic only when an `IRealtimeTopicAuthorizer` that handles its prefix agrees:
+Clients connect to the hub at `/hubs/realtime` (signed in; when its token expires the server closes the connection so that the client reconnects, through the web app with a fresh token, and subscribes its topics again) and call `Subscribe(topic)` and `Unsubscribe(topic)`; every message arrives through `OnEvent` as a `RealtimeEnvelope(Topic, Type, Payload)` with `Id`, `At`, `Actor` and `CorrelationId` (see [Who, when, why](../fundamentals/event-targets.md#who-when-why)). The server lets a connection join a topic only when an `IRealtimeTopicAuthorizer` that handles its prefix agrees:
 
 | Topic | Who may follow it | What goes there |
 |---|---|---|
 | `type:{Entity}`, `entity:{Entity}:{id}` | holders of the permission of the entity's `[Realtime]` attribute; for `entity:` also holders of it on that resource (`[Realtime(permission, ResourceType = ...)]`) | `EntityChanged` |
 | `user:{id}` | that user | his notifications, chat, `SessionRevoked` |
 | `session:{sid}` (`RealtimeTopics.Session`) | connections whose token carries that `sid` | `ImpersonationEnded` (`ImpersonationEndedPayload`) when a *Log in as* ends, see [identity](../features/identity.md#log-in-as-another-user) |
-| `tenant:...` | every signed-in user of the organisation | e.g. `tenant:permissions`, `tenant:presence` |
-| `global:...` | every signed-in user | e.g. `global:permissions` |
+| `tenant:...` | every signed-in user of the organisation | e.g. `tenant:permissions`, `tenant:presence`; `tenant:events` for `EventTarget.All` |
+| `global:...` | every signed-in user | e.g. `global:permissions`; `global:events` for `EventTarget.Global` |
 
-Other prefixes are refused unless an app registers its own `IRealtimeTopicAuthorizer` (`Handles(topic)`, `AuthorizeAsync(topic, ct)`), as the social, workflow and record attachment modules do for their topics. `IRealtimePublisher.PublishAsync(tenantId, topic, type, payload)` sends to a topic; apps can decorate it to forward messages to hubs of their own. `SessionRevoked` (`SessionRevokedPayload`: reason, `KeptSessionId`, `EndedSessionId` when only one [session](../security/clients.md#sessions) ended) passes the publisher once per session change on every instance, but `RealtimePublisher` sends it to no group: the identity module ends exactly the hub connections of that session (see [Clients and sessions](../security/clients.md#signing-out-everywhere-and-locking)).
+Other prefixes are refused unless an app registers its own `IRealtimeTopicAuthorizer` (`Handles(topic)`, `AuthorizeAsync(topic, ct)`), as the social, workflow and record attachment modules do for their topics. `IRealtimePublisher.PublishAsync(tenantId, topic, type, payload)` sends to a topic, `RealtimeEvents.PublishAsync(target, type, payload)` to an [event target](../fundamentals/event-targets.md#realtime-events-for-a-target) (permission, role, group, ids; online users only, after the commit); apps can decorate it to forward messages to hubs of their own. `SessionRevoked` (`SessionRevokedPayload`: reason, `KeptSessionId`, `EndedSessionId` when only one [session](../security/clients.md#sessions) ended) passes the publisher once per session change on every instance, but `RealtimePublisher` sends it to no group: the identity module ends exactly the hub connections of that session (see [Clients and sessions](../security/clients.md#signing-out-everywhere-and-locking)).
 
 ## Permissions
 
@@ -157,6 +157,27 @@ Localizable notifications take the English texts as keys with `{0}` placeholders
 ```csharp
 await notifier.NotifyLocalizedAsync(adminIds, "account.registration", "New registration", "{0} ({1}) waits for activation.", [name, email], $"/admin/users/{id}", ct);
 ```
+
+`SendAsync` takes an [event target](../fundamentals/event-targets.md) instead of user ids and says how it is delivered: stored in the inbox (default), as toast (a snackbar for whoever of the target is online, no row), and when a mail goes out:
+
+```csharp
+await notifier.SendAsync(new NotificationRequest(EventTarget.Permission(OrderPermissions.View), "Order {0} shipped")
+{
+    Type = "orders.shipped", Arguments = [order.Number], Link = $"/orders/{order.Id}",
+    Delivery = Delivery.Stored | Delivery.Toast, Severity = NotificationSeverity.Success,
+    Mail = MailDelivery.WhenOffline,   // ByPreference (default) | Never | Always | WhenOffline
+}, ct);
+await notifier.ToastAsync(EventTarget.All, "Maintenance at 18:00", NotificationSeverity.Warning, ct);
+```
+
+| `Mail` | Who gets a mail (the type's delay applies to all) |
+|---|---|
+| `ByPreference` | as each recipient's preference for the type says (default; `NotifyAsync` and `PublishAsync` work this way) |
+| `Never` | nobody |
+| `Always` | every recipient whose preference is not *Off* |
+| `WhenOffline` | every recipient without a realtime connection when it is sent |
+
+Recipients of a stored notification or mail are the target's users and the followers of `EntityType`/`EntityId` (as for `NotificationMessage`); the preferences apply, *Off* wins. The actor gets it only when the target names him by id or as `EventTarget.Current`. A toast leaves after the commit of the pending unit of work, at once when nothing is pending. `NotifyAsync`, `NotifyLocalizedAsync` and `PublishAsync` work as before. A decorator of `INotifier` forwards `SendAsync` to the notifier it wraps; one written before it passes stored requests to user ids on to `PublishAsync` and refuses the rest.
 
 Users see them in the bell of the app bar and on the notifications page, live through SignalR (topic `user:{id}`). A daily digest mails the unread ones (see [Daily digest](#daily-digest)).
 

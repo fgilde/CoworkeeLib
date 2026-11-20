@@ -40,6 +40,14 @@ await notifier.NotifyAsync([reviewerId], "review.requested", "Review requested",
 
 `NotifyLocalizedAsync` does the same with English texts as keys, so each reader gets their own language. Registered notification types (`AddNotificationTypes`) add categories and per-user preferences in the app and by e-mail, following of records (`Followable<T>`, `CoworkeeFollowButton`), `INotifier.PublishAsync` for recipients, followers and an audience, and mails per notification with delay, debounce and a mail template per type ([preferences, following and delayed mails](../modules/realtime.md#preferences-following-and-delayed-mails)).
 
+Who gets something is one [event target](../fundamentals/event-targets.md) for notifications, toasts, mails and realtime events alike, resolved in the database and for online users only where it is live:
+
+```csharp
+await notifier.SendAsync(new NotificationRequest(EventTarget.Permission(OrderPermissions.View).Except(EventTarget.Current), "Order shipped")
+    { Delivery = Delivery.Stored | Delivery.Toast, Mail = MailDelivery.WhenOffline }, ct);
+await notifier.ToastAsync(EventTarget.All, "Maintenance at 18:00", NotificationSeverity.Warning, ct);
+```
+
 `Coworkee.Chat` adds direct and group chats inside an organisation: formatted messages, `@` mentions of people and `#` mentions of records, replies, reactions, files and pictures, read marks and a typing indicator. A new message pops up as a snackbar unless the chat is already open, and mini chats dock at the bottom right ([chat](../modules/chat.md)).
 
 ## Comments, tags, ratings and reactions

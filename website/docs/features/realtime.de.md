@@ -40,6 +40,14 @@ await notifier.NotifyAsync([reviewerId], "review.requested", "Review requested",
 
 `NotifyLocalizedAsync` macht dasselbe mit englischen Texten als Schlüssel, jeder Leser bekommt dann seine Sprache. Registrierte Benachrichtigungstypen (`AddNotificationTypes`) bringen Kategorien und Einstellungen pro Benutzer, in der App und per E-Mail, das Verfolgen von Datensätzen (`Followable<T>`, `CoworkeeFollowButton`), `INotifier.PublishAsync` für Empfänger, Verfolgende und ein Publikum sowie Mails pro Benachrichtigung mit Verzögerung, Bündelung und einer Mail-Vorlage pro Typ ([Einstellungen, Verfolgen und verzögerte Mails](../modules/realtime.md#einstellungen-verfolgen-und-verzogerte-mails)).
 
+Wer etwas bekommt, ist ein [Event-Ziel](../fundamentals/event-targets.md), gleich für Benachrichtigungen, Toasts, Mails und Realtime-Events, aufgelöst in der Datenbank und, wo es live ist, nur für angemeldete Benutzer:
+
+```csharp
+await notifier.SendAsync(new NotificationRequest(EventTarget.Permission(OrderPermissions.View).Except(EventTarget.Current), "Order shipped")
+    { Delivery = Delivery.Stored | Delivery.Toast, Mail = MailDelivery.WhenOffline }, ct);
+await notifier.ToastAsync(EventTarget.All, "Maintenance at 18:00", NotificationSeverity.Warning, ct);
+```
+
 `Coworkee.Chat` bringt Direkt- und Gruppenchats innerhalb einer Organisation: formatierte Nachrichten, `@`-Erwähnungen von Personen und `#`-Erwähnungen von Datensätzen, Antworten, Reaktionen, Dateien und Bilder, Lesemarken und eine Tipp-Anzeige. Eine neue Nachricht erscheint als Snackbar, außer der Chat ist schon offen, und Mini-Chats docken unten rechts an ([Chat](../modules/chat.md)).
 
 ## Kommentare, Tags, Bewertungen und Reaktionen

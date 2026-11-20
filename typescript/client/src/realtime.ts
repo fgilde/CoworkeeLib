@@ -1,7 +1,30 @@
 import { HubConnectionBuilder, HubConnectionState, type HubConnection } from '@microsoft/signalr';
 
 /** What the realtime hub of a Coworkee app sends: an event of a type on a topic (user:{id}, tenant:presence, type:{Entity}, ...). */
-export type RealtimeEnvelope<T = unknown> = { topic: string; type: string; payload: T };
+export type RealtimeEnvelope<T = unknown> = {
+  topic: string;
+  type: string;
+  payload: T;
+  /** Metadata the server fills (older servers leave it out): unique id, when it was sent, who caused it (absent for the system), the request's trace. */
+  id?: string;
+  at?: string;
+  actor?: ActorInfo | null;
+  correlationId?: string | null;
+};
+
+/** Who caused an event; `impersonatorId` is set while someone is signed in as the user ("Log in as"). */
+export type ActorInfo = { userId?: string | null; name?: string | null; impersonatorId?: string | null };
+
+/** A transient notification (`INotifier.ToastAsync`), on the user, session, organisation or global topic. */
+export type Toast = {
+  title: string;
+  body?: string | null;
+  severity: 'Normal' | 'Info' | 'Success' | 'Warning' | 'Error';
+  link?: string | null;
+  /** Set for localizable texts: title and body are English texts with {0} placeholders. */
+  arguments?: string[] | null;
+  type?: string | null;
+};
 
 export type EntityChanged = { entityType: string; entityId: string; action: 'Created' | 'Updated' | 'Deleted'; changedProperties: string[] };
 
@@ -21,9 +44,13 @@ export const realtimeTopics = {
   presence: 'tenant:presence',
   tenantPermissions: 'tenant:permissions',
   globalPermissions: 'global:permissions',
+  /** Events for the whole organisation (EventTarget.All) and for every organisation (EventTarget.Global). */
+  tenantEvents: 'tenant:events',
+  globalEvents: 'global:events',
+  session: (sessionId: string) => `session:${sessionId}`,
 } as const;
 
-export const realtimeEvents = { entityChanged: 'EntityChanged', sessionRevoked: 'SessionRevoked', presenceChanged: 'presence.changed', chatMessage: 'chat.message', chatRead: 'chat.read' } as const;
+export const realtimeEvents = { entityChanged: 'EntityChanged', sessionRevoked: 'SessionRevoked', presenceChanged: 'presence.changed', chatMessage: 'chat.message', chatRead: 'chat.read', toast: 'notification.toast' } as const;
 
 /** Every retry after 0, 2, 10, then 30 seconds, forever - like the Blazor client. */
 const delays = [0, 2000, 10000, 30000];
