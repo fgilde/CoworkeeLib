@@ -218,6 +218,25 @@ The web resource links to **Swagger** (`/swagger`) and, when an API uses `Cowork
 
 Every service of the app gets the addresses of the others under `Coworkee:Services:<resource>`: the Aspire dashboard (`dashboard`), the Hangfire dashboard (`jobs`), each project (`myapp-api`, `myapp-auth`, `myapp-web`, with `HealthPath` `/health`) and every container with an http endpoint (`mail`, `pgadmin`, `keycloak`, ...), also resources added after `AddCoworkeeApp`. Inject them as `IOptionsMonitor<CoworkeeServicesOptions>`; the admin page **Services** shows them with their live state (see [Settings](../modules/settings.md#services)). A deployment lists the public addresses of its tools there; further ones go into appsettings.
 
+### The Aspire dashboard on the Services page
+
+The Services page shows the Aspire dashboard on top as a highlighted card with an **Open dashboard** button, apart from the tiles, as long as it answers. The app host passes its address as `Coworkee:Services:dashboard` (`CoworkeeServicesOptions.Dashboard`):
+
+| Where the app runs | Address of the dashboard |
+|---|---|
+| Local run (`coworkee run`, F5, `aspire run`) | the app host's `ASPNETCORE_URLS` (the `applicationUrl` of its launch profile), https first, with the browser token: `https://localhost:17100/login?t=…`, so the link signs in like the one on the console. Without `ASPNETCORE_URLS` Aspire picks a random port and the services get no address. |
+| Azure Container Apps (`coworkee deploy azure`) | Aspire 17 runs the dashboard as a component of the Container Apps environment (`aspire-dashboard`, on unless `WithDashboard(false)` or `AsExpress()`): `https://aspire-dashboard.ext.<default domain of the environment>`, the address Aspire prints after a deployment. The container apps get it from the environment's output; Azure asks for an Azure sign-in with access to the environment before it opens. |
+| Docker Compose | not shown: the dashboard container (`compose-dashboard`) publishes port 18888 on a random port of the host, with no public address (`docker compose port compose-dashboard 18888` names it). |
+| Kubernetes | not shown: the chart's dashboard (`k8s-dashboard-service`, port 18888) is a cluster-internal service; `kubectl port-forward` reaches it. |
+
+Behind a reverse proxy of your own, set the address yourself and the card appears:
+
+```json
+{ "Coworkee": { "Services": { "dashboard": { "Url": "https://dashboard.example.com" } } } }
+```
+
+The api asks the dashboard at most every 30 seconds with a timeout of 1.5 seconds (any answer below 500 counts, a redirect to its sign-in too), so the page never waits for it; a dashboard that does not answer is not shown.
+
 An AspireUI in the app host adds the apps and stacks you host *yourself* with it to the same page. `builder.AddAspireUI().WithRetrieveApi()` is all it takes: the app host passes the address (and the key given to `WithRetrieveApi(...)`: a parameter stays a reference, never a resolved string; a literal key is passed as text) to every service as `Coworkee:AspireUI:Url` and `ApiKey`. The first AspireUI with the retrieve API is used; one without it is ignored, and a published app gets nothing (set `Coworkee:AspireUI` in appsettings). Services find them through `IServiceDirectory` (see [Settings](../modules/settings.md#service-directory)).
 
 ## Typed settings

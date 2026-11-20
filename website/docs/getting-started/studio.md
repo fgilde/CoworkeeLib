@@ -152,7 +152,7 @@ The Studio writes the spec, runs `coworkee spec validate` and `coworkee new --sp
 
 - the name, the folder and the options that differ from the template; **Refresh** reads everything again
 - **On this machine**: whether it runs, **Start** and **Stop** (the runner of *My apps*), the links to the dashboard and the app, the setup token while the app is not set up yet
-- **Deployments**: every record in `.coworkee/deployments/*.json` of the app folder with target, resource group, region, the Azure account, when it was last deployed and the public addresses as links; **Update** deploys it again, **Deploy…** starts a new one (see [Deploy](#deploy))
+- **Deployments**: every record in `.coworkee/deployments/*.json` of the app folder with target, resource group, region, the Azure account, when it was last deployed and the public addresses as links, the Aspire dashboard first (**Aspire dashboard**, when the deployment has one); **Update** deploys it again, **Deploy…** starts a new one (see [Deploy](#deploy))
 - open the folder, the solution or VS Code
 - **Edit in the wizard** for changes to the app
 

@@ -4,6 +4,11 @@
 
 ## Unveröffentlicht
 
+### Hinzugefügt
+
+- Das Aspire-Dashboard auf der Seite **Dienste**: eine hervorgehobene Karte oben mit **Dashboard öffnen**, sichtbar, solange das Dashboard antwortet (die API fragt es höchstens alle 30 Sekunden, 1,5 Sekunden Zeitlimit). Ein lokaler Lauf gibt die Adresse des Dashboards mit dem Browser-Token (`/login?t=…`) weiter, ein Deployment auf Azure Container Apps die Dashboard-Komponente seiner Umgebung (`https://aspire-dashboard.ext.<Standarddomäne>`), als `Coworkee:Services:dashboard` (`CoworkeeServicesOptions.Dashboard`). Docker Compose und Kubernetes betreiben ein Dashboard ohne öffentliche Adresse und zeigen keines, außer die Einstellung ist gesetzt. Siehe [Das Aspire-Dashboard auf der Seite Dienste](../hosting/aspire.md#das-aspire-dashboard-auf-der-seite-dienste).
+- `coworkee deploy azure --apply` schreibt das Dashboard in den Deployment-Eintrag (`urls["aspire-dashboard"]`); Coworkee Studio listet es als **Aspire-Dashboard** zuerst.
+
 ### Behoben
 
 - SQLite-Kopien von Client-Entities: eine Sammlungsspalte, die der Snapshot des Servers `NULL` lässt (eine Liste des Zeilentyps außerhalb des `Expand` der Kopie, z. B. `List<OrderLineDto> Lines`), liest sich als leere Sammlung, oder `null`, wo die Eigenschaft nullable ist. Bisher scheiterte jede Abfrage eines solchen Sets mit *The data is NULL at ordinal n* und ging an den Server, während der Sync-Ring die Kopie als aktuell zeigte. Apps mit einem sammlungsfreien Zeilentyp als Umgehung können ihn behalten. Siehe [SQLite im Browser](../ui/client-entities.md#wie-die-kopie-arbeitet).

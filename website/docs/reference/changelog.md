@@ -4,6 +4,11 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Added
+
+- The Aspire dashboard on the **Services** page: a highlighted card on top with **Open dashboard**, shown while the dashboard answers (the api asks it at most every 30 seconds, 1.5 seconds timeout). A local run passes the dashboard's address with the browser token (`/login?t=…`), a deployment to Azure Container Apps the dashboard component of its environment (`https://aspire-dashboard.ext.<default domain>`), as `Coworkee:Services:dashboard` (`CoworkeeServicesOptions.Dashboard`). Docker Compose and Kubernetes run a dashboard without a public address and show none unless the setting is set. See [The Aspire dashboard on the Services page](../hosting/aspire.md#the-aspire-dashboard-on-the-services-page).
+- `coworkee deploy azure --apply` writes the dashboard into the deployment record (`urls["aspire-dashboard"]`); Coworkee Studio lists it first as **Aspire dashboard**.
+
 ### Fixed
 
 - SQLite copies of client entities: a collection column the server's snapshot leaves `NULL` (a list of the row type outside the copy's `Expand`, e.g. `List<OrderLineDto> Lines`) reads as an empty collection, or `null` where the property is nullable. Before, every query of such a set failed with *The data is NULL at ordinal n* and went to the server while the sync ring showed the copy as current. Apps with a collection-free row type as a workaround can keep it. See [SQLite in the browser](../ui/client-entities.md#how-the-copy-works).

@@ -152,7 +152,7 @@ Das Studio schreibt die Spezifikation, ruft `coworkee spec validate` und `cowork
 
 - Name, Ordner und die Optionen, die von der Vorlage abweichen; **Aktualisieren** liest alles neu
 - **Auf diesem Rechner**: ob sie läuft, **Starten** und **Stoppen** (der Runner von *Meine Apps*), die Links zum Dashboard und zur App, das Setup-Token, solange die App nicht eingerichtet ist
-- **Deployments**: jeder Eintrag in `.coworkee/deployments/*.json` im Ordner der App mit Ziel, Ressourcengruppe, Region, Azure-Konto, letztem Deployment und den öffentlichen Adressen als Links; **Aktualisieren** deployt ihn erneut, **Deployen …** beginnt ein neues (siehe [Deployen](#deployen))
+- **Deployments**: jeder Eintrag in `.coworkee/deployments/*.json` im Ordner der App mit Ziel, Ressourcengruppe, Region, Azure-Konto, letztem Deployment und den öffentlichen Adressen als Links, das Aspire-Dashboard zuerst (**Aspire-Dashboard**, wenn das Deployment eines hat); **Aktualisieren** deployt ihn erneut, **Deployen …** beginnt ein neues (siehe [Deployen](#deployen))
 - Ordner, Solution oder VS Code öffnen
 - **Im Assistenten bearbeiten** für Änderungen an der App
 
