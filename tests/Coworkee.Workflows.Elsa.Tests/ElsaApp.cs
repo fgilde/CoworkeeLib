@@ -98,6 +98,13 @@ public sealed class ElsaApp : DatabaseFixture
         }
     }
 
+    public async Task<T> InDbAsync<T>(Guid? userId, Guid? tenantId, Func<ElsaTestDbContext, Task<T>> action)
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(userId, tenantId));
+        await using var scope = App.Services.CreateAsyncScope();
+        return await action(scope.ServiceProvider.GetRequiredService<ElsaTestDbContext>());
+    }
+
     public async Task<List<Notification>> NotificationsAsync()
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
@@ -113,12 +120,30 @@ public sealed class Document : AuditedEntity, IMultiTenant
     public Guid TenantId { get; set; }
 }
 
+/// <summary>A watched type that is deleted softly.</summary>
+public sealed class Memo : AuditedEntity, IMultiTenant, ISoftDelete
+{
+    public required string Text { get; set; }
+
+    public Guid TenantId { get; set; }
+
+    public bool IsDeleted { get; set; }
+
+    public DateTimeOffset? DeletedAt { get; set; }
+
+    public Guid? DeletedBy { get; set; }
+}
+
 public sealed class ElsaTestDbContext(DbContextOptions<ElsaTestDbContext> options, ICurrentUser currentUser, IEnumerable<IModelContributor> contributors)
     : CoworkeeDbContext(options, currentUser, contributors);
 
 internal sealed class DocumentModelContributor : IModelContributor
 {
-    public void Apply(ModelBuilder modelBuilder) => modelBuilder.Entity<Document>(document => document.ToTable("Documents"));
+    public void Apply(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Document>(document => document.ToTable("Documents"));
+        modelBuilder.Entity<Memo>(memo => memo.ToTable("Memos"));
+    }
 }
 
 /// <summary>Review starts it: the reviewers hear about it, then it waits for the decision and tells the requester.</summary>
@@ -165,7 +190,7 @@ public sealed class TestElsaModule : CoworkeeModule
             d.Transition("Submit", "Draft", "Review");
             d.State("Review").Approval("Approved", "Rejected", a => a.Role("Reviewer"));
         }));
-        context.Services.AddCoworkeeElsa(e => e.Watch<Document>("Documents"));
+        context.Services.AddCoworkeeElsa(e => e.Watch<Document>("Documents").Watch<Memo>("Memos"));
         context.Services.AddWorkflow<ReviewWorkflow>();
         context.Services.AddWorkflow<NewDocumentWorkflow>();
         context.Services.AddCoworkeeDbContext<ElsaTestDbContext>((provider, options) =>

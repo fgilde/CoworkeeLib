@@ -184,6 +184,27 @@ public sealed class Parcel : AggregateRoot
     public DateTimeOffset? UpdatedUtc { get; set; }
 }
 
+/// <summary>Names its own topics.</summary>
+public sealed class Board : AggregateRoot, IMultiTenant, IHasRealtimeTopics
+{
+    public required string Name { get; set; }
+
+    public Guid TenantId { get; set; }
+
+    public IEnumerable<string> RealtimeTopics => ["tenant:boards", $"tenant:board:{Name}"];
+}
+
+/// <summary>Mapped to topics by <see cref="CrateTopics"/>, like the permission tables of the identity module.</summary>
+public sealed class Crate : AggregateRoot
+{
+    public required string Label { get; set; }
+}
+
+internal sealed class CrateTopics : IRealtimeTopicMapper
+{
+    public IEnumerable<string> TopicsFor(object entity) => entity is Crate crate ? ["tenant:crates", $"tenant:crate:{crate.Label}", Contracts.Realtime.RealtimeTopics.TenantPermissions] : [];
+}
+
 public sealed class UrgentTicket : Ticket
 {
     public int Priority { get; set; }
@@ -200,6 +221,8 @@ internal sealed class TicketModel : IModelContributor, IPermissionDefinitionCont
         modelBuilder.Entity<UrgentTicket>();
         modelBuilder.Entity<Memo>();
         modelBuilder.Entity<Parcel>();
+        modelBuilder.Entity<Board>();
+        modelBuilder.Entity<Crate>();
     }
 
     public void Define(PermissionDefinitionContext context) => context.Group("Test", "Test").Add(Ticket.ViewPermission, "View tickets");
@@ -210,6 +233,7 @@ public sealed class TestRealtimeModule : CoworkeeModule
 {
     public override void ConfigureServices(ModuleServiceContext context)
     {
+        context.Services.AddSingleton<IRealtimeTopicMapper, CrateTopics>();
         context.Services.AddSingleton<TicketModel>();
         context.Services.AddSingleton<IModelContributor>(sp => sp.GetRequiredService<TicketModel>());
         context.Services.AddSingleton<IPermissionDefinitionContributor>(sp => sp.GetRequiredService<TicketModel>());
@@ -233,11 +257,11 @@ public sealed class TestRealtimeModule : CoworkeeModule
 /// <summary>What passed the publisher, as a decorator of an app sees it.</summary>
 public sealed class RecordingPublisher(IRealtimePublisher inner) : IRealtimePublisher
 {
-    public ConcurrentQueue<(string Topic, string Type, object Payload)> Published { get; } = new();
+    public ConcurrentQueue<(string Topic, string Type, object Payload, Guid? TenantId)> Published { get; } = new();
 
     public Task PublishAsync(Guid? tenantId, string topic, string type, object payload, CancellationToken cancellationToken = default)
     {
-        Published.Enqueue((topic, type, payload));
+        Published.Enqueue((topic, type, payload, tenantId));
         return inner.PublishAsync(tenantId, topic, type, payload, cancellationToken);
     }
 }

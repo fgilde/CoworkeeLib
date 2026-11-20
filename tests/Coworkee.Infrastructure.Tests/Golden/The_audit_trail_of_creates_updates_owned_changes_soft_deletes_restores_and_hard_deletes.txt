@@ -1,0 +1,16 @@
+## create
+{"EntityType":"Article","EntityId":"<guid1>","Action":"Created","Actor":"user","Impersonator":"impersonator","Tenant":"tenant","CorrelationId":null,"OccurredAt":"2026-10-01T08:01:00+00:00","Changes":[{"Property":"Revision","OldValue":null,"NewValue":"0"},{"Property":"Secret","OldValue":null,"NewValue":"\u0022***\u0022"},{"Property":"Title","OldValue":null,"NewValue":"\u0022Article\u0022"}]}
+{"EntityType":"Document","EntityId":"<guid2>","Action":"Created","Actor":"user","Impersonator":"impersonator","Tenant":"tenant","CorrelationId":null,"OccurredAt":"2026-10-01T08:01:00+00:00","Changes":[{"Property":"Note","OldValue":null,"NewValue":"\u0022***\u0022"},{"Property":"Secret","OldValue":null,"NewValue":"\u0022***\u0022"},{"Property":"TenantId","OldValue":null,"NewValue":"\u0022<guid3>\u0022"},{"Property":"Title","OldValue":null,"NewValue":"\u0022Doc\u0022"},{"Property":"Settings","OldValue":null,"NewValue":"{\u0022Color\u0022:\u0022none\u0022}"}]}
+## update
+{"EntityType":"Article","EntityId":"<guid1>","Action":"Updated","Actor":"user","Impersonator":"impersonator","Tenant":"tenant","CorrelationId":null,"OccurredAt":"2026-10-01T08:02:00+00:00","Changes":[{"Property":"Title","OldValue":"\u0022Article\u0022","NewValue":"\u0022Article 2\u0022"}]}
+{"EntityType":"Document","EntityId":"<guid2>","Action":"Updated","Actor":"user","Impersonator":"impersonator","Tenant":"tenant","CorrelationId":null,"OccurredAt":"2026-10-01T08:02:00+00:00","Changes":[{"Property":"Secret","OldValue":"\u0022***\u0022","NewValue":"\u0022***\u0022"},{"Property":"Title","OldValue":"\u0022Doc\u0022","NewValue":"\u0022Doc 2\u0022"},{"Property":"Settings","OldValue":"{\u0022Color\u0022:\u0022none\u0022}","NewValue":"{\u0022Color\u0022:\u0022red\u0022}"}]}
+## owned only
+{"EntityType":"Document","EntityId":"<guid2>","Action":"Updated","Actor":"user","Impersonator":"impersonator","Tenant":"tenant","CorrelationId":null,"OccurredAt":"2026-10-01T08:03:00+00:00","Changes":[{"Property":"Settings","OldValue":"{\u0022Color\u0022:\u0022red\u0022}","NewValue":"{\u0022Color\u0022:\u0022blue\u0022}"}]}
+## not audited property only
+## same value
+## soft delete
+{"EntityType":"Document","EntityId":"<guid2>","Action":"Deleted","Actor":"user","Impersonator":"impersonator","Tenant":"tenant","CorrelationId":null,"OccurredAt":"2026-10-01T08:06:00+00:00","Changes":[{"Property":"Settings","OldValue":"{\u0022Color\u0022:\u0022blue\u0022}","NewValue":null}]}
+## restore
+{"EntityType":"Document","EntityId":"<guid2>","Action":"Restored","Actor":"user","Impersonator":"impersonator","Tenant":"tenant","CorrelationId":null,"OccurredAt":"2026-10-01T08:07:00+00:00","Changes":[]}
+## hard delete
+{"EntityType":"Article","EntityId":"<guid1>","Action":"Deleted","Actor":"user","Impersonator":"impersonator","Tenant":"tenant","CorrelationId":null,"OccurredAt":"2026-10-01T08:08:00+00:00","Changes":[{"Property":"Revision","OldValue":"2","NewValue":null},{"Property":"Secret","OldValue":"\u0022***\u0022","NewValue":null},{"Property":"Title","OldValue":"\u0022Article 2\u0022","NewValue":null}]}

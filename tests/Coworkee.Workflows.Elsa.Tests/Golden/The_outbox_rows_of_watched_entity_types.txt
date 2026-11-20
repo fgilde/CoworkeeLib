@@ -1,0 +1,10 @@
+## create
+{"Type":"Coworkee.Workflows.Elsa.EntityChanged, Coworkee.Workflows.Elsa, Version=*, Culture=neutral, PublicKeyToken=null","Payload":"{\u0022EntityType\u0022:\u0022Documents\u0022,\u0022EntityId\u0022:\u0022<document>\u0022,\u0022Action\u0022:\u0022Created\u0022}","OccurredAt":"now","Tenant":"tenant","Actor":"admin","ImpersonatorId":null,"CorrelationId":null}
+{"Type":"Coworkee.Workflows.Elsa.EntityChanged, Coworkee.Workflows.Elsa, Version=*, Culture=neutral, PublicKeyToken=null","Payload":"{\u0022EntityType\u0022:\u0022Memos\u0022,\u0022EntityId\u0022:\u0022<memo>\u0022,\u0022Action\u0022:\u0022Created\u0022}","OccurredAt":"now","Tenant":"tenant","Actor":"admin","ImpersonatorId":null,"CorrelationId":null}
+## update
+{"Type":"Coworkee.Workflows.Elsa.EntityChanged, Coworkee.Workflows.Elsa, Version=*, Culture=neutral, PublicKeyToken=null","Payload":"{\u0022EntityType\u0022:\u0022Documents\u0022,\u0022EntityId\u0022:\u0022<document>\u0022,\u0022Action\u0022:\u0022Updated\u0022}","OccurredAt":"now","Tenant":"tenant","Actor":"admin","ImpersonatorId":null,"CorrelationId":null}
+## same value
+## soft delete
+{"Type":"Coworkee.Workflows.Elsa.EntityChanged, Coworkee.Workflows.Elsa, Version=*, Culture=neutral, PublicKeyToken=null","Payload":"{\u0022EntityType\u0022:\u0022Memos\u0022,\u0022EntityId\u0022:\u0022<memo>\u0022,\u0022Action\u0022:\u0022Updated\u0022}","OccurredAt":"now","Tenant":"tenant","Actor":"admin","ImpersonatorId":null,"CorrelationId":null}
+## hard delete
+{"Type":"Coworkee.Workflows.Elsa.EntityChanged, Coworkee.Workflows.Elsa, Version=*, Culture=neutral, PublicKeyToken=null","Payload":"{\u0022EntityType\u0022:\u0022Documents\u0022,\u0022EntityId\u0022:\u0022<document>\u0022,\u0022Action\u0022:\u0022Deleted\u0022}","OccurredAt":"now","Tenant":"tenant","Actor":"admin","ImpersonatorId":null,"CorrelationId":null}

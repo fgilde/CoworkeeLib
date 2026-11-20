@@ -1,0 +1,32 @@
+## create
+tenant | type:Ticket | EntityChanged | {"entityType":"Ticket","entityId":"<guid1>","action":"Created","changedProperties":[],"isDeleted":false}
+tenant | entity:Ticket:<guid1> | EntityChanged | {"entityType":"Ticket","entityId":"<guid1>","action":"Created","changedProperties":[],"isDeleted":false}
+tenant | type:Ticket | EntityChanged | {"entityType":"Ticket","entityId":"<guid2>","action":"Created","changedProperties":[],"isDeleted":false}
+tenant | entity:Ticket:<guid2> | EntityChanged | {"entityType":"Ticket","entityId":"<guid2>","action":"Created","changedProperties":[],"isDeleted":false}
+tenant | type:Memo | EntityChanged | {"entityType":"Memo","entityId":"<guid3>","action":"Created","changedProperties":[],"isDeleted":false}
+tenant | entity:Memo:<guid3> | EntityChanged | {"entityType":"Memo","entityId":"<guid3>","action":"Created","changedProperties":[],"isDeleted":false}
+tenant | tenant:boards | EntityChanged | {"entityType":"Board","entityId":"<guid4>","action":"Created","changedProperties":[],"isDeleted":false}
+tenant | tenant:board:Plan | EntityChanged | {"entityType":"Board","entityId":"<guid4>","action":"Created","changedProperties":[],"isDeleted":false}
+tenant | tenant:crates | EntityChanged | {"entityType":"Crate","entityId":"<guid5>","action":"Created","changedProperties":[],"isDeleted":false}
+tenant | tenant:crate:C1 | EntityChanged | {"entityType":"Crate","entityId":"<guid5>","action":"Created","changedProperties":[],"isDeleted":false}
+tenant | tenant:permissions | EntityChanged | {"entityType":"Crate","entityId":"<guid5>","action":"Created","changedProperties":[],"isDeleted":false}
+## update
+tenant | type:Ticket | EntityChanged | {"entityType":"Ticket","entityId":"<guid1>","action":"Updated","changedProperties":["Title"],"isDeleted":false}
+tenant | entity:Ticket:<guid1> | EntityChanged | {"entityType":"Ticket","entityId":"<guid1>","action":"Updated","changedProperties":["Title"],"isDeleted":false}
+tenant | type:Ticket | EntityChanged | {"entityType":"Ticket","entityId":"<guid2>","action":"Updated","changedProperties":["Priority"],"isDeleted":false}
+tenant | entity:Ticket:<guid2> | EntityChanged | {"entityType":"Ticket","entityId":"<guid2>","action":"Updated","changedProperties":["Priority"],"isDeleted":false}
+tenant | tenant:boards | EntityChanged | {"entityType":"Board","entityId":"<guid4>","action":"Updated","changedProperties":["Name"],"isDeleted":false}
+tenant | tenant:board:Plan 2 | EntityChanged | {"entityType":"Board","entityId":"<guid4>","action":"Updated","changedProperties":["Name"],"isDeleted":false}
+tenant | tenant:crates | EntityChanged | {"entityType":"Crate","entityId":"<guid5>","action":"Updated","changedProperties":["Label"],"isDeleted":false}
+tenant | tenant:crate:C2 | EntityChanged | {"entityType":"Crate","entityId":"<guid5>","action":"Updated","changedProperties":["Label"],"isDeleted":false}
+tenant | tenant:permissions | EntityChanged | {"entityType":"Crate","entityId":"<guid5>","action":"Updated","changedProperties":["Label"],"isDeleted":false}
+## same value
+## soft delete
+tenant | type:Memo | EntityChanged | {"entityType":"Memo","entityId":"<guid3>","action":"Deleted","changedProperties":["DeletedAt","DeletedBy","IsDeleted","TenantId","Text"],"isDeleted":true}
+tenant | entity:Memo:<guid3> | EntityChanged | {"entityType":"Memo","entityId":"<guid3>","action":"Deleted","changedProperties":["DeletedAt","DeletedBy","IsDeleted","TenantId","Text"],"isDeleted":true}
+## hard delete
+tenant | type:Ticket | EntityChanged | {"entityType":"Ticket","entityId":"<guid1>","action":"Deleted","changedProperties":[],"isDeleted":true}
+tenant | entity:Ticket:<guid1> | EntityChanged | {"entityType":"Ticket","entityId":"<guid1>","action":"Deleted","changedProperties":[],"isDeleted":true}
+tenant | tenant:crates | EntityChanged | {"entityType":"Crate","entityId":"<guid5>","action":"Deleted","changedProperties":[],"isDeleted":true}
+tenant | tenant:crate:C2 | EntityChanged | {"entityType":"Crate","entityId":"<guid5>","action":"Deleted","changedProperties":[],"isDeleted":true}
+tenant | tenant:permissions | EntityChanged | {"entityType":"Crate","entityId":"<guid5>","action":"Deleted","changedProperties":[],"isDeleted":true}

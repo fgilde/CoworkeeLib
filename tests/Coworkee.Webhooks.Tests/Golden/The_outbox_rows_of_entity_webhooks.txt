@@ -1,0 +1,8 @@
+## create
+{"Type":"Coworkee.Webhooks.WebhookEntityChanged, Coworkee.Webhooks, Version=*, Culture=neutral, PublicKeyToken=null","Payload":"{\u0022EntityType\u0022:\u0022Gadgets\u0022,\u0022Key\u0022:\u0022<desk>\u0022,\u0022Action\u0022:\u0022created\u0022}","OccurredAt":"now","Tenant":"tenant","Actor":"admin","ImpersonatorId":null,"CorrelationId":null}
+{"Type":"Coworkee.Webhooks.WebhookEntityChanged, Coworkee.Webhooks, Version=*, Culture=neutral, PublicKeyToken=null","Payload":"{\u0022EntityType\u0022:\u0022Gadgets\u0022,\u0022Key\u0022:\u0022<lamp>\u0022,\u0022Action\u0022:\u0022created\u0022}","OccurredAt":"now","Tenant":"tenant","Actor":"admin","ImpersonatorId":null,"CorrelationId":null}
+## update
+{"Type":"Coworkee.Webhooks.WebhookEntityChanged, Coworkee.Webhooks, Version=*, Culture=neutral, PublicKeyToken=null","Payload":"{\u0022EntityType\u0022:\u0022Gadgets\u0022,\u0022Key\u0022:\u0022<lamp>\u0022,\u0022Action\u0022:\u0022updated\u0022}","OccurredAt":"now","Tenant":"tenant","Actor":"admin","ImpersonatorId":null,"CorrelationId":null}
+## same value
+## delete
+{"Type":"Coworkee.Webhooks.WebhookEntityChanged, Coworkee.Webhooks, Version=*, Culture=neutral, PublicKeyToken=null","Payload":"{\u0022EntityType\u0022:\u0022Gadgets\u0022,\u0022Key\u0022:\u0022<desk>\u0022,\u0022Action\u0022:\u0022deleted\u0022}","OccurredAt":"now","Tenant":"tenant","Actor":"admin","ImpersonatorId":null,"CorrelationId":null}

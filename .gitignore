@@ -516,3 +516,4 @@ artifacts/
 
 .libmentor/
 .libmentor-inputs/
+*.received.txt

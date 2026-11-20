@@ -91,6 +91,13 @@ public sealed class HourlyNote : AnonymousEntity, IAnonymous
     TimeSpan IAnonymous.TimestampPrecision => TimeSpan.FromHours(1);
 }
 
+/// <summary>A type the audit trail leaves out entirely.</summary>
+[NotAudited]
+public sealed class Draft : Entity
+{
+    public required string Name { get; set; }
+}
+
 public sealed class DocumentSettings
 {
     public string Color { get; set; } = "none";
@@ -106,6 +113,7 @@ public sealed class TestModelContributor : IModelContributor
         document.Property(d => d.Internal).IsNotAudited();
         modelBuilder.Entity<Article>();
         modelBuilder.Entity<Ballot>();
+        modelBuilder.Entity<Draft>();
     }
 }
 
