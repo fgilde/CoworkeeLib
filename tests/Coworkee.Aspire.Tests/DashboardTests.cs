@@ -77,7 +77,8 @@ public sealed class DashboardTests
             await callback.Callback(new EnvironmentCallbackContext(builder.ExecutionContext, env, TestContext.Current.CancellationToken));
         }
 
-        env["Coworkee__Services__dashboard__Url"].ShouldBeOfType<string>().ShouldStartWith("https://localhost:17000");
+        // Aspire generates the browser token of a local run into the configuration: the link signs in
+        env["Coworkee__Services__dashboard__Url"].ShouldBeOfType<string>().ShouldStartWith("https://localhost:17000/login?t=");
         env["Coworkee__Services__jobs__Url"].ShouldBeOfType<ReferenceExpression>();
         env["Coworkee__Services__demo-web__Url"].ShouldBeOfType<EndpointReference>().EndpointName.ShouldBe("https");
         env["Coworkee__Services__demo-api__HealthPath"].ShouldBe("/health");
