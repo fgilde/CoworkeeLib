@@ -372,6 +372,49 @@ public sealed class CopyRoundTripTests : IDisposable
         }
     }
 
+    public sealed class Order
+    {
+        public Guid Id { get; set; }
+        public string Number { get; set; } = "";
+        public List<Inner> Lines { get; set; } = [];
+        public Inner[] Parts { get; set; } = [];
+        public IReadOnlyList<string> Codes { get; set; } = [];
+        public Dictionary<string, int> Counts { get; set; } = [];
+        public List<Inner>? MaybeLines { get; set; }
+        public Inner? Main { get; set; }
+    }
+
+    // the server's snapshot of a set selects no navigation outside the expand: their columns are NULL, which must read as empty (or null where allowed)
+    [Fact]
+    public async Task A_snapshot_without_its_collection_columns_answers_locally_with_empty_collections()
+    {
+        var store = new SqliteClientEntityStore<Order>("orders", _storage, _log, _directory);
+        await using var _ = store;
+        var request = store.Snapshot(null).ShouldNotBeNull();
+        var file = Path.Combine(_directory, "orders.db");
+        Directory.CreateDirectory(_directory);
+        IReadOnlyList<IReadOnlyDictionary<string, object?>> shaped = [.. Enumerable.Range(1, 5).Select(i =>
+            (IReadOnlyDictionary<string, object?>)new Dictionary<string, object?> { ["Id"] = new Guid(i, 0, 0, new byte[8]), ["Number"] = "O" + i })];
+        ClientEntitySnapshot.Write(file, request.Columns, shaped, Version);
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        await store.ReplaceWithFileAsync(await File.ReadAllBytesAsync(file), Version, TestContext.Current.CancellationToken);
+
+        var page = await store.QueryAsync(new ODataQuery { Filter = "Number ne 'O3'", OrderBy = "Number desc", Count = true }, _ => Task.FromResult<IReadOnlyList<FacetGroupDto>>([]),
+            TestContext.Current.CancellationToken);
+
+        page.Count.ShouldBe(4);
+        page.Items.Select(o => o.Number).ShouldBe(["O5", "O4", "O2", "O1"]);
+        page.Items.ShouldAllBe(o => o.Lines.Count == 0 && o.Parts.Length == 0 && o.Codes.Count == 0 && o.Counts.Count == 0 && o.MaybeLines == null && o.Main == null);
+        page.Items[0].Lines.ShouldNotBeSameAs(page.Items[1].Lines);
+        _log.Messages.ShouldNotContain(m => m.Contains("in memory"));
+
+        // an order by a path into a JSON column runs on the rows in memory, which read the same
+        var nested = await store.QueryAsync(new ODataQuery { OrderBy = "Main/Code,Number desc", Top = 2 }, _ => Task.FromResult<IReadOnlyList<FacetGroupDto>>([]),
+            TestContext.Current.CancellationToken);
+        nested.Items.Select(o => o.Number).ShouldBe(["O5", "O4"]);
+        nested.Items.ShouldAllBe(o => o.Lines.Count == 0 && o.Counts.Count == 0);
+    }
+
     private readonly ListLogger _log = new();
 
     private SqliteClientEntityStore<Row> Store(string key) => new(key, _storage, _log, _directory);

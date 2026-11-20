@@ -293,7 +293,7 @@ private GridItemsProvider<SalesOrderDto> Provider => async request =>
 
 ## Was lokal läuft
 
-Das Suchfeld einer Tabelle über einer lokalen Kopie fragt nie den Server (im Speicher und in SQLite, auch über verschachtelte Objekte und berechnete Eigenschaften) und wartet nach der letzten Taste 90 ms statt 300 ms. Die [Befehlspalette](../web/global-search.md#zuerst-die-lokalen-kopien) findet Datensätze einer lokalen Kopie, bevor der Server antwortet, wenn das Set eine globale Suche hat. Der [KI-Assistent](../modules/ai.md#antworten-aus-den-lokalen-daten-des-browsers) beantwortet seine `query_data`-Abfragen einer lokalen Kopie ebenfalls im Browser, in Millisekunden statt mit einer Datenbankabfrage; Abfragen, die die Kopie nicht beantworten kann, gehen an den Server. `IClientDataCache.LocalSets` nennt die Sets, die gerade lokal antworten, und `QueryLocallyAsync(entitySet, query)` beantwortet eine Abfrage aus der Kopie als Zeilen nach Feldnamen mit der Gesamtzahl, oder `null`, wenn nur der Server es kann, auch wenn die Antwort weniger Felder hätte als die des Servers (kein Select und ein Zeilentyp ohne jedes Feld aus `Fields` des Manifests).
+Das Suchfeld einer Tabelle über einer lokalen Kopie fragt nie den Server (im Speicher und in SQLite, auch über verschachtelte Objekte und berechnete Eigenschaften) und wartet nach der letzten Taste 90 ms statt 300 ms. Die [Befehlspalette](../web/global-search.md#zuerst-die-lokalen-kopien) findet Datensätze einer lokalen Kopie, bevor der Server antwortet, wenn das Set eine globale Suche hat. Der [KI-Assistent](../modules/ai.md#antworten-aus-den-lokalen-daten-des-browsers) beantwortet seine `query_data`-Abfragen einer lokalen Kopie ebenfalls im Browser, in Millisekunden statt mit einer Datenbankabfrage; Abfragen, die die Kopie nicht beantworten kann, gehen an den Server. Die erste Abfrage eines Sets, die seine Kopie nicht beantworten kann, schreibt eine Warnung mit dem Grund ins Log (spätere auf Debug-Ebene), so fällt eine Kopie, die nichts beantwortet, während ihr Ring grün ist, in der Browser-Konsole auf. `IClientDataCache.LocalSets` nennt die Sets, die gerade lokal antworten, und `QueryLocallyAsync(entitySet, query)` beantwortet eine Abfrage aus der Kopie als Zeilen nach Feldnamen mit der Gesamtzahl, oder `null`, wenn nur der Server es kann, auch wenn die Antwort weniger Felder hätte als die des Servers (kein Select und ein Zeilentyp ohne jedes Feld aus `Fields` des Manifests).
 
 Die lokale Kopie versteht, was Tabellen, Facetten und Picker senden: `eq ne gt ge lt le and or not in`, Arithmetik, `contains startswith endswith tolower toupper trim length year month day hour minute second`, Pfade wie `Customer/Name` (null-sicher) und Literale aller einfachen Typen, Enums eingeschlossen. `$search`, Lambda-Operatoren (`any`, `all`), ein `$expand`, mit dem die Kopie nicht geladen wurde, und alle anderen Funktionen gehen an den Server. Facetten behalten Gruppen und Optionen des Servers; nur die Anzahlen werden lokal gezählt. Die Kopie speichert die Facetten des Servers mit ihren Zeilen und fragt sie höchstens alle 10 Minuten im Hintergrund neu an; Optionen inzwischen neu aufgetauchter Werte erscheinen dann.
 
@@ -404,6 +404,18 @@ So werden Spalten gespeichert; der Server schreibt den Snapshot in denselben For
 | `DateOnly` | `TEXT` `yyyy-MM-dd` |
 | `TimeOnly`, `TimeSpan` | `INTEGER`, ihre Ticks |
 | Listen, verschachtelte Objekte, expandierte Navigationen | `TEXT`, JSON |
+
+Eine JSON-Spalte ohne Wert ist `NULL`: der Snapshot des Servers wählt keine Navigation außerhalb des `Expand` der Kopie, eine Liste wie `List<OrderLineDto> Lines` des Zeilentyps kommt also leer an. Sie liest sich als leere Sammlung (`[]`, ein Dictionary `{}`), wo die Eigenschaft nicht nullable ist, als `null`, wo sie es ist (`List<OrderLineDto>? Lines`), und bei verschachtelten Objekten. Die Kopie antwortet in beiden Fällen lokal.
+
+```csharp
+public sealed class OrderRowDto
+{
+    public Guid Id { get; set; }
+    public string Number { get; set; } = "";
+    public List<OrderLineDto> Lines { get; set; } = [];   // nicht im Expand: [] in jeder Zeile der Kopie
+    public CustomerDto? Customer { get; set; }            // nicht im Expand: null
+}
+```
 
 Die Tests der Library (`CopyRoundTripTests`, `ClientEntitySnapshotTests`) schreiben jeden Typ im Browser und als Server-Snapshot, lesen ihn zurück und vergleichen Filter und Sortierungen mit den Zeilen selbst.
 

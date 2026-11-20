@@ -2,6 +2,13 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Behoben
+
+- SQLite-Kopien von Client-Entities: eine Sammlungsspalte, die der Snapshot des Servers `NULL` lässt (eine Liste des Zeilentyps außerhalb des `Expand` der Kopie, z. B. `List<OrderLineDto> Lines`), liest sich als leere Sammlung, oder `null`, wo die Eigenschaft nullable ist. Bisher scheiterte jede Abfrage eines solchen Sets mit *The data is NULL at ordinal n* und ging an den Server, während der Sync-Ring die Kopie als aktuell zeigte. Apps mit einem sammlungsfreien Zeilentyp als Umgehung können ihn behalten. Siehe [SQLite im Browser](../ui/client-entities.md#wie-die-kopie-arbeitet).
+- Ein Client-Entity-Set, dessen lokale Kopie eine Abfrage nicht beantworten kann, schreibt beim ersten Mal eine Warnung ins Log (mit dem Grund; spätere auf Debug-Ebene), statt still an den Server zu gehen.
+
 ## 0.0.1.95 (2026-11-19)
 
 ### Breaking Changes

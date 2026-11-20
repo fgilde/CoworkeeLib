@@ -36,6 +36,40 @@ public sealed class ClientEntitySetTests
     }
 
     [Fact]
+    public async Task A_query_the_copy_cannot_answer_goes_to_the_server_with_one_warning()
+    {
+        var log = new LevelLogger();
+        await using var set = new ClientEntitySet<Gadget>(_server.Info, "Brand", "p1", _server, _server.Api, new NoClientEntityStorage(), log);
+        await set.RefreshAsync(Ct);
+        var before = _server.Queries.Count;
+
+        await set.QueryAsync(new ODataQuery { Filter = "Missing eq 1" }, Ct);
+        await set.QueryAsync(new ODataQuery { Filter = "Missing eq 2" }, Ct);
+
+        _server.Queries.Count.ShouldBe(before + 2);
+        log.Entries.Where(e => e.Message.Contains("Missing")).Select(e => e.Level)
+            .ShouldBe([Microsoft.Extensions.Logging.LogLevel.Warning, Microsoft.Extensions.Logging.LogLevel.Debug]);
+    }
+
+    private sealed class LevelLogger : Microsoft.Extensions.Logging.ILogger
+    {
+        public List<(Microsoft.Extensions.Logging.LogLevel Level, string Message)> Entries { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
+
+        public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, Microsoft.Extensions.Logging.EventId eventId, TState state, Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            lock (Entries)
+            {
+                Entries.Add((logLevel, formatter(state, exception)));
+            }
+        }
+    }
+
+    [Fact]
     public async Task Groups_are_counted_from_the_local_rows_once_they_are_here()
     {
         _server.Rows.Add(new(Guid.CreateVersion7(), "Saw", "Tools", 45, new Brand(Guid.NewGuid(), "Bosch")));

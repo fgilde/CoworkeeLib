@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Coworkee.Client.Blazor.ClientEntities.Sqlite;
@@ -13,6 +14,43 @@ internal sealed class CopyDb<T>(DbContextOptions<CopyDb<T>> options) : DbContext
     public const string Table = "rows";
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) => CopyModel.Configure<T>(modelBuilder);
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) => optionsBuilder.AddInterceptors(EmptyJsonColumns<T>.Instance);
+}
+
+/// <summary>
+/// A NULL JSON column (a collection outside the expand of a server snapshot, which selects no navigation) reads as an empty collection where the
+/// property is not nullable, so the row reads as the server's JSON would; nullable ones and nested objects stay null.
+/// </summary>
+internal sealed class EmptyJsonColumns<T> : IMaterializationInterceptor
+    where T : class
+{
+    public static readonly EmptyJsonColumns<T> Instance = new();
+
+    private static readonly Action<object>? Fill = Build();
+
+    public object InitializedInstance(MaterializationInterceptionData materializationData, object entity)
+    {
+        Fill?.Invoke(entity);
+        return entity;
+    }
+
+    // row => { if (row.A == null) row.A = FromJson<A>("[]"); ... } for every such property, compiled once
+    private static Action<object>? Build()
+    {
+        var nullability = new NullabilityInfoContext();
+        var row = Expression.Parameter(typeof(object), "row");
+        var typed = Expression.Convert(row, typeof(T));
+        var fills = CopyModel.Properties(typeof(T))
+            .Where(p => !CopyModel.IsColumn(p.PropertyType) && !p.PropertyType.IsValueType && nullability.Create(p).WriteState != NullabilityState.Nullable)
+            .Select(p => (Property: p, Json: CopyModel.EmptyJson(p.PropertyType)))
+            .Where(x => x.Json is not null)
+            .Select(x => (Expression)Expression.IfThen(
+                Expression.Equal(Expression.Property(typed, x.Property), Expression.Constant(null, x.Property.PropertyType)),
+                Expression.Assign(Expression.Property(typed, x.Property), Expression.Call(CopyModel.FromJsonMethod.MakeGenericMethod(x.Property.PropertyType), Expression.Constant(x.Json)))))
+            .ToList();
+        return fills.Count == 0 ? null : Expression.Lambda<Action<object>>(Expression.Block(fills), row).Compile();
+    }
 }
 
 /// <summary>
@@ -47,7 +85,8 @@ internal static class CopyModel
             var column = entity.Property(property.PropertyType, property.Name);
             if (!IsColumn(property.PropertyType))
             {
-                column.HasConversion((ValueConverter)JsonConverterMethod.MakeGenericMethod(property.PropertyType).Invoke(null, null)!);
+                // NULL where the copy has no value (EmptyJsonColumns): EF reads it without the converter
+                column.IsRequired(false).HasConversion((ValueConverter)JsonConverterMethod.MakeGenericMethod(property.PropertyType).Invoke(null, null)!);
                 continue;
             }
 
@@ -76,6 +115,16 @@ internal static class CopyModel
 
     private static ValueConverter JsonConverter<TValue>() =>
         new ValueConverter<TValue, string>(v => JsonSerializer.Serialize(v, Json), s => JsonSerializer.Deserialize<TValue>(s, Json)!);
+
+    public static readonly MethodInfo FromJsonMethod = typeof(CopyModel).GetMethod(nameof(FromJson), BindingFlags.NonPublic | BindingFlags.Static)!;
+
+    private static TValue FromJson<TValue>(string json) => JsonSerializer.Deserialize<TValue>(json, Json)!;
+
+    /// <summary>"{}" for a dictionary, "[]" for any other collection, null for an object.</summary>
+    public static string? EmptyJson(Type type) =>
+        type == typeof(string) || !typeof(System.Collections.IEnumerable).IsAssignableFrom(type) ? null
+        : type.GetInterfaces().Append(type).Any(i => i.IsGenericType && i.GetGenericTypeDefinition() is var d && (d == typeof(IDictionary<,>) || d == typeof(IReadOnlyDictionary<,>))) ? "{}"
+        : "[]";
 
     /// <summary>How the server writes a column of a snapshot, as this model stores it.</summary>
     public static string Kind(Type type)

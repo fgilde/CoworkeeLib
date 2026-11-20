@@ -293,7 +293,7 @@ private GridItemsProvider<SalesOrderDto> Provider => async request =>
 
 ## What runs locally
 
-A table's search box over a local copy never asks the server (in memory and in SQLite, also over nested objects and computed properties), and it waits 90 ms after the last key instead of 300 ms. The [command palette](../web/global-search.md#local-copies-first) finds records of a local copy before the server answers, when the set has a global search. The [AI assistant](../modules/ai.md#answers-from-the-browsers-local-data) answers its `query_data` reads of a local copy in the browser too, in milliseconds instead of a database query; reads the copy cannot answer go to the server. `IClientDataCache.LocalSets` names the sets that answer locally right now and `QueryLocallyAsync(entitySet, query)` answers a query from the copy as rows by field name with the total, or `null` when only the server can, also when the answer would hold fewer fields than the server's (no select and a row type without every field of the manifest's `Fields`).
+A table's search box over a local copy never asks the server (in memory and in SQLite, also over nested objects and computed properties), and it waits 90 ms after the last key instead of 300 ms. The [command palette](../web/global-search.md#local-copies-first) finds records of a local copy before the server answers, when the set has a global search. The [AI assistant](../modules/ai.md#answers-from-the-browsers-local-data) answers its `query_data` reads of a local copy in the browser too, in milliseconds instead of a database query; reads the copy cannot answer go to the server. The first query of a set that its copy cannot answer logs a warning with the reason (later ones log at debug level), so a copy that answers nothing while its ring is green shows up in the browser console. `IClientDataCache.LocalSets` names the sets that answer locally right now and `QueryLocallyAsync(entitySet, query)` answers a query from the copy as rows by field name with the total, or `null` when only the server can, also when the answer would hold fewer fields than the server's (no select and a row type without every field of the manifest's `Fields`).
 
 The local copy understands what tables, facets and pickers send: `eq ne gt ge lt le and or not in`, arithmetic, `contains startswith endswith tolower toupper trim length year month day hour minute second`, paths like `Customer/Name` (null safe) and literals of every simple type, enums included. `$search`, lambda operators (`any`, `all`), an `$expand` the copy was not loaded with and every other function go to the server. Facets keep the server's groups and options; only their counts are computed locally. The copy keeps the server's facets with its rows and asks for them again at most every 10 minutes, in the background; options of values that appeared meanwhile show up then.
 
@@ -404,6 +404,18 @@ Columns are stored like this; the server writes the snapshot in the same formats
 | `DateOnly` | `TEXT` `yyyy-MM-dd` |
 | `TimeOnly`, `TimeSpan` | `INTEGER`, their ticks |
 | lists, nested objects, expanded navigations | `TEXT`, JSON |
+
+A JSON column without a value is `NULL`: the server's snapshot selects no navigation outside the copy's `Expand`, so a list such as `List<OrderLineDto> Lines` of the row type arrives empty. It reads as an empty collection (`[]`, a dictionary `{}`) where the property is not nullable, as `null` where it is (`List<OrderLineDto>? Lines`) and for nested objects. The copy answers locally either way.
+
+```csharp
+public sealed class OrderRowDto
+{
+    public Guid Id { get; set; }
+    public string Number { get; set; } = "";
+    public List<OrderLineDto> Lines { get; set; } = [];   // not in the expand: [] in every row of the copy
+    public CustomerDto? Customer { get; set; }            // not in the expand: null
+}
+```
 
 The library's tests (`CopyRoundTripTests`, `ClientEntitySnapshotTests`) write every type in the browser and as a server snapshot, read it back and compare filters and orders with the rows themselves.
 

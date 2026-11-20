@@ -2,6 +2,13 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixed
+
+- SQLite copies of client entities: a collection column the server's snapshot leaves `NULL` (a list of the row type outside the copy's `Expand`, e.g. `List<OrderLineDto> Lines`) reads as an empty collection, or `null` where the property is nullable. Before, every query of such a set failed with *The data is NULL at ordinal n* and went to the server while the sync ring showed the copy as current. Apps with a collection-free row type as a workaround can keep it. See [SQLite in the browser](../ui/client-entities.md#how-the-copy-works).
+- A client entity set whose local copy cannot answer a query logs a warning the first time (with the reason; later ones at debug level) instead of going to the server silently.
+
 ## 0.0.1.95 (2026-11-19)
 
 ### Breaking changes

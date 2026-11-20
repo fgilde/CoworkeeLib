@@ -130,7 +130,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
                 }
                 catch (Exception exception) when (LocalQueryNotSupportedException.IsUnanswerable(exception))
                 {
-                    _logger.LogDebug(exception, "{EntitySet} answers {Filter} on the server", EntitySet, query.Filter);
+                    Unanswered(exception, query.Filter);
                 }
             }
 
@@ -145,7 +145,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
             }
             catch (Exception exception) when (LocalQueryNotSupportedException.IsUnanswerable(exception))
             {
-                _logger.LogDebug(exception, "{EntitySet} answers {Filter} on the server", EntitySet, query.Filter);
+                Unanswered(exception, query.Filter);
             }
         }
 
@@ -257,9 +257,23 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         }
         catch (Exception exception) when (LocalQueryNotSupportedException.IsUnanswerable(exception))
         {
-            _logger.LogDebug(exception, "{EntitySet} cannot answer {Filter} locally", EntitySet, query.Filter);
+            Unanswered(exception, query.Filter);
             return null;
         }
+    }
+
+    private int _unanswered;
+
+    // the server answers instead, which the sync state does not show: the first time a warning, so a copy that cannot read its own rows is noticed
+    private void Unanswered(Exception exception, string? filter)
+    {
+        if (Interlocked.Exchange(ref _unanswered, 1) == 0)
+        {
+            _logger.LogWarning(exception, "{EntitySet} could not answer {Filter} from its local copy, the server answers; further ones are logged at debug level", EntitySet, filter);
+            return;
+        }
+
+        _logger.LogDebug(exception, "{EntitySet} answers {Filter} on the server", EntitySet, filter);
     }
 
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Func<T, object?>> Getters = new(StringComparer.OrdinalIgnoreCase);
