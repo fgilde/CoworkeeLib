@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { HubConnectionState } from '@microsoft/signalr';
-import { createRealtime, lineSplitter, postNdjson, type RealtimeEnvelope } from '../src/index.ts';
+import { createRealtime, lineSplitter, onEvent, postNdjson, targetedTopics, type RealtimeEnvelope } from '../src/index.ts';
 
 function fakeConnection() {
   const calls: string[] = [];
@@ -47,6 +47,22 @@ test('the last handler of a topic unsubscribes it, a reconnect subscribes the fo
   await tick();
 
   assert.deepEqual(fake.calls, ['start', 'Subscribe type:Product', 'Subscribe user:1', 'Unsubscribe type:Product', 'Subscribe user:1']);
+});
+
+test('onEvent follows the targeted topics, keeps one type and leaves out what the user caused himself', async () => {
+  const fake = fakeConnection();
+  const realtime = createRealtime({ connection: fake.connection as never });
+  const seen: number[] = [];
+  const stop = onEvent<{ number: number }>(realtime, 'orders.approved', targetedTopics('me', 'sid1'), (e) => seen.push(e.number), { skipActor: 'me' });
+  await tick();
+  fake.send({ topic: 'tenant:events', type: 'orders.approved', payload: { number: 1 }, actor: { userId: 'other' } });
+  fake.send({ topic: 'user:me', type: 'orders.approved', payload: { number: 2 }, actor: { userId: 'me' } });
+  fake.send({ topic: 'global:events', type: 'something.else', payload: { number: 3 } });
+  stop();
+  fake.send({ topic: 'tenant:events', type: 'orders.approved', payload: { number: 4 } });
+
+  assert.deepEqual(seen, [1]);
+  assert.deepEqual(fake.calls.filter((c) => c.startsWith('Subscribe')), ['Subscribe user:me', 'Subscribe tenant:events', 'Subscribe global:events', 'Subscribe session:sid1']);
 });
 
 test('lines of a stream come out whole, however the chunks are cut', () => {

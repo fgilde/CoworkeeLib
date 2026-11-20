@@ -52,6 +52,26 @@ export const realtimeTopics = {
 
 export const realtimeEvents = { entityChanged: 'EntityChanged', sessionRevoked: 'SessionRevoked', presenceChanged: 'presence.changed', chatMessage: 'chat.message', chatRead: 'chat.read', toast: 'notification.toast' } as const;
 
+/** The topics an event target of the server (EventTarget) reaches a signed-in user on: his own, the organisation's, the global one and his session's. */
+export const targetedTopics = (userId: string, sessionId?: string) =>
+  [realtimeTopics.user(userId), realtimeTopics.tenantEvents, realtimeTopics.globalEvents, ...(sessionId ? [realtimeTopics.session(sessionId)] : [])];
+
+/**
+ * Events of one type (an `[EventName]` of the server, `EntityChanged`, `notification.toast`) on the given topics, like `Realtime.On<T>` in Blazor:
+ * `onEvent<OrderApproved>(realtime, 'orders.approved', targetedTopics(me, sid), (e) => ...)`. `skipActor` leaves out what that user caused himself.
+ * The returned function stops every subscription.
+ */
+export function onEvent<T>(
+  realtime: Realtime, type: string, topics: string[], handler: (payload: T, envelope: RealtimeEnvelope<T>) => void, options: { skipActor?: string } = {},
+): () => void {
+  const receive: RealtimeHandler = (envelope) => {
+    if (envelope.type !== type || (options.skipActor && envelope.actor?.userId === options.skipActor)) return;
+    handler(envelope.payload as T, envelope as RealtimeEnvelope<T>);
+  };
+  const stops = topics.map((topic) => realtime.subscribe(topic, receive));
+  return () => stops.forEach((stop) => stop());
+}
+
 /** Every retry after 0, 2, 10, then 30 seconds, forever - like the Blazor client. */
 const delays = [0, 2000, 10000, 30000];
 
