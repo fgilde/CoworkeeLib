@@ -226,6 +226,38 @@ public sealed class ServiceDirectoryTests
     }
 
     [Fact]
+    public async Task The_dashboard_is_probed_once_per_cache_period_and_never_waits_longer_than_its_short_timeout()
+    {
+        var handler = new FakeHandler(async (request, token) =>
+        {
+            if (request.RequestUri!.Host == "dashboard.test")
+            {
+                await Task.Delay(Timeout.InfiniteTimeSpan, token);
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.Redirect);
+        });
+        using var provider = Build(handler, services: o =>
+        {
+            o[CoworkeeServicesOptions.Dashboard] = new CoworkeeServiceOptions { Url = "http://dashboard.test/login?t=x" };
+            o["api"] = new CoworkeeServiceOptions { Url = "http://api.test" };
+        });
+        var directory = Dir(provider);
+
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        var first = await directory.GetAllAsync(Ct);
+        var elapsed = watch.Elapsed;
+        var second = await directory.GetAllAsync(Ct);
+
+        elapsed.ShouldBeLessThan(ServiceSourceTimeouts.Request);
+        ConfiguredServiceSource.DashboardTimeout.ShouldBeLessThan(ServiceSourceTimeouts.Request);
+        first.Services.Select(s => (s.Name, s.Health)).ShouldBe([("api", ServiceHealth.Healthy), ("dashboard", ServiceHealth.Unreachable)]);
+        second.Services.Select(s => (s.Name, s.Health)).ShouldBe(first.Services.Select(s => (s.Name, s.Health)));
+        handler.Requests.Count(r => r.RequestUri!.Host == "dashboard.test").ShouldBe(1);
+        handler.Requests.Count(r => r.RequestUri!.Host == "api.test").ShouldBe(2);
+    }
+
+    [Fact]
     public void The_directory_guard_is_longer_than_the_timeout_of_the_built_in_sources()
     {
         ServiceSourceTimeouts.Guard.ShouldBeGreaterThan(ServiceSourceTimeouts.Request);

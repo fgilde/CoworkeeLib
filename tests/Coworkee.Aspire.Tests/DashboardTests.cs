@@ -77,7 +77,7 @@ public sealed class DashboardTests
             await callback.Callback(new EnvironmentCallbackContext(builder.ExecutionContext, env, TestContext.Current.CancellationToken));
         }
 
-        env["Coworkee__Services__dashboard__Url"].ShouldBe("https://localhost:17000");
+        env["Coworkee__Services__dashboard__Url"].ShouldBeOfType<string>().ShouldStartWith("https://localhost:17000");
         env["Coworkee__Services__jobs__Url"].ShouldBeOfType<ReferenceExpression>();
         env["Coworkee__Services__demo-web__Url"].ShouldBeOfType<EndpointReference>().EndpointName.ShouldBe("https");
         env["Coworkee__Services__demo-api__HealthPath"].ShouldBe("/health");
@@ -85,6 +85,41 @@ public sealed class DashboardTests
         env.Keys.ShouldContain("Coworkee__Services__pgadmin__Url");
         env.Keys.ShouldNotContain("Coworkee__Services__mail__HealthPath");
         env.Keys.ShouldNotContain("Coworkee__Services__postgres__Url");
+    }
+
+    [Theory]
+    [InlineData("http://localhost:15000;https://localhost:17000/", "abc+1", "https://localhost:17000/login?t=abc%2B1")]
+    [InlineData("http://localhost:15000", null, "http://localhost:15000")]
+    [InlineData(null, "abc", null)]
+    public void The_local_dashboard_link_signs_in_with_the_browser_token(string? urls, string? token, string? expected)
+    {
+        var configuration = Microsoft.Extensions.Configuration.MemoryConfigurationBuilderExtensions.AddInMemoryCollection(new Microsoft.Extensions.Configuration.ConfigurationBuilder(),
+            new Dictionary<string, string?> { ["ASPNETCORE_URLS"] = urls, ["AppHost:BrowserToken"] = token }).Build();
+
+        CoworkeeApp.LocalDashboard(configuration).ShouldBe(expected);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task A_container_apps_deployment_passes_the_dashboard_of_its_environment_unless_switched_off(bool dashboard)
+    {
+        var builder = DistributedApplication.CreateBuilder(["--operation", "publish", "--step", "publish"]);
+        builder.AddAzureContainerAppEnvironment("env").WithDashboard(dashboard);
+        var app = builder.AddCoworkeeApp("demo").AddProjects();
+
+        var env = await ApiEnvironment(builder, app);
+
+        if (dashboard)
+        {
+            var url = env["Coworkee__Services__dashboard__Url"].ShouldBeOfType<ReferenceExpression>();
+            url.Format.ShouldStartWith("https://aspire-dashboard.ext.");
+            url.ValueProviders.ShouldHaveSingleItem().ShouldBeOfType<global::Aspire.Hosting.Azure.BicepOutputReference>().Name.ShouldBe("AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN");
+        }
+        else
+        {
+            env.Keys.ShouldNotContain("Coworkee__Services__dashboard__Url");
+        }
     }
 
     [Fact]

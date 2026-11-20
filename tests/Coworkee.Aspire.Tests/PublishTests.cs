@@ -160,6 +160,17 @@ public sealed class PublishTests
         // the services page of the deployment lists the tools at their public addresses
         written.ShouldContain("Coworkee__Services__grafana__Url");
 
+        // and the dashboard Container Apps runs as a component of the environment; Kubernetes runs one inside the cluster only, with no public address
+        if (target == "azure")
+        {
+            written.ShouldContain("componentType: 'AspireDashboard'");
+            written.ShouldContain("value: 'https://aspire-dashboard.ext.${aca_outputs_azure_container_apps_environment_default_domain}'");
+        }
+        else
+        {
+            written.ShouldNotContain("Coworkee__Services__dashboard__Url");
+        }
+
         // Container Apps gives every app its own address, so only other targets ask for the public addresses
         foreach (var parameter in new[] { "demo_grafana_url", "demo_keycloak_url" })
         {

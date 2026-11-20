@@ -1,12 +1,20 @@
 using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Settings;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 
 namespace Coworkee.Settings;
 
-internal sealed class ConfiguredServiceSource(IOptionsMonitor<CoworkeeServicesOptions> options, IHttpClientFactory clients, TimeProvider time) : IServiceSource
+internal sealed class ConfiguredServiceSource(IOptionsMonitor<CoworkeeServicesOptions> options, IHttpClientFactory clients, HybridCache cache, TimeProvider time) : IServiceSource
 {
     public const string Client = "Coworkee.Services";
+
+    /// <summary>The dashboard is asked at most this often and waits at most <see cref="DashboardTimeout"/>: it must never slow the page down.</summary>
+    internal static readonly TimeSpan DashboardCache = TimeSpan.FromSeconds(30);
+
+    internal static readonly TimeSpan DashboardTimeout = TimeSpan.FromSeconds(1.5);
+
+    private static readonly HybridCacheEntryOptions DashboardEntry = new() { Expiration = DashboardCache, LocalCacheExpiration = DashboardCache };
 
     public string Name => "app";
 
@@ -15,7 +23,10 @@ internal sealed class ConfiguredServiceSource(IOptionsMonitor<CoworkeeServicesOp
         var probes = options.CurrentValue
             .Where(s => Contracts.WebAddress.IsWeb(s.Value.Url))
             .OrderBy(s => s.Key, StringComparer.OrdinalIgnoreCase)
-            .Select(async s => ToDto(s.Key, s.Value, await ProbeAsync(s.Value, cancellationToken)));
+            .Select(async s => ToDto(s.Key, s.Value, string.Equals(s.Key, CoworkeeServicesOptions.Dashboard, StringComparison.OrdinalIgnoreCase)
+                ? await cache.GetOrCreateAsync("coworkee:services:dashboard:" + s.Value.Url, s.Value, (service, token) => new ValueTask<ServiceHealth>(ProbeAsync(service, DashboardTimeout, token)),
+                    DashboardEntry, cancellationToken: cancellationToken)
+                : await ProbeAsync(s.Value, ServiceSourceTimeouts.Request, cancellationToken)));
         return await Task.WhenAll(probes);
     }
 
@@ -28,9 +39,9 @@ internal sealed class ConfiguredServiceSource(IOptionsMonitor<CoworkeeServicesOp
     private static ServiceDto ToDto(string name, CoworkeeServiceOptions service, ServiceHealth health) =>
         new(name, service.Title ?? name, service.Url!, health);
 
-    private async Task<ServiceHealth> ProbeAsync(CoworkeeServiceOptions service, CancellationToken cancellationToken)
+    private async Task<ServiceHealth> ProbeAsync(CoworkeeServiceOptions service, TimeSpan limit, CancellationToken cancellationToken)
     {
-        using var timeout = ServiceSourceTimeouts.Limit(ServiceSourceTimeouts.Request, time, cancellationToken);
+        using var timeout = ServiceSourceTimeouts.Limit(limit, time, cancellationToken);
         var url = service.HealthPath is { Length: > 0 } path ? new Uri(new Uri(service.Url!), path) : new Uri(service.Url!);
         try
         {

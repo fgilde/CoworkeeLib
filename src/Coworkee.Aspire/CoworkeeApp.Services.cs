@@ -1,5 +1,7 @@
 using Aspire.Hosting.ApplicationModel;
+using Aspire.Hosting.Azure.AppContainers;
 using Coworkee.Aspire.Modules;
+using Coworkee.Contracts.Configuration;
 using Coworkee.Aspire.Settings;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -24,6 +26,11 @@ public sealed partial class CoworkeeApp
                 foreach (var (tool, url) in _toolUrls)
                 {
                     context.EnvironmentVariables[SettingPath.Of(s => s.Coworkee.Services[tool.Name].Url)] = url;
+                }
+
+                if (DeployedDashboard() is { } dashboard)
+                {
+                    context.EnvironmentVariables[SettingPath.Of(s => s.Coworkee.Services[CoworkeeServicesOptions.Dashboard].Url)] = dashboard;
                 }
             });
             return;
@@ -80,13 +87,46 @@ public sealed partial class CoworkeeApp
         }
     }
 
+    /// <summary>
+    /// The Aspire dashboard of a deployment: Container Apps environments run it as their component <c>aspire-dashboard</c> (on unless
+    /// <c>WithDashboard(false)</c> or Express) at <c>https://aspire-dashboard.ext.{default domain}</c>, the address Aspire prints after a deploy. Docker
+    /// Compose and Kubernetes run a dashboard too, but only on a random host port or inside the cluster: no address browsers could use.
+    /// </summary>
+    private ReferenceExpression? DeployedDashboard()
+    {
+        if (Builder.Resources.OfType<AzureContainerAppEnvironmentResource>().FirstOrDefault(HasDashboard) is not { } environment)
+        {
+            return null;
+        }
+
+        var domain = new global::Aspire.Hosting.Azure.BicepOutputReference("AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN", environment);
+        return ReferenceExpression.Create($"https://aspire-dashboard.ext.{domain}");
+    }
+
+    // ponytail: Aspire 17 keeps EnableDashboard internal (WithDashboard sets it); read by reflection, Aspire's default (on) when it moves
+    private static readonly System.Reflection.PropertyInfo? EnableDashboard = typeof(AzureContainerAppEnvironmentResource)
+        .GetProperty("EnableDashboard", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+
+    private static bool HasDashboard(AzureContainerAppEnvironmentResource environment) => EnableDashboard?.GetValue(environment) as bool? ?? true;
+
+    /// <summary>
+    /// The dashboard of a local run: the app host's ASPNETCORE_URLS (the launch profile's applicationUrl; without it Aspire picks a random port and the
+    /// services get none), https first, with the browser token, so the link signs in like the one on the console.
+    /// </summary>
+    internal static string? LocalDashboard(Microsoft.Extensions.Configuration.IConfiguration configuration)
+    {
+        var url = configuration["ASPNETCORE_URLS"]?.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .OrderByDescending(u => u.StartsWith("https:", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.TrimEnd('/');
+        return url is null ? null
+            : configuration["AppHost:BrowserToken"] is { Length: > 0 } token ? $"{url}/login?t={Uri.EscapeDataString(token)}"
+            : url;
+    }
+
     private IEnumerable<(string Name, object Url, string? Health)> ServiceUrls()
     {
-        var dashboard = Builder.Configuration["ASPNETCORE_URLS"]?.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .OrderByDescending(u => u.StartsWith("https:", StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
-        if (dashboard is not null)
+        if (LocalDashboard(Builder.Configuration) is { } dashboard)
         {
-            yield return ("dashboard", dashboard, null);
+            yield return (CoworkeeServicesOptions.Dashboard, dashboard, null);
         }
 
         if (Web is { } web && _apis.Any(a => CoworkeeModules.Of(a.Resource).Contains(CoworkeeModules.BackgroundJobs)))

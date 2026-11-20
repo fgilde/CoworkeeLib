@@ -7,4 +7,10 @@ public sealed class CoworkeeServicesOptions() : Dictionary<string, CoworkeeServi
 
     /// <summary>Health checks with this tag are listed as services too (e.g. "antivirus"), with their state and description.</summary>
     public const string HealthCheckTag = "coworkee-service";
+
+    /// <summary>
+    /// The Aspire dashboard (<c>Coworkee:Services:dashboard:Url</c>): the app host passes it while running and on Azure Container Apps; the Services page
+    /// shows it on top while it answers.
+    /// </summary>
+    public const string Dashboard = "dashboard";
 }
