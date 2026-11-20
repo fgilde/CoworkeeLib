@@ -3,6 +3,7 @@ using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Realtime;
 using Coworkee.Testing;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -183,7 +184,7 @@ public sealed class RealtimeTests(RealtimeApp app) : IAsyncLifetime
     {
         // Abort() sent allowReconnect: false, and SignalR clients then stop for good: realtime went quiet after the token lifetime
         var server = app.App.GetTestServer();
-        await using var connection = new Microsoft.AspNetCore.SignalR.Client.HubConnectionBuilder()
+        await using var connection = new HubConnectionBuilder()
             .WithUrl(new Uri(server.BaseAddress, "hubs/realtime"), options =>
             {
                 options.HttpMessageHandlerFactory = _ => server.CreateHandler();
