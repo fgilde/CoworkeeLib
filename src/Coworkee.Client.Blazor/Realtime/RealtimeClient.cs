@@ -5,7 +5,8 @@ using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Coworkee.Client.Blazor.Realtime;
 
-public sealed class RealtimeClient(IRealtimeConnection connection, AuthenticationStateProvider? authentication = null)
+// the services, not the authentication state provider: the BFF's provider reaches this client through the permission store (a cycle in the constructors)
+public sealed class RealtimeClient(IRealtimeConnection connection, IServiceProvider? services = null)
 {
     private readonly Dictionary<string, List<Func<RealtimeEnvelope, Task>>> _handlers = new(StringComparer.Ordinal);
     private readonly Lock _lock = new();
@@ -53,7 +54,9 @@ public sealed class RealtimeClient(IRealtimeConnection connection, Authenticatio
     public async Task<IAsyncDisposable> On<T>(Func<T, Task> handler, string? topic = null, bool skipOwn = false)
     {
         ArgumentNullException.ThrowIfNull(handler);
-        var user = authentication is null ? null : (await authentication.GetAuthenticationStateAsync()).User;
+        var user = services?.GetService(typeof(AuthenticationStateProvider)) is AuthenticationStateProvider authentication
+            ? (await authentication.GetAuthenticationStateAsync()).User
+            : null;
         Guid? me = ClientUser.From(user).TryGetUserId(out var id) ? id : null;
         var entity = typeof(T).IsGenericType && typeof(T).GetGenericTypeDefinition() == typeof(EntityChanged<>);
         var type = entity ? RealtimeEventTypes.EntityChanged : EventNames.Of<T>();
