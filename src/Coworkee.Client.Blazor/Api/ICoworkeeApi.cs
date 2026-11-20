@@ -108,6 +108,9 @@ public interface ICoworkeeApi
 
     Task<IReadOnlyDictionary<Guid, string>> GetUserNamesAsync(IReadOnlyList<Guid> userIds, CancellationToken cancellationToken = default);
 
+    /// <summary>How many users a selection reaches, resolved on the server with the caller's rights.</summary>
+    Task<UserSelectionCountDto> CountUserSelectionAsync(UserSelection selection, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<RoleDto>> GetRolesAsync(CancellationToken cancellationToken = default);
 
     Task<Guid> CreateRoleAsync(RoleRequest request, CancellationToken cancellationToken = default);
@@ -218,6 +221,12 @@ public interface ICoworkeeApi
     Task<RenderedMailDto> PreviewMailTemplateAsync(string name, string culture, SaveMailTemplateRequest request, CancellationToken cancellationToken = default);
 
     Task SendTestMailAsync(string name, string culture, CancellationToken cancellationToken = default);
+
+    /// <summary>The recipients of a send for real and the mail of the first one.</summary>
+    Task<MailTemplateSendPreviewDto> PreviewMailTemplateSendAsync(string name, SendMailTemplateRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>Sends the template for real, one mail per recipient; returns how many were queued.</summary>
+    Task<int> SendMailTemplateAsync(string name, SendMailTemplateRequest request, CancellationToken cancellationToken = default);
 
     /// <summary>The saved states of a template language, newest first.</summary>
     Task<IReadOnlyList<MailTemplateVersionDto>> GetMailTemplateHistoryAsync(string name, string culture, CancellationToken cancellationToken = default);
@@ -334,6 +343,9 @@ public interface ICoworkeeApi
     Task DeleteNotificationAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task DeleteAllNotificationsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>A notification for the users of a selection (Notifications.Send).</summary>
+    Task SendNotificationAsync(SendNotificationRequest request, CancellationToken cancellationToken = default);
 
     Task<PushSettingsDto> GetPushSettingsAsync(CancellationToken cancellationToken = default);
 

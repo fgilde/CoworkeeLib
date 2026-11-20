@@ -73,6 +73,15 @@ Every user can put several emojis on an entity, each once; reacting with the sam
 <CoworkeeComments EntityType="Products" EntityId="product.Id" />
 ```
 
+Or everything the server opted the type into, in one component:
+
+```razor
+<CoworkeeSocial EntityType="Products" EntityId="product.Id" />
+<CoworkeeSocial EntityType="Products" EntityId="product.Id" ShowComments="false" ReadOnly="true" RatingSize="Size.Small" />
+```
+
+`CoworkeeSocial` asks `GET /api/v1/social/{entityType}` which blocks the type takes (`SocialFeaturesDto`, `ISocialApi.GetFeaturesAsync`) and shows those the user may see (their view permissions, following permission changes live): rating and reactions in one row, the tags below, then the comments under a heading. `ShowRating`, `ShowReactions`, `ShowTags`, `ShowComments` and `ShowCommentsTitle` hide parts; `ReadOnly`, `RatingSize`, `Emojis`, `NewStatus` and `TagsChanged` go to the blocks, `Class` and `Style` to the frame. A type without blocks renders nothing.
+
 The components ask the server what the user may do and hide the inputs otherwise. `CoworkeeReactions` shows a chip per emoji with its count (the own ones filled), who reacted on hover and a picker with `SocialReactions.Defaults` (👍 ❤️ 😂 🎉 😮 😢; `Emojis` sets others). With `CommentReactions()` the comments show the same row under each comment. `CoworkeeComments` shows the status of each comment, offers holders of `Social.Comments.SetStatus` a status menu and gives new comments the status `NewStatus` (default `None`). `ISocialApi` (`SetCommentStatusAsync`, `AddCommentAsync(entityType, entityId, CommentRequest)`, reactions, tags, ratings) calls the same endpoints from own components. `CoworkeeTagCloud` lists the tag set and turns the chosen tag into an OData filter for a data table:
 
 ```razor
@@ -110,6 +119,7 @@ The personal data export has a section `social` with the user's comments, rating
 
 | Endpoint | |
 |---|---|
+| `GET /api/v1/social/{entityType}` | the blocks the type takes `{ "comments", "tags", "ratings", "reactions" }` (every signed-in user) |
 | `GET/POST /api/v1/comments/{entityType}/{entityId}` | the thread / comment with `{ "text", "parentId", "status", "properties" }` |
 | `PUT/DELETE /api/v1/comments/{id}` | edit the own comment with `{ "text", "status", "properties" }` / delete |
 | `PUT /api/v1/comments/{id}/status` | set the status with `{ "status" }` (`Social.Comments.SetStatus`) |

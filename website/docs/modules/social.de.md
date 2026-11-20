@@ -73,6 +73,15 @@ Jeder Benutzer kann mehrere Emojis an eine Entität setzen, jedes einmal; dassel
 <CoworkeeComments EntityType="Products" EntityId="product.Id" />
 ```
 
+Oder alles, wofür der Server den Typ freigeschaltet hat, in einer Komponente:
+
+```razor
+<CoworkeeSocial EntityType="Products" EntityId="product.Id" />
+<CoworkeeSocial EntityType="Products" EntityId="product.Id" ShowComments="false" ReadOnly="true" RatingSize="Size.Small" />
+```
+
+`CoworkeeSocial` fragt `GET /api/v1/social/{entityType}`, welche Bausteine der Typ hat (`SocialFeaturesDto`, `ISocialApi.GetFeaturesAsync`), und zeigt die, die der Benutzer sehen darf (ihre Ansehen-Berechtigungen, live bei Änderungen der Berechtigungen): Bewertung und Reaktionen in einer Zeile, darunter die Tags, dann die Kommentare unter einer Überschrift. `ShowRating`, `ShowReactions`, `ShowTags`, `ShowComments` und `ShowCommentsTitle` blenden Teile aus; `ReadOnly`, `RatingSize`, `Emojis`, `NewStatus` und `TagsChanged` gehen an die Bausteine, `Class` und `Style` an den Rahmen. Ein Typ ohne Bausteine zeigt nichts.
+
 Die Komponenten fragen den Server, was der Benutzer darf, und blenden Eingaben sonst aus. `CoworkeeReactions` zeigt einen Chip pro Emoji mit Anzahl (die eigenen gefüllt), beim Überfahren, wer reagiert hat, und eine Auswahl mit `SocialReactions.Defaults` (👍 ❤️ 😂 🎉 😮 😢; `Emojis` setzt andere). Mit `CommentReactions()` zeigen die Kommentare dieselbe Zeile unter jedem Kommentar. `CoworkeeComments` zeigt den Status jedes Kommentars, bietet Inhabern von `Social.Comments.SetStatus` ein Status-Menü und gibt neuen Kommentaren den Status `NewStatus` (Standard `None`). `ISocialApi` (`SetCommentStatusAsync`, `AddCommentAsync(entityType, entityId, CommentRequest)`, Reaktionen, Tags, Bewertungen) ruft dieselben Endpunkte aus eigenen Komponenten auf. `CoworkeeTagCloud` zeigt die Tag-Sammlung und macht aus dem gewählten Tag einen OData-Filter für eine Datentabelle:
 
 ```razor
@@ -110,6 +119,7 @@ Der Export personenbezogener Daten hat einen Abschnitt `social` mit den Kommenta
 
 | Endpunkt | |
 |---|---|
+| `GET /api/v1/social/{entityType}` | die Bausteine des Typs `{ "comments", "tags", "ratings", "reactions" }` (jeder angemeldete Benutzer) |
 | `GET/POST /api/v1/comments/{entityType}/{entityId}` | der Thread / Kommentar mit `{ "text", "parentId", "status", "properties" }` |
 | `PUT/DELETE /api/v1/comments/{id}` | den eigenen Kommentar bearbeiten mit `{ "text", "status", "properties" }` / löschen |
 | `PUT /api/v1/comments/{id}/status` | den Status setzen mit `{ "status" }` (`Social.Comments.SetStatus`) |

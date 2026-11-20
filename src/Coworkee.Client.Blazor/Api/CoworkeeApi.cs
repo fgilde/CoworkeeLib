@@ -144,6 +144,9 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public async Task<IReadOnlyDictionary<Guid, IReadOnlyList<RoleRefDto>>> GetUsersRolesAsync(IReadOnlyList<Guid> userIds, CancellationToken cancellationToken = default) =>
         await SendAsync<Dictionary<Guid, IReadOnlyList<RoleRefDto>>>(HttpMethod.Post, $"{Identity}/users/roles", new IdListRequest(userIds), cancellationToken);
 
+    public Task<UserSelectionCountDto> CountUserSelectionAsync(UserSelection selection, CancellationToken cancellationToken = default) =>
+        SendAsync<UserSelectionCountDto>(HttpMethod.Post, $"{Identity}/users/selection/count", selection, cancellationToken);
+
     public async Task<IReadOnlyDictionary<Guid, string>> GetUserNamesAsync(IReadOnlyList<Guid> userIds, CancellationToken cancellationToken = default) =>
         await SendAsync<Dictionary<Guid, string>>(HttpMethod.Post, $"{Identity}/users/names", new IdListRequest(userIds), cancellationToken);
 
@@ -287,6 +290,12 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
 
     public Task SendTestMailAsync(string name, string culture, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Post, Template(name, culture) + "/test", null, cancellationToken);
+
+    public Task<MailTemplateSendPreviewDto> PreviewMailTemplateSendAsync(string name, SendMailTemplateRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync<MailTemplateSendPreviewDto>(HttpMethod.Post, $"api/v1/mail/templates/{Uri.EscapeDataString(name)}/send/preview", request, cancellationToken);
+
+    public Task<int> SendMailTemplateAsync(string name, SendMailTemplateRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync<int>(HttpMethod.Post, $"api/v1/mail/templates/{Uri.EscapeDataString(name)}/send", request, cancellationToken);
 
     public async Task<IReadOnlyList<MailTemplateVersionDto>> GetMailTemplateHistoryAsync(string name, string culture, CancellationToken cancellationToken = default) =>
         await GetAsync<MailTemplateVersionDto[]>(Template(name, culture) + "/history", cancellationToken);
@@ -455,6 +464,9 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
 
     public Task DeleteAllNotificationsAsync(CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Delete, "api/v1/notifications", null, cancellationToken);
+
+    public Task SendNotificationAsync(SendNotificationRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, "api/v1/notifications/send", request, cancellationToken);
 
     public Task<PushSettingsDto> GetPushSettingsAsync(CancellationToken cancellationToken = default) =>
         GetAsync<PushSettingsDto>("api/v1/notifications/push", cancellationToken);

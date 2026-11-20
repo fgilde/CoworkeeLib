@@ -959,11 +959,13 @@
     {
       "version": "0.0.1.96",
       "breaking": [
+        "ICoworkeeApi gained CountUserSelectionAsync, SendNotificationAsync, PreviewMailTemplateSendAsync and SendMailTemplateAsync, ISocialApi gained GetFeaturesAsync; own implementations add them.",
         "INotifier gained SendAsync (event targets, toasts, mail modes) and ToastAsync with default implementations: decorators of INotifier forward SendAsync to the notifier they wrap, else toasts and targets other than user ids throw NotSupportedException through them.",
         "Audit trail reason: the new nullable column cw.AuditEntries.Reason needs a migration of the app (coworkee migrations add AuditReason)."
       ],
       "needsMigration": true,
       "manual": [
+        { "text": "Own ICoworkeeApi implementations add CountUserSelectionAsync, SendNotificationAsync, PreviewMailTemplateSendAsync and SendMailTemplateAsync; own ISocialApi implementations add GetFeaturesAsync.", "find": ":\\s*(ICoworkeeApi|ISocialApi)\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
         { "text": "INotifier has SendAsync (event targets, toasts, mail modes) and ToastAsync: a decorator of INotifier forwards SendAsync to the notifier it wraps, public Task SendAsync(NotificationRequest request, CancellationToken cancellationToken = default) => inner.SendAsync(request, cancellationToken). Without it the interface's default passes stored requests to user ids on to PublishAsync and throws NotSupportedException for toasts and other targets.", "find": "[:,]\\s*INotifier\\b", "files": [ "src/**/*.cs" ], "unless": "SendAsync" }
       ]
     }

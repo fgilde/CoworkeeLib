@@ -160,6 +160,20 @@ Der visuelle Editor schreibt das Markup um, deshalb wird alles, was er veränder
 
 Neben dem Editor listet **Platzhalter** alle Variablen der Vorlage mit Typ und Beispielwert. Ein Klick fügt sie an der Cursorposition ein: als Chip im Visuell-Modus, als `{{ name }}` im Quelltext. Eine Liste (etwa die Benachrichtigungen eines Digests) fügt im Quelltext ein Schleifengerüst `{{ for item in liste }} ... {{ end }}` ein; ihre Mitglieder (aufgelistet als liste[].title) werden als {{ item.title }} eingefügt. Im Visuell-Modus kommen beide ans Ende des Quelltexts, weil sich Schleifen nicht visuell bauen lassen. Die Schaltfläche neben dem Betreff hängt einen Platzhalter an den Betreff an. Eigene Vorlagen verwenden das Empfängermodell (`user.first_name`, `user.display_name`, `app.name` und die weiteren Werte der Liste); *Auf Standard zurücksetzen* gibt es nur für Vorlagen der Module, eigene Vorlagen haben keinen Standard.
 
+### Eine Vorlage wirklich senden
+
+**Senden…** neben dem Titel (mit `Mail.Campaigns.Send` und `Identity.Users.View` neben `Mail.Templates.Manage`) sendet die Vorlage sofort an Benutzer, jede Vorlage eines Moduls oder eine eigene. Das Blatt hat drei Teile:
+
+1. **Empfänger**: die Benutzerauswahl der Bibliothek (`CoworkeeUserSelection`, siehe [Benutzerauswahl](../fundamentals/event-targets.md#benutzerauswahl)): alle, auf die der Filter der Benutzertabelle passt, einzelne Benutzer von Hand ausgelassen oder hinzugefügt, mit der Zahl des Servers.
+2. **Werte**: das Modell der Vorlage, gefüllt mit ihrem Beispiel, im Objekt-Editor von MudBlazor.Extensions (`MudExStructuredDataEditor`). Ändern Sie, was die Vorlage sagen soll (einen Link, ein Datum, einen Text). Die Felder von `user` (`first_name`, `last_name`, `display_name`, `email`, `culture`) werden für jeden Empfänger gefüllt, und ein Schlüssel `unsubscribe_url` bekommt den eigenen Abmeldelink jedes Empfängers.
+3. **Vorschau** rendert die Mail des ersten Empfängers und zeigt, wie viele sie bekommen und wie viele ausgelassen werden; **An N Benutzer senden** stellt eine Mail je Empfänger in seiner Sprache über das Mail-Log ein (`OutgoingMail`, Zustellung wie jede andere Mail).
+
+Wer sie bekommt, folgt den Regeln der Kampagnen: Benutzer ohne Adresse, gesperrte und deaktivierte Benutzer und Benutzer, die **Newsletter empfangen** abgeschaltet haben, bleiben außen vor. Ein Versand erreicht höchstens 1.000 Benutzer; mehr gehen über eine Kampagne. Das Layout lässt sich nicht senden.
+
+Berechtigungen: `Mail.Templates.Manage` und `Mail.Campaigns.Send` (das Recht, viele Benutzer anzuschreiben), dazu `Identity.Users.View`, weil die Empfänger aus den Benutzern gewählt werden. Ein echter Versand ist ein Mailing, keine Benachrichtigung, er braucht also nicht `Notifications.Send`.
+
+API: `POST /api/v1/mail/templates/{name}/send/preview` und `POST /api/v1/mail/templates/{name}/send` mit `{ "recipients": { ...Benutzerauswahl... }, "model": "{ \"login_url\": \"https://...\" }" }` (`model` ist das JSON-Objekt als Text, null für das Beispiel; `MailTemplateDto.SampleModel` enthält das Beispiel); der Versand antwortet mit der Zahl der eingestellten Mails (`ICoworkeeApi.PreviewMailTemplateSendAsync`, `SendMailTemplateAsync`). Kampagnen nehmen dieselbe Auswahl als Empfängerquelle `Selection` (`RecipientSourceDto.Selection`).
+
 ### Sprachen einer Vorlage
 
 Eine Vorlage hat eine Variante pro Sprache; die Spalte *Sprachen* listet sie mit ihren Flaggen (hervorgehoben: hier geändert). Im Editor stehen dieselben Sprachen als Chips neben dem Titel: Ein Klick öffnet die Variante, die Übersetzen-Schaltfläche daneben fügt eine hinzu. Eine später auf der Sprachen-Seite eingeschaltete Sprache bekommt nicht von selbst eine Variante. **Sprache hinzufügen** (die Übersetzen-Schaltfläche einer Vorlage) fragt nach der Sprache, nach der vorhandenen Variante, von der sie ausgeht, und ob maschinell übersetzt werden soll: Ist unter den Übersetzungseinstellungen ein Übersetzungsdienst eingerichtet, werden nur die Texte zwischen den HTML-Tags übersetzt, Tags, Styles und `{{ ... }}`-Platzhalter bleiben, wie sie sind; ohne Dienst beginnt die Variante als Kopie. Danach öffnet sich der Editor der neuen Variante, dort den Text prüfen. Eine hinzugefügte Sprache lässt sich über das Kreuz ihres Chips entfernen; die mitgelieferten Sprachen einer Modulvorlage werden stattdessen im Editor zurückgesetzt, und die letzte Sprache einer eigenen Vorlage bleibt. Die Schaltfläche ist deaktiviert, wenn jede aktive Sprache schon eine Variante hat.
@@ -198,5 +212,5 @@ Die Liste zeigt jede Kampagne mit Status, `Gesendet/Gesamt` und einer roten Zahl
 |---|---|
 | `Mail.Templates.Manage` | *Mail templates*: eigene Vorlagen, Texte, Sprachen, Vorschau und Testmails |
 | `Mail.Log.View` | *Mail log*, `GET /api/v1/mail/outgoing`, OData `Mails` |
-| `Mail.Campaigns.Send` | *Mail campaigns*: anlegen, planen, abbrechen; eigene Abfragen und manuelle Auswahl brauchen zusätzlich `Identity.Users.View` |
+| `Mail.Campaigns.Send` | *Mail campaigns*: anlegen, planen, abbrechen; eigene Abfragen und manuelle Auswahl brauchen zusätzlich `Identity.Users.View`; mit `Mail.Templates.Manage` und `Identity.Users.View` eine Vorlage wirklich senden |
 | `Settings.Manage` | *Mail settings*: Anbieter, Zugangsdaten, Absender, Whitelist, Testmail |

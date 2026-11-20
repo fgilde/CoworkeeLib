@@ -28,6 +28,7 @@ await notifier.ToastAsync(EventTarget.All, "Maintenance at 18:00", NotificationS
 | `EventTarget.Group(groupId)` | the members of the group and of its sub-groups |
 | `EventTarget.Users(u => ...)` | the users who match a predicate (below) |
 | `EventTarget.Custom<TResolver>(args)` | the users an `IAudienceResolver` of the app names |
+| `EventTarget.Users(selection)` | the users of a `UserSelection` (filter of the Users set, added, left out) with the rights of the current user ([below](#user-selections)) |
 | `a \| b`, `a.Or(b)` | the users of both |
 | `a.Except(b)` | the users of `a` without those of `b`, e.g. `.Except(EventTarget.Current)` to leave out the one who acted |
 
@@ -61,6 +62,48 @@ public sealed class ShipmentAudience(AppDbContext db) : IAudienceResolver
 }
 
 await notifier.SendAsync(new NotificationRequest(EventTarget.Custom<ShipmentAudience>(shipment.Id), "Shipment departed"), ct);
+```
+
+## User selections
+
+A `UserSelection` is what someone chose in a users table: everyone the filter matches (`AllMatching`, `Filter` is an OData `$filter` of the Users set, null for all), plus `Included`, minus `Excluded` (at most 1,000 ids each, `UserSelection.MaxIds`). It is a plain serialisable record: store it, send it, resolve it later. A big choice travels as a filter, never as thousands of ids through the browser.
+
+```csharp
+var selection = new UserSelection("Groups/any(g: g/Id eq 6a1f...)", Excluded: [bobId]);
+await notifier.SendAsync(new NotificationRequest(EventTarget.Users(selection), "Inventory starts on Monday"), ct);
+
+UserSelection.Of(aliceId, carlId);   // only these users, if the caller may see them
+```
+
+The server resolves it with the rights of the **current user**, as the Users set shows them: `Identity.Users.View`, the organisation, the set's row filters and the group selection; a filter he may not run (a hidden property, an unknown name) is refused. Ids the browser added only count when the caller sees those users. As a target the selection reaches the active users of the organisation and follows the target rules: the actor is left out (the selection does not name him by id), preferences apply. Without the right to view users `EventTarget.Users(selection)` throws; `IUserSelectionResolver.ResolveAsync(selection)` returns the ids or the error (`Forbidden`, `Validation`) for own code.
+
+`POST /api/v1/identity/users/selection/count` (`Identity.Users.View`, body: the selection) answers `{ "users": 12, "active": 11 }` (`ICoworkeeApi.CountUserSelectionAsync`).
+
+### Choosing users in Blazor
+
+`CoworkeeUserSelection` (`Coworkee.Client.Blazor.Components.Users`) is a data table over the Users set with its facets, search and column filters: the switch *Everyone matching the filter* takes every match, the checkbox of a row leaves a user out or adds him, *Add a user* adds anyone by name. Below it shows the count of the server, live: a change of users reloads the table and counts again.
+
+```razor
+<CoworkeeUserSelection @bind-Value="_recipients" CountChanged="c => _count = c" Filter="IsActive eq true" />
+
+@code {
+    private UserSelection _recipients = new();
+    private UserSelectionCountDto? _count;
+}
+```
+
+`Filter` narrows the table and becomes part of the selection; `PageSize` sets the rows per page. The value goes to the server as it is, e.g. in an own request with `EventTarget.Users(request.Recipients)`.
+
+## Sending notifications from the administration
+
+The page *Send notification* (Administration → Communication, `/admin/notifications/send`, page key `send-notification`, permission `Notifications.Send`) sends a notification to a user selection: title, text, optional arguments (one per line: title and text become English texts with `{0}` placeholders that every reader sees in his language), link (a path of the app or an http(s) address), severity, inbox and/or toast, mail (as each recipient chose, never, always, when offline) and the type (the generic one or a registered type). Choosing the recipients also needs `Identity.Users.View`; the system admin role has both. The page sends through `INotifier.SendAsync`, so the rules above apply: the sender is left out, preferences hold, a toast reaches whoever is online at once.
+
+The same from code or another client: `POST /api/v1/notifications/send` with a `SendNotificationRequest` (`ICoworkeeApi.SendNotificationAsync`):
+
+```json
+{ "recipients": { "filter": "contains(Email,'@acme.test')", "allMatching": true, "excluded": ["..."] },
+  "title": "Maintenance at {0}", "body": "Please save your work.", "arguments": ["18:00"],
+  "link": "/status", "severity": "Warning", "stored": true, "toast": true, "mail": "WhenOffline", "type": null }
 ```
 
 ## How targets resolve

@@ -1,0 +1,45 @@
+@using Coworkee.Client.Blazor.Data.Admin
+<MudStack Spacing="2" Class="@Class" data-testid="user-selection">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="2">
+        <MudSwitch T="bool" Value="Value.AllMatching" ValueChanged="SetAllMatchingAsync" Color="Color.Primary" data-testid="selection-all"
+                   Label="@L["Everyone matching the filter"]" />
+        <MudSpacer />
+        <div style="min-width:280px" data-testid="selection-add">
+            <ODataPicker @key="_pickerKey" EntitySet="Users" TextProperty="FirstName,LastName,Email" Value="Guid.Empty" ValueChanged="AddAsync" Label="@L["Add a user"]" />
+        </div>
+    </MudStack>
+    <CoworkeeDataTable @ref="_table" T="UserRow" EntitySet="Users" Filter="@Filter" SearchFields="SearchFields" RealtimeTopic="type:User" OnLoaded="LoadedAsync"
+                       StateKey="user-selection" UrlState="false" SavedViews="false" Exportable="false" Groupable="false" PageSize="PageSize">
+        <Columns>
+            <TemplateColumn T="UserRow" Sortable="false" Title="">
+                <CellTemplate>
+                    <MudCheckBox T="bool" Value="@IsChosen(context.Item.Id)" ValueChanged="v => ChooseAsync(context.Item.Id, v)" Dense="true"
+                                 aria-label="@L["Recipient"]" data-testid="@($"choose-{context.Item.Email}")" />
+                </CellTemplate>
+            </TemplateColumn>
+            <PropertyColumn Property="u => u.Email" Title="@L["Email"]" />
+            <PropertyColumn Property="u => u.LastName" Title="@L["Name"]">
+                <CellTemplate>@context.Item.Name</CellTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="u => u.IsActive" Title="@L["Active"]">
+                <CellTemplate>@L[context.Item.IsActive ? "yes" : "no"]</CellTemplate>
+            </PropertyColumn>
+        </Columns>
+    </CoworkeeDataTable>
+    <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="1">
+        <MudIcon Icon="@Icons.Material.Outlined.Group" Size="Size.Small" />
+        <MudText Typo="Typo.subtitle2" data-testid="selection-count">@(_count is null ? L["Counting recipients…"] : L["{0} recipients", _count.Active])</MudText>
+        @if (_count is { } count && count.Users > count.Active)
+        {
+            <MudText Typo="Typo.caption" Class="mud-text-secondary" data-testid="selection-inactive">@L["{0} inactive users are left out", count.Users - count.Active]</MudText>
+        }
+        @foreach (var id in Value.Included ?? [])
+        {
+            <MudChip T="Guid" Size="Size.Small" OnClose="() => ChooseAsync(id, false)" data-testid="selection-added">@(_names.GetValueOrDefault(id) ?? "…")</MudChip>
+        }
+        @if (Value.Excluded is { Count: > 0 } excluded)
+        {
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" OnClose="ClearExcludedAsync" data-testid="selection-excluded">@L["{0} left out", excluded.Count]</MudChip>
+        }
+    </MudStack>
+</MudStack>

@@ -1,0 +1,49 @@
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + NotificationPermissions.Send)]
+@using Coworkee.Client.Blazor.Components.Users
+@using Coworkee.Contracts.Notifications
+
+<PageHeader Title="Send notification" Description="A message to users you choose by filter or by hand: in their inbox, as a toast for those online, by mail." />
+
+<MudGrid Spacing="4" data-testid="send-notification">
+    <MudItem xs="12" lg="7">
+        <MudText Typo="Typo.overline" Class="mud-text-secondary">@L["Recipients"]</MudText>
+        <CoworkeeUserSelection @bind-Value="_recipients" CountChanged="c => _count = c" />
+    </MudItem>
+    <MudItem xs="12" lg="5">
+        <MudPaper Outlined="true" Class="pa-4">
+            <MudStack Spacing="3">
+                <MudTextField T="string" @bind-Value="_title" Label="@L["Title"]" Required="true" MaxLength="300" Variant="Variant.Outlined" data-testid="notification-title" />
+                <MudTextField T="string" @bind-Value="_body" Label="@L["Text"]" Lines="4" MaxLength="4000" Variant="Variant.Outlined" data-testid="notification-body" />
+                <MudTextField T="string" @bind-Value="_arguments" Label="@L["Arguments"]" Lines="2" Variant="Variant.Outlined" data-testid="notification-arguments"
+                              HelperText="@L["Optional: one value per line for the numbered placeholders of title and text; then every reader sees title and text in his language."]" />
+                <MudTextField T="string" @bind-Value="_link" Label="@L["Link"]" Placeholder="/orders/42" Variant="Variant.Outlined" data-testid="notification-link" />
+                <MudSelect T="NotificationSeverity" @bind-Value="_severity" Label="@L["Severity"]" Variant="Variant.Outlined" data-testid="notification-severity">
+                    @foreach (var severity in Enum.GetValues<NotificationSeverity>())
+                    {
+                        <MudSelectItem Value="severity">@L[severity.ToString()]</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudStack Row="true" Spacing="4">
+                    <MudCheckBox T="bool" @bind-Value="_stored" Label="@L["Inbox"]" Color="Color.Primary" data-testid="notification-stored" />
+                    <MudCheckBox T="bool" @bind-Value="_toast" Label="@L["Toast"]" Color="Color.Primary" data-testid="notification-toast" />
+                </MudStack>
+                <MudSelect T="NotificationMail" @bind-Value="_mail" Label="@L["Mail"]" Variant="Variant.Outlined" data-testid="notification-mail">
+                    <MudSelectItem Value="NotificationMail.ByPreference">@L["As each recipient chose"]</MudSelectItem>
+                    <MudSelectItem Value="NotificationMail.Never">@L["Never"]</MudSelectItem>
+                    <MudSelectItem Value="NotificationMail.Always">@L["Always"]</MudSelectItem>
+                    <MudSelectItem Value="NotificationMail.WhenOffline">@L["When offline"]</MudSelectItem>
+                </MudSelect>
+                <MudSelect T="string" @bind-Value="_type" Label="@L["Type"]" Variant="Variant.Outlined" data-testid="notification-type">
+                    <MudSelectItem Value="@DefaultType">@L["General"]</MudSelectItem>
+                    @foreach (var type in _types)
+                    {
+                        <MudSelectItem Value="@type.Type">@L[type.Name]</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Send" OnClick="SendAsync" Disabled="@(!CanSend)" data-testid="notification-send">
+                    @(_count is { Active: > 0 } count ? L["Send to {0} users", count.Active] : L["Send"])
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+</MudGrid>

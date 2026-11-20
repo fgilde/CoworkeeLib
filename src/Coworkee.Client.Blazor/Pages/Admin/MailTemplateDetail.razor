@@ -12,6 +12,12 @@
             <MudChip T="string" Size="Size.Small" OnClick="() => Open(culture)" title="@Variants.Name(culture)" data-testid="@($"language-chip-{culture}")"
                      Color="@(culture == Culture ? Color.Primary : Color.Default)" Variant="@(culture == Culture ? Variant.Filled : Variant.Outlined)"><LanguageFlag Culture="@culture" Size="12" Alt="" Style="margin-inline-end:6px" />@culture</MudChip>
         }
+        @if (_canSend)
+        {
+            <MudTooltip Text="@L["Send this template for real to users you choose"]">
+                <MudButton StartIcon="@Icons.Material.Outlined.ForwardToInbox" Size="Size.Small" OnClick="SendAsync" data-testid="send-for-real">@L["Send…"]</MudButton>
+            </MudTooltip>
+        }
         <MudTooltip Text="@(Variants.Missing(_summary).Count > 0 ? L["Add language"] : L["Every active language has a variant"])">
             <MudIconButton Icon="@Icons.Material.Outlined.Translate" Size="Size.Small" aria-label="@L["Add language"]" Disabled="@(Variants.Missing(_summary).Count == 0)"
                            OnClick="AddLanguageAsync" data-testid="add-language" />

@@ -160,6 +160,20 @@ The visual editor rewrites markup, so everything it would change becomes a prote
 
 Next to the editor the **Placeholders** list shows every variable of the template with its type and a sample value. A click inserts it at the cursor: as a chip in Visual, as `{{ name }}` in Source. A list (for example the notifications of a digest) inserts a loop skeleton `{{ for item in list }} ... {{ end }}` in Source; its members (listed as list[].title) insert as {{ item.title }}. In Visual both are added at the end of the source, because loops cannot be built visually. The button next to the subject appends a placeholder to the subject. Own templates use the recipient model (`user.first_name`, `user.display_name`, `app.name` and the other values of the list); a *Reset to default* button exists for the templates of modules only, own templates have no default.
 
+### Sending a template for real
+
+**Send…** next to the title (with `Mail.Campaigns.Send` and `Identity.Users.View` besides `Mail.Templates.Manage`) sends the template to users right away, any template of a module or your own. The sheet has three parts:
+
+1. **Recipients**: the user selection of the library (`CoworkeeUserSelection`, see [User selections](../fundamentals/event-targets.md#user-selections)): everyone the filter of the users table matches, single users left out or added by hand, with the count of the server.
+2. **Values**: the template's model, filled with its sample, in the MudBlazor.Extensions object editor (`MudExStructuredDataEditor`). Change what the template should say (a link, a date, a text). The fields of `user` (`first_name`, `last_name`, `display_name`, `email`, `culture`) are filled for each recipient, and a key `unsubscribe_url` gets each recipient's own opt-out link.
+3. **Preview** renders the mail of the first recipient and shows how many get it and how many are left out; **Send to N users** queues one mail per recipient, in his language, through the mail log (`OutgoingMail`, delivery as every other mail).
+
+Who gets it follows the campaign rules: users without an address, locked and deactivated users and users who turned off **Receive newsletters** are left out. One send reaches at most 1,000 users; more go through a campaign. The layout cannot be sent.
+
+Permissions: `Mail.Templates.Manage` and `Mail.Campaigns.Send` (the right to mail many users), plus `Identity.Users.View` because the recipients are picked from the users. A send for real is a mailing, not a notification, so it does not need `Notifications.Send`.
+
+API: `POST /api/v1/mail/templates/{name}/send/preview` and `POST /api/v1/mail/templates/{name}/send` with `{ "recipients": { ...user selection... }, "model": "{ \"login_url\": \"https://...\" }" }` (`model` is the JSON object as text, null for the sample; `MailTemplateDto.SampleModel` has the sample); the send answers the number of queued mails (`ICoworkeeApi.PreviewMailTemplateSendAsync`, `SendMailTemplateAsync`). Campaigns take the same selection as recipient source `Selection` (`RecipientSourceDto.Selection`).
+
 ### Languages of a template
 
 A template has one variant per language; the *Languages* column lists them with their flags (highlighted: changed here). In the editor the same languages sit as chips next to the title: a click opens that variant, the translate button next to them adds one. A language switched on later on the Languages page gets no variant by itself. **Add language** (the translate button of a template) asks for the language, from which existing variant to start, and whether to machine translate: with a translation service set up under the translation settings, only the texts between the HTML tags are translated, and tags, styles and `{{ ... }}` placeholders stay as they are; without one the variant starts as a copy. The editor of the new variant opens right after, so check the text there. An added language can be removed with the cross on its chip; the shipped languages of a module template are reset in the editor instead, and the last language of an own template stays. The button is off when every active language already has a variant.
@@ -198,5 +212,5 @@ The list shows each campaign with its status, `Sent/Total`, and a red *failed* c
 |---|---|
 | `Mail.Templates.Manage` | *Mail templates*: own templates, texts, languages, preview and test mails |
 | `Mail.Log.View` | *Mail log*, `GET /api/v1/mail/outgoing`, OData `Mails` |
-| `Mail.Campaigns.Send` | *Mail campaigns*: create, schedule, cancel; custom queries and manual selection also need `Identity.Users.View` |
+| `Mail.Campaigns.Send` | *Mail campaigns*: create, schedule, cancel; custom queries and manual selection also need `Identity.Users.View`; with `Mail.Templates.Manage` and `Identity.Users.View` sending a template for real |
 | `Settings.Manage` | *Mail settings*: provider, credentials, sender, whitelist, test mail |

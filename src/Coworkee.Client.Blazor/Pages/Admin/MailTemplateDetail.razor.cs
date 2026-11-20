@@ -8,8 +8,9 @@ using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Pages.Admin;
 
-public partial class MailTemplateDetail
+public partial class MailTemplateDetail : IDisposable
 {
+    private bool _canSend;
     private List<BreadcrumbItem> _breadcrumbs = [];
     private MailTemplateSummaryDto? _summary;
     private IReadOnlyList<LanguageDto> _languages = [];
@@ -28,11 +29,19 @@ public partial class MailTemplateDetail
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
+    [Inject] private Security.PermissionStore Permissions { get; set; } = null!;
+
     [Parameter] public string Name { get; set; } = string.Empty;
 
     [Parameter] public string Culture { get; set; } = string.Empty;
 
     private MailTemplateLanguages Variants => new(Api, Dialogs, Snackbar, L, _languages);
+
+    protected override async Task OnInitializedAsync()
+    {
+        Permissions.Changed += OnPermissionsChanged;
+        await CheckSendAsync();
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -54,4 +63,25 @@ public partial class MailTemplateDetail
             Open(culture);
         }
     }
+
+    // sending for real takes the campaign right and the right to choose users; follows permission changes live
+    private async Task CheckSendAsync() =>
+        _canSend = await Permissions.HasAsync([MailPermissions.Campaigns.Send, Contracts.Identity.IdentityPermissions.Users.View], Security.PermissionMatch.All);
+
+    private void OnPermissionsChanged() => _ = InvokeAsync(async () =>
+    {
+        await CheckSendAsync();
+        StateHasChanged();
+    });
+
+    private async Task SendAsync()
+    {
+        MailTemplateDto? template = null;
+        if (await Snackbar.RunAsync(async () => template = await Api.GetMailTemplateAsync(Name, Culture)) && template is not null)
+        {
+            await MailTemplateSendDialog.ShowAsync(Dialogs, L, template);
+        }
+    }
+
+    public void Dispose() => Permissions.Changed -= OnPermissionsChanged;
 }
