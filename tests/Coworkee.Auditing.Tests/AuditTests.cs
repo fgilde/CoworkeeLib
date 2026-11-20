@@ -39,6 +39,21 @@ public sealed class AuditTests(AuditApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_audit_names_the_reason_a_change_was_saved_with()
+    {
+        Guid id;
+        using (Application.Events.ChangeReason.Begin("Corrected after the customer called"))
+        {
+            id = await app.CreateNoteAsync(_setup.AdminUserId, _setup.TenantId, "why");
+        }
+
+        await app.UpdateNoteAsync(_setup.AdminUserId, _setup.TenantId, id, "no reason");
+
+        var page = await Admin.GetFromJsonAsync<PagedResult<AuditEntryDto>>($"/api/v1/audit?entityType=Note&entityId={id}", Ct);
+        page!.Items.Select(e => (e.Action, e.Reason)).ShouldBe([("Updated", (string?)null), ("Created", "Corrected after the customer called")]);
+    }
+
+    [Fact]
     public async Task Audit_filters_by_entity_actor_and_time()
     {
         var first = await app.CreateNoteAsync(_setup.AdminUserId, _setup.TenantId, "one");

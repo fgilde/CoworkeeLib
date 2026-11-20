@@ -6,6 +6,8 @@ namespace Coworkee.Infrastructure.Auditing;
 [NotAudited]
 public sealed class AuditEntry
 {
+    public const int ReasonLength = 500;
+
     public Guid Id { get; init; } = Guid.CreateVersion7();
 
     public Guid? TenantId { get; init; }
@@ -26,6 +28,9 @@ public sealed class AuditEntry
     public string? CorrelationId { get; init; }
 
     public DateTimeOffset OccurredAt { get; init; }
+
+    /// <summary>Why the change was made (<c>ChangeReason</c>), when the code said so.</summary>
+    public string? Reason { get; init; }
 
     public List<AuditChange> Changes { get; init; } = [];
 }

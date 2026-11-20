@@ -16,6 +16,7 @@ internal sealed class CoworkeeModelContributor : IModelContributor
             entity.Property(e => e.EntityType).HasMaxLength(200);
             entity.Property(e => e.EntityId).HasMaxLength(200);
             entity.Property(e => e.CorrelationId).HasMaxLength(64);
+            entity.Property(e => e.Reason).HasMaxLength(AuditEntry.ReasonLength);
             entity.HasIndex(e => new { e.EntityType, e.EntityId });
             entity.HasIndex(e => e.OccurredAt);
             entity.OwnsMany(e => e.Changes, changes => changes.ToJson());

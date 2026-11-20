@@ -37,6 +37,10 @@ else
                                    OnClick="() => RestoreAsync(entry, null)" data-testid="restore-point">@L["Restore this state"]</MudButton>
                     }
                 </div>
+                @if (entry.Reason is { Length: > 0 } reason)
+                {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary" data-testid="history-reason">@reason</MudText>
+                }
                 @foreach (var change in entry.Changes)
                 {
                     <div class="cw-history-change" data-change="@change.Property">

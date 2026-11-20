@@ -91,6 +91,24 @@ public sealed class HourlyNote : AnonymousEntity, IAnonymous
     TimeSpan IAnonymous.TimestampPrecision => TimeSpan.FromHours(1);
 }
 
+/// <summary>Publishes its changes to <c>IEntityChangeHandler&lt;Parcel&gt;</c> by attribute.</summary>
+[PublishChanges]
+public class Parcel : Entity, IMultiTenant, ISoftDelete
+{
+    public required string Code { get; set; }
+
+    public Guid TenantId { get; set; }
+
+    public bool IsDeleted { get; set; }
+
+    public DateTimeOffset? DeletedAt { get; set; }
+
+    public Guid? DeletedBy { get; set; }
+}
+
+/// <summary>Published through its base type.</summary>
+public sealed class ExpressParcel : Parcel;
+
 /// <summary>A type the audit trail leaves out entirely.</summary>
 [NotAudited]
 public sealed class Draft : Entity
@@ -114,6 +132,8 @@ public sealed class TestModelContributor : IModelContributor
         modelBuilder.Entity<Article>();
         modelBuilder.Entity<Ballot>();
         modelBuilder.Entity<Draft>();
+        modelBuilder.Entity<Parcel>();
+        modelBuilder.Entity<ExpressParcel>();
     }
 }
 

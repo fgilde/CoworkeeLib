@@ -3,78 +3,28 @@ using System.Reflection;
 using Coworkee.Contracts.Realtime;
 using Coworkee.Core.Security;
 using Coworkee.Domain;
+using Coworkee.Infrastructure.Changes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Coworkee.Realtime;
 
+/// <summary>
+/// <see cref="RealtimeEventTypes.EntityChanged"/> on <c>type:</c>/<c>entity:</c> topics of <see cref="RealtimeAttribute"/> types and on the topics entities name
+/// (<see cref="IHasRealtimeTopics"/>, <see cref="IRealtimeTopicMapper"/>), sent after the commit; also the queued messages of <see cref="RealtimeEvents"/>.
+/// Payloads stay as before the change collector (ids and changed property names only).
+/// </summary>
 // ponytail: events are sent after commit but not persisted; a crash between commit and send drops UI refresh signals. Route through the outbox if a consumer needs delivery guarantees.
-internal sealed class RealtimeChangeInterceptor(
+internal sealed class RealtimeChangeSink(
     IRealtimePublisher publisher, ICurrentUser currentUser, IEnumerable<IRealtimeTopicMapper> mappers, RealtimeAccessSignal access)
-    : SaveChangesInterceptor, IDbTransactionInterceptor
+    : IEntityChangeSink
 {
     private static readonly ConcurrentDictionary<Type, bool> RealtimeTypes = new();
     private readonly List<(Guid? TenantId, string Topic, string Type, object Payload)> _pending = [];
 
-    public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
+    public void Saving(DbContext context, IReadOnlyList<EntityChangeEntry> changes)
     {
-        Capture(eventData.Context);
-        return result;
-    }
-
-    public override ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
-    {
-        Capture(eventData.Context);
-        return ValueTask.FromResult(result);
-    }
-
-    public override async ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result, CancellationToken cancellationToken = default)
-    {
-        if (eventData.Context?.Database.CurrentTransaction is null)
-        {
-            await FlushAsync();
-        }
-
-        return result;
-    }
-
-    public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
-    {
-        if (eventData.Context?.Database.CurrentTransaction is null)
-        {
-            FlushAsync().GetAwaiter().GetResult();
-        }
-
-        return result;
-    }
-
-    public void TransactionCommitted(System.Data.Common.DbTransaction transaction, TransactionEndEventData eventData) => FlushAsync().GetAwaiter().GetResult();
-
-    public Task TransactionCommittedAsync(System.Data.Common.DbTransaction transaction, TransactionEndEventData eventData, CancellationToken cancellationToken = default) => FlushAsync();
-
-    public void TransactionRolledBack(System.Data.Common.DbTransaction transaction, TransactionEndEventData eventData) => _pending.Clear();
-
-    public Task TransactionRolledBackAsync(System.Data.Common.DbTransaction transaction, TransactionEndEventData eventData, CancellationToken cancellationToken = default)
-    {
-        _pending.Clear();
-        return Task.CompletedTask;
-    }
-
-    public override void SaveChangesFailed(DbContextErrorEventData eventData) => _pending.Clear();
-
-    public override Task SaveChangesFailedAsync(DbContextErrorEventData eventData, CancellationToken cancellationToken = default)
-    {
-        _pending.Clear();
-        return Task.CompletedTask;
-    }
-
-    /// <summary>A message of <see cref="RealtimeEvents"/> that leaves with the changes of the pending save or transaction, or never.</summary>
-    internal void Enqueue(Guid? tenantId, string topic, string type, object payload) => _pending.Add((tenantId, topic, type, payload));
-
-    private void Capture(DbContext? context)
-    {
-        foreach (var entry in context?.ChangeTracker.Entries().Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted) ?? [])
+        foreach (var entry in changes.Select(c => c.Entry).Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted))
         {
             var root = entry.Metadata.GetRootType().ClrType;
             var extraTopics = (entry.Entity is IHasRealtimeTopics topics ? topics.RealtimeTopics : [])
@@ -102,8 +52,16 @@ internal sealed class RealtimeChangeInterceptor(
         }
     }
 
-    private async Task FlushAsync()
+    /// <summary>A message of <see cref="RealtimeEvents"/> that leaves with the changes of the pending save or transaction, or never.</summary>
+    internal void Enqueue(Guid? tenantId, string topic, string type, object payload) => _pending.Add((tenantId, topic, type, payload));
+
+    public async Task CommittedAsync(CancellationToken cancellationToken)
     {
+        if (_pending.Count == 0)
+        {
+            return;
+        }
+
         var pending = _pending.ToList();
         _pending.Clear();
         foreach (var (tenantId, topic, type, payload) in pending)
@@ -121,12 +79,14 @@ internal sealed class RealtimeChangeInterceptor(
         }
     }
 
+    public void Discarded() => _pending.Clear();
+
     private static bool IsRealtime(Type type) => RealtimeTypes.GetOrAdd(type, t => t.GetCustomAttribute<RealtimeAttribute>(inherit: false) is not null);
 
     private static Guid? TenantOf(EntityEntry entry) =>
         entry.Metadata.FindProperty("TenantId") is { } property ? entry.Property(property.Name).CurrentValue as Guid? : null;
 
-    // a soft delete arrives here as an update that sets IsDeleted
+    // the payload's own rule (kept from before the collector): a soft delete is an update that sets IsDeleted
     private static string Action(EntityEntry entry) => entry.State switch
     {
         EntityState.Added => EntityChangedPayload.Created,

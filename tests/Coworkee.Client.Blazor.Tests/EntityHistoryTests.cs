@@ -39,6 +39,21 @@ public sealed class EntityHistoryTests : ClientTestBase
     }
 
     [Fact]
+    public void An_entry_shows_why_it_was_made()
+    {
+        _history.GetAsync("Products", _id, Arg.Any<CancellationToken>()).Returns(new EntityHistoryDto(false, false,
+        [
+            new EntityHistoryEntryDto(Guid.CreateVersion7(), "Updated", null, "Ada Admin", DateTimeOffset.UtcNow, [], "Import from CW1"),
+            new EntityHistoryEntryDto(Guid.CreateVersion7(), "Created", null, "Ada Admin", DateTimeOffset.UtcNow.AddDays(-1), []),
+        ]));
+
+        var history = Render<CoworkeeEntityHistory>(p => p.Add(h => h.EntitySet, "Products").Add(h => h.Id, _id));
+
+        history.WaitForAssertion(() => history.Find("[data-testid='history-reason']").TextContent.ShouldBe("Import from CW1"));
+        history.FindAll("[data-testid='history-reason']").Count.ShouldBe(1);
+    }
+
+    [Fact]
     public void Word_diff_marks_only_what_changed()
     {
         var parts = TextDiff.Compute("the quick brown fox", "the slow brown fox")!;

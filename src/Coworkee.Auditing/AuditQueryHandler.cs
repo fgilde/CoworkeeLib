@@ -58,7 +58,7 @@ internal sealed class AuditQueryHandler(CoworkeeDbContext db, ICurrentUser curre
         return new PagedResult<AuditEntryDto>(
             items.Select(e => new AuditEntryDto(
                 e.Id, e.EntityType, e.EntityId, e.Action.ToString(), e.ActorId, e.ActorId is { } id ? names.GetValueOrDefault(id) : null,
-                e.OccurredAt, e.CorrelationId, e.Changes.Select(c => new AuditChangeDto(c.Property, c.OldValue, c.NewValue)).ToList(), e.ImpersonatorId)).ToList(),
+                e.OccurredAt, e.CorrelationId, e.Changes.Select(c => new AuditChangeDto(c.Property, c.OldValue, c.NewValue)).ToList(), e.ImpersonatorId, e.Reason)).ToList(),
             total, page, pageSize);
     }
 }

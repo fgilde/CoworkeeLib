@@ -42,7 +42,8 @@ internal sealed class EntityHistoryHandlers(
                     .Select(c => new EntityHistoryChangeDto(
                         c.Property, c.OldValue, c.NewValue, record.Texts.Text(c.Property, c.OldValue), record.Texts.Text(c.Property, c.NewValue),
                         canRestore && e.Action != AuditAction.Created && record.Fields.Restorable(c.Property) is { } p && record.Fields.CanTake(p, c.OldValue)))
-                    .ToList()))
+                    .ToList(),
+                e.Reason))
             .ToList();
         return new EntityHistoryDto(canRestore, record.IsDeleted, entries);
     }

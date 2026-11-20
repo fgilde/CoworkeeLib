@@ -20,7 +20,7 @@ public sealed class RealtimeEvents(
         var tenantId = currentUser.TenantId;
         if (db.Database.CurrentTransaction is not null || db.ChangeTracker.HasChanges())
         {
-            var pending = services.GetRequiredService<RealtimeChangeInterceptor>();
+            var pending = services.GetRequiredService<RealtimeChangeSink>();
             foreach (var topic in topics)
             {
                 pending.Enqueue(tenantId, topic, type, payload);

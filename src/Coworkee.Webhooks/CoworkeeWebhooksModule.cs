@@ -33,7 +33,7 @@ public sealed class CoworkeeWebhooksModule : CoworkeeModule, IWebModule
         services.AddScoped<WebhookAdmins>();
         services.AddScoped<Application.Privacy.IPersonalDataContributor, WebhookPersonalData>();
         services.AddScoped<IWebhookPublisher, WebhookPublisher>();
-        services.AddScoped<IInterceptor, WebhookChangeInterceptor>();
+        services.AddScoped<Infrastructure.Changes.IEntityChangeSink, WebhookChangeSink>();
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IOutboxRelay, WebhookRelay>());
         services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<WebhookDeliveryRetention>();

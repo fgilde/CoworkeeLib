@@ -25,7 +25,14 @@ public static class DbContextServiceCollectionExtensions
         services.AddScoped<SoftDeleteInterceptor>();
         services.AddScoped<AuditablePropertiesInterceptor>();
         services.AddScoped<MultiTenantInterceptor>();
-        services.AddScoped<AuditTrailInterceptor>();
+        services.AddOptions();
+        services.AddScoped<Changes.EntityChangeCollector>();
+        services.AddScoped<Changes.EntityChangeSinks>();
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<Changes.IEntityChangeSink, Changes.AuditTrailSink>());
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<Changes.IEntityChangeSink, Changes.PublishChangesSink>());
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<Changes.IEntityChangeSink, Changes.EntityEventsSink>());
+        services.TryAddSingleton<Changes.EntityEvents>();
+        services.TryAddSingleton<Application.Events.IEntityEvents>(provider => provider.GetRequiredService<Changes.EntityEvents>());
         services.AddScoped<SnapshotInterceptor>();
         services.AddScoped<OutboxInterceptor>();
 
@@ -37,10 +44,13 @@ public static class DbContextServiceCollectionExtensions
                 provider.GetRequiredService<SoftDeleteInterceptor>(),
                 provider.GetRequiredService<AuditablePropertiesInterceptor>(),
                 provider.GetRequiredService<MultiTenantInterceptor>(),
-                provider.GetRequiredService<AuditTrailInterceptor>(),
+                provider.GetRequiredService<Changes.EntityChangeCollector>(),
                 provider.GetRequiredService<SnapshotInterceptor>(),
                 provider.GetRequiredService<OutboxInterceptor>());
             options.AddInterceptors(provider.GetServices<IInterceptor>());
+
+            // last: the sinks get the changes of the one scan with what every other interceptor did to the entries
+            options.AddInterceptors(provider.GetRequiredService<Changes.EntityChangeSinks>());
         });
         services.AddScoped<CoworkeeDbContext>(provider => provider.GetRequiredService<TContext>());
         services.TryAddSingleton<IDistributedLock, DatabaseDistributedLock>();

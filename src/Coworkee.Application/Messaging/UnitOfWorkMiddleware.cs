@@ -10,6 +10,8 @@ internal sealed class UnitOfWorkMiddleware(IServiceProvider services) : IRequest
     public async Task<TResult> InvokeAsync<TRequest, TResult>(TRequest request, RequestHandlerDelegate<TResult> next, CancellationToken cancellationToken)
         where TRequest : IRequest<TResult>
     {
+        // the reason of the request lands on every change its handler and its save make
+        using var reason = request is Events.IHasChangeReason { Reason: { } why } ? Events.ChangeReason.Begin(why) : null;
         var result = await next();
         if (request is not ICommand<TResult> || result is Result { IsSuccess: false })
         {

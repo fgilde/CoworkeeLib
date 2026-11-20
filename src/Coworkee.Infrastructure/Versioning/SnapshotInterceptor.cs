@@ -70,6 +70,6 @@ internal sealed class SnapshotInterceptor(ICurrentUser currentUser, TimeProvider
             .Where(p => !p.Metadata.IsShadowProperty()
                 && !p.Metadata.IsConcurrencyToken
                 && !p.Metadata.HasFlag(AuditPropertyBuilderExtensions.NotAudited)
-                && !AuditTrailInterceptor.IsSensitive(p.Metadata))
+                && !Changes.EntityChangeCollector.IsSensitive(p.Metadata))
             .ToDictionary(p => p.Metadata.Name, p => p.CurrentValue, StringComparer.Ordinal));
 }

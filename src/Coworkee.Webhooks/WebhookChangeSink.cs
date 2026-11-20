@@ -1,39 +1,27 @@
 using Coworkee.Core.Security;
 using Coworkee.Domain;
+using Coworkee.Infrastructure.Changes;
 using Coworkee.Infrastructure.Outbox;
 using Coworkee.OData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Options;
 
 namespace Coworkee.Webhooks;
 
 /// <summary>Writes an outbox message per change of an opted-in entity, in the same save, so a change and its webhook commit together.</summary>
 // ponytail: one outbox row per change even when no endpoint listens; check the endpoints here (cached) if the opted-in sets change a lot
-internal sealed class WebhookChangeInterceptor(IOptions<WebhookOptions> options, ODataEntityRegistry registry, ICurrentUser currentUser, TimeProvider clock)
-    : SaveChangesInterceptor
+internal sealed class WebhookChangeSink(IOptions<WebhookOptions> options, ODataEntityRegistry registry, ICurrentUser currentUser, TimeProvider clock)
+    : IEntityChangeSink
 {
-    public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
+    public void Saving(DbContext context, IReadOnlyList<EntityChangeEntry> changes)
     {
-        Capture(eventData.Context);
-        return result;
-    }
-
-    public override ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
-    {
-        Capture(eventData.Context);
-        return ValueTask.FromResult(result);
-    }
-
-    private void Capture(DbContext? context)
-    {
-        if (context is null || options.Value.Entities.Count == 0)
+        if (options.Value.Entities.Count == 0)
         {
             return;
         }
 
-        var messages = context.ChangeTracker.Entries()
+        var messages = changes.Select(c => c.Entry)
             .Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted && options.Value.Entities.Contains(e.Metadata.GetRootType().ClrType))
             .Where(e => e.State != EntityState.Modified || e.Properties.Any(p => p.IsModified))
             .Select(e => WebhookOutbox.Message(

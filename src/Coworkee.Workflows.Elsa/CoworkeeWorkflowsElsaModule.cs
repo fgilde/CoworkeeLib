@@ -37,7 +37,7 @@ public sealed class CoworkeeWorkflowsElsaModule : CoworkeeModule, IWebModule
         services.AddCoworkeeElsa(_ => { });
         services.AddMessagingFromAssembly(typeof(CoworkeeWorkflowsElsaModule).Assembly);
         services.AddSingleton<IPermissionDefinitionContributor, ElsaPermissionDefinitions>();
-        services.AddScoped<IInterceptor, EntityChangeInterceptor>();
+        services.AddScoped<Infrastructure.Changes.IEntityChangeSink, ElsaChangeSink>();
         services.AddHttpClient(QueryOData.HttpClientName, (sp, http) =>
         {
             var section = sp.GetRequiredService<IConfiguration>().GetSection(ElsaWorkflowOptions.Section);

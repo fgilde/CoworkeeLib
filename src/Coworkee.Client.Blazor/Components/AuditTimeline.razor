@@ -14,6 +14,10 @@ else
         {
             <MudTimelineItem Size="Size.Small" Color="@(entry.Action == "Deleted" ? Color.Error : entry.Action == "Restored" ? Color.Secondary : Color.Default)">
                 <MudText Typo="Typo.body2"><b>@L[entry.Action]</b> @L["by {0}", entry.ActorName ?? L["system"]] · @entry.OccurredAt.ToLocalTime().ToString("g")</MudText>
+                @if (entry.Reason is { Length: > 0 } reason)
+                {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary" data-testid="audit-reason">@reason</MudText>
+                }
                 <AuditChanges Changes="entry.Changes" />
             </MudTimelineItem>
         }

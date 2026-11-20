@@ -7,7 +7,6 @@ using Coworkee.Core.Modularity;
 using Coworkee.Core.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Realtime;
@@ -39,8 +38,8 @@ public sealed class CoworkeeRealtimeModule : CoworkeeModule, IWebModule
         services.AddHostedService(provider => provider.GetRequiredService<RealtimePresence>());
         services.AddSingleton<RealtimeAccessSignal>();
         services.AddHostedService(provider => provider.GetRequiredService<RealtimeAccessSignal>());
-        services.AddScoped<RealtimeChangeInterceptor>();
-        services.AddScoped<IInterceptor>(provider => provider.GetRequiredService<RealtimeChangeInterceptor>());
+        services.AddScoped<RealtimeChangeSink>();
+        services.AddScoped<Infrastructure.Changes.IEntityChangeSink>(provider => provider.GetRequiredService<RealtimeChangeSink>());
         services.AddScoped<RealtimeEvents>();
         services.AddScoped<IRealtimeTopicAuthorizer, UserTopicAuthorizer>();
         services.AddScoped<IRealtimeTopicAuthorizer, GlobalTopicAuthorizer>();

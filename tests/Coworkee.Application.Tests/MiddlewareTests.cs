@@ -52,6 +52,18 @@ public sealed class MiddlewareTests
     }
 
     [Fact]
+    public async Task A_command_with_a_reason_handles_and_saves_inside_its_reason_scope()
+    {
+        var (dispatcher, unitOfWork) = Build();
+        string? reasonAtSave = null;
+        unitOfWork.When(u => u.SaveChangesAsync(Arg.Any<CancellationToken>())).Do(_ => reasonAtSave = Events.ChangeReason.Current);
+
+        var result = await dispatcher.SendAsync(new Relabel("Label 2", "Typo in the label"), TestContext.Current.CancellationToken);
+
+        (result.Value, reasonAtSave, Events.ChangeReason.Current).ShouldBe(("Typo in the label", "Typo in the label", null));
+    }
+
+    [Fact]
     public async Task Works_without_unit_of_work_registration()
     {
         var services = new ServiceCollection();
@@ -86,6 +98,13 @@ public sealed class MiddlewareTests
     public sealed record Rename(string Name) : ICommand<Result>;
 
     public sealed record Shout(string Text) : IQuery<string>;
+
+    public sealed record Relabel(string Label, string? Reason) : ICommand<Result<string?>>, Events.IHasChangeReason;
+
+    internal sealed class RelabelHandler : IHandler<Relabel, Result<string?>>
+    {
+        public Task<Result<string?>> HandleAsync(Relabel request, CancellationToken cancellationToken) => Task.FromResult(Result<string?>.Success(Events.ChangeReason.Current));
+    }
 
     internal sealed class RenameValidator : AbstractValidator<Rename>
     {
