@@ -15,7 +15,7 @@ namespace Aspire.Hosting;
 /// <summary>
 /// What Azure Container Apps needs beyond Aspire's defaults, found in the first real deployment: every parameter starts empty (the publisher would
 /// wait for a value), the services that keep files share one file share, secret names lose their dots, containers with state run as one replica,
-/// and Azure Files mounts skip byte-range locks (SQLite on SMB never gets its lock otherwise).
+/// services too when the app has no Redis (with Redis they scale out with sticky sessions), and Azure Files mounts skip byte-range locks (SQLite on SMB never gets its lock otherwise).
 /// </summary>
 public sealed partial class CoworkeeApp
 {
@@ -29,15 +29,19 @@ public sealed partial class CoworkeeApp
             foreach (var resource in Builder.Resources.OfType<ContainerResource>())
             {
                 var size = SizeOf(resource);
-                resource.Annotations.Add(new AzureContainerAppCustomizationAnnotation((_, app) => ConfigureContainerApp(app, stateful: true, size)));
+                resource.Annotations.Add(new AzureContainerAppCustomizationAnnotation((_, app) => ConfigureContainerApp(app, oneReplica: true, size)));
             }
+
+            // Container Apps scales a service out to 10 replicas under load by default (open hub connections count as requests). Without Redis every replica keeps
+            // its own hub connections, caches and sign-in sessions: an event reached the clients of its own replica only, a cookie its own replica only
+            var oneReplica = _redis is null && Options.Redis is null;
 
             foreach (var resource in Builder.Resources.OfType<ProjectResource>())
             {
                 // a job (the migrations, PublishAsAzureContainerAppJob) takes the job's annotation only
                 resource.Annotations.Add(resource.Annotations.OfType<AzureContainerAppJobCustomizationAnnotation>().Any()
                     ? new AzureContainerAppJobCustomizationAnnotation((_, job) => ConfigureJob(job))
-                    : new AzureContainerAppCustomizationAnnotation((_, app) => ConfigureContainerApp(app, stateful: false)));
+                    : new AzureContainerAppCustomizationAnnotation((_, app) => ConfigureContainerApp(app, oneReplica)));
             }
 
             return Task.CompletedTask;
@@ -99,7 +103,7 @@ public sealed partial class CoworkeeApp
         _ => null,
     };
 
-    internal static void ConfigureContainerApp(ContainerApp app, bool stateful, (double Cpu, string Memory)? size = null)
+    internal static void ConfigureContainerApp(ContainerApp app, bool oneReplica, (double Cpu, string Memory)? size = null)
     {
         RenameSecrets(app.Configuration.Secrets, app.Template.Containers);
         SkipLocks(app.Template.Volumes);
@@ -112,10 +116,17 @@ public sealed partial class CoworkeeApp
         }
 
         // a database, cache, broker or tool keeps its data on one volume: a second replica would corrupt it
-        if (stateful)
+        if (oneReplica)
         {
             app.Template.Scale.MinReplicas = 1;
             app.Template.Scale.MaxReplicas = 1;
+        }
+        else if (app.Configuration.Ingress is IBicepValue { IsEmpty: false })
+        {
+            // a SignalR client that negotiates (@coworkee/client, a frontend of the app's own) sends the negotiate request and then opens the connection
+            // with the id it got; on another replica that id is unknown (404). The affinity cookie of the ingress keeps both on one replica, also through
+            // the web app's forwarder. The Blazor client opens its WebSocket without negotiating
+            app.Configuration.Ingress.StickySessionsAffinity = StickySessionAffinity.Sticky;
         }
     }
 

@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Coworkee.Contracts.Realtime;
 using Coworkee.Core.Security;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Connections.Features;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Coworkee.Realtime;
@@ -18,16 +19,34 @@ public sealed class RealtimeHub(IEnumerable<IRealtimeTopicAuthorizer> authorizer
             var remaining = DateTimeOffset.FromUnixTimeSeconds(expires) - DateTimeOffset.UtcNow;
             if (remaining <= TimeSpan.Zero)
             {
-                context.Abort();
+                CloseForReconnect(context);
             }
             else
             {
                 _ = Task.Delay(remaining, context.ConnectionAborted)
-                    .ContinueWith(delay => { if (!delay.IsCanceled) { context.Abort(); } }, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
+                    .ContinueWith(delay => { if (!delay.IsCanceled) { CloseForReconnect(context); } }, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
             }
         }
 
         return base.OnConnectedAsync();
+    }
+
+    /// <summary>
+    /// Closes a connection whose token expired so that the client connects again with a fresh one. <see cref="HubCallerContext.Abort"/> would send
+    /// the close message with <c>allowReconnect: false</c>, and SignalR clients then stop for good: realtime went quiet after the token lifetime
+    /// (15 minutes by default) until the page was reloaded. A close requested through the connection's lifetime feature (what a server shutdown does)
+    /// lets them reconnect.
+    /// </summary>
+    internal static void CloseForReconnect(HubCallerContext context)
+    {
+        if (context.Features.Get<IConnectionLifetimeNotificationFeature>() is { } lifetime)
+        {
+            lifetime.RequestClose();
+        }
+        else
+        {
+            context.Abort();
+        }
     }
 
     public override Task OnDisconnectedAsync(Exception? exception)

@@ -97,7 +97,7 @@ With several API instances, set the connection string `redis` for the SignalR ba
 
 ## Topics
 
-Clients connect to the hub at `/hubs/realtime` (signed in; the connection ends when its token expires) and call `Subscribe(topic)` and `Unsubscribe(topic)`; every message arrives through `OnEvent` as a `RealtimeEnvelope(Topic, Type, Payload)`. The server lets a connection join a topic only when an `IRealtimeTopicAuthorizer` that handles its prefix agrees:
+Clients connect to the hub at `/hubs/realtime` (signed in; when its token expires the server closes the connection so that the client reconnects, through the web app with a fresh token, and subscribes its topics again) and call `Subscribe(topic)` and `Unsubscribe(topic)`; every message arrives through `OnEvent` as a `RealtimeEnvelope(Topic, Type, Payload)`. The server lets a connection join a topic only when an `IRealtimeTopicAuthorizer` that handles its prefix agrees:
 
 | Topic | Who may follow it | What goes there |
 |---|---|---|

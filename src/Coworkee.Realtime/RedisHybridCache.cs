@@ -67,9 +67,9 @@ internal sealed partial class RedisHybridCache(HybridCache inner, IServiceProvid
 
             try
             {
-                var subscriber = services.GetRequiredService<IConnectionMultiplexer>().GetSubscriber();
-                subscriber.Subscribe(Channel, (channel, value) => _ = ReceiveAsync(value));
-                _subscriber = subscriber;
+                // the handler is registered before the subscription is sent: a Redis that does not answer yet gets it once it does, so once is enough
+                _subscriber = services.GetRequiredService<IConnectionMultiplexer>().GetSubscriber();
+                _subscriber.Subscribe(Channel, (channel, value) => _ = ReceiveAsync(value));
             }
             catch (Exception exception) when (exception is RedisException or TimeoutException)
             {
