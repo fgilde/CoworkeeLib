@@ -4,6 +4,9 @@ namespace Coworkee.Client.Blazor.Social;
 
 public interface ISocialApi
 {
+    /// <summary>The blocks the server opted <paramref name="entityType"/> into; <see cref="Components.CoworkeeSocial"/> shows those.</summary>
+    Task<SocialFeaturesDto> GetFeaturesAsync(string entityType, CancellationToken cancellationToken = default);
+
     Task<CommentThreadDto> GetCommentsAsync(string entityType, Guid entityId, CancellationToken cancellationToken = default);
 
     Task<CommentDto> AddCommentAsync(string entityType, Guid entityId, string text, Guid? parentId = null, CancellationToken cancellationToken = default);

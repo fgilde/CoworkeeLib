@@ -5,6 +5,9 @@ namespace Coworkee.Client.Blazor.Social;
 
 internal sealed class SocialApi(HttpClient http) : ApiClientBase(http), ISocialApi
 {
+    public Task<SocialFeaturesDto> GetFeaturesAsync(string entityType, CancellationToken cancellationToken = default) =>
+        GetAsync<SocialFeaturesDto>($"api/v1/social/{Uri.EscapeDataString(entityType)}", cancellationToken);
+
     public Task<CommentThreadDto> GetCommentsAsync(string entityType, Guid entityId, CancellationToken cancellationToken = default) =>
         GetAsync<CommentThreadDto>(Url("comments", entityType, entityId), cancellationToken);
 

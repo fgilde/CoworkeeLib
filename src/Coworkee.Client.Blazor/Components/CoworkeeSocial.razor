@@ -1,0 +1,34 @@
+@if (_rating || _reactions || _tags || _comments)
+{
+    <MudStack Spacing="2" Class="@Class" Style="@Style" data-testid="social">
+        @if (_rating || _reactions)
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Wrap="Wrap.Wrap" Spacing="2">
+                @if (_rating)
+                {
+                    <CoworkeeRating EntityType="@EntityType" EntityId="EntityId" ReadOnly="ReadOnly" Size="RatingSize" />
+                }
+                @if (_reactions)
+                {
+                    <CoworkeeReactions EntityType="@EntityType" EntityId="EntityId" ReadOnly="ReadOnly" Emojis="Emojis" />
+                }
+            </MudStack>
+        }
+        @if (_tags)
+        {
+            <CoworkeeTags EntityType="@EntityType" EntityId="EntityId" ReadOnly="ReadOnly" Changed="TagsChanged" />
+        }
+        @if (_comments)
+        {
+            @if (_rating || _reactions || _tags)
+            {
+                <MudDivider />
+            }
+            @if (ShowCommentsTitle)
+            {
+                <MudText Typo="Typo.subtitle2">@L["Comments"]</MudText>
+            }
+            <CoworkeeComments EntityType="@EntityType" EntityId="EntityId" NewStatus="NewStatus" />
+        }
+    </MudStack>
+}

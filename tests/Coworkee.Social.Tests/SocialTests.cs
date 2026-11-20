@@ -5,6 +5,7 @@ using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Realtime;
 using Coworkee.Contracts.Social;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Coworkee.Social.Tests;
@@ -51,6 +52,18 @@ public sealed class SocialTests(SocialApp app) : IAsyncLifetime
 
         (await Admin.DeleteAsync($"/api/v1/comments/{first.Id}", Ct)).EnsureSuccessStatusCode();
         (await Admin.GetFromJsonAsync<CommentThreadDto>(Comments, Ct))!.Comments.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task The_features_of_an_entity_type_name_the_blocks_it_was_opted_into()
+    {
+        var plain = await CreateUserAsync("plain@acme.test");
+        var asPlain = app.As(plain.Id, _setup.TenantId);
+
+        (await asPlain.GetFromJsonAsync<SocialFeaturesDto>("/api/v1/social/Notes", Ct)).ShouldBe(new SocialFeaturesDto(true, true, true, true));
+        (await asPlain.GetFromJsonAsync<SocialFeaturesDto>($"/api/v1/social/{SocialReactions.Comment}", Ct)).ShouldBe(new SocialFeaturesDto(false, false, false, true));
+        (await asPlain.GetFromJsonAsync<SocialFeaturesDto>("/api/v1/social/Unknown", Ct)).ShouldBe(new SocialFeaturesDto(false, false, false, false));
+        (await app.App.GetTestClient().GetAsync("/api/v1/social/Notes", Ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
     [Fact]

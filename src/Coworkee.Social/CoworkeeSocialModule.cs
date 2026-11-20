@@ -33,6 +33,9 @@ public sealed class CoworkeeSocialModule : CoworkeeModule, IWebModule
 
     public void ConfigureApplication(WebApplication app)
     {
+        app.MapCoworkeeApi("/api/v1/social").WithTags("Social").RequireAuthorization()
+            .MapGet("/{entityType}", (string entityType, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetSocialFeaturesQuery(entityType), ct).ToHttpResult());
+
         var comments = app.MapCoworkeeApi("/api/v1/comments").WithTags("Comments").RequireAuthorization();
         comments.MapGet("/{entityType}/{entityId:guid}", (string entityType, Guid entityId, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new GetCommentsQuery(entityType, entityId), ct).ToHttpResult());

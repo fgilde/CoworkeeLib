@@ -51,6 +51,7 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
         services.AddScoped<IResourceAccessReader, ResourceAccessReader>();
         services.AddScoped<IUserDirectory, Users.UserDirectory>();
         services.AddScoped<Application.Events.IEventTargetResolver, Events.EventTargetResolver>();
+        services.AddScoped<Application.Events.IUserSelectionResolver, Users.Selection.UserSelectionResolver>();
         services.AddScoped<ImpersonationRules>();
         services.AddScoped<Users.AccountGuard>();
         services.AddScoped<Users.AdminReach>();

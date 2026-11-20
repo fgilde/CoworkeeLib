@@ -134,6 +134,54 @@ public sealed class SocialComponentsTests : ClientTestBase
         await _api.Received(1).AddCommentAsync("Quotes", _id, Arg.Is<CommentRequest>(r => r.Text == "Another" && r.Status == CommentStatus.Open), Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public void Social_shows_the_blocks_the_server_opted_the_type_into_and_the_user_may_see()
+    {
+        _api.GetFeaturesAsync("Products", default).ReturnsForAnyArgs(new SocialFeaturesDto(Comments: true, Tags: true, Ratings: true, Reactions: false));
+        _api.GetRatingAsync("Products", _id, default).ReturnsForAnyArgs(new RatingDto(4, 2, null, true));
+        _api.GetEntityTagsAsync("Products", _id, default).ReturnsForAnyArgs(new EntityTagsDto(["red"], true));
+        Api.GetMyPermissionsAsync(default).ReturnsForAnyArgs([SocialPermissions.Ratings.View, SocialPermissions.Tags.View, SocialPermissions.Reactions.View]);
+
+        var social = Render<CoworkeeSocial>(p => p.Add(s => s.EntityType, "Products").Add(s => s.EntityId, _id).Add(s => s.ShowTags, false));
+
+        social.WaitForAssertion(() => social.Find("[data-testid='rating']"));
+        social.FindAll("[data-testid='reactions']").ShouldBeEmpty(); // not opted in
+        social.FindAll("[data-tag='red']").ShouldBeEmpty(); // hidden by the page
+        social.FindAll("textarea[data-testid='comment-text']").ShouldBeEmpty(); // no view permission
+        _api.DidNotReceiveWithAnyArgs().GetCommentsAsync(default!, default, default);
+        _api.DidNotReceiveWithAnyArgs().GetEntityTagsAsync(default!, default, default);
+    }
+
+    [Fact]
+    public async Task Social_follows_permission_changes_live_and_passes_options_to_the_blocks()
+    {
+        _api.GetFeaturesAsync("Products", default).ReturnsForAnyArgs(new SocialFeaturesDto(true, false, true, false));
+        _api.GetRatingAsync("Products", _id, default).ReturnsForAnyArgs(new RatingDto(3, 1, 3, true));
+        _api.GetCommentsAsync("Products", _id, default).ReturnsForAnyArgs(new CommentThreadDto([], true, false));
+        Api.GetMyPermissionsAsync(default).ReturnsForAnyArgs([SocialPermissions.Ratings.View]);
+        var social = Render<CoworkeeSocial>(p => p.Add(s => s.EntityType, "Products").Add(s => s.EntityId, _id).Add(s => s.ReadOnly, true));
+        social.WaitForAssertion(() => social.Find("[data-testid='rating']"));
+        social.FindAll("[data-testid='rating-clear']").ShouldBeEmpty(); // read-only reached the rating
+        social.FindAll("textarea[data-testid='comment-text']").ShouldBeEmpty();
+
+        Api.GetMyPermissionsAsync(default).ReturnsForAnyArgs([SocialPermissions.Ratings.View, SocialPermissions.Comments.View]);
+        await social.InvokeAsync(() => Services.GetRequiredService<Security.PermissionStore>().Reset());
+
+        social.WaitForAssertion(() => social.Find("textarea[data-testid='comment-text']"));
+    }
+
+    [Fact]
+    public void Social_shows_nothing_for_a_type_without_blocks()
+    {
+        _api.GetFeaturesAsync("Brands", default).ReturnsForAnyArgs(new SocialFeaturesDto(false, false, false, false));
+        Api.GetMyPermissionsAsync(default).ReturnsForAnyArgs([SocialPermissions.Ratings.View]);
+
+        var social = Render<CoworkeeSocial>(p => p.Add(s => s.EntityType, "Brands").Add(s => s.EntityId, _id));
+
+        social.WaitForAssertion(() => _api.ReceivedWithAnyArgs(1).GetFeaturesAsync(default!, default));
+        social.FindAll("[data-testid='social']").ShouldBeEmpty();
+    }
+
     private static CommentDto Comment(Guid author, string text, Guid? parentId = null) =>
         new(Guid.CreateVersion7(), parentId, author, text, DateTimeOffset.UtcNow, null);
 }

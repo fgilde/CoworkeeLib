@@ -24,6 +24,7 @@ public sealed class CoworkeeNotificationsModule : CoworkeeModule, IWebModule
         context.Services.AddMessagingFromAssembly(typeof(CoworkeeNotificationsModule).Assembly);
         context.Services.AddSingleton<IModelContributor, NotificationModelContributor>();
         context.Services.AddScoped<INotifier, Notifier>();
+        context.Services.AddSingleton<Application.Authorization.IPermissionDefinitionContributor, NotificationPermissionDefinitions>();
         context.Services.AddNotificationTypes(_ => { });
         context.Services.AddScoped<NotificationMails>();
         context.Services.AddRecurringJob<NotificationMailJob>(NotificationMailJob.Id, NotificationMailJob.Cron);
@@ -61,6 +62,7 @@ public sealed class CoworkeeNotificationsModule : CoworkeeModule, IWebModule
         api.MapPost("/{id:guid}/unread", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new MarkNotificationUnread(id), ct).ToHttpResult());
         api.MapDelete("/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteNotification(id), ct).ToHttpResult());
         api.MapDelete("/", (IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteAllNotifications(), ct).ToHttpResult());
+        api.MapPost("/send", (SendNotificationRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SendNotification(body), ct).ToHttpResult());
         api.MapGet("/push", (IDispatcher d, CancellationToken ct) => d.SendAsync(new Push.GetPushSettings(), ct).ToHttpResult());
         api.MapPut("/push", (PushSubscriptionRequest subscription, IDispatcher d, CancellationToken ct) => d.SendAsync(new Push.SavePushSubscription(subscription), ct).ToHttpResult());
         api.MapDelete("/push/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new Push.DeletePushSubscription(id), ct).ToHttpResult());

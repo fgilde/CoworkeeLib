@@ -39,6 +39,12 @@ public abstract record EventTarget
     /// </summary>
     public static EventTarget Users(Expression<Func<EventUser, bool>> predicate) => new WhereTarget(predicate);
 
+    /// <summary>
+    /// The active users of a <see cref="Contracts.Identity.UserSelection"/> (filter, added, left out), resolved with the rights of the current user as the Users
+    /// set shows them, e.g. what an administrator chose in <c>CoworkeeUserSelection</c>; never ids the browser resolved.
+    /// </summary>
+    public static EventTarget Users(Contracts.Identity.UserSelection selection) => new CustomTarget(typeof(IUserSelectionResolver), selection ?? throw new ArgumentNullException(nameof(selection)));
+
     /// <summary>The users who hold <paramref name="permission"/>, with the semantics of <c>IPermissionChecker</c>.</summary>
     public static EventTarget Permission(string permission) => Users(u => u.HasPermission(permission));
 
