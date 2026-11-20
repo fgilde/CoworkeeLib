@@ -1,9 +1,7 @@
 using System.Net;
-using System.Text.Json;
 using Coworkee.Client.Blazor.Realtime;
 using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.Notifications;
-using Coworkee.Contracts.Realtime;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
@@ -16,7 +14,7 @@ namespace Coworkee.Client.Blazor.Components;
 /// </summary>
 public partial class ToastNotifier : IAsyncDisposable
 {
-    private readonly List<IAsyncDisposable> _subscriptions = [];
+    private IAsyncDisposable? _subscription;
 
     [Inject] private RealtimeClient Realtime { get; set; } = null!;
 
@@ -33,30 +31,14 @@ public partial class ToastNotifier : IAsyncDisposable
     protected override async Task OnInitializedAsync()
     {
         var user = AuthenticationState is null ? null : (await AuthenticationState).User;
-        if (!ClientUser.From(user).TryGetUserId(out var me))
+        if (ClientUser.From(user).TryGetUserId(out _))
         {
-            return;
-        }
-
-        List<string> topics = [RealtimeTopics.User(me), RealtimeTopics.TenantEvents, RealtimeTopics.GlobalEvents];
-        if (user!.FindFirst("sid")?.Value is { Length: > 0 } sid)
-        {
-            topics.Add(RealtimeTopics.Session(sid));
-        }
-
-        foreach (var topic in topics)
-        {
-            _subscriptions.Add(await Realtime.SubscribeAsync(topic, envelope => envelope.Type == ToastPayload.Event ? InvokeAsync(() => Show(envelope)) : Task.CompletedTask));
+            _subscription = await Realtime.On<ToastPayload>(toast => InvokeAsync(() => Show(toast)));
         }
     }
 
-    private void Show(RealtimeEnvelope envelope)
+    private void Show(ToastPayload toast)
     {
-        if (envelope.Payload.Deserialize<ToastPayload>(JsonSerializerOptions.Web) is not { } toast)
-        {
-            return;
-        }
-
         var title = WebUtility.HtmlEncode(L.Server(toast.Title, toast.Arguments));
         var body = L.Server(toast.Body, toast.Arguments) is { Length: > 0 } text ? $"<br />{WebUtility.HtmlEncode(text)}" : null;
         Snackbar.Add(new MarkupString($"<b>{title}</b>{body}"), Look(toast.Severity), options =>
@@ -85,9 +67,9 @@ public partial class ToastNotifier : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        foreach (var subscription in _subscriptions)
+        if (_subscription is not null)
         {
-            await subscription.DisposeAsync();
+            await _subscription.DisposeAsync();
         }
 
         GC.SuppressFinalize(this);

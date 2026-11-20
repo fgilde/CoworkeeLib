@@ -106,6 +106,23 @@ public sealed class EventTargetTests(RealtimeApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_typed_event_goes_out_under_its_stable_name()
+    {
+        var bob = await UserAsync("bob@acme.test");
+        await using var listener = await ListenAsync(bob, RealtimeTopics.TenantEvents);
+        var text = Guid.NewGuid().ToString("N");
+
+        using (CurrentUserScope.Begin(new ImpersonatedUser(_setup.AdminUserId, _setup.TenantId)))
+        {
+            await using var scope = app.App.Services.CreateAsyncScope();
+            await scope.ServiceProvider.GetRequiredService<RealtimeEvents>().PublishAsync(EventTarget.All, new Pinged(text), Ct);
+        }
+
+        var envelope = await listener.NextAsync(e => e.Type == "test.pinged");
+        envelope.Payload.GetProperty("text").GetString().ShouldBe(text);
+    }
+
+    [Fact]
     public async Task Users_of_another_organisation_are_never_reached_through_ids()
     {
         var (otherAdmin, otherTenant) = await app.CreateTenantAdminAsync();
@@ -193,3 +210,6 @@ public sealed class EventTargetTests(RealtimeApp app) : IAsyncLifetime
         return user.Id;
     }
 }
+
+[EventName("test.pinged")]
+public sealed record Pinged(string Text);

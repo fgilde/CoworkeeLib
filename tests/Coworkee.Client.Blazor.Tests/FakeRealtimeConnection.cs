@@ -33,5 +33,7 @@ public sealed class FakeRealtimeConnection : IRealtimeConnection
 
     public void Push(string topic, string type, object payload) => _handler?.Invoke(new RealtimeEnvelope(topic, type, JsonSerializer.SerializeToElement(payload, JsonSerializerOptions.Web)));
 
+    public void Push(RealtimeEnvelope envelope) => _handler?.Invoke(envelope);
+
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }

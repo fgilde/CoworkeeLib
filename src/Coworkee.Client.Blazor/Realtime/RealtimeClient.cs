@@ -1,8 +1,11 @@
+using System.Text.Json;
+using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.Realtime;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Coworkee.Client.Blazor.Realtime;
 
-public sealed class RealtimeClient(IRealtimeConnection connection)
+public sealed class RealtimeClient(IRealtimeConnection connection, AuthenticationStateProvider? authentication = null)
 {
     private readonly Dictionary<string, List<Func<RealtimeEnvelope, Task>>> _handlers = new(StringComparer.Ordinal);
     private readonly Lock _lock = new();
@@ -35,6 +38,79 @@ public sealed class RealtimeClient(IRealtimeConnection connection)
         }
 
         return new Subscription(this, topic, handler);
+    }
+
+    /// <summary>
+    /// Typed events, with the subscriptions, reconnects and resubscribes of <see cref="SubscribeAsync"/>:
+    /// <list type="bullet">
+    /// <item><c>On&lt;EntityChanged&lt;OrderDto&gt;&gt;(c => ...)</c>: changes of the entity on <c>type:Order</c> (the DTO's name without "Dto"), with who and when;
+    /// <paramref name="topic"/> follows another one, e.g. <c>entity:Order:{id}</c>.</item>
+    /// <item><c>On&lt;OrderApproved&gt;(e => ...)</c>: an event of the server's <c>RealtimeEvents</c> under its stable name (<see cref="EventNameAttribute"/>), on every topic
+    /// an event target reaches (the user's, the organisation's, the global one, the session's), or on <paramref name="topic"/>.</item>
+    /// </list>
+    /// <paramref name="skipOwn"/> leaves out what the signed-in user caused himself (the envelope's actor).
+    /// </summary>
+    public async Task<IAsyncDisposable> On<T>(Func<T, Task> handler, string? topic = null, bool skipOwn = false)
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+        var user = authentication is null ? null : (await authentication.GetAuthenticationStateAsync()).User;
+        Guid? me = ClientUser.From(user).TryGetUserId(out var id) ? id : null;
+        var entity = typeof(T).IsGenericType && typeof(T).GetGenericTypeDefinition() == typeof(EntityChanged<>);
+        var type = entity ? RealtimeEventTypes.EntityChanged : EventNames.Of<T>();
+        List<string> topics = topic is { Length: > 0 } ? [topic]
+            : entity ? [RealtimeTopics.Type((string)typeof(T).GetProperty(nameof(EntityChanged<object>.Entity))!.GetValue(null)!)]
+            : [.. Targeted(user, me)];
+
+        Task Receive(RealtimeEnvelope envelope)
+        {
+            if (envelope.Type != type || (skipOwn && me is not null && envelope.Actor?.UserId == me))
+            {
+                return Task.CompletedTask;
+            }
+
+            var value = entity ? Entity<T>(envelope) : envelope.Payload.Deserialize<T>(JsonSerializerOptions.Web);
+            return value is null ? Task.CompletedTask : handler(value);
+        }
+
+        var subscriptions = new List<IAsyncDisposable>();
+        foreach (var t in topics)
+        {
+            subscriptions.Add(await SubscribeAsync(t, Receive));
+        }
+
+        return new Subscriptions(subscriptions);
+    }
+
+    // the topics an event target can reach a signed-in user on
+    private static IEnumerable<string> Targeted(System.Security.Claims.ClaimsPrincipal? user, Guid? me)
+    {
+        if (me is { } id)
+        {
+            yield return RealtimeTopics.User(id);
+        }
+
+        yield return RealtimeTopics.TenantEvents;
+        yield return RealtimeTopics.GlobalEvents;
+        if (user?.FindFirst("sid")?.Value is { Length: > 0 } sid)
+        {
+            yield return RealtimeTopics.Session(sid);
+        }
+    }
+
+    private static T? Entity<T>(RealtimeEnvelope envelope) =>
+        envelope.Payload.Deserialize<EntityChangedPayload>(JsonSerializerOptions.Web) is { } change
+            ? (T)Activator.CreateInstance(typeof(T), change.EntityType, change.EntityId, change.Action, change.ChangedProperties, envelope.Actor, envelope.At)!
+            : default;
+
+    private sealed class Subscriptions(List<IAsyncDisposable> subscriptions) : IAsyncDisposable
+    {
+        public async ValueTask DisposeAsync()
+        {
+            foreach (var subscription in subscriptions)
+            {
+                await subscription.DisposeAsync();
+            }
+        }
     }
 
     /// <summary>True for every subscription <see cref="SubscribeAsync"/> returns: one made while the hub was not reachable follows once it is.</summary>

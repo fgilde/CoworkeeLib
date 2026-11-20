@@ -14,6 +14,11 @@ namespace Coworkee.Realtime;
 public sealed class RealtimeEvents(
     IRealtimePublisher publisher, IEventTargetResolver targets, ICurrentUser currentUser, CoworkeeDbContext db, IServiceProvider services)
 {
+    /// <summary>A typed event under its stable name (<see cref="Contracts.Realtime.EventNameAttribute"/>): <c>events.PublishAsync(EventTarget.All, new OrderApproved(id))</c>.</summary>
+    public Task PublishAsync<TEvent>(EventTarget target, TEvent @event, CancellationToken cancellationToken = default)
+        where TEvent : notnull =>
+        PublishAsync(target, Contracts.Realtime.EventNames.Of(typeof(TEvent)), @event, cancellationToken);
+
     public async Task PublishAsync(EventTarget target, string type, object payload, CancellationToken cancellationToken = default)
     {
         var topics = await targets.TopicsAsync(target, cancellationToken);
