@@ -29,6 +29,8 @@ public sealed class ChangePerformanceTests(DatabaseFixture database) : IAsyncLif
     [Fact]
     public async Task Saving_a_thousand_entities_stays_as_fast_as_before()
     {
+        // ponytail: an absolute time budget, only meaningful on a developer machine; shared CI runners test all projects at once
+        Assert.SkipWhen(Environment.GetEnvironmentVariable("CI") == "true", "Timing guard: runs on developer machines only (CI runners share their cores between all test projects).");
         var best = TimeSpan.MaxValue;
         for (var run = 0; run < 3; run++)
         {
