@@ -163,3 +163,15 @@ Decisions taken while building, and where phase 1 deviates from the text above:
 - **Reason**: `ChangeReason` (AsyncLocal) + `IHasChangeReason` (the unit-of-work middleware opens the scope around handler and save). `AuditEntry.Reason` (max 500, truncated), `AuditEntryDto.Reason`, `EntityHistoryEntryDto.Reason`, shown in `AuditTimeline` and `CoworkeeEntityHistory`. Migration: apps add one (upgrade rule 0.0.1.96 `needsMigration: true`); the template's initial migration is not regenerated in this branch (it also lacks `cw.ClientValues` of 0.0.1.95; regenerate at release).
 - **Performance**: `ChangePerformanceTests` (insert + update of 1,000 audited documents, best of 3): before 896-941 ms, after 808-925 ms on the dev machine; the guard allows 2.5x the 900 ms baseline. Apps without published types or subscribers pay one list per save instead of four scans.
 - **ActorInfo.Name** is null on `EntityChange` (no lookup in the save); realtime envelopes still carry the token's name.
+
+## Phase 3 as built (2026-11-20)
+
+- **Stable names**: `[EventName]` and `EventNames.Of<T>()` in `Coworkee.Contracts.Realtime` (shared by server and client); without the attribute the short type name (never the full CLR name). `ToastPayload` carries `[EventName("notification.toast")]`.
+- **Server**: `RealtimeEvents.PublishAsync<TEvent>(EventTarget, TEvent)` next to the string overload; same resolution, same after-commit rule.
+- **Client**: `RealtimeClient.On<T>(handler, topic = null, skipOwn = false)` on top of `SubscribeAsync` (so reference counting, retry of the start, reconnect and resubscribe are unchanged). `RealtimeClient` takes the `AuthenticationStateProvider` as an optional dependency for "me" and the session. Custom events follow the four targeted topics (`user:{me}`, `tenant:events`, `global:events`, `session:{sid}`) unless a topic is given; the type filter is the event name.
+- **`EntityChanged<TDto>` instead of the spec's client-side `EntityChange<TDto>`** (`Coworkee.Contracts.Realtime`): `EntityChange` is the server record of phase 2 (in Application, with values); a second type of the same name would clash in server code, and the client type deliberately carries no values (`EntityChangedPayload` + `Actor` + `At`). The entity name is the DTO name without a trailing "Dto"; any other mapping passes `topic:`.
+- **Own-change filter**: `skipOwn` / `SkipOwn` compares the envelope's `Actor.UserId` with the signed-in user.
+- **Component**: `<RealtimeEvent T="..." OnEvent="..." Topic="..." SkipOwn="..." />`.
+- `ToastNotifier` now uses `On<ToastPayload>` (its own topic list is gone).
+- **TypeScript**: `onEvent<T>(realtime, type, topics, handler, { skipActor })` and `targetedTopics(userId, sessionId)`.
+- Phase 4 (DTO payloads with in-place update) is not started.

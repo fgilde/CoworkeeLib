@@ -91,6 +91,35 @@ internal sealed class ApproveOrderHandler(AppDbContext db, RealtimeEvents events
 
 Clients bekommen es auf den Themen, denen sie ohnehin folgen (`user:{id}`, `tenant:events`, `global:events`, `session:{sid}`); eine Blazor-Seite abonniert eines davon mit `RealtimeClient.SubscribeAsync` und prüft den `Type`. Wie jede Realtime-Nutzlast geht es an jeden, den das Ziel nennt: IDs und was sich geändert hat senden, keine Daten, die einige davon nicht sehen dürfen.
 
+## Typisierte Events
+
+Ein Event-Typ bekommt einen stabilen Namen und wird an ein Ziel veröffentlicht; der Name übersteht Umbenennen oder Verschieben des Typs (ohne Attribut ist es der kurze Typname, nie der volle CLR-Name):
+
+```csharp
+[EventName("orders.approved")]
+public sealed record OrderApproved(Guid OrderId, string Number);   // in den Contracts, mit dem Client geteilt
+
+await events.PublishAsync(EventTarget.Permission(OrderPermissions.View), new OrderApproved(order.Id, order.Number), ct);
+```
+
+In Blazor abonniert `RealtimeClient.On<T>`, deserialisiert und behält die gezählten Abonnements, das Neuverbinden und Wiederabonnieren von `SubscribeAsync`:
+
+```csharp
+// ein Event des Servers: auf jedem Thema, auf dem ein Ziel diesen Benutzer erreicht (sein eigenes, tenant:events, global:events, seine Sitzung)
+await using var approved = await Realtime.On<OrderApproved>(e => InvokeAsync(() => Snackbar.Add(L["Order {0} approved", e.Number])));
+
+// Änderungen an Entities: OrderDto folgt type:Order (der Name ohne "Dto"), mit wer und wann; skipOwn lässt eigene Änderungen aus
+await using var changes = await Realtime.On<EntityChanged<OrderDto>>(c => InvokeAsync(ReloadAsync), skipOwn: true);
+await using var one = await Realtime.On<EntityChanged<OrderDto>>(c => c.IsDeleted ? GoBackAsync() : ReloadAsync(), topic: RealtimeTopics.Entity("Order", id));
+```
+
+```razor
+<RealtimeEvent T="EntityChanged<OrderDto>" OnEvent="ReloadAsync" SkipOwn="true" />
+<RealtimeEvent T="OrderApproved" OnEvent="ShowApproved" />
+```
+
+`EntityChanged<TDto>` trägt `EntityType`, `EntityId`, `Action`, `ChangedProperties`, `Actor` und `At`, nie Werte: Der Client lädt neu, was er sehen darf. Auch `ToastPayload` hat seinen Namen (`On<ToastPayload>` nutzt der `ToastNotifier` der Shell). In TypeScript macht `onEvent<T>(realtime, 'orders.approved', targetedTopics(userId, sessionId), handler, { skipActor: userId })` dasselbe.
+
 ## Wer, wann, warum
 
 Jeder `RealtimeEnvelope` trägt Metadaten, die der Publisher ohne Abfrage füllt: `Id` (eindeutig pro Nachricht), `At` (wann gesendet), `Actor` (`ActorInfo(UserId, Name, ImpersonatorId)`; null für das System) und `CorrelationId` (der Trace der Anfrage). Eine Komponente kann eigene Änderungen übergehen oder sagen, wer eine gemacht hat:
