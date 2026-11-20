@@ -74,7 +74,10 @@ internal sealed class MailTemplateHandlers(
             fallback.Body,
             existing is not null,
             MailTemplateVariables.From(definition.SampleModel),
-            catalog.IsCustom(definition));
+            catalog.IsCustom(definition))
+        {
+            SampleModel = MailTemplateSend.SampleJson(definition.SampleModel),
+        };
     }
 
     public async Task<Result> HandleAsync(SaveMailTemplate command, CancellationToken cancellationToken)

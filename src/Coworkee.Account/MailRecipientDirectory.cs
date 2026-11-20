@@ -1,3 +1,4 @@
+using Coworkee.Application.Events;
 using Coworkee.Contracts.Mailing;
 using Coworkee.Contracts.Settings;
 using Coworkee.Core.Results;
@@ -8,6 +9,7 @@ using Coworkee.OData;
 using Coworkee.Settings;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OData;
 
 namespace Coworkee.Account;
@@ -71,7 +73,7 @@ internal sealed class MailRecipientDirectory(IServiceProvider services, Coworkee
 
     private async Task<Result<IQueryable<User>>> SelectAsync(RecipientSourceDto source, CancellationToken cancellationToken)
     {
-        if (source.Kind is RecipientSourceKind.Query or RecipientSourceKind.Manual && !await ODataEntityAccess.IsGrantedAsync(services, typeof(User), cancellationToken))
+        if (source.Kind is RecipientSourceKind.Query or RecipientSourceKind.Manual or RecipientSourceKind.Selection && !await ODataEntityAccess.IsGrantedAsync(services, typeof(User), cancellationToken))
         {
             return Error.Forbidden("mail.recipients_forbidden", "Choosing recipients by filter or by hand requires the right to view users.");
         }
@@ -93,6 +95,15 @@ internal sealed class MailRecipientDirectory(IServiceProvider services, Coworkee
             case RecipientSourceKind.Manual:
                 var ids = source.UserIds?.ToList() ?? [];
                 return Result<IQueryable<User>>.Success((await ODataEntityAccess.VisibleAsync<User>(services, cancellationToken)).Where(u => ids.Contains(u.Id)));
+            case RecipientSourceKind.Selection when source.Selection is { } selection:
+                var resolved = await services.GetRequiredService<IUserSelectionResolver>().ResolveAsync(selection, cancellationToken);
+                if (!resolved.IsSuccess)
+                {
+                    return resolved.Error!;
+                }
+
+                var chosen = resolved.Value.ToList();
+                return Result<IQueryable<User>>.Success((await ODataEntityAccess.VisibleAsync<User>(services, cancellationToken)).Where(u => chosen.Contains(u.Id)));
             default:
                 return Error.Validation(nameof(RecipientSourceDto.Kind), "Choose a recipient source.");
         }
