@@ -192,7 +192,7 @@ public sealed class CommandPaletteTests : ClientTestBase
 
         Services.GetRequiredService<NavigationManager>().Uri.ShouldEndWith(second == "Products" ? "/catalog/products" : "/catalog/products?new=1");
         palette.Find("[data-testid='palette-button']").Click();
-        palette.Find("[data-testid='palette-input']").Input("prod");
+        palette.WaitForElement("[data-testid='palette-input']").Input("prod");
         await palette.Find("[data-testid='palette-input']").KeyDownAsync(new KeyboardEventArgs { Key = "Enter", MetaKey = true });
         Services.GetRequiredService<NavigationManager>().Uri.ShouldEndWith("/search?q=prod");
     }
