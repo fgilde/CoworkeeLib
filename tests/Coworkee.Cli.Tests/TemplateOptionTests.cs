@@ -22,6 +22,22 @@ public sealed class TemplateOptionTests(TemplateFixture template)
     }
 
     [Fact]
+    public async Task Social_opts_the_sample_products_in_and_shows_them_in_the_product_rows()
+    {
+        var app = await template.CreateAsync("social", "--social", "true");
+        var plain = await template.CreateAsync("no-social");
+
+        Read(app, "src/Shop.Catalog/Shop.Catalog.csproj").ShouldContain("\"Coworkee.Social\"");
+        Read(app, "src/Shop.Catalog/CatalogModule.cs").ShouldContain(".Ratings<Product>(\"Products\")");
+        Read(app, "src/Shop.Web.Client/Pages/Catalog/Products.razor").ShouldContain("<CoworkeeSocial EntityType=\"Products\"");
+        Read(app, "src/Shop.Migrations/DemoSeed.cs").ShouldContain("SocialPermissions.Comments.Create");
+        Read(plain, "src/Shop.Catalog/CatalogModule.cs").ShouldNotContain("Social");
+        Read(plain, "src/Shop.Web.Client/Pages/Catalog/Products.razor").ShouldNotContain("CoworkeeSocial");
+        Read(plain, "src/Shop.Migrations/DemoSeed.cs").ShouldNotContain("SocialPermissions");
+        TemplateTests.ShouldHaveNoLeftovers(app);
+    }
+
+    [Fact]
     public async Task Modules_switch_off_and_on_with_their_packages_wiring_and_app_host_resources()
     {
         var app = await template.CreateAsync("modules", "--samples", "false", "--chat", "false", "--ai", "false", "--backup", "false", "--notifications", "false", "--auditing", "false",

@@ -5,6 +5,9 @@ using Coworkee.Core.Modularity;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.OData;
 using Coworkee.OData.GlobalSearch;
+#if (social)
+using Coworkee.Social;
+#endif
 #if (webhooks)
 using Coworkee.Webhooks;
 #endif
@@ -39,6 +42,15 @@ public sealed class MyAppCatalogModule : CoworkeeModule, IWebModule
         context.Services.AddGlobalSearch<Brand>(s => s.Fields(b => b.Name, b => b.Description).Subtitle(b => b.Description).Page("/catalog/brands").Icon("Label"));
         context.Services.AddGlobalSearch<Product>(s => s.Fields(p => p.Name, p => p.Barcode, p => p.Description).Subtitle(p => p.Barcode)
             .Thumbnail(p => p.ImageDataUrl).Page("/catalog/products").Icon("ViewCarousel"));
+#if (social)
+        // rating, tags, reactions and comments on products; <CoworkeeSocial EntityType="Products" .../> shows what is opted in here
+        context.Services.AddCoworkeeSocial(social => social
+            .Ratings<Product>("Products")
+            .Tags<Product>("Products")
+            .Reactions<Product>("Products")
+            .Comments<Product>("Products", _ => "/catalog/products")
+            .CommentReactions());
+#endif
 #if (webhooks)
         context.Services.AddCoworkeeWebhooks(webhooks => webhooks.Entity<Product>());
 #endif

@@ -7,6 +7,9 @@ using Coworkee.Contracts.Chat;
 #if (workflows)
 using Coworkee.Contracts.Workflows;
 #endif
+#if (social)
+using Coworkee.Contracts.Social;
+#endif
 using Coworkee.Identity.Setup;
 #if (samples)
 using MyApp.Contracts.Catalog;
@@ -59,6 +62,9 @@ public static class DemoSeed
 #endif
 #if (workflows)
         WorkflowPermissions.View, WorkflowPermissions.Transition,
+#endif
+#if (social)
+        SocialPermissions.Comments.Create, SocialPermissions.Tags.Create, SocialPermissions.Ratings.Create, SocialPermissions.Reactions.Create,
 #endif
 #if (samples)
         CatalogPermissions.Dashboards.View,

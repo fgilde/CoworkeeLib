@@ -11,6 +11,9 @@
     <!--#if (workflows) -->
     <CoworkeePackage Include="Coworkee.Workflows" />
     <!--#endif -->
+    <!--#if (social) -->
+    <CoworkeePackage Include="Coworkee.Social" />
+    <!--#endif -->
     <!--#if (webhooks) -->
     <CoworkeePackage Include="Coworkee.Webhooks" />
     <!--#endif -->

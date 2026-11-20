@@ -24,4 +24,9 @@
         <CoworkeeWorkflowColumn T="ProductDto" EntityType="Products" Title="@L["Approval"]" />
 #endif*@
     </Columns>
+@*#if (social)
+    <ChildRowContent>
+        <CoworkeeSocial EntityType="Products" EntityId="context.Item.Id" Class="pa-3" />
+    </ChildRowContent>
+#endif*@
 </CoworkeeDataTable>
