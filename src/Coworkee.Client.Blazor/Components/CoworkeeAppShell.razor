@@ -16,5 +16,11 @@
 <SessionGuard />
 @ChildContent?.Invoke(this)
 <AuthorizeView>
-    <Authorized><SettingsLiveUpdates /></Authorized>
+    <Authorized>
+        <SettingsLiveUpdates />
+        @if (Options.ShowToasts)
+        {
+            <ToastNotifier />
+        }
+    </Authorized>
 </AuthorizeView>

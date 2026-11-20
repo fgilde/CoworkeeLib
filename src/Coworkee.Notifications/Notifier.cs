@@ -1,3 +1,4 @@
+using Coworkee.Application.Events;
 using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Notifications;
 using Coworkee.Core.Security;
@@ -20,12 +21,53 @@ internal sealed partial class Notifier(
         IEnumerable<Guid> userIds, string type, string title, string? body, IReadOnlyList<string> arguments, string? link = null, CancellationToken cancellationToken = default) =>
         PublishAsync(new NotificationMessage(type, title, body) { Arguments = arguments, Link = link, Recipients = [.. userIds] }, cancellationToken);
 
-    public Task SendAsync(NotificationRequest request, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public async Task SendAsync(NotificationRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var stored = request.Delivery.HasFlag(Delivery.Stored);
+        if (stored || request.Mail != MailDelivery.Never)
+        {
+            await DeliverAsync(request.ToMessage(await AddressedAsync(request.Target, cancellationToken)), stored, request.Mail, cancellationToken);
+        }
 
-    public async Task PublishAsync(NotificationMessage message, CancellationToken cancellationToken = default)
+        // after the rows: a toast of a unit of work leaves with its commit
+        if (request.Delivery.HasFlag(Delivery.Toast))
+        {
+            await services.GetRequiredService<Realtime.RealtimeEvents>().PublishAsync(request.Target, ToastPayload.Event,
+                new ToastPayload(request.Title, request.Body, request.Severity, request.Link, request.Arguments, request.Type), cancellationToken);
+        }
+    }
+
+    public Task PublishAsync(NotificationMessage message, CancellationToken cancellationToken = default) =>
+        DeliverAsync(message, stored: true, MailDelivery.ByPreference, cancellationToken);
+
+    /// <summary>The users the target addresses directly: ids as given (no lookup, as <see cref="NotifyAsync"/>), the rest resolved; the actor only when named.</summary>
+    private async Task<IReadOnlyCollection<Guid>> AddressedAsync(EventTarget target, CancellationToken cancellationToken)
+    {
+        var ids = target is UsersTarget users
+            ? users.Ids
+            : await (services.GetService<IEventTargetResolver>()
+                     ?? throw new InvalidOperationException($"The notification target {target} needs Coworkee.Identity (IEventTargetResolver); only user ids work without it."))
+                .UsersAsync(target, cancellationToken: cancellationToken);
+        return currentUser.UserId is { } actor && ids.Contains(actor) && !target.Names(actor, actor) ? [.. ids.Where(id => id != actor)] : ids;
+    }
+
+    private async Task DeliverAsync(NotificationMessage message, bool stored, MailDelivery mail, CancellationToken cancellationToken)
     {
         var type = services.GetService<NotificationTypeOptions>()?.Find(message.Type);
-        var recipients = await RecipientsAsync(message, type, cancellationToken);
+        var online = mail == MailDelivery.WhenOffline && services.GetService<Realtime.RealtimePresence>() is { } presence
+            ? (await presence.OnlineAsync(currentUser.TenantId)).ToHashSet()
+            : [];
+        var recipients = (await RecipientsAsync(message, type, cancellationToken))
+            .Select(r => (r.UserId, InApp: stored && r.Preference.InApp, Email: mail switch
+            {
+                MailDelivery.Never => false,
+                MailDelivery.Always => true,
+                MailDelivery.WhenOffline => !online.Contains(r.UserId),
+                _ => r.Preference.Email,
+            }))
+            .Where(r => r.InApp || r.Email)
+            .ToList();
         if (recipients.Count == 0)
         {
             return;
@@ -36,16 +78,16 @@ internal sealed partial class Notifier(
         List<string>? arguments = message.Arguments is null ? null : [.. message.Arguments];
         var mails = new List<NotificationMails.Item>();
         var model = NotificationMailModel.Json(message.MailModel);
-        var delay = type is not null && recipients.Any(r => r.Preference.Email) ? await EmailDelayAsync(type, cancellationToken) : null;
+        var delay = type is not null && recipients.Any(r => r.Email) ? await EmailDelayAsync(type, cancellationToken) : null;
 
         // a mail goes only to an active address; who has none keeps the notification for the digest
-        var reachable = recipients.Any(r => r.Preference.Email) && services.GetService<IUserDirectory>() is { } users
-            ? await users.GetActiveEmailsAsync([.. recipients.Where(r => r.Preference.Email).Select(r => r.UserId)], cancellationToken)
+        var reachable = recipients.Any(r => r.Email) && services.GetService<IUserDirectory>() is { } users
+            ? await users.GetActiveEmailsAsync([.. recipients.Where(r => r.Email).Select(r => r.UserId)], cancellationToken)
             : null;
-        foreach (var (userId, preference) in recipients)
+        foreach (var (userId, inApp, wantsEmail) in recipients)
         {
-            var email = preference.Email && (reachable?.ContainsKey(userId) ?? true);
-            if (preference.InApp)
+            var email = wantsEmail && (reachable?.ContainsKey(userId) ?? true);
+            if (inApp)
             {
                 var notification = new Notification
                 {
@@ -103,7 +145,7 @@ internal sealed partial class Notifier(
     [LoggerMessage(Level = LogLevel.Warning, Message = "The mail delay of the notification type {Type} could not be resolved; its default applies.")]
     private partial void LogDelayFailed(Exception exception, string type);
 
-    /// <summary>Who gets it and how: addressed users unless their scope is Off, followers with All or Followed, the audience with All; never the actor unless addressed.</summary>
+    /// <summary>Who may get it (the channels follow from the delivery): addressed users unless their scope is Off, followers with All or Followed, the audience with All; never the actor unless addressed.</summary>
     private async Task<List<(Guid UserId, NotificationPreference Preference)>> RecipientsAsync(NotificationMessage message, NotificationType? type, CancellationToken cancellationToken)
     {
         var direct = message.Recipients?.ToHashSet() ?? [];
@@ -142,7 +184,7 @@ internal sealed partial class Notifier(
                 : userId == actor ? false
                 : followers.Contains(userId) ? preference.Scope is NotificationScope.All or NotificationScope.Followed
                 : preference.Scope == NotificationScope.All;
-            if (wanted && (preference.InApp || preference.Email))
+            if (wanted)
             {
                 result.Add((userId, preference));
             }

@@ -15,7 +15,7 @@ internal sealed class RealtimeChangeInterceptor(
     : SaveChangesInterceptor, IDbTransactionInterceptor
 {
     private static readonly ConcurrentDictionary<Type, bool> RealtimeTypes = new();
-    private readonly List<(Guid? TenantId, string Topic, EntityChangedPayload Payload)> _pending = [];
+    private readonly List<(Guid? TenantId, string Topic, string Type, object Payload)> _pending = [];
 
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
@@ -69,6 +69,9 @@ internal sealed class RealtimeChangeInterceptor(
         return Task.CompletedTask;
     }
 
+    /// <summary>A message of <see cref="RealtimeEvents"/> that leaves with the changes of the pending save or transaction, or never.</summary>
+    internal void Enqueue(Guid? tenantId, string topic, string type, object payload) => _pending.Add((tenantId, topic, type, payload));
+
     private void Capture(DbContext? context)
     {
         foreach (var entry in context?.ChangeTracker.Entries().Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted) ?? [])
@@ -91,11 +94,11 @@ internal sealed class RealtimeChangeInterceptor(
             var tenantId = TenantOf(entry) ?? currentUser.TenantId;
             if (IsRealtime(root))
             {
-                _pending.Add((tenantId, RealtimeTopics.Type(name), payload));
-                _pending.Add((tenantId, RealtimeTopics.Entity(name, id), payload));
+                _pending.Add((tenantId, RealtimeTopics.Type(name), RealtimeEventTypes.EntityChanged, payload));
+                _pending.Add((tenantId, RealtimeTopics.Entity(name, id), RealtimeEventTypes.EntityChanged, payload));
             }
 
-            _pending.AddRange(extraTopics.Select(topic => (tenantId, topic, payload)));
+            _pending.AddRange(extraTopics.Select(topic => (tenantId, topic, RealtimeEventTypes.EntityChanged, (object)payload)));
         }
     }
 
@@ -103,9 +106,9 @@ internal sealed class RealtimeChangeInterceptor(
     {
         var pending = _pending.ToList();
         _pending.Clear();
-        foreach (var (tenantId, topic, payload) in pending)
+        foreach (var (tenantId, topic, type, payload) in pending)
         {
-            await publisher.PublishAsync(tenantId, topic, RealtimeEventTypes.EntityChanged, payload);
+            await publisher.PublishAsync(tenantId, topic, type, payload);
         }
 
         // permissions changed: connections give back the topics they may no longer follow

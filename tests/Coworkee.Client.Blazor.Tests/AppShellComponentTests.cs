@@ -38,16 +38,25 @@ public sealed class AppShellComponentTests : ClientTestBase
     }
 
     [Fact]
-    public void The_shell_shows_toasts_of_signed_in_users_unless_the_app_turns_them_off()
+    public void The_shell_shows_toasts_of_signed_in_users()
     {
         AddAuthorization().SetAuthorized("Ada");
-        var shell = RenderShell();
-        shell.WaitForAssertion(() => shell.FindComponents<ToastNotifier>().ShouldHaveSingleItem());
 
-        Services.GetRequiredService<CoworkeeClientOptions>().ShowToasts = false;
-        var without = RenderShell();
-        without.WaitForAssertion(() => without.Find("#own"));
-        without.FindComponents<ToastNotifier>().ShouldBeEmpty();
+        var shell = RenderShell();
+
+        shell.WaitForAssertion(() => shell.FindComponents<ToastNotifier>().ShouldHaveSingleItem());
+    }
+
+    [Fact]
+    public void The_app_can_turn_the_toasts_of_the_shell_off()
+    {
+        Services.AddSingleton(new CoworkeeClientOptions { ShowToasts = false });
+        AddAuthorization().SetAuthorized("Ada");
+
+        var shell = RenderShell();
+
+        shell.WaitForAssertion(() => shell.Find("#own"));
+        shell.FindComponents<ToastNotifier>().ShouldBeEmpty();
     }
 
     [Fact]

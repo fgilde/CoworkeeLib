@@ -60,8 +60,8 @@ public sealed class CoworkeeClientOptions
     public Navigation.PageOptions Pages { get; } = new();
 
     /// <summary>
-    /// Shows toasts (<c>INotifier.ToastAsync</c>, <c>Delivery.Toast</c>) as snackbars in every layout on <see cref="Components.CoworkeeAppShell"/>; false
-    /// leaves them to the app (<see cref="Components.ToastNotifier"/> placed elsewhere, or its own handler of <c>ToastPayload.Event</c>).
+    /// Shows toasts (<c>INotifier.ToastAsync</c>, <c>Delivery.Toast</c>) as snackbars: <see cref="Components.CoworkeeAppShell"/> places a
+    /// <see cref="Components.ToastNotifier"/> for signed-in users. False leaves them to the app (its own <c>ToastNotifier</c>, or a handler of <c>ToastPayload.Event</c>).
     /// </summary>
     public bool ShowToasts { get; set; } = true;
 
