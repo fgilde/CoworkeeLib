@@ -3,12 +3,33 @@
     <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="2">
         <MudSwitch T="bool" Value="Value.AllMatching" ValueChanged="SetAllMatchingAsync" Color="Color.Primary" data-testid="selection-all"
                    Label="@L["Everyone matching the filter"]" />
+        @if (_roles.Count > 0)
+        {
+            <MudSelect T="Guid" MultiSelection="true" SelectedValues="_roleIds" SelectedValuesChanged="RolesChanged" ToStringFunc="RoleName" Label="@L["Roles"]"
+                       Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Clearable="true" Style="min-width:200px;max-width:320px" data-testid="selection-roles">
+                @foreach (var role in _roles)
+                {
+                    <MudSelectItem T="Guid" Value="@role.Id">@role.Name</MudSelectItem>
+                }
+            </MudSelect>
+        }
+        @if (_groups.Count > 0)
+        {
+            <MudSelect T="Guid" MultiSelection="true" SelectedValues="_groupIds" SelectedValuesChanged="GroupsChanged" ToStringFunc="GroupName" Label="@L["Groups"]"
+                       HelperText="@L["With their sub-groups"]" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Clearable="true" Style="min-width:200px;max-width:320px"
+                       data-testid="selection-groups">
+                @foreach (var group in _groups)
+                {
+                    <MudSelectItem T="Guid" Value="@group.Id">@GroupName(group.Id)</MudSelectItem>
+                }
+            </MudSelect>
+        }
         <MudSpacer />
         <div style="min-width:280px" data-testid="selection-add">
             <ODataPicker @key="_pickerKey" EntitySet="Users" TextProperty="FirstName,LastName,Email" Value="Guid.Empty" ValueChanged="AddAsync" Label="@L["Add a user"]" />
         </div>
     </MudStack>
-    <CoworkeeDataTable @ref="_table" T="UserRow" EntitySet="Users" Filter="@Filter" SearchFields="SearchFields" RealtimeTopic="type:User" OnLoaded="LoadedAsync"
+    <CoworkeeDataTable @ref="_table" T="UserRow" EntitySet="Users" Filter="@TableFilter" SearchFields="SearchFields" RealtimeTopic="type:User" OnLoaded="LoadedAsync"
                        StateKey="user-selection" UrlState="false" SavedViews="false" Exportable="false" Groupable="false" PageSize="PageSize">
         <Columns>
             <TemplateColumn T="UserRow" Sortable="false" Title="">

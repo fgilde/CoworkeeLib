@@ -2344,5 +2344,14 @@
   "Send {0}": "Надіслати {0}",
   "Send this template for real to users you choose": "Справді надіслати цей шаблон вибраним користувачам",
   "Send…": "Надіслати…",
-  "Normal": "Звичайна"
+  "Normal": "Звичайна",
+  "Preview and send": "Попередній перегляд і надсилання",
+  "{0} values": "Значень: {0}",
+  "None needed": "Не потрібні",
+  "With their sub-groups": "Разом із підгрупами",
+  "This template needs no values.": "Цьому шаблону не потрібні значення.",
+  "{0} of {1}": "{0} з {1}",
+  "e.g. {0}": "напр. {0}",
+  "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "Хто отримає лист: усі, хто відповідає фільтру, з окремо доданими чи виключеними користувачами. Кожен отримувач отримає його своєю мовою.",
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Лише значення, які використовує шаблон. Ім’я, адреса й мова кожного отримувача та посилання для відписки підставляються для кожного окремо."
 }

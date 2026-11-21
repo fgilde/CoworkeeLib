@@ -2344,5 +2344,14 @@
   "Send {0}": "Pošalji {0}",
   "Send this template for real to users you choose": "Stvarno pošalji ovaj predložak korisnicima po vašem izboru",
   "Send…": "Pošalji…",
-  "Normal": "Normalno"
+  "Normal": "Normalno",
+  "Preview and send": "Pregled i slanje",
+  "{0} values": "{0} vrijednosti",
+  "None needed": "Nisu potrebne",
+  "With their sub-groups": "S podgrupama",
+  "This template needs no values.": "Ovaj predložak ne treba vrijednosti.",
+  "{0} of {1}": "{0} od {1}",
+  "e.g. {0}": "npr. {0}",
+  "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "Tko dobiva poruku: svi koji odgovaraju filtru, s pojedinačno dodanim ili izostavljenim korisnicima. Svaki primatelj dobiva je na svom jeziku.",
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Samo vrijednosti koje predložak koristi. Ime, adresa i jezik svakog primatelja te poveznica za odjavu popunjavaju se za svakoga posebno."
 }

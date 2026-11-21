@@ -22,7 +22,7 @@ public sealed record SendMailTemplate(string Name, SendMailTemplateRequest Reque
 /// <summary>How many users a send for real reaches and the mail the first of them gets.</summary>
 [RequiresPermission(MailPermissions.Templates.Manage)]
 [RequiresPermission(MailPermissions.Campaigns.Send)]
-public sealed record PreviewMailTemplateSend(string Name, SendMailTemplateRequest Request) : IQuery<Result<MailTemplateSendPreviewDto>>;
+public sealed record PreviewMailTemplateSend(string Name, SendMailTemplateRequest Request, int Index = 0) : IQuery<Result<MailTemplateSendPreviewDto>>;
 
 internal sealed class SendMailTemplateValidator : AbstractValidator<SendMailTemplate>
 {
@@ -47,6 +47,7 @@ internal sealed class PreviewMailTemplateSendValidator : AbstractValidator<Previ
             RuleFor(c => c.Request.Recipients).NotNull().SetValidator(new UserSelectionValidator());
             RuleFor(c => c.Request.Model).MaximumLength(MailTemplateSend.MaxModelLength);
         });
+        RuleFor(c => c.Index).InclusiveBetween(0, MailTemplateSend.MaxRecipients - 1);
     }
 }
 
@@ -76,21 +77,26 @@ internal sealed class MailTemplateSend(
             return prepared.Error!;
         }
 
-        var (model, source) = prepared.Value;
+        var (model, source, perRecipient) = prepared.Value;
         var preview = await directory.PreviewAsync(source, 0, cancellationToken);
         if (!preview.IsSuccess)
         {
             return preview.Error!;
         }
 
-        var first = await directory.PageAsync(source, null, 1, cancellationToken);
-        if (!first.IsSuccess)
+        // the recipient at Index (in the order the send goes through them); the last one when there are fewer
+        var page = await directory.PageAsync(source, null, query.Index + 1, cancellationToken);
+        if (!page.IsSuccess)
         {
-            return first.Error!;
+            return page.Error!;
         }
 
-        var mail = first.Value.Recipients is [var recipient, ..] ? await RenderAsync(query.Name, model, recipient, cancellationToken) : null;
-        return new MailTemplateSendPreviewDto(preview.Value.Count, preview.Value.Excluded, mail is null ? null : new RenderedMailDto(mail.Subject, mail.HtmlBody));
+        var recipient = page.Value.Recipients.LastOrDefault();
+        var mail = recipient is null ? null : await RenderAsync(query.Name, model, perRecipient, recipient, cancellationToken);
+        return new MailTemplateSendPreviewDto(preview.Value.Count, preview.Value.Excluded, mail is null ? null : new RenderedMailDto(mail.Subject, mail.HtmlBody))
+        {
+            Recipient = recipient is null ? null : Name(recipient),
+        };
     }
 
     public async Task<Result<int>> HandleAsync(SendMailTemplate command, CancellationToken cancellationToken)
@@ -101,7 +107,7 @@ internal sealed class MailTemplateSend(
             return prepared.Error!;
         }
 
-        var (model, source) = prepared.Value;
+        var (model, source, perRecipient) = prepared.Value;
         var preview = await directory.PreviewAsync(source, 0, cancellationToken);
         if (!preview.IsSuccess)
         {
@@ -126,7 +132,7 @@ internal sealed class MailTemplateSend(
 
             foreach (var recipient in page.Value.Recipients)
             {
-                var rendered = await RenderAsync(command.Name, model, recipient, cancellationToken);
+                var rendered = await RenderAsync(command.Name, model, perRecipient, recipient, cancellationToken);
                 db.Add(OutgoingMail.Queue(recipient.Email, rendered, command.Name, currentUser.TenantId, clock.GetUtcNow()));
                 queued++;
             }
@@ -138,17 +144,18 @@ internal sealed class MailTemplateSend(
         return queued;
     }
 
-    private async Task<Result<(JsonObject Model, RecipientSourceDto Source)>> PrepareAsync(string name, SendMailTemplateRequest request, CancellationToken cancellationToken)
+    private async Task<Result<(JsonObject Model, RecipientSourceDto Source, JsonObject PerRecipient)>> PrepareAsync(string name, SendMailTemplateRequest request, CancellationToken cancellationToken)
     {
         if (name == CoreMailTemplates.Layout || await catalog.FindAsync(name, cancellationToken) is not { } definition)
         {
             return MailErrors.UnknownTemplate;
         }
 
+        var sample = SampleJson(definition.SampleModel);
         JsonObject? model;
         try
         {
-            model = JsonNode.Parse(request.Model ?? SampleJson(definition.SampleModel)) as JsonObject;
+            model = JsonNode.Parse(request.Model ?? sample) as JsonObject;
         }
         catch (JsonException)
         {
@@ -157,11 +164,11 @@ internal sealed class MailTemplateSend(
 
         return model is null
             ? Error.Validation(nameof(SendMailTemplateRequest.Model), "The model must be a JSON object.")
-            : (model, new RecipientSourceDto(RecipientSourceKind.Selection) { Selection = request.Recipients });
+            : (model, new RecipientSourceDto(RecipientSourceKind.Selection) { Selection = request.Recipients }, JsonNode.Parse(sample) as JsonObject ?? []);
     }
 
     // template and layout once per language, as campaigns do
-    private async Task<RenderedMail> RenderAsync(string name, JsonObject model, MailRecipient recipient, CancellationToken cancellationToken)
+    private async Task<RenderedMail> RenderAsync(string name, JsonObject model, JsonObject sample, MailRecipient recipient, CancellationToken cancellationToken)
     {
         var key = recipient.Culture ?? string.Empty;
         if (!_templates.TryGetValue(key, out var template))
@@ -169,13 +176,21 @@ internal sealed class MailTemplateSend(
             template = _templates[key] = (await renderer.ResolveAsync(name, recipient.Culture, cancellationToken), await renderer.ResolveAsync(CoreMailTemplates.Layout, recipient.Culture, cancellationToken));
         }
 
-        return await renderer.RenderContentAsync(template.Content, template.Layout, For(model, recipient), cancellationToken);
+        return await renderer.RenderContentAsync(template.Content, template.Layout, For(model, sample, recipient), cancellationToken);
     }
 
-    /// <summary>The model of one recipient: his values in <c>user</c>, his opt-out link in <c>unsubscribe_url</c> where the model has these.</summary>
-    private JsonElement For(JsonObject model, MailRecipient recipient)
+    /// <summary>
+    /// The model of one recipient: his values in <c>user</c>, his opt-out link in <c>unsubscribe_url</c> where the model or the template's sample has
+    /// these (a send asks only for the values the template reads and leaves both out).
+    /// </summary>
+    private JsonElement For(JsonObject model, JsonObject sample, MailRecipient recipient)
     {
         var mine = (JsonObject)model.DeepClone();
+        if (mine["user"] is not JsonObject && sample["user"] is JsonObject)
+        {
+            mine["user"] = new JsonObject();
+        }
+
         if (mine["user"] is JsonObject user)
         {
             var displayName = $"{recipient.FirstName} {recipient.LastName}".Trim();
@@ -186,13 +201,16 @@ internal sealed class MailTemplateSend(
             user["culture"] = recipient.Culture;
         }
 
-        if (mine.ContainsKey("unsubscribe_url"))
+        if (mine.ContainsKey("unsubscribe_url") || sample.ContainsKey("unsubscribe_url"))
         {
             mine["unsubscribe_url"] = UnsubscribeUrl(recipient.Id);
         }
 
         return JsonSerializer.SerializeToElement(mine);
     }
+
+    private static string Name(MailRecipient recipient) =>
+        $"{recipient.FirstName} {recipient.LastName}".Trim() is { Length: > 0 } name ? $"{name} <{recipient.Email}>" : recipient.Email;
 
     private string? UnsubscribeUrl(Guid userId)
     {

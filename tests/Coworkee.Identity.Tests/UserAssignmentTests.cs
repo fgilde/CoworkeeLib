@@ -181,6 +181,26 @@ public sealed class UserAssignmentTests(IdentityApp app) : IAsyncLifetime
 
     private Task<Guid> GroupAsync(string name) => PostAsync<Guid>("/api/v1/identity/groups", new GroupRequest(name, null));
 
+    [Fact]
+    public async Task The_users_set_filters_by_direct_roles_and_by_the_roles_of_groups()
+    {
+        var (eve, bob, ann) = (await UserAsync("eve"), await UserAsync("bob"), await UserAsync("ann"));
+        var (editors, viewers) = (await RoleAsync("Editors"), await RoleAsync("Viewers"));
+        var team = await GroupAsync("Team");
+        await PutAsync($"/api/v1/identity/users/{eve}/roles", new IdListRequest([editors]));
+        await PutAsync($"/api/v1/identity/users/{ann}/roles", new IdListRequest([viewers]));
+        await PutAsync($"/api/v1/identity/groups/{team}/roles", new IdListRequest([editors]));
+        await PutAsync($"/api/v1/identity/groups/{team}/members", new IdListRequest([bob]));
+
+        // as the user selection writes it: the role directly or a group that has it
+        (await UserIdsAsync($"Roles/any(r: r/RoleId in ({editors}))")).ShouldBe([eve]);
+        (await UserIdsAsync($"Roles/any(r: r/RoleId in ({editors})) or Groups/any(m: m/GroupId in ({team}))")).ShouldBe([eve, bob], ignoreOrder: true);
+        (await UserIdsAsync($"Roles/any(r: r/RoleId in ({editors},{viewers}))")).ShouldBe([eve, ann], ignoreOrder: true);
+    }
+
+    private async Task<IReadOnlyList<Guid>> UserIdsAsync(string filter) =>
+        [.. (await Admin.GetFromJsonAsync<System.Text.Json.JsonElement>($"/odata/Users?$filter={Uri.EscapeDataString(filter)}&$select=Id", Ct)).GetProperty("value").EnumerateArray().Select(u => u.GetProperty("Id").GetGuid())];
+
     private async Task<IReadOnlyList<Guid>> RolesAsync(Guid user) =>
         [.. (await Admin.GetFromJsonAsync<UserDetailDto>($"/api/v1/identity/users/{user}", Ct))!.Roles.Select(r => r.Id)];
 

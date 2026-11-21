@@ -116,25 +116,80 @@ public sealed class UserSelectionTests : ClientTestBase
     }
 
     [Fact]
-    public async Task A_mail_template_is_previewed_for_the_first_recipient_and_sent_with_the_edited_values()
+    public async Task The_selection_narrows_to_roles_directly_or_through_groups_and_to_groups_with_their_sub_groups()
     {
-        const string sample = """{"user":{"first_name":"Ada"},"login_url":"https://example.com"}""";
-        Api.PreviewMailTemplateSendAsync(default!, default!, default).ReturnsForAnyArgs(new MailTemplateSendPreviewDto(1, 1, new RenderedMailDto("Welcome, Ada", "<p>Hello Ada</p>")));
-        Api.SendMailTemplateAsync(default!, default!, default).ReturnsForAnyArgs(1);
-        var template = new MailTemplateDto("Identity.Welcome", "en", "Welcome", "<p></p>", "Welcome", "<p></p>", false, [], false) { SampleModel = sample };
+        RoleDto editors = new(Guid.CreateVersion7(), "Editors", null, false);
+        Api.GetRolesAsync(Arg.Any<CancellationToken>()).Returns([editors]);
+        GroupRow team = new(Guid.CreateVersion7(), "Team", null, [new GroupRoleRow(editors.Id)], null, "00001"), sub = new(Guid.CreateVersion7(), "Sub", null, [], null, "00001.00001");
+        _odata.With("Groups", team, sub);
+        var filters = new List<string?>();
+        _odata.Queried += (_, query) => filters.Add(query.Filter);
+        UserSelection? value = null;
+        var picker = Render<CoworkeeUserSelection>(p => p.Add(s => s.Filter, "IsActive eq true").Add(s => s.ValueChanged, v => value = v));
+        picker.WaitForElement("[data-testid='selection-groups']");
+
+        var selects = picker.FindComponents<MudSelect<Guid>>();
+        await picker.InvokeAsync(() => selects[0].Instance.SelectedValuesChanged.InvokeAsync([editors.Id]));
+
+        picker.WaitForAssertion(() => value!.Filter.ShouldBe($"(IsActive eq true) and ((Roles/any(r: r/RoleId in ({editors.Id})) or Groups/any(m: m/GroupId in ({team.Id}))))"));
+
+        await picker.InvokeAsync(() => selects[0].Instance.SelectedValuesChanged.InvokeAsync(Array.Empty<Guid>()));
+        await picker.InvokeAsync(() => selects[1].Instance.SelectedValuesChanged.InvokeAsync([team.Id]));
+
+        picker.WaitForAssertion(() => value!.Filter.ShouldBe($"(IsActive eq true) and (Groups/any(m: m/GroupId in ({team.Id},{sub.Id})))"));
+        selects[1].Instance.ToStringFunc!(sub.Id).ShouldBe("Team / Sub");
+    }
+
+    [Fact]
+    public async Task A_mail_template_is_sent_by_a_wizard_asking_only_for_the_values_it_reads_and_previewed_for_each_recipient()
+    {
+        Api.PreviewMailTemplateSendAsync(default!, default!, default, default).ReturnsForAnyArgs(call => call.ArgAt<int>(2) == 0
+            ? new MailTemplateSendPreviewDto(2, 1, new RenderedMailDto("Welcome, Ada", "<p>Hello Ada</p>")) { Recipient = "Ada Lovelace <ada@acme.test>" }
+            : new MailTemplateSendPreviewDto(2, 1, new RenderedMailDto("Welcome, Bob", "<p>Hello Bob</p>")) { Recipient = "Bob Builder <bob@acme.test>" });
+        Api.SendMailTemplateAsync(default!, default!, default).ReturnsForAnyArgs(2);
+        var template = new MailTemplateDto("Identity.Welcome", "en", "Welcome", "<p></p>", "Welcome", "<p></p>", false, [new MailVariableDto("login_url", "text", "https://example.com", false)], false)
+        {
+            SampleModel = """{"user":{"first_name":"Ada"},"login_url":"https://example.com"}""",
+            SendModel = """{"login_url":"https://example.com"}""",
+        };
         var shown = Render<MudExShowHost>(p => p.Add(h => h.Show, () => MailTemplateSendDialog.ShowAsync(Services.GetRequiredService<IDialogService>(), Services.GetRequiredService<Localization.CoworkeeLocalizer>(), template)));
-        _dialogs.WaitForAssertion(() => _dialogs.Find("[data-testid='mail-send-model']"));
+
+        // 1. recipients
         _dialogs.WaitForAssertion(() => _dialogs.Find("[data-testid='selection-count']").TextContent.ShouldBe("1 recipients"));
-        _dialogs.Find("[data-testid='mail-send-send']").HasAttribute("disabled").ShouldBeTrue();
+        _dialogs.WaitForAssertion(() => _dialogs.Find("[data-testid='wizard-next']").HasAttribute("disabled").ShouldBeFalse());
+        await _dialogs.Find("[data-testid='wizard-next']").ClickAsync(new());
 
-        await _dialogs.Find("[data-testid='mail-send-preview']").ClickAsync(new());
+        // 2. only the values the template reads
+        _dialogs.WaitForAssertion(() => _dialogs.Find("[data-testid='mail-send-model']"));
+        _dialogs.Find("[data-testid='mail-send-values']").InnerHtml.ShouldContain("Login url");
+        await _dialogs.Find("[data-testid='wizard-next']").ClickAsync(new());
 
+        // 3. the mail of each recipient, then the send
         _dialogs.WaitForAssertion(() => _dialogs.Find("[data-testid='mail-send-subject']").TextContent.ShouldBe("Welcome, Ada"));
-        _dialogs.Find("[data-testid='mail-send-count']").TextContent.ShouldBe("1 recipients");
-        _dialogs.Find("[data-testid='mail-send-frame']").GetAttribute("srcdoc").ShouldBe("<p>Hello Ada</p>");
+        _dialogs.Find("[data-testid='mail-send-recipient']").TextContent.ShouldContain("ada@acme.test");
+        _dialogs.Find("[data-testid='mail-send-position']").TextContent.ShouldBe("1 of 2");
+        await _dialogs.Find("[data-testid='mail-send-next']").ClickAsync(new());
+        _dialogs.WaitForAssertion(() => _dialogs.Find("[data-testid='mail-send-frame']").GetAttribute("srcdoc").ShouldBe("<p>Hello Bob</p>"));
+        _dialogs.Find("[data-testid='mail-send-position']").TextContent.ShouldBe("2 of 2");
+
         await _dialogs.Find("[data-testid='mail-send-send']").ClickAsync(new());
-        await Api.Received(1).SendMailTemplateAsync("Identity.Welcome", Arg.Is<SendMailTemplateRequest>(r => r.Recipients.AllMatching && r.Model!.Contains("login_url")), Arg.Any<CancellationToken>());
+        await Api.Received(1).SendMailTemplateAsync("Identity.Welcome",
+            Arg.Is<SendMailTemplateRequest>(r => r.Recipients.AllMatching && r.Model!.Contains("login_url") && !r.Model.Contains("first_name")), Arg.Any<CancellationToken>());
         _dialogs.WaitForAssertion(() => _dialogs.FindAll("[data-testid='mail-send']").ShouldBeEmpty());
+        _ = shown;
+    }
+
+    [Fact]
+    public async Task A_template_that_reads_no_values_says_so()
+    {
+        var template = new MailTemplateDto("Static", "en", "Hi", "<p>Hi</p>", "Hi", "<p>Hi</p>", false, [], true) { SampleModel = "{}", SendModel = "{}" };
+        var shown = Render<MudExShowHost>(p => p.Add(h => h.Show, () => MailTemplateSendDialog.ShowAsync(Services.GetRequiredService<IDialogService>(), Services.GetRequiredService<Localization.CoworkeeLocalizer>(), template)));
+        _dialogs.WaitForAssertion(() => _dialogs.Find("[data-testid='wizard-next']").HasAttribute("disabled").ShouldBeFalse());
+
+        await _dialogs.Find("[data-testid='wizard-next']").ClickAsync(new());
+
+        _dialogs.WaitForAssertion(() => _dialogs.Find("[data-testid='mail-send-no-values']"));
+        _dialogs.FindAll("[data-testid='mail-send-model']").ShouldBeEmpty();
         _ = shown;
     }
 

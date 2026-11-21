@@ -9,5 +9,9 @@ namespace Coworkee.Contracts.Mailing;
 /// </summary>
 public sealed record SendMailTemplateRequest(UserSelection Recipients, string? Model = null);
 
-/// <summary>Who gets the mail (<see cref="Excluded"/>: chosen, but inactive, locked, without address or opted out) and the mail of the first recipient.</summary>
-public sealed record MailTemplateSendPreviewDto(int Recipients, int Excluded, RenderedMailDto? Mail);
+/// <summary>Who gets the mail (<see cref="Excluded"/>: chosen, but inactive, locked, without address or opted out) and the mail of one recipient (the first by default).</summary>
+public sealed record MailTemplateSendPreviewDto(int Recipients, int Excluded, RenderedMailDto? Mail)
+{
+    /// <summary>Whose mail <see cref="Mail"/> is: "Ada Lovelace &lt;ada@example.com&gt;".</summary>
+    public string? Recipient { get; init; }
+}

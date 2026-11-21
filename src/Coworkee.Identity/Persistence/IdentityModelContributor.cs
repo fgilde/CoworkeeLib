@@ -46,7 +46,7 @@ internal sealed class IdentityModelContributor : IModelContributor
             user.HasMany<IdentityUserClaim<Guid>>().WithOne().HasForeignKey(c => c.UserId).IsRequired();
             user.HasMany<IdentityUserLogin<Guid>>().WithOne().HasForeignKey(l => l.UserId).IsRequired();
             user.HasMany<IdentityUserToken<Guid>>().WithOne().HasForeignKey(t => t.UserId).IsRequired();
-            user.HasMany<IdentityUserRole<Guid>>().WithOne().HasForeignKey(r => r.UserId).IsRequired();
+            user.HasMany(u => u.Roles).WithOne().HasForeignKey(r => r.UserId).IsRequired();
             user.HasMany<IdentityUserPasskey<Guid>>().WithOne().HasForeignKey(p => p.UserId).IsRequired();
             // loaded with the user, so OData's Users set shows the real memberships; row filters stay plain Where calls (navigation scope)
             user.Navigation(u => u.Groups).AutoInclude();

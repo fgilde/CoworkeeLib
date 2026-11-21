@@ -2344,5 +2344,14 @@
   "Send {0}": "{0} senden",
   "Send this template for real to users you choose": "Diese Vorlage wirklich an Benutzer Ihrer Wahl senden",
   "Send…": "Senden…",
-  "Normal": "Normal"
+  "Normal": "Normal",
+  "Preview and send": "Vorschau und Senden",
+  "{0} values": "{0} Werte",
+  "None needed": "Keine nötig",
+  "With their sub-groups": "Mit Untergruppen",
+  "This template needs no values.": "Dieses Template braucht keine Werte.",
+  "{0} of {1}": "{0} von {1}",
+  "e.g. {0}": "z. B. {0}",
+  "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "Wer die Mail bekommt: alle, auf die der Filter passt, einzelne Benutzer hinzugefügt oder ausgelassen. Jeder Empfänger bekommt sie in seiner Sprache.",
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Nur die Werte, die das Template benutzt. Name, Adresse und Sprache jedes Empfängers und der Abmeldelink werden für jeden einzeln eingesetzt."
 }

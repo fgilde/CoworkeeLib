@@ -47,6 +47,9 @@ public sealed class User : IdentityUser<Guid>, IAuditable
     /// <summary>The groups the user is a member of; lets OData filter users by group (<c>Groups/any(m: m/GroupId eq …)</c>).</summary>
     public List<UserGroupMember> Groups { get; } = [];
 
+    /// <summary>The roles given to the user directly (not those of his groups); lets OData filter users by role (<c>Roles/any(r: r/RoleId eq …)</c>).</summary>
+    public List<Microsoft.AspNetCore.Identity.IdentityUserRole<Guid>> Roles { get; } = [];
+
     public string? Street { get; set; }
 
     public string? ZipCode { get; set; }

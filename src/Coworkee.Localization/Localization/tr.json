@@ -2344,5 +2344,14 @@
   "Send {0}": "{0} gönder",
   "Send this template for real to users you choose": "Bu şablonu seçtiğiniz kullanıcılara gerçekten gönder",
   "Send…": "Gönder…",
-  "Normal": "Normal"
+  "Normal": "Normal",
+  "Preview and send": "Önizle ve gönder",
+  "{0} values": "{0} değer",
+  "None needed": "Gerekmiyor",
+  "With their sub-groups": "Alt gruplarıyla birlikte",
+  "This template needs no values.": "Bu şablon değer gerektirmiyor.",
+  "{0} of {1}": "{0} / {1}",
+  "e.g. {0}": "ör. {0}",
+  "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "Postayı kim alır: filtreye uyan herkes, tek tek eklenen veya çıkarılan kullanıcılarla. Her alıcı onu kendi dilinde alır.",
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Yalnızca şablonun kullandığı değerler. Her alıcının adı, adresi ve dili ile abonelikten çıkma bağlantısı her biri için ayrı doldurulur."
 }

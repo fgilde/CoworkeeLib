@@ -2344,5 +2344,14 @@
   "Send {0}": "ផ្ញើ {0}",
   "Send this template for real to users you choose": "ផ្ញើគំរូនេះពិតប្រាកដទៅអ្នកប្រើដែលអ្នកជ្រើស",
   "Send…": "ផ្ញើ…",
-  "Normal": "ធម្មតា"
+  "Normal": "ធម្មតា",
+  "Preview and send": "មើលជាមុន និងផ្ញើ",
+  "{0} values": "តម្លៃ {0}",
+  "None needed": "មិនត្រូវការ",
+  "With their sub-groups": "រួមទាំងក្រុមរង",
+  "This template needs no values.": "គំរូនេះមិនត្រូវការតម្លៃទេ។",
+  "{0} of {1}": "{0} នៃ {1}",
+  "e.g. {0}": "ឧ. {0}",
+  "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "អ្នកដែលទទួលសារ៖ អ្នកទាំងអស់ដែលត្រូវនឹងតម្រង ដោយអាចបន្ថែម ឬដកអ្នកប្រើម្នាក់ៗចេញ។ អ្នកទទួលម្នាក់ៗទទួលបានវាជាភាសារបស់ខ្លួន។",
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "មានតែតម្លៃដែលគំរូប្រើប៉ុណ្ណោះ។ ឈ្មោះ អាសយដ្ឋាន និងភាសារបស់អ្នកទទួលម្នាក់ៗ និងតំណឈប់ជាវ ត្រូវបានបំពេញសម្រាប់ម្នាក់ៗ។"
 }

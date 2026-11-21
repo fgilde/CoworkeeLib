@@ -2,6 +2,17 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Breaking Changes
+
+- `ICoworkeeApi.PreviewMailTemplateSendAsync` nimmt den Empfänger der Vorschau: `(name, request, index = 0, cancellationToken)`; eigene Implementierungen ergänzen den Parameter, Aufrufe mit einem Token an Position benennen ihn (`cancellationToken: ct`).
+
+### Neu
+
+- **Eine Mail-Vorlage wirklich senden ist ein Assistent**: Empfänger, Werte, Vorschau und Senden. Der Schritt Werte fragt nur, was die Texte der Vorlage in allen Sprachen lesen (`MailTemplateDto.SendModel`: das Beispielmodell, zugeschnitten von `MailTemplateUsage`, Scriban-Pfade inklusive der Mitglieder von Schleifenvariablen), nie nach `user` und `unsubscribe_url`, in `MudExStructuredDataEditor` mit Beschriftungen, Gruppen und Beispielen oder als JSON. Die Vorschau blättert durch die Empfänger (`POST .../send/preview?index=n`, `MailTemplateSendPreviewDto.Recipient`). Der Versand füllt `user` für jeden Empfänger auch, wenn das übergebene Modell es auslässt. Siehe [Eine Vorlage wirklich senden](../modules/mailing.md#eine-vorlage-wirklich-senden).
+- `CoworkeeUserSelection` schränkt auf **Rollen** (direkt oder über eine Gruppe) und **Gruppen** (mit Untergruppen) ein; die Menge Users filtert nach Rolle: `Roles/any(r: r/RoleId in (...))` (neue Navigation `User.Roles`, keine Schemaänderung). Die Seite Benachrichtigung senden hat sie auch.
+
 ## 0.0.1.96 (2026-11-20)
 
 ### Breaking Changes

@@ -1,5 +1,7 @@
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components.Data;
+using Coworkee.Client.Blazor.Components.Groups;
+using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Data.Admin;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Identity;
@@ -9,8 +11,8 @@ using MudBlazor;
 namespace Coworkee.Client.Blazor.Components.Users;
 
 /// <summary>
-/// Chooses users from the Users set with the rights, facets and search of the users page: everyone the filter matches, single users left out or added
-/// by hand. The value is a serialisable <see cref="UserSelection"/> (filter + added + left out) that the server resolves with the caller's rights, e.g.
+/// Chooses users from the Users set with the rights, facets and search of the users page, narrowed to roles (direct or through a group) and groups
+/// (with their sub-groups) where the caller may read them: everyone the filter matches, single users left out or added by hand. The value is a serialisable <see cref="UserSelection"/> (filter + added + left out) that the server resolves with the caller's rights, e.g.
 /// <c>EventTarget.Users(selection)</c>; the recipient count comes from the server and follows changes of users live.
 /// </summary>
 public partial class CoworkeeUserSelection : IDisposable
@@ -21,10 +23,16 @@ public partial class CoworkeeUserSelection : IDisposable
     private Dictionary<Guid, string> _names = [];
     private CancellationTokenSource? _counting;
     private int _pickerKey;
+    private IReadOnlyList<RoleDto> _roles = [];
+    private IReadOnlyList<GroupRow> _groups = [];
+    private IReadOnlyCollection<Guid> _roleIds = [];
+    private IReadOnlyCollection<Guid> _groupIds = [];
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
+
+    [Inject] private IODataClient OData { get; set; } = null!;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
@@ -42,8 +50,77 @@ public partial class CoworkeeUserSelection : IDisposable
 
     [Parameter] public string? Class { get; set; }
 
+    /// <summary>The most groups the group filter offers (ordered by path).</summary>
+    internal const int MaxGroups = 500;
+
     /// <summary>How long the count waits for further changes.</summary>
     internal static TimeSpan CountDelay { get; set; } = TimeSpan.FromMilliseconds(300);
+
+    // the page's filter and the chosen roles and groups; the table adds facets, search and column filters
+    private string? TableFilter => And(Filter, RoleFilter, GroupFilter);
+
+    // members of a chosen role: directly or through a group that has it (as permissions count roles)
+    private string? RoleFilter
+    {
+        get
+        {
+            if (_roleIds.Count == 0)
+            {
+                return null;
+            }
+
+            var direct = $"Roles/any(r: r/RoleId in ({string.Join(",", _roleIds)}))";
+            var groups = _groups.Where(g => g.Roles.Any(r => _roleIds.Contains(r.RoleId))).Select(g => g.Id).ToList();
+            return groups.Count == 0 ? direct : $"({direct} or Groups/any(m: m/GroupId in ({string.Join(",", groups)})))";
+        }
+    }
+
+    private string? GroupFilter
+    {
+        get
+        {
+            if (_groupIds.Count == 0)
+            {
+                return null;
+            }
+
+            var codes = _groups.Where(g => _groupIds.Contains(g.Id) && g.Code is not null).Select(g => g.Code + ".").ToList();
+            var ids = _groups.Where(g => _groupIds.Contains(g.Id) || (g.Code is { } code && codes.Any(c => code.StartsWith(c, StringComparison.Ordinal)))).Select(g => g.Id);
+            return $"Groups/any(m: m/GroupId in ({string.Join(",", ids.Union(_groupIds))}))";
+        }
+    }
+
+    private static string? And(params string?[] filters) =>
+        filters.Where(f => !string.IsNullOrWhiteSpace(f)).ToList() is { Count: > 0 } parts ? string.Join(" and ", parts.Select(p => parts.Count > 1 ? $"({p})" : p)) : null;
+
+    // only what the caller may read: without the right to view roles or groups the filter is not offered
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _roles = [.. (await Api.GetRolesAsync()).OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase)];
+        }
+        catch (Exception exception) when (exception is HttpRequestException or ApiException)
+        {
+        }
+
+        try
+        {
+            var groups = await OData.QueryAsync<GroupRow>("Groups", new ODataQuery { Select = "Id,Name,Code,Roles", OrderBy = "Code", Top = MaxGroups, Count = false });
+            _groups = groups?.Items ?? [];
+        }
+        catch (Exception exception) when (exception is HttpRequestException or ApiException)
+        {
+        }
+    }
+
+    private string RoleName(Guid id) => _roles.FirstOrDefault(r => r.Id == id)?.Name ?? string.Empty;
+
+    private string GroupName(Guid id) => _groups.FirstOrDefault(g => g.Id == id) is { } group ? GroupPaths.Path(group.Code, group.Name, _groups.Select(g => (g.Code, g.Name))) : string.Empty;
+
+    private void RolesChanged(IEnumerable<Guid> ids) => _roleIds = [.. ids];
+
+    private void GroupsChanged(IEnumerable<Guid> ids) => _groupIds = [.. ids];
 
     private bool IsChosen(Guid id) => Value.Included?.Contains(id) == true || (Value.AllMatching && Value.Excluded?.Contains(id) != true);
 

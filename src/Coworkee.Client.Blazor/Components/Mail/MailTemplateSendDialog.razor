@@ -3,41 +3,98 @@
 @using MudBlazor.Extensions.Components.ObjectEdit
 <MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial">
     <DialogContent>
-        <MudStack Spacing="3" data-testid="mail-send">
-            <MudText Typo="Typo.overline" Class="mud-text-secondary">@L["Recipients"]</MudText>
-            <CoworkeeUserSelection @bind-Value="_recipients" @bind-Value:after="Forget" />
-            <MudText Typo="Typo.overline" Class="mud-text-secondary">@L["Values"]</MudText>
-            <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["The values the template uses. The fields of user (name, address, language) are filled for each recipient."]</MudText>
-            @if (!string.IsNullOrEmpty(_model))
+        <MudStepper ActiveIndex="_step" ActiveIndexChanged="GoToAsync" NonLinear="true" ActionContent="NoActions" Class="mb-2" data-testid="mail-send-steps">
+            <MudStep Title="@L["Recipients"]" SecondaryText="@(_count is { } count ? L["{0} recipients", count.Active] : null)" Completed="@(_step > 0)" />
+            <MudStep Title="@L["Values"]" SecondaryText="@ValuesText" Completed="@(_step > 1)" Disabled="@(!HasRecipients)" />
+            <MudStep Title="@L["Preview and send"]" Disabled="@(!HasRecipients)" />
+        </MudStepper>
+
+        <div hidden="@(_step != 0)" data-testid="mail-send">
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">@L["Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language."]</MudText>
+            <CoworkeeUserSelection @bind-Value="_recipients" @bind-Value:after="Forget" CountChanged="CountChanged" />
+        </div>
+
+        <div hidden="@(_step != 1)" data-testid="mail-send-values">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them."]</MudText>
+                <MudSpacer />
+                @if (HasValues)
+                {
+                    <MudSwitch T="bool" @bind-Value="_json" Color="Color.Primary" Label="JSON" data-testid="mail-send-json" />
+                }
+            </MudStack>
+            @if (!HasValues)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true" data-testid="mail-send-no-values">@L["This template needs no values."]</MudAlert>
+            }
+            else if (_json)
+            {
+                <MudTextField T="string" @bind-Value="_model" @bind-Value:after="Forget" Lines="14" Variant="Variant.Outlined" Style="font-family:monospace"
+                              data-testid="mail-send-model-json" />
+            }
+            else if (_step == 1)
             {
                 <div data-testid="mail-send-model">
-                    <MudExStructuredDataEditor @bind-Data="_model" @bind-Data:after="Forget" DataType="StructuredDataType.Json" FormatJson="true" ShowSaveButton="false" ShowCancelButton="false" />
+                    <MudExStructuredDataEditor @bind-Data="_model" @bind-Data:after="Forget" DataType="StructuredDataType.Json" FormatJson="true" ShowSaveButton="false"
+                                               ShowCancelButton="false" MetaConfiguration="Configure" />
                 </div>
             }
-            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Preview" OnClick="PreviewAsync" Disabled="@(_busy || _recipients.IsEmpty)"
-                           data-testid="mail-send-preview">@L["Preview"]</MudButton>
-                @if (_preview is { } preview)
-                {
+        </div>
+
+        <div hidden="@(_step != 2)" data-testid="mail-send-preview-step">
+            @if (_preview is { } preview)
+            {
+                <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="2" Class="mb-2">
+                    <MudIcon Icon="@Icons.Material.Outlined.Group" Size="Size.Small" />
                     <MudText Typo="Typo.subtitle2" data-testid="mail-send-count">@L["{0} recipients", preview.Recipients]</MudText>
                     @if (preview.Excluded > 0)
                     {
                         <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["{0} left out: inactive, locked, without address or opted out", preview.Excluded]</MudText>
                     }
+                    <MudSpacer />
+                    @if (LastIndex > 0)
+                    {
+                        <MudIconButton Icon="@Icons.Material.Outlined.ChevronLeft" Size="Size.Small" Disabled="@(_busy || _index == 0)" OnClick="() => ShowAsync(_index - 1)"
+                                       aria-label="@L["Previous"]" data-testid="mail-send-previous" />
+                        <MudText Typo="Typo.caption" data-testid="mail-send-position">@L["{0} of {1}", _index + 1, LastIndex + 1]</MudText>
+                        <MudIconButton Icon="@Icons.Material.Outlined.ChevronRight" Size="Size.Small" Disabled="@(_busy || _index >= LastIndex)" OnClick="() => ShowAsync(_index + 1)"
+                                       aria-label="@L["Next"]" data-testid="mail-send-next" />
+                    }
+                </MudStack>
+                @if (preview.Mail is { } mail)
+                {
+                    <MudPaper Outlined="true" Class="pa-2 mb-2">
+                        @if (preview.Recipient is { } recipient)
+                        {
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary" data-testid="mail-send-recipient">@L["To"]: @recipient</MudText>
+                        }
+                        <MudText Typo="Typo.body2" Style="font-weight:600" data-testid="mail-send-subject">@mail.Subject</MudText>
+                    </MudPaper>
+                    <iframe data-testid="mail-send-frame" sandbox="" srcdoc="@mail.HtmlBody" title="@L["Preview"]" style="width:100%;height:440px;border:1px solid var(--mud-palette-lines-default);border-radius:4px;background:#fff"></iframe>
                 }
-            </MudStack>
-            @if (_preview?.Mail is { } mail)
-            {
-                <MudPaper Outlined="true" Class="pa-2">
-                    <MudText Typo="Typo.body2" Style="font-weight:600" data-testid="mail-send-subject">@mail.Subject</MudText>
-                </MudPaper>
-                <iframe data-testid="mail-send-frame" sandbox="" srcdoc="@mail.HtmlBody" title="@L["Preview"]" style="width:100%;height:420px;border:1px solid var(--mud-palette-lines-default);border-radius:4px;background:#fff"></iframe>
             }
-        </MudStack>
+            else if (_busy)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+            }
+        </div>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="() => Dialog.Cancel()">@L["Cancel"]</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Send" OnClick="SendAsync" Disabled="@(_busy || _preview is not { Recipients: > 0 })"
-                   data-testid="mail-send-send">@(_preview is { Recipients: > 0 } p ? L["Send to {0} users", p.Recipients] : L["Send"])</MudButton>
+        <MudSpacer />
+        @if (_step > 0)
+        {
+            <MudButton OnClick="() => GoToAsync(_step - 1)" data-testid="wizard-back">@L["Back"]</MudButton>
+        }
+        @if (_step < 2)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" EndIcon="@Icons.Material.Outlined.ChevronRight" Disabled="@(!HasRecipients)" OnClick="() => GoToAsync(_step + 1)"
+                       data-testid="wizard-next">@L["Next"]</MudButton>
+        }
+        else
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Send" OnClick="SendAsync" Disabled="@(_busy || _preview is not { Recipients: > 0 })"
+                       data-testid="mail-send-send">@(_preview is { Recipients: > 0 } p ? L["Send to {0} users", p.Recipients] : L["Send"])</MudButton>
+        }
     </DialogActions>
 </MudDialog>

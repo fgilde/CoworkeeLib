@@ -2344,5 +2344,14 @@
   "Send {0}": "Odeslat {0}",
   "Send this template for real to users you choose": "Opravdu odeslat tuto šablonu vybraným uživatelům",
   "Send…": "Odeslat…",
-  "Normal": "Normální"
+  "Normal": "Normální",
+  "Preview and send": "Náhled a odeslání",
+  "{0} values": "{0} hodnot",
+  "None needed": "Žádné nejsou potřeba",
+  "With their sub-groups": "Včetně podskupin",
+  "This template needs no values.": "Tato šablona nepotřebuje žádné hodnoty.",
+  "{0} of {1}": "{0} z {1}",
+  "e.g. {0}": "např. {0}",
+  "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "Kdo dostane e-mail: všichni, kdo odpovídají filtru, s jednotlivými uživateli přidanými nebo vynechanými. Každý příjemce jej dostane ve svém jazyce.",
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Jen hodnoty, které šablona používá. Jméno, adresa a jazyk každého příjemce a odkaz na odhlášení se doplní pro každého zvlášť."
 }

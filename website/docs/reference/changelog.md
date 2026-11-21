@@ -2,6 +2,17 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Breaking changes
+
+- `ICoworkeeApi.PreviewMailTemplateSendAsync` takes the recipient to preview: `(name, request, index = 0, cancellationToken)`; own implementations add the parameter, calls passing a token by position name it (`cancellationToken: ct`).
+
+### Added
+
+- **Sending a mail template for real is a wizard**: recipients, values, preview and send. The values step asks only for what the template's texts of every language read (`MailTemplateDto.SendModel`: the sample model cut down by `MailTemplateUsage`, Scriban paths including the members of loop variables), never for `user` and `unsubscribe_url`, in `MudExStructuredDataEditor` with labels, groups and samples, or as JSON. The preview pages through the recipients (`POST .../send/preview?index=n`, `MailTemplateSendPreviewDto.Recipient`). The send fills `user` for each recipient also when the given model leaves it out. See [Sending a template for real](../modules/mailing.md#sending-a-template-for-real).
+- `CoworkeeUserSelection` narrows to **roles** (directly or through a group) and **groups** (with sub-groups); the Users set filters by role: `Roles/any(r: r/RoleId in (...))` (new navigation `User.Roles`, no schema change). The Send notification page has them too.
+
 ## 0.0.1.96 (2026-11-20)
 
 ### Breaking changes

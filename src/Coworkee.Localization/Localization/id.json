@@ -2344,5 +2344,14 @@
   "Send {0}": "Kirim {0}",
   "Send this template for real to users you choose": "Kirim templat ini sungguhan ke pengguna pilihan Anda",
   "Send…": "Kirim…",
-  "Normal": "Normal"
+  "Normal": "Normal",
+  "Preview and send": "Pratinjau dan kirim",
+  "{0} values": "{0} nilai",
+  "None needed": "Tidak diperlukan",
+  "With their sub-groups": "Beserta subgrupnya",
+  "This template needs no values.": "Templat ini tidak memerlukan nilai.",
+  "{0} of {1}": "{0} dari {1}",
+  "e.g. {0}": "mis. {0}",
+  "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "Siapa yang menerima email: semua yang cocok dengan filter, dengan pengguna tertentu ditambahkan atau dikecualikan. Setiap penerima mendapatkannya dalam bahasanya sendiri.",
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Hanya nilai yang digunakan templat. Nama, alamat, dan bahasa setiap penerima serta tautan berhenti berlangganan diisi untuk masing-masing."
 }

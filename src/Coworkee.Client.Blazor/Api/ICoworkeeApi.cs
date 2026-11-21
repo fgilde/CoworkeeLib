@@ -222,8 +222,8 @@ public interface ICoworkeeApi
 
     Task SendTestMailAsync(string name, string culture, CancellationToken cancellationToken = default);
 
-    /// <summary>The recipients of a send for real and the mail of the first one.</summary>
-    Task<MailTemplateSendPreviewDto> PreviewMailTemplateSendAsync(string name, SendMailTemplateRequest request, CancellationToken cancellationToken = default);
+    /// <summary>The recipients of a send for real and the mail of the one at <paramref name="index"/> (in send order).</summary>
+    Task<MailTemplateSendPreviewDto> PreviewMailTemplateSendAsync(string name, SendMailTemplateRequest request, int index = 0, CancellationToken cancellationToken = default);
 
     /// <summary>Sends the template for real, one mail per recipient; returns how many were queued.</summary>
     Task<int> SendMailTemplateAsync(string name, SendMailTemplateRequest request, CancellationToken cancellationToken = default);

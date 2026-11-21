@@ -291,8 +291,8 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public Task SendTestMailAsync(string name, string culture, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Post, Template(name, culture) + "/test", null, cancellationToken);
 
-    public Task<MailTemplateSendPreviewDto> PreviewMailTemplateSendAsync(string name, SendMailTemplateRequest request, CancellationToken cancellationToken = default) =>
-        SendAsync<MailTemplateSendPreviewDto>(HttpMethod.Post, $"api/v1/mail/templates/{Uri.EscapeDataString(name)}/send/preview", request, cancellationToken);
+    public Task<MailTemplateSendPreviewDto> PreviewMailTemplateSendAsync(string name, SendMailTemplateRequest request, int index = 0, CancellationToken cancellationToken = default) =>
+        SendAsync<MailTemplateSendPreviewDto>(HttpMethod.Post, $"api/v1/mail/templates/{Uri.EscapeDataString(name)}/send/preview?index={index}", request, cancellationToken);
 
     public Task<int> SendMailTemplateAsync(string name, SendMailTemplateRequest request, CancellationToken cancellationToken = default) =>
         SendAsync<int>(HttpMethod.Post, $"api/v1/mail/templates/{Uri.EscapeDataString(name)}/send", request, cancellationToken);

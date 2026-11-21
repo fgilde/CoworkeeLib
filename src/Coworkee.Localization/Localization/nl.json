@@ -2344,5 +2344,14 @@
   "Send {0}": "{0} versturen",
   "Send this template for real to users you choose": "Deze sjabloon echt versturen naar gebruikers die u kiest",
   "Send…": "Versturen…",
-  "Normal": "Normaal"
+  "Normal": "Normaal",
+  "Preview and send": "Voorbeeld en verzenden",
+  "{0} values": "{0} waarden",
+  "None needed": "Geen nodig",
+  "With their sub-groups": "Met hun subgroepen",
+  "This template needs no values.": "Deze sjabloon heeft geen waarden nodig.",
+  "{0} of {1}": "{0} van {1}",
+  "e.g. {0}": "bijv. {0}",
+  "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "Wie de mail krijgt: iedereen die aan het filter voldoet, met losse gebruikers toegevoegd of weggelaten. Elke ontvanger krijgt hem in zijn eigen taal.",
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Alleen de waarden die de sjabloon gebruikt. Naam, adres en taal van elke ontvanger en de afmeldlink worden per ontvanger ingevuld."
 }

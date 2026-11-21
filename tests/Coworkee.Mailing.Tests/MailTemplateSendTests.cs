@@ -55,6 +55,52 @@ public sealed class MailTemplateSendTests(MailApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_send_model_asks_only_for_the_values_the_template_reads_and_never_for_the_recipients_own()
+    {
+        var template = (await Admin.GetFromJsonAsync<MailTemplateDto>($"{Welcome}/en", Ct))!;
+
+        var model = JsonNode.Parse(template.SendModel!)!.AsObject();
+        model.ContainsKey("user").ShouldBeFalse();
+        model.ContainsKey("unsubscribe_url").ShouldBeFalse();
+        model.Select(p => p.Key).ShouldAllBe(key => template.Body.Contains(key) || template.Subject.Contains(key));
+    }
+
+    [Fact]
+    public async Task A_send_with_only_the_asked_values_still_greets_each_recipient_by_name()
+    {
+        await SeedUserAsync("grace@seed.test", "Grace");
+        var template = (await Admin.GetFromJsonAsync<MailTemplateDto>($"{Welcome}/en", Ct))!;
+
+        (await ReadAsync<int>(await Admin.PostAsJsonAsync($"{Welcome}/send", new SendMailTemplateRequest(new UserSelection("Email eq 'grace@seed.test'"), template.SendModel), Ct))).ShouldBe(1);
+
+        var mail = await app.InDbAsync(db => db.Set<OutgoingMail>().AsNoTracking().SingleAsync(m => m.To == "grace@seed.test", Ct));
+        mail.Subject.ShouldBe("Welcome, Grace");
+        mail.HtmlBody.ShouldContain("Hello Grace");
+    }
+
+    [Fact]
+    public async Task The_preview_pages_through_the_recipients_in_send_order()
+    {
+        await SeedUserAsync("grace@seed.test", "Grace");
+        await SeedUserAsync("linus@seed.test", "Linus");
+        var request = new SendMailTemplateRequest(new UserSelection("endswith(Email,'@seed.test')"));
+
+        var shown = new List<string?>();
+        foreach (var index in new[] { 0, 1, 7 })
+        {
+            var preview = await ReadAsync<MailTemplateSendPreviewDto>(await Admin.PostAsJsonAsync($"{Welcome}/send/preview?index={index}", request, Ct));
+            preview.Recipients.ShouldBe(2);
+            preview.Mail!.Subject.ShouldBe($"Welcome, {preview.Recipient!.Split(' ')[0]}");
+            shown.Add(preview.Recipient);
+        }
+
+        shown[0].ShouldNotBe(shown[1]);
+        shown[2].ShouldBe(shown[1]); // past the end: the last one
+        shown.ShouldAllBe(r => r!.EndsWith("@seed.test>"));
+        (await Admin.PostAsJsonAsync($"{Welcome}/send/preview?index=-1", request, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task Sending_refuses_the_layout_unknown_templates_bad_models_and_other_organisations_users()
     {
         var bob = await SeedUserAsync("bob@seed.test", "Bob");

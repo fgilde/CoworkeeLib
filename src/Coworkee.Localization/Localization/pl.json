@@ -2344,5 +2344,14 @@
   "Send {0}": "Wyślij {0}",
   "Send this template for real to users you choose": "Naprawdę wyślij ten szablon do wybranych użytkowników",
   "Send…": "Wyślij…",
-  "Normal": "Normalny"
+  "Normal": "Normalny",
+  "Preview and send": "Podgląd i wysyłka",
+  "{0} values": "{0} wartości",
+  "None needed": "Brak potrzebnych",
+  "With their sub-groups": "Z podgrupami",
+  "This template needs no values.": "Ten szablon nie potrzebuje wartości.",
+  "{0} of {1}": "{0} z {1}",
+  "e.g. {0}": "np. {0}",
+  "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "Kto dostanie wiadomość: wszyscy pasujący do filtra, z pojedynczymi użytkownikami dodanymi lub pominiętymi. Każdy odbiorca dostaje ją w swoim języku.",
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Tylko wartości używane przez szablon. Imię, adres i język każdego odbiorcy oraz link do wypisania są uzupełniane dla każdego z osobna."
 }

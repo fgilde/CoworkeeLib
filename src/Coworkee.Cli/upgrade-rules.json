@@ -968,6 +968,22 @@
         { "text": "Own ICoworkeeApi implementations add CountUserSelectionAsync, SendNotificationAsync, PreviewMailTemplateSendAsync and SendMailTemplateAsync; own ISocialApi implementations add GetFeaturesAsync.", "find": ":\\s*(ICoworkeeApi|ISocialApi)\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
         { "text": "INotifier has SendAsync (event targets, toasts, mail modes) and ToastAsync: a decorator of INotifier forwards SendAsync to the notifier it wraps, public Task SendAsync(NotificationRequest request, CancellationToken cancellationToken = default) => inner.SendAsync(request, cancellationToken). Without it the interface's default passes stored requests to user ids on to PublishAsync and throws NotSupportedException for toasts and other targets.", "find": "[:,]\\s*INotifier\\b", "files": [ "src/**/*.cs" ], "unless": "SendAsync" }
       ]
+    },
+    {
+      "version": "0.0.1.97",
+      "breaking": [
+        "ICoworkeeApi.PreviewMailTemplateSendAsync takes the recipient to preview: (name, request, index = 0, cancellationToken); own implementations add the parameter."
+      ],
+      "manual": [
+        {
+          "text": "Own ICoworkeeApi implementations change PreviewMailTemplateSendAsync to (string name, SendMailTemplateRequest request, int index = 0, CancellationToken cancellationToken = default); calls that pass a token by position name it (cancellationToken: ct).",
+          "find": "PreviewMailTemplateSendAsync",
+          "files": [
+            "src/**/*.cs",
+            "tests/**/*.cs"
+          ]
+        }
+      ]
     }
   ]
 }

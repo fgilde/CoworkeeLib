@@ -162,11 +162,13 @@ Next to the editor the **Placeholders** list shows every variable of the templat
 
 ### Sending a template for real
 
-**Send…** next to the title (with `Mail.Campaigns.Send` and `Identity.Users.View` besides `Mail.Templates.Manage`) sends the template to users right away, any template of a module or your own. The sheet has three parts:
+**Send…** next to the title (with `Mail.Campaigns.Send` and `Identity.Users.View` besides `Mail.Templates.Manage`) sends the template to users right away, any template of a module or your own. A wizard of three steps leads through it:
 
-1. **Recipients**: the user selection of the library (`CoworkeeUserSelection`, see [User selections](../fundamentals/event-targets.md#user-selections)): everyone the filter of the users table matches, single users left out or added by hand, with the count of the server.
-2. **Values**: the template's model, filled with its sample, in the MudBlazor.Extensions object editor (`MudExStructuredDataEditor`). Change what the template should say (a link, a date, a text). The fields of `user` (`first_name`, `last_name`, `display_name`, `email`, `culture`) are filled for each recipient, and a key `unsubscribe_url` gets each recipient's own opt-out link.
-3. **Preview** renders the mail of the first recipient and shows how many get it and how many are left out; **Send to N users** queues one mail per recipient, in his language, through the mail log (`OutgoingMail`, delivery as every other mail).
+1. **Recipients**: the user selection of the library (`CoworkeeUserSelection`, see [User selections](../fundamentals/event-targets.md#user-selections)): everyone the filter of the users table matches (facets, search, roles, groups with their sub-groups), single users left out or added by hand, with the count of the server.
+2. **Values**: only what the template reads. The server parses the template's subjects and bodies of every language (Scriban) and cuts its sample model down to the values they use (`MailTemplateDto.SendModel`): a template that shows `shipment.number` and `shipment.eta` asks for these two, not for the whole shipment; in a loop `{{ for c in shipment.containers }}{{ c.number }}{{ end }}` each container asks for its number. The form is the MudBlazor.Extensions object editor (`MudExStructuredDataEditor`) with a readable label per field, a group per object and the sample as hint; the switch **JSON** edits the same values as text. The fields of `user` (`first_name`, `last_name`, `display_name`, `email`, `culture`) and `unsubscribe_url` are never asked for: the send fills them for each recipient.
+3. **Preview and send** renders the mail of the first recipient, shows how many get it and how many are left out, and pages through the recipients ("1 of 37", the mail of each one with his values); **Send to N users** queues one mail per recipient, in his language, through the mail log (`OutgoingMail`, delivery as every other mail).
+
+`POST /api/v1/mail/templates/{name}/send/preview?index=n` renders the mail of the recipient at `n` in send order (`MailTemplateSendPreviewDto.Recipient` names him). `MailTemplateUsage.Read(texts)` and `MailTemplateUsage.SendModel(sampleJson, usage)` (Coworkee.Mailing) do the cut for own pages.
 
 Who gets it follows the campaign rules: users without an address, locked and deactivated users and users who turned off **Receive newsletters** are left out. One send reaches at most 1,000 users; more go through a campaign. The layout cannot be sent.
 

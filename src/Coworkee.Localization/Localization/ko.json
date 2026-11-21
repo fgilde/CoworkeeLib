@@ -2344,5 +2344,14 @@
   "Send {0}": "{0} 보내기",
   "Send this template for real to users you choose": "이 템플릿을 선택한 사용자에게 실제로 보내기",
   "Send…": "보내기…",
-  "Normal": "보통"
+  "Normal": "보통",
+  "Preview and send": "미리 보기 및 보내기",
+  "{0} values": "값 {0}개",
+  "None needed": "필요 없음",
+  "With their sub-groups": "하위 그룹 포함",
+  "This template needs no values.": "이 템플릿에는 값이 필요하지 않습니다.",
+  "{0} of {1}": "{0} / {1}",
+  "e.g. {0}": "예: {0}",
+  "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "메일 받는 사람: 필터에 맞는 모든 사용자이며, 개별 사용자를 추가하거나 제외할 수 있습니다. 각 수신자는 자신의 언어로 받습니다.",
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "템플릿이 사용하는 값만 입력합니다. 각 수신자의 이름, 주소, 언어와 수신 거부 링크는 수신자마다 채워집니다."
 }

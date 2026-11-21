@@ -61,6 +61,7 @@ internal sealed class MailTemplateHandlers(
         }
 
         var owner = await OwnerAsync(definition, cancellationToken);
+        var sample = MailTemplateSend.SampleJson(definition.SampleModel);
         var existing = await FindOverrideAsync(query.Name, query.Culture, owner, cancellationToken);
         var fallback = catalog.IsCustom(definition)
             ? await OtherCultureAsync(query.Name, query.Culture, owner, cancellationToken)
@@ -76,7 +77,8 @@ internal sealed class MailTemplateHandlers(
             MailTemplateVariables.From(definition.SampleModel),
             catalog.IsCustom(definition))
         {
-            SampleModel = MailTemplateSend.SampleJson(definition.SampleModel),
+            SampleModel = sample,
+            SendModel = MailTemplateUsage.SendModel(sample, MailTemplateUsage.Read(await TextsAsync(definition, owner, cancellationToken))),
         };
     }
 
@@ -224,6 +226,14 @@ internal sealed class MailTemplateHandlers(
     {
         var rows = await db.Set<MailTemplateOverride>().AsNoTracking().Where(o => o.Name == name && o.TenantId == owner && o.Culture != culture).ToListAsync(cancellationToken);
         return rows.OrderBy(o => o.CreatedAt).FirstOrDefault() is { } first ? new MailTemplateContent(first.Subject, first.Body) : new MailTemplateContent(string.Empty, string.Empty);
+    }
+
+    // what a send may render: the defaults and the stored texts of every language (the organisation's and the shared ones)
+    private async Task<IEnumerable<string?>> TextsAsync(MailTemplateDefinition definition, Guid? owner, CancellationToken cancellationToken)
+    {
+        var stored = await db.Set<MailTemplateOverride>().AsNoTracking().Where(o => o.Name == definition.Name && (o.TenantId == owner || o.TenantId == null))
+            .Select(o => new { o.Subject, o.Body }).ToListAsync(cancellationToken);
+        return definition.Defaults.Values.SelectMany(d => new[] { d.Subject, d.Body }).Concat(stored.SelectMany(o => new[] { o.Subject, o.Body }));
     }
 
     private Task<MailTemplateOverride?> FindOverrideAsync(string name, string culture, Guid? tenantId, CancellationToken cancellationToken) =>
