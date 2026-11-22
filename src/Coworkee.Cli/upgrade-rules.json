@@ -984,6 +984,15 @@
           ]
         }
       ]
+    },
+    {
+      "version": "0.0.1.99",
+      "breaking": [
+        "SigNoz as a second observability tool next to Grafana (options.UseSigNoz(), opt-in): the services export to it through SIGNOZ_OTLP_ENDPOINT and SIGNOZ_OTLP_PROTOCOL, which ServiceDefaults has to read like the Grafana ones."
+      ],
+      "manual": [
+        { "text": "SigNoz exporter per signal next to the Grafana one: with SIGNOZ_OTLP_ENDPOINT add exporters signoz-logs/-metrics/-traces, with SIGNOZ_OTLP_PROTOCOL=http/protobuf to {endpoint}/v1/{logs|metrics|traces} over HttpProtobuf (see the template ServiceDefaults/Extensions.cs). Needed only with options.UseSigNoz().", "find": "GRAFANA_OTLP_ENDPOINT", "files": [ "src/*.ServiceDefaults/Extensions.cs" ], "unless": "SIGNOZ_OTLP_ENDPOINT" }
+      ]
     }
   ]
 }

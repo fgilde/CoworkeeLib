@@ -59,6 +59,7 @@ public sealed partial class ReviewStep(MainViewModel main) : StepViewModel(main)
             new(L.Get("Redis"), YesNo(values["redis"])),
             new(L.Get("Virus scan"), YesNo(values["antivirus"])),
             new(L.Get("Grafana"), YesNo(values["grafana"])),
+            new(L.Get("SigNoz"), YesNo(values["signoz"])),
             new(L.Get("WebDataStudio"), YesNo(values["webDataStudio"])),
             new(L.Get("AspireUI"), YesNo(values["aspireUI"])),
             new(L.Get("AirWorks client"), YesNo(values["airworks"])),

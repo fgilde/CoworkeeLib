@@ -2,6 +2,7 @@ using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Nextended.Aspire.Hosting.AspireUI;
 using Nextended.Aspire.Hosting.Grafana;
+using Nextended.Aspire.Hosting.SigNoz;
 using Nextended.Aspire.Hosting.WebDataStudio;
 
 namespace Coworkee.Aspire.Tests;
@@ -47,6 +48,107 @@ public sealed class ToolsTests
         grafana["GF_DS_APP_DATABASE_PASSWORD"].ShouldBe("{postgres-password.value}");
         grafana["MINE"].ShouldBe("1");
         app.Grafana.Resource.Annotations.OfType<ContainerMountAnnotation>().ShouldContain(m => m.Target == "/var/lib/grafana/dashboards");
+    }
+
+    [Fact]
+    public void Signoz_is_off_unless_asked_and_grafana_needs_no_signoz()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo", o => o.UseGrafana().UseSigNoz().WithoutSigNoz());
+
+        app.AddProjects();
+
+        builder.Resources.OfType<SigNozResource>().ShouldBeEmpty();
+        builder.Resources.OfType<SigNozClickHouseResource>().ShouldBeEmpty();
+        app.SigNoz.ShouldBeNull();
+        app.Grafana.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task Without_signoz_the_services_get_no_signoz_exporter()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo", o => o.UseGrafana());
+
+        app.AddProjects();
+        Allocated(app.AuthServer!.Resource);
+
+        (await Environment(app.Apis[0].Resource)).Keys.ShouldNotContain(CoworkeeApp.SigNozOtlpEndpoint);
+    }
+
+    [Fact]
+    public async Task Signoz_receives_the_services_telemetry_next_to_grafana_and_takes_the_administrator()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo", o => { o.Administrator = Admin; o.UseGrafana().UseSigNoz(s => s.WithEnvironment("MINE", "1")); });
+
+        app.AddProjects();
+        Allocated(app.AuthServer!.Resource);
+
+        builder.Resources.Select(r => r.Name).ShouldContain("signoz-collector");
+        builder.Resources.Select(r => r.Name).ShouldContain("signoz-clickhouse");
+        foreach (var service in new IResourceWithEnvironment[] { app.Migrations!.Resource, app.Apis[0].Resource, app.Web!.Resource })
+        {
+            var env = await Environment(service);
+            env[CoworkeeApp.SigNozOtlpEndpoint].ShouldBe("{signoz-collector.bindings.otlp-grpc.url}");
+            env[CoworkeeApp.SigNozOtlpProtocol].ShouldBe("grpc");
+            env[CoworkeeApp.GrafanaOtlpEndpoint].ShouldBe("{otel-collector.bindings.otlp-grpc.url}");
+        }
+
+        Allocated(app.SigNoz!.Resource.SignIn!);
+        var signoz = await Environment(Allocated(app.SigNoz.Resource));
+        signoz["SIGNOZ_USER_ROOT_EMAIL"].ShouldBe(Admin.UserName);
+        signoz["SIGNOZ_USER_ROOT_PASSWORD"].ShouldBe("{demo-admin-password.value}");
+        signoz["SIGNOZ_USER_ROOT_ORG_NAME"].ShouldBe("demo");
+        signoz["MINE"].ShouldBe("1");
+    }
+
+    [Fact]
+    public async Task Signoz_signs_in_at_the_auth_server_through_its_proxy_as_its_admin()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo", o => { o.Administrator = Admin; o.UseSigNoz(); });
+
+        app.AddProjects();
+        Allocated(app.AuthServer!.Resource);
+
+        var proxy = app.SigNoz!.Resource.SignIn.ShouldNotBeNull();
+        proxy.Name.ShouldBe("signoz-signin");
+        var env = await Environment(Allocated(proxy));
+        env["OAUTH2_PROXY_CLIENT_ID"].ShouldBe("demo-signoz");
+        env["OAUTH2_PROXY_CLIENT_SECRET"].ShouldBe("{demo-signoz-secret.value}");
+        // the browser goes to the auth server's address on the host, the proxy itself over the container network
+        env["OAUTH2_PROXY_LOGIN_URL"].ShouldBe("https://localhost:8180/connect/authorize");
+        env["OAUTH2_PROXY_OIDC_ISSUER_URL"].ShouldBe("https://localhost:8180/");
+        env["OAUTH2_PROXY_REDEEM_URL"].ShouldBe("{demo-auth.bindings.https.url}/connect/token");
+        env["OAUTH2_PROXY_OIDC_JWKS_URL"].ShouldBe("{demo-auth.bindings.https.url}/.well-known/jwks");
+        env["OAUTH2_PROXY_SKIP_OIDC_DISCOVERY"].ShouldBe("true");
+        env["OAUTH2_PROXY_INSECURE_OIDC_ALLOW_UNVERIFIED_EMAIL"].ShouldBe("true");
+        env["OAUTH2_PROXY_UPSTREAMS"].ShouldBe("{signoz.bindings.http.url}");
+
+        var signoz = await Environment(Allocated(app.SigNoz.Resource));
+        signoz["SIGNOZ_IDENTN_IMPERSONATION_ENABLED"].ShouldBe("true");
+        app.SigNoz.Resource.Annotations.OfType<EndpointAnnotation>().ShouldAllBe(e => !e.IsExternal);
+
+        var auth = await Environment(app.AuthServer.Resource);
+        var client = auth.Single(e => e.Value == "demo-signoz").Key.Replace("__ClientId", "", StringComparison.Ordinal);
+        auth[$"{client}__SystemAdministratorsOnly"].ShouldBe("true");
+        auth[$"{client}__RedirectUris__0"].ShouldBe("{signoz-signin.bindings.http.url}/oauth2/callback");
+    }
+
+    [Fact]
+    public async Task An_administrator_password_signoz_would_refuse_leaves_signoz_its_own_admin()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo", o => { o.Administrator = new CoworkeeLogin("admin", "admin"); o.UseSigNoz(); });
+
+        app.AddProjects();
+
+        Allocated(app.AuthServer!.Resource);
+        Allocated(app.SigNoz!.Resource.SignIn!);
+        var signoz = await Environment(Allocated(app.SigNoz.Resource));
+        signoz["SIGNOZ_USER_ROOT_EMAIL"].ShouldBe("admin@signoz.local");
+        signoz["SIGNOZ_USER_ROOT_PASSWORD"].ShouldBe("{signoz-password.value}");
     }
 
     [Fact]

@@ -129,6 +129,74 @@ if (builder.Configuration["GRAFANA_OTLP_ENDPOINT"] is { Length: > 0 } grafana)
 
 `GRAFANA_OTLP_PROTOCOL` is `http/protobuf` in a deployment (gRPC while running). Here `telemetry` is the `builder.Services.AddOpenTelemetry()` builder, and the Aspire dashboard exporter is added per signal (`AddOtlpExporter()`) instead of `UseOtlpExporter()`, which cannot be combined with a second exporter.
 
+
+## SigNoz
+
+[![SigNoz](https://raw.githubusercontent.com/SigNoz/signoz/main/frontend/src/assets/Logos/signoz-brand-logo.svg){ .cw-product-logo }](https://signoz.io/)
+
+`options.UseSigNoz()` adds [SigNoz](https://signoz.io/) next to Grafana or instead of it: traces, metrics and logs of every service in one UI, with dashboards and alerts. It is off by default, because its ClickHouse needs 1–2 GB of memory. It comes from the package `Nextended.Aspire.Hosting.SigNoz`, which `Coworkee.Aspire` brings along.
+
+```csharp
+var app = builder.AddCoworkeeApp("myapp", options =>
+{
+    options.UseGrafana();      // stays the default
+    options.UseSigNoz();       // opt-in, both can run together
+});
+```
+
+| Resource | What it does |
+|---|---|
+| `signoz` | SigNoz (UI, API, alerts); creates its admin, the dashboards and the alert rules on every start |
+| `signoz-collector` | receives OTLP from the services and writes to ClickHouse |
+| `signoz-clickhouse` | the telemetry store, with ClickHouse Keeper inside (no ZooKeeper container) |
+| `signoz-signin` | oauth2-proxy in front of SigNoz: the sign-in at the app's auth server (apps with an auth server) |
+
+The services keep sending to the Aspire dashboard and Grafana. The service defaults send the same telemetry to SigNoz as well, through the settings `SIGNOZ_OTLP_ENDPOINT` and `SIGNOZ_OTLP_PROTOCOL`, which the app host sets only when SigNoz runs. Without `UseSigNoz()` none of it starts and the services export nothing extra.
+
+**Dashboards** (tag `stack:aspire`, each filtered by service):
+
+- *HTTP services*: requests, error rate and p50/p95/p99 latency per service, status codes, routes, slowest endpoints, outgoing calls
+- *.NET runtime*: CPU, memory, GC, thread pool, exceptions, locks, JIT
+- *Database calls*: calls, latency and failures per service, slowest statements, connection pool
+- *Logs and traces*: logs by level, the latest errors and failed spans
+
+**Alert rules**: HTTP error rate above 5%, HTTP p95 above 1 s, database p95 above 500 ms, error logs, thread pool queue. The rules go through SigNoz's notification policies, so they fire in the UI right away. To get notified, add a channel and a policy under *Alerts → Configuration*.
+
+Dashboards and rules are created when missing. A deleted one comes back on the next start.
+
+**Signing in.** SigNoz's own single sign-on (OIDC, SAML) is part of its enterprise edition. So the app host puts oauth2-proxy in front of it, as it does for Kibana. The browser signs in at the app's auth server (through Keycloak when it is on), only administrators of the system organisation get through, and SigNoz acts as its admin for each of them. SigNoz itself then has no public address.
+
+SigNoz's admin user is the app's administrator when the password meets SigNoz's rule: 12 characters with upper and lower case, a digit and a symbol. The template's password and a deployment's meet it. Otherwise the admin is `admin@signoz.local` with the generated parameter `signoz-password`.
+
+`options.UseSigNoz(signoz => signoz.WithDashboards("./signoz"))` adds dashboards of your own; afterwards `app.SigNoz` is the resource builder. An app created before this option needs the SigNoz exporter in `MyApp.ServiceDefaults/Extensions.cs`, next to the Grafana one (`coworkee update` points at it):
+
+```csharp
+if (builder.Configuration["SIGNOZ_OTLP_ENDPOINT"] is { Length: > 0 } signoz)
+{
+    var http = builder.Configuration["SIGNOZ_OTLP_PROTOCOL"] == "http/protobuf";
+    Action<OtlpExporterOptions> SigNoz(string signal) => o => (o.Endpoint, o.Protocol, o.Headers) = http
+        ? (new Uri($"{signoz.TrimEnd('/')}/v1/{signal}"), OtlpExportProtocol.HttpProtobuf, string.Empty)
+        : (new Uri(signoz), OtlpExportProtocol.Grpc, string.Empty);
+    telemetry.WithLogging(l => l.AddOtlpExporter("signoz-logs", SigNoz("logs"))).WithMetrics(m => m.AddOtlpExporter("signoz-metrics", SigNoz("metrics")))
+        .WithTracing(t => t.AddOtlpExporter("signoz-traces", SigNoz("traces")));
+}
+```
+
+To switch it on, use any of:
+
+- `coworkee new Shop --signoz true`
+- `coworkee add signoz`
+- the card *SigNoz* in the Studio's *Infrastructure* group
+- `"signoz": true` in a spec
+
+!!! note "In a deployment"
+    `coworkee deploy` takes SigNoz along like Grafana; `--without signoz` leaves it out.
+
+    - Its configuration, dashboards and alert rules are built into the images.
+    - ClickHouse and SigNoz get volumes (`<app>-signoz-clickhouse-data`, `<app>-signoz-data`), and the proxy gets a public address.
+    - On Azure, ClickHouse gets 1 CPU and 2 GiB.
+    - ClickHouse is published on TCP 19000 and the collector takes OTLP over HTTP on 14318, so both stacks fit into one Container Apps environment.
+
 ## Databases
 
 | Database | Grafana | WebDataStudio |

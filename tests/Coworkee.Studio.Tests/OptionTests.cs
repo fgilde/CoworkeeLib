@@ -65,13 +65,30 @@ public sealed class OptionTests
         using var folder = new TempFolder();
         var main = Studio.Create(folder);
 
-        main.Architecture.Infrastructure.Select(o => o.Id).ShouldBe(["database", "redis", "grafana", "webDataStudio", "aspireUI"]);
+        main.Architecture.Infrastructure.Select(o => o.Id).ShouldBe(["database", "redis", "grafana", "signoz", "webDataStudio", "aspireUI"]);
         main.Option("aspireUI").IsOn.ShouldBeFalse();
         main.Architecture.Summary.Containers.ShouldNotContain("AspireUI");
 
         main.Option("aspireUI").IsOn = true;
         main.Architecture.Summary.Containers.ShouldContain("AspireUI");
         main.ToSpec().Options["aspireUI"]!.GetValue<bool>().ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Signoz_is_a_highlighted_option_that_is_off_until_chosen_and_adds_its_containers_next_to_grafana()
+    {
+        using var folder = new TempFolder();
+        var main = Studio.Create(folder);
+
+        main.Option("signoz").IsOn.ShouldBeFalse();
+        main.Option("grafana").IsOn.ShouldBeTrue();
+        main.Architecture.Summary.Containers.ShouldNotContain("SigNoz");
+
+        main.Option("signoz").IsOn = true;
+        main.Architecture.Summary.Containers.ShouldContain("SigNoz");
+        main.Architecture.Summary.Containers.ShouldContain("ClickHouse");
+        main.Architecture.Summary.Containers.ShouldContain("Grafana");
+        main.ToSpec().Options["signoz"]!.GetValue<bool>().ShouldBeTrue();
     }
 
     [Fact]

@@ -100,6 +100,8 @@ public sealed partial class CoworkeeApp
         SqlServerServerResource => (1.0, "2Gi"),
         // the signatures take more than 1 GiB in memory, and a reload briefly more
         ClamAvResource => (1.5, "3Gi"),
+        // SigNoz's ClickHouse merges parts in memory; 1 GiB ran out at the first schema migrations
+        Nextended.Aspire.Hosting.SigNoz.SigNozClickHouseResource => (1.0, "2Gi"),
         _ => null,
     };
 

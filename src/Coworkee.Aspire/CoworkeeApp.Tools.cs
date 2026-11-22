@@ -23,6 +23,11 @@ public sealed partial class CoworkeeApp
             AddGrafana(grafana);
         }
 
+        if (Options.SigNozServer is { } signoz && Deploys(CoworkeeTools.SigNoz))
+        {
+            AddSigNoz(signoz);
+        }
+
         if (Options.WebDataStudioServer is { } studio && Deploys(CoworkeeTools.WebDataStudio))
         {
             AddWebDataStudio(studio);
@@ -34,6 +39,11 @@ public sealed partial class CoworkeeApp
         if (Grafana is { } grafana)
         {
             AddGrafanaSignIn(grafana);
+        }
+
+        if (SigNoz is { } signoz)
+        {
+            AddSigNozSignIn(signoz);
         }
 
         if (WebDataStudio is { } studio)

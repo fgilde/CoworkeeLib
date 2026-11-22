@@ -27,7 +27,7 @@ public static class Deployments
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
     /// <summary>The tools of the app host (CoworkeeTools); each one is deployed when the app uses it, Mailpit only with <c>--with mailpit</c>.</summary>
-    public static readonly string[] Tools = ["keycloak", "mailpit", "libretranslate", "grafana", "webdatastudio", "ollama", "aspireui", "kibana", "openwebui", "elsastudio"];
+    public static readonly string[] Tools = ["keycloak", "mailpit", "libretranslate", "grafana", "signoz", "webdatastudio", "ollama", "aspireui", "kibana", "openwebui", "elsastudio"];
 
     /// <summary>Tools that stay out of a deployment unless asked for.</summary>
     public static bool DeployedByDefault(string tool) => tool != "mailpit";

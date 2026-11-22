@@ -1,6 +1,6 @@
 # Deployment
 
-The app host that runs the app on your machine also describes its deployment. `coworkee deploy` publishes it for a target: Docker Compose for a single Linux host, Azure Container Apps as Bicep, Kubernetes as a Helm chart. The tools your app host uses (Keycloak, Grafana, WebDataStudio, LibreTranslate, Ollama, Open WebUI, Kibana, AspireUI) go along, each with its own volume and, where it has a web interface, a public address.
+The app host that runs the app on your machine also describes its deployment. `coworkee deploy` publishes it for a target: Docker Compose for a single Linux host, Azure Container Apps as Bicep, Kubernetes as a Helm chart. The tools your app host uses (Keycloak, Grafana, SigNoz, WebDataStudio, LibreTranslate, Ollama, Open WebUI, Kibana, AspireUI) go along, each with its own volume and, where it has a web interface, a public address.
 
 | Target | Command | Status |
 |---|---|---|
@@ -18,7 +18,7 @@ Publishing runs the app host in publish mode with the environment `Production`. 
 | Development certificates for the tokens | two certificates from the parameters `<app>-signing-certificate` and `<app>-encryption-certificate` (PKCS#12 as Base64), the issuer is the public auth address |
 | Demo users from `DemoUsers.cs` | one administrator from the parameters `<app>-admin-email` and `<app>-admin-password`, created by the migrations in an empty database (see [The first administrator](#the-first-administrator)) |
 | Mailpit | your mail server from the parameters `<app>-smtp-host`, `-smtp-port`, `-smtp-username`, `-smtp-password` and `-smtp-from`; Mailpit only when you ask for it (see [Mail](#mail)) |
-| Keycloak, Grafana, WebDataStudio, LibreTranslate, Ollama, Open WebUI, Kibana, AspireUI | deployed as well, unless you leave one out (see [Tools](#tools)) |
+| Keycloak, Grafana, SigNoz, WebDataStudio, LibreTranslate, Ollama, Open WebUI, Kibana, AspireUI | deployed as well, unless you leave one out (see [Tools](#tools)) |
 | Files in `.data/blobs` | a volume `<app>-files`, shared by the services (Docker Compose) |
 | Volumes named after the app host's folder | `<app>-postgres-data`, `<app>-redis-data`, ...: publishing again from another checkout finds the same data |
 
@@ -36,12 +36,13 @@ coworkee deploy compose --without grafana --without ollama
 var app = builder.AddCoworkeeApp("shop", options => options.UseGrafana().DeployTool(CoworkeeTools.Grafana, false));
 ```
 
-`--without` and `--with` set `Coworkee:Deploy:Tools:<tool>`, which wins over `DeployTool`. The tools are `keycloak`, `mailpit`, `libretranslate`, `grafana`, `webdatastudio`, `ollama`, `aspireui`, `kibana`, `openwebui` and `elsastudio` (the workflow designer, a project of the app). Your own app host code asks `app.Deploys(CoworkeeTools.Ollama)`, the way the template adds Ollama and AspireUI.
+`--without` and `--with` set `Coworkee:Deploy:Tools:<tool>`, which wins over `DeployTool`. The tools are `keycloak`, `mailpit`, `libretranslate`, `grafana`, `signoz`, `webdatastudio`, `ollama`, `aspireui`, `kibana`, `openwebui` and `elsastudio` (the workflow designer, a project of the app). Your own app host code asks `app.Deploys(CoworkeeTools.Ollama)`, the way the template adds Ollama and AspireUI.
 
 | Tool | In the deployment |
 |---|---|
 | Keycloak | the realm of the app with the client of the auth server (the tools sign in at the auth server, not in the realm), and the first administrator as user with the role `Administrator`; the migrations bring it in line on every deployment. Public address `<app>-keycloak-url`, data in `<app>-keycloak-data` (Keycloak's own file database), its console as `admin` with `KEYCLOAK_PASSWORD`. The demo users and the login theme stay local |
 | Grafana | with Prometheus, Loki, Tempo and the collector; the app's dashboards and the configuration are built into the images (`<app>-grafana`, ...). The administrator signs in with the password or at the auth server. Public address `<app>-grafana-url`, data in `<app>-grafana-data`, `<app>-prometheus-data` and `<app>-loki-data`; Tempo keeps its traces in the container |
+| SigNoz | with its collector and ClickHouse; configuration, dashboards and alert rules are built into the images. Administrators of the system organisation sign in at the auth server through oauth2-proxy (`<app>-signoz-signin-url`), SigNoz itself without an auth server (`<app>-signoz-url`). Data in `<app>-signoz-data` and `<app>-signoz-clickhouse-data`; on Azure ClickHouse gets 1 CPU and 2 GiB |
 | Open WebUI | with Ollama; the administrator signs in with the password or at the auth server. Public address `<app>-openwebui-url`, data in `<app>-openwebui-data`, key `<app>-openwebui-secret-key` |
 | Kibana | behind oauth2-proxy; administrators of the system organisation sign in at the auth server (its public address is the issuer and token endpoint). Public address `<app>-kibana-url`, client secret `<app>-kibana-secret`, cookie secret `<app>-kibana-cookie-secret`, the password of `kibana_system` `<app>-kibana-password` |
 | WebDataStudio | connected to the app database; the administrator signs in with the password or at the auth server. Public address `<app>-webdatastudio-url`, data in `<app>-webdatastudio-data` |
@@ -88,7 +89,7 @@ SHOP_GRAFANA_URL=https://grafana.example.com
 SHOP_WEBDATASTUDIO_URL=https://data.example.com
 ```
 
-The services listen on the host's loopback in the order they were added: auth server `127.0.0.1:8080`, api `8081`, web app `8082` (AirWorks `8083`). The tools have fixed ports: Keycloak `8090`, Grafana `8091`, WebDataStudio `8092`, AspireUI `8093`, Mailpit `8094`, Kibana `8096`, Open WebUI `8097`. A reverse proxy terminates HTTPS in front of them, for example Caddy, which gets the certificates from Let's Encrypt:
+The services listen on the host's loopback in the order they were added: auth server `127.0.0.1:8080`, api `8081`, web app `8082` (AirWorks `8083`). The tools have fixed ports: Keycloak `8090`, Grafana `8091`, WebDataStudio `8092`, AspireUI `8093`, Mailpit `8094`, Kibana `8096`, Open WebUI `8097`, SigNoz `8098`. A reverse proxy terminates HTTPS in front of them, for example Caddy, which gets the certificates from Let's Encrypt:
 
 ```caddyfile
 auth.example.com {

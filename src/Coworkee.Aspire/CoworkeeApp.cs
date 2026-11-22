@@ -73,6 +73,7 @@ public sealed partial class CoworkeeApp
         }
 
         WireGrafanaTelemetry(Migrations);
+        WireSigNozTelemetry(Migrations);
         // the seed writes through the modules as well (files into the blob storage, ...); the database is wired above
         WireModules(Migrations, except: CoworkeeModules.Infrastructure);
         AddDatabaseCommands(Migrations);
@@ -388,6 +389,7 @@ public sealed partial class CoworkeeApp
         WithSetupToken(service);
         WireServices(service);
         WireGrafanaTelemetry(service);
+        WireSigNozTelemetry(service);
         WireModules(service);
         return service;
     }

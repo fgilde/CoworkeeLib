@@ -2,6 +2,14 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- **SigNoz** as a second observability tool next to Grafana: `options.UseSigNoz()` / `WithoutSigNoz()`, `CoworkeeTools.SigNoz`, `app.SigNoz`. It brings SigNoz, its collector and ClickHouse, dashboards (HTTP services, .NET runtime, database calls, logs and traces) and alert rules provisioned on every start, and sign-in at the auth server through oauth2-proxy (SigNoz's own SSO needs its enterprise license). Grafana stays the default; SigNoz is opt-in and both can run together. It is deployed like Grafana (`--without signoz`). The template option is `signoz` (`coworkee add signoz`), and the Studio has a card for it. See [SigNoz](../hosting/observability.md#signoz).
+- The service defaults of the template export to SigNoz when the app host sets `SIGNOZ_OTLP_ENDPOINT`. An existing app adds the exporter next to the Grafana one (`coworkee update` points at it).
+- The template's service defaults trace Npgsql (`AddSource(..., "Npgsql")`): a span per database command, which the database dashboards of Grafana and SigNoz show. Optional for existing apps.
+
 ## 0.0.1.98 (2026-11-22)
 
 ### Added

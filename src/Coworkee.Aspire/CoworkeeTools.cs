@@ -7,6 +7,7 @@ public static class CoworkeeTools
     public const string Mailpit = "mailpit";
     public const string LibreTranslate = "libretranslate";
     public const string Grafana = "grafana";
+    public const string SigNoz = "signoz";
     public const string WebDataStudio = "webdatastudio";
     public const string Ollama = "ollama";
     public const string AspireUI = "aspireui";
@@ -16,7 +17,7 @@ public static class CoworkeeTools
     /// <summary>The workflow designer, a project of the app (<c>MyApp.ElsaStudio</c>) that <see cref="CoworkeeApp.AddProjects"/> adds.</summary>
     public const string ElsaStudio = "elsastudio";
 
-    public static readonly IReadOnlyList<string> All = [Keycloak, Mailpit, LibreTranslate, Grafana, WebDataStudio, Ollama, AspireUI, Kibana, OpenWebUI, ElsaStudio];
+    public static readonly IReadOnlyList<string> All = [Keycloak, Mailpit, LibreTranslate, Grafana, SigNoz, WebDataStudio, Ollama, AspireUI, Kibana, OpenWebUI, ElsaStudio];
 
     /// <summary>The loopback port Docker Compose binds a tool's web interface to, next to the services' 8080 and up.</summary>
     internal static int ComposePort(string tool) => tool switch
@@ -28,6 +29,8 @@ public static class CoworkeeTools
         Mailpit or "mail" => 8094,
         Kibana => 8096,
         OpenWebUI => 8097,
+        // SigNoz itself, or its sign-in proxy in front when the app has an auth server
+        SigNoz or "signoz-signin" => 8098,
         _ => 8095,
     };
 }

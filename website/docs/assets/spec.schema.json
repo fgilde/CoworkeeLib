@@ -220,6 +220,11 @@
           "type": "boolean",
           "default": true
         },
+        "signoz": {
+          "description": "SigNoz with ClickHouse and its OpenTelemetry collector in the app host: traces, metrics and logs of every service in one UI, with dashboards (HTTP, .NET runtime, database, logs and traces) and alert rules provisioned on every start. Next to Grafana or instead of it. Sign-in at the app's auth server through oauth2-proxy for administrators of the system organisation (SigNoz's own single sign-on needs its enterprise license).",
+          "type": "boolean",
+          "default": false
+        },
         "webDataStudio": {
           "description": "WebDataStudio, a database studio in the browser, connected to the app database. Sign-in with the app's administrator, or at the app's auth server for administrators of the system organisation.",
           "type": "boolean",

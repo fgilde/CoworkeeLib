@@ -65,7 +65,8 @@ public static class Extensions
             .WithMetrics(metrics => metrics.AddAspNetCoreInstrumentation().AddHttpClientInstrumentation().AddRuntimeInstrumentation()
                 .AddMeter("Microsoft.EntityFrameworkCore", "Npgsql", "Coworkee.Auditing"))
             .WithTracing(tracing => tracing
-                .AddSource(builder.Environment.ApplicationName)
+                // Npgsql: a span per database command (the database dashboards of Grafana and SigNoz)
+                .AddSource(builder.Environment.ApplicationName, "Npgsql")
                 .AddAspNetCoreInstrumentation(o => o.Filter = ctx =>
                     !ctx.Request.Path.StartsWithSegments(HealthEndpointPath) && !ctx.Request.Path.StartsWithSegments(AlivenessEndpointPath))
                 .AddHttpClientInstrumentation());
@@ -85,6 +86,17 @@ public static class Extensions
                 : (new Uri(grafana), OtlpExportProtocol.Grpc, string.Empty);
             telemetry.WithLogging(l => l.AddOtlpExporter("grafana-logs", Grafana("logs"))).WithMetrics(m => m.AddOtlpExporter("grafana-metrics", Grafana("metrics")))
                 .WithTracing(t => t.AddOtlpExporter("grafana-traces", Grafana("traces")));
+        }
+
+        // SigNoz of the app host when it runs one, the same way
+        if (builder.Configuration["SIGNOZ_OTLP_ENDPOINT"] is { Length: > 0 } signoz)
+        {
+            var http = builder.Configuration["SIGNOZ_OTLP_PROTOCOL"] == "http/protobuf";
+            Action<OtlpExporterOptions> SigNoz(string signal) => o => (o.Endpoint, o.Protocol, o.Headers) = http
+                ? (new Uri($"{signoz.TrimEnd('/')}/v1/{signal}"), OtlpExportProtocol.HttpProtobuf, string.Empty)
+                : (new Uri(signoz), OtlpExportProtocol.Grpc, string.Empty);
+            telemetry.WithLogging(l => l.AddOtlpExporter("signoz-logs", SigNoz("logs"))).WithMetrics(m => m.AddOtlpExporter("signoz-metrics", SigNoz("metrics")))
+                .WithTracing(t => t.AddOtlpExporter("signoz-traces", SigNoz("traces")));
         }
     }
 }

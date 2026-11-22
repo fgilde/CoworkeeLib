@@ -2,17 +2,17 @@
 using Coworkee.Aspire.Settings;
 
 #endif
-#if (keycloak || grafana || webDataStudio || aspireUI)
+#if (keycloak || grafana || signoz || webDataStudio || aspireUI)
 using MyApp.Migrations;
 #endif
 #if (aspireUI)
 using Nextended.Aspire.Hosting.AspireUI;
 #endif
-#if (keycloak || grafana || webDataStudio || aspireUI)
+#if (keycloak || grafana || signoz || webDataStudio || aspireUI)
 
 #endif
 var builder = DistributedApplication.CreateBuilder(args);
-#if (grafana || webDataStudio || aspireUI)
+#if (grafana || signoz || webDataStudio || aspireUI)
 
 var administrator = DemoUsers.All.First(u => u.IsAdmin);
 #endif
@@ -56,12 +56,15 @@ var app = builder.AddCoworkeeApp("myapp", options =>
 #elif (database == "sqlite")
     options.UseSqlite();
 #endif
-#if (grafana || webDataStudio || aspireUI)
+#if (grafana || signoz || webDataStudio || aspireUI)
     // the tools take the sign-in of the app's administrator (LOGIN.md); a deployment takes the administrator of its parameters
     options.Administrator = new(administrator.Email, administrator.Password);
 #endif
 #if (grafana)
     options.UseGrafana();
+#endif
+#if (signoz)
+    options.UseSigNoz();
 #endif
 #if (webDataStudio)
     options.UseWebDataStudio();

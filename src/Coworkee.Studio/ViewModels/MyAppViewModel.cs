@@ -80,6 +80,11 @@ public sealed partial class MyAppViewModel : ObservableObject
             {
                 links.AddRange(new[] { ("grafana", "Grafana"), ("webDataStudio", "WebDataStudio") }
                     .Where(t => On(t.Item1)).Select(t => new AppEndpoint(t.Item2, dashboard)));
+                // SigNoz is opt-in: listed only when the app turned it on
+                if (App.Options.GetValueOrDefault("signoz") == "true")
+                {
+                    links.Add(new AppEndpoint("SigNoz", dashboard));
+                }
             }
 
             return links;

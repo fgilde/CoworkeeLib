@@ -64,6 +64,7 @@ public static class ExistingApp
             ["redis"] = Flag(!appHost.Contains("options.WithoutRedis();", StringComparison.Ordinal)),
             ["antivirus"] = Flag(appHost.Contains("options.UseAntivirus(", StringComparison.Ordinal)),
             ["grafana"] = Flag(appHost.Contains("options.UseGrafana();", StringComparison.Ordinal)),
+            ["signoz"] = Flag(appHost.Contains("options.UseSigNoz();", StringComparison.Ordinal)),
             ["webDataStudio"] = Flag(appHost.Contains("options.UseWebDataStudio();", StringComparison.Ordinal)),
             ["kibana"] = Flag(appHost.Contains("options.UseKibana();", StringComparison.Ordinal)),
             ["aspireUI"] = Flag(appHost.Contains("AddAspireUI()", StringComparison.Ordinal)),

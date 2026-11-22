@@ -46,6 +46,8 @@ Optionale Container: `UseLibreTranslate([...])` für die [maschinelle Übersetzu
 
 `UseWebDataStudio()` öffnet die App-Datenbank im Browser, mit Tabellen, SQL, Diagrammen und Exporten. Bei SQLite hängt es die Datenbankdatei ein.
 
+`UseSigNoz()` fügt SigNoz neben Grafana oder statt Grafana hinzu: Traces, Metriken und Logs in einer Oberfläche, mit Dashboards für HTTP, die .NET-Laufzeit, die Datenbank und Logs sowie Alert-Regeln, alles bei jedem Start angelegt. Optional, weil ClickHouse 1–2 GB Speicher braucht. Siehe [SigNoz](../hosting/observability.md#signoz).
+
 Beide melden sich mit dem Administrator der App an oder am Auth-Server der App als Administrator der Systemorganisation, ebenso AspireUI, Kibana und Open WebUI.
 
 ## AspireUI und die Seite Dienste
@@ -64,7 +66,7 @@ Jeder Dienst kennt die Adressen der anderen, dazu Aspire- und Hangfire-Dashboard
 
 ## Deployment
 
-`coworkee deploy compose|azure|k8s` veröffentlicht den App-Host für Docker Compose, Azure Container Apps oder Kubernetes, mit den Tools des App-Hosts (Keycloak, Grafana, WebDataStudio, LibreTranslate, Ollama, AspireUI, Kibana, Open WebUI) und einer öffentlichen Adresse für jedes; `--without grafana` lässt eines weg. Siehe [Deployment](../hosting/deployment.md).
+`coworkee deploy compose|azure|k8s` veröffentlicht den App-Host für Docker Compose, Azure Container Apps oder Kubernetes, mit den Tools des App-Hosts (Keycloak, Grafana, SigNoz, WebDataStudio, LibreTranslate, Ollama, AspireUI, Kibana, Open WebUI) und einer öffentlichen Adresse für jedes; `--without grafana` lässt eines weg. Siehe [Deployment](../hosting/deployment.md).
 
 **Stand:** Docker Compose ist mit einer generierten App geprüft; die Ausgaben für Azure Container Apps und Kubernetes bauen und validieren, eine echte Bereitstellung gab es noch nicht. Für mehr als eine Instanz brauchst du Redis und einen gemeinsamen Data-Protection-Schlüsselring.
 

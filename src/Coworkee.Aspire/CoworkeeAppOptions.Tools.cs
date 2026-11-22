@@ -1,5 +1,6 @@
 using Aspire.Hosting.ApplicationModel;
 using Nextended.Aspire.Hosting.Grafana;
+using Nextended.Aspire.Hosting.SigNoz;
 using Nextended.Aspire.Hosting.WebDataStudio;
 
 namespace Aspire.Hosting;
@@ -21,6 +22,18 @@ public sealed partial class CoworkeeAppOptions
         Set(() => GrafanaServer = (GrafanaServer ?? (_ => { })) + configure);
 
     public CoworkeeAppOptions WithoutGrafana() => Set(() => GrafanaServer = null);
+
+    internal Action<IResourceBuilder<SigNozResource>>? SigNozServer { get; private set; }
+
+    /// <summary>
+    /// SigNoz with ClickHouse and its collector: traces, metrics and logs of every service in one UI, with dashboards and alert rules for the services provisioned on
+    /// every start. Opt-in (ClickHouse needs 1–2 GB of memory), next to Grafana or instead of it. With the auth server administrators of the system organisation sign in
+    /// through oauth2-proxy (SigNoz's own single sign-on is part of its licensed edition); deployed unless <see cref="CoworkeeTools.SigNoz"/> is switched off.
+    /// </summary>
+    public CoworkeeAppOptions UseSigNoz(Action<IResourceBuilder<SigNozResource>>? configure = null) =>
+        Set(() => SigNozServer = (SigNozServer ?? (_ => { })) + configure);
+
+    public CoworkeeAppOptions WithoutSigNoz() => Set(() => SigNozServer = null);
 
     /// <summary>WebDataStudio, a database studio in the browser, connected to the app database. With Keycloak it offers single sign-on; deployed unless <see cref="CoworkeeTools.WebDataStudio"/> is switched off.</summary>
     public CoworkeeAppOptions UseWebDataStudio(Action<IResourceBuilder<WebDataStudioResource>>? configure = null) =>

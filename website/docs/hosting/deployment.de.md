@@ -1,6 +1,6 @@
 # Deployment
 
-Der App-Host, der die App auf deinem Rechner startet, beschreibt auch ihr Deployment. `coworkee deploy` veröffentlicht ihn für ein Ziel: Docker Compose für einen einzelnen Linux-Host, Azure Container Apps als Bicep, Kubernetes als Helm-Chart. Die Tools deines App-Hosts (Keycloak, Grafana, WebDataStudio, LibreTranslate, Ollama, Open WebUI, Kibana, AspireUI) kommen mit, jedes mit eigenem Volume und, wo es eine Weboberfläche hat, einer öffentlichen Adresse.
+Der App-Host, der die App auf deinem Rechner startet, beschreibt auch ihr Deployment. `coworkee deploy` veröffentlicht ihn für ein Ziel: Docker Compose für einen einzelnen Linux-Host, Azure Container Apps als Bicep, Kubernetes als Helm-Chart. Die Tools deines App-Hosts (Keycloak, Grafana, SigNoz, WebDataStudio, LibreTranslate, Ollama, Open WebUI, Kibana, AspireUI) kommen mit, jedes mit eigenem Volume und, wo es eine Weboberfläche hat, einer öffentlichen Adresse.
 
 | Ziel | Befehl | Stand |
 |---|---|---|
@@ -18,7 +18,7 @@ Beim Veröffentlichen läuft der App-Host im Publish-Modus mit der Umgebung `Pro
 | Entwicklungszertifikate für die Tokens | zwei Zertifikate aus den Parametern `<app>-signing-certificate` und `<app>-encryption-certificate` (PKCS#12 als Base64), Issuer ist die öffentliche Adresse des Auth-Servers |
 | Demo-Benutzer aus `DemoUsers.cs` | ein Administrator aus den Parametern `<app>-admin-email` und `<app>-admin-password`, den die Migrationen in einer leeren Datenbank anlegen (siehe [Der erste Administrator](#der-erste-administrator)) |
 | Mailpit | dein Mailserver aus den Parametern `<app>-smtp-host`, `-smtp-port`, `-smtp-username`, `-smtp-password` und `-smtp-from`; Mailpit nur, wenn du es willst (siehe [Mail](#mail)) |
-| Keycloak, Grafana, WebDataStudio, LibreTranslate, Ollama, Open WebUI, Kibana, AspireUI | werden mit deployt, außer du lässt eins weg (siehe [Tools](#tools)) |
+| Keycloak, Grafana, SigNoz, WebDataStudio, LibreTranslate, Ollama, Open WebUI, Kibana, AspireUI | werden mit deployt, außer du lässt eins weg (siehe [Tools](#tools)) |
 | Dateien in `.data/blobs` | ein Volume `<app>-files`, das sich die Dienste teilen (Docker Compose) |
 | Volumes nach dem Ordner des App-Hosts benannt | `<app>-postgres-data`, `<app>-redis-data`, ...: Veröffentlichst du aus einem anderen Checkout, findet das Deployment dieselben Daten |
 
@@ -36,12 +36,13 @@ coworkee deploy compose --without grafana --without ollama
 var app = builder.AddCoworkeeApp("shop", options => options.UseGrafana().DeployTool(CoworkeeTools.Grafana, false));
 ```
 
-`--without` und `--with` setzen `Coworkee:Deploy:Tools:<tool>`, das gewinnt gegen `DeployTool`. Die Tools heißen `keycloak`, `mailpit`, `libretranslate`, `grafana`, `webdatastudio`, `ollama`, `aspireui`, `kibana`, `openwebui` und `elsastudio` (der Workflow-Designer, ein Projekt der App). Eigener Code im App-Host fragt `app.Deploys(CoworkeeTools.Ollama)`, so wie das Template Ollama und AspireUI hinzufügt.
+`--without` und `--with` setzen `Coworkee:Deploy:Tools:<tool>`, das gewinnt gegen `DeployTool`. Die Tools heißen `keycloak`, `mailpit`, `libretranslate`, `grafana`, `signoz`, `webdatastudio`, `ollama`, `aspireui`, `kibana`, `openwebui` und `elsastudio` (der Workflow-Designer, ein Projekt der App). Eigener Code im App-Host fragt `app.Deploys(CoworkeeTools.Ollama)`, so wie das Template Ollama und AspireUI hinzufügt.
 
 | Tool | Im Deployment |
 |---|---|
 | Keycloak | der Realm der App mit dem Client des Auth-Servers (die Tools melden sich am Auth-Server an, nicht im Realm), dazu der erste Administrator als Benutzer mit der Rolle `Administrator`; die Migrationen gleichen ihn bei jedem Deployment ab. Öffentliche Adresse `<app>-keycloak-url`, Daten in `<app>-keycloak-data` (Keycloaks eigene Dateidatenbank), seine Konsole als `admin` mit `KEYCLOAK_PASSWORD`. Demo-Benutzer und Login-Theme bleiben lokal |
 | Grafana | mit Prometheus, Loki, Tempo und dem Collector; die Dashboards der App und die Konfiguration stecken in den Images (`<app>-grafana`, ...). Der Administrator meldet sich mit Passwort oder am Auth-Server an. Öffentliche Adresse `<app>-grafana-url`, Daten in `<app>-grafana-data`, `<app>-prometheus-data` und `<app>-loki-data`; Tempo hält seine Traces im Container |
+| SigNoz | mit Collector und ClickHouse; Konfiguration, Dashboards und Alert-Regeln stecken in den Images. Administratoren der System-Organisation melden sich über oauth2-proxy am Auth-Server an (`<app>-signoz-signin-url`), ohne Auth-Server bei SigNoz selbst (`<app>-signoz-url`). Daten in `<app>-signoz-data` und `<app>-signoz-clickhouse-data`; auf Azure bekommt ClickHouse 1 CPU und 2 GiB |
 | Open WebUI | mit Ollama; der Administrator meldet sich mit Passwort oder am Auth-Server an. Öffentliche Adresse `<app>-openwebui-url`, Daten in `<app>-openwebui-data`, Schlüssel `<app>-openwebui-secret-key` |
 | Kibana | hinter oauth2-proxy; Administratoren der System-Organisation melden sich am Auth-Server an (seine öffentliche Adresse ist Issuer und Token-Endpunkt). Öffentliche Adresse `<app>-kibana-url`, Client-Secret `<app>-kibana-secret`, Cookie-Secret `<app>-kibana-cookie-secret`, Passwort von `kibana_system` `<app>-kibana-password` |
 | WebDataStudio | mit der App-Datenbank verbunden; der Administrator meldet sich mit Passwort oder am Auth-Server an. Öffentliche Adresse `<app>-webdatastudio-url`, Daten in `<app>-webdatastudio-data` |
@@ -88,7 +89,7 @@ SHOP_GRAFANA_URL=https://grafana.example.com
 SHOP_WEBDATASTUDIO_URL=https://data.example.com
 ```
 
-Die Dienste lauschen auf dem Loopback des Hosts, in der Reihenfolge, in der sie hinzugefügt wurden: Auth-Server `127.0.0.1:8080`, API `8081`, Web-App `8082` (AirWorks `8083`). Die Tools haben feste Ports: Keycloak `8090`, Grafana `8091`, WebDataStudio `8092`, AspireUI `8093`, Mailpit `8094`, Kibana `8096`, Open WebUI `8097`. Davor beendet ein Reverse Proxy HTTPS, zum Beispiel Caddy, der sich die Zertifikate bei Let's Encrypt holt:
+Die Dienste lauschen auf dem Loopback des Hosts, in der Reihenfolge, in der sie hinzugefügt wurden: Auth-Server `127.0.0.1:8080`, API `8081`, Web-App `8082` (AirWorks `8083`). Die Tools haben feste Ports: Keycloak `8090`, Grafana `8091`, WebDataStudio `8092`, AspireUI `8093`, Mailpit `8094`, Kibana `8096`, Open WebUI `8097`, SigNoz `8098`. Davor beendet ein Reverse Proxy HTTPS, zum Beispiel Caddy, der sich die Zertifikate bei Let's Encrypt holt:
 
 ```caddyfile
 auth.example.com {

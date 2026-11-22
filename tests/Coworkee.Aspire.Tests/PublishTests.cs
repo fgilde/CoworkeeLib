@@ -117,6 +117,44 @@ public sealed class PublishTests
     }
 
     [Fact]
+    public async Task Signoz_goes_along_behind_its_sign_in_proxy_with_volumes_and_the_administrator()
+    {
+        var (compose, env) = await PublishAsync("compose", o => o.UseGrafana().UseSigNoz());
+
+        // built FROM signoz/signoz with its provisioning baked in
+        compose.ShouldContain("image: \"${SIGNOZ_IMAGE}\"");
+        compose.ShouldContain("SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN: \"tcp://signoz-clickhouse:19000\"");
+        compose.ShouldContain("quay.io/oauth2-proxy/oauth2-proxy");
+        compose.ShouldContain("127.0.0.1:8098:4180");
+        compose.ShouldContain("SIGNOZ_USER_ROOT_EMAIL: \"${DEMO_ADMIN_EMAIL}\"");
+        compose.ShouldContain("SIGNOZ_USER_ROOT_PASSWORD: \"${DEMO_ADMIN_PASSWORD}\"");
+        compose.ShouldContain("SIGNOZ_GLOBAL_EXTERNAL__URL: \"${DEMO_SIGNOZ_SIGNIN_URL}\"");
+        compose.ShouldContain("OAUTH2_PROXY_REDIRECT_URL: \"${DEMO_SIGNOZ_SIGNIN_URL}/oauth2/callback\"");
+        compose.ShouldContain("OAUTH2_PROXY_REDEEM_URL: \"${DEMO_AUTH_URL}/connect/token\"");
+        compose.ShouldContain("source: \"demo-signoz-data\"");
+        compose.ShouldContain("source: \"demo-signoz-clickhouse-data\"");
+        // ports of its own next to Grafana's collector
+        compose.ShouldContain("SIGNOZ_OTLP_ENDPOINT: \"http://signoz-collector:14318\"");
+        compose.ShouldContain("SIGNOZ_OTLP_PROTOCOL: \"http/protobuf\"");
+        compose.ShouldContain("GRAFANA_OTLP_ENDPOINT: \"http://otel-collector:4318\"");
+        compose.ShouldContain("Coworkee__Services__signoz-signin__Url: \"${DEMO_SIGNOZ_SIGNIN_URL}\"");
+        env.ShouldContain("DEMO_SIGNOZ_SIGNIN_URL=");
+    }
+
+    [Fact]
+    public async Task On_azure_signoz_gets_two_gigabytes_for_clickhouse_and_ports_of_its_own()
+    {
+        var output = await PublishFolderAsync("azure", o => o.UseGrafana().UseSigNoz());
+
+        var bicep = await File.ReadAllTextAsync(Directory.EnumerateFiles(output, "signoz-clickhouse*.bicep", SearchOption.AllDirectories).Single(), TestContext.Current.CancellationToken);
+        bicep.ShouldContain("memory: '2Gi'");
+        bicep.ShouldContain("19000");
+        var written = string.Join('\n', Directory.EnumerateFiles(output, "*", SearchOption.AllDirectories).Select(File.ReadAllText));
+        written.ShouldContain("signoz-collector:14318");
+        written.ShouldContain("Coworkee__Services__signoz-signin__Url");
+    }
+
+    [Fact]
     public async Task Each_tool_can_be_left_out_and_mailpit_comes_along_when_switched_on()
     {
         var (compose, _) = await PublishAsync("compose", o => o.UseKeycloak().UseGrafana().UseWebDataStudio().DeployTool(CoworkeeTools.WebDataStudio, false),

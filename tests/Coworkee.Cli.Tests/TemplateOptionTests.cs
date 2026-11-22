@@ -204,6 +204,34 @@ public sealed class TemplateOptionTests(TemplateFixture template)
     }
 
     [Fact]
+    public async Task Signoz_is_off_by_default_and_comes_next_to_grafana_or_alone()
+    {
+        var off = await template.CreateAsync("signoz-off", "--samples", "false");
+        Read(off, "src/Shop.AppHost/AppHost.cs").ShouldNotContain("UseSigNoz");
+        Read(off, "LOGIN.md").ShouldNotContain("signoz");
+        // the exporter waits for the setting, which only an app host with SigNoz sets
+        Read(off, "src/Shop.ServiceDefaults/Extensions.cs").ShouldContain("SIGNOZ_OTLP_ENDPOINT");
+        SpecOptions.Resolve(ExistingApp.Infer(off))["signoz"].ShouldBe("false");
+
+        var both = await template.CreateAsync("signoz-both", "--samples", "false", "--signoz", "true");
+        var appHost = Read(both, "src/Shop.AppHost/AppHost.cs");
+        appHost.ShouldContain("options.UseGrafana();");
+        appHost.ShouldContain("options.UseSigNoz();");
+        Read(both, "LOGIN.md").ShouldContain("*signoz-signin*");
+        SignInInfo.Read(both)!.Tools.ShouldContain("SigNoz");
+        SpecOptions.Resolve(ExistingApp.Infer(both))["signoz"].ShouldBe("true");
+
+        var alone = await template.CreateAsync("signoz-alone", "--samples", "false", "--signoz", "true", "--grafana", "false", "--webDataStudio", "false");
+        appHost = Read(alone, "src/Shop.AppHost/AppHost.cs");
+        appHost.ShouldNotContain("UseGrafana");
+        appHost.ShouldContain("options.UseSigNoz();");
+        // SigNoz takes the administrator too
+        appHost.ShouldContain("options.Administrator = new(administrator.Email, administrator.Password);");
+        appHost.ShouldContain("using Shop.Migrations;");
+        TemplateTests.ShouldHaveNoLeftovers(alone);
+    }
+
+    [Fact]
     public async Task Kibana_comes_with_the_search_only()
     {
         var on = await template.CreateAsync("kibana-on", "--samples", "false", "--elasticsearch", "true", "--kibana", "true");

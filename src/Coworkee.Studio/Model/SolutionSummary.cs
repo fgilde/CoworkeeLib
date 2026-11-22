@@ -68,6 +68,11 @@ public sealed record SolutionSummary(IReadOnlyList<string> Projects, IReadOnlyLi
             containers.AddRange(["Grafana", "Prometheus", "Loki", "Tempo", "OpenTelemetry Collector", .. values["database"] == "postgres" ? new[] { "postgres_exporter" } : []]);
         }
 
+        if (On("signoz"))
+        {
+            containers.AddRange(["SigNoz", "SigNoz collector", "ClickHouse", "oauth2-proxy"]);
+        }
+
         if (On("webDataStudio"))
         {
             containers.Add("WebDataStudio");

@@ -22,13 +22,16 @@ The workflow designer *myapp-elsastudio* (Elsa Studio, *Workflow designer* in th
 Visitors can also create an account on the sign-in page (setting `Account.AllowRegistration`).
 
 <!--#endif -->
-<!--#if (grafana || webDataStudio || aspireUI || (elasticsearch && kibana) || withOpenWebUI) -->
+<!--#if (grafana || signoz || webDataStudio || aspireUI || (elasticsearch && kibana) || withOpenWebUI) -->
 ## Development tools
 
 The administrator signs in with the same email and password to the tools the app host starts next to the app (open them from the Aspire dashboard):
 
 <!--#if (grafana) -->
 - *grafana*: dashboards over the metrics, logs and traces of every service and the app database (folder *COWORKEE_APP_TITLE*).
+<!--#endif -->
+<!--#if (signoz) -->
+- *signoz-signin*: SigNoz, with traces, metrics, logs, dashboards and alert rules for every service. It signs in at the auth server of the app through oauth2-proxy: only administrators of the system organisation get in (SigNoz's own single sign-on needs its enterprise license).
 <!--#endif -->
 <!--#if (webDataStudio) -->
 - *webdatastudio*: the app database in the browser.

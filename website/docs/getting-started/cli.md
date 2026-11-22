@@ -79,6 +79,7 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--redis` | `redis` | bool | `true` | Redis container for backplane, presence, cache invalidation and sessions across instances ([Redis](../hosting/redis.md)) |
 | `--antivirus` | `antivirus` | bool | `false` | ClamAV container, also deployed: every upload is scanned before it is stored, an infected file is refused with the finding ([Virus scan](../modules/storage.md#virus-scan)) |
 | `--grafana` | `grafana` | bool | `true` | Grafana with Prometheus, Loki, Tempo and a collector: telemetry of every service, the app database and dashboards ([Grafana and WebDataStudio](../hosting/observability.md)) |
+| `--signoz` | `signoz` | bool | `false` | SigNoz with ClickHouse and its collector: traces, metrics, logs, dashboards and alert rules in one UI, next to Grafana or instead of it ([SigNoz](../hosting/observability.md#signoz)) |
 | `--web-data-studio` | `webDataStudio` | bool | `true` | WebDataStudio connected to the app database ([Grafana and WebDataStudio](../hosting/observability.md)) |
 | `--open-web-ui` | `openWebUI` | bool | `false` | Open WebUI next to Ollama (with `--ai-provider ollama`), a chat over the local models; administrators of the system organisation sign in at the auth server ([Open WebUI](../hosting/aspire.md#open-webui)) |
 | `--kibana` | `kibana` | bool | `false` | Kibana next to Elasticsearch (with `--elasticsearch`), signed in through the auth server for administrators of the system organisation ([Kibana](../hosting/aspire.md#kibana)) |

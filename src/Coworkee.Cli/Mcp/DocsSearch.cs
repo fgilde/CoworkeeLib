@@ -96,7 +96,7 @@ internal static partial class DocsSearch
         ("Aspire app host", "hosting/aspire/"),
         ("Deployment", "hosting/deployment/"),
         ("Scaling out with Redis", "hosting/redis/"),
-        ("Grafana and WebDataStudio", "hosting/observability/"),
+        ("Grafana, SigNoz and WebDataStudio", "hosting/observability/"),
         ("Testing", "testing/"),
         ("Packages and namespaces", "reference/packages/"),
         ("Changelog", "reference/changelog/"),

@@ -81,6 +81,9 @@ public sealed class DeployCommandTests
 
         DeployCommand.PublishArgs(solution, "compose", "out", DeployCommand.ToolSwitches(["grafana"], ["mailpit"]))[^2..]
             .ShouldBe(["--Coworkee:Deploy:Tools:grafana=false", "--Coworkee:Deploy:Tools:mailpit=true"]);
+        DeployCommand.PublishArgs(solution, "compose", "out", DeployCommand.ToolSwitches(["signoz"], []))[^1..]
+            .ShouldBe(["--Coworkee:Deploy:Tools:signoz=false"]);
+        DeployCommand.Tools.ShouldContain("signoz"); // --without signoz is accepted
 
         var asked = new List<string>();
         var known = DeploySummary.Known(["SHOP_ADMIN_EMAIL", "SHOP_SMTP_HOST", "SHOP_SMTP_PORT", "POSTGRES_PASSWORD"], new Dictionary<string, string> { ["SHOP_SMTP_PORT"] = "587" },
