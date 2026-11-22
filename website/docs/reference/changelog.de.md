@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Behoben
+
+- SigNoz auf Azure Container Apps speichert wieder Telemetrie: ClickHouse bekommt dort kein Volume. Azure Files über SMB erlaubt weder Dateizeiten zu setzen noch Hardlinks, darum scheiterten jeder Insert und die Schema-Migrationen (`Cannot set modification time`). Die Telemetrie liegt im Container und ist nach einem Neustart weg; das SigNoz-Volume (Benutzer, Dashboards, Alert-Regeln) bleibt. Docker Compose behält das ClickHouse-Volume. Das Volume `<app>-signoz-clickhouse-data` einer bestehenden Azure-Installation wird nicht mehr eingehängt und kann gelöscht werden.
+
 ## 0.1.1 (2026-11-22)
 
 ### Behoben

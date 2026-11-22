@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixed
+
+- SigNoz on Azure Container Apps stores telemetry again: ClickHouse gets no volume there. Azure Files over SMB lets it neither set file times nor make hard links, so every insert and the schema migrations failed (`Cannot set modification time`). The telemetry lives in the container and is gone after a restart; the SigNoz volume (users, dashboards, alert rules) stays. Docker Compose keeps the ClickHouse volume. The volume `<app>-signoz-clickhouse-data` of an existing Azure deployment is no longer mounted and can be deleted.
+
 ## 0.1.1 (2026-11-22)
 
 ### Fixed

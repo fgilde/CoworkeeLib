@@ -149,6 +149,10 @@ public sealed class PublishTests
         var bicep = await File.ReadAllTextAsync(Directory.EnumerateFiles(output, "signoz-clickhouse*.bicep", SearchOption.AllDirectories).Single(), TestContext.Current.CancellationToken);
         bicep.ShouldContain("memory: '2Gi'");
         bicep.ShouldContain("29000");
+        // Azure Files over SMB breaks ClickHouse's inserts: no volume there
+        bicep.ShouldNotContain("volumeMounts");
+        var signoz = await File.ReadAllTextAsync(Directory.EnumerateFiles(output, "signoz.bicep", SearchOption.AllDirectories).Single(), TestContext.Current.CancellationToken);
+        signoz.ShouldContain("volumeMounts");
         var written = string.Join('\n', Directory.EnumerateFiles(output, "*", SearchOption.AllDirectories).Select(File.ReadAllText));
         written.ShouldContain("signoz-collector:14318");
         written.ShouldContain("Coworkee__Services__signoz-signin__Url");

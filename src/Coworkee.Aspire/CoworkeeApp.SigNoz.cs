@@ -22,8 +22,13 @@ public sealed partial class CoworkeeApp
         {
             // SigNoz takes the administrator of the deployment (coworkee deploy generates a password SigNoz accepts)
             SigNoz.WithAdminUser(AdminEmail, ReferenceExpression.Create($"{AdminPassword}"), Title)
-                .WithDataVolume(DataVolume(CoworkeeTools.SigNoz))
-                .WithClickHouse(c => c.WithDataVolume(DataVolume("signoz-clickhouse")));
+                .WithDataVolume(DataVolume(CoworkeeTools.SigNoz));
+            // ponytail: on Azure ClickHouse keeps the telemetry in the container (lost on a restart): Azure Files over SMB lets it neither set file times
+            // nor make hard links, every insert fails there. An NFS share (premium storage, an environment in a VNet) would keep it
+            if (_target != "azure")
+            {
+                SigNoz.WithClickHouse(c => c.WithDataVolume(DataVolume("signoz-clickhouse")));
+            }
             // the browser reaches SigNoz itself unless the auth server's sign-in proxy stands in front (added with the auth server, after this)
             Builder.Eventing.Subscribe<BeforeStartEvent>((_, _) =>
             {
