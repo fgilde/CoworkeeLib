@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixed
+
+- SigNoz deploys to Azure Container Apps: its ClickHouse listens on 29000 in a deployment (Nextended.Aspire.Hosting.SigNoz 10.1.69); Container Apps reserves the 19000 used so far as a target port and refused the revision.
+
 ## 0.1.0 (2026-11-22)
 
 ### Fixed

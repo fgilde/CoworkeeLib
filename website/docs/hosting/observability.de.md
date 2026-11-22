@@ -195,7 +195,7 @@ Einschalten geht auf jedem dieser Wege:
     - Konfiguration, Dashboards und Alert-Regeln stecken in den Images.
     - ClickHouse und SigNoz bekommen Volumes (`<app>-signoz-clickhouse-data`, `<app>-signoz-data`), der Proxy bekommt eine öffentliche Adresse.
     - Auf Azure bekommt ClickHouse 1 CPU und 2 GiB.
-    - ClickHouse ist auf TCP 19000 veröffentlicht und der Collector nimmt OTLP über HTTP auf 14318 an, damit beide Stacks in eine Container-Apps-Umgebung passen.
+    - ClickHouse ist auf TCP 29000 veröffentlicht (19000 reserviert Container Apps) und der Collector nimmt OTLP über HTTP auf 14318 an, damit beide Stacks in eine Container-Apps-Umgebung passen.
 
 ## Datenbanken
 

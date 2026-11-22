@@ -123,7 +123,7 @@ public sealed class PublishTests
 
         // built FROM signoz/signoz with its provisioning baked in
         compose.ShouldContain("image: \"${SIGNOZ_IMAGE}\"");
-        compose.ShouldContain("SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN: \"tcp://signoz-clickhouse:19000\"");
+        compose.ShouldContain("SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN: \"tcp://signoz-clickhouse:29000\"");
         compose.ShouldContain("quay.io/oauth2-proxy/oauth2-proxy");
         compose.ShouldContain("127.0.0.1:8098:4180");
         compose.ShouldContain("SIGNOZ_USER_ROOT_EMAIL: \"${DEMO_ADMIN_EMAIL}\"");
@@ -148,7 +148,7 @@ public sealed class PublishTests
 
         var bicep = await File.ReadAllTextAsync(Directory.EnumerateFiles(output, "signoz-clickhouse*.bicep", SearchOption.AllDirectories).Single(), TestContext.Current.CancellationToken);
         bicep.ShouldContain("memory: '2Gi'");
-        bicep.ShouldContain("19000");
+        bicep.ShouldContain("29000");
         var written = string.Join('\n', Directory.EnumerateFiles(output, "*", SearchOption.AllDirectories).Select(File.ReadAllText));
         written.ShouldContain("signoz-collector:14318");
         written.ShouldContain("Coworkee__Services__signoz-signin__Url");

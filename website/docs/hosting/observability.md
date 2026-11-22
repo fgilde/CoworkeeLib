@@ -195,7 +195,7 @@ To switch it on, use any of:
     - Its configuration, dashboards and alert rules are built into the images.
     - ClickHouse and SigNoz get volumes (`<app>-signoz-clickhouse-data`, `<app>-signoz-data`), and the proxy gets a public address.
     - On Azure, ClickHouse gets 1 CPU and 2 GiB.
-    - ClickHouse is published on TCP 19000 and the collector takes OTLP over HTTP on 14318, so both stacks fit into one Container Apps environment.
+    - ClickHouse is published on TCP 29000 (Container Apps reserves 19000) and the collector takes OTLP over HTTP on 14318, so both stacks fit into one Container Apps environment.
 
 ## Databases
 

@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Behoben
+
+- SigNoz lässt sich in Azure Container Apps deployen: ClickHouse hört in einer Installation auf 29000 (Nextended.Aspire.Hosting.SigNoz 10.1.69); die bisherige 19000 reserviert Container Apps als Zielport und lehnte die Revision ab.
+
 ## 0.1.0 (2026-11-22)
 
 ### Behoben
