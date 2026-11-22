@@ -87,7 +87,8 @@ internal sealed class SecurityEventInterceptor(SecurityLog log, TimeProvider clo
 
     private IEnumerable<SecurityEvent> UserChanges(EntityEntry<User> entry, User user)
     {
-        if (Changed(entry, u => u.PasswordHash))
+        // a rehash at sign-in stores the same password anew: no change of it
+        if (Changed(entry, u => u.PasswordHash) && !Users.PasswordRehash.Rehashed(user))
         {
             yield return Event(SecurityActions.PasswordChanged, user.Id, user.TenantId, null);
         }

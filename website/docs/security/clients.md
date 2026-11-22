@@ -179,6 +179,8 @@ The messages of ASP.NET Core Identity (password rules, taken e-mail address or u
 | `Account.Password.ExpiryDays` | 0 | after so many days the sign-in asks for a new password; 0 never |
 | `Account.Password.History` | 0 | a new password may not be one of the last so many (up to 24 are kept) |
 
+A password hash in an older format or with fewer iterations than Identity uses today (for example imported from another system) is renewed at the next sign-in. That rehash stores the same password anew, so it changes nothing a password change resets: an asked-for change stays, `PasswordChangedAt` (expiry) and the history stay, the security stamp stays (no other session ends), and the security log gets no *password changed*.
+
 The defaults of the six password rules come from the configured Identity options, so `Coworkee:Registration:Password` stays the starting point of a deployment; what administrators save wins. They are `Global` settings, visible to the clients. `SettingsPasswordValidator` enforces them for every way a password is set: registration, reset, change, setting one as administrator and the first administrator at setup. A host that loads only the Identity module, without the Account module, keeps Identity's default validator and its configured options.
 
 Next to every password field (registration, reset, change, new password at sign-in, the administrator's dialog, the setup wizard) a hint names the rules in force, e.g. *At least 12 characters, a digit, an uppercase letter.* `PasswordRules.Describe` builds it from the settings and a translation function. Before the first administrator exists nobody can read settings, so the setup status (`SetupStatusDto.PasswordRules`) carries the rules for the setup page.

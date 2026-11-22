@@ -87,6 +87,7 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
             })
             .AddDefaultTokenProviders()
             .AddErrorDescriber<LocalizedIdentityErrorDescriber>();
+        services.AddScoped<Microsoft.AspNetCore.Identity.IPasswordHasher<User>, Users.RehashAwarePasswordHasher>();
         services.ValidateBearerTokens();
         services.AddCoworkeeRedis(context.Configuration);
         services.AddSingleton<SessionStamps>();

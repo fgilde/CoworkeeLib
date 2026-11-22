@@ -2,7 +2,13 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
-## Unreleased
+## Unveröffentlicht
+
+### Behoben
+
+- Eine Anmeldung, die einen alten Passwort-Hash erneuert (älteres Format oder weniger Iterationen, wie bei importierten Hashes üblich), gilt nicht mehr als Passwortwechsel: ein verlangter Wechsel (`MustChangePassword`), `PasswordChangedAt`, der Passwortverlauf und der Security-Stamp bleiben, und das Sicherheitsprotokoll bekommt kein *Passwort geändert*. Bisher übersprang eine solche Anmeldung den erzwungenen Wechsel und beendete die anderen Sitzungen des Benutzers. Siehe [Passwortregeln und Sperre](../security/clients.md#passwortregeln-und-sperre).
+
+## 0.0.1.100 (2026-11-22)
 
 ### Behoben
 

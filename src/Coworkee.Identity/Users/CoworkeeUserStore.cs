@@ -23,9 +23,16 @@ internal sealed class CoworkeeUserStore(CoworkeeDbContext context) : UserStore<U
         return IdentityResult.Success;
     }
 
-    // every way to a new password passes here: the old hash goes to the history, and a changed password ends a forced change
+    // every way to a new password passes here: the old hash goes to the history, and a changed password ends a forced change.
+    // A rehash at sign-in (PasswordRehash) stores the same password anew and keeps all of that.
     public override async Task SetPasswordHashAsync(User user, string? passwordHash, CancellationToken cancellationToken = default)
     {
+        if (PasswordRehash.IsRehash(user, passwordHash))
+        {
+            await base.SetPasswordHashAsync(user, passwordHash, cancellationToken);
+            return;
+        }
+
         if (user.PasswordHash is { } previous && previous != passwordHash)
         {
             user.PasswordHistory = string.Join('\n', new[] { previous }.Concat(PasswordHistory.Of(user)).Take(PasswordHistory.Max));
@@ -35,4 +42,8 @@ internal sealed class CoworkeeUserStore(CoworkeeDbContext context) : UserStore<U
         user.PasswordChangedAt = passwordHash is null ? null : DateTimeOffset.UtcNow;
         await base.SetPasswordHashAsync(user, passwordHash, cancellationToken);
     }
+
+    // a rehash keeps the sessions: Identity renews the stamp right after it, which would end every other session of the user
+    public override Task SetSecurityStampAsync(User user, string stamp, CancellationToken cancellationToken = default) =>
+        PasswordRehash.KeepStamp(user) ? Task.CompletedTask : base.SetSecurityStampAsync(user, stamp, cancellationToken);
 }

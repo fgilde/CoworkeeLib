@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixed
+
+- A sign-in that renews an old password hash (older format or fewer iterations, as imported hashes often are) no longer counts as a password change: an asked-for change (`MustChangePassword`), `PasswordChangedAt`, the password history and the security stamp stay, and the security log gets no *password changed*. Before, such a sign-in skipped the forced change and ended the user's other sessions. See [Password rules and lockout](../security/clients.md#password-rules-and-lockout).
+
 ## 0.0.1.100 (2026-11-22)
 
 ### Fixed

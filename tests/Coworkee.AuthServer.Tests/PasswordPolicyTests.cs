@@ -5,6 +5,7 @@ using Coworkee.Contracts.Identity;
 using Coworkee.Identity.Domain;
 using Coworkee.Identity.Users;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.AuthServer.Tests;
 
@@ -38,6 +39,62 @@ public sealed class PasswordPolicyTests(AuthApp app) : IAsyncLifetime
         await flow.RedeemAsync(await flow.FollowAsync(changed.Response));
         (await MustChangeAsync(bob)).ShouldBeFalse();
     }
+
+    [Fact]
+    public async Task A_rehash_at_sign_in_keeps_the_forced_change_the_time_the_history_and_the_stamp()
+    {
+        var bob = await CreateUserAsync("bob@acme.test", mustChange: true);
+        var changedAt = DateTimeOffset.UtcNow.AddDays(-3);
+        var (oldHash, stamp) = await SetImportedHashAsync(bob, changedAt);
+        var flow = new OidcFlow(app);
+        (await flow.LoginAsync("bob@acme.test", Password, flow.AuthorizeUrl)).StatusCode.ShouldBe(HttpStatusCode.Redirect);
+        var authorize = await flow.FollowAsync(await flow.AuthorizeAsync());
+        authorize.RequestMessage!.RequestUri!.PathAndQuery.ShouldStartWith("/Account/ChangePasswordRequired");
+
+        var rehashed = await app.InDbAsync(db => db.Set<User>().AsNoTracking().SingleAsync(u => u.Id == bob));
+        rehashed.PasswordHash.ShouldNotBe(oldHash);
+        rehashed.MustChangePassword.ShouldBeTrue();
+        rehashed.PasswordChangedAt!.Value.ShouldBe(changedAt, TimeSpan.FromSeconds(1));
+        rehashed.PasswordHistory.ShouldBeNull();
+        rehashed.SecurityStamp.ShouldBe(stamp);
+    }
+
+    [Fact]
+    public async Task A_change_that_verifies_an_old_hash_is_still_a_change()
+    {
+        var bob = await CreateUserAsync("bob@acme.test", mustChange: true);
+        var changedAt = DateTimeOffset.UtcNow.AddDays(-3);
+        var (oldHash, stamp) = await SetImportedHashAsync(bob, changedAt);
+
+        await using (var scope = app.App.Services.CreateAsyncScope())
+        {
+            // ChangePasswordAsync verifies the current password against the old hash (a rehash would follow) and stores another password
+            using var actor = Coworkee.Core.Security.CurrentUserScope.Begin(new Coworkee.Core.Security.ImpersonatedUser(null, null));
+            var users = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<User>>();
+            var user = await users.FindByIdAsync(bob.ToString());
+            (await users.ChangePasswordAsync(user!, Password, NewPassword)).Succeeded.ShouldBeTrue();
+            await scope.ServiceProvider.GetRequiredService<Coworkee.Infrastructure.Persistence.CoworkeeDbContext>().SaveChangesAsync();
+        }
+
+        var changed = await app.InDbAsync(db => db.Set<User>().AsNoTracking().SingleAsync(u => u.Id == bob));
+        changed.MustChangePassword.ShouldBeFalse();
+        changed.PasswordHistory.ShouldBe(oldHash);
+        changed.PasswordChangedAt!.Value.ShouldBeGreaterThan(changedAt.AddDays(1));
+        changed.SecurityStamp.ShouldNotBe(stamp);
+    }
+
+    /// <summary>A hash as imported from another system: the current format with fewer iterations than Identity asks for, so a sign-in rehashes it.</summary>
+    private Task<(string Hash, string? Stamp)> SetImportedHashAsync(Guid userId, DateTimeOffset changedAt) => app.InDbAsync(async db =>
+    {
+        var user = await db.Set<User>().SingleAsync(u => u.Id == userId);
+        var hasher = new Microsoft.AspNetCore.Identity.PasswordHasher<User>(
+            Microsoft.Extensions.Options.Options.Create(new Microsoft.AspNetCore.Identity.PasswordHasherOptions { IterationCount = 10_000 }));
+        user.PasswordHash = hasher.HashPassword(user, Password);
+        user.PasswordChangedAt = changedAt;
+        user.PasswordHistory = null;
+        await db.SaveChangesAsync();
+        return (user.PasswordHash, user.SecurityStamp);
+    });
 
     [Fact]
     public async Task An_expired_password_asks_for_a_new_one()
