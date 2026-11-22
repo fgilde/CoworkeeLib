@@ -2,6 +2,17 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Neu
+
+- `CoworkeeDataTable.PageFacets`: Facettengruppen der Seite, gezeigt und gewählt mit denen des Servers, jede Option mit eigenem OData-Filter (für Werte, die der Server nicht facettieren kann, etwa eine Sammlung); ein negativer Count zeigt keine Zahl. Siehe [Facetten der Seite](../ui/data-table.md#facetten-der-seite).
+
+### Geändert
+
+- `CoworkeeUserSelection`: Rollen und Gruppen sind Facetten neben den anderen (Gruppen als Baum) statt zwei Auswahlfelder; *Benutzer hinzufügen* steht in der Werkzeugleiste der Tabelle.
+- Das JSON der Werte im Versand-Assistenten für Mail-Vorlagen wird im Code-Editor (Monaco) bearbeitet.
+
 ## 0.0.1.97 (2026-11-21)
 
 ### Breaking Changes

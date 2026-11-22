@@ -39,10 +39,10 @@ public abstract class FacetViewBase : CoworkeeComponentBase
     protected RenderFragment Value(FacetOptionDto option) =>
         FacetLabels.Render(Options.ValueRenderers, Group, option, Label(option));
 
-    protected static string Count(int count) => count.ToString("N0", CultureInfo.CurrentCulture);
+    protected static string Count(int count) => count < 0 ? string.Empty : count.ToString("N0", CultureInfo.CurrentCulture);
 
     protected string State(FacetOptionDto option) => IsExcluded(option) ? "excluded" : IsSelected(option) ? "selected" : string.Empty;
 
     /// <summary>Width of the bar under an option, its share of the largest count.</summary>
-    protected string Share(FacetOptionDto option) => MaxCount == 0 ? "width:0" : FormattableString.Invariant($"width:{100.0 * option.Count / MaxCount:0.#}%");
+    protected string Share(FacetOptionDto option) => MaxCount <= 0 || option.Count < 0 ? "width:0" : FormattableString.Invariant($"width:{100.0 * option.Count / MaxCount:0.#}%");
 }

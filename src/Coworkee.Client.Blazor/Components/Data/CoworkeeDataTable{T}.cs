@@ -15,6 +15,8 @@ public partial class CoworkeeDataTable<T>
     private bool _advancedOpen;
     private string? _facetKey;
     private CancellationTokenSource? _facetLoad;
+    private IReadOnlyList<FacetGroupDto> _serverFacets = [];
+    private IReadOnlyList<FacetGroupDto>? _shownPageFacets;
 
     /// <summary>The page's say per facet group key: view, "any of / all of", exclusion, hiding. Wins over the server's [FacetBehavior].</summary>
     [Parameter] public IReadOnlyDictionary<string, FacetSettings>? FacetSettings { get; set; }
@@ -48,10 +50,27 @@ public partial class CoworkeeDataTable<T>
     private IReadOnlyList<FacetGroupDto> Shape(IReadOnlyList<FacetGroupDto> groups) => FacetSettings is null ? groups
         : [.. groups.Select(g => FacetSettings.TryGetValue(g.Key, out var settings) ? settings.Hidden ? null : settings.Apply(g) : g).OfType<FacetGroupDto>()];
 
+    /// <summary>
+    /// Facet groups of the page, shown and chosen like the server's: each option filters by its own <see cref="FacetOptionDto.OData"/>, e.g. a role
+    /// through a collection the server cannot facet. Their counts are the page's; a negative count shows none.
+    /// </summary>
+    [Parameter] public IReadOnlyList<FacetGroupDto>? PageFacets { get; set; }
+
     private void ShowFacets(IReadOnlyList<FacetGroupDto> groups)
     {
-        _facets = Shape(groups);
+        _serverFacets = groups;
+        _shownPageFacets = PageFacets;
+        _facets = Shape([.. groups, .. PageFacets ?? []]);
         _queryFields = null;
+    }
+
+    // new page facets (e.g. loaded after the table) show without waiting for the server's
+    private void FollowPageFacets()
+    {
+        if (!ReferenceEquals(PageFacets, _shownPageFacets))
+        {
+            ShowFacets(_serverFacets);
+        }
     }
 
     /// <summary>

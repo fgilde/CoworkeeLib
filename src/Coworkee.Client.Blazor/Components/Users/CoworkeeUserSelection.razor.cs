@@ -4,6 +4,8 @@ using Coworkee.Client.Blazor.Components.Groups;
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Data.Admin;
 using Coworkee.Client.Blazor.Localization;
+using System.Text.Json;
+using Coworkee.Contracts.Data;
 using Coworkee.Contracts.Identity;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -23,10 +25,7 @@ public partial class CoworkeeUserSelection : IDisposable
     private Dictionary<Guid, string> _names = [];
     private CancellationTokenSource? _counting;
     private int _pickerKey;
-    private IReadOnlyList<RoleDto> _roles = [];
-    private IReadOnlyList<GroupRow> _groups = [];
-    private IReadOnlyCollection<Guid> _roleIds = [];
-    private IReadOnlyCollection<Guid> _groupIds = [];
+    private IReadOnlyList<FacetGroupDto> _facets = [];
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
@@ -56,49 +55,53 @@ public partial class CoworkeeUserSelection : IDisposable
     /// <summary>How long the count waits for further changes.</summary>
     internal static TimeSpan CountDelay { get; set; } = TimeSpan.FromMilliseconds(300);
 
-    // the page's filter and the chosen roles and groups; the table adds facets, search and column filters
-    private string? TableFilter => And(Filter, RoleFilter, GroupFilter);
-
-    // members of a chosen role: directly or through a group that has it (as permissions count roles)
-    private string? RoleFilter
+    /// <summary>The facets "Roles" (members directly or through a group that has the role, as permissions count roles) and "Groups" (members with their sub-groups).</summary>
+    internal static IReadOnlyList<FacetGroupDto> RoleAndGroupFacets(IReadOnlyList<RoleDto> roles, IReadOnlyList<GroupRow> groups)
     {
-        get
+        var facets = new List<FacetGroupDto>(2);
+        if (roles.Count > 0)
         {
-            if (_roleIds.Count == 0)
+            facets.Add(Facet("Roles", "Roles", roles.Select(role =>
             {
-                return null;
-            }
-
-            var direct = $"Roles/any(r: r/RoleId in ({string.Join(",", _roleIds)}))";
-            var groups = _groups.Where(g => g.Roles.Any(r => _roleIds.Contains(r.RoleId))).Select(g => g.Id).ToList();
-            return groups.Count == 0 ? direct : $"({direct} or Groups/any(m: m/GroupId in ({string.Join(",", groups)})))";
+                var direct = $"Roles/any(r: r/RoleId eq {role.Id})";
+                var through = groups.Where(g => g.Roles.Any(r => r.RoleId == role.Id)).Select(g => g.Id).ToList();
+                return (role.Id, role.Name, through.Count == 0 ? direct : $"({direct} or Groups/any(m: m/GroupId in ({string.Join(",", through)})))");
+            }), 1000));
         }
-    }
 
-    private string? GroupFilter
-    {
-        get
+        if (groups.Count > 0)
         {
-            if (_groupIds.Count == 0)
+            var paths = groups.Select(g => (g.Code, g.Name)).ToList();
+            facets.Add(Facet("Groups", "Groups", groups.Select(group =>
             {
-                return null;
-            }
-
-            var codes = _groups.Where(g => _groupIds.Contains(g.Id) && g.Code is not null).Select(g => g.Code + ".").ToList();
-            var ids = _groups.Where(g => _groupIds.Contains(g.Id) || (g.Code is { } code && codes.Any(c => code.StartsWith(c, StringComparison.Ordinal)))).Select(g => g.Id);
-            return $"Groups/any(m: m/GroupId in ({string.Join(",", ids.Union(_groupIds))}))";
+                var below = groups.Where(g => g.Id == group.Id || (group.Code is { } code && g.Code?.StartsWith(code + ".", StringComparison.Ordinal) == true)).Select(g => g.Id);
+                return (group.Id, GroupPaths.Path(group.Code, group.Name, paths), $"Groups/any(m: m/GroupId in ({string.Join(",", below)}))");
+            }), 1001) with
+            {
+                TreeSeparator = " / ",
+                View = groups.Any(g => g.Code?.Contains('.') == true) ? FacetView.Tree : FacetView.Auto,
+            });
         }
-    }
 
-    private static string? And(params string?[] filters) =>
-        filters.Where(f => !string.IsNullOrWhiteSpace(f)).ToList() is { Count: > 0 } parts ? string.Join(" and ", parts.Select(p => parts.Count > 1 ? $"({p})" : p)) : null;
+        return facets;
+
+        // no counts: the server cannot count through these collections (a negative count shows none)
+        static FacetGroupDto Facet(string key, string label, IEnumerable<(Guid Id, string Label, string OData)> options, int order) =>
+            new(key, label, key, FacetKind.CheckboxList, FacetOperator.Or,
+                [.. options.Select(o => new FacetOptionDto(JsonSerializer.SerializeToElement(o.Id), o.Label, true, -1, o.OData))], true, order)
+            {
+                Combine = FacetCombine.Any,
+            };
+    }
 
     // only what the caller may read: without the right to view roles or groups the filter is not offered
     protected override async Task OnInitializedAsync()
     {
+        IReadOnlyList<RoleDto> roles = [];
+        IReadOnlyList<GroupRow> groups = [];
         try
         {
-            _roles = [.. (await Api.GetRolesAsync()).OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase)];
+            roles = [.. (await Api.GetRolesAsync()).OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase)];
         }
         catch (Exception exception) when (exception is HttpRequestException or ApiException)
         {
@@ -106,21 +109,14 @@ public partial class CoworkeeUserSelection : IDisposable
 
         try
         {
-            var groups = await OData.QueryAsync<GroupRow>("Groups", new ODataQuery { Select = "Id,Name,Code,Roles", OrderBy = "Code", Top = MaxGroups, Count = false });
-            _groups = groups?.Items ?? [];
+            groups = (await OData.QueryAsync<GroupRow>("Groups", new ODataQuery { Select = "Id,Name,Code,Roles", OrderBy = "Code", Top = MaxGroups, Count = false }))?.Items ?? [];
         }
         catch (Exception exception) when (exception is HttpRequestException or ApiException)
         {
         }
+
+        _facets = RoleAndGroupFacets(roles, groups);
     }
-
-    private string RoleName(Guid id) => _roles.FirstOrDefault(r => r.Id == id)?.Name ?? string.Empty;
-
-    private string GroupName(Guid id) => _groups.FirstOrDefault(g => g.Id == id) is { } group ? GroupPaths.Path(group.Code, group.Name, _groups.Select(g => (g.Code, g.Name))) : string.Empty;
-
-    private void RolesChanged(IEnumerable<Guid> ids) => _roleIds = [.. ids];
-
-    private void GroupsChanged(IEnumerable<Guid> ids) => _groupIds = [.. ids];
 
     private bool IsChosen(Guid id) => Value.Included?.Contains(id) == true || (Value.AllMatching && Value.Excluded?.Contains(id) != true);
 

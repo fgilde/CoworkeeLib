@@ -43,6 +43,7 @@
 | `ColumnFilters` | a filter in every column header, see [column filters](#column-filters) (default `options.DataTable.ColumnFilters`, `true`) |
 | `FacetLayout` | `Bar` (pills above the rows, default) or `Panel` (a side panel with every facet open), see [facets](#facets) |
 | `FacetSettings` | the page's say per facet: view, *any of / all of*, exclusion, hiding |
+| `PageFacets` | facet groups of the page itself, shown and chosen with the server's (see [Facets of the page](#facets-of-the-page)) |
 | `History`, `ItemId` | a history action per row and a *Deleted records* button, see [record history](../modules/auditing.md#record-history-and-restore); `ItemId` picks the id (default the `Id` property) |
 | `AdvancedFilter` | the *Advanced filter* button with the [query builder](query-builder.md) (default `options.DataTable.AdvancedFilter`, `true`) |
 | `QueryFields` | the fields of the query builder; by default the property columns and the reference facets |
@@ -144,6 +145,27 @@ The page has the last word:
 ```
 
 Keys are the facet keys: the property name in camel case (`orderDate`).
+
+#### Facets of the page
+
+What the server cannot facet (a value behind a collection, such as the roles of a user) the page brings itself: `PageFacets` takes `FacetGroupDto`s whose options carry their own OData filter. They show as pills next to the server's, combine and appear as chips the same way, and their filter is part of `CurrentFilter`. The server does not count them: a negative `Count` shows no number.
+
+```razor
+<CoworkeeDataTable T="UserRow" EntitySet="Users" PageFacets="_facets" ...>
+
+@code {
+    private IReadOnlyList<FacetGroupDto> _facets = [];
+
+    protected override async Task OnInitializedAsync() => _facets =
+    [
+        new("Roles", "Roles", "Roles", FacetKind.CheckboxList, FacetOperator.Or,
+            [.. (await Api.GetRolesAsync()).Select(r => new FacetOptionDto(JsonSerializer.SerializeToElement(r.Id), r.Name, true, -1, $"Roles/any(x: x/RoleId eq {r.Id})"))],
+            true, 1000) { Combine = FacetCombine.Any },
+    ];
+}
+```
+
+`CoworkeeUserSelection` uses it for its facets *Roles* and *Groups* ([User selections](../fundamentals/event-targets.md#user-selections)).
 
 **Ranges**: number facets with `FacetType.Range` and date facets get their smallest and largest value and a histogram whose buckets are options with their own filter, so client entities recount them locally. The chosen range is one value, `(Total ge 40 and Total le 100)`. Date presets stay relative: a saved view with *last 7 days* means the last 7 days whenever it opens.
 

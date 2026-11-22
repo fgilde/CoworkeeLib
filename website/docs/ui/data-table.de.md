@@ -43,6 +43,7 @@
 | `ColumnFilters` | ein Filter in jedem Spaltenkopf, siehe [Spaltenfilter](#spaltenfilter) (Standard `options.DataTable.ColumnFilters`, `true`) |
 | `FacetLayout` | `Bar` (Pillen über den Zeilen, Standard) oder `Panel` (eine Seitenleiste mit allen Facetten offen), siehe [Facetten](#facetten) |
 | `FacetSettings` | das letzte Wort der Seite je Facette: Ansicht, *eines von / alle von*, Ausschluss, Ausblenden |
+| `PageFacets` | Facettengruppen der Seite selbst, gezeigt und gewählt mit denen des Servers (siehe [Facetten der Seite](#facetten-der-seite)) |
 | `History`, `ItemId` | eine Verlaufsaktion je Zeile und ein Knopf *Gelöschte Datensätze*, siehe [Verlauf eines Datensatzes](../modules/auditing.md#verlauf-eines-datensatzes-und-wiederherstellen); `ItemId` wählt die Id (sonst die Eigenschaft `Id`) |
 | `AdvancedFilter` | die Schaltfläche *Erweiterter Filter* mit dem [Query-Builder](query-builder.md) (Standard `options.DataTable.AdvancedFilter`, `true`) |
 | `QueryFields` | die Felder des Query-Builders; standardmäßig die Eigenschaftsspalten und die Referenz-Facetten |
@@ -144,6 +145,27 @@ Die Seite hat das letzte Wort:
 ```
 
 Schlüssel sind die Facetten-Schlüssel: der Eigenschaftsname in camelCase (`orderDate`).
+
+#### Facetten der Seite
+
+Was der Server nicht facettieren kann (einen Wert hinter einer Sammlung, etwa die Rollen eines Benutzers), bringt die Seite selbst: `PageFacets` nimmt `FacetGroupDto`s, deren Optionen ihren eigenen OData-Filter tragen. Sie erscheinen als Pills neben denen des Servers, kombinieren und zeigen sich als Chips genauso, und ihr Filter ist Teil von `CurrentFilter`. Der Server zählt sie nicht: ein negativer `Count` zeigt keine Zahl.
+
+```razor
+<CoworkeeDataTable T="UserRow" EntitySet="Users" PageFacets="_facets" ...>
+
+@code {
+    private IReadOnlyList<FacetGroupDto> _facets = [];
+
+    protected override async Task OnInitializedAsync() => _facets =
+    [
+        new("Roles", "Rollen", "Roles", FacetKind.CheckboxList, FacetOperator.Or,
+            [.. (await Api.GetRolesAsync()).Select(r => new FacetOptionDto(JsonSerializer.SerializeToElement(r.Id), r.Name, true, -1, $"Roles/any(x: x/RoleId eq {r.Id})"))],
+            true, 1000) { Combine = FacetCombine.Any },
+    ];
+}
+```
+
+`CoworkeeUserSelection` nutzt das für seine Facetten *Rollen* und *Gruppen* ([Benutzerauswahl](../fundamentals/event-targets.md#benutzerauswahl)).
 
 **Bereiche**: Zahlen-Facetten mit `FacetType.Range` und Datums-Facetten bekommen ihren kleinsten und größten Wert und ein Histogramm, dessen Balken Optionen mit eigenem Filter sind; Client-Entities zählen sie so lokal nach. Der gewählte Bereich ist ein Wert, `(Total ge 40 and Total le 100)`. Datumsvorgaben bleiben relativ: eine gespeicherte Ansicht mit *letzte 7 Tage* meint die letzten 7 Tage, wann immer sie öffnet.
 

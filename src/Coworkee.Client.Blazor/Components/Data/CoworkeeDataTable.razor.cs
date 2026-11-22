@@ -178,6 +178,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
         var reload = _lastFilter != Filter && _grid is not null;
         reload |= FollowBindings();
         reload |= FollowView();
+        FollowPageFacets();
         if (reload)
         {
             Reload();

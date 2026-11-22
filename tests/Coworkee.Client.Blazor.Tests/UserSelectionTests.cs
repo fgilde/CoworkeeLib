@@ -21,6 +21,7 @@ public sealed class UserSelectionTests : ClientTestBase
     private static readonly Guid BobId = Guid.CreateVersion7();
     private readonly FakeODataClient _odata = new();
     private readonly IRenderedComponent<MudDialogProvider> _dialogs;
+    private readonly IRenderedComponent<MudPopoverProvider> _popovers;
 
     public UserSelectionTests()
     {
@@ -39,7 +40,7 @@ public sealed class UserSelectionTests : ClientTestBase
         Api.GetUserNamesAsync(default!, default).ReturnsForAnyArgs(call => call.Arg<IReadOnlyList<Guid>>().ToDictionary(id => id, id => id == AdaId ? "Ada Lovelace" : "Bob Builder"));
         AddAuthorization().SetAuthorized("Admin").SetClaims(new Claim("sub", Guid.CreateVersion7().ToString()))
             .SetPolicies(Security.PermissionPolicy.For(NotificationPermissions.Send), Security.PermissionPolicy.For(IdentityPermissions.Users.View));
-        Render<MudPopoverProvider>();
+        _popovers = Render<MudPopoverProvider>();
         Render<MudSnackbarProvider>();
         _dialogs = Render<MudDialogProvider>();
     }
@@ -116,28 +117,29 @@ public sealed class UserSelectionTests : ClientTestBase
     }
 
     [Fact]
-    public async Task The_selection_narrows_to_roles_directly_or_through_groups_and_to_groups_with_their_sub_groups()
+    public void The_selection_narrows_by_the_facets_roles_directly_or_through_groups_and_groups_with_their_sub_groups()
     {
         RoleDto editors = new(Guid.CreateVersion7(), "Editors", null, false);
         Api.GetRolesAsync(Arg.Any<CancellationToken>()).Returns([editors]);
         GroupRow team = new(Guid.CreateVersion7(), "Team", null, [new GroupRoleRow(editors.Id)], null, "00001"), sub = new(Guid.CreateVersion7(), "Sub", null, [], null, "00001.00001");
         _odata.With("Groups", team, sub);
-        var filters = new List<string?>();
-        _odata.Queried += (_, query) => filters.Add(query.Filter);
         UserSelection? value = null;
         var picker = Render<CoworkeeUserSelection>(p => p.Add(s => s.Filter, "IsActive eq true").Add(s => s.ValueChanged, v => value = v));
-        picker.WaitForElement("[data-testid='selection-groups']");
 
-        var selects = picker.FindComponents<MudSelect<Guid>>();
-        await picker.InvokeAsync(() => selects[0].Instance.SelectedValuesChanged.InvokeAsync([editors.Id]));
+        // pills like the server's facets, next to them
+        var role = $"(Roles/any(r: r/RoleId eq {editors.Id}) or Groups/any(m: m/GroupId in ({team.Id})))";
+        picker.WaitForAssertion(() => picker.Find("[data-facet='Roles'] [data-testid='facet-button']").Click());
+        _popovers.WaitForAssertion(() => _popovers.Find($"[data-option=\"{role}\"]").Click());
+        picker.WaitForAssertion(() => value!.Filter.ShouldBe($"(IsActive eq true) and {role}"));
+        picker.Find("[data-testid='facet-chips']").TextContent.ShouldContain("Editors");
 
-        picker.WaitForAssertion(() => value!.Filter.ShouldBe($"(IsActive eq true) and ((Roles/any(r: r/RoleId in ({editors.Id})) or Groups/any(m: m/GroupId in ({team.Id}))))"));
-
-        await picker.InvokeAsync(() => selects[0].Instance.SelectedValuesChanged.InvokeAsync(Array.Empty<Guid>()));
-        await picker.InvokeAsync(() => selects[1].Instance.SelectedValuesChanged.InvokeAsync([team.Id]));
-
-        picker.WaitForAssertion(() => value!.Filter.ShouldBe($"(IsActive eq true) and (Groups/any(m: m/GroupId in ({team.Id},{sub.Id})))"));
-        selects[1].Instance.ToStringFunc!(sub.Id).ShouldBe("Team / Sub");
+        var facets = CoworkeeUserSelection.RoleAndGroupFacets([editors], [team, sub]);
+        var groups = facets.Single(f => f.Key == "Groups");
+        groups.View.ShouldBe(Contracts.Data.FacetView.Tree);
+        groups.Options.Select(o => o.Label).ShouldBe(["Team", "Team / Sub"]);
+        groups.Options[0].OData.ShouldBe($"Groups/any(m: m/GroupId in ({team.Id},{sub.Id}))");
+        groups.Options[1].OData.ShouldBe($"Groups/any(m: m/GroupId in ({sub.Id}))");
+        CoworkeeUserSelection.RoleAndGroupFacets([], []).ShouldBeEmpty();
     }
 
     [Fact]
@@ -162,6 +164,10 @@ public sealed class UserSelectionTests : ClientTestBase
         // 2. only the values the template reads
         _dialogs.WaitForAssertion(() => _dialogs.Find("[data-testid='mail-send-model']"));
         _dialogs.Find("[data-testid='mail-send-values']").InnerHtml.ShouldContain("Login url");
+        // the same values as JSON in the code editor
+        _dialogs.Find("[data-testid='mail-send-json'] input, input[data-testid='mail-send-json']").Change(true);
+        _dialogs.WaitForAssertion(() => _dialogs.FindComponent<Components.Editors.CodeEditor>().Instance.Language.ShouldBe("json"));
+        _dialogs.FindComponent<Components.Editors.CodeEditor>().Instance.Value.ShouldContain("login_url");
         await _dialogs.Find("[data-testid='wizard-next']").ClickAsync(new());
 
         // 3. the mail of each recipient, then the send

@@ -2,6 +2,17 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- `CoworkeeDataTable.PageFacets`: facet groups of the page, shown and chosen with the server's, each option with its own OData filter (for values the server cannot facet, such as a collection); a negative count shows none. See [Facets of the page](../ui/data-table.md#facets-of-the-page).
+
+### Changed
+
+- `CoworkeeUserSelection`: roles and groups are facets next to the others (groups as a tree) instead of two select fields; *Add a user* sits in the table's toolbar.
+- The JSON of the mail template send wizard's values is edited in the code editor (Monaco).
+
 ## 0.0.1.97 (2026-11-21)
 
 ### Breaking changes

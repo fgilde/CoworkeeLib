@@ -1,3 +1,4 @@
+@using Coworkee.Client.Blazor.Components.Editors
 @using Coworkee.Client.Blazor.Components.Users
 @using Nextended.Core.Helper
 @using MudBlazor.Extensions.Components.ObjectEdit
@@ -29,8 +30,9 @@
             }
             else if (_json)
             {
-                <MudTextField T="string" @bind-Value="_model" @bind-Value:after="Forget" Lines="14" Variant="Variant.Outlined" Style="font-family:monospace"
-                              data-testid="mail-send-model-json" />
+                <div data-testid="mail-send-model-json">
+                    <CodeEditor @bind-Value="_model" @bind-Value:after="Forget" Language="json" Height="360px" AllowFullscreen="false" />
+                </div>
             }
             else if (_step == 1)
             {

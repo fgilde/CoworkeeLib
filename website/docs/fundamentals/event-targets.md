@@ -81,7 +81,7 @@ The server resolves it with the rights of the **current user**, as the Users set
 
 ### Choosing users in Blazor
 
-`CoworkeeUserSelection` (`Coworkee.Client.Blazor.Components.Users`) is a data table over the Users set with its facets, search and column filters: the switch *Everyone matching the filter* takes every match, the checkbox of a row leaves a user out or adds him, *Add a user* adds anyone by name. **Roles** narrows to the members of roles, given directly or through a group that has the role (as permissions count roles); **Groups** to the members of groups and of their sub-groups. Both are offered where the user may read roles or groups. Below it shows the count of the server, live: a change of users reloads the table and counts again.
+`CoworkeeUserSelection` (`Coworkee.Client.Blazor.Components.Users`) is a data table over the Users set with its facets, search and column filters: the switch *Everyone matching the filter* takes every match, the checkbox of a row leaves a user out or adds him, *Add a user* adds anyone by name. Next to the facets of the Users set it has the facets **Roles**, the members of roles given directly or through a group that has the role (as permissions count roles), and **Groups**, the members of groups and of their sub-groups (as a tree); each where the user may read roles or groups. Below it shows the count of the server, live: a change of users reloads the table and counts again.
 
 ```razor
 <CoworkeeUserSelection @bind-Value="_recipients" CountChanged="c => _count = c" Filter="IsActive eq true" />
@@ -92,7 +92,7 @@ The server resolves it with the rights of the **current user**, as the Users set
 }
 ```
 
-The chosen roles and groups become OData filters of the selection: `Roles/any(r: r/RoleId in (...)) or Groups/any(m: m/GroupId in (...))` and `Groups/any(m: m/GroupId in (...))` (the Users set has the navigation `Roles` for this, the direct roles of a user). `Filter` narrows the table and becomes part of the selection; `PageSize` sets the rows per page. The value goes to the server as it is, e.g. in an own request with `EventTarget.Users(request.Recipients)`.
+They are facets of the page (`PageFacets` of the data table); a chosen role or group is an OData filter of the selection: `(Roles/any(r: r/RoleId eq ...) or Groups/any(m: m/GroupId in (...)))` and `Groups/any(m: m/GroupId in (...))` (the Users set has the navigation `Roles` for this, the direct roles of a user). `Filter` narrows the table and becomes part of the selection; `PageSize` sets the rows per page. The value goes to the server as it is, e.g. in an own request with `EventTarget.Users(request.Recipients)`.
 
 ## Sending notifications from the administration
 
