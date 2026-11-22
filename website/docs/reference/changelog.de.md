@@ -4,6 +4,12 @@
 
 ## Unreleased
 
+### Behoben
+
+- `coworkee deploy` erzeugt die Cookie-Secrets der oauth2-proxys (Kibana, SigNoz) mit 32 Zeichen; die bisherigen 40 nimmt oauth2-proxy nicht an (16, 24 oder 32 Bytes). Einen schon in `.env` stehenden Wert (`*_COOKIE_SECRET`) leeren, damit er neu erzeugt wird.
+
+## 0.0.1.99 (2026-11-22)
+
 ### Neu
 
 - **SigNoz** als zweites Observability-Werkzeug neben Grafana: `options.UseSigNoz()` / `WithoutSigNoz()`, `CoworkeeTools.SigNoz`, `app.SigNoz`. Es bringt SigNoz, seinen Collector und ClickHouse mit, dazu Dashboards (HTTP services, .NET runtime, Database calls, Logs and traces) und Alert-Regeln, die bei jedem Start angelegt werden, und die Anmeldung am Auth-Server über oauth2-proxy (das eigene SSO von SigNoz braucht seine Enterprise-Lizenz). Grafana bleibt der Standard; SigNoz ist optional, beide laufen auch zusammen. Es wird wie Grafana mit ausgerollt (`--without signoz`). Die Template-Option heißt `signoz` (`coworkee add signoz`), und das Studio hat eine Karte dafür. Siehe [SigNoz](../hosting/observability.md#signoz).

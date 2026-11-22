@@ -282,6 +282,16 @@ public sealed class DeployCommandTests
     }
 
     [Fact]
+    public void Cookie_secrets_of_the_sign_in_proxies_have_a_length_oauth2_proxy_takes()
+    {
+        var values = ComposeEnv.Generate(["SIGNOZ_SIGNIN_COOKIE_SECRET", "SHOP_KIBANA_COOKIE_SECRET", "SHOP_SIGNOZ_SECRET"], "Shop");
+
+        values["SIGNOZ_SIGNIN_COOKIE_SECRET"].Length.ShouldBe(32);
+        values["SHOP_KIBANA_COOKIE_SECRET"].Length.ShouldBe(32);
+        values["SHOP_SIGNOZ_SECRET"].Length.ShouldBe(40);
+    }
+
+    [Fact]
     public void Values_of_an_earlier_run_and_set_values_are_kept()
     {
         var env = Env.Replace("SHOP_WEB_URL=", "SHOP_WEB_URL=https://shop.example.com");

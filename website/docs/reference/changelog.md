@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixed
+
+- `coworkee deploy` generates the cookie secrets of the oauth2-proxies (Kibana, SigNoz) with 32 characters; oauth2-proxy refuses the 40 it got so far (16, 24 or 32 bytes). Empty a value already in `.env` (`*_COOKIE_SECRET`) to get a new one.
+
 ## 0.0.1.99 (2026-11-22)
 
 ### Added

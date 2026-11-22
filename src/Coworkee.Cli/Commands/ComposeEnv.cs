@@ -53,6 +53,8 @@ internal static class ComposeEnv
         _ when IsAdminEmail(key) => $"admin@{appName.ToLowerInvariant()}.local",
         // the password rules of a new system want upper and lower case, a digit and a special character
         _ when key.EndsWith("_ADMIN_PASSWORD", StringComparison.Ordinal) => $"Cw1-{Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(12))}",
+        // oauth2-proxy (Kibana, SigNoz) takes a cookie secret of 16, 24 or 32 bytes only: 32 hex characters
+        _ when key.EndsWith("_COOKIE_SECRET", StringComparison.Ordinal) => Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(16)),
         _ when key.EndsWith("_PUSH_PUBLIC_KEY", StringComparison.Ordinal) => vapid.Value.Public,
         _ when key.EndsWith("_PUSH_PRIVATE_KEY", StringComparison.Ordinal) => vapid.Value.Private,
         _ when comment?.StartsWith(ImageComment, StringComparison.Ordinal) == true => ImageTag(comment[ImageComment.Length..].Trim(), appName),
