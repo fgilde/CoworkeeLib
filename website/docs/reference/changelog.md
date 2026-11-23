@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixed
+
+- The sign-in proxies of SigNoz and Kibana open their tool on Azure Container Apps: they sent the tool their own public host name, and Container Apps, which routes by host, answered with 404 ("This Container App is stopped or does not exist"). They no longer pass the host header (Nextended.Aspire.Hosting.SigNoz 10.1.70).
+
 ## 0.1.2 (2026-11-22)
 
 ### Fixed

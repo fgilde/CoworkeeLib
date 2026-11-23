@@ -125,6 +125,7 @@ public sealed class ToolsTests
         env["OAUTH2_PROXY_SKIP_OIDC_DISCOVERY"].ShouldBe("true");
         env["OAUTH2_PROXY_INSECURE_OIDC_ALLOW_UNVERIFIED_EMAIL"].ShouldBe("true");
         env["OAUTH2_PROXY_UPSTREAMS"].ShouldBe("{signoz.bindings.http.url}");
+        env["OAUTH2_PROXY_PASS_HOST_HEADER"].ShouldBe("false");
 
         var signoz = await Environment(Allocated(app.SigNoz.Resource));
         signoz["SIGNOZ_IDENTN_IMPERSONATION_ENABLED"].ShouldBe("true");

@@ -86,6 +86,8 @@ public sealed partial class CoworkeeApp
             .WithEnvironment("OAUTH2_PROXY_EMAIL_DOMAINS", "*")
             .WithEnvironment("OAUTH2_PROXY_SKIP_PROVIDER_BUTTON", "true")
             .WithEnvironment("OAUTH2_PROXY_UPSTREAMS", kibana.GetEndpoint("http"))
+            // Kibana gets its own host name: Azure Container Apps routes by host and answers the proxy's public one with 404
+            .WithEnvironment("OAUTH2_PROXY_PASS_HOST_HEADER", "false")
             .WithEnvironment("OAUTH2_PROXY_HTTP_ADDRESS", "0.0.0.0:4180")
             .WithEnvironment("OAUTH2_PROXY_COOKIE_SECRET", GeneratedSecret($"{clientId}-cookie-secret", 32))
             // browsers send cookies to every port of localhost

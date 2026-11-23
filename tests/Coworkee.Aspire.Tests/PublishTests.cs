@@ -67,6 +67,7 @@ public sealed class PublishTests
         compose.ShouldContain("quay.io/oauth2-proxy/oauth2-proxy");
         compose.ShouldContain("docker.io/library/kibana");
         compose.ShouldContain("127.0.0.1:8096:4180");
+        compose.ShouldContain("OAUTH2_PROXY_PASS_HOST_HEADER: \"false\"");
         System.Text.RegularExpressions.Regex.Match(compose, @"
   kibana-server:
 ((?:    .*

@@ -63,7 +63,7 @@
     <PackageVersion Include="Nextended.Web" Version="10.1.66" />
     <PackageVersion Include="Nextended.ResponseFilters.AspNetCore" Version="10.1.66" />
     <PackageVersion Include="Nextended.Aspire.Hosting.Grafana" Version="10.1.66" />
-    <PackageVersion Include="Nextended.Aspire.Hosting.SigNoz" Version="10.1.69" />
+    <PackageVersion Include="Nextended.Aspire.Hosting.SigNoz" Version="10.1.70" />
     <PackageVersion Include="Nextended.Aspire.Hosting.WebDataStudio" Version="10.1.66" />
     <PackageVersion Include="Nextended.Aspire.Hosting.AspireUI" Version="10.1.66" />
     <PackageVersion Include="MudBlazor" Version="9.13.0" />
