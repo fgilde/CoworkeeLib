@@ -12,19 +12,9 @@
         <MudPopover Open="_open" AnchorOrigin="@MenuOrigins.Anchor" TransformOrigin="@MenuOrigins.Transform" Paper="true" Elevation="8" Class="pa-2" Style="width:360px">
             @if (_open)
             {
-                <div class="d-flex align-center gap-2 mb-1">
-                    <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Outlined.SelectAll" Disabled="_draft.Count == 0"
-                               OnClick="() => _draft = new HashSet<Guid>()" data-testid="group-scope-all">@L["All my groups"]</MudButton>
-                    <MudSpacer />
-                    <MudText Typo="Typo.caption" Class="mud-text-secondary" data-testid="group-scope-count">@(_draft.Count == 0 ? L["All"] : L["{0} chosen", _draft.Count])</MudText>
-                </div>
+                <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Outlined.SelectAll" Disabled="_draft.Count == 0" Class="mb-1"
+                           OnClick="() => _draft = new HashSet<Guid>()" data-testid="group-scope-all">@L["All my groups"]</MudButton>
                 <GroupTree Nodes="@(_scopeAll ? null : _nodes)" CheckedIds="_draft" CheckedIdsChanged="ids => _draft = ids" Bold="Members" ListStyle="max-height:55vh;overflow:auto" />
-                <div class="d-flex align-center gap-2 mt-2">
-                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["Applied when the list closes."]</MudText>
-                    <MudSpacer />
-                    <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="CancelAsync" data-testid="group-scope-cancel">@L["Cancel"]</MudButton>
-                    <MudButton Variant="Variant.Filled" Size="Size.Small" Color="Color.Primary" OnClick="CloseAsync" data-testid="group-scope-apply">@L["Apply"]</MudButton>
-                </div>
             }
         </MudPopover>
         <MudOverlay Visible="_open" VisibleChanged="visible => visible ? Task.CompletedTask : CloseAsync()" AutoClose="true" />

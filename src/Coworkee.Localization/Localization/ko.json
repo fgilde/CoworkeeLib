@@ -2353,8 +2353,5 @@
   "{0} of {1}": "{0} / {1}",
   "e.g. {0}": "예: {0}",
   "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "메일 받는 사람: 필터에 맞는 모든 사용자이며, 개별 사용자를 추가하거나 제외할 수 있습니다. 각 수신자는 자신의 언어로 받습니다.",
-  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "템플릿이 사용하는 값만 입력합니다. 각 수신자의 이름, 주소, 언어와 수신 거부 링크는 수신자마다 채워집니다.",
-  "{0} of {1} groups shown; search to find the others.": "{1}개 그룹 중 {0}개 표시 중입니다. 나머지는 검색하세요.",
-  "{0} chosen": "{0}개 선택됨",
-  "Applied when the list closes.": "목록을 닫으면 적용됩니다."
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "템플릿이 사용하는 값만 입력합니다. 각 수신자의 이름, 주소, 언어와 수신 거부 링크는 수신자마다 채워집니다."
 }

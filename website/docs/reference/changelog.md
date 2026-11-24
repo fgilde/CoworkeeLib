@@ -2,6 +2,13 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Changed
+
+- `GroupScopePicker` has no Apply and Cancel buttons and no captions any more: closing the list (a click outside or on the button) saves the checks once. "All my groups", the search and the saving spinner stay.
+- `GroupTree` renders more top groups as the list scrolls to its end (100 at a time, an `IntersectionObserver` through `observeEnd` in `coworkee.js`) instead of a "Show more" button and a hint to search; a search renders its matches the same way. This covers the groups page, the group picker dialog and the scope picker. The texts "{0} of {1} groups shown; search to find the others.", "{0} chosen" and "Applied when the list closes." are gone.
+
 ## 0.1.4 (2026-11-24)
 
 ### Changed

@@ -2353,8 +2353,5 @@
   "{0} of {1}": "{0} od {1}",
   "e.g. {0}": "npr. {0}",
   "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "Tko dobiva poruku: svi koji odgovaraju filtru, s pojedinačno dodanim ili izostavljenim korisnicima. Svaki primatelj dobiva je na svom jeziku.",
-  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Samo vrijednosti koje predložak koristi. Ime, adresa i jezik svakog primatelja te poveznica za odjavu popunjavaju se za svakoga posebno.",
-  "{0} of {1} groups shown; search to find the others.": "Prikazano {0} od {1} grupa; pretražite za ostale.",
-  "{0} chosen": "Odabrano: {0}",
-  "Applied when the list closes.": "Primjenjuje se kad se popis zatvori."
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Samo vrijednosti koje predložak koristi. Ime, adresa i jezik svakog primatelja te poveznica za odjavu popunjavaju se za svakoga posebno."
 }

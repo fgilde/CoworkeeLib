@@ -2,6 +2,7 @@ using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Identity;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Components.Groups;
@@ -9,11 +10,12 @@ namespace Coworkee.Client.Blazor.Components.Groups;
 /// <summary>
 /// The group tree, loaded level by level as nodes open (MudBlazor's <c>ServerData</c>); a search shows the matches with their ancestors.
 /// Used by the groups page, the group picker dialog and, with checkboxes, the group scope picker. A level of thousands of groups (an imported
-/// organisation) shows <see cref="PageSize"/> of its top groups at a time: rendering them all took seconds per click.
+/// organisation, or a broad search) renders <see cref="PageSize"/> of its top groups at first and the next ones as the list is scrolled to its end:
+/// rendering them all took seconds per click.
 /// </summary>
-public partial class GroupTree
+public partial class GroupTree : IAsyncDisposable
 {
-    /// <summary>Top groups shown at a time; "Show more" adds as many again, the search finds the others.</summary>
+    /// <summary>Top groups rendered at first; scrolling to the end of the list adds as many again.</summary>
     public const int PageSize = 100;
 
     private List<TreeItemData<GroupNodeDto>> _items = [];
@@ -23,6 +25,12 @@ public partial class GroupTree
     private string _search = string.Empty;
     private int _loads;
     private IReadOnlyList<GroupNodeDto>? _nodes;
+    private ElementReference _end;
+    private string? _observedEnd;
+    private IJSObjectReference? _endObserver;
+    private DotNetObjectReference<GroupTree>? _self;
+
+    [Inject] private IJSRuntime JS { get; set; } = null!;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
@@ -164,7 +172,67 @@ public partial class GroupTree
         _items = _roots.Count <= _limit ? _roots : _roots.GetRange(0, _limit);
     }
 
-    private void ShowMore() => ShowUpTo(_limit + PageSize);
+    /// <summary>The end of the list scrolled into view: renders the next <see cref="PageSize"/> top groups.</summary>
+    /// <returns>Whether more are left; the observer asks again while the end stays in view.</returns>
+    [JSInvokable]
+    public async Task<bool> ShowMoreAsync()
+    {
+        await InvokeAsync(() =>
+        {
+            ShowUpTo(_limit + PageSize);
+            StateHasChanged();
+        });
+        return Hidden > 0;
+    }
+
+    // a new end element (the first page, a new search) is watched; without one the watch stops
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        var end = Hidden > 0 ? _end.Id : null;
+        if (end == _observedEnd)
+        {
+            return;
+        }
+
+        await StopObservingAsync();
+        if (end is null)
+        {
+            return;
+        }
+
+        _observedEnd = end;
+        try
+        {
+            var module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
+            _endObserver = await module.InvokeAsync<IJSObjectReference>("observeEnd", _end, _self ??= DotNetObjectReference.Create(this), nameof(ShowMoreAsync));
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+
+    private async Task StopObservingAsync()
+    {
+        _observedEnd = null;
+        if (_endObserver is { } observer)
+        {
+            _endObserver = null;
+            try
+            {
+                await observer.InvokeVoidAsync("dispose");
+                await observer.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await StopObservingAsync();
+        _self?.Dispose();
+    }
 
     private async Task SearchAsync(string? text)
     {

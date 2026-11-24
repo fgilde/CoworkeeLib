@@ -2353,8 +2353,5 @@
   "{0} of {1}": "{0} / {1}",
   "e.g. {0}": "例如 {0}",
   "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "收件人：所有符合筛选条件的用户，可单独添加或排除。每位收件人都会收到其本人语言的邮件。",
-  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "仅填写模板使用的值。每位收件人的姓名、地址、语言以及退订链接会分别自动填入。",
-  "{0} of {1} groups shown; search to find the others.": "显示 {1} 个组中的 {0} 个；搜索以查找其他组。",
-  "{0} chosen": "已选 {0} 个",
-  "Applied when the list closes.": "关闭列表时应用。"
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "仅填写模板使用的值。每位收件人的姓名、地址、语言以及退订链接会分别自动填入。"
 }

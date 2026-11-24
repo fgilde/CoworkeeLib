@@ -2,6 +2,13 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Geändert
+
+- `GroupScopePicker` hat keine Übernehmen- und Abbrechen-Buttons und keine Beschriftungen mehr: Das Schließen der Liste (ein Klick daneben oder auf den Button) speichert die Häkchen einmal. „Alle meine Gruppen“, die Suche und der Speicher-Spinner bleiben.
+- `GroupTree` rendert weitere oberste Gruppen, während die Liste an ihr Ende scrollt (je 100, ein `IntersectionObserver` über `observeEnd` in `coworkee.js`), statt eines „Weitere anzeigen“-Buttons und eines Hinweises auf die Suche; eine Suche rendert ihre Treffer genauso. Das gilt für die Gruppenseite, den Gruppen-Auswahldialog und den Scope-Picker. Die Texte „{0} of {1} groups shown; search to find the others.“, „{0} chosen“ und „Applied when the list closes.“ entfallen.
+
 ## 0.1.4 (2026-11-24)
 
 ### Geändert

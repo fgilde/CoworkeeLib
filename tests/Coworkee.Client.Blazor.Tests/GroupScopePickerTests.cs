@@ -107,7 +107,7 @@ public sealed class GroupScopePickerTests : ClientTestBase
         // a draft until the list closes: nothing is sent, the table keeps its rows while the user goes on choosing
         await Api.DidNotReceive().SelectGroupsAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>());
         _loads.ShouldBe(1);
-        await ApplyAsync();
+        await CloseAsync();
 
         picker.WaitForAssertion(() => Api.Received(1).SelectGroupsAsync(Arg.Is<IReadOnlyList<Guid>>(ids => ids.SequenceEqual(new[] { Hamburg.Id })), Arg.Any<CancellationToken>()));
         picker.WaitForAssertion(() => Button(picker).TextContent.Trim().ShouldBe("Hamburg"));
@@ -157,7 +157,7 @@ public sealed class GroupScopePickerTests : ClientTestBase
         await OpenAsync(picker);
 
         await Check(Bremen).ChangeAsync(new ChangeEventArgs { Value = true });
-        await ApplyAsync();
+        await CloseAsync();
 
         picker.WaitForAssertion(() => Api.Received(1).SelectGroupsAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>()));
         picker.WaitForAssertion(() => Button(picker).TextContent.Trim().ShouldBe("All my groups"));
@@ -226,7 +226,7 @@ public sealed class GroupScopePickerTests : ClientTestBase
         await OpenAsync(picker);
 
         await _popovers.Find("[data-testid='group-scope-all']").ClickAsync(new());
-        await ApplyAsync();
+        await CloseAsync();
 
         picker.WaitForAssertion(() => Api.Received(1).SelectGroupsAsync(Arg.Is<IReadOnlyList<Guid>>(ids => ids.Count == 0), Arg.Any<CancellationToken>()));
         picker.WaitForAssertion(() => Button(picker).TextContent.Trim().ShouldBe("All my groups"));
@@ -282,35 +282,41 @@ public sealed class GroupScopePickerTests : ClientTestBase
         _popovers.WaitForAssertion(() => _popovers.FindAll("[data-group-node]").Select(n => n.TextContent).ShouldBe(["Customer A", "Hamburg"], ignoreOrder: false));
 
         await Check(Hamburg).ChangeAsync(new ChangeEventArgs { Value = true });
-        await ApplyAsync();
+        await CloseAsync();
 
         picker.WaitForAssertion(() => Api.Received(1).SelectGroupsAsync(Arg.Is<IReadOnlyList<Guid>>(ids => ids.SequenceEqual(new[] { Hamburg.Id })), Arg.Any<CancellationToken>()));
         picker.WaitForAssertion(() => Button(picker).TextContent.Trim().ShouldBe("Hamburg"));
     }
 
     [Fact]
-    public async Task Several_checks_are_sent_once_and_cancel_keeps_the_stored_selection()
+    public async Task Several_checks_are_sent_once_when_the_list_closes()
     {
         var picker = RenderPicker();
         await OpenAsync(picker);
+        // no buttons, no captions: closing the list applies
+        _popovers.FindAll("[data-testid='group-scope-apply'], [data-testid='group-scope-cancel'], [data-testid='group-scope-count']").ShouldBeEmpty();
 
         await Check(Hamburg).ChangeAsync(new ChangeEventArgs { Value = true });
         await Check(Supplier).ChangeAsync(new ChangeEventArgs { Value = true });
-        _popovers.WaitForAssertion(() => _popovers.Find("[data-testid='group-scope-count']").TextContent.ShouldBe("2 chosen"));
-        await _popovers.Find("[data-testid='group-scope-cancel']").ClickAsync(new());
-
+        await Check(Bremen).ChangeAsync(new ChangeEventArgs { Value = true });
+        await Check(Bremen).ChangeAsync(new ChangeEventArgs { Value = false });
         await Api.DidNotReceive().SelectGroupsAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>());
-        Button(picker).TextContent.Trim().ShouldBe("All my groups");
-
-        await OpenAsync(picker);
-        _popovers.WaitForAssertion(() => Check(Hamburg).HasAttribute("checked").ShouldBeFalse());
-        await Check(Hamburg).ChangeAsync(new ChangeEventArgs { Value = true });
-        await Check(Supplier).ChangeAsync(new ChangeEventArgs { Value = true });
-        await ApplyAsync();
+        // the button closes the list as well
+        await Button(picker).ClickAsync(new());
 
         picker.WaitForAssertion(() => Api.Received(1).SelectGroupsAsync(Arg.Is<IReadOnlyList<Guid>>(ids => ids.Count == 2 && ids.Contains(Hamburg.Id) && ids.Contains(Supplier.Id)),
             Arg.Any<CancellationToken>()));
         picker.WaitForAssertion(() => Button(picker).TextContent.Trim().ShouldBe("2 groups"));
+        _popovers.FindAll("[data-testid='group-tree']").ShouldBeEmpty();
+
+        // opened and closed again without a change: nothing is sent
+        await OpenAsync(picker);
+        _popovers.WaitForAssertion(() => Check(Hamburg).HasAttribute("checked").ShouldBeTrue());
+        await Check(Hamburg).ChangeAsync(new ChangeEventArgs { Value = false });
+        await Check(Hamburg).ChangeAsync(new ChangeEventArgs { Value = true });
+        await CloseAsync();
+
+        await Api.Received(1).SelectGroupsAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>());
     }
 
     private FakeRealtimeConnection Realtime => Services.GetRequiredService<FakeRealtimeConnection>();
@@ -339,7 +345,8 @@ public sealed class GroupScopePickerTests : ClientTestBase
         _popovers.WaitForElement("[data-testid='group-tree']");
     }
 
-    private Task ApplyAsync() => _popovers.Find("[data-testid='group-scope-apply']").ClickAsync(new());
+    // a click outside the list (the overlay renders in the popover provider)
+    private Task CloseAsync() => _popovers.Find(".mud-overlay").ClickAsync(new());
 
     private AngleSharp.Dom.IElement Check(GroupNodeDto node) => _popovers.Find($"[data-group-check='{node.Id}'] input, input[data-group-check='{node.Id}']");
 

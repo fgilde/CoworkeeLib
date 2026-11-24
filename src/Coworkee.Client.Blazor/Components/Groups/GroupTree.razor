@@ -28,10 +28,8 @@
 </MudTreeView>
 @if (Hidden > 0)
 {
-    <div class="d-flex align-center flex-wrap gap-2 pa-2" data-testid="group-tree-more">
-        <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["{0} of {1} groups shown; search to find the others.", _items.Count, _roots.Count]</MudText>
-        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="ShowMore" data-testid="group-tree-show-more">@L["Show {0} more", Math.Min(PageSize, Hidden)]</MudButton>
-    </div>
+    @* scrolled into view, it adds the next top groups (observeEnd) *@
+    <div @ref="_end" style="height:1px" data-testid="group-tree-end"></div>
 }
 @if (_items.Count == 0 && !_loading)
 {
