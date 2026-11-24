@@ -25,6 +25,7 @@ public partial class Groups
     private bool _canManage;
     private bool _canManageMembers;
     private bool _ready;
+    private bool _loadingGroup;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
@@ -81,14 +82,27 @@ public partial class Groups
         }
     }
 
-    private async Task LoadAsync(Guid id) => await Snackbar.RunAsync(async () =>
+    // the bar shows while the chosen group loads; the previous one stays until the new one is there
+    private async Task LoadAsync(Guid id)
     {
-        _requested = id;
-        var query = new ODataQuery { Filter = $"Id eq {id}", Top = 1, Count = false };
-        _group = (await OData.QueryAsync<GroupRow>("Groups", query)).Items.FirstOrDefault(g => g.Id == id);
-        _notFound = _group is null;
-        _ancestors = _group?.Code is { } code && code.Contains('.') ? await AncestorsAsync(code) : [];
-    });
+        _loadingGroup = true;
+        StateHasChanged();
+        try
+        {
+            await Snackbar.RunAsync(async () =>
+            {
+                _requested = id;
+                var query = new ODataQuery { Filter = $"Id eq {id}", Top = 1, Count = false };
+                var group = (await OData.QueryAsync<GroupRow>("Groups", query)).Items.FirstOrDefault(g => g.Id == id);
+                _ancestors = group?.Code is { } code && code.Contains('.') ? await AncestorsAsync(code) : [];
+                (_group, _notFound) = (group, group is null);
+            });
+        }
+        finally
+        {
+            _loadingGroup = false;
+        }
+    }
 
     private async Task<List<(string? Code, string Name)>> AncestorsAsync(string code)
     {

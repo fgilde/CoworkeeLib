@@ -9,6 +9,7 @@ namespace Coworkee.Client.Blazor.Components.Groups;
 
 /// <summary>
 /// App-bar button for the groups the user works in: "All my groups", one group's name or "{0} groups"; opens a tree with checkboxes.
+/// The checks are a draft until the list closes (Apply, a click outside): every check used to reload the page's data while the user was still choosing.
 /// Not part of the layout: apps that use groups as units place <c>&lt;GroupScopePicker /&gt;</c> themselves. Hidden without groups.
 /// </summary>
 public partial class GroupScopePicker : IDisposable
@@ -22,6 +23,8 @@ public partial class GroupScopePicker : IDisposable
     private bool _open;
     private IReadOnlyList<GroupNodeDto> _nodes = [];
     private IReadOnlySet<Guid> _checked = new HashSet<Guid>();
+    private IReadOnlySet<Guid> _draft = new HashSet<Guid>();
+    private bool _saving;
 
     [Inject] private GroupScopeState State { get; set; } = null!;
 
@@ -86,15 +89,48 @@ public partial class GroupScopePicker : IDisposable
         }
     }
 
-    // checked at once, so a second click while the first one is saved builds on it; rendered before the save, so a rejected one unchecks again
-    private async Task SelectAsync(IReadOnlySet<Guid> ids)
+    private Task ToggleAsync()
     {
-        _checked = ids;
+        if (_open)
+        {
+            return CloseAsync();
+        }
+
+        _draft = _checked;
+        _open = true;
+        return Task.CompletedTask;
+    }
+
+    private Task CancelAsync()
+    {
+        _draft = _checked;
+        _open = false;
+        return Task.CompletedTask;
+    }
+
+    // the draft is saved once, when the list closes; the button shows the save, a rejected one restores the stored selection
+    private async Task CloseAsync()
+    {
+        _open = false;
+        if (_draft.SetEquals(_checked))
+        {
+            return;
+        }
+
+        var ids = _draft;
+        (_checked, _saving) = (ids, true);
         StateHasChanged();
         await Task.Yield();
-        if (!await Snackbar.RunAsync(() => State.SelectAsync([.. ids])))
+        try
         {
-            Rebuild();
+            if (!await Snackbar.RunAsync(() => State.SelectAsync([.. ids])))
+            {
+                Rebuild();
+            }
+        }
+        finally
+        {
+            _saving = false;
         }
     }
 }

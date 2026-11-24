@@ -2353,5 +2353,8 @@
   "{0} of {1}": "{0} di {1}",
   "e.g. {0}": "es. {0}",
   "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "Chi riceve la mail: tutti quelli che corrispondono al filtro, con singoli utenti aggiunti o esclusi. Ogni destinatario la riceve nella propria lingua.",
-  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Solo i valori usati dal modello. Nome, indirizzo e lingua di ogni destinatario e il link di disiscrizione vengono inseriti per ciascuno."
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Solo i valori usati dal modello. Nome, indirizzo e lingua di ogni destinatario e il link di disiscrizione vengono inseriti per ciascuno.",
+  "{0} of {1} groups shown; search to find the others.": "Mostrati {0} gruppi su {1}; cerca per trovare gli altri.",
+  "{0} chosen": "{0} scelti",
+  "Applied when the list closes.": "Applicato alla chiusura dell'elenco."
 }

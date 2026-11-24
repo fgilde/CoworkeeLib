@@ -2353,5 +2353,8 @@
   "{0} of {1}": "{0} / {1}",
   "e.g. {0}": "例: {0}",
   "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "メールの受信者: フィルターに一致するすべてのユーザー（個別に追加・除外可能）。各受信者には本人の言語で届きます。",
-  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "テンプレートが使う値のみ。各受信者の名前、アドレス、言語と配信停止リンクは受信者ごとに自動で入ります。"
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "テンプレートが使う値のみ。各受信者の名前、アドレス、言語と配信停止リンクは受信者ごとに自動で入ります。",
+  "{0} of {1} groups shown; search to find the others.": "{1} 件中 {0} 件のグループを表示中。ほかは検索してください。",
+  "{0} chosen": "{0} 件選択",
+  "Applied when the list closes.": "リストを閉じると適用されます。"
 }

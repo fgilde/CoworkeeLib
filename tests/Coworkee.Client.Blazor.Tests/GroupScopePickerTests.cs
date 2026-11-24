@@ -104,6 +104,10 @@ public sealed class GroupScopePickerTests : ClientTestBase
         _popovers.Find($"[data-group-node='{Customer.Id}']").GetAttribute("style")!.ShouldContain("font-weight", Case.Insensitive, "members are bold");
 
         await Check(Hamburg).ChangeAsync(new ChangeEventArgs { Value = true });
+        // a draft until the list closes: nothing is sent, the table keeps its rows while the user goes on choosing
+        await Api.DidNotReceive().SelectGroupsAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>());
+        _loads.ShouldBe(1);
+        await ApplyAsync();
 
         picker.WaitForAssertion(() => Api.Received(1).SelectGroupsAsync(Arg.Is<IReadOnlyList<Guid>>(ids => ids.SequenceEqual(new[] { Hamburg.Id })), Arg.Any<CancellationToken>()));
         picker.WaitForAssertion(() => Button(picker).TextContent.Trim().ShouldBe("Hamburg"));
@@ -153,10 +157,12 @@ public sealed class GroupScopePickerTests : ClientTestBase
         await OpenAsync(picker);
 
         await Check(Bremen).ChangeAsync(new ChangeEventArgs { Value = true });
+        await ApplyAsync();
 
         picker.WaitForAssertion(() => Api.Received(1).SelectGroupsAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>()));
+        picker.WaitForAssertion(() => Button(picker).TextContent.Trim().ShouldBe("All my groups"));
+        await OpenAsync(picker);
         _popovers.WaitForAssertion(() => Check(Bremen).HasAttribute("checked").ShouldBeFalse());
-        Button(picker).TextContent.Trim().ShouldBe("All my groups");
         await _cache.DidNotReceive().ScopeChangedAsync();
         // nothing changed: another tab announcing "all groups" is this tab's state, not news
         Realtime.Push($"user:{Me}", GroupSelectionEvents.Changed, new { groupIds = Array.Empty<Guid>() });
@@ -220,6 +226,7 @@ public sealed class GroupScopePickerTests : ClientTestBase
         await OpenAsync(picker);
 
         await _popovers.Find("[data-testid='group-scope-all']").ClickAsync(new());
+        await ApplyAsync();
 
         picker.WaitForAssertion(() => Api.Received(1).SelectGroupsAsync(Arg.Is<IReadOnlyList<Guid>>(ids => ids.Count == 0), Arg.Any<CancellationToken>()));
         picker.WaitForAssertion(() => Button(picker).TextContent.Trim().ShouldBe("All my groups"));
@@ -275,9 +282,35 @@ public sealed class GroupScopePickerTests : ClientTestBase
         _popovers.WaitForAssertion(() => _popovers.FindAll("[data-group-node]").Select(n => n.TextContent).ShouldBe(["Customer A", "Hamburg"], ignoreOrder: false));
 
         await Check(Hamburg).ChangeAsync(new ChangeEventArgs { Value = true });
+        await ApplyAsync();
 
         picker.WaitForAssertion(() => Api.Received(1).SelectGroupsAsync(Arg.Is<IReadOnlyList<Guid>>(ids => ids.SequenceEqual(new[] { Hamburg.Id })), Arg.Any<CancellationToken>()));
         picker.WaitForAssertion(() => Button(picker).TextContent.Trim().ShouldBe("Hamburg"));
+    }
+
+    [Fact]
+    public async Task Several_checks_are_sent_once_and_cancel_keeps_the_stored_selection()
+    {
+        var picker = RenderPicker();
+        await OpenAsync(picker);
+
+        await Check(Hamburg).ChangeAsync(new ChangeEventArgs { Value = true });
+        await Check(Supplier).ChangeAsync(new ChangeEventArgs { Value = true });
+        _popovers.WaitForAssertion(() => _popovers.Find("[data-testid='group-scope-count']").TextContent.ShouldBe("2 chosen"));
+        await _popovers.Find("[data-testid='group-scope-cancel']").ClickAsync(new());
+
+        await Api.DidNotReceive().SelectGroupsAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>());
+        Button(picker).TextContent.Trim().ShouldBe("All my groups");
+
+        await OpenAsync(picker);
+        _popovers.WaitForAssertion(() => Check(Hamburg).HasAttribute("checked").ShouldBeFalse());
+        await Check(Hamburg).ChangeAsync(new ChangeEventArgs { Value = true });
+        await Check(Supplier).ChangeAsync(new ChangeEventArgs { Value = true });
+        await ApplyAsync();
+
+        picker.WaitForAssertion(() => Api.Received(1).SelectGroupsAsync(Arg.Is<IReadOnlyList<Guid>>(ids => ids.Count == 2 && ids.Contains(Hamburg.Id) && ids.Contains(Supplier.Id)),
+            Arg.Any<CancellationToken>()));
+        picker.WaitForAssertion(() => Button(picker).TextContent.Trim().ShouldBe("2 groups"));
     }
 
     private FakeRealtimeConnection Realtime => Services.GetRequiredService<FakeRealtimeConnection>();
@@ -305,6 +338,8 @@ public sealed class GroupScopePickerTests : ClientTestBase
         await Button(picker).ClickAsync(new());
         _popovers.WaitForElement("[data-testid='group-tree']");
     }
+
+    private Task ApplyAsync() => _popovers.Find("[data-testid='group-scope-apply']").ClickAsync(new());
 
     private AngleSharp.Dom.IElement Check(GroupNodeDto node) => _popovers.Find($"[data-group-check='{node.Id}'] input, input[data-group-check='{node.Id}']");
 

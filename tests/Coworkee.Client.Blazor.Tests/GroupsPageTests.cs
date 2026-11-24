@@ -47,6 +47,25 @@ public sealed class GroupsPageTests : ClientTestBase
     }
 
     [Fact]
+    public async Task Thousands_of_top_groups_show_a_page_at_a_time()
+    {
+        // an imported organisation: 250 top groups
+        var roots = Enumerable.Range(1, 250).Select(i => new GroupNodeDto(Guid.CreateVersion7(), null, i.ToString("D5"), $"Unit {i:D3}", null, 0, 0)).ToList();
+        Api.GetGroupChildrenAsync(null, Arg.Any<CancellationToken>()).Returns(roots);
+        var page = RenderPage();
+
+        page.WaitForAssertion(() => page.FindAll("[data-group-node]").Count.ShouldBe(GroupTree.PageSize));
+        page.Find("[data-testid='group-tree-more']").TextContent.ShouldContain("100 of 250");
+
+        await page.Find("[data-testid='group-tree-show-more']").ClickAsync(new());
+        page.WaitForAssertion(() => page.FindAll("[data-group-node]").Count.ShouldBe(200));
+
+        await page.Find("[data-testid='group-tree-show-more']").ClickAsync(new());
+        page.WaitForAssertion(() => page.FindAll("[data-group-node]").Count.ShouldBe(250));
+        page.FindAll("[data-testid='group-tree-more']").ShouldBeEmpty();
+    }
+
+    [Fact]
     public void Search_shows_matches_with_ancestors()
     {
         Api.SearchGroupTreeAsync("Ham", Arg.Any<CancellationToken>()).Returns([Customer, Hamburg]);

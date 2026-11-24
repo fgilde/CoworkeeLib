@@ -2353,5 +2353,8 @@
   "{0} of {1}": "{0} af {1}",
   "e.g. {0}": "f.eks. {0}",
   "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "Hvem der får mailen: alle, filteret passer på, med enkelte brugere tilføjet eller udeladt. Hver modtager får den på sit eget sprog.",
-  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Kun de værdier, skabelonen bruger. Navn, adresse og sprog for hver modtager og afmeldingslinket udfyldes for hver enkelt."
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Kun de værdier, skabelonen bruger. Navn, adresse og sprog for hver modtager og afmeldingslinket udfyldes for hver enkelt.",
+  "{0} of {1} groups shown; search to find the others.": "{0} af {1} grupper vises; søg for at finde de andre.",
+  "{0} chosen": "{0} valgt",
+  "Applied when the list closes.": "Anvendes, når listen lukkes."
 }

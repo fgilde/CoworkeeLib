@@ -2,6 +2,13 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Geändert
+
+- `GroupScopePicker` speichert die Auswahl einmal, wenn seine Liste schließt (Übernehmen, ein Klick daneben; Abbrechen verwirft den Entwurf), statt bei jedem Häkchen: Jedes Häkchen lud die Daten der Seite neu, während der Benutzer noch auswählte. Die Suche bleibt sichtbar, während die Liste scrollt; der Button zeigt das Speichern.
+- `GroupTree` zeigt 100 oberste Gruppen auf einmal (`GroupTree.PageSize`, „Weitere anzeigen“, Hinweis auf die Suche) und einen Ladebalken; neuer Parameter `ListStyle` für eine scrollende Liste unter der Suche. Die Gruppenseite zeigt einen Balken, während die gewählte Gruppe lädt. Bei 3.300 obersten Gruppen renderte der Baum jede einzelne und brauchte 11 Sekunden pro Klick.
+
 ## 0.1.3 (2026-11-23)
 
 ### Behoben

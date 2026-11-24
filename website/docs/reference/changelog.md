@@ -2,6 +2,13 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Changed
+
+- `GroupScopePicker` saves the selection once, when its list closes (Apply, a click outside; Cancel drops the draft), instead of at every check: each check reloaded the page's data while the user was still choosing. The search stays in view while the list scrolls; the button shows the save.
+- `GroupTree` shows 100 top groups at a time (`GroupTree.PageSize`, "Show more", a hint to search) and a loading bar; new parameter `ListStyle` for a scrolling list below the search. The groups page shows a bar while the chosen group loads. With 3,300 top groups the tree rendered every one and took 11 seconds per click.
+
 ## 0.1.3 (2026-11-23)
 
 ### Fixed

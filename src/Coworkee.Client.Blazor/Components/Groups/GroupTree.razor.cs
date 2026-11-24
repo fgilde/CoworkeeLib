@@ -8,11 +8,18 @@ namespace Coworkee.Client.Blazor.Components.Groups;
 
 /// <summary>
 /// The group tree, loaded level by level as nodes open (MudBlazor's <c>ServerData</c>); a search shows the matches with their ancestors.
-/// Used by the groups page, the group picker dialog and, with checkboxes, the group scope picker.
+/// Used by the groups page, the group picker dialog and, with checkboxes, the group scope picker. A level of thousands of groups (an imported
+/// organisation) shows <see cref="PageSize"/> of its top groups at a time: rendering them all took seconds per click.
 /// </summary>
 public partial class GroupTree
 {
+    /// <summary>Top groups shown at a time; "Show more" adds as many again, the search finds the others.</summary>
+    public const int PageSize = 100;
+
     private List<TreeItemData<GroupNodeDto>> _items = [];
+    private List<TreeItemData<GroupNodeDto>> _roots = [];
+    private int _limit = PageSize;
+    private bool _loading;
     private string _search = string.Empty;
     private int _loads;
     private IReadOnlyList<GroupNodeDto>? _nodes;
@@ -51,6 +58,11 @@ public partial class GroupTree
 
     /// <summary>Groups whose name is shown bold, e.g. direct memberships.</summary>
     [Parameter] public IReadOnlySet<Guid>? Bold { get; set; }
+
+    /// <summary>Style of the area below the search, e.g. <c>max-height:60vh;overflow:auto</c>: the list scrolls, the search field stays in view.</summary>
+    [Parameter] public string? ListStyle { get; set; }
+
+    private int Hidden => _roots.Count - _items.Count;
 
     private GroupNodeDto? Selected => Flatten(_items).FirstOrDefault(i => i.Value!.Id == SelectedId)?.Value;
 
@@ -95,7 +107,17 @@ public partial class GroupTree
             // ancestors above the roots of a group-scoped administrator's reach are not in the tree
             if (level.FirstOrDefault(i => i.Value!.Code == prefix) is not { } item)
             {
-                continue;
+                // a top group beyond the shown ones: show up to it
+                if (ReferenceEquals(level, _items) && _roots.FindIndex(i => i.Value!.Code == prefix) is >= 0 and var index)
+                {
+                    ShowUpTo(index + 1);
+                    level = _items;
+                    item = level[index];
+                }
+                else
+                {
+                    continue;
+                }
             }
 
             var children = item.Children is null ? await ChildrenOfAsync(item.Value!.Id) : [.. Typed(item.Children)];
@@ -111,16 +133,38 @@ public partial class GroupTree
     {
         var load = ++_loads;
         var search = _search;
-        var nodes = Nodes is { } fixedNodes ? GroupPaths.Matching(fixedNodes, search)
-            : await FetchAsync(() => search.Length == 0 ? Api.GetGroupChildrenAsync(null) : Api.SearchGroupTreeAsync(search));
+        _loading = true;
+        IReadOnlyList<GroupNodeDto>? nodes;
+        try
+        {
+            nodes = Nodes is { } fixedNodes ? GroupPaths.Matching(fixedNodes, search)
+                : await FetchAsync(() => search.Length == 0 ? Api.GetGroupChildrenAsync(null) : Api.SearchGroupTreeAsync(search));
+        }
+        finally
+        {
+            if (load == _loads)
+            {
+                _loading = false;
+            }
+        }
+
         if (nodes is null || load != _loads)
         {
             return false;
         }
 
-        _items = search.Length == 0 && Nodes is null ? [.. nodes.Where(Shown).Select(Item)] : Tree(nodes);
+        _roots = search.Length == 0 && Nodes is null ? [.. nodes.Where(Shown).Select(Item)] : Tree(nodes);
+        ShowUpTo(PageSize);
         return true;
     }
+
+    private void ShowUpTo(int count)
+    {
+        _limit = Math.Max(count, PageSize);
+        _items = _roots.Count <= _limit ? _roots : _roots.GetRange(0, _limit);
+    }
+
+    private void ShowMore() => ShowUpTo(_limit + PageSize);
 
     private async Task SearchAsync(string? text)
     {

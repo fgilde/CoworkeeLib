@@ -1,5 +1,7 @@
 <MudTextField T="string" Value="_search" ValueChanged="SearchAsync" Placeholder="@L["Search groups"]" Immediate="true" DebounceInterval="300" Clearable="true"
               Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" Margin="Density.Margin" Class="mb-2" data-testid="group-search" />
+<MudProgressLinear Indeterminate="true" Size="Size.Small" Color="Color.Primary" Class="@(_loading ? "mb-1" : "mb-1 invisible")" data-testid="group-tree-loading" />
+<div style="@ListStyle">
 <MudTreeView T="GroupNodeDto" Items="_items" ServerData="@(Nodes is null ? ChildrenAsync : null)" ReadOnly="CheckedIds is not null" Comparer="GroupNodeComparer.Instance" SelectionMode="SelectionMode.SingleSelection"
              SelectedValue="Selected" SelectedValueChanged="SelectAsync" Hover="true" Dense="Density.Dense" data-testid="group-tree">
     <ItemTemplate>
@@ -24,7 +26,15 @@
         </MudTreeViewItem>
     </ItemTemplate>
 </MudTreeView>
-@if (_items.Count == 0)
+@if (Hidden > 0)
+{
+    <div class="d-flex align-center flex-wrap gap-2 pa-2" data-testid="group-tree-more">
+        <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["{0} of {1} groups shown; search to find the others.", _items.Count, _roots.Count]</MudText>
+        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="ShowMore" data-testid="group-tree-show-more">@L["Show {0} more", Math.Min(PageSize, Hidden)]</MudButton>
+    </div>
+}
+@if (_items.Count == 0 && !_loading)
 {
     <MudText Typo="Typo.body2" Class="mud-text-secondary pa-2">@L[_search.Length == 0 ? "No groups yet." : "No group matches."]</MudText>
 }
+</div>

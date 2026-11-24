@@ -20,7 +20,7 @@
             </div>
             @if (_ready)
             {
-                <GroupTree @ref="_tree" SelectedId="_group?.Id" SelectedChanged="SelectAsync" RevealCode="@_group?.Code">
+                <GroupTree @ref="_tree" SelectedId="_group?.Id" SelectedChanged="SelectAsync" RevealCode="@_group?.Code" ListStyle="max-height:calc(100vh - 300px);overflow:auto">
                     <NodeActions Context="node">
                         @if (_canManage)
                         {
@@ -32,6 +32,7 @@
         </MudPaper>
     </MudItem>
     <MudItem xs="12" md="8">
+        <MudProgressLinear Indeterminate="true" Size="Size.Small" Color="Color.Primary" Class="@(_loadingGroup ? "mb-1" : "mb-1 invisible")" data-testid="group-loading" />
         @if (_group is { } group)
         {
             <MudPaper Outlined="true" Class="pa-4">

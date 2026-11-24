@@ -2353,5 +2353,8 @@
   "{0} of {1}": "{0} នៃ {1}",
   "e.g. {0}": "ឧ. {0}",
   "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "អ្នកដែលទទួលសារ៖ អ្នកទាំងអស់ដែលត្រូវនឹងតម្រង ដោយអាចបន្ថែម ឬដកអ្នកប្រើម្នាក់ៗចេញ។ អ្នកទទួលម្នាក់ៗទទួលបានវាជាភាសារបស់ខ្លួន។",
-  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "មានតែតម្លៃដែលគំរូប្រើប៉ុណ្ណោះ។ ឈ្មោះ អាសយដ្ឋាន និងភាសារបស់អ្នកទទួលម្នាក់ៗ និងតំណឈប់ជាវ ត្រូវបានបំពេញសម្រាប់ម្នាក់ៗ។"
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "មានតែតម្លៃដែលគំរូប្រើប៉ុណ្ណោះ។ ឈ្មោះ អាសយដ្ឋាន និងភាសារបស់អ្នកទទួលម្នាក់ៗ និងតំណឈប់ជាវ ត្រូវបានបំពេញសម្រាប់ម្នាក់ៗ។",
+  "{0} of {1} groups shown; search to find the others.": "បង្ហាញ {0} ក្នុងចំណោម {1} ក្រុម; ស្វែងរកដើម្បីរកក្រុមផ្សេងទៀត។",
+  "{0} chosen": "បានជ្រើស {0}",
+  "Applied when the list closes.": "អនុវត្តនៅពេលបិទបញ្ជី។"
 }

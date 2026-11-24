@@ -2353,5 +2353,8 @@
   "{0} of {1}": "{0} от {1}",
   "e.g. {0}": "напр. {0}",
   "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "Кой получава писмото: всички, които отговарят на филтъра, с отделно добавени или изключени потребители. Всеки получател го получава на своя език.",
-  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Само стойностите, които шаблонът използва. Името, адресът и езикът на всеки получател и връзката за отписване се попълват за всеки поотделно."
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Само стойностите, които шаблонът използва. Името, адресът и езикът на всеки получател и връзката за отписване се попълват за всеки поотделно.",
+  "{0} of {1} groups shown; search to find the others.": "Показани са {0} от {1} групи; търсете, за да намерите останалите.",
+  "{0} chosen": "{0} избрани",
+  "Applied when the list closes.": "Прилага се при затваряне на списъка."
 }

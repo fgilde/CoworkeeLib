@@ -2353,5 +2353,8 @@
   "{0} of {1}": "{0} من {1}",
   "e.g. {0}": "مثلًا {0}",
   "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "من يتلقى الرسالة: كل من يطابق عامل التصفية، مع إضافة مستخدمين أو استبعادهم فرديًا. يتلقاها كل مستلم بلغته.",
-  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "القيم التي يستخدمها القالب فقط. يُملأ اسم كل مستلم وعنوانه ولغته ورابط إلغاء الاشتراك لكل واحد منهم."
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "القيم التي يستخدمها القالب فقط. يُملأ اسم كل مستلم وعنوانه ولغته ورابط إلغاء الاشتراك لكل واحد منهم.",
+  "{0} of {1} groups shown; search to find the others.": "عرض {0} من {1} مجموعة؛ ابحث للعثور على البقية.",
+  "{0} chosen": "تم اختيار {0}",
+  "Applied when the list closes.": "يُطبَّق عند إغلاق القائمة."
 }
