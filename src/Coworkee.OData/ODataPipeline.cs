@@ -35,7 +35,7 @@ internal static class ODataPipeline
     /// of its navigations ($expand into sets the user may not read or whose filters cannot apply) and $apply through narrowed navigations. Keeps the
     /// denied members, the navigation scope and the visible rows on the request for the next steps.
     /// </summary>
-    /// <param name="byKey">A single record: the user's group selection does not narrow it.</param>
+    /// <param name="byKey">A single record: the user's group selection does not narrow it, and data filters that do not apply to details skip it.</param>
     public static async Task<Refusal?> PrepareAsync<TEntity>(HttpContext http, bool byKey)
         where TEntity : class
     {
@@ -88,7 +88,11 @@ internal static class ODataPipeline
         IQueryable<TEntity> visible;
         using (byKey ? GroupScope.Unnarrowed() : null)
         {
-            visible = await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken);
+            // the record itself only: what it expands is a list
+            using (byKey ? DataFilters.DataFilterScope.ByKey() : null)
+            {
+                visible = await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken);
+            }
 
             // the targets the query reaches, [AutoExpand] navigations included, inside the same group scope as the root
             if (await ReachedAsync(http, options, visible, denied, scope) is { } reached)

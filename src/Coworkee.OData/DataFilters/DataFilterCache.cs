@@ -17,6 +17,12 @@ namespace Coworkee.OData.DataFilters;
 /// <summary>A stored data filter as the resolver reads it.</summary>
 internal sealed record DataFilterRow(Guid Id, string EntitySet, DataFilterLayer Layer, Guid? LayerKey, string Query, bool AppliesToDetails, int Version);
 
+/// <summary>A stored link as the resolver reads it.</summary>
+internal sealed record DataFilterLinkRow(string EntitySet, string Property, string TargetSet);
+
+/// <summary>What applies in an organisation: its filters and the (system-wide) links.</summary>
+internal sealed record DataFilterRows(IReadOnlyList<DataFilterRow> Filters, IReadOnlyList<DataFilterLinkRow> Links);
+
 /// <summary>
 /// The data filters of an organisation (its own and the System ones), shared by all requests until a filter changes, and every filter parsed once per
 /// version and day (relative dates such as "in the last 7 days" move with the day).
@@ -29,16 +35,25 @@ internal sealed partial class DataFilterCache(HybridCache cache, IMemoryCache pa
 
     private readonly ConcurrentDictionary<(Guid, int), bool> _warned = new();
 
-    /// <summary>The System filters and those of <paramref name="tenantId"/>; filters of other organisations never, whatever their layer key names.</summary>
-    public async Task<IReadOnlyList<DataFilterRow>> FiltersAsync(IServiceProvider services, Guid? tenantId, CancellationToken ct) =>
+    /// <summary>
+    /// The System filters and those of <paramref name="tenantId"/> (filters of other organisations never, whatever their layer key names), and the links:
+    /// one cached lookup for a read.
+    /// </summary>
+    public async Task<DataFilterRows> FiltersAsync(IServiceProvider services, Guid? tenantId, CancellationToken ct) =>
         await cache.GetOrCreateInScopeAsync(
             services,
             new ImpersonatedUser(null, tenantId),
             $"{Tag}:{tenantId}",
-            (scope, token) => scope.GetRequiredService<CoworkeeDbContext>().Set<DataFilter>().AsNoTracking()
-                .Where(f => f.TenantId == null ? f.Layer == DataFilterLayer.System : f.TenantId == tenantId && f.Layer != DataFilterLayer.System)
-                .Select(f => new DataFilterRow(f.Id, f.EntitySet, f.Layer, f.LayerKey, f.Query, f.AppliesToDetails, f.Version))
-                .ToListAsync(token),
+            async (scope, token) =>
+            {
+                var db = scope.GetRequiredService<CoworkeeDbContext>();
+                var filters = await db.Set<DataFilter>().AsNoTracking()
+                    .Where(f => f.TenantId == null ? f.Layer == DataFilterLayer.System : f.TenantId == tenantId && f.Layer != DataFilterLayer.System)
+                    .Select(f => new DataFilterRow(f.Id, f.EntitySet, f.Layer, f.LayerKey, f.Query, f.AppliesToDetails, f.Version))
+                    .ToListAsync(token);
+                var links = await db.Set<DataFilterLink>().AsNoTracking().Select(l => new DataFilterLinkRow(l.EntitySet, l.Property, l.TargetSet)).ToListAsync(token);
+                return new DataFilterRows(filters, links);
+            },
             tags: [Tag],
             cancellationToken: ct);
 
@@ -89,7 +104,7 @@ internal sealed partial class DataFilterCache(HybridCache cache, IMemoryCache pa
     private partial void LogBroken(Guid filterId, int version, string entitySet, string problem);
 }
 
-/// <summary>Drops the cached filters of every organisation once a data filter is saved or deleted (on every replica through the cache's tags).</summary>
+/// <summary>Drops the cached filters of every organisation once a data filter or link is saved or deleted (on every replica through the cache's tags).</summary>
 internal sealed class DataFilterCacheInterceptor(HybridCache cache) : SaveChangesInterceptor
 {
     private bool _pending;
@@ -137,5 +152,5 @@ internal sealed class DataFilterCacheInterceptor(HybridCache cache) : SaveChange
     }
 
     private void Detect(DbContext? context) =>
-        _pending |= context?.ChangeTracker.Entries<DataFilter>().Any(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted) == true;
+        _pending |= context?.ChangeTracker.Entries().Any(e => e.Entity is DataFilter or DataFilterLink && e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted) == true;
 }

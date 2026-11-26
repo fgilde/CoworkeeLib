@@ -4,6 +4,8 @@ using Coworkee.Application.Groups;
 using Coworkee.Contracts.DataFilters;
 using Coworkee.Contracts.Identity;
 using Coworkee.Core.Security;
+using Coworkee.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,7 +15,8 @@ namespace Coworkee.OData.DataFilters;
 /// The hidden data filters of an entity set for the current user, as one predicate: System AND Tenant AND each active role AND the group part. The group part
 /// only narrows, it never scopes: a row that comes through none of the user's active groups is left to the app's own scope; one that comes through an active
 /// group without filters (own and ancestors') passes; one that comes only through filtered active groups must pass the filters of one of them. For sets
-/// without an <see cref="IGroupRowSource{TEntity}"/> a row passes when one active group's filters let it through.
+/// without an <see cref="IGroupRowSource{TEntity}"/> a row passes when one active group's filters let it through. A linked set's rows also need their target row
+/// to pass the target's data filters.
 /// </summary>
 public sealed class DataFilterResolver(IServiceProvider services, ICurrentUser user, IPermissionChecker permissions, ODataEntityRegistry registry)
 {
@@ -39,10 +42,12 @@ public sealed class DataFilterResolver(IServiceProvider services, ICurrentUser u
 
     private async Task<Expression<Func<TEntity, bool>>?> ResolveAsync<TEntity>(string entitySet, bool byKey, CancellationToken ct)
     {
-        var filters = (await _cache.FiltersAsync(services, user.TenantId, ct))
+        var stored = await _cache.FiltersAsync(services, user.TenantId, ct);
+        var filters = stored.Filters
             .Where(f => string.Equals(f.EntitySet, entitySet, StringComparison.OrdinalIgnoreCase) && (!byKey || f.AppliesToDetails))
             .ToList();
-        if (filters.Count == 0 || await permissions.IsGrantedAsync(DataFilterPermissions.Bypass, ct))
+        var link = LinkOf(stored.Links, entitySet);
+        if ((filters.Count == 0 && link is null) || await permissions.IsGrantedAsync(DataFilterPermissions.Bypass, ct))
         {
             return null;
         }
@@ -64,7 +69,77 @@ public sealed class DataFilterResolver(IServiceProvider services, ICurrentUser u
             parts.Add(await GroupPartAsync(groupFilters, Of, ct));
         }
 
+        if (link is not null)
+        {
+            parts.Add(await LinkedAsync<TEntity>(link, stored.Links, byKey, ct));
+        }
+
         return All(parts);
+    }
+
+    private static DataFilterLinkRow? LinkOf(IEnumerable<DataFilterLinkRow> links, string entitySet) =>
+        links.FirstOrDefault(l => string.Equals(l.EntitySet, entitySet, StringComparison.OrdinalIgnoreCase));
+
+    private static readonly System.Reflection.MethodInfo LinkMethod =
+        typeof(DataFilterResolver).GetMethod(nameof(LinkAsync), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+
+    /// <summary>
+    /// A linked set: its rows whose <see cref="DataFilterLinkRow.Property"/> names a row of the target set that passes the target's data filters (links of the
+    /// target included). A broken link (missing target, a chain that comes back to itself) hides every row.
+    /// </summary>
+    private async Task<Expression<Func<TEntity, bool>>?> LinkedAsync<TEntity>(DataFilterLinkRow link, IReadOnlyList<DataFilterLinkRow> links, bool byKey, CancellationToken ct)
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { link.EntitySet };
+        for (var next = link; next is not null; next = LinkOf(links, next.TargetSet))
+        {
+            if (!seen.Add(next.TargetSet))
+            {
+                return _ => false;
+            }
+        }
+
+        return registry.Find(link.TargetSet) is { } target
+            ? (Expression<Func<TEntity, bool>>?)await (Task<LambdaExpression?>)LinkMethod.MakeGenericMethod(typeof(TEntity), target.EntityType).Invoke(this, [link, target, byKey, ct])!
+            : _ => false;
+    }
+
+    // e => target.Where(passes).Any(t => t.Key == e.Property), null when no filter restricts the target
+    private async Task<LambdaExpression?> LinkAsync<TEntity, TTarget>(DataFilterLinkRow link, ODataEntityRegistration target, bool byKey, CancellationToken ct)
+        where TTarget : class
+    {
+        if (await PredicateAsync<TTarget>(target.EntitySet, byKey, ct) is not { } passes)
+        {
+            return null;
+        }
+
+        var db = services.DbContextFor(typeof(TEntity));
+        var key = db.Model.FindEntityType(typeof(TTarget))?.FindPrimaryKey()?.Properties is [{ PropertyInfo: { } single }] ? single : null;
+        var property = typeof(TEntity).GetProperty(link.Property);
+        if (db != services.DbContextFor(typeof(TTarget)) || key is null || property is null
+            || (Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType) != (Nullable.GetUnderlyingType(key.PropertyType) ?? key.PropertyType))
+        {
+            return (Expression<Func<TEntity, bool>>)(_ => false);
+        }
+
+        // the target row passes or not, deleted or not: the linked row's own soft delete decides about it
+        var rows = db.Set<TTarget>().IgnoreQueryFilters([CoworkeeDbContext.SoftDeleteFilter]).Where(passes);
+        var (e, t) = (Expression.Parameter(typeof(TEntity), "e"), Expression.Parameter(typeof(TTarget), "t"));
+        Expression targetKey = Expression.Property(t, key), value = Expression.Property(e, property);
+        if (targetKey.Type != value.Type)
+        {
+            // Guid against Guid?: the plain side becomes nullable
+            if (Nullable.GetUnderlyingType(value.Type) is null)
+            {
+                value = Expression.Convert(value, targetKey.Type);
+            }
+            else
+            {
+                targetKey = Expression.Convert(targetKey, value.Type);
+            }
+        }
+
+        var same = Expression.Lambda<Func<TTarget, bool>>(Expression.Equal(targetKey, value), t);
+        return Expression.Lambda<Func<TEntity, bool>>(Expression.Call(typeof(Queryable), nameof(Queryable.Any), [typeof(TTarget)], rows.Expression, Expression.Quote(same)), e);
     }
 
     private async Task<Expression<Func<TEntity, bool>>?> GroupPartAsync<TEntity>(

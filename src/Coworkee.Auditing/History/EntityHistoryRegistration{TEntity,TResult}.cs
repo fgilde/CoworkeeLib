@@ -16,6 +16,7 @@ internal sealed class EntityHistoryRegistration<TEntity, TResult>(string entityS
     internal override async Task<object?> FindAsync(IServiceProvider services, Guid id, CancellationToken cancellationToken)
     {
         using var unnarrowed = GroupScope.Unnarrowed();
+        using var byKey = Coworkee.OData.DataFilters.DataFilterScope.ByKey();
         return await (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken, withDeleted: true))
             .SingleOrDefaultAsync(e => EF.Property<Guid>(e, nameof(Entity.Id)) == id, cancellationToken);
     }

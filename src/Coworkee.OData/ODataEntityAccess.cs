@@ -75,7 +75,7 @@ public static class ODataEntityAccess
             query = query.IgnoreQueryFilters([CoworkeeDbContext.SoftDeleteFilter]);
         }
 
-        foreach (var filter in services.GetServices<IODataEntityFilter<TEntity>>())
+        foreach (var filter in Filters<TEntity>(services))
         {
             query = await filter.ApplyAsync(query, cancellationToken);
         }
@@ -83,6 +83,14 @@ public static class ODataEntityAccess
         ODataNavigationScope.Root(query.Expression);
         return query;
     }
+
+    /// <summary>
+    /// The row filters of a set in the order they apply: the app's first, the data filters last, so they narrow what the app's filters leave (some set a
+    /// scope the data filters read, some are more than a Where).
+    /// </summary>
+    internal static IEnumerable<IODataEntityFilter<TEntity>> Filters<TEntity>(IServiceProvider services)
+        where TEntity : class =>
+        services.GetServices<IODataEntityFilter<TEntity>>().OrderBy(f => f is DataFilters.DataFilterEntityFilter<TEntity>);
 
     /// <summary>
     /// $search over the string properties of the set the user may read (Nextended's default is every string property, an ISearchable entity
@@ -195,7 +203,8 @@ public static class ODataEntityAccess
     }
 
     /// <summary>
-    /// The ids of the rows the current user may open (guards: attachments, social, children), whatever groups he selected: through the
+    /// The ids of the rows the current user may open (guards: attachments, social, children), whatever groups he selected and as a key read of the data
+    /// filters (<see cref="DataFilters.DataFilterScope.ByKey"/>): through the
     /// entity's registered set (null without the set's permission), without a set (or without the OData module) every row the app's DbContext
     /// shows, so tenant and soft delete filters apply. An entity of an external DbContext needs its set: without one nobody may open its rows.
     /// </summary>
@@ -209,6 +218,7 @@ public static class ODataEntityAccess
         }
 
         using var unnarrowed = GroupScope.Unnarrowed();
+        using var byKey = DataFilters.DataFilterScope.ByKey();
         return await IsGrantedAsync(services, typeof(TEntity), cancellationToken)
             ? (await VisibleAsync<TEntity>(services, cancellationToken)).Select(e => EF.Property<Guid>(e, "Id"))
             : null;

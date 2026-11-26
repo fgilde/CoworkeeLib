@@ -244,7 +244,7 @@ public sealed class ODataNavigationScope
     private static async Task<(bool Harvested, LambdaExpression? Predicate)> HarvestAsync<T>(IServiceProvider services, CancellationToken cancellationToken)
         where T : class
     {
-        var filters = services.GetServices<IODataEntityFilter<T>>().ToList();
+        var filters = ODataEntityAccess.Filters<T>(services).ToList();
         if (filters.Count == 0)
         {
             return (true, null);

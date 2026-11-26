@@ -101,6 +101,7 @@ public sealed class EntityWorkflow<TEntity>(string entityType) : EntityWorkflow(
     internal override async Task<bool> VisibleAsync(IServiceProvider services, Guid id, CancellationToken cancellationToken)
     {
         using var unnarrowed = GroupScope.Unnarrowed();
+        using var byKey = Coworkee.OData.DataFilters.DataFilterScope.ByKey();
         return await ODataEntityAccess.IsGrantedAsync(services, typeof(TEntity), cancellationToken)
             && await (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken)).AnyAsync(e => EF.Property<Guid>(e, "Id") == id, cancellationToken);
     }
