@@ -24,7 +24,7 @@ internal sealed class SocialGuard(CoworkeeDbContext db, SocialOptions options, I
 
         if (target.VisibleIdsAsync is { } visibleIds)
         {
-            var ids = await visibleIds(services, cancellationToken);
+            var ids = await visibleIds(services, true, cancellationToken);
             if (access.EntityId is { } id ? ids is null || !await ids.AnyAsync(x => x == id, cancellationToken) : ids is null)
             {
                 return access.EntityId is null ? Forbidden : NotFound;
@@ -53,9 +53,9 @@ internal sealed class SocialGuard(CoworkeeDbContext db, SocialOptions options, I
 
     public async Task<bool> AllowsAsync(SocialAccess access, CancellationToken cancellationToken) => await CheckAsync(access, cancellationToken) is null;
 
-    /// <summary>The ids of <paramref name="entityType"/> the current user sees; null when the type checks no ids.</summary>
-    public async Task<IQueryable<Guid>?> VisibleIdsAsync(SocialFeature feature, string entityType, CancellationToken cancellationToken) =>
-        options.Targets[(feature, entityType)].VisibleIdsAsync is { } visibleIds ? await visibleIds(services, cancellationToken) : null;
+    /// <summary>The ids of <paramref name="entityType"/> the current user sees in a list (every data filter applies); null when the type checks no ids.</summary>
+    public async Task<IQueryable<Guid>?> ListedIdsAsync(SocialFeature feature, string entityType, CancellationToken cancellationToken) =>
+        options.Targets[(feature, entityType)].VisibleIdsAsync is { } visibleIds ? await visibleIds(services, false, cancellationToken) : null;
 
     public SocialTarget Target(SocialFeature feature, string entityType) => options.Targets[(feature, entityType)];
 

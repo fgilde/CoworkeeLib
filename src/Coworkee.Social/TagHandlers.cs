@@ -108,7 +108,7 @@ internal sealed class TagHandlers(CoworkeeDbContext db, SocialGuard guard, IPerm
     /// <summary>The tag links of entities the current user sees: counts and lists never tell of hidden rows.</summary>
     private async Task<IQueryable<EntityTag>> LinksAsync(string entityType, CancellationToken cancellationToken)
     {
-        if (await guard.VisibleIdsAsync(SocialFeature.Tags, entityType, cancellationToken) is not { } visible)
+        if (await guard.ListedIdsAsync(SocialFeature.Tags, entityType, cancellationToken) is not { } visible)
         {
             return db.Set<EntityTag>();
         }

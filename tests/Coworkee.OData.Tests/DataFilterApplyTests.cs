@@ -145,6 +145,33 @@ public sealed class DataFilterApplyTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_linked_set_behind_a_navigation_follows_its_target()
+    {
+        var (open, other) = await ShelvesAsync();
+        await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            var (gold, tin) = (new Badge { Name = "Gold", TenantId = _setup.TenantId }, new Badge { Name = "Tin", TenantId = _setup.TenantId });
+            db.AddRange(gold, tin);
+            await db.SaveChangesAsync(Ct);
+            var bins = await db.Set<Bin>().ToDictionaryAsync(b => b.Name, Ct);
+            (bins["Small"].BadgeId, bins["Big"].BadgeId) = (gold.Id, tin.Id);
+            return await db.SaveChangesAsync(Ct);
+        });
+        var user = Client(await UserWithAsync(ODataApp.ViewGadgets, ODataApp.ViewBins));
+        await LinkAsync("Bins", nameof(Bin.BadgeId), "Badges");
+        await FilterAsync("Badges", DataFilterLayer.Tenant, null, Rule("Name", QueryOperator.Equal, "Gold"));
+
+        // the bins whose badge passes the badges' filters, in their own set and behind every navigation into them
+        Names((await GetAsync(user, "/odata/Bins")).GetProperty("value")).ShouldBe(["Small"]);
+        Names((await GetAsync(user, $"/odata/Shelves({open})?$expand=Bins")).GetProperty("Bins")).ShouldBe(["Small"]);
+        (await GetAsync(user, $"/odata/Shelves({other})?$expand=Featured")).GetProperty("Featured").ValueKind.ShouldBe(JsonValueKind.Null);
+        (await GetAsync(user, "/odata/Shelves?$filter=Bins/any(b: b/Name eq 'Big')&$count=true")).GetProperty("@odata.count").GetInt32().ShouldBe(0);
+        (await GetAsync(user, "/odata/Shelves?$filter=Bins/any(b: b/Name eq 'Small')&$count=true")).GetProperty("@odata.count").GetInt32().ShouldBe(1);
+        (await GetAsync(user, "/odata/Trays?$filter=Name eq 't-big'")).GetProperty("value")[0].GetProperty("Bin").ValueKind.ShouldBe(JsonValueKind.Null);
+        (await GetAsync(user, "/odata/Trays?$filter=Name eq 't-small'")).GetProperty("value")[0].GetProperty("Bin").GetProperty("Name").GetString().ShouldBe("Small");
+    }
+
+    [Fact]
     public async Task Search_reports_exports_and_client_snapshots_see_the_same_rows()
     {
         await app.InDbAsync(_setup.TenantId, async db =>

@@ -208,7 +208,12 @@ public static class ODataEntityAccess
     /// entity's registered set (null without the set's permission), without a set (or without the OData module) every row the app's DbContext
     /// shows, so tenant and soft delete filters apply. An entity of an external DbContext needs its set: without one nobody may open its rows.
     /// </summary>
-    public static async Task<IQueryable<Guid>?> VisibleIdsAsync<TEntity>(IServiceProvider services, CancellationToken cancellationToken)
+    public static Task<IQueryable<Guid>?> VisibleIdsAsync<TEntity>(IServiceProvider services, CancellationToken cancellationToken)
+        where TEntity : class => VisibleIdsAsync<TEntity>(services, byKey: true, cancellationToken);
+
+    /// <inheritdoc cref="VisibleIdsAsync{TEntity}(IServiceProvider, CancellationToken)"/>
+    /// <param name="byKey">False for a list of the ids (tag counts, "rows with tag X"): every data filter applies, also those that skip details.</param>
+    public static async Task<IQueryable<Guid>?> VisibleIdsAsync<TEntity>(IServiceProvider services, bool byKey, CancellationToken cancellationToken)
         where TEntity : class
     {
         RequireGuidId<TEntity>("Opening rows by id");
@@ -218,7 +223,7 @@ public static class ODataEntityAccess
         }
 
         using var unnarrowed = GroupScope.Unnarrowed();
-        using var byKey = DataFilters.DataFilterScope.ByKey();
+        using var details = byKey ? DataFilters.DataFilterScope.ByKey() : null;
         return await IsGrantedAsync(services, typeof(TEntity), cancellationToken)
             ? (await VisibleAsync<TEntity>(services, cancellationToken)).Select(e => EF.Property<Guid>(e, "Id"))
             : null;

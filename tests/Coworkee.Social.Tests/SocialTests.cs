@@ -7,6 +7,7 @@ using Coworkee.Contracts.Social;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Social.Tests;
 
@@ -247,6 +248,36 @@ public sealed class SocialTests(SocialApp app) : IAsyncLifetime
         public bool Equals(ReactionDto? x, ReactionDto? y) => x?.Emoji == y?.Emoji && x!.UserIds.SequenceEqual(y!.UserIds);
 
         public int GetHashCode(ReactionDto obj) => obj.Emoji.GetHashCode();
+    }
+
+    [Fact]
+    public async Task Tag_lists_and_counts_follow_the_lists_data_filters_and_single_records_the_key_read()
+    {
+        var filtered = await app.AddNoteAsync(_setup.AdminUserId, _setup.TenantId, "filtered");
+        var bob = await CreateUserAsync("lister@acme.test", SocialPermissions.Tags.Create);
+        var asBob = app.As(bob.Id, _setup.TenantId);
+        await SaveTagsAsync(filtered, "shared");
+        await SaveTagsAsync(_note, "shared");
+        // a data filter that hides the note from lists but not from a key read (details switch off)
+        await using (var scope = app.App.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<Coworkee.Infrastructure.Persistence.CoworkeeDbContext>();
+            db.Add(new Coworkee.OData.DataFilters.DataFilter
+            {
+                TenantId = _setup.TenantId, EntitySet = "Notes", Layer = Coworkee.Contracts.DataFilters.DataFilterLayer.Tenant, AppliesToDetails = false, Version = 1,
+                Query = Coworkee.Contracts.Query.QueryJson.Serialize(new Coworkee.Contracts.Query.QueryGroup
+                {
+                    Children = [new Coworkee.Contracts.Query.QueryRule { Field = "Text", Operator = Coworkee.Contracts.Query.QueryOperator.NotEqual, Value = "filtered" }],
+                }),
+            });
+            await db.SaveChangesAsync(Ct);
+        }
+
+        // lists: neither its id nor a count tells of the filtered note
+        (await asBob.GetFromJsonAsync<List<Guid>>("/api/v1/tags/Notes/entities?tag=shared", Ct))!.ShouldBe([_note]);
+        (await asBob.GetFromJsonAsync<List<TagDto>>("/api/v1/tags/Notes", Ct))!.ShouldContain(t => t.Name == "shared" && t.Count == 1);
+        // the record itself opens by key, so do its tags
+        (await asBob.GetFromJsonAsync<EntityTagsDto>($"/api/v1/tags/Notes/{filtered}", Ct))!.Tags.ShouldBe(["shared"]);
     }
 
     [Fact]
