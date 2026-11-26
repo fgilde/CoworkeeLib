@@ -7,7 +7,7 @@ description: "Administrators define filters per entity set on four layers (syste
 
 Administrators define, per entity set, filters that are always applied and that users never see. They sit on four layers: **System**, **Tenant**, **Group** and **Role**. A user's own filtering, facets and counts work on what is left. Nothing tells a user that rows were removed: counts, facets, search and paging are computed on the filtered rows.
 
-The filters apply wherever the library decides which rows a user may see: OData lists and `$count`, `$expand` targets, client entities (local copies, snapshots and deltas), global search, dynamic reports and exports. With no filter configured for a set there is no extra `Where` and no extra query.
+The filters apply wherever the library decides which rows a user may see: OData lists and `$count`, `$expand` targets, client entities (local copies, snapshots and deltas), global search, dynamic reports and exports. With no filter configured for a set there is no extra `Where`; finding that out costs one cached lookup of the organisation's filters (read from the database on a cold cache and inside a transaction).
 
 ## The four layers
 
@@ -18,7 +18,7 @@ The filters apply wherever the library decides which rows a user may see: OData 
 | Group | members of a group (and its sub-groups) | `DataFilters.ManageGroups` |
 | Role | users acting in a role | `DataFilters.ManageRoles` |
 
-`DataFilters.Bypass` ("see every row") switches all layers off for its holder. The built-in Admin role holds every defined permission, so also this one, and whoever maintains filters with it also sees the unfiltered data. Filters are stored as the `QueryGroup` of the [`QueryBuilder`](data.md) and translated to `$filter` on the server; saving validates them against the model of the set.
+`DataFilters.Bypass` ("see every row") switches the Tenant, Group and Role layers off for its holder, and the System layer too when he belongs to the system organisation. The built-in Admin role holds every defined permission, so the administrators of every organisation hold Bypass: they see their organisation's data without its own filters, but System filters still apply to them; only the system organisation's administrators see the unfiltered data. Filters are stored as the `QueryGroup` of the [`QueryBuilder`](data.md) and translated to `$filter` on the server; saving validates them against the model of the set and refuses a filter that uses a property the saving administrator may not read (`HideUnless`).
 
 ## How the layers combine
 
@@ -51,7 +51,7 @@ using (DataFilterScope.ByKey())
 
 ## Linked sets
 
-Sets over the same data with different properties (`Shipment` and `CalculatedShipment`) are linked by their shared key on the admin page: *(set, property) → target set*. The filter is written once, on the set that has the properties. A linked set is narrowed by key: a `Shipment` row is visible only when the `CalculatedShipment` row with that key passes the target's filters (and its own link, so chains work). Both sets must live in the same `DbContext`; links across contexts are refused when saving. A link whose target, property or key no longer exists fails closed.
+Sets over the same data with different properties (`Shipment` and `CalculatedShipment`) are linked by their shared key on the admin page: *(set, property) → target set*. The filter is written once, on the set that has the properties. A linked set is narrowed by key: a `Shipment` row is visible only when the `CalculatedShipment` row with that key passes the target's filters (and its own link, so chains work). Both sets must live in the same `DbContext`, the property must have the type of the target's key, and a chain of links must not come back to a set in it; saving refuses each of these. A link whose target, property or key no longer exists fails closed.
 
 ## Invalid filters fail closed
 
@@ -83,11 +83,11 @@ Role filters apply to the user's active roles, read through `IPermissionChecker.
 
 ## Realtime
 
-Every change reloads open tables and resynchronises local copies; the partition of a client copy includes a fingerprint of the filters that apply to the user, so a changed filter drops the copy and fetches the visible rows again. Changes publish payload-free, actor-free signals: entities implement `IHasRealtimeSignals` to name the topics, and the event type is `RealtimeEventTypes.Signal`. A signal carries an empty payload (no entity name, id or filter content) and no actor. Tenant, group and role filters signal on `tenant:data-filters` (their own organisation only), System filters and links on `global:data-filters`. "Signal" is a reserved event name: an app must not use it for events of its own.
+Every change reloads open tables and resynchronises local copies; the partition of a client copy includes a fingerprint of all filters of the user's organisation and the System ones (ids and versions, links included), of his active roles that carry a role filter and, when there are group filters, of his active groups, so a changed filter, a role switch or another group drops the copy and fetches the visible rows again. Without filters the partition gets nothing extra. Changes publish payload-free, actor-free signals: entities implement `IHasRealtimeSignals` to name the topics, and the event type is `RealtimeEventTypes.Signal`. A signal carries an empty payload (no entity name, id or filter content) and no actor. Tenant, group and role filters signal on `tenant:data-filters` (their own organisation only), System filters and links on `global:data-filters`. "Signal" is a reserved event name: an app must not use it for events of its own.
 
 ## Admin UI
 
-- **Data types** lists every entity set with its client entity settings and the System and Tenant filters, and the link to another set.
+- **Data types** lists every entity set with its client entity settings and the System and Tenant filters, and the link to another set. The System editors and the link editor show only in the system organisation.
 - The **Data filters** tab on the group page and the role page edits the filters of that group or role.
 - The filter editor is the `QueryBuilder`: drag rules and groups into other groups or positions (or use the node menu: up, down, into a group, out of a group), switch a group between AND and OR, wrap ticked conditions into a new group, unwrap a group. Unwrap is offered only when the meaning stays the same: the group's logic equals its parent's, or it has at most one child, and it is not negated.
 

@@ -7,7 +7,7 @@ description: "Administratoren legen pro Entity-Set Filter auf vier Ebenen fest (
 
 Administratoren legen pro Entity-Set Filter fest, die immer gelten und die Benutzer nie sehen. Sie liegen auf vier Ebenen: **System**, **Mandant**, **Gruppe** und **Rolle**. Die eigene Filterung, Facetten und Zähler eines Benutzers arbeiten auf dem, was übrig bleibt. Nichts verrät dem Benutzer, dass Zeilen fehlen: Zähler, Facetten, Suche und Paging werden auf den gefilterten Zeilen berechnet.
 
-Die Filter gelten überall, wo die Bibliothek entscheidet, welche Zeilen ein Benutzer sehen darf: OData-Listen und `$count`, `$expand`-Ziele, Client-Entities (lokale Kopien, Snapshots und Deltas), globale Suche, dynamische Berichte und Exporte. Ist für ein Set kein Filter eingerichtet, gibt es kein zusätzliches `Where` und keine zusätzliche Abfrage.
+Die Filter gelten überall, wo die Bibliothek entscheidet, welche Zeilen ein Benutzer sehen darf: OData-Listen und `$count`, `$expand`-Ziele, Client-Entities (lokale Kopien, Snapshots und Deltas), globale Suche, dynamische Berichte und Exporte. Ist für ein Set kein Filter eingerichtet, gibt es kein zusätzliches `Where`; das festzustellen kostet einen gecachten Nachschlag der Filter der Organisation (bei kaltem Cache und innerhalb einer Transaktion aus der Datenbank gelesen).
 
 ## Die vier Ebenen
 
@@ -18,7 +18,7 @@ Die Filter gelten überall, wo die Bibliothek entscheidet, welche Zeilen ein Ben
 | Gruppe | Mitglieder einer Gruppe (und ihrer Untergruppen) | `DataFilters.ManageGroups` |
 | Rolle | Benutzer, die in einer Rolle arbeiten | `DataFilters.ManageRoles` |
 
-`DataFilters.Bypass` („alle Zeilen sehen“) schaltet für den Inhaber alle Ebenen ab. Die eingebaute Rolle Admin hat jede definierte Berechtigung, also auch diese, und wer damit Filter pflegt, sieht auch die ungefilterten Daten. Filter werden als `QueryGroup` des [`QueryBuilder`](data.md) gespeichert und auf dem Server in `$filter` übersetzt; das Speichern prüft sie gegen das Modell des Sets.
+`DataFilters.Bypass` („alle Zeilen sehen“) schaltet für den Inhaber die Ebenen Mandant, Gruppe und Rolle ab, und die Systemebene ebenfalls, wenn er zur Systemorganisation gehört. Die eingebaute Rolle Admin hat jede definierte Berechtigung, also haben die Administratoren jeder Organisation Bypass: Sie sehen die Daten ihrer Organisation ohne deren eigene Filter, die Systemfilter gelten für sie aber weiter; nur die Administratoren der Systemorganisation sehen die ungefilterten Daten. Filter werden als `QueryGroup` des [`QueryBuilder`](data.md) gespeichert und auf dem Server in `$filter` übersetzt; das Speichern prüft sie gegen das Modell des Sets und lehnt einen Filter ab, der eine Eigenschaft verwendet, die der speichernde Administrator nicht lesen darf (`HideUnless`).
 
 ## So greifen die Ebenen ineinander
 
@@ -51,7 +51,7 @@ using (DataFilterScope.ByKey())
 
 ## Verknüpfte Sets
 
-Sets über dieselben Daten mit unterschiedlichen Eigenschaften (`Shipment` und `CalculatedShipment`) werden auf der Admin-Seite über ihren gemeinsamen Schlüssel verknüpft: *(Set, Eigenschaft) → Zielset*. Der Filter wird einmal geschrieben, auf dem Set, das die Eigenschaften hat. Ein verknüpftes Set wird über den Schlüssel eingeschränkt: Eine `Shipment`-Zeile ist nur sichtbar, wenn die `CalculatedShipment`-Zeile mit demselben Schlüssel die Filter des Ziels besteht (und dessen eigene Verknüpfung, Ketten funktionieren also). Beide Sets müssen im selben `DbContext` liegen; Verknüpfungen über Contexts hinweg werden beim Speichern abgelehnt. Eine Verknüpfung, deren Ziel, Eigenschaft oder Schlüssel nicht mehr existiert, schließt sicher (keine Zeilen).
+Sets über dieselben Daten mit unterschiedlichen Eigenschaften (`Shipment` und `CalculatedShipment`) werden auf der Admin-Seite über ihren gemeinsamen Schlüssel verknüpft: *(Set, Eigenschaft) → Zielset*. Der Filter wird einmal geschrieben, auf dem Set, das die Eigenschaften hat. Ein verknüpftes Set wird über den Schlüssel eingeschränkt: Eine `Shipment`-Zeile ist nur sichtbar, wenn die `CalculatedShipment`-Zeile mit demselben Schlüssel die Filter des Ziels besteht (und dessen eigene Verknüpfung, Ketten funktionieren also). Beide Sets müssen im selben `DbContext` liegen, die Eigenschaft muss den Typ des Schlüssels des Ziels haben, und eine Kette von Verknüpfungen darf nicht zu einem ihrer Sets zurückführen; das Speichern lehnt jeden dieser Fälle ab. Eine Verknüpfung, deren Ziel, Eigenschaft oder Schlüssel nicht mehr existiert, schließt sicher (keine Zeilen).
 
 ## Ungültige Filter schließen sicher
 
@@ -83,11 +83,11 @@ Rollenfilter gelten für die aktiven Rollen des Benutzers, gelesen über `IPermi
 
 ## Echtzeit
 
-Jede Änderung lädt offene Tabellen neu und gleicht lokale Kopien ab; die Partition einer Client-Kopie enthält einen Fingerabdruck der Filter, die für den Benutzer gelten, ein geänderter Filter verwirft also die Kopie und holt die sichtbaren Zeilen neu. Änderungen senden Signale ohne Nutzdaten und ohne Akteur: Entities implementieren `IHasRealtimeSignals`, um die Topics zu nennen, der Ereignistyp ist `RealtimeEventTypes.Signal`. Ein Signal trägt eine leere Nutzlast (weder Entity-Name noch Id noch Filterinhalt) und keinen Akteur. Mandanten-, Gruppen- und Rollenfilter signalisieren auf `tenant:data-filters` (nur die eigene Organisation), Systemfilter und Verknüpfungen auf `global:data-filters`. „Signal“ ist ein reservierter Ereignisname: Eine App darf ihn nicht für eigene Ereignisse verwenden.
+Jede Änderung lädt offene Tabellen neu und gleicht lokale Kopien ab; die Partition einer Client-Kopie enthält einen Fingerabdruck aller Filter der Organisation des Benutzers und der Systemfilter (Ids und Versionen, Verknüpfungen eingeschlossen), seiner aktiven Rollen, die einen Rollenfilter tragen, und, wenn es Gruppenfilter gibt, seiner aktiven Gruppen; ein geänderter Filter, ein Rollenwechsel oder eine andere Gruppe verwirft also die Kopie und holt die sichtbaren Zeilen neu. Ohne Filter bekommt die Partition nichts dazu. Änderungen senden Signale ohne Nutzdaten und ohne Akteur: Entities implementieren `IHasRealtimeSignals`, um die Topics zu nennen, der Ereignistyp ist `RealtimeEventTypes.Signal`. Ein Signal trägt eine leere Nutzlast (weder Entity-Name noch Id noch Filterinhalt) und keinen Akteur. Mandanten-, Gruppen- und Rollenfilter signalisieren auf `tenant:data-filters` (nur die eigene Organisation), Systemfilter und Verknüpfungen auf `global:data-filters`. „Signal“ ist ein reservierter Ereignisname: Eine App darf ihn nicht für eigene Ereignisse verwenden.
 
 ## Admin-Oberfläche
 
-- **Datentypen** listet jedes Entity-Set mit seinen Client-Entity-Einstellungen sowie den System- und Mandantenfiltern und der Verknüpfung zu einem anderen Set.
+- **Datentypen** listet jedes Entity-Set mit seinen Client-Entity-Einstellungen sowie den System- und Mandantenfiltern und der Verknüpfung zu einem anderen Set. Die Systemeditoren und der Verknüpfungseditor erscheinen nur in der Systemorganisation.
 - Der Reiter **Datenfilter** auf der Gruppenseite und der Rollenseite bearbeitet die Filter dieser Gruppe oder Rolle.
 - Der Filtereditor ist der `QueryBuilder`: Regeln und Gruppen per Drag and Drop in andere Gruppen oder Positionen ziehen (oder über das Knotenmenü: hoch, runter, in eine Gruppe, aus einer Gruppe), eine Gruppe zwischen UND und ODER umschalten, angehakte Bedingungen in eine neue Gruppe einpacken, eine Gruppe auspacken. Auspacken gibt es nur, wenn die Bedeutung gleich bleibt: Die Logik der Gruppe entspricht der ihrer übergeordneten Gruppe, oder sie hat höchstens ein Kind und ist nicht negiert.
 
