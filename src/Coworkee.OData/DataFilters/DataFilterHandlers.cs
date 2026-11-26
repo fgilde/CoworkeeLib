@@ -70,9 +70,17 @@ internal sealed class DataFilterHandlers(
             return Error.Validation("entitySet", $"There is no entity set '{request.EntitySet}'.");
         }
 
-        if (DataFilterQueries.Problem(services, entity, request.Query) is { } problem)
+        var (filterOption, problem) = DataFilterQueries.Parse(services, entity, request.Query);
+        if (problem is not null)
         {
             return Error.Validation("query", problem);
+        }
+
+        // a filter is no way to probe properties the editing administrator may not read
+        if (filterOption is not null
+            && ODataQueryGuard.Denies(services, entity.EntityType, filterOption.RawValue, await ODataEntityAccess.DeniedByTypeAsync(services, cancellationToken)))
+        {
+            return Error.Validation("query", "The filter uses a property you may not read.");
         }
 
         // without an organisation a non-System filter would belong to nobody
@@ -172,7 +180,26 @@ internal sealed class DataFilterHandlers(
             return Error.Validation("property", $"{entity.EntitySet} has no property '{request.Property}'.");
         }
 
-        var link = await db.Set<DataFilterLink>().FirstOrDefaultAsync(l => l.EntitySet == entity.EntitySet, cancellationToken);
+        // the link joins on the target's key: the property must hold one
+        var key = services.DbContextFor(target.EntityType).Model.FindEntityType(target.EntityType)?.FindPrimaryKey()?.Properties is [{ } single] ? single.ClrType : null;
+        var own = entity.EntityType.GetProperty(property.Name)?.PropertyType;
+        if (key is null || own is null || (Nullable.GetUnderlyingType(own) ?? own) != (Nullable.GetUnderlyingType(key) ?? key))
+        {
+            return Error.Validation("property", $"{entity.EntitySet}.{property.Name} cannot hold the key of {target.EntitySet}.");
+        }
+
+        // a chain that comes back to this set would hide every row of every set in it
+        var links = await db.Set<DataFilterLink>().ToListAsync(cancellationToken);
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { entity.EntitySet };
+        for (var next = target.EntitySet; next is not null; next = links.FirstOrDefault(l => string.Equals(l.EntitySet, next, StringComparison.OrdinalIgnoreCase))?.TargetSet)
+        {
+            if (!seen.Add(next))
+            {
+                return Error.Validation("targetSet", $"Linking {entity.EntitySet} to {target.EntitySet} makes a chain of links that comes back to {next}.");
+            }
+        }
+
+        var link = links.FirstOrDefault(l => string.Equals(l.EntitySet, entity.EntitySet, StringComparison.OrdinalIgnoreCase));
         if (link is null)
         {
             link = new DataFilterLink { EntitySet = entity.EntitySet };

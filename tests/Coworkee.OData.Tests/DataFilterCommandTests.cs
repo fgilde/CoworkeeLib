@@ -230,6 +230,48 @@ public sealed class DataFilterCommandTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_filter_may_only_use_properties_the_editing_admin_may_read()
+    {
+        // Category is HideUnless(Gadgets.Categories)
+        var (without, _) = await UserWithAsync(_setup.TenantId, DataFilterPermissions.ManageTenant);
+        var (with, _) = await UserWithAsync(_setup.TenantId, DataFilterPermissions.ManageTenant, ODataApp.SeeCategories);
+
+        (await without.PutAsJsonAsync(Root, Request(DataFilterLayer.Tenant, "Category"), CoworkeeJson.Web, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await without.PutAsJsonAsync(Root, Request(DataFilterLayer.Tenant), CoworkeeJson.Web, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await with.PutAsJsonAsync(Root, Request(DataFilterLayer.Tenant, "Category"), CoworkeeJson.Web, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task A_malformed_filter_is_refused_not_a_server_error()
+    {
+        // complete for the builder (one value), but the value is null: writing the $filter throws
+        var query = QueryJson.Serialize(new QueryGroup { Children = [new QueryRule { Field = "Name", Operator = QueryOperator.In, Values = [null!] }] });
+
+        (await Admin().PutAsJsonAsync(Root, new SaveDataFilterRequest("Gadgets", DataFilterLayer.Tenant, null, query), CoworkeeJson.Web, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await Admin().PutAsJsonAsync(Root, new SaveDataFilterRequest("Gadgets", DataFilterLayer.Tenant, null, """{"children":[null]}"""), CoworkeeJson.Web, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task A_link_chain_that_comes_back_to_its_set_is_refused()
+    {
+        (await Admin().PutAsJsonAsync(Root + "/links", new SaveDataFilterLinkRequest("Gadgets", "Id", "Widgets"), CoworkeeJson.Web, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Admin().PutAsJsonAsync(Root + "/links", new SaveDataFilterLinkRequest("Widgets", "Id", "Lockets"), CoworkeeJson.Web, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        (await Admin().PutAsJsonAsync(Root + "/links", new SaveDataFilterLinkRequest("Lockets", "Id", "Gadgets"), CoworkeeJson.Web, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await Admin().GetFromJsonAsync<DataFilterLinkDto[]>(Root + "/links", CoworkeeJson.Web, Ct))!.Length.ShouldBe(2);
+        // moving the start of the chain to its end replaces that link: no loop
+        (await Admin().PutAsJsonAsync(Root + "/links", new SaveDataFilterLinkRequest("Gadgets", "Id", "Lockets"), CoworkeeJson.Web, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task A_link_property_of_another_type_than_the_target_key_is_refused()
+    {
+        // Price is a decimal, the key of Widgets a Guid
+        (await Admin().PutAsJsonAsync(Root + "/links", new SaveDataFilterLinkRequest("Gadgets", "Price", "Widgets"), CoworkeeJson.Web, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await Admin().GetFromJsonAsync<DataFilterLinkDto[]>(Root + "/links", CoworkeeJson.Web, Ct))!.ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task The_fields_and_sets_need_a_manage_permission()
     {
         var plain = await PlainUserAsync();

@@ -23,27 +23,28 @@ internal static class DataFilterQueries
             return (null, "The filter is not a query.");
         }
 
-        var fields = EdmQueryFields.For(services.GetRequiredService<IEdmModel>(), entity.EntitySet);
-        var known = fields.Select(f => f.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        if (query.Rules().Select(r => r.Field).FirstOrDefault(f => !string.IsNullOrEmpty(f) && !known.Contains(f)) is { } unknown)
-        {
-            return (null, $"The filter names the unknown property '{unknown}' of {entity.EntitySet}.");
-        }
-
-        if (ODataQueryTranslator.ToFilter(query, fields, now) is not { } filter)
-        {
-            return (null, null);
-        }
-
+        // a stored or sent query may be malformed in ways the builder never writes (a null rule or value): a problem, never an exception
         try
         {
+            var fields = EdmQueryFields.For(services.GetRequiredService<IEdmModel>(), entity.EntitySet);
+            var known = fields.Select(f => f.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            if (query.Rules().Select(r => r.Field).FirstOrDefault(f => !string.IsNullOrEmpty(f) && !known.Contains(f)) is { } unknown)
+            {
+                return (null, $"The filter names the unknown property '{unknown}' of {entity.EntitySet}.");
+            }
+
+            if (ODataQueryTranslator.ToFilter(query, fields, now) is not { } filter)
+            {
+                return (null, null);
+            }
+
             var option = ODataQueryGuard.Options(services, entity.EntityType, QueryString.Create("$filter", filter)).Filter;
             _ = option?.FilterClause;
             return (option, null);
         }
-        catch (Exception exception) when (exception is ODataException or InvalidOperationException)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            return (null, exception.Message);
+            return (null, exception is ODataException or InvalidOperationException ? exception.Message : "The filter is not a valid query.");
         }
     }
 }
