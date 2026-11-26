@@ -18,7 +18,7 @@ The filters apply wherever the library decides which rows a user may see: OData 
 | Group | members of a group (and its sub-groups) | `DataFilters.ManageGroups` |
 | Role | users acting in a role | `DataFilters.ManageRoles` |
 
-`DataFilters.Bypass` ("see every row") switches all layers off for its holder. The system administrator role holds it, so whoever maintains filters also sees the unfiltered data. Filters are stored as the `QueryGroup` of the [`QueryBuilder`](data.md) and translated to `$filter` on the server; saving validates them against the model of the set.
+`DataFilters.Bypass` ("see every row") switches all layers off for its holder. The built-in Admin role holds every defined permission, so also this one, and whoever maintains filters with it also sees the unfiltered data. Filters are stored as the `QueryGroup` of the [`QueryBuilder`](data.md) and translated to `$filter` on the server; saving validates them against the model of the set.
 
 ## How the layers combine
 
@@ -63,7 +63,7 @@ The library cannot know how an app relates rows to groups, so an app registers o
 
 ```csharp
 [RegisterAs(typeof(IGroupRowSource<Shipment>))]
-internal sealed class ShipmentRowsOfGroups(IOrgCodes codes, ICurrentUser user) : IGroupRowSource<Shipment>
+internal sealed class ShipmentRowsOfGroups(IOrgCodes codes, IPermissionChecker permissions) : IGroupRowSource<Shipment>
 {
     public async Task<Expression<Func<Shipment, bool>>> RowsOfAsync(IReadOnlyCollection<Guid> groupIds, CancellationToken ct)
     {
@@ -71,11 +71,11 @@ internal sealed class ShipmentRowsOfGroups(IOrgCodes codes, ICurrentUser user) :
         return s => org.Contains(s.OrganisationCode);
     }
 
-    public Task<bool> SeesAllAsync(CancellationToken ct) => Task.FromResult(user.IsGranted("Shipments.ViewAll"));
+    public Task<bool> SeesAllAsync(CancellationToken ct) => permissions.IsGrantedAsync("Shipments.ViewAll", ct);
 }
 ```
 
-`RowsOfAsync` returns a predicate EF Core translates, for the rows of exactly these groups (not their sub-groups; the layer passes sub-groups it reaches with their own filters). Without a source a set uses the "any group's filter" rule. With `UseRelationalNulls(true)` rows whose group link is null are not matched by the predicate and are hidden (fail closed), where the default null semantics would let `!=` comparisons match them.
+`IOrgCodes` and `OfGroupsAsync` stand for the app's own service that maps groups to the codes its rows carry. `RowsOfAsync` returns a predicate EF Core translates, for the rows of exactly these groups (not their sub-groups; the layer passes sub-groups it reaches with their own filters). Without a source a set uses the "any group's filter" rule. The group part negates the "reached through a group" predicate (`NOT rowsOf(active groups)`), so null group links matter, for users the group layer applies to and on sets with group filters. With the default EF null semantics a row with a null group link counts as "not through a group" and is left to the app's own scope; with `UseRelationalNulls(true)` `NOT(NULL)` stays NULL, so such rows drop out (fail closed).
 
 ## Role filters need `GetRoleIdsAsync`
 
@@ -95,4 +95,4 @@ Reading and writing needs the permission of the layer; the page and the navigati
 
 ## Moving to a version with data filters
 
-The tables `cw.DataFilters` and `cw.DataFilterLinks` must exist before the app starts: every entity-set read looks them up on a cold cache. Add and apply the migration (`coworkee migrations add AddDataFilters`) first. The query model moved to `Coworkee.Contracts.Query`; see the [changelog](../reference/changelog.md).
+The tables `cw.DataFilters` and `cw.DataFilterLinks` must exist before the app starts: every entity-set read looks them up on a cold cache. Add and apply an app migration (`coworkee migrations add AddDataFilters`) first; the library ships no migration of its own. The query model moved to `Coworkee.Contracts.Query`; see the [changelog](../reference/changelog.md).

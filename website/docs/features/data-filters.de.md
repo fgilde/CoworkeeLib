@@ -18,7 +18,7 @@ Die Filter gelten überall, wo die Bibliothek entscheidet, welche Zeilen ein Ben
 | Gruppe | Mitglieder einer Gruppe (und ihrer Untergruppen) | `DataFilters.ManageGroups` |
 | Rolle | Benutzer, die in einer Rolle arbeiten | `DataFilters.ManageRoles` |
 
-`DataFilters.Bypass` („alle Zeilen sehen“) schaltet für den Inhaber alle Ebenen ab. Die Rolle des Systemadministrators hat sie, wer Filter pflegt, sieht also auch die ungefilterten Daten. Filter werden als `QueryGroup` des [`QueryBuilder`](data.md) gespeichert und auf dem Server in `$filter` übersetzt; das Speichern prüft sie gegen das Modell des Sets.
+`DataFilters.Bypass` („alle Zeilen sehen“) schaltet für den Inhaber alle Ebenen ab. Die eingebaute Rolle Admin hat jede definierte Berechtigung, also auch diese, und wer damit Filter pflegt, sieht auch die ungefilterten Daten. Filter werden als `QueryGroup` des [`QueryBuilder`](data.md) gespeichert und auf dem Server in `$filter` übersetzt; das Speichern prüft sie gegen das Modell des Sets.
 
 ## So greifen die Ebenen ineinander
 
@@ -63,7 +63,7 @@ Die Bibliothek kann nicht wissen, wie eine App Zeilen mit Gruppen verbindet; des
 
 ```csharp
 [RegisterAs(typeof(IGroupRowSource<Shipment>))]
-internal sealed class ShipmentRowsOfGroups(IOrgCodes codes, ICurrentUser user) : IGroupRowSource<Shipment>
+internal sealed class ShipmentRowsOfGroups(IOrgCodes codes, IPermissionChecker permissions) : IGroupRowSource<Shipment>
 {
     public async Task<Expression<Func<Shipment, bool>>> RowsOfAsync(IReadOnlyCollection<Guid> groupIds, CancellationToken ct)
     {
@@ -71,11 +71,11 @@ internal sealed class ShipmentRowsOfGroups(IOrgCodes codes, ICurrentUser user) :
         return s => org.Contains(s.OrganisationCode);
     }
 
-    public Task<bool> SeesAllAsync(CancellationToken ct) => Task.FromResult(user.IsGranted("Shipments.ViewAll"));
+    public Task<bool> SeesAllAsync(CancellationToken ct) => permissions.IsGrantedAsync("Shipments.ViewAll", ct);
 }
 ```
 
-`RowsOfAsync` liefert ein Prädikat, das EF Core übersetzt, für die Zeilen genau dieser Gruppen (nicht ihrer Untergruppen; Untergruppen, die der Benutzer erreicht, reicht die Ebene mit ihren eigenen Filtern durch). Ohne Quelle gilt für ein Set die Regel „Filter irgendeiner Gruppe“. Mit `UseRelationalNulls(true)` trifft das Prädikat Zeilen mit leerer Gruppenverknüpfung (null) nicht, sie bleiben verborgen (sicher geschlossen), wo die Standard-Null-Semantik `!=`-Vergleiche sie treffen ließe.
+`IOrgCodes` und `OfGroupsAsync` stehen für den eigenen Dienst der App, der Gruppen auf die Codes abbildet, die ihre Zeilen tragen. `RowsOfAsync` liefert ein Prädikat, das EF Core übersetzt, für die Zeilen genau dieser Gruppen (nicht ihrer Untergruppen; Untergruppen, die der Benutzer erreicht, reicht die Ebene mit ihren eigenen Filtern durch). Ohne Quelle gilt für ein Set die Regel „Filter irgendeiner Gruppe“. Der Gruppenteil verneint das Prädikat „kommt über eine Gruppe“ (`NOT rowsOf(aktive Gruppen)`), deshalb zählen leere Gruppenverknüpfungen (null), für Benutzer, für die die Gruppenebene gilt, und bei Sets mit Gruppenfiltern. Mit der EF-Standard-Null-Semantik gilt eine Zeile mit leerer Gruppenverknüpfung als „nicht über eine Gruppe“ und bleibt dem eigenen Scope der App überlassen; mit `UseRelationalNulls(true)` bleibt `NOT(NULL)` NULL, die Zeile fällt also heraus (sicher geschlossen).
 
 ## Rollenfilter brauchen `GetRoleIdsAsync`
 
@@ -95,4 +95,4 @@ Lesen und Schreiben braucht die Berechtigung der Ebene; die Seite und der Naviga
 
 ## Umstieg auf eine Version mit Datenfiltern
 
-Die Tabellen `cw.DataFilters` und `cw.DataFilterLinks` müssen existieren, bevor die App startet: Jede Abfrage eines Entity-Sets schlägt sie bei kaltem Cache nach. Zuerst die Migration anlegen und anwenden (`coworkee migrations add AddDataFilters`). Das Abfragemodell ist nach `Coworkee.Contracts.Query` umgezogen; siehe das [Änderungsprotokoll](../reference/changelog.de.md).
+Die Tabellen `cw.DataFilters` und `cw.DataFilterLinks` müssen existieren, bevor die App startet: Jede Abfrage eines Entity-Sets schlägt sie bei kaltem Cache nach. Zuerst eine App-Migration anlegen und anwenden (`coworkee migrations add AddDataFilters`); die Bibliothek bringt keine eigene Migration mit. Das Abfragemodell ist nach `Coworkee.Contracts.Query` umgezogen; siehe das [Änderungsprotokoll](../reference/changelog.de.md).
