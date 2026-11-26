@@ -2382,5 +2382,6 @@
   "This filter no longer fits the data and lets no rows through: {0}": "Tento filtr už neodpovídá datům a nepropustí žádné řádky: {0}",
   "This filter uses a property only some users may see. It still hides rows from everyone it applies to.": "Tento filtr používá vlastnost, kterou smějí vidět jen někteří uživatelé. Řádky přesto skrývá všem, na které se vztahuje.",
   "{0} (only some users see it)": "{0} (vidí ji jen někteří uživatelé)",
-  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Pro každou sadu entit: místní kopie v prohlížečích (vypnuto, paměť nebo SQLite) s limity řádků a synchronizací a datové filtry, které rozhodují, kdo vidí které řádky."
+  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Pro každou sadu entit: místní kopie v prohlížečích (vypnuto, paměť nebo SQLite) s limity řádků a synchronizací a datové filtry, které rozhodují, kdo vidí které řádky.",
+  "Not available for local copies": "Pro místní kopie není k dispozici"
 }

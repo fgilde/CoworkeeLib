@@ -2382,5 +2382,6 @@
   "This filter no longer fits the data and lets no rows through: {0}": "Αυτό το φίλτρο δεν ταιριάζει πια με τα δεδομένα και δεν αφήνει καμία γραμμή να περάσει: {0}",
   "This filter uses a property only some users may see. It still hides rows from everyone it applies to.": "Αυτό το φίλτρο χρησιμοποιεί μια ιδιότητα που βλέπουν μόνο ορισμένοι χρήστες. Παρ' όλα αυτά κρύβει γραμμές από όλους στους οποίους ισχύει.",
   "{0} (only some users see it)": "{0} (τη βλέπουν μόνο ορισμένοι χρήστες)",
-  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Ανά σύνολο οντοτήτων: τοπικό αντίγραφο στους περιηγητές (ανενεργό, μνήμη ή SQLite) με όρια γραμμών και συγχρονισμό, και τα φίλτρα δεδομένων που αποφασίζουν ποιος βλέπει ποιες γραμμές."
+  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Ανά σύνολο οντοτήτων: τοπικό αντίγραφο στους περιηγητές (ανενεργό, μνήμη ή SQLite) με όρια γραμμών και συγχρονισμό, και τα φίλτρα δεδομένων που αποφασίζουν ποιος βλέπει ποιες γραμμές.",
+  "Not available for local copies": "Μη διαθέσιμο για τοπικά αντίγραφα"
 }

@@ -2382,5 +2382,6 @@
   "This filter no longer fits the data and lets no rows through: {0}": "Dit filter past niet meer bij de gegevens en laat geen rijen door: {0}",
   "This filter uses a property only some users may see. It still hides rows from everyone it applies to.": "Dit filter gebruikt een eigenschap die slechts sommige gebruikers mogen zien. Het verbergt toch rijen voor iedereen op wie het van toepassing is.",
   "{0} (only some users see it)": "{0} (slechts enkele gebruikers zien het)",
-  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Per entiteitenset: lokale kopie in de browsers (uit, geheugen of SQLite) met rijlimieten en synchronisatie, en de gegevensfilters die bepalen wie welke rijen ziet."
+  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Per entiteitenset: lokale kopie in de browsers (uit, geheugen of SQLite) met rijlimieten en synchronisatie, en de gegevensfilters die bepalen wie welke rijen ziet.",
+  "Not available for local copies": "Niet beschikbaar voor lokale kopieën"
 }

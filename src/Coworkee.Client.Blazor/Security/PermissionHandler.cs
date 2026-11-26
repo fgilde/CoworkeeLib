@@ -6,7 +6,7 @@ internal sealed class PermissionHandler(PermissionStore permissions) : Authoriza
 {
     protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
     {
-        if (await permissions.HasAsync(requirement.Permission))
+        if (await permissions.HasAsync(PermissionPolicy.Split(requirement.Permission), PermissionMatch.Any))
         {
             context.Succeed(requirement);
         }

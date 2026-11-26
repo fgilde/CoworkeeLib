@@ -2382,5 +2382,6 @@
   "This filter no longer fits the data and lets no rows through: {0}": "لم يعد هذا المرشح يناسب البيانات ولا يمرّر أي صف: {0}",
   "This filter uses a property only some users may see. It still hides rows from everyone it applies to.": "يستخدم هذا المرشح خاصية لا يراها إلا بعض المستخدمين. ومع ذلك يخفي صفوفًا عن كل من ينطبق عليهم.",
   "{0} (only some users see it)": "{0} (يراها بعض المستخدمين فقط)",
-  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "لكل مجموعة كيانات: نسخة محلية في المتصفحات (متوقفة أو ذاكرة أو SQLite) مع حدود للصفوف والمزامنة، ومرشحات البيانات التي تحدد من يرى أي صفوف."
+  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "لكل مجموعة كيانات: نسخة محلية في المتصفحات (متوقفة أو ذاكرة أو SQLite) مع حدود للصفوف والمزامنة، ومرشحات البيانات التي تحدد من يرى أي صفوف.",
+  "Not available for local copies": "غير متاح للنسخ المحلية"
 }

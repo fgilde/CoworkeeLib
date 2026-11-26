@@ -36,6 +36,8 @@ public sealed class LocalCopiesTests : BunitContext
         Services.AddSingleton(_server.Api);
         Services.AddSingleton(_api);
         Services.AddSingleton<IClientEntityEngine>(_engine);
+        _api.GetMyPermissionsAsync(default).ReturnsForAnyArgs([SettingsPermissions.Manage]);
+        Services.AddSingleton(new Security.PermissionStore(_api, new Realtime.RealtimeClient(Substitute.For<Realtime.IRealtimeConnection>())));
         Services.AddSingleton(new CoworkeeClientOptions());
         Services.AddScoped<Dialogs.CoworkeeDialogOptions>();
         Services.AddSingleton<Dialogs.DialogOptionsContributor>();

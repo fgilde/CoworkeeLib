@@ -1,4 +1,4 @@
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = Coworkee.Client.Blazor.Security.PermissionPolicy.Prefix + Coworkee.Contracts.Settings.SettingsPermissions.Manage)]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = Coworkee.Client.Blazor.Security.PermissionPolicy.Prefix + Coworkee.Contracts.Settings.SettingsPermissions.Manage + "|" + Coworkee.Contracts.DataFilters.DataFilterPermissions.ManageSystem + "|" + Coworkee.Contracts.DataFilters.DataFilterPermissions.ManageTenant)]
 @using Coworkee.Client.Blazor.Components
 @using Coworkee.Contracts.Data
 @using Coworkee.Contracts.DataFilters
@@ -11,15 +11,21 @@
 }
 <MudDataGrid T="ClientEntityAdminSetDto" Items="_sets" Loading="_busy" Dense="true" Hover="true" Striped="true" Elevation="0" Outlined="true" data-testid="local-copies">
     <Columns>
-        <HierarchyColumn T="ClientEntityAdminSetDto" ButtonDisabledFunc="_ => false" />
+        <HierarchyColumn T="ClientEntityAdminSetDto" Hidden="!_canFilter" ButtonDisabledFunc="_ => false" />
         <PropertyColumn Property="s => s.EntitySet" Title="@L["Entity set"]">
             <CellTemplate>
                 <MudText Typo="Typo.body2">@context.Item.EntitySet</MudText>
                 <MudText Typo="Typo.caption" Class="mud-text-secondary">@context.Item.EntityType</MudText>
             </CellTemplate>
         </PropertyColumn>
-        <TemplateColumn T="ClientEntityAdminSetDto" Title="@L["Local copy"]" Sortable="false">
+        <TemplateColumn T="ClientEntityAdminSetDto" Title="@L["Local copy"]" Sortable="false" Hidden="!_canCopy">
             <CellTemplate>
+              @if (_noCopy.Contains(context.Item.EntitySet))
+              {
+                <MudText Typo="Typo.caption" Class="mud-text-secondary" data-testid="@($"no-copy-{context.Item.EntitySet}")">@L["Not available for local copies"]</MudText>
+              }
+              else
+              {
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" data-testid="@($"copy-{context.Item.EntitySet}")" data-copy="@(context.Item.Copy?.ToString() ?? "Auto")">
                     <MudChip T="string" Size="Size.Small" Color="@CopyColor(context.Item.Copy)" Icon="@CopyIcon(context.Item.Copy)">@CopyText(context.Item.Copy)</MudChip>
                     @if (context.Item.Copy == ClientEntityCopy.Sqlite && !_sqlite)
@@ -30,31 +36,35 @@
                     }
                     @Source(context.Item, nameof(ClientEntityAdminSetDto.Copy), always: true)
                 </MudStack>
+              }
             </CellTemplate>
         </TemplateColumn>
-        <TemplateColumn T="ClientEntityAdminSetDto" Title="@L["Row limit"]" Sortable="false">
+        <TemplateColumn T="ClientEntityAdminSetDto" Title="@L["Row limit"]" Sortable="false" Hidden="!_canCopy">
             <CellTemplate>@Value(context.Item, nameof(ClientEntityAdminSetDto.MaxRows), context.Item.MaxRows.ToString("N0", Culture))</CellTemplate>
         </TemplateColumn>
-        <TemplateColumn T="ClientEntityAdminSetDto" Title="@L["Batch"]" Sortable="false">
+        <TemplateColumn T="ClientEntityAdminSetDto" Title="@L["Batch"]" Sortable="false" Hidden="!_canCopy">
             <CellTemplate>@Value(context.Item, nameof(ClientEntityAdminSetDto.BatchSize), context.Item.BatchSize.ToString("N0", Culture))</CellTemplate>
         </TemplateColumn>
-        <TemplateColumn T="ClientEntityAdminSetDto" Title="@L["Parallel pages"]" Sortable="false">
+        <TemplateColumn T="ClientEntityAdminSetDto" Title="@L["Parallel pages"]" Sortable="false" Hidden="!_canCopy">
             <CellTemplate>@Value(context.Item, nameof(ClientEntityAdminSetDto.ParallelPages), context.Item.ParallelPages.ToString(Culture))</CellTemplate>
         </TemplateColumn>
-        <TemplateColumn T="ClientEntityAdminSetDto" Title="@L["Refresh interval"]" Sortable="false">
+        <TemplateColumn T="ClientEntityAdminSetDto" Title="@L["Refresh interval"]" Sortable="false" Hidden="!_canCopy">
             <CellTemplate>@Value(context.Item, nameof(ClientEntityAdminSetDto.RefreshInterval), Interval(context.Item.RefreshInterval))</CellTemplate>
         </TemplateColumn>
-        <TemplateColumn T="ClientEntityAdminSetDto" Title="@L["Default mode"]" Sortable="false">
+        <TemplateColumn T="ClientEntityAdminSetDto" Title="@L["Default mode"]" Sortable="false" Hidden="!_canCopy">
             <CellTemplate>@Value(context.Item, nameof(ClientEntityAdminSetDto.DefaultMode), ModeText(context.Item.DefaultMode))</CellTemplate>
         </TemplateColumn>
-        <TemplateColumn T="ClientEntityAdminSetDto" Sortable="false" CellStyle="text-align:right;white-space:nowrap">
+        <TemplateColumn T="ClientEntityAdminSetDto" Sortable="false" Hidden="!_canCopy" CellStyle="text-align:right;white-space:nowrap">
             <CellTemplate>
+              @if (!_noCopy.Contains(context.Item.EntitySet))
+              {
                 <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" aria-label="@L["Edit"]" Disabled="_busy" OnClick="() => EditAsync(context.Item)"
                                data-testid="@($"edit-{context.Item.EntitySet}")" />
                 <MudTooltip Text="@L["Back to what the code says"]">
                     <MudIconButton Icon="@Icons.Material.Outlined.SettingsBackupRestore" Size="Size.Small" aria-label="@L["Reset"]" Disabled="@(_busy || context.Item.Override is null)"
                                    OnClick="() => ResetAsync(context.Item)" data-testid="@($"reset-{context.Item.EntitySet}")" />
                 </MudTooltip>
+              }
             </CellTemplate>
         </TemplateColumn>
     </Columns>
@@ -71,7 +81,7 @@
 </MudDataGrid>
 
 @code {
-    private RenderFragment Value(ClientEntityAdminSetDto set, string property, string text) => @<span>@text @Source(set, property)</span>;
+    private RenderFragment Value(ClientEntityAdminSetDto set, string property, string text) => _noCopy.Contains(set.EntitySet) ? _ => { } : @<span>@text @Source(set, property)</span>;
 
     // what decided a value; values of the defaults show none, except the copy, where Default tells that the code does not mark the set
     private RenderFragment Source(ClientEntityAdminSetDto set, string property, bool always = false) => __builder =>

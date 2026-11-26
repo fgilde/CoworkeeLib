@@ -2382,5 +2382,6 @@
   "This filter no longer fits the data and lets no rows through: {0}": "តម្រងនេះលែងត្រូវនឹងទិន្នន័យ ហើយមិនឲ្យជួរដេកណាឆ្លងកាត់ទេ៖ {0}",
   "This filter uses a property only some users may see. It still hides rows from everyone it applies to.": "តម្រងនេះប្រើលក្ខណៈដែលអ្នកប្រើមួយចំនួនប៉ុណ្ណោះអាចមើលឃើញ។ ប៉ុន្តែវានៅតែលាក់ជួរដេកពីអ្នកទាំងអស់ដែលវាអនុវត្តចំពោះ។",
   "{0} (only some users see it)": "{0} (អ្នកប្រើមួយចំនួនប៉ុណ្ណោះឃើញ)",
-  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "ក្នុងមួយសំណុំធាតុ៖ ច្បាប់ចម្លងក្នុងកម្មវិធីរុករក (បិទ ចងចាំ ឬ SQLite) ជាមួយដែនកំណត់ជួរដេក និងសមកាលកម្ម ព្រមទាំងតម្រងទិន្នន័យដែលកំណត់ថានរណាឃើញជួរដេកអ្វី។"
+  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "ក្នុងមួយសំណុំធាតុ៖ ច្បាប់ចម្លងក្នុងកម្មវិធីរុករក (បិទ ចងចាំ ឬ SQLite) ជាមួយដែនកំណត់ជួរដេក និងសមកាលកម្ម ព្រមទាំងតម្រងទិន្នន័យដែលកំណត់ថានរណាឃើញជួរដេកអ្វី។",
+  "Not available for local copies": "មិនមានសម្រាប់ច្បាប់ចម្លងក្នុងម៉ាស៊ីន"
 }

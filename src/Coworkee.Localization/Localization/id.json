@@ -2382,5 +2382,6 @@
   "This filter no longer fits the data and lets no rows through: {0}": "Filter ini tidak lagi cocok dengan data dan tidak meloloskan baris apa pun: {0}",
   "This filter uses a property only some users may see. It still hides rows from everyone it applies to.": "Filter ini memakai properti yang hanya boleh dilihat sebagian pengguna. Filter tetap menyembunyikan baris bagi semua yang terkena.",
   "{0} (only some users see it)": "{0} (hanya sebagian pengguna yang melihatnya)",
-  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Per kumpulan entitas: salinan lokal di browser (mati, memori, atau SQLite) dengan batas baris dan sinkronisasi, serta filter data yang menentukan siapa melihat baris apa."
+  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Per kumpulan entitas: salinan lokal di browser (mati, memori, atau SQLite) dengan batas baris dan sinkronisasi, serta filter data yang menentukan siapa melihat baris apa.",
+  "Not available for local copies": "Tidak tersedia untuk salinan lokal"
 }

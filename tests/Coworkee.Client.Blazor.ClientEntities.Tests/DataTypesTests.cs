@@ -6,6 +6,7 @@ using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.Data;
 using Coworkee.Contracts.DataFilters;
 using Coworkee.Contracts.Query;
+using Coworkee.Contracts.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 using MudBlazor.Extensions;
@@ -36,7 +37,7 @@ public sealed class DataTypesTests : BunitContext
         Services.AddSingleton(new CoworkeeClientOptions());
         _server.AdminSets.Add(new ClientEntityAdminSetDto("Gadgets", "Gadget", ClientEntityCopy.Memory, 50_000, 1000, 1, TimeSpan.FromMinutes(5), ClientEntityDefaultMode.Client,
             new Dictionary<string, ClientEntitySettingSource> { ["Copy"] = ClientEntitySettingSource.Override }, new ClientEntitySetOverride { Copy = ClientEntityCopy.Memory }));
-        _api.GetMyPermissionsAsync(default).ReturnsForAnyArgs([DataFilterPermissions.ManageSystem, DataFilterPermissions.ManageTenant]);
+        _api.GetMyPermissionsAsync(default).ReturnsForAnyArgs([SettingsPermissions.Manage, DataFilterPermissions.ManageSystem, DataFilterPermissions.ManageTenant]);
         _api.GetDataFilterSetsAsync(default).ReturnsForAnyArgs(["Gadgets", "Widgets"]);
         _api.GetDataFilterFieldsAsync(default!, default).ReturnsForAnyArgs(
         [
@@ -63,6 +64,47 @@ public sealed class DataTypesTests : BunitContext
         var filters = page.WaitForElement("[data-testid='filters-Gadgets']");
         page.WaitForAssertion(() => filters.QuerySelectorAll("[data-testid='data-filter-editor']").Select(e => e.GetAttribute("data-layer")).ShouldBe(["System", "Tenant"]));
         filters.QuerySelector("[data-testid='data-filter-link'] [data-testid='link-text']")!.TextContent.ShouldBe("Same data as Widgets via WidgetId");
+    }
+
+    [Fact]
+    public async Task A_set_without_a_local_copy_still_has_its_system_and_tenant_filters()
+    {
+        var page = Render<LocalCopies>();
+        page.WaitForElement("[data-testid='no-copy-Widgets']").TextContent.ShouldContain("Not available for local copies");
+
+        await page.FindAll("tbody tr")[1].QuerySelector("button")!.ClickAsync(new());
+
+        var filters = page.WaitForElement("[data-testid='filters-Widgets']");
+        page.WaitForAssertion(() => filters.QuerySelectorAll("[data-testid='data-filter-editor']").Select(e => e.GetAttribute("data-set") + ":" + e.GetAttribute("data-layer")).ShouldBe(["Widgets:System", "Widgets:Tenant"]));
+        page.FindAll("[data-testid='edit-Widgets']").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task With_only_the_tenant_permission_the_page_shows_only_the_tenant_editors()
+    {
+        _api.GetMyPermissionsAsync(default).ReturnsForAnyArgs([DataFilterPermissions.ManageTenant]);
+        var page = Render<LocalCopies>();
+        page.WaitForAssertion(() => page.FindAll("tbody tr").Count.ShouldBe(2));
+
+        // no copy settings without Settings.Manage
+        page.FindAll("[data-testid^='copy-'], [data-testid^='no-copy-'], [data-testid^='edit-']").ShouldBeEmpty();
+        await page.FindAll("tbody tr")[0].QuerySelector("button")!.ClickAsync(new());
+
+        var filters = page.WaitForElement("[data-testid='filters-Gadgets']");
+        page.WaitForAssertion(() => filters.QuerySelectorAll("[data-testid='data-filter-editor']").Select(e => e.GetAttribute("data-layer")).ShouldBe(["Tenant"]));
+        filters.QuerySelectorAll("[data-testid='data-filter-link']").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void With_only_Settings_Manage_the_copy_settings_show_without_filters()
+    {
+        _api.GetMyPermissionsAsync(default).ReturnsForAnyArgs([SettingsPermissions.Manage]);
+        var page = Render<LocalCopies>();
+
+        page.WaitForElement("[data-testid='copy-Gadgets']");
+        page.FindAll("tbody tr").Count.ShouldBe(1);
+        page.FindAll("tbody tr")[0].QuerySelectorAll("button[aria-label='Edit']").Count.ShouldBe(1);
+        _api.DidNotReceiveWithAnyArgs().GetDataFilterSetsAsync(default);
     }
 
     private sealed class Engine : IClientEntityEngine

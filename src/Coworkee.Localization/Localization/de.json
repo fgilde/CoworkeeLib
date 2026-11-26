@@ -2382,5 +2382,6 @@
   "This filter no longer fits the data and lets no rows through: {0}": "Dieser Filter passt nicht mehr zu den Daten und lässt keine Zeilen durch: {0}",
   "This filter uses a property only some users may see. It still hides rows from everyone it applies to.": "Dieser Filter nutzt eine Eigenschaft, die nur manche Benutzer sehen dürfen. Er blendet trotzdem Zeilen für alle aus, für die er gilt.",
   "{0} (only some users see it)": "{0} (nur manche Benutzer sehen sie)",
-  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Pro Entitätsmenge: lokale Kopie in den Browsern (aus, Speicher oder SQLite) mit Zeilenlimits und Synchronisierung sowie die Datenfilter, die bestimmen, wer welche Zeilen sieht."
+  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Pro Entitätsmenge: lokale Kopie in den Browsern (aus, Speicher oder SQLite) mit Zeilenlimits und Synchronisierung sowie die Datenfilter, die bestimmen, wer welche Zeilen sieht.",
+  "Not available for local copies": "Für lokale Kopien nicht verfügbar"
 }

@@ -2382,5 +2382,6 @@
   "This filter no longer fits the data and lets no rows through: {0}": "이 필터는 더 이상 데이터와 맞지 않아 어떤 행도 통과시키지 않습니다: {0}",
   "This filter uses a property only some users may see. It still hides rows from everyone it applies to.": "이 필터는 일부 사용자만 볼 수 있는 속성을 사용합니다. 그래도 적용 대상 모두에게 행을 숨깁니다.",
   "{0} (only some users see it)": "{0}(일부 사용자만 볼 수 있음)",
-  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "엔터티 집합별로: 브라우저의 로컬 사본(끔, 메모리 또는 SQLite)과 행 제한·동기화, 그리고 누가 어떤 행을 보는지 결정하는 데이터 필터."
+  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "엔터티 집합별로: 브라우저의 로컬 사본(끔, 메모리 또는 SQLite)과 행 제한·동기화, 그리고 누가 어떤 행을 보는지 결정하는 데이터 필터.",
+  "Not available for local copies": "로컬 사본에는 사용할 수 없음"
 }

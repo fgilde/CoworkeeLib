@@ -5,6 +5,9 @@ using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Realtime;
 using Coworkee.Contracts.Data;
+using Coworkee.Contracts.DataFilters;
+using Coworkee.Contracts.Settings;
+using Coworkee.Client.Blazor.Security;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
@@ -22,10 +25,15 @@ public partial class LocalCopies : IAsyncDisposable
 {
     private IReadOnlyList<ClientEntityAdminSetDto> _sets = [];
     private bool _busy;
+    private bool _canCopy;
+    private bool _canFilter;
+    private HashSet<string> _noCopy = [];
     private bool _sqlite;
     private IAsyncDisposable? _subscription;
 
     [Inject] private ClientEntityApi Sets { get; set; } = null!;
+
+    [Inject] private PermissionStore Permissions { get; set; } = null!;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
@@ -41,6 +49,8 @@ public partial class LocalCopies : IAsyncDisposable
 
     protected override async Task OnInitializedAsync()
     {
+        _canCopy = await Permissions.HasAsync(SettingsPermissions.Manage);
+        _canFilter = await Permissions.HasAsync([DataFilterPermissions.ManageSystem, DataFilterPermissions.ManageTenant], PermissionMatch.Any);
         _sqlite = Services.GetService<IClientEntityEngine>() is { IsAvailable: true };
         await LoadAsync();
         // a change of another administrator shows at once
@@ -68,13 +78,23 @@ public partial class LocalCopies : IAsyncDisposable
         _busy = true;
         try
         {
-            await Snackbar.RunAsync(async () => _sets = await Sets.AdminAsync(CancellationToken.None));
+            await Snackbar.RunAsync(async () =>
+            {
+                // every set a filter can be written for; the copy settings exist only for those that can have a local copy
+                IReadOnlyList<ClientEntityAdminSetDto> copies = _canCopy ? await Sets.AdminAsync(CancellationToken.None) : [];
+                var names = _canFilter ? await Api.GetDataFilterSetsAsync() : [];
+                _noCopy = [.. names.Except(copies.Select(s => s.EntitySet), StringComparer.OrdinalIgnoreCase)];
+                _sets = [.. copies.Concat(_noCopy.Select(NoCopy)).OrderBy(s => s.EntitySet, StringComparer.OrdinalIgnoreCase)];
+            });
         }
         finally
         {
             _busy = false;
         }
     }
+
+    private static ClientEntityAdminSetDto NoCopy(string entitySet) =>
+        new(entitySet, string.Empty, null, 0, 0, 0, TimeSpan.Zero, ClientEntityDefaultMode.Client, new Dictionary<string, ClientEntitySettingSource>(), null);
 
     private async Task EditAsync(ClientEntityAdminSetDto set)
     {

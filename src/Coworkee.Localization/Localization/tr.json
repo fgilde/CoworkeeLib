@@ -2382,5 +2382,6 @@
   "This filter no longer fits the data and lets no rows through: {0}": "Bu filtre artık verilere uymuyor ve hiçbir satırı geçirmiyor: {0}",
   "This filter uses a property only some users may see. It still hides rows from everyone it applies to.": "Bu filtre yalnızca bazı kullanıcıların görebildiği bir özellik kullanıyor. Yine de geçerli olduğu herkesten satırları gizler.",
   "{0} (only some users see it)": "{0} (yalnızca bazı kullanıcılar görür)",
-  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Varlık kümesi başına: tarayıcılarda yerel kopya (kapalı, bellek veya SQLite), satır sınırları ve senkronizasyon ile kimin hangi satırları göreceğini belirleyen veri filtreleri."
+  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Varlık kümesi başına: tarayıcılarda yerel kopya (kapalı, bellek veya SQLite), satır sınırları ve senkronizasyon ile kimin hangi satırları göreceğini belirleyen veri filtreleri.",
+  "Not available for local copies": "Yerel kopyalar için kullanılamaz"
 }

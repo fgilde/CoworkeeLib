@@ -2382,5 +2382,6 @@
   "This filter no longer fits the data and lets no rows through: {0}": "Dette filter passer ikke længere til dataene og lader ingen rækker passere: {0}",
   "This filter uses a property only some users may see. It still hides rows from everyone it applies to.": "Dette filter bruger en egenskab, som kun nogle brugere må se. Det skjuler stadig rækker for alle, det gælder for.",
   "{0} (only some users see it)": "{0} (kun nogle brugere ser den)",
-  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Pr. entitetsmængde: lokal kopi i browserne (fra, hukommelse eller SQLite) med rækkegrænser og synkronisering, og de datafiltre, der afgør, hvem der ser hvilke rækker."
+  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Pr. entitetsmængde: lokal kopi i browserne (fra, hukommelse eller SQLite) med rækkegrænser og synkronisering, og de datafiltre, der afgør, hvem der ser hvilke rækker.",
+  "Not available for local copies": "Ikke tilgængelig for lokale kopier"
 }

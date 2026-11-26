@@ -2382,5 +2382,6 @@
   "This filter no longer fits the data and lets no rows through: {0}": "Этот фильтр больше не подходит к данным и не пропускает ни одной строки: {0}",
   "This filter uses a property only some users may see. It still hides rows from everyone it applies to.": "Этот фильтр использует свойство, которое видят только некоторые пользователи. Тем не менее он скрывает строки у всех, к кому применяется.",
   "{0} (only some users see it)": "{0} (видят только некоторые пользователи)",
-  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Для каждого набора сущностей: локальная копия в браузерах (выкл., память или SQLite) с ограничениями строк и синхронизацией, а также фильтры данных, которые решают, кто какие строки видит."
+  "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Для каждого набора сущностей: локальная копия в браузерах (выкл., память или SQLite) с ограничениями строк и синхронизацией, а также фильтры данных, которые решают, кто какие строки видит.",
+  "Not available for local copies": "Недоступно для локальных копий"
 }
