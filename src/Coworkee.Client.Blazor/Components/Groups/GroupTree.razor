@@ -1,38 +1,55 @@
+<style>
+    .cw-tree-row { display: flex; align-items: center; gap: 4px; overflow: hidden; cursor: pointer; border-radius: 4px; padding-right: 4px; }
+    .cw-tree-row:hover { background: var(--mud-palette-action-default-hover); }
+    .cw-tree-row.selected { background: color-mix(in srgb, var(--mud-palette-primary) 12%, transparent); }
+    .cw-tree-row.disabled { cursor: default; }
+</style>
 <MudTextField T="string" Value="_search" ValueChanged="SearchAsync" Placeholder="@L["Search groups"]" Immediate="true" DebounceInterval="300" Clearable="true"
               Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" Margin="Density.Margin" Class="mb-2" data-testid="group-search" />
-<MudProgressLinear Indeterminate="true" Size="Size.Small" Color="Color.Primary" Class="@(_loading ? "mb-1" : "mb-1 invisible")" data-testid="group-tree-loading" />
-<div style="@ListStyle">
-<MudTreeView T="GroupNodeDto" Items="_items" ServerData="@(Nodes is null ? ChildrenAsync : null)" ReadOnly="CheckedIds is not null" Comparer="GroupNodeComparer.Instance" SelectionMode="SelectionMode.SingleSelection"
-             SelectedValue="Selected" SelectedValueChanged="SelectAsync" Hover="true" Dense="Density.Dense" data-testid="group-tree">
-    <ItemTemplate>
-        <MudTreeViewItem T="GroupNodeDto" Value="context.Value" Items="context.Children" ItemsChanged="items => context.Children = items"
-                         CanExpand="context.Expandable" @bind-Expanded="context.Expanded" ReadOnly="Disabled(context.Value!)">
-            <BodyContent Context="item">
-                <div class="d-flex align-center gap-1" style="width:100%">
-                    @if (CheckedIds is not null)
-                    {
-                        <MudCheckBox T="bool" Value="CheckedIds.Contains(item.Value!.Id)" ValueChanged="on => ToggleAsync(item.Value!, on)" Size="Size.Small" Dense="true" data-group-check="@item.Value!.Id" />
-                    }
-                    <MudText Typo="Typo.body2" Class="@(Disabled(item.Value!) ? "mud-text-disabled" : null)" Style="@($"overflow:hidden;text-overflow:ellipsis;white-space:nowrap{(Bold?.Contains(item.Value!.Id) == true ? ";font-weight:600" : null)}")" data-group-node="@item.Value!.Id">@item.Value.Name</MudText>
-                    @if (Nodes is null)
-                    {
-                        <MudTooltip Text="@L["{0} members", item.Value.MemberCount]" RootClass="ml-auto">
-                            <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Icon="@Icons.Material.Outlined.Person" data-group-count="@item.Value.Id">@item.Value.MemberCount</MudChip>
-                        </MudTooltip>
-                    }
-                    @NodeActions?.Invoke(item.Value)
-                </div>
-            </BodyContent>
-        </MudTreeViewItem>
-    </ItemTemplate>
-</MudTreeView>
-@if (Hidden > 0)
-{
-    @* scrolled into view, it adds the next top groups (observeEnd) *@
-    <div @ref="_end" style="height:1px" data-testid="group-tree-end"></div>
-}
-@if (_items.Count == 0 && !_loading)
-{
-    <MudText Typo="Typo.body2" Class="mud-text-secondary pa-2">@L[_search.Length == 0 ? "No groups yet." : "No group matches."]</MudText>
-}
+<MudProgressLinear Indeterminate="true" Size="Size.Small" Color="Color.Primary" Class="@(_busy > 0 ? "mb-1" : "mb-1 invisible")" data-testid="group-tree-loading" />
+@* every row of the open tree is in _rows; only the ones in view (and a few around them) are in the DOM *@
+<div @ref="_list" style="@ListStyle" role="tree" data-testid="group-tree">
+    <MudVirtualize T="Row" Enabled="true" Items="_rows" ItemSize="RowHeight" OverscanCount="20" Context="row">
+        @{
+            var node = row.Node;
+            var open = _expanded.Contains(node.Id);
+        }
+        <div class="@RowClass(node)" style="@($"height:{RowHeight}px;padding-left:{row.Depth * 20}px")" role="treeitem" aria-level="@(row.Depth + 1)"
+             aria-selected="@(node.Id == SelectedId ? "true" : "false")" aria-expanded="@(node.ChildCount > 0 ? (open ? "true" : "false") : null)"
+             tabindex="@(Disabled(node) ? -1 : 0)" @onclick="() => ActivateAsync(node)" @onkeydown="e => KeyAsync(e, node)" data-group-row="@node.Id">
+            @if (node.ChildCount > 0)
+            {
+                <span @onclick:stopPropagation="true">
+                    <MudIconButton Icon="@(open ? Icons.Material.Outlined.ExpandMore : Icons.Material.Outlined.ChevronRight)" Size="Size.Small" OnClick="() => ExpandAsync(node)"
+                                   aria-label="@L[open ? "Collapse" : "Expand"]" tabindex="-1" data-group-expand="@node.Id" />
+                </span>
+            }
+            else
+            {
+                <span style="width:30px;flex:none"></span>
+            }
+            @if (CheckedIds is not null)
+            {
+                <span @onclick:stopPropagation="true">
+                    <MudCheckBox T="bool" Value="CheckedIds.Contains(node.Id)" ValueChanged="on => ToggleAsync(node, on)" Size="Size.Small" Dense="true" data-group-check="@node.Id" />
+                </span>
+            }
+            <MudText Typo="Typo.body2" Class="@(Disabled(node) ? "mud-text-disabled" : null)" Style="@($"overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0{(Bold?.Contains(node.Id) == true ? ";font-weight:600" : null)}")" title="@node.Name" data-group-node="@node.Id">@node.Name</MudText>
+            <span class="ml-auto"></span>
+            @if (Nodes is null)
+            {
+                <MudTooltip Text="@L["{0} members", node.MemberCount]">
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Icon="@Icons.Material.Outlined.Person" data-group-count="@node.Id">@node.MemberCount</MudChip>
+                </MudTooltip>
+            }
+            @if (NodeActions is not null)
+            {
+                <span @onclick:stopPropagation="true">@NodeActions(node)</span>
+            }
+        </div>
+    </MudVirtualize>
+    @if (_rows.Count == 0 && _busy == 0)
+    {
+        <MudText Typo="Typo.body2" Class="mud-text-secondary pa-2">@L[_search.Length == 0 ? "No groups yet." : "No group matches."]</MudText>
+    }
 </div>

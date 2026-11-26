@@ -8,7 +8,7 @@ using MudBlazor;
 namespace Coworkee.Client.Blazor.Components.Groups;
 
 /// <summary>
-/// App-bar button for the groups the user works in: "All my groups", one group's name or "{0} groups"; opens a tree with checkboxes.
+/// App-bar button for the groups the user works in: "All my groups", one group's name or "{0} groups"; opens a tree with checkboxes, "Select all" and "Deselect all".
 /// The checks are a draft, saved once when the list closes (a click outside or on the button): every check used to reload the page's data while the user was still choosing.
 /// Not part of the layout: apps that use groups as units place <c>&lt;GroupScopePicker /&gt;</c> themselves. Hidden without groups.
 /// </summary>
@@ -25,6 +25,7 @@ public partial class GroupScopePicker : IDisposable
     private IReadOnlySet<Guid> _checked = new HashSet<Guid>();
     private IReadOnlySet<Guid> _draft = new HashSet<Guid>();
     private bool _saving;
+    private GroupTree? _tree;
 
     [Inject] private GroupScopeState State { get; set; } = null!;
 
@@ -100,6 +101,9 @@ public partial class GroupScopePicker : IDisposable
         _open = true;
         return Task.CompletedTask;
     }
+
+    // adds what the list shows (all groups, or the matches of a search) to the draft; checks made before a search stay
+    private void SelectAll() => _draft = _tree is null ? _draft : _draft.Union(_tree.Listed()).ToHashSet();
 
     // the draft is saved once, when the list closes; the button shows the save, a rejected one restores the stored selection
     private async Task CloseAsync()

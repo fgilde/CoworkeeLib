@@ -225,11 +225,76 @@ public sealed class GroupScopePickerTests : ClientTestBase
         var picker = RenderPicker();
         await OpenAsync(picker);
 
-        await _popovers.Find("[data-testid='group-scope-all']").ClickAsync(new());
+        await _popovers.Find("[data-testid='group-scope-deselect-all']").ClickAsync(new());
         await CloseAsync();
 
         picker.WaitForAssertion(() => Api.Received(1).SelectGroupsAsync(Arg.Is<IReadOnlyList<Guid>>(ids => ids.Count == 0), Arg.Any<CancellationToken>()));
         picker.WaitForAssertion(() => Button(picker).TextContent.Trim().ShouldBe("All my groups"));
+    }
+
+    [Fact]
+    public async Task Select_all_checks_every_listed_group_and_deselect_all_none()
+    {
+        var picker = RenderPicker();
+        await OpenAsync(picker);
+        // no "All my groups" button next to them: nothing checked is all of them
+        _popovers.FindAll("[data-testid='group-scope-all']").ShouldBeEmpty();
+        _popovers.Find("[data-testid='group-scope-deselect-all']").HasAttribute("disabled").ShouldBeTrue();
+
+        await _popovers.Find("[data-testid='group-scope-select-all']").ClickAsync(new());
+
+        _popovers.WaitForAssertion(() => _popovers.FindAll("[data-group-check] input, input[data-group-check]").ShouldAllBe(c => c.HasAttribute("checked")));
+        await Api.DidNotReceive().SelectGroupsAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>());
+        await CloseAsync();
+        picker.WaitForAssertion(() => Api.Received(1).SelectGroupsAsync(Arg.Is<IReadOnlyList<Guid>>(ids => ids.Count == 4), Arg.Any<CancellationToken>()));
+        picker.WaitForAssertion(() => Button(picker).TextContent.Trim().ShouldBe("4 groups"));
+
+        await OpenAsync(picker);
+        await _popovers.Find("[data-testid='group-scope-deselect-all']").ClickAsync(new());
+        _popovers.WaitForAssertion(() => _popovers.FindAll("[data-group-check] input, input[data-group-check]").ShouldAllBe(c => !c.HasAttribute("checked")));
+        await CloseAsync();
+
+        picker.WaitForAssertion(() => Api.Received(1).SelectGroupsAsync(Arg.Is<IReadOnlyList<Guid>>(ids => ids.Count == 0), Arg.Any<CancellationToken>()));
+        picker.WaitForAssertion(() => Button(picker).TextContent.Trim().ShouldBe("All my groups"));
+    }
+
+    [Fact]
+    public async Task Select_all_with_a_search_adds_the_matches_without_their_ancestors()
+    {
+        var picker = RenderPicker();
+        await OpenAsync(picker);
+        await Check(Supplier).ChangeAsync(new ChangeEventArgs { Value = true });
+        _popovers.Find("input[data-testid='group-search'], [data-testid='group-search'] input").Input("Ham");
+        _popovers.WaitForAssertion(() => _popovers.FindAll("[data-group-node]").Select(n => n.TextContent).ShouldBe(["Customer A", "Hamburg"], ignoreOrder: false));
+
+        await _popovers.Find("[data-testid='group-scope-select-all']").ClickAsync(new());
+        await CloseAsync();
+
+        picker.WaitForAssertion(() => Api.Received(1).SelectGroupsAsync(Arg.Is<IReadOnlyList<Guid>>(ids => ids.Count == 2 && ids.Contains(Hamburg.Id) && ids.Contains(Supplier.Id)),
+            Arg.Any<CancellationToken>()));
+    }
+
+    [Fact]
+    public async Task Scope_all_over_thousands_of_top_groups_scrolls_virtually_and_selects_them_all()
+    {
+        // an imported organisation: 3,000 top groups in one call, only the rows in view rendered
+        List<GroupNodeDto> units = [.. Enumerable.Range(1, 3000).Select(i => new GroupNodeDto(Guid.CreateVersion7(), null, i.ToString("D5"), $"Unit {i:D4}", null, 0, 0))];
+        Api.GetMyGroupsAsync(Arg.Any<CancellationToken>()).Returns(_ =>
+            [.. units.Where(n => _selected.Contains(n.Id)).Select(n => new MyGroupDto(n.Id, n.ParentId, n.Code, n.Name, false, true))]);
+        Api.GetMyPermissionsAsync(Arg.Any<CancellationToken>()).Returns([IdentityPermissions.Groups.ScopeAll]);
+        Api.GetGroupChildrenAsync(null, Arg.Any<CancellationToken>()).Returns(units);
+        var picker = RenderPicker();
+        await OpenAsync(picker);
+        _popovers.WaitForAssertion(() => _popovers.FindAll("[data-group-row]").Count.ShouldBeInRange(1, 200));
+
+        // a click on a row checks it as well
+        await _popovers.Find($"[data-group-row='{units[0].Id}']").ClickAsync(new());
+        _popovers.WaitForAssertion(() => Check(units[0]).HasAttribute("checked").ShouldBeTrue());
+        await _popovers.Find("[data-testid='group-scope-select-all']").ClickAsync(new());
+        await CloseAsync();
+
+        picker.WaitForAssertion(() => Api.Received(1).SelectGroupsAsync(Arg.Is<IReadOnlyList<Guid>>(ids => ids.Count == 3000 && ids.Distinct().Count() == 3000), Arg.Any<CancellationToken>()));
+        picker.WaitForAssertion(() => Button(picker).TextContent.Trim().ShouldBe("3000 groups"));
     }
 
     [Fact]
@@ -276,7 +341,7 @@ public sealed class GroupScopePickerTests : ClientTestBase
 
         await OpenAsync(picker);
         _popovers.WaitForAssertion(() => _popovers.FindAll("[data-group-node]").Select(n => n.TextContent).ShouldBe(["Customer A", "Supplier"], ignoreOrder: false));
-        await _popovers.Find($"[data-group-node='{Customer.Id}']").Closest(".mud-treeview-item-content")!.QuerySelector(".mud-treeview-item-arrow button")!.ClickAsync(new());
+        await _popovers.Find($"[data-group-expand='{Customer.Id}']").ClickAsync(new());
         _popovers.WaitForAssertion(() => _popovers.FindAll("[data-group-node]").Select(n => n.TextContent).ShouldBe(["Customer A", "Bremen", "Hamburg", "Supplier"], ignoreOrder: false));
         _popovers.Find("input[data-testid='group-search'], [data-testid='group-search'] input").Input("Ham");
         _popovers.WaitForAssertion(() => _popovers.FindAll("[data-group-node]").Select(n => n.TextContent).ShouldBe(["Customer A", "Hamburg"], ignoreOrder: false));

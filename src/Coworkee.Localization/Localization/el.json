@@ -2353,5 +2353,7 @@
   "{0} of {1}": "{0} από {1}",
   "e.g. {0}": "π.χ. {0}",
   "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "Ποιος λαμβάνει το μήνυμα: όλοι όσοι ταιριάζουν στο φίλτρο, με μεμονωμένους χρήστες να προστίθενται ή να εξαιρούνται. Κάθε παραλήπτης το λαμβάνει στη γλώσσα του.",
-  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Μόνο οι τιμές που χρησιμοποιεί το πρότυπο. Το όνομα, η διεύθυνση και η γλώσσα κάθε παραλήπτη και ο σύνδεσμος διαγραφής συμπληρώνονται για τον καθένα."
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Μόνο οι τιμές που χρησιμοποιεί το πρότυπο. Το όνομα, η διεύθυνση και η γλώσσα κάθε παραλήπτη και ο σύνδεσμος διαγραφής συμπληρώνονται για τον καθένα.",
+  "Select all": "Επιλογή όλων",
+  "Deselect all": "Αποεπιλογή όλων"
 }

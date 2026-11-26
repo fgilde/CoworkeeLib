@@ -2,6 +2,17 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Changed
+
+- `GroupTree` is a virtualized list of rows instead of a `MudTreeView`: all top groups load at once and only the rows in view render, so thousands scroll without any "load more" step. `GroupTree.PageSize` and `ShowMoreAsync` are gone; new `GroupTree.RowHeight` (36 px) and `Listed()` (the groups the list shows). A click on a row selects it, or checks it in checkbox mode; a deep link scrolls the group into view (`scrollIntoRange` in `coworkee.js`). Tests that clicked `.mud-treeview-item-arrow` click `[data-group-expand]`; the selected row has `aria-selected="true"`.
+- `GroupScopePicker` has "Select all" (what the list shows; with a search the matches) and "Deselect all" (back to all my groups) instead of the "All my groups" button (`data-testid` `group-scope-select-all`, `group-scope-deselect-all`). New texts "Select all" and "Deselect all".
+
+### Fixed
+
+- A group selection of thousands of groups (Select all with `ScopeAll`): `IGroupScope.ActiveAsync` compared every group with every selected one; it looks up the ancestor codes now.
+
 ## 0.1.5 (2026-11-24)
 
 ### Changed

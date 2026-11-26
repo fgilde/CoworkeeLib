@@ -47,44 +47,78 @@ public sealed class GroupsPageTests : ClientTestBase
     }
 
     [Fact]
-    public async Task Thousands_of_top_groups_render_a_page_at_a_time_and_more_as_the_list_scrolls()
+    public async Task Thousands_of_top_groups_are_one_virtual_list_without_paging()
     {
-        // an imported organisation: 250 top groups
-        var module = JSInterop.SetupModule("./_content/Coworkee.Client.Blazor/coworkee.js");
-        module.SetupModule("observeEnd", _ => true);
-        Api.GetGroupChildrenAsync(null, Arg.Any<CancellationToken>()).Returns(Units(250));
+        // an imported organisation: 3,000 top groups, loaded in one call; only the rows in view are rendered
+        Api.GetGroupChildrenAsync(null, Arg.Any<CancellationToken>()).Returns(Units(3000));
         var page = RenderPage();
 
-        page.WaitForAssertion(() => page.FindAll("[data-group-node]").Count.ShouldBe(GroupTree.PageSize));
-        page.Find("[data-testid='group-tree-end']");
-        // no button, no hint: the end of the list is watched and asks for more when it scrolls into view
-        page.FindAll("[data-testid='group-tree-more'], [data-testid='group-tree-show-more']").ShouldBeEmpty();
-        page.WaitForAssertion(() => module.Invocations["observeEnd"].Single().Arguments[2].ShouldBe(nameof(GroupTree.ShowMoreAsync)));
-
-        var tree = page.FindComponent<GroupTree>().Instance;
-        (await tree.ShowMoreAsync()).ShouldBeTrue("more are left");
-        page.WaitForAssertion(() => page.FindAll("[data-group-node]").Count.ShouldBe(200));
-
-        (await tree.ShowMoreAsync()).ShouldBeFalse("all are shown");
-        page.WaitForAssertion(() => page.FindAll("[data-group-node]").Count.ShouldBe(250));
-        page.FindAll("[data-testid='group-tree-end']").ShouldBeEmpty();
+        page.WaitForAssertion(() => page.FindAll("[data-group-row]").Count.ShouldBeInRange(1, 200));
+        page.Find("[data-group-node]").TextContent.ShouldBe("Unit 0001");
+        // the spacer below stands for the rows not rendered: the list is as tall as all 3,000
+        Spacers(page).Sum().ShouldBe((3000 - page.FindAll("[data-group-row]").Count) * GroupTree.RowHeight);
+        page.FindAll("[data-testid='group-tree-end'], [data-testid='group-tree-more']").ShouldBeEmpty();
         await Api.Received(1).GetGroupChildrenAsync(null, Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task A_broad_search_renders_its_matches_a_page_at_a_time()
+    public async Task Opening_a_node_among_thousands_inserts_its_children_below_it()
+    {
+        var units = Units(3000);
+        var first = units[0] with { ChildCount = 1 };
+        units[0] = first;
+        var child = new GroupNodeDto(Guid.CreateVersion7(), first.Id, first.Code + ".00001", "Child", null, 0, 0);
+        Api.GetGroupChildrenAsync(null, Arg.Any<CancellationToken>()).Returns(units);
+        Api.GetGroupChildrenAsync(first.Id, Arg.Any<CancellationToken>()).Returns([child]);
+        var page = RenderPage();
+        page.WaitForElement($"[data-group-node='{first.Id}']");
+
+        await Expander(page, first).ClickAsync(new());
+
+        page.WaitForAssertion(() => page.FindAll("[data-group-node]").Take(3).Select(n => n.TextContent).ShouldBe(["Unit 0001", "Child", "Unit 0002"], ignoreOrder: false));
+        page.Find($"[data-group-row='{child.Id}']").GetAttribute("aria-level").ShouldBe("2");
+        page.Find($"[data-group-row='{first.Id}']").GetAttribute("aria-expanded").ShouldBe("true");
+
+        // closed and opened again: the children are known, no second call
+        await Expander(page, first).ClickAsync(new());
+        page.WaitForAssertion(() => page.FindAll($"[data-group-row='{child.Id}']").ShouldBeEmpty());
+        await Expander(page, first).ClickAsync(new());
+        page.WaitForElement($"[data-group-row='{child.Id}']");
+        await Api.Received(1).GetGroupChildrenAsync(first.Id, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public void A_broad_search_lists_all_its_matches_in_the_virtual_list()
     {
         Api.SearchGroupTreeAsync("Unit", Arg.Any<CancellationToken>()).Returns(Units(150));
         var page = RenderPage();
         page.WaitForElement($"[data-group-node='{Supplier.Id}']");
-        page.FindAll("[data-testid='group-tree-end']").ShouldBeEmpty("two top groups fit at once");
 
         page.Find("input[data-testid='group-search'], [data-testid='group-search'] input").Input("Unit");
 
-        page.WaitForAssertion(() => page.FindAll("[data-group-node]").Count.ShouldBe(GroupTree.PageSize));
-        (await page.FindComponent<GroupTree>().Instance.ShowMoreAsync()).ShouldBeFalse();
-        page.WaitForAssertion(() => page.FindAll("[data-group-node]").Count.ShouldBe(150));
-        page.FindAll("[data-testid='group-tree-end']").ShouldBeEmpty();
+        page.WaitForAssertion(() => page.Find("[data-group-node]").TextContent.ShouldBe("Unit 0001"));
+        Spacers(page).Sum().ShouldBe((150 - page.FindAll("[data-group-row]").Count) * GroupTree.RowHeight);
+    }
+
+    [Fact]
+    public void Deep_link_to_a_group_far_down_opens_its_parent_and_scrolls_it_into_view()
+    {
+        var module = JSInterop.SetupModule("./_content/Coworkee.Client.Blazor/coworkee.js");
+        module.SetupVoid("scrollIntoRange", _ => true).SetVoidResult();
+        var units = Units(3000);
+        var parent = units[1999] with { ChildCount = 1 };
+        units[1999] = parent;
+        var target = new GroupNodeDto(Guid.CreateVersion7(), parent.Id, parent.Code + ".00001", "Deep", null, 0, 0);
+        Api.GetGroupChildrenAsync(null, Arg.Any<CancellationToken>()).Returns(units);
+        Api.GetGroupChildrenAsync(parent.Id, Arg.Any<CancellationToken>()).Returns([target]);
+        _odata.With("Groups", Row(target));
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={target.Id}");
+
+        var page = RenderPage();
+
+        page.WaitForAssertion(() => page.Find("[data-testid='group-title']").TextContent.ShouldContain("Deep"));
+        // row 2000 (0-based): the parent is row 1999
+        page.WaitForAssertion(() => module.Invocations["scrollIntoRange"].Last().Arguments[1].ShouldBe(2000 * GroupTree.RowHeight));
     }
 
     [Fact]
@@ -259,7 +293,7 @@ public sealed class GroupsPageTests : ClientTestBase
 
         var clicked = page.Find("[data-testid='group-move-members']").ClickAsync(new());
         dialogs.WaitForElement($"[data-group-node='{Customer.Id}']");
-        await Expander(dialogs.Find($"[data-group-node='{Customer.Id}']")).ClickAsync(new());
+        await dialogs.Find($"[data-group-expand='{Customer.Id}']").ClickAsync(new());
         dialogs.WaitForElement($"[data-group-node='{Hamburg.Id}']");
         await dialogs.Find($"[data-group-node='{Hamburg.Id}']").ClickAsync(new());
         await dialogs.Find("[data-testid='group-pick-ok']").ClickAsync(new());
@@ -301,7 +335,7 @@ public sealed class GroupsPageTests : ClientTestBase
 
         page.WaitForAssertion(() => page.Find($"[data-group-node='{Supplier.Id}']").TextContent.ShouldBe("Vendor"));
         page.Find("[data-testid='group-title']").TextContent.ShouldContain("Vendor");
-        page.Find($"[data-group-node='{Supplier.Id}']").Closest(".mud-treeview-item-content")!.ClassList.ShouldContain("mud-treeview-item-selected");
+        page.Find($"[data-group-row='{Supplier.Id}']").GetAttribute("aria-selected").ShouldBe("true");
     }
 
     [Fact]
@@ -488,7 +522,8 @@ public sealed class GroupsPageTests : ClientTestBase
         var page = RenderPage();
 
         page.WaitForAssertion(() => page.Find("[data-testid='group-title']").TextContent.ShouldContain("Hamburg"));
-        page.WaitForAssertion(() => page.Find($"[data-group-node='{Hamburg.Id}']").Closest(".mud-treeview-item-content")!.ClassList.ShouldContain("mud-treeview-item-selected"));
+        page.WaitForAssertion(() => page.Find($"[data-group-row='{Hamburg.Id}']").GetAttribute("aria-selected").ShouldBe("true"));
+        page.Find($"[data-group-row='{Customer.Id}']").GetAttribute("aria-selected").ShouldBe("false");
     }
 
     // app tabs are services: everything renders after the test registered them
@@ -502,15 +537,17 @@ public sealed class GroupsPageTests : ClientTestBase
 
     // the shape the Groups set really has: roles, no members (those are rows of Users)
     private static List<GroupNodeDto> Units(int count) =>
-        [.. Enumerable.Range(1, count).Select(i => new GroupNodeDto(Guid.CreateVersion7(), null, i.ToString("D5"), $"Unit {i:D3}", null, 0, 0))];
+        [.. Enumerable.Range(1, count).Select(i => new GroupNodeDto(Guid.CreateVersion7(), null, i.ToString("D5"), $"Unit {i:D4}", null, 0, 0))];
 
     private static GroupRow Row(GroupNodeDto node, params Guid[] roles) =>
         new(node.Id, node.Name, node.Description, [.. roles.Select(r => new GroupRoleRow(r))], node.ParentId, node.Code);
 
-    private static AngleSharp.Dom.IElement Expander(IRenderedComponent<Groups> page, GroupNodeDto node) => Expander(page.Find($"[data-group-node='{node.Id}']"));
+    private static AngleSharp.Dom.IElement Expander(IRenderedComponent<Groups> page, GroupNodeDto node) => page.Find($"[data-group-expand='{node.Id}']");
 
-    private static AngleSharp.Dom.IElement Expander(AngleSharp.Dom.IElement node) =>
-        node.Closest(".mud-treeview-item-content")!.QuerySelector(".mud-treeview-item-arrow button")!;
+    // the heights of the virtual list's spacers, which stand for the rows not rendered
+    private static IEnumerable<int> Spacers(IRenderedComponent<Groups> page) =>
+        page.FindAll("[data-testid='group-tree'] > div:not([data-group-row])").Select(d => d.GetAttribute("style") ?? "")
+            .Select(style => System.Text.RegularExpressions.Regex.Match(style, @"height:\s*(\d+)px")).Where(m => m.Success).Select(m => int.Parse(m.Groups[1].Value));
 
     private static AngleSharp.Dom.IElement Tab(IRenderedComponent<Groups> page, string title) => page.FindAll(".mud-tab").Single(t => t.TextContent.Trim() == title);
 

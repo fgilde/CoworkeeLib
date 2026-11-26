@@ -2353,5 +2353,7 @@
   "{0} of {1}": "{0} av {1}",
   "e.g. {0}": "t.ex. {0}",
   "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "Vem som får mejlet: alla som filtret matchar, med enskilda användare tillagda eller utelämnade. Varje mottagare får det på sitt eget språk.",
-  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Bara de värden som mallen använder. Namn, adress och språk för varje mottagare och avregistreringslänken fylls i för var och en."
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Bara de värden som mallen använder. Namn, adress och språk för varje mottagare och avregistreringslänken fylls i för var och en.",
+  "Select all": "Markera alla",
+  "Deselect all": "Avmarkera alla"
 }

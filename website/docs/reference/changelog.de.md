@@ -2,6 +2,17 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Geändert
+
+- `GroupTree` ist eine virtualisierte Liste von Zeilen statt eines `MudTreeView`: Alle obersten Gruppen laden auf einmal, und nur die sichtbaren Zeilen werden gerendert, Tausende scrollen also ohne „Weitere laden“. `GroupTree.PageSize` und `ShowMoreAsync` entfallen; neu sind `GroupTree.RowHeight` (36 px) und `Listed()` (die Gruppen, die die Liste zeigt). Ein Klick auf eine Zeile wählt sie, im Checkbox-Modus hakt er sie an; ein Deep Link scrollt die Gruppe ins Bild (`scrollIntoRange` in `coworkee.js`). Tests, die `.mud-treeview-item-arrow` klickten, klicken `[data-group-expand]`; die gewählte Zeile hat `aria-selected="true"`.
+- `GroupScopePicker` hat „Alle auswählen“ (was die Liste zeigt; mit Suche die Treffer) und „Alle abwählen“ (zurück zu allen meinen Gruppen) statt des Buttons „Alle meine Gruppen“ (`data-testid` `group-scope-select-all`, `group-scope-deselect-all`). Neue Texte „Select all“ und „Deselect all“.
+
+### Behoben
+
+- Eine Gruppenauswahl aus Tausenden Gruppen („Alle auswählen“ mit `ScopeAll`): `IGroupScope.ActiveAsync` verglich jede Gruppe mit jeder gewählten; jetzt schlägt es die Codes der Vorfahren nach.
+
 ## 0.1.5 (2026-11-24)
 
 ### Geändert

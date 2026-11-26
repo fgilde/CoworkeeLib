@@ -2353,5 +2353,7 @@
   "{0} of {1}": "{0} из {1}",
   "e.g. {0}": "напр. {0}",
   "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "Кто получит письмо: все, кто подходит под фильтр, с отдельно добавленными или исключёнными пользователями. Каждый получатель получит его на своём языке.",
-  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Только значения, которые использует шаблон. Имя, адрес и язык каждого получателя и ссылка для отписки подставляются для каждого отдельно."
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Только значения, которые использует шаблон. Имя, адрес и язык каждого получателя и ссылка для отписки подставляются для каждого отдельно.",
+  "Select all": "Выбрать все",
+  "Deselect all": "Снять выбор со всех"
 }

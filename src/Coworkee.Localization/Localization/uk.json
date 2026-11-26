@@ -2353,5 +2353,7 @@
   "{0} of {1}": "{0} з {1}",
   "e.g. {0}": "напр. {0}",
   "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "Хто отримає лист: усі, хто відповідає фільтру, з окремо доданими чи виключеними користувачами. Кожен отримувач отримає його своєю мовою.",
-  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Лише значення, які використовує шаблон. Ім’я, адреса й мова кожного отримувача та посилання для відписки підставляються для кожного окремо."
+  "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Лише значення, які використовує шаблон. Ім’я, адреса й мова кожного отримувача та посилання для відписки підставляються для кожного окремо.",
+  "Select all": "Вибрати всі",
+  "Deselect all": "Скасувати вибір усіх"
 }

@@ -38,7 +38,7 @@ internal sealed class GroupScopeHandlers(CoworkeeDbContext db, ICurrentUser curr
             return NoUser;
         }
 
-        var ids = command.GroupIds.Distinct().ToList();
+        var ids = command.GroupIds.ToHashSet();
         if (ids.Except(await scope.AccessibleAsync(cancellationToken)).Any())
         {
             return NotSelectable;
@@ -51,7 +51,7 @@ internal sealed class GroupScopeHandlers(CoworkeeDbContext db, ICurrentUser curr
             .ExecuteUpdateAsync(u => u.SetProperty(x => x.ConcurrencyStamp, x => x.ConcurrencyStamp), cancellationToken);
         var stored = await db.Set<GroupSelection>().Where(s => s.UserId == me).ToListAsync(cancellationToken);
         db.RemoveRange(stored.Where(s => !ids.Contains(s.GroupId)));
-        db.AddRange(ids.Where(id => stored.All(s => s.GroupId != id)).Select(id => new GroupSelection { UserId = me, GroupId = id }));
+        db.AddRange(ids.Except(stored.Select(s => s.GroupId)).Select(id => new GroupSelection { UserId = me, GroupId = id }));
         // saved here so other tabs reload only after the commit, as profile changes do
         await db.SaveChangesAsync(cancellationToken);
         if (transaction is not null)

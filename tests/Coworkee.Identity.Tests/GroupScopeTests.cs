@@ -130,6 +130,33 @@ public sealed class GroupScopeTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Select_all_of_an_imported_organisation_stores_thousands_of_groups()
+    {
+        // the scope picker's "Select all" over 3,300 top groups and 1,000 sub-groups
+        var operatorId = await UserWithAsync(IdentityPermissions.Groups.ScopeAll);
+        var (ids, unselected) = await app.InDbAsync(_setup.TenantId, db =>
+        {
+            List<UserGroup> tops = [.. Enumerable.Range(1, 3300).Select(i => new UserGroup { Name = $"Unit {i}", Code = $"{i:D5}" })];
+            List<UserGroup> subs = [.. tops.Take(1000).Select(t => new UserGroup { Name = $"{t.Name} sub", Code = $"{t.Code}.00001", ParentId = t.Id })];
+            var below = new UserGroup { Name = "Below", Code = "00001.00001.00001", ParentId = subs[0].Id };
+            db.AddRange([.. tops, .. subs, below]);
+            return Task.FromResult((tops.Concat(subs).Select(g => g.Id).ToArray(), below.Id));
+        });
+
+        (await SelectAsync(operatorId, ids)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        (await StoredAsync(operatorId)).Length.ShouldBe(4300);
+        var active = await ScopeAsync(operatorId, s => s.ActiveAsync(Ct));
+        active.Count.ShouldBe(4301, "the sub-groups of selected groups come along");
+        active.ShouldContain(unselected);
+        (await MineAsync(operatorId)).Count(g => g.Selected).ShouldBe(4300);
+
+        // and back to all: Deselect all sends none
+        (await SelectAsync(operatorId)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await StoredAsync(operatorId)).ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task Api_keys_and_jobs_ignore_the_selection()
     {
         var (user, a, a1, b) = await MemberOfAAndBAsync();

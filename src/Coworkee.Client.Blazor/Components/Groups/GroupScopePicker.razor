@@ -12,9 +12,13 @@
         <MudPopover Open="_open" AnchorOrigin="@MenuOrigins.Anchor" TransformOrigin="@MenuOrigins.Transform" Paper="true" Elevation="8" Class="pa-2" Style="width:360px">
             @if (_open)
             {
-                <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Outlined.SelectAll" Disabled="_draft.Count == 0" Class="mb-1"
-                           OnClick="() => _draft = new HashSet<Guid>()" data-testid="group-scope-all">@L["All my groups"]</MudButton>
-                <GroupTree Nodes="@(_scopeAll ? null : _nodes)" CheckedIds="_draft" CheckedIdsChanged="ids => _draft = ids" Bold="Members" ListStyle="max-height:55vh;overflow:auto" />
+                @* nothing checked is "All my groups" on the server: Deselect all goes back to it *@
+                <div class="d-flex gap-1 mb-1">
+                    <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Outlined.SelectAll" OnClick="SelectAll" data-testid="group-scope-select-all">@L["Select all"]</MudButton>
+                    <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Outlined.Deselect" Disabled="_draft.Count == 0"
+                               OnClick="() => _draft = new HashSet<Guid>()" data-testid="group-scope-deselect-all">@L["Deselect all"]</MudButton>
+                </div>
+                <GroupTree @ref="_tree" Nodes="@(_scopeAll ? null : _nodes)" CheckedIds="_draft" CheckedIdsChanged="ids => _draft = ids" Bold="Members" ListStyle="max-height:55vh;overflow:auto" />
             }
         </MudPopover>
         <MudOverlay Visible="_open" VisibleChanged="visible => visible ? Task.CompletedTask : CloseAsync()" AutoClose="true" />

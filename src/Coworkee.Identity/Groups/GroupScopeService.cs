@@ -47,9 +47,11 @@ internal sealed class GroupScopeService(CoworkeeDbContext db, ICurrentUser user,
             return access.Ids;
         }
 
-        var codes = access.Groups.Where(g => selected.Contains(g.Id) && g.Code is not null).Select(g => g.Code!).ToList();
+        // a group is active when it or one of its ancestors (a leading part of its code) is selected: a look-up per level, as "Select all" sends thousands
+        var ids = selected.ToHashSet();
+        var codes = access.Groups.Where(g => ids.Contains(g.Id) && g.Code is not null).Select(g => g.Code!).ToHashSet(StringComparer.Ordinal);
         return access.Groups
-            .Where(g => selected.Contains(g.Id) || (g.Code is { } code && codes.Any(ancestor => GroupCodes.IsDescendant(code, ancestor))))
+            .Where(g => ids.Contains(g.Id) || (g.Code is { } code && GroupCodes.Prefixes(code).Any(codes.Contains)))
             .Select(g => g.Id).ToList();
     }
 

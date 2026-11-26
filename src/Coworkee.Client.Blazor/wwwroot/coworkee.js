@@ -206,6 +206,13 @@ export function observeEnd(element, dotnet, method) {
     return { dispose: () => observer.disconnect() };
 }
 
+// a row of a virtualized list (its top and height in pixels) scrolled into the middle of the list, unless it is in view already
+export function scrollIntoRange(element, top, height) {
+    if (element && (top < element.scrollTop || top + height > element.scrollTop + element.clientHeight)) {
+        element.scrollTop = Math.max(0, top - (element.clientHeight - height) / 2);
+    }
+}
+
 export function submitOnEnter(element, dotnet) {
     if (!element) {
         return;
