@@ -1,5 +1,10 @@
-<div class="@Class" style="@Accent" data-testid="query-group" data-depth="@Depth">
+<div class="@Class" style="@Accent" data-testid="query-group" data-depth="@Depth" @ondragover="() => { }" @ondragover:preventDefault @ondragover:stopPropagation
+     @ondrop="() => State!.DropAsync(Group, null)" @ondrop:stopPropagation>
     <div class="qb-group-head">
+        @if (Depth > 0)
+        {
+            <span class="qb-group-no" data-testid="query-group-no">@QueryTree.GroupLabel(State!.Root, Group, T)</span>
+        }
         <MudToggleGroup T="QueryLogic" Value="Group.Logic" ValueChanged="LogicAsync" Size="Size.Small" Color="Color.Primary" Outlined="true" Delimiters="true"
                         data-testid="query-logic">
             <MudToggleItem Value="QueryLogic.And" Text="@T("All")" />
@@ -13,7 +18,11 @@
             {
                 <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.AccountTree" Variant="Variant.Text" Color="Color.Secondary" OnClick="AddGroupAsync" data-testid="query-add-group">@T("Group")</MudButton>
             }
-            <QueryMoveButtons Position="Position" Localize="Localize" OnMove="OnMove" />
+            @if (State!.Selected.Any(id => Group.Children.Any(c => c.Id == id)))
+            {
+                <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.PlaylistAdd" Variant="Variant.Text" OnClick="WrapSelectedAsync" data-testid="query-wrap-selected">@T("Wrap selected")</MudButton>
+            }
+            <QueryNodeMenu Node="Group" Position="Position" Localize="Localize" OnMove="OnMove" />
             @if (OnRemove.HasDelegate)
             {
                 <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" OnClick="OnRemove" aria-label="@T("Remove group")" data-testid="query-remove-group" />
@@ -40,7 +49,7 @@
             }
             else
             {
-                <QueryRuleEditor @key="child.Id" Rule="(QueryRule)child" Fields="Fields" Dense="Dense" Localize="Localize" Changed="Changed"
+                <QueryRuleEditor @key="child.Id" Rule="(QueryRule)child" OnDrop="() => State!.DropAsync(Group, index)" Fields="Fields" Dense="Dense" Localize="Localize" Changed="Changed"
                                  OnRemove="() => RemoveAsync(index)" Position="(index, Group.Children.Count)" OnMove="by => MoveAsync(index, by)" />
             }
         }

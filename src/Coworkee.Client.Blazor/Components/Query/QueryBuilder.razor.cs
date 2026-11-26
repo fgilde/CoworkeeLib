@@ -16,6 +16,7 @@ public partial class QueryBuilder
     private bool _importing;
     private bool _importFailed;
     private string? _import;
+    private readonly QueryEditorState _state = new();
 
     [Inject] private IJSRuntime Js { get; set; } = null!;
 
@@ -40,6 +41,14 @@ public partial class QueryBuilder
 
     /// <summary>"Now" for relative dates such as "today" and "in the last 7 days"; defaults to the local clock.</summary>
     [Parameter] public Func<DateTimeOffset>? Now { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _state.Root = Value;
+        _state.MaxDepth = MaxDepth;
+        _state.Rerender = () => InvokeAsync(StateHasChanged);
+        _state.Changed = EventCallback.Factory.Create(this, ChangedAsync);
+    }
 
     private string T(string text) => Localize?.Invoke(text) ?? text;
 
@@ -66,6 +75,7 @@ public partial class QueryBuilder
         Value.Logic = query.Logic;
         Value.Not = query.Not;
         Value.Children = query.Children;
+        _state.Selected.Clear();
         await ChangedAsync();
     }
 

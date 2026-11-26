@@ -1,0 +1,29 @@
+@if (State is { } state && Node != state.Root)
+{
+    <span class="qb-handle" draggable="true" @ondragstart="() => state.Dragged = Node" @ondragend="() => state.Dragged = null" title="@T("Drag to move")" data-testid="query-drag">
+        <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Size="Size.Small" />
+    </span>
+    @if (Position.Count > 1)
+    {
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small" Disabled="@(Position.Index == 0)" OnClick="() => OnMove.InvokeAsync(-1)"
+                       aria-label="@T("Move up")" data-testid="query-move-up" />
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward" Size="Size.Small" Disabled="@(Position.Index == Position.Count - 1)" OnClick="() => OnMove.InvokeAsync(1)"
+                       aria-label="@T("Move down")" data-testid="query-move-down" />
+    }
+    <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" AriaLabel="@T("Actions")" Dense="true" data-testid="query-node-menu">
+        @foreach (var target in QueryTree.Targets(state.Root, Node, state.MaxDepth))
+        {
+            var group = target;
+            <MudMenuItem OnClick="() => state.EditAsync(() => QueryTree.Move(state.Root, Node, group, state.MaxDepth))" data-testid="query-move-into">@T("Move into") @Label(group)</MudMenuItem>
+        }
+        @if (QueryTree.ParentOf(state.Root, Node) is { } parent && QueryTree.ParentOf(state.Root, parent) is not null)
+        {
+            <MudMenuItem OnClick="() => state.EditAsync(() => QueryTree.MoveOut(state.Root, Node, state.MaxDepth))" data-testid="query-move-out">@T("Move out of group")</MudMenuItem>
+        }
+        <MudMenuItem OnClick="() => state.EditAsync(() => QueryTree.Wrap(state.Root, WrapNodes(), state.MaxDepth) is not null)" data-testid="query-wrap">@T("Wrap in a group")</MudMenuItem>
+        @if (Node is QueryGroup { Not: false } unwrappable)
+        {
+            <MudMenuItem OnClick="() => state.EditAsync(() => QueryTree.Unwrap(state.Root, unwrappable))" data-testid="query-unwrap">@T("Unwrap group")</MudMenuItem>
+        }
+    </MudMenu>
+}

@@ -9,6 +9,8 @@ public partial class QueryGroupEditor
 {
     private static readonly string[] Accents = ["var(--mud-palette-primary)", "var(--mud-palette-secondary)", "var(--mud-palette-tertiary)", "var(--mud-palette-info)"];
 
+    [CascadingParameter] public QueryEditorState? State { get; set; }
+
     [Parameter, EditorRequired] public QueryGroup Group { get; set; } = null!;
 
     [Parameter, EditorRequired] public IReadOnlyList<QueryField> Fields { get; set; } = [];
@@ -63,6 +65,9 @@ public partial class QueryGroupEditor
         Group.Children.Add(group);
         return Changed.InvokeAsync();
     }
+
+    private Task WrapSelectedAsync() =>
+        State!.EditAsync(() => QueryTree.Wrap(State.Root, Group.Children.Where(c => State.Selected.Contains(c.Id)).ToList(), State.MaxDepth) is not null);
 
     private Task RemoveAsync(int index)
     {

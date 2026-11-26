@@ -8,6 +8,11 @@ namespace Coworkee.Client.Blazor.Components.Query;
 /// <summary>One rule of the query builder: field, operator and the value editor that fits both.</summary>
 public partial class QueryRuleEditor
 {
+    [CascadingParameter] public QueryEditorState? State { get; set; }
+
+    /// <summary>Something was dropped on this rule: it goes in front of it.</summary>
+    [Parameter] public EventCallback OnDrop { get; set; }
+
     [Parameter, EditorRequired] public QueryRule Rule { get; set; } = null!;
 
     [Parameter, EditorRequired] public IReadOnlyList<QueryField> Fields { get; set; } = [];
@@ -23,6 +28,20 @@ public partial class QueryRuleEditor
     [Parameter] public (int Index, int Count) Position { get; set; }
 
     [Parameter] public EventCallback<int> OnMove { get; set; }
+
+    private void SelectAsync(bool on)
+    {
+        if (on)
+        {
+            State!.Selected.Add(Rule.Id);
+        }
+        else
+        {
+            State!.Selected.Remove(Rule.Id);
+        }
+
+        State.Rerender?.Invoke();
+    }
 
     private QueryField? Field => Fields.FirstOrDefault(f => string.Equals(f.Name, Rule.Field, StringComparison.OrdinalIgnoreCase));
 

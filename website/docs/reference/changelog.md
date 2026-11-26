@@ -8,6 +8,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 - The query model (`QueryGroup`, `QueryRule`, `QueryField`, `QueryOption`, `QueryOperator`, `QueryFieldType`, `QueryLogic`, `QueryJson`, `QueryDescriber`, `QueryDates`, `QueryOperators`) and `ODataQueryTranslator` moved from `Coworkee.Client.Blazor.Components.Query` to `Coworkee.Contracts.Query`, so server code can translate a saved query into a `$filter`. The editors (`QueryBuilder`, `QueryGroupEditor`, ...) and `LinqQueryTranslator` stay in the client namespace; `coworkee update` adds `using Coworkee.Contracts.Query;` next to the old one. New `EdmQueryFields.For(model, entitySet)` (`Coworkee.OData.Query`) lists the query fields of a set from its EDM model.
 
+### Added
+
+- `QueryBuilder` moves, regroups and unwraps afterwards: drag and drop plus an actions menu per node (up, down, into a group, out of a group, wrap, unwrap), *Wrap selected* for ticked conditions, all within `MaxDepth`. `QueryMoveButtons` became `QueryNodeMenu`; `QueryTree` holds the edits. No action needed unless you used `QueryMoveButtons` directly.
+
 ## 0.1.6 (2026-11-26)
 
 ### Changed

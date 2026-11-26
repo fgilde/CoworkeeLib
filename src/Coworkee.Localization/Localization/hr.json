@@ -2355,5 +2355,12 @@
   "Who gets the mail: everyone the filter matches, with single users added or left out. Each recipient gets it in their own language.": "Tko dobiva poruku: svi koji odgovaraju filtru, s pojedinačno dodanim ili izostavljenim korisnicima. Svaki primatelj dobiva je na svom jeziku.",
   "Only the values the template uses. Name, address and language of each recipient and the opt-out link are filled in for each of them.": "Samo vrijednosti koje predložak koristi. Ime, adresa i jezik svakog primatelja te poveznica za odjavu popunjavaju se za svakoga posebno.",
   "Select all": "Odaberi sve",
-  "Deselect all": "Poništi odabir svih"
+  "Deselect all": "Poništi odabir svih",
+  "Drag to move": "Povucite za premještanje",
+  "Move into": "Premjesti u",
+  "Move out of group": "Premjesti iz grupe",
+  "Wrap in a group": "Smjesti u grupu",
+  "Unwrap group": "Razgrupiraj",
+  "Wrap selected": "Grupiraj odabrano",
+  "Select": "Odaberi"
 }

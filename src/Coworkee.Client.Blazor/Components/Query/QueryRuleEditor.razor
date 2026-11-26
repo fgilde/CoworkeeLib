@@ -1,4 +1,6 @@
-<div class="@(QueryOperators.IsComplete(Rule) ? "qb-rule" : "qb-rule qb-incomplete")" data-testid="query-rule" data-field="@Rule.Field">
+<div class="@(QueryOperators.IsComplete(Rule) ? "qb-rule" : "qb-rule qb-incomplete")" data-testid="query-rule" data-field="@Rule.Field"
+     @ondragover="() => { }" @ondragover:preventDefault @ondragover:stopPropagation @ondrop="OnDrop" @ondrop:stopPropagation>
+    <MudCheckBox T="bool" Value="State!.Selected.Contains(Rule.Id)" ValueChanged="SelectAsync" Size="Size.Small" Class="qb-select" aria-label="@T("Select")" data-testid="query-select" />
     <div class="qb-field">
         <MudSelect T="string" Value="Rule.Field" ValueChanged="FieldAsync" Label="@T("Field")" Variant="Variant.Outlined" Margin="Margin" Dense="true"
                    AnchorOrigin="Origin.BottomLeft" data-testid="query-field">
@@ -36,7 +38,7 @@
         }
     }
     <div class="qb-actions">
-        <QueryMoveButtons Position="Position" Localize="Localize" OnMove="OnMove" />
+        <QueryNodeMenu Node="Rule" Position="Position" Localize="Localize" OnMove="OnMove" />
         <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" OnClick="OnRemove" aria-label="@T("Remove condition")" data-testid="query-remove-rule" />
     </div>
 </div>

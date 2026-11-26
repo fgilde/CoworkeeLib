@@ -38,6 +38,17 @@ The component, its model and both translators live in `Coworkee.Client.Blazor.Co
 | `Dense` | compact inputs (default `true`) |
 | `Now` | "now" for relative dates; defaults to the local clock |
 
+## Rearranging
+
+Every condition and group has a drag handle, up and down buttons and an actions menu, so the keyboard reaches everything the mouse does:
+
+- drag a condition onto another to put it in front of it, or onto a group to put it at the end of that group; a group moves with its conditions
+- the menu moves a node *into* any other group, *out of* its group, *wraps* it in a new group and *unwraps* a group (not a negated one, its meaning would change)
+- tick conditions and press *Wrap selected* in their group to put them together in a new group
+- the *All* / *Any* switch of a group changes at any time
+
+Nothing moves deeper than `MaxDepth`: the menu leaves out targets that are too deep and a drop there does nothing. The same builder serves the data table's *Advanced filter*.
+
 ## Fields
 
 A `QueryField` has a name (the property path, `Customer.Name` or `Customer/Name`), a label and a `QueryFieldType`:

@@ -21,11 +21,15 @@
     .qb-preview-head { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: color-mix(in srgb, var(--mud-palette-primary) 6%, var(--mud-palette-surface)); }
     .qb-preview pre { margin: 0; padding: 10px 12px; font-size: .8rem; white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow: auto;
         font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .qb-handle { cursor: grab; display: inline-flex; align-items: center; opacity: .7; }
+    .qb-group-no { font-size: .75rem; font-weight: 600; color: var(--qb-accent, var(--mud-palette-primary)); }
     .qb-tags { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 </style>
 
 <div class="qb" data-testid="query-builder">
-    <QueryGroupEditor Group="Value" Fields="Fields" Depth="0" MaxDepth="MaxDepth" Dense="Dense" Localize="T" Changed="ChangedAsync" />
+    <CascadingValue Value="_state" IsFixed="true">
+        <QueryGroupEditor Group="Value" Fields="Fields" Depth="0" MaxDepth="MaxDepth" Dense="Dense" Localize="T" Changed="ChangedAsync" />
+    </CascadingValue>
     @if (ShowPreview)
     {
         <div class="qb-preview" data-testid="query-preview">

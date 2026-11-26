@@ -57,7 +57,7 @@ public sealed class QueryBuilderTests : ClientTestBase
         var query = new QueryGroup { Children = [new QueryRule { Field = "Name", Operator = QueryOperator.Contains, Value = "x" }] };
         var builder = Render<QueryBuilder>(p => p.Add(b => b.Fields, Fields).Add(b => b.Value, query));
 
-        builder.Find("[data-field='Name'] .mud-input-control").MouseDown();
+        builder.Find("[data-field='Name'] .qb-field .mud-input-control").MouseDown();
         popovers.WaitForElement(".mud-list-item:nth-of-type(3), .mud-list-item").ShouldNotBeNull();
         popovers.FindAll(".mud-list-item").Single(i => i.TextContent.Contains("Kind")).Click();
 
@@ -172,5 +172,153 @@ public sealed class QueryBuilderTests : ClientTestBase
         table.WaitForAssertion(() => last!.FacetContext!.Groups["status"].ShouldBe("Status eq 'Shipped'"));
         last!.FacetContext!.Base.ShouldBeNull();
         table.WaitForAssertion(() => table.Find("[data-testid='facet-chips']").TextContent.ShouldContain("On the way"));
+    }
+
+    private static QueryRule R(string value) => new() { Field = "Name", Operator = QueryOperator.Contains, Value = value };
+
+    private static string Text(QueryGroup g) => ODataQueryTranslator.ToFilter(g, Fields)!;
+
+    private (IRenderedComponent<MudPopoverProvider> Popovers, IRenderedComponent<QueryBuilder> Builder) Build(QueryGroup query, int maxDepth = 3)
+    {
+        var popovers = Render<MudPopoverProvider>();
+        return (popovers, Render<QueryBuilder>(p => p.Add(b => b.Fields, Fields).Add(b => b.Value, query).Add(b => b.MaxDepth, maxDepth)));
+    }
+
+    private static async Task Menu(IRenderedComponent<MudPopoverProvider> popovers, IRenderedComponent<QueryBuilder> builder, string rowSelector, int row, string item)
+    {
+        await builder.FindAll(rowSelector)[row].QuerySelector("[data-testid='query-node-menu'] button, button[data-testid='query-node-menu']")!.ClickAsync(new());
+        await popovers.WaitForElement($"[data-testid='{item}']").ClickAsync(new());
+    }
+
+    [Fact]
+    public async Task A_rule_moves_up_down_and_into_another_group()
+    {
+        var inner = new QueryGroup { Logic = QueryLogic.Or, Children = [R("c")] };
+        var query = new QueryGroup { Children = [R("a"), R("b"), inner] };
+        var (popovers, builder) = Build(query);
+
+        await builder.FindAll("[data-testid='query-rule'] [data-testid='query-move-down']")[0].ClickAsync(new());
+        query.Children.Take(2).Cast<QueryRule>().Select(r => r.Value).ShouldBe(["b", "a"]);
+        await builder.FindAll("[data-testid='query-rule'] [data-testid='query-move-up']")[1].ClickAsync(new());
+        query.Children.Take(2).Cast<QueryRule>().Select(r => r.Value).ShouldBe(["a", "b"]);
+
+        await Menu(popovers, builder, "[data-testid='query-rule']", 0, "query-move-into");
+        query.Children.Count.ShouldBe(2);
+        inner.Children.Count.ShouldBe(2);
+        ((QueryRule)inner.Children[1]).Value.ShouldBe("a");
+
+        await Menu(popovers, builder, "[data-testid='query-rule']", 2, "query-move-out");
+        query.Children.OfType<QueryRule>().Select(r => r.Value).ShouldBe(["b", "a"]);
+
+        // drag and drop: the rule dropped on another goes in front of it
+        await builder.FindAll("[data-testid='query-rule']")[2].QuerySelector("[data-testid='query-drag']")!.TriggerEventAsync("ondragstart", new Microsoft.AspNetCore.Components.Web.DragEventArgs());
+        await builder.FindAll("[data-testid='query-rule']")[0].TriggerEventAsync("ondrop", new Microsoft.AspNetCore.Components.Web.DragEventArgs());
+        query.Children.OfType<QueryRule>().Select(r => r.Value).ShouldBe(["a", "b"]);
+        query.Children.Count.ShouldBe(3);
+    }
+
+    [Fact]
+    public async Task A_group_moves_with_its_rules()
+    {
+        var inner = new QueryGroup { Logic = QueryLogic.Or, Children = [R("c"), R("d")] };
+        var other = new QueryGroup { Children = [R("e")] };
+        var query = new QueryGroup { Children = [R("a"), inner, other] };
+        var (popovers, builder) = Build(query);
+
+        const string heads = "[data-testid='query-group'][data-depth='1'] > .qb-group-head";
+        await builder.FindAll(heads + " [data-testid='query-move-down']")[0].ClickAsync(new());
+        query.Children[2].ShouldBe(inner);
+        await builder.FindAll(heads + " [data-testid='query-move-up']")[1].ClickAsync(new());
+        query.Children[1].ShouldBe(inner);
+
+        // into the other group, rules and all
+        await Menu(popovers, builder, heads, 0, "query-move-into");
+        query.Children.Count.ShouldBe(2);
+        other.Children.ShouldContain(inner);
+        inner.Children.Count.ShouldBe(2);
+        Text(query).ShouldBe("(contains(tolower(Name),'a') and (contains(tolower(Name),'e') and (contains(tolower(Name),'c') or contains(tolower(Name),'d'))))");
+    }
+
+    [Fact]
+    public async Task AND_OR_of_a_group_changes_afterwards()
+    {
+        var inner = new QueryGroup { Logic = QueryLogic.And, Children = [R("c"), R("d")] };
+        var query = new QueryGroup { Children = [R("a"), inner] };
+        var (_, builder) = Build(query);
+
+        await builder.Find("[data-depth='1'] > .qb-group-head .mud-toggle-item:nth-of-type(2)").ClickAsync(new());
+        inner.Logic.ShouldBe(QueryLogic.Or);
+        Text(query).ShouldBe("(contains(tolower(Name),'a') and (contains(tolower(Name),'c') or contains(tolower(Name),'d')))");
+        await builder.Find("[data-depth='0'] > .qb-group-head .mud-toggle-item:nth-of-type(2)").ClickAsync(new());
+        query.Logic.ShouldBe(QueryLogic.Or);
+    }
+
+    [Fact]
+    public async Task Selected_rules_wrap_into_a_new_group_and_a_group_unwraps()
+    {
+        var query = new QueryGroup { Children = [R("a"), R("b"), R("c")] };
+        var (popovers, builder) = Build(query);
+
+        foreach (var i in new[] { 0, 2 })
+        {
+            await builder.FindAll("[data-testid='query-rule'] [data-testid='query-select'] input, [data-testid='query-rule'] input[data-testid='query-select']")[i].ChangeAsync(new ChangeEventArgs { Value = true });
+        }
+
+        await builder.Find("[data-testid='query-wrap-selected']").ClickAsync(new());
+        query.Children.Count.ShouldBe(2);
+        var wrapper = query.Children.OfType<QueryGroup>().Single();
+        wrapper.Logic.ShouldBe(QueryLogic.Or);
+        wrapper.Children.Cast<QueryRule>().Select(r => r.Value).ShouldBe(["a", "c"]);
+        query.Children[0].ShouldBe(wrapper);
+
+        await Menu(popovers, builder, "[data-testid='query-group'][data-depth='1'] > .qb-group-head", 0, "query-unwrap");
+        query.Children.Cast<QueryRule>().Select(r => r.Value).ShouldBe(["a", "c", "b"]);
+
+        // a single node wraps from its menu
+        await Menu(popovers, builder, "[data-testid='query-rule']", 1, "query-wrap");
+        query.Children.OfType<QueryGroup>().Single().Children.Cast<QueryRule>().Single().Value.ShouldBe("c");
+    }
+
+    [Fact]
+    public void MaxDepth_is_respected_when_moving()
+    {
+        var deep = new QueryGroup { Children = [new QueryGroup { Children = [R("x")] }] };
+        var shallow = new QueryGroup { Children = [R("y")] };
+        var query = new QueryGroup { Children = [deep, shallow, R("a")] };
+
+        // deep needs 2 levels; inside the root's child (depth 1) that is 3
+        QueryTree.CanMove(query, deep, shallow, 2).ShouldBeFalse();
+        QueryTree.CanMove(query, deep, shallow, 3).ShouldBeTrue();
+        QueryTree.Move(query, deep, shallow, 2).ShouldBeFalse();
+        query.Children.ShouldContain(deep);
+        QueryTree.CanMove(query, deep, deep, 5).ShouldBeFalse();
+        QueryTree.CanMove(query, deep, (QueryGroup)deep.Children[0], 5).ShouldBeFalse();
+        QueryTree.Targets(query, deep, 2).ShouldBeEmpty();
+
+        // wrapping pushes the nodes one level down
+        QueryTree.Wrap(query, [deep], 2).ShouldBeNull();
+        QueryTree.Wrap(query, [query.Children[2]], 1).ShouldNotBeNull();
+
+        // with MaxDepth 0 the builder offers no groups at all
+        var (_, builder) = Build(new QueryGroup { Children = [R("a")] }, maxDepth: 0);
+        builder.FindAll("[data-testid='query-add-group']").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void The_advanced_filter_of_a_table_uses_the_builder()
+    {
+        Services.AddSingleton<IODataClient>(new FakeODataClient().With("Gadgets", new DataTableTests.Gadget(Guid.NewGuid(), "Drill", "Tools")));
+        AddAuthorization().SetAuthorized("Ada");
+        Render<MudPopoverProvider>();
+        var table = Render<CoworkeeDataTable<DataTableTests.Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.Columns, (RenderFragment)(b =>
+        {
+            b.OpenComponent<PropertyColumn<DataTableTests.Gadget, string>>(0);
+            b.AddComponentParameter(1, "Property", (System.Linq.Expressions.Expression<Func<DataTableTests.Gadget, string>>)(g => g.Name));
+            b.CloseComponent();
+        })));
+
+        table.Find("[data-testid='advanced-filter']").Click();
+        table.FindComponent<QueryBuilder>().ShouldNotBeNull();
+        table.Find("[data-testid='advanced-panel'] [data-testid='query-add-group']").ShouldNotBeNull();
     }
 }

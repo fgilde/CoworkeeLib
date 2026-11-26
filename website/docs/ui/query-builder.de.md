@@ -38,6 +38,17 @@ Komponente, Modell und beide Übersetzer liegen in `Coworkee.Client.Blazor.Compo
 | `Dense` | kompakte Eingaben (Standard `true`) |
 | `Now` | "jetzt" für relative Datumsangaben; standardmäßig die lokale Uhr |
 
+## Umordnen
+
+Jede Bedingung und Gruppe hat einen Ziehgriff, Hoch-/Runter-Knöpfe und ein Aktionsmenü, damit die Tastatur alles erreicht, was die Maus kann:
+
+- eine Bedingung auf eine andere ziehen setzt sie davor, auf eine Gruppe gezogen ans Ende dieser Gruppe; eine Gruppe wandert mit ihren Bedingungen
+- das Menü verschiebt einen Knoten *in* eine andere Gruppe oder *aus* seiner Gruppe, *packt* ihn in eine neue Gruppe und *löst* eine Gruppe *auf* (nicht, wenn sie negiert ist, sonst ändert sich die Bedeutung)
+- Bedingungen ankreuzen und in ihrer Gruppe *Auswahl gruppieren* drücken, um sie in einer neuen Gruppe zusammenzufassen
+- der *Alle* / *Beliebige*-Schalter einer Gruppe lässt sich jederzeit ändern
+
+Nichts wandert tiefer als `MaxDepth`: Das Menü lässt zu tiefe Ziele weg, ein Ablegen dort tut nichts. Derselbe Builder bedient den *Erweiterten Filter* der Datentabelle.
+
 ## Felder
 
 Ein `QueryField` hat einen Namen (den Eigenschaftspfad, `Customer.Name` oder `Customer/Name`), eine Beschriftung und einen `QueryFieldType`:
