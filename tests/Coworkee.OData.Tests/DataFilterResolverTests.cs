@@ -222,7 +222,7 @@ public sealed class DataFilterResolverTests(ODataApp app) : IAsyncLifetime
         (await GadgetsAsync(_setup.AdminUserId)).ShouldBe(["Hammer", "Hat", "Hook", "Rag"]);
 
         // the organisation stops being the system one: System filters apply to its admin, its own Tenant and Group filters still do not
-        await app.InDbAsync(null, db => db.Database.ExecuteSqlRawAsync("UPDATE cw.\"Tenants\" SET \"IsDefault\" = false", Ct));
+        await app.InDbAsync(null, db => db.Set<Coworkee.Identity.Domain.Tenant>().IgnoreQueryFilters().ExecuteUpdateAsync(s => s.SetProperty(t => t.IsDefault, false), Ct));
         (await GadgetsAsync(_setup.AdminUserId)).ShouldBe(["Hammer", "Hat"]);
     }
 

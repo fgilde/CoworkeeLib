@@ -184,8 +184,8 @@ public sealed class DataFilterCommandTests(ODataApp app) : IAsyncLifetime
         // the admin's organisation stops being the system (default) one: it still holds every permission, a plain tenant admin
         await using (var scope = app.App.Services.CreateAsyncScope())
         {
-            await scope.ServiceProvider.GetRequiredService<CoworkeeDbContext>().Database
-                .ExecuteSqlRawAsync("UPDATE cw.\"Tenants\" SET \"IsDefault\" = false", Ct);
+            await scope.ServiceProvider.GetRequiredService<CoworkeeDbContext>().Set<Coworkee.Identity.Domain.Tenant>().IgnoreQueryFilters()
+                .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsDefault, false), Ct);
         }
 
         await using var other = await app.StartAnotherAsync(new Dictionary<string, string>());
