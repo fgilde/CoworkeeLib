@@ -11,5 +11,5 @@ internal sealed class DataFilterPermissionDefinitions : IPermissionDefinitionCon
             .Add(DataFilterPermissions.ManageTenant, "Write the data filters of the organisation")
             .Add(DataFilterPermissions.ManageGroups, "Write the data filters of groups")
             .Add(DataFilterPermissions.ManageRoles, "Write the data filters of roles")
-            .Add(DataFilterPermissions.Bypass, "See all rows: no data filter applies");
+            .Add(DataFilterPermissions.Bypass, "See all rows: no data filter of the own organisation applies (System filters neither, in the system organisation)");
 }

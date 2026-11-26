@@ -16,6 +16,9 @@ public static class DataFilterPermissions
     /// <summary>Write the filters of roles of the own organisation.</summary>
     public const string ManageRoles = "DataFilters.ManageRoles";
 
-    /// <summary>See every row: no data filter applies. Granted to the system administrator role (which holds every permission).</summary>
+    /// <summary>
+    /// See every row of the own organisation: its Tenant, Group and Role filters do not apply; System filters do not apply either when the holder belongs
+    /// to the system organisation. Every organisation's Admin role holds it (it holds every permission), so System filters still bind tenant admins.
+    /// </summary>
     public const string Bypass = "DataFilters.Bypass";
 }

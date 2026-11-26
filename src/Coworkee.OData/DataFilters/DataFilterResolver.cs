@@ -25,9 +25,15 @@ public sealed class DataFilterResolver(IServiceProvider services, ICurrentUser u
     // once per user, set and group scope switch in a request: a request reads a set several times (list, count, facets)
     private readonly Dictionary<(Guid?, Guid?, string, Type, bool, bool, IReadOnlyList<Guid>?), LambdaExpression?> _resolved = [];
 
+    // once per organisation in a scope: inside a transaction the cache does not keep them, and every set would read them again
+    private readonly Dictionary<Guid, DataFilterRows> _rows = [];
+
+    private readonly Dictionary<Guid, bool> _systemTenant = [];
+
     /// <summary>
     /// The rows of <paramref name="entitySet"/> the user may see, <c>null</c> when no filter restricts him (none stored, or he holds
-    /// <see cref="DataFilterPermissions.Bypass"/>). <paramref name="byKey"/>: a read of single records, which skips filters that do not apply to details.
+    /// <see cref="DataFilterPermissions.Bypass"/> in the system organisation; elsewhere Bypass skips every layer but System, as every organisation's
+    /// admin holds it). <paramref name="byKey"/>: a read of single records, which skips filters that do not apply to details.
     /// </summary>
     public async Task<Expression<Func<TEntity, bool>>?> PredicateAsync<TEntity>(string entitySet, bool byKey, CancellationToken ct)
     {
@@ -42,14 +48,33 @@ public sealed class DataFilterResolver(IServiceProvider services, ICurrentUser u
 
     private async Task<Expression<Func<TEntity, bool>>?> ResolveAsync<TEntity>(string entitySet, bool byKey, CancellationToken ct)
     {
-        var stored = await _cache.FiltersAsync(services, user.TenantId, ct);
+        if (!_rows.TryGetValue(user.TenantId ?? Guid.Empty, out var stored))
+        {
+            _rows[user.TenantId ?? Guid.Empty] = stored = await _cache.FiltersAsync(services, user.TenantId, ct);
+        }
+
         var filters = stored.Filters
             .Where(f => string.Equals(f.EntitySet, entitySet, StringComparison.OrdinalIgnoreCase) && (!byKey || f.AppliesToDetails))
             .ToList();
         var link = LinkOf(stored.Links, entitySet);
-        if ((filters.Count == 0 && link is null) || await permissions.IsGrantedAsync(DataFilterPermissions.Bypass, ct))
+        if (filters.Count == 0 && link is null)
         {
             return null;
+        }
+
+        // the Admin role of every organisation holds Bypass: it skips the organisation's own layers there, System only in the system organisation
+        if (await permissions.IsGrantedAsync(DataFilterPermissions.Bypass, ct))
+        {
+            if (await IsSystemTenantAsync(ct))
+            {
+                return null;
+            }
+
+            filters.RemoveAll(f => f.Layer != DataFilterLayer.System);
+            if (filters.Count == 0 && link is null)
+            {
+                return null;
+            }
         }
 
         var entity = registry.Find(entitySet);
@@ -75,6 +100,21 @@ public sealed class DataFilterResolver(IServiceProvider services, ICurrentUser u
         }
 
         return All(parts);
+    }
+
+    private async Task<bool> IsSystemTenantAsync(CancellationToken ct)
+    {
+        if (user.TenantId is not { } tenantId || services.GetService<ITenantDirectory>() is not { } tenants)
+        {
+            return false;
+        }
+
+        if (!_systemTenant.TryGetValue(tenantId, out var system))
+        {
+            _systemTenant[tenantId] = system = await tenants.IsSystemTenantAsync(tenantId, ct);
+        }
+
+        return system;
     }
 
     private static DataFilterLinkRow? LinkOf(IEnumerable<DataFilterLinkRow> links, string entitySet) =>

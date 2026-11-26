@@ -210,6 +210,23 @@ public sealed class DataFilterResolverTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Bypass_outside_the_system_tenant_keeps_the_System_layer()
+    {
+        // the admin holds Bypass through the Admin role, as the admin of every organisation does
+        await FilterAsync("Gadgets", DataFilterLayer.System, null, Rule("Price", QueryOperator.GreaterThan, "1"));
+        await FilterAsync("Gadgets", DataFilterLayer.Tenant, null, Rule("Category", QueryOperator.Equal, "Tools"));
+        await FilterAsync("Gadgets", DataFilterLayer.Group, A, Rule("Name", QueryOperator.Equal, "Nothing"));
+        await FilterAsync("Gadgets", DataFilterLayer.Group, B, Rule("Name", QueryOperator.Equal, "Nothing"));
+
+        // the system organisation's admin sees every row
+        (await GadgetsAsync(_setup.AdminUserId)).ShouldBe(["Hammer", "Hat", "Hook", "Rag"]);
+
+        // the organisation stops being the system one: System filters apply to its admin, its own Tenant and Group filters still do not
+        await app.InDbAsync(null, db => db.Database.ExecuteSqlRawAsync("UPDATE cw.\"Tenants\" SET \"IsDefault\" = false", Ct));
+        (await GadgetsAsync(_setup.AdminUserId)).ShouldBe(["Hammer", "Hat"]);
+    }
+
+    [Fact]
     public async Task A_broken_filter_shows_nothing_and_does_not_throw()
     {
         var user = await UserAsync();
