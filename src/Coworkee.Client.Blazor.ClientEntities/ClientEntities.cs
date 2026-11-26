@@ -3,6 +3,7 @@ using System.Text.Json;
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Realtime;
 using Coworkee.Contracts.Data;
+using Coworkee.Contracts.DataFilters;
 using Microsoft.Extensions.Logging;
 
 namespace Coworkee.Client.Blazor.ClientEntities;
@@ -29,7 +30,7 @@ public sealed class ClientEntities : IClientDataCache, IAsyncDisposable
     private readonly Dictionary<string, ClientEntitySet> _sets = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Task<IAsyncDisposable>> _subscriptions = new(StringComparer.OrdinalIgnoreCase);
     private Task<ClientEntityManifest?>? _manifest;
-    private Task<IAsyncDisposable>? _settingsSubscription;
+    private Task<IAsyncDisposable[]>? _settingsSubscription;
 
     internal ClientEntities(ClientEntityApi api, IODataClient server, IClientEntityStorage storage, RealtimeClient? realtime, ClientEntitySignal signal, ILogger<ClientEntities> logger,
         ClientEntityModes? modes = null, IClientEntityEngine? engine = null)
@@ -147,7 +148,10 @@ public sealed class ClientEntities : IClientDataCache, IAsyncDisposable
         if (_settingsSubscription is { } settings)
         {
             _settingsSubscription = null;
-            await (await settings).DisposeAsync();
+            foreach (var subscription in await settings)
+            {
+                await subscription.DisposeAsync();
+            }
         }
 
         await DisposeSetsAsync();
@@ -234,12 +238,13 @@ public sealed class ClientEntities : IClientDataCache, IAsyncDisposable
         }
 
         await KeepAsync(manifest);
-        // an administrator changing the settings reaches the open clients (Local copies page)
-        _settingsSubscription ??= _realtime?.SubscribeAsync(ClientEntityTopics.Changed, envelope =>
-        {
-            _ = SettingsChangedAsync();
-            return Task.CompletedTask;
-        });
+        // an administrator changing the settings, or a data filter that decides which rows the user gets, reaches the open clients (Local copies page)
+        _settingsSubscription ??= _realtime is null ? null : Task.WhenAll(new[] { ClientEntityTopics.Changed, DataFilterTopics.TenantChanged, DataFilterTopics.Changed }
+            .Select(topic => _realtime.SubscribeAsync(topic, envelope =>
+            {
+                _ = SettingsChangedAsync();
+                return Task.CompletedTask;
+            })));
         return manifest;
     }
 

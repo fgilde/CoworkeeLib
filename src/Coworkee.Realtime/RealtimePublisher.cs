@@ -29,10 +29,11 @@ internal sealed class RealtimePublisher(IHubContext<RealtimeHub> hub, IServicePr
         {
             Id = Guid.CreateVersion7(),
             At = _clock.GetUtcNow(),
-            Actor = userId is null && actor?.ImpersonatorId is null
+            // a signal says that something changed, never who changed it
+            Actor = type == RealtimeEventTypes.Signal || (userId is null && actor?.ImpersonatorId is null)
                 ? null
                 : new ActorInfo(userId, userId is { } id && principal?.FindFirstValue("sub") == id.ToString() ? principal.FindFirstValue("name") : null, actor?.ImpersonatorId),
-            CorrelationId = Activity.Current?.TraceId.ToHexString(),
+            CorrelationId = type == RealtimeEventTypes.Signal ? null : Activity.Current?.TraceId.ToHexString(),
         };
     }
 }

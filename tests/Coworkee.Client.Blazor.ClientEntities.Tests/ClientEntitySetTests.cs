@@ -343,7 +343,7 @@ public sealed class ClientEntitySetTests
         }
 
         // the settings topic: an administrator changing the Local copies page
-        realtime.Subscribed.ShouldBe([Contracts.Data.ClientEntityTopics.Changed, "type:Gadget"], ignoreOrder: true);
+        realtime.Subscribed.ShouldBe([Contracts.Data.ClientEntityTopics.Changed, Contracts.DataFilters.DataFilterTopics.TenantChanged, Contracts.DataFilters.DataFilterTopics.Changed, "type:Gadget"], ignoreOrder: true);
         set.Items.Count.ShouldBe(4);
     }
 }

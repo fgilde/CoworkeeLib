@@ -4,6 +4,9 @@ public static class RealtimeEventTypes
 {
     public const string EntityChanged = "EntityChanged";
 
+    /// <summary>Something changed, nothing more: an empty payload and no actor (<see cref="Coworkee.Domain.IHasRealtimeSignals"/>).</summary>
+    public const string Signal = "Signal";
+
     /// <summary>On the user's own topic: the session ended (signed out or locked by an administrator, new password); the client ends it too.</summary>
     public const string SessionRevoked = "SessionRevoked";
 

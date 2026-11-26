@@ -26,6 +26,19 @@ internal sealed class RealtimeChangeSink(
     {
         foreach (var entry in changes.Select(c => c.Entry).Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted))
         {
+            if (entry.Entity is IHasRealtimeSignals signals)
+            {
+                var signalTenant = TenantOf(entry) ?? currentUser.TenantId;
+                foreach (var topic in signals.RealtimeSignals.Distinct(StringComparer.Ordinal))
+                {
+                    // one per topic and organisation for the whole save, whatever the number of rows
+                    if (!_pending.Any(p => p.Type == RealtimeEventTypes.Signal && p.Topic == topic && p.TenantId == signalTenant))
+                    {
+                        _pending.Add((signalTenant, topic, RealtimeEventTypes.Signal, new object()));
+                    }
+                }
+            }
+
             var root = entry.Metadata.GetRootType().ClrType;
             var extraTopics = (entry.Entity is IHasRealtimeTopics topics ? topics.RealtimeTopics : [])
                 .Concat(mappers.SelectMany(m => m.TopicsFor(entry.Entity)))

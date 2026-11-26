@@ -21,7 +21,9 @@ public partial class CoworkeeDataTable<T>
     private string LiveTopic => RealtimeTopic ?? (DataSource is null ? RealtimeTopics.Type(EntityName) : string.Empty);
 
     // the data filters that apply to the user changed: the rows a server read returns change with them (quiet where the table is)
-    private string FilterTopic => LiveTopic.Length == 0 ? string.Empty : DataFilterTopics.Changed;
+    private string FilterTopic => LiveTopic.Length == 0 ? string.Empty : DataFilterTopics.TenantChanged;
+
+    private string SystemFilterTopic => LiveTopic.Length == 0 ? string.Empty : DataFilterTopics.Changed;
 
     private static string EntityName => typeof(T).Name.EndsWith("Dto", StringComparison.Ordinal) ? typeof(T).Name[..^3] : typeof(T).Name;
 

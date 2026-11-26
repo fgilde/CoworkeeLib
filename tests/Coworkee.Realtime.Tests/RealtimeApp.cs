@@ -194,6 +194,18 @@ public sealed class Board : AggregateRoot, IMultiTenant, IHasRealtimeTopics
     public IEnumerable<string> RealtimeTopics => ["tenant:boards", $"tenant:board:{Name}"];
 }
 
+/// <summary>Announces itself with payload-free signals: on its organisation's topic, or on a global one.</summary>
+public sealed class Rule : AggregateRoot, IMultiTenant, IHasRealtimeSignals
+{
+    public required string Secret { get; set; }
+
+    public bool Everywhere { get; set; }
+
+    public Guid TenantId { get; set; }
+
+    public IEnumerable<string> RealtimeSignals => [Everywhere ? "global:rules" : "tenant:rules"];
+}
+
 /// <summary>Mapped to topics by <see cref="CrateTopics"/>, like the permission tables of the identity module.</summary>
 public sealed class Crate : AggregateRoot
 {
@@ -223,6 +235,7 @@ internal sealed class TicketModel : IModelContributor, IPermissionDefinitionCont
         modelBuilder.Entity<Parcel>();
         modelBuilder.Entity<Board>();
         modelBuilder.Entity<Crate>();
+        modelBuilder.Entity<Rule>();
     }
 
     public void Define(PermissionDefinitionContext context) => context.Group("Test", "Test").Add(Ticket.ViewPermission, "View tickets");

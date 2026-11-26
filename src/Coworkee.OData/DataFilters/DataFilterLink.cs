@@ -4,7 +4,7 @@ using Coworkee.Domain;
 namespace Coworkee.OData.DataFilters;
 
 /// <summary>System-wide: a row of <see cref="EntitySet"/> is visible only when the <see cref="TargetSet"/> row with the key <see cref="Property"/> passes the target's filters.</summary>
-public sealed class DataFilterLink : AuditedEntity, IHasRealtimeTopics
+public sealed class DataFilterLink : AuditedEntity, IHasRealtimeSignals
 {
     public string EntitySet { get; set; } = string.Empty;
 
@@ -12,5 +12,5 @@ public sealed class DataFilterLink : AuditedEntity, IHasRealtimeTopics
 
     public string TargetSet { get; set; } = string.Empty;
 
-    public IEnumerable<string> RealtimeTopics => [DataFilterTopics.Changed, Coworkee.Contracts.Data.ClientEntityTopics.Changed];
+    public IEnumerable<string> RealtimeSignals => [DataFilterTopics.Changed];
 }

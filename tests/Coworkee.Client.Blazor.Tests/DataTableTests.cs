@@ -51,17 +51,19 @@ public sealed class DataTableTests : ClientTestBase
         selection.ToFilter().ShouldBe("Category eq 'Light' and BrandId eq 1");
     }
 
-    [Fact]
-    public void Open_tables_reload_on_the_data_filter_event()
+    [Theory]
+    [InlineData(Contracts.DataFilters.DataFilterTopics.TenantChanged)]
+    [InlineData(Contracts.DataFilters.DataFilterTopics.Changed)]
+    public void Open_tables_reload_on_the_data_filter_event(string topic)
     {
         var clock = new Microsoft.Extensions.Time.Testing.FakeTimeProvider();
         Services.AddSingleton<TimeProvider>(clock);
         var realtime = Services.GetRequiredService<FakeRealtimeConnection>();
         var table = Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.Columns, Columns()));
-        table.WaitForAssertion(() => realtime.Invocations.ShouldContain(("Subscribe", Contracts.DataFilters.DataFilterTopics.Changed)));
+        table.WaitForAssertion(() => realtime.Invocations.ShouldContain(("Subscribe", topic)));
         table.WaitForAssertion(() => _odata.Loads.ShouldBe(1));
 
-        realtime.Push(Contracts.DataFilters.DataFilterTopics.Changed, Contracts.Realtime.RealtimeEventTypes.EntityChanged, new Contracts.Realtime.EntityChangedPayload("DataFilter", "1", "Updated", []));
+        realtime.Push(topic, Contracts.Realtime.RealtimeEventTypes.Signal, new { });
         clock.Advance(TimeSpan.FromMilliseconds(300));
 
         // under load a push is handled a little later than the clock moved: step on until the reload

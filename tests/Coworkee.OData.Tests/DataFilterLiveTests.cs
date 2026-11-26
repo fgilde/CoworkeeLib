@@ -129,13 +129,16 @@ public sealed class DataFilterLiveTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
-    public void Filters_and_links_publish_on_global_topics_that_reach_every_organisation()
+    public void Filters_signal_their_organisation_and_System_filters_and_links_every_organisation()
     {
-        foreach (var topics in new[] { new DataFilter().RealtimeTopics, new DataFilterLink().RealtimeTopics })
-        {
-            topics.ShouldBe([DataFilterTopics.Changed, ClientEntityTopics.Changed], ignoreOrder: true);
-            topics.ShouldAllBe(t => t.StartsWith("global:", StringComparison.Ordinal));
-        }
+        new DataFilter { TenantId = Guid.NewGuid(), Layer = DataFilterLayer.Tenant }.RealtimeSignals.ShouldBe([DataFilterTopics.TenantChanged]);
+        new DataFilter { Layer = DataFilterLayer.System }.RealtimeSignals.ShouldBe([DataFilterTopics.Changed]);
+        new DataFilterLink().RealtimeSignals.ShouldBe([DataFilterTopics.Changed]);
+        // no entity name, ids or property names: filters and links are no IHasRealtimeTopics and carry no [Realtime]
+        typeof(DataFilter).GetInterfaces().ShouldNotContain(typeof(Coworkee.Domain.IHasRealtimeTopics));
+        typeof(DataFilterLink).GetInterfaces().ShouldNotContain(typeof(Coworkee.Domain.IHasRealtimeTopics));
+        typeof(DataFilter).GetCustomAttributes(typeof(Coworkee.Domain.RealtimeAttribute), false).ShouldBeEmpty();
+        typeof(DataFilterLink).GetCustomAttributes(typeof(Coworkee.Domain.RealtimeAttribute), false).ShouldBeEmpty();
     }
 
     [Fact]
