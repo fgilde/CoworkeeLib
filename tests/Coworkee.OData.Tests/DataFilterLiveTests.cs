@@ -153,4 +153,64 @@ public sealed class DataFilterLiveTests(ODataApp app) : IAsyncLifetime
 
         (await cache.FiltersAsync(scope.ServiceProvider, other, Ct)).Filters.Count.ShouldBe(before + 1);
     }
+
+    [Fact]
+    public async Task A_read_between_save_and_commit_does_not_keep_the_old_filters()
+    {
+        Assert.SkipWhen(app.Provider == Coworkee.Contracts.Configuration.DatabaseProviders.SqlServer, "SQL Server's read committed waits on the uncommitted row.");
+        var cache = app.App.Services.GetRequiredService<DataFilterCache>();
+        await using var writer = app.App.Services.CreateAsyncScope();
+        var db = writer.ServiceProvider.GetRequiredService<CoworkeeDbContext>();
+        await using var transaction = await db.Database.BeginTransactionAsync(Ct);
+        db.Add(new DataFilter { TenantId = _setup.TenantId, EntitySet = "Gadgets", Layer = DataFilterLayer.Tenant, Query = Price(QueryOperator.GreaterThan, "10"), Version = 1 });
+        await db.SaveChangesAsync(Ct);
+
+        // another request reads before the commit: it sees (and caches) the filters without the new one
+        await using (var reader = app.App.Services.CreateAsyncScope())
+        {
+            (await cache.FiltersAsync(reader.ServiceProvider, _setup.TenantId, Ct)).Filters.ShouldBeEmpty();
+        }
+
+        await transaction.CommitAsync(Ct);
+
+        await using var after = app.App.Services.CreateAsyncScope();
+        (await cache.FiltersAsync(after.ServiceProvider, _setup.TenantId, Ct)).Filters.ShouldHaveSingleItem();
+    }
+
+    [Fact]
+    public async Task The_client_copy_partition_follows_the_active_role_and_groups_when_they_carry_filters()
+    {
+        var tools = await RoleAsync("Tools");
+        var dear = await RoleAsync("Dear");
+        var user = await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest($"r-{Guid.NewGuid():N}@acme.test", "Passw0rd!x", null, null), Ct);
+        var userId = (await user.Content.ReadFromJsonAsync<UserDto>(Ct))!.Id;
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{userId}/roles", new IdListRequest([tools, dear]), Ct)).EnsureSuccessStatusCode();
+        var client = app.As(userId, _setup.TenantId);
+        var plain = await PartitionAsync(client);
+        foreach (var role in new[] { tools, dear })
+        {
+            (await Admin.PutAsJsonAsync(Root, new SaveDataFilterRequest("Gadgets", DataFilterLayer.Role, role, Price(QueryOperator.GreaterThan, "1")), CoworkeeJson.Web, Ct)).EnsureSuccessStatusCode();
+        }
+
+        var bothRoles = await PartitionAsync(client);
+        (await client.PutAsJsonAsync("/api/v1/identity/roles/me/active", new SetActiveRoleRequest(tools), Ct)).EnsureSuccessStatusCode();
+        var asTools = await PartitionAsync(client);
+        (await client.PutAsJsonAsync("/api/v1/identity/roles/me/active", new SetActiveRoleRequest(dear), Ct)).EnsureSuccessStatusCode();
+        var asDear = await PartitionAsync(client);
+
+        new[] { plain, bothRoles, asTools, asDear }.Distinct().Count().ShouldBe(4);
+
+        // a group filter: the user's groups (here all he reaches, nothing selected) are part of the partition too
+        (await Admin.PutAsJsonAsync(Root, new SaveDataFilterRequest("Gadgets", DataFilterLayer.Group, FakeGroupScope.A, Price(QueryOperator.GreaterThan, "1")), CoworkeeJson.Web, Ct)).EnsureSuccessStatusCode();
+        var inAandB = await PartitionAsync(client);
+        app.App.Services.GetRequiredService<FakeGroupScope>().Accessible = [FakeGroupScope.B];
+        (await PartitionAsync(client)).ShouldNotBe(inAandB);
+    }
+
+    private async Task<Guid> RoleAsync(string name)
+    {
+        var response = await Admin.PostAsJsonAsync("/api/v1/identity/roles", new RoleRequest(name, null), Ct);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<Guid>(Ct);
+    }
 }

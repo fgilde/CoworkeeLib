@@ -6,7 +6,6 @@ using Coworkee.Core.Security;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
@@ -102,55 +101,4 @@ internal sealed partial class DataFilterCache(HybridCache cache, IMemoryCache pa
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "The data filter {FilterId} (version {Version}) of {EntitySet} does not apply and hides every row: {Problem}")]
     private partial void LogBroken(Guid filterId, int version, string entitySet, string problem);
-}
-
-/// <summary>Drops the cached filters of every organisation once a data filter or link is saved or deleted (on every replica through the cache's tags).</summary>
-internal sealed class DataFilterCacheInterceptor(HybridCache cache) : SaveChangesInterceptor
-{
-    private bool _pending;
-
-    public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
-    {
-        Detect(eventData.Context);
-        return result;
-    }
-
-    public override ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
-    {
-        Detect(eventData.Context);
-        return ValueTask.FromResult(result);
-    }
-
-    public override async ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result, CancellationToken cancellationToken = default)
-    {
-        if (_pending)
-        {
-            _pending = false;
-            await cache.RemoveByTagAsync(DataFilterCache.Tag, cancellationToken);
-        }
-
-        return result;
-    }
-
-    public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
-    {
-        if (_pending)
-        {
-            _pending = false;
-            cache.RemoveByTagAsync(DataFilterCache.Tag).AsTask().GetAwaiter().GetResult();
-        }
-
-        return result;
-    }
-
-    public override void SaveChangesFailed(DbContextErrorEventData eventData) => _pending = false;
-
-    public override Task SaveChangesFailedAsync(DbContextErrorEventData eventData, CancellationToken cancellationToken = default)
-    {
-        _pending = false;
-        return Task.CompletedTask;
-    }
-
-    private void Detect(DbContext? context) =>
-        _pending |= context?.ChangeTracker.Entries().Any(e => e.Entity is DataFilter or DataFilterLink && e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted) == true;
 }
