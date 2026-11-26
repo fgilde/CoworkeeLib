@@ -3,13 +3,15 @@ using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.DataFilters;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Components.DataFilters;
 
 /// <summary>
 /// The data filters of one layer: of a group or role across every set (<see cref="EntitySet"/> unset: each filter and a picker for the next set), or
-/// of one set (the Data types page: System or Tenant). Shows nothing to users without the layer's manage permission and loads again when
+/// of one set (the Data types page: System or Tenant). Shows nothing to users without the layer's manage permission (System: nor outside the system
+/// organisation) and loads again when
 /// the filters change anywhere (<see cref="DataFilterTopics"/>).
 /// </summary>
 public partial class DataFilterList
@@ -28,6 +30,8 @@ public partial class DataFilterList
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
+
+    [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
 
     [Parameter, EditorRequired] public DataFilterLayer Layer { get; set; }
 
@@ -55,7 +59,9 @@ public partial class DataFilterList
     {
         if (!_loaded)
         {
-            _allowed = await Permissions.HasAsync(PermissionOf(Layer));
+            // System filters are written in the system organisation only; every organisation's admin holds the permission
+            _allowed = await Permissions.HasAsync(PermissionOf(Layer))
+                && (Layer != DataFilterLayer.System || AuthenticationState is null || !SystemTenant.IsOutside((await AuthenticationState).User));
             _loaded = true;
             _key = LayerKey;
             if (_allowed)

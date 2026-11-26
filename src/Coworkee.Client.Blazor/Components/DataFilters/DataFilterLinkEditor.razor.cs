@@ -4,11 +4,12 @@ using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.DataFilters;
 using Coworkee.Contracts.Query;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Components.DataFilters;
 
-/// <summary>"Same data as {set} via {property}": the rows of a set are visible only when the row of the other set they point to passes that set's filters. Only for who manages System filters.</summary>
+/// <summary>"Same data as {set} via {property}": the rows of a set are visible only when the row of the other set they point to passes that set's filters. Only for who manages System filters in the system organisation.</summary>
 public partial class DataFilterLinkEditor
 {
     private DataFilterLinkDto? _link;
@@ -27,11 +28,15 @@ public partial class DataFilterLinkEditor
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
+    [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
+
     [Parameter, EditorRequired] public string EntitySet { get; set; } = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
-        _allowed = await Permissions.HasAsync(DataFilterPermissions.ManageSystem);
+        // links are written in the system organisation only; every organisation's admin holds the permission
+        _allowed = await Permissions.HasAsync(DataFilterPermissions.ManageSystem)
+            && (AuthenticationState is null || !SystemTenant.IsOutside((await AuthenticationState).User));
         if (_allowed)
         {
             _sets = await Api.GetDataFilterSetsAsync();

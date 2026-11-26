@@ -20,11 +20,13 @@ public sealed class DataFiltersUiTests : ClientTestBase
     private static readonly GroupNodeDto Supplier = new(Guid.CreateVersion7(), null, "00002", "Supplier", null, 0, 0);
     private static readonly Guid RoleId = Guid.CreateVersion7();
     private readonly FakeODataClient _odata = new();
+    private readonly Bunit.TestDoubles.BunitAuthorizationContext _auth;
 
     public DataFiltersUiTests()
     {
         Services.AddSingleton<IODataClient>(_odata);
-        AddAuthorization().SetAuthorized("admin").SetPolicies(Security.PermissionPolicy.For(IdentityPermissions.Roles.Manage), Security.PermissionPolicy.For(IdentityPermissions.Permissions.Manage));
+        _auth = AddAuthorization();
+        _auth.SetAuthorized("admin").SetPolicies(Security.PermissionPolicy.For(IdentityPermissions.Roles.Manage), Security.PermissionPolicy.For(IdentityPermissions.Permissions.Manage));
         Api.GetGroupChildrenAsync(null, Arg.Any<CancellationToken>()).Returns([Supplier]);
         Api.GetRolesAsync(Arg.Any<CancellationToken>()).Returns([new RoleDto(RoleId, "Customer", null, false)]);
         Api.GetPermissionDefinitionsAsync(Arg.Any<CancellationToken>()).Returns([]);
@@ -120,6 +122,35 @@ public sealed class DataFiltersUiTests : ClientTestBase
         system.FindAll("[data-testid='data-filter-editor']").ShouldBeEmpty();
         role.WaitForAssertion(() => role.FindAll(".mud-tab").Select(t => t.TextContent.Trim()).ShouldBe(["Permissions"]));
         await Api.DidNotReceive().GetDataFiltersAsync(Arg.Any<string?>(), DataFilterLayer.System, Arg.Any<Guid?>(), Arg.Any<CancellationToken>());
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task System_editors_show_only_in_the_system_organisation(bool system)
+    {
+        // every organisation's admin holds ManageSystem through the Admin role; the server refuses System writes outside the system organisation
+        _auth.SetClaims(new System.Security.Claims.Claim(Security.SystemTenant.ClaimType, system ? "true" : "false"));
+        Grant(DataFilterPermissions.ManageSystem, DataFilterPermissions.ManageTenant);
+        Api.GetDataFiltersAsync(Arg.Any<string?>(), Arg.Any<DataFilterLayer?>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>()).Returns([]);
+        Api.GetDataFilterLinksAsync(Arg.Any<CancellationToken>()).Returns([]);
+
+        var tenant = Render<DataFilterList>(p => p.Add(l => l.Layer, DataFilterLayer.Tenant).Add(l => l.EntitySet, "Gadgets"));
+        var systemList = Render<DataFilterList>(p => p.Add(l => l.Layer, DataFilterLayer.System).Add(l => l.EntitySet, "Gadgets"));
+        Render<DataFilterLinkEditor>(p => p.Add(l => l.EntitySet, "Gadgets"));
+
+        tenant.WaitForElement("[data-testid='data-filter-editor']");
+        if (system)
+        {
+            systemList.WaitForElement("[data-testid='data-filter-editor']");
+            await Api.Received().GetDataFilterLinksAsync(Arg.Any<CancellationToken>());
+        }
+        else
+        {
+            systemList.FindAll("[data-testid='data-filter-editor']").ShouldBeEmpty();
+            await Api.DidNotReceive().GetDataFiltersAsync(Arg.Any<string?>(), DataFilterLayer.System, Arg.Any<Guid?>(), Arg.Any<CancellationToken>());
+            await Api.DidNotReceive().GetDataFilterLinksAsync(Arg.Any<CancellationToken>());
+        }
     }
 
     [Fact]
