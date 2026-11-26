@@ -1,4 +1,4 @@
-namespace Coworkee.Client.Blazor.Components.Query;
+namespace Coworkee.Contracts.Query;
 
 /// <summary>
 /// A field the query builder offers. <see cref="Name"/> is the path (<c>Customer.Name</c> or <c>Customer/Name</c>); <see cref="Options"/> or

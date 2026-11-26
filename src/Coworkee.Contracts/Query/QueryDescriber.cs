@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Coworkee.Client.Blazor.Components.Query;
+namespace Coworkee.Contracts.Query;
 
 /// <summary>Reads a query as a sentence, e.g. <c>Status is any of Open, Shipped and Total is at least 100</c>.</summary>
 public static class QueryDescriber

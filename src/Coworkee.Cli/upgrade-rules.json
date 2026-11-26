@@ -993,6 +993,16 @@
       "manual": [
         { "text": "SigNoz exporter per signal next to the Grafana one: with SIGNOZ_OTLP_ENDPOINT add exporters signoz-logs/-metrics/-traces, with SIGNOZ_OTLP_PROTOCOL=http/protobuf to {endpoint}/v1/{logs|metrics|traces} over HttpProtobuf (see the template ServiceDefaults/Extensions.cs). Needed only with options.UseSigNoz().", "find": "GRAFANA_OTLP_ENDPOINT", "files": [ "src/*.ServiceDefaults/Extensions.cs" ], "unless": "SIGNOZ_OTLP_ENDPOINT" }
       ]
+    },
+    {
+      "version": "0.1.7",
+      "breaking": [
+        "The query model (QueryGroup, QueryRule, QueryField, QueryOperator, QueryFieldType, QueryOption, QueryLogic, QueryJson, QueryDescriber, QueryDates, QueryOperators) and ODataQueryTranslator moved from Coworkee.Client.Blazor.Components.Query to Coworkee.Contracts.Query, so the server can use them; the editors (QueryBuilder and friends) and LinqQueryTranslator stay."
+      ],
+      "renames": [
+        {"find": "(?m)^using Coworkee\\.Client\\.Blazor\\.Components\\.Query;", "replace": "using Coworkee.Client.Blazor.Components.Query;\nusing Coworkee.Contracts.Query;", "files": ["src/**/*.cs", "tests/**/*.cs"], "unless": "using Coworkee.Contracts.Query;"},
+        {"find": "(?m)^@using Coworkee\\.Client\\.Blazor\\.Components\\.Query[ \\t]*$", "replace": "@using Coworkee.Client.Blazor.Components.Query\n@using Coworkee.Contracts.Query", "files": ["src/**/*.razor", "tests/**/*.razor"], "unless": "@using Coworkee.Contracts.Query"}
+      ]
     }
   ]
 }

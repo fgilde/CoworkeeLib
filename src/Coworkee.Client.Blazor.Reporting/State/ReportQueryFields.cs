@@ -1,4 +1,4 @@
-using Coworkee.Client.Blazor.Components.Query;
+using Coworkee.Contracts.Query;
 using Coworkee.Contracts.Reporting;
 
 namespace Coworkee.Client.Blazor.Reporting.State;

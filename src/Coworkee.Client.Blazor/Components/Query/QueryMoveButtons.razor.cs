@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components;
 
+using Coworkee.Contracts.Query;
+
 namespace Coworkee.Client.Blazor.Components.Query;
 
 /// <summary>Moves a rule or group one place up or down among its siblings.</summary>

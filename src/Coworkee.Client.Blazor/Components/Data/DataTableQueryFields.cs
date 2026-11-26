@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Coworkee.Client.Blazor.Components.Query;
+using Coworkee.Contracts.Query;
 using Coworkee.Contracts.Data;
 using MudBlazor;
 

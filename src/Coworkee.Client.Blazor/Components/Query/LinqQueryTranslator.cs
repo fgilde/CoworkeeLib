@@ -2,6 +2,8 @@ using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
 
+using Coworkee.Contracts.Query;
+
 namespace Coworkee.Client.Blazor.Components.Query;
 
 /// <summary>

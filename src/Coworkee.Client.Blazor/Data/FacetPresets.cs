@@ -1,4 +1,4 @@
-using Coworkee.Client.Blazor.Components.Query;
+using Coworkee.Contracts.Query;
 
 namespace Coworkee.Client.Blazor.Data;
 

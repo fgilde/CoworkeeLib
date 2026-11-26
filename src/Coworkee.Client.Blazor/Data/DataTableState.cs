@@ -31,7 +31,7 @@ public sealed record DataTableState(string? Search, IReadOnlyList<SelectedFacet>
     public IReadOnlyList<DataTableFilter>? ColumnFilters { get; init; }
 
     /// <summary>The advanced filter built in the query builder.</summary>
-    public Components.Query.QueryGroup? Advanced { get; init; }
+    public Coworkee.Contracts.Query.QueryGroup? Advanced { get; init; }
 
     /// <summary>The view the user picked per facet group key.</summary>
     public IReadOnlyDictionary<string, Contracts.Data.FacetView>? FacetViews { get; init; }

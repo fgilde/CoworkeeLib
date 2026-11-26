@@ -1,4 +1,4 @@
-using Coworkee.Client.Blazor.Components.Query;
+using Coworkee.Contracts.Query;
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Contracts.Data;
 using Microsoft.AspNetCore.Components;

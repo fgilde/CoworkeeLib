@@ -1,3 +1,3 @@
-namespace Coworkee.Client.Blazor.Components.Query;
+namespace Coworkee.Contracts.Query;
 
 public sealed record QueryOption(string Value, string Label);

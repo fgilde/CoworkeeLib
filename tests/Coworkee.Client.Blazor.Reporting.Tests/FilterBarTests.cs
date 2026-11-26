@@ -49,15 +49,15 @@ public sealed class FilterBarTests : ReportingTestBase
         var query = new WidgetQuery { EntitySet = "SalesOrders" };
         var editor = Render<WidgetFilterEditor>(p => p.Add(x => x.Query, query).Add(x => x.State, State(Chart)));
         var builder = editor.FindComponent<Blazor.Components.Query.QueryBuilder>();
-        var rules = new Blazor.Components.Query.QueryGroup
+        var rules = new Coworkee.Contracts.Query.QueryGroup
         {
-            Children = [new Blazor.Components.Query.QueryRule { Field = "Total", Operator = Blazor.Components.Query.QueryOperator.GreaterThan, Value = "100" }],
+            Children = [new Coworkee.Contracts.Query.QueryRule { Field = "Total", Operator = Coworkee.Contracts.Query.QueryOperator.GreaterThan, Value = "100" }],
         };
 
         await editor.InvokeAsync(() => builder.Instance.ValueChanged.InvokeAsync(rules));
 
         query.Filter.ShouldBe("Total gt 100");
-        Blazor.Components.Query.QueryJson.Deserialize(query.Rules)!.Rules().Single().Field.ShouldBe("Total");
+        Coworkee.Contracts.Query.QueryJson.Deserialize(query.Rules)!.Rules().Single().Field.ShouldBe("Total");
         builder.Instance.Fields.Single(f => f.Name == "Status").Options!.Select(o => o.Value).ShouldBe(["Open", "Shipped"]);
     }
 }

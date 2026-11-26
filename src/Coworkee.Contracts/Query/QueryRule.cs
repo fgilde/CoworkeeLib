@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Coworkee.Client.Blazor.Components.Query;
+namespace Coworkee.Contracts.Query;
 
 /// <summary>A condition on one field. Values are invariant text: numbers with a dot, dates as yyyy-MM-dd, enums by member name.</summary>
 public sealed class QueryRule : QueryNode

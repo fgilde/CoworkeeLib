@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
+using Coworkee.Contracts.Query;
+
 namespace Coworkee.Client.Blazor.Components.Query;
 
 /// <summary>One rule of the query builder: field, operator and the value editor that fits both.</summary>

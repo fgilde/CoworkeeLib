@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components;
 
+using Coworkee.Contracts.Query;
+
 namespace Coworkee.Client.Blazor.Components.Query;
 
 /// <summary>One group of the query builder: its join, negation, children and the buttons that add rules and nested groups.</summary>

@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components.Data;
-using Coworkee.Client.Blazor.Components.Query;
+using Coworkee.Contracts.Query;
 using Coworkee.Client.Blazor.Data.Admin;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Identity;

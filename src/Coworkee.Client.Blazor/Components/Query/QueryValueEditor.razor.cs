@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 
+using Coworkee.Contracts.Query;
+
 namespace Coworkee.Client.Blazor.Components.Query;
 
 /// <summary>The values of a rule: one, two for a range, a list for "any of", or a number of days.</summary>

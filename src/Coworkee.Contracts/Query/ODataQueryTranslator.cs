@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Coworkee.Client.Blazor.Components.Query;
+namespace Coworkee.Contracts.Query;
 
 /// <summary>
 /// Writes a query as OData <c>$filter</c> text. Text compares ignoring case (<c>tolower</c>), dates by whole days in the offset of

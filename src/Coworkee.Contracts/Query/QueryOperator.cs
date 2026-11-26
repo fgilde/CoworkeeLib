@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Coworkee.Client.Blazor.Components.Query;
+namespace Coworkee.Contracts.Query;
 
 [JsonConverter(typeof(JsonStringEnumConverter<QueryOperator>))]
 public enum QueryOperator

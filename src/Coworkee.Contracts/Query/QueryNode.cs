@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Coworkee.Client.Blazor.Components.Query;
+namespace Coworkee.Contracts.Query;
 
 /// <summary>A node of a query: a <see cref="QueryGroup"/> of nodes or a <see cref="QueryRule"/> on one field.</summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]

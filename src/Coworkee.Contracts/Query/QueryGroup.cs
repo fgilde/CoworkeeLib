@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Coworkee.Client.Blazor.Components.Query;
+namespace Coworkee.Contracts.Query;
 
 /// <summary>Nodes joined with <see cref="Logic"/>; <see cref="Not"/> negates the whole group.</summary>
 public sealed class QueryGroup : QueryNode

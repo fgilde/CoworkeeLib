@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Coworkee.Client.Blazor.Components.Query;
+namespace Coworkee.Contracts.Query;
 
 /// <summary>Turns date operators into half-open day ranges [from, to) in the offset of "now", so both translators agree on what a day is.</summary>
 public static class QueryDates

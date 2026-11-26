@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
+using Coworkee.Contracts.Query;
+
 namespace Coworkee.Client.Blazor.Components.Query;
 
 /// <summary>

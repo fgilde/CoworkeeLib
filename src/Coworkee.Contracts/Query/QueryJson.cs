@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Coworkee.Client.Blazor.Components.Query;
+namespace Coworkee.Contracts.Query;
 
 /// <summary>Reads and writes queries as compact JSON: enums as names, empty values left out, so saved queries survive reordered enums.</summary>
 public static class QueryJson

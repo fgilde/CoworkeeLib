@@ -2,6 +2,8 @@ using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
+using Coworkee.Contracts.Query;
+
 namespace Coworkee.Client.Blazor.Components.Query;
 
 /// <summary>One value of a rule, edited the way its field reads: a choice, a lookup, a number, a date or text. Values stay invariant text.</summary>

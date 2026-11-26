@@ -1,4 +1,4 @@
-namespace Coworkee.Client.Blazor.Components.Query;
+namespace Coworkee.Contracts.Query;
 
 /// <summary>Which operators fit a field, what they need and how they read.</summary>
 public static class QueryOperators
