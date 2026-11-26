@@ -46,6 +46,9 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         services.AddSingleton<Microsoft.Extensions.Options.IPostConfigureOptions<ClientEntityOptions>, ServiceClientEntities>();
         services.AddSingleton<Coworkee.Infrastructure.Persistence.IModelContributor, DataFilters.DataFilterModelContributor>();
         services.AddSingleton<Coworkee.Application.Authorization.IPermissionDefinitionContributor, DataFilters.DataFilterPermissionDefinitions>();
+        services.AddSingleton<DataFilters.DataFilterCache>();
+        services.AddScoped<DataFilters.DataFilterResolver>();
+        services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, DataFilters.DataFilterCacheInterceptor>();
         services.AddScoped<ClientEntityChangeLog>();
         services.AddScoped<IClientEntityChangeLog>(sp => sp.GetRequiredService<ClientEntityChangeLog>());
         services.AddSingleton<Coworkee.Infrastructure.Persistence.IModelContributor, ClientEntityTouchModel>();

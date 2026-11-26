@@ -10,7 +10,7 @@ public interface IPermissionChecker
 
     Task<IReadOnlyCollection<Guid>> GetGrantedResourcesAsync(string permission, string resourceType, CancellationToken cancellationToken);
 
-    /// <summary>The tenant wide roles of the current user, directly and through groups; for rules an app attaches to roles (such as restrictions).</summary>
+    /// <summary>The tenant wide roles the current user acts in, directly and through groups (only the active one when the role switch is on); for rules an app attaches to roles (such as restrictions and data filters).</summary>
     Task<IReadOnlyCollection<Guid>> GetRoleIdsAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyCollection<Guid>>([]);
 
     /// <summary>

@@ -104,7 +104,8 @@ public sealed class ODataApp : DatabaseFixture
     public async Task<SetupResultDto> SetupAsync()
     {
         await ResetAsync();
-        App.Services.GetRequiredService<FakeGroupScope>().Stored = [];
+        var groups = App.Services.GetRequiredService<FakeGroupScope>();
+        (groups.Stored, groups.Accessible, groups.Nodes) = ([], [FakeGroupScope.A, FakeGroupScope.B], []);
         Mails.Sent.Clear();
         Mails.Fail = false;
         Mails.During = null;
@@ -295,6 +296,7 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddODataImport<AddPartCommand>("Parts");
         context.Services.AddODataEntity<Crate>("Crates", ODataApp.ViewGadgets);
         context.Services.AddScoped<IODataEntityFilter<Crate>, CratesOfActiveUnits>();
+        context.Services.AddScoped<DataFilters.IGroupRowSource<Crate>, CrateUnits>();
         context.Services.AddGlobalSearch<Crate>(s => s.Fields(c => c.Name).Page("/crates"));
         context.Services.AddODataImport("Crates", (Guid? id, CrateRow row) => new SaveCrateCommand(id, row));
         context.Services.AddODataEntity<Shelf>("Shelves", ODataApp.ViewGadgets);

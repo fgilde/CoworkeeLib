@@ -28,6 +28,18 @@ internal sealed class CratesOfActiveUnits(IGroupScope groups) : IODataEntityFilt
     }
 }
 
+/// <summary>A crate comes through its unit (group data filters).</summary>
+internal sealed class CrateUnits : Coworkee.OData.DataFilters.IGroupRowSource<Crate>
+{
+    public Task<System.Linq.Expressions.Expression<Func<Crate, bool>>> RowsOfAsync(IReadOnlyCollection<Guid> groupIds, CancellationToken ct)
+    {
+        var ids = groupIds.ToList();
+        return Task.FromResult<System.Linq.Expressions.Expression<Func<Crate, bool>>>(c => ids.Contains(c.UnitId));
+    }
+
+    public Task<bool> SeesAllAsync(CancellationToken ct) => Task.FromResult(false);
+}
+
 public sealed class CrateRow
 {
     public string Name { get; set; } = string.Empty;
