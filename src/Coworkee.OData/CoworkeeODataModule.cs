@@ -44,6 +44,8 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         services.AddDataTransfer();
         services.Configure<ClientEntityOptions>(context.Configuration.GetSection(ClientEntityOptions.Section));
         services.AddSingleton<Microsoft.Extensions.Options.IPostConfigureOptions<ClientEntityOptions>, ServiceClientEntities>();
+        services.AddSingleton<Coworkee.Infrastructure.Persistence.IModelContributor, DataFilters.DataFilterModelContributor>();
+        services.AddSingleton<Coworkee.Application.Authorization.IPermissionDefinitionContributor, DataFilters.DataFilterPermissionDefinitions>();
         services.AddScoped<ClientEntityChangeLog>();
         services.AddScoped<IClientEntityChangeLog>(sp => sp.GetRequiredService<ClientEntityChangeLog>());
         services.AddSingleton<Coworkee.Infrastructure.Persistence.IModelContributor, ClientEntityTouchModel>();
@@ -61,6 +63,7 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         app.MapControllers();
         app.MapDataTransferEndpoints();
         app.MapClientEntityEndpoints();
+        DataFilters.DataFilterEndpoints.MapDataFilterEndpoints(app);
         GlobalSearch.GlobalSearchEndpoints.MapGlobalSearchEndpoints(app);
     }
 }
