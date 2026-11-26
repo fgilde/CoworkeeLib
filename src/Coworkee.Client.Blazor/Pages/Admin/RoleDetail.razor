@@ -28,8 +28,18 @@
         <MudAlert Dense="Density.Dense" Severity="Severity.Info" Class="mb-4">@L["Administrators have every permission."]</MudAlert>
     }
 
-    <PermissionView Permission="@IdentityPermissions.Permissions.Manage">
-        <ChildContent><PermissionMatrix ProviderType="PermissionProviderType.Role" ProviderKey="_role.Id" ReadOnly="_role.IsSystem" /></ChildContent>
-        <NotAuthorized><PermissionMatrix ProviderType="PermissionProviderType.Role" ProviderKey="_role.Id" ReadOnly="true" /></NotAuthorized>
-    </PermissionView>
+    <MudTabs Elevation="0" TabPanelsClass="pt-2" data-testid="role-tabs">
+        <MudTabPanel Text="@L["Permissions"]">
+            <PermissionView Permission="@IdentityPermissions.Permissions.Manage">
+                <ChildContent><PermissionMatrix ProviderType="PermissionProviderType.Role" ProviderKey="_role.Id" ReadOnly="_role.IsSystem" /></ChildContent>
+                <NotAuthorized><PermissionMatrix ProviderType="PermissionProviderType.Role" ProviderKey="_role.Id" ReadOnly="true" /></NotAuthorized>
+            </PermissionView>
+        </MudTabPanel>
+        @if (_canManageDataFilters)
+        {
+            <MudTabPanel Text="@L["Data filters"]">
+                <DataFilterList Layer="DataFilterLayer.Role" LayerKey="_role.Id" />
+            </MudTabPanel>
+        }
+    </MudTabs>
 }

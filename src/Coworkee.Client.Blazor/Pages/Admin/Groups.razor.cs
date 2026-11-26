@@ -6,6 +6,7 @@ using Coworkee.Client.Blazor.Data.Admin;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.Data;
+using Coworkee.Contracts.DataFilters;
 using Coworkee.Contracts.Identity;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,7 +14,7 @@ using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Pages.Admin;
 
-/// <summary>The group tree on the left, the selected group in tabs on the right (General, Members, Roles, then the app's tabs); <c>?group=</c> selects one.</summary>
+/// <summary>The group tree on the left, the selected group in tabs on the right (General, Members, Roles, Data filters, then the app's tabs); <c>?group=</c> selects one.</summary>
 public partial class Groups
 {
     private GroupTree? _tree;
@@ -24,6 +25,7 @@ public partial class Groups
     private List<GroupDetailTab> _appTabs = [];
     private bool _canManage;
     private bool _canManageMembers;
+    private bool _canManageDataFilters;
     private bool _ready;
     private bool _loadingGroup;
 
@@ -53,6 +55,7 @@ public partial class Groups
     {
         _canManage = await Permissions.HasAsync(IdentityPermissions.Groups.Manage);
         _canManageMembers = await Permissions.HasAsync(IdentityPermissions.Groups.ManageMembers);
+        _canManageDataFilters = await Permissions.HasAsync(DataFilterPermissions.ManageGroups);
         foreach (var tab in AppTabs)
         {
             if (tab.Permission is null || await Permissions.HasAsync(tab.Permission))

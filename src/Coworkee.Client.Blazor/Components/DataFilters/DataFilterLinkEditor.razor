@@ -1,0 +1,37 @@
+@if (_allowed)
+{
+    <RealtimeSubscription Topic="@DataFilterTopics.Changed" OnEvent="_ => ReloadAsync()" />
+    <div class="d-flex flex-column gap-2" data-testid="data-filter-link" data-set="@EntitySet">
+        <MudText Typo="Typo.subtitle2">@L["Linked set"]</MudText>
+        @if (_link is not null)
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudText Typo="Typo.body2" data-testid="link-text">@L["Same data as {0} via {1}", _link.TargetSet, _link.Property]</MudText>
+                <MudIconButton Icon="@Icons.Material.Outlined.LinkOff" Size="Size.Small" aria-label="@L["Remove link"]" OnClick="RemoveAsync" data-testid="link-remove" />
+            </MudStack>
+        }
+        else
+        {
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["Rows are visible only when the row of another set they point to is visible. Choose that set and the property that holds its key."]</MudText>
+        }
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudSelect T="string" @bind-Value="_target" Label="@L["Same data as"]" Dense="true" Margin="Margin.Dense" Style="max-width:260px" data-testid="link-target">
+                @foreach (var set in _sets.Where(s => !string.Equals(s, EntitySet, StringComparison.OrdinalIgnoreCase)))
+                {
+                    <MudSelectItem T="string" Value="@set">@set</MudSelectItem>
+                }
+            </MudSelect>
+            <MudSelect T="string" @bind-Value="_property" Label="@L["Via property"]" Dense="true" Margin="Margin.Dense" Style="max-width:260px" data-testid="link-property">
+                @foreach (var field in _keys)
+                {
+                    <MudSelectItem T="string" Value="@field">@field</MudSelectItem>
+                }
+            </MudSelect>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(_target is null || _property is null)" OnClick="SaveAsync" data-testid="link-save">@L["Save"]</MudButton>
+        </MudStack>
+        @if (_problem is not null)
+        {
+            <MudAlert Severity="Severity.Error" Dense="true" data-testid="link-problem">@_problem</MudAlert>
+        }
+    </div>
+}

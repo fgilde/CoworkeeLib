@@ -215,4 +215,26 @@ public sealed class DataFilterCommandTests(ODataApp app) : IAsyncLifetime
         (await client.GetFromJsonAsync<DataFilterDto[]>(Root, CoworkeeJson.Web, Ct))!.ShouldHaveSingleItem().Id.ShouldBe(group!.Id);
         (await client.DeleteAsync($"{Root}/{group.Id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
     }
+
+    [Fact]
+    public async Task The_fields_of_a_set_flag_the_properties_only_some_users_see()
+    {
+        var fields = (await Admin().GetFromJsonAsync<DataFilterFieldDto[]>($"{Root}/fields/Gadgets", CoworkeeJson.Web, Ct))!;
+
+        fields.Single(f => f.Name == "Name").Protected.ShouldBeFalse();
+        fields.Single(f => f.Name == "Category").Protected.ShouldBeTrue();
+        // hidden properties are not part of the model, so they are not offered
+        fields.ShouldNotContain(f => f.Name == "SerialCode");
+        (await Admin().GetFromJsonAsync<string[]>(Root + "/sets", CoworkeeJson.Web, Ct))!.ShouldContain("Gadgets");
+        (await Admin().GetAsync($"{Root}/fields/NoSuchSet", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task The_fields_and_sets_need_a_manage_permission()
+    {
+        var plain = await PlainUserAsync();
+
+        (await plain.GetAsync($"{Root}/fields/Gadgets", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await plain.GetAsync(Root + "/sets", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
 }

@@ -54,6 +54,12 @@
                     <MudTabPanel Text="@L["Roles"]">
                         <GroupRolesTab Group="group" CanManage="_canManage" Changed="ChangedAsync" />
                     </MudTabPanel>
+                    @if (_canManageDataFilters)
+                    {
+                        <MudTabPanel Text="@L["Data filters"]">
+                            <DataFilterList Layer="DataFilterLayer.Group" LayerKey="group.Id" />
+                        </MudTabPanel>
+                    }
                     @foreach (var tab in _appTabs)
                     {
                         <MudTabPanel Text="@L[tab.Title]">

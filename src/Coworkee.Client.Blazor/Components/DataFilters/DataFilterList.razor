@@ -1,0 +1,38 @@
+@if (_allowed)
+{
+    <RealtimeSubscription Topic="@DataFilterTopics.TenantChanged" OnEvent="_ => ReloadAsync()" />
+    <RealtimeSubscription Topic="@DataFilterTopics.Changed" OnEvent="_ => ReloadAsync()" />
+    <div class="d-flex flex-column gap-3" data-testid="data-filter-list" data-layer="@Layer">
+        @if (Title is not null)
+        {
+            <MudText Typo="Typo.subtitle2">@L[Title]</MudText>
+        }
+        @if (EntitySet is { } set)
+        {
+            <DataFilterEditor EntitySet="@set" Layer="Layer" LayerKey="LayerKey" Filter="_filters.FirstOrDefault()" Changed="ReloadAsync" />
+        }
+        else
+        {
+            @foreach (var filter in _filters)
+            {
+                <MudPaper Outlined="true" Class="pa-3" data-testid="@($"filter-{filter.EntitySet}")">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">@filter.EntitySet</MudText>
+                    <DataFilterEditor @key="filter.Id" EntitySet="@filter.EntitySet" Layer="Layer" LayerKey="LayerKey" Filter="filter" Changed="ReloadAsync" />
+                </MudPaper>
+            }
+            @if (_adding is { } adding)
+            {
+                <MudPaper Outlined="true" Class="pa-3" data-testid="filter-new">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">@adding</MudText>
+                    <DataFilterEditor @key="adding" EntitySet="@adding" Layer="Layer" LayerKey="LayerKey" Filter="null" Changed="ReloadAsync" />
+                </MudPaper>
+            }
+            <MudSelect T="string" Value="_adding" ValueChanged="s => _adding = s" Label="@L["Add a filter for"]" Dense="true" Margin="Margin.Dense" Style="max-width:320px" data-testid="filter-add-set">
+                @foreach (var name in Unfiltered)
+                {
+                    <MudSelectItem T="string" Value="@name">@name</MudSelectItem>
+                }
+            </MudSelect>
+        }
+    </div>
+}

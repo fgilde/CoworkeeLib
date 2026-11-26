@@ -16,9 +16,14 @@ public partial class RoleDetail
 
     [Inject] private MudBlazor.IDialogService Dialogs { get; set; } = null!;
 
+    [Inject] private Security.PermissionStore Permissions { get; set; } = null!;
+
     private RoleDto? _role;
+    private bool _canManageDataFilters;
 
     [Parameter] public Guid Id { get; set; }
+
+    protected override async Task OnInitializedAsync() => _canManageDataFilters = await Permissions.HasAsync(Contracts.DataFilters.DataFilterPermissions.ManageRoles);
 
     protected override async Task OnParametersSetAsync() => _role = (await Api.GetRolesAsync()).FirstOrDefault(r => r.Id == Id);
 

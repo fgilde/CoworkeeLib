@@ -1,5 +1,6 @@
 using Coworkee.Contracts;
 using Coworkee.Contracts.Auditing;
+using Coworkee.Contracts.DataFilters;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Mailing;
 using Coworkee.Contracts.Notifications;
@@ -15,6 +16,7 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     private const string Mail = "api/v1/mail";
     private const string Themes = "api/v1/themes";
     private const string Versions = "api/v1/versions";
+    private const string DataFilters = "api/v1/data-filters";
 
     public Task<BffUserDto> GetUserAsync(CancellationToken cancellationToken = default) => GetAsync<BffUserDto>("bff/user", cancellationToken);
 
@@ -476,6 +478,33 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
 
     public Task DeletePushSubscriptionAsync(Guid id, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Delete, $"api/v1/notifications/push/{id}", null, cancellationToken);
+
+    public async Task<IReadOnlyList<DataFilterDto>> GetDataFiltersAsync(string? entitySet = null, DataFilterLayer? layer = null, Guid? layerKey = null, CancellationToken cancellationToken = default)
+    {
+        List<string> parameters = [];
+        Add(parameters, "entitySet", entitySet);
+        Add(parameters, "layer", layer?.ToString());
+        Add(parameters, "layerKey", layerKey?.ToString());
+        return await GetAsync<DataFilterDto[]>(parameters.Count == 0 ? DataFilters : $"{DataFilters}?{string.Join('&', parameters)}", cancellationToken);
+    }
+
+    public Task<DataFilterDto> SaveDataFilterAsync(SaveDataFilterRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync<DataFilterDto>(HttpMethod.Put, DataFilters, request, cancellationToken);
+
+    public Task DeleteDataFilterAsync(Guid id, CancellationToken cancellationToken = default) => SendAsync(HttpMethod.Delete, $"{DataFilters}/{id}", null, cancellationToken);
+
+    public async Task<IReadOnlyList<string>> GetDataFilterSetsAsync(CancellationToken cancellationToken = default) => await GetAsync<string[]>($"{DataFilters}/sets", cancellationToken);
+
+    public async Task<IReadOnlyList<DataFilterFieldDto>> GetDataFilterFieldsAsync(string entitySet, CancellationToken cancellationToken = default) =>
+        await GetAsync<DataFilterFieldDto[]>($"{DataFilters}/fields/{Uri.EscapeDataString(entitySet)}", cancellationToken);
+
+    public async Task<IReadOnlyList<DataFilterLinkDto>> GetDataFilterLinksAsync(CancellationToken cancellationToken = default) =>
+        await GetAsync<DataFilterLinkDto[]>($"{DataFilters}/links", cancellationToken);
+
+    public Task<DataFilterLinkDto> SaveDataFilterLinkAsync(SaveDataFilterLinkRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync<DataFilterLinkDto>(HttpMethod.Put, $"{DataFilters}/links", request, cancellationToken);
+
+    public Task DeleteDataFilterLinkAsync(Guid id, CancellationToken cancellationToken = default) => SendAsync(HttpMethod.Delete, $"{DataFilters}/links/{id}", null, cancellationToken);
 
     private static void Add(List<string> parameters, string name, string? value)
     {

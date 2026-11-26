@@ -17,7 +17,9 @@ internal sealed class DataFilterHandlers(
       IHandler<GetDataFiltersQuery, Result<IReadOnlyList<DataFilterDto>>>,
       IHandler<SaveDataFilterLinkCommand, Result<DataFilterLinkDto>>,
       IHandler<DeleteDataFilterLinkCommand, Result>,
-      IHandler<GetDataFilterLinksQuery, Result<IReadOnlyList<DataFilterLinkDto>>>
+      IHandler<GetDataFilterLinksQuery, Result<IReadOnlyList<DataFilterLinkDto>>>,
+      IHandler<GetDataFilterFieldsQuery, Result<IReadOnlyList<DataFilterFieldDto>>>,
+      IHandler<GetDataFilterSetsQuery, Result<IReadOnlyList<string>>>
 {
     private static readonly Error Forbidden = Error.Forbidden("data_filters.forbidden", "You may not manage data filters of this layer.");
 
@@ -202,6 +204,46 @@ internal sealed class DataFilterHandlers(
             ? Forbidden
             : (await db.Set<DataFilterLink>().AsNoTracking().OrderBy(l => l.EntitySet).ToListAsync(cancellationToken))
                 .Select(l => new DataFilterLinkDto(l.Id, l.EntitySet, l.Property, l.TargetSet)).ToList();
+
+    public async Task<Result<IReadOnlyList<string>>> HandleAsync(GetDataFilterSetsQuery query, CancellationToken cancellationToken) =>
+        (await ManageableAsync(cancellationToken)).Count == 0
+            ? Forbidden
+            : registry.Entities.Select(e => e.EntitySet).Order(StringComparer.OrdinalIgnoreCase).ToList();
+
+    /// <summary>The properties a filter on the set may name, with those only some users see flagged.</summary>
+    public async Task<Result<IReadOnlyList<DataFilterFieldDto>>> HandleAsync(GetDataFilterFieldsQuery query, CancellationToken cancellationToken)
+    {
+        if ((await ManageableAsync(cancellationToken)).Count == 0)
+        {
+            return Forbidden;
+        }
+
+        if (registry.Find(query.EntitySet) is not { } entity)
+        {
+            return Error.Validation("entitySet", $"There is no entity set '{query.EntitySet}'.");
+        }
+
+        var model = services.GetRequiredService<IEdmModel>();
+        var type = model.EntityContainer.FindEntitySet(entity.EntitySet)!.EntityType;
+        return Query.EdmQueryFields.For(model, entity.EntitySet)
+            .Select(f => new DataFilterFieldDto(f.Name, f.Type, f.Nullable, f.Flags, f.Options, IsProtected(entity, type, f.Name)))
+            .ToList();
+    }
+
+    // a property of a navigation counts by the registration of the set that shows that type
+    private bool IsProtected(ODataEntityRegistration entity, IEdmEntityType type, string name)
+    {
+        var dot = name.IndexOf('.');
+        if (dot < 0)
+        {
+            return entity.ProtectedProperties.ContainsKey(name) || entity.SharedHidden.Contains(name);
+        }
+
+        var target = (type.FindProperty(name[..dot]) as IEdmNavigationProperty)?.ToEntityType().Name;
+        var other = registry.Entities.FirstOrDefault(e => e.EntityType.Name == target);
+        var property = name[(dot + 1)..];
+        return other is not null && (other.ProtectedProperties.ContainsKey(property) || other.SharedHidden.Contains(property));
+    }
 
     private static DataFilterDto ToDto(DataFilter f, string? problem) => new(f.Id, f.EntitySet, f.Layer, f.LayerKey, f.Query, f.AppliesToDetails, problem is null, problem);
 }

@@ -1,5 +1,6 @@
 using Coworkee.Contracts;
 using Coworkee.Contracts.Auditing;
+using Coworkee.Contracts.DataFilters;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Mailing;
 using Coworkee.Contracts.Notifications;
@@ -352,4 +353,23 @@ public interface ICoworkeeApi
     Task<PushDeviceDto> SavePushSubscriptionAsync(PushSubscriptionRequest subscription, CancellationToken cancellationToken = default);
 
     Task DeletePushSubscriptionAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>The data filters of the layers the caller may manage, narrowed by set, layer and the group or role.</summary>
+    Task<IReadOnlyList<DataFilterDto>> GetDataFiltersAsync(string? entitySet = null, DataFilterLayer? layer = null, Guid? layerKey = null, CancellationToken cancellationToken = default);
+
+    /// <summary>Saves a filter; the server refuses one that does not parse against the set (<see cref="ApiException"/> names the problem).</summary>
+    Task<DataFilterDto> SaveDataFilterAsync(SaveDataFilterRequest request, CancellationToken cancellationToken = default);
+
+    Task DeleteDataFilterAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>The entity sets a filter can be written for.</summary>
+    Task<IReadOnlyList<string>> GetDataFilterSetsAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<DataFilterFieldDto>> GetDataFilterFieldsAsync(string entitySet, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<DataFilterLinkDto>> GetDataFilterLinksAsync(CancellationToken cancellationToken = default);
+
+    Task<DataFilterLinkDto> SaveDataFilterLinkAsync(SaveDataFilterLinkRequest request, CancellationToken cancellationToken = default);
+
+    Task DeleteDataFilterLinkAsync(Guid id, CancellationToken cancellationToken = default);
 }

@@ -1,0 +1,23 @@
+<div class="d-flex flex-column gap-2" data-testid="data-filter-editor" data-set="@EntitySet" data-layer="@Layer">
+    @if (Filter is { Valid: false })
+    {
+        <MudAlert Severity="Severity.Warning" Dense="true" data-testid="filter-invalid">@L["This filter no longer fits the data and lets no rows through: {0}", L.Server(Filter.Problem, null)]</MudAlert>
+    }
+    @if (_problem is not null)
+    {
+        <MudAlert Severity="Severity.Error" Dense="true" data-testid="filter-problem">@_problem</MudAlert>
+    }
+    @if (UsesProtected)
+    {
+        <MudAlert Severity="Severity.Info" Dense="true" data-testid="filter-protected">@L["This filter uses a property only some users may see. It still hides rows from everyone it applies to."]</MudAlert>
+    }
+    <QueryBuilder Fields="_fields" Value="_query" ValueChanged="QueryChanged" Localize="s => L[s]" ShowImportExport="false" MaxDepth="3" />
+    <MudSwitch T="bool" @bind-Value="_appliesToDetails" Color="Color.Primary" Label="@L["Applies to single rows too"]" data-testid="filter-details" />
+    <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="1">
+        @if (Filter is not null)
+        {
+            <MudButton Variant="Variant.Text" Color="Color.Error" Disabled="_busy" OnClick="RemoveAsync" data-testid="filter-remove">@L["Remove filter"]</MudButton>
+        }
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_busy" OnClick="SaveAsync" data-testid="filter-save">@L["Save"]</MudButton>
+    </MudStack>
+</div>

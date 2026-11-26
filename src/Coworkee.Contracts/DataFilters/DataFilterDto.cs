@@ -11,3 +11,6 @@ public sealed record SaveDataFilterRequest(string EntitySet, DataFilterLayer Lay
 public sealed record DataFilterLinkDto(Guid Id, string EntitySet, string Property, string TargetSet);
 
 public sealed record SaveDataFilterLinkRequest(string EntitySet, string Property, string TargetSet);
+
+/// <summary>A property the filter editor offers for a set (one level of single-valued navigations as <c>Nav.Prop</c>); <see cref="Protected"/> properties are seen only by users with their permission, so a filter on them hides rows by something not every user may read.</summary>
+public sealed record DataFilterFieldDto(string Name, Contracts.Query.QueryFieldType Type, bool Nullable, bool Flags, IReadOnlyList<Contracts.Query.QueryOption>? Options, bool Protected);

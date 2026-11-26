@@ -16,6 +16,8 @@ internal static class DataFilterEndpoints
             d.SendAsync(new GetDataFiltersQuery(entitySet, layer, layerKey), ct).ToHttpResult());
         api.MapPut("/", (SaveDataFilterRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SaveDataFilterCommand(body), ct).ToHttpResult());
         api.MapDelete("/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteDataFilterCommand(id), ct).ToHttpResult());
+        api.MapGet("/sets", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetDataFilterSetsQuery(), ct).ToHttpResult());
+        api.MapGet("/fields/{entitySet}", (string entitySet, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetDataFilterFieldsQuery(entitySet), ct).ToHttpResult());
         api.MapGet("/links", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetDataFilterLinksQuery(), ct).ToHttpResult());
         api.MapPut("/links", (SaveDataFilterLinkRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SaveDataFilterLinkCommand(body), ct).ToHttpResult());
         api.MapDelete("/links/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteDataFilterLinkCommand(id), ct).ToHttpResult());

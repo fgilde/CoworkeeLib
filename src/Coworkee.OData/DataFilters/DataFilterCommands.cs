@@ -24,6 +24,12 @@ public sealed record DeleteDataFilterLinkCommand(Guid Id) : ICommand<Result>;
 [AiTool(Exclude = true)]
 public sealed record GetDataFilterLinksQuery : IQuery<Result<IReadOnlyList<DataFilterLinkDto>>>;
 
+[AiTool(Exclude = true)]
+public sealed record GetDataFilterFieldsQuery(string EntitySet) : IQuery<Result<IReadOnlyList<DataFilterFieldDto>>>;
+
+[AiTool(Exclude = true)]
+public sealed record GetDataFilterSetsQuery : IQuery<Result<IReadOnlyList<string>>>;
+
 internal sealed class SaveDataFilterValidator : AbstractValidator<SaveDataFilterCommand>
 {
     public SaveDataFilterValidator()

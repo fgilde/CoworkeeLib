@@ -1,14 +1,17 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = Coworkee.Client.Blazor.Security.PermissionPolicy.Prefix + Coworkee.Contracts.Settings.SettingsPermissions.Manage)]
 @using Coworkee.Client.Blazor.Components
 @using Coworkee.Contracts.Data
+@using Coworkee.Contracts.DataFilters
+@using Coworkee.Client.Blazor.Components.DataFilters
 
-<PageHeader Title="Local copies" Description="Which data the browsers keep a copy of and search locally, and how they keep it in sync. Changes reach every open client at once, without a deployment." />
+<PageHeader Title="Data types" Description="Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows each organisation and user sees at all (data filters). Changes reach every open client at once, without a deployment." />
 @if (!_sqlite && _sets.Any(s => s.Copy == ClientEntityCopy.Sqlite))
 {
     <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-2" data-testid="sqlite-missing">@L["SQLite is not available in this app: sets set to SQLite stay in memory."]</MudAlert>
 }
 <MudDataGrid T="ClientEntityAdminSetDto" Items="_sets" Loading="_busy" Dense="true" Hover="true" Striped="true" Elevation="0" Outlined="true" data-testid="local-copies">
     <Columns>
+        <HierarchyColumn T="ClientEntityAdminSetDto" ButtonDisabledFunc="_ => false" />
         <PropertyColumn Property="s => s.EntitySet" Title="@L["Entity set"]">
             <CellTemplate>
                 <MudText Typo="Typo.body2">@context.Item.EntitySet</MudText>
@@ -55,6 +58,13 @@
             </CellTemplate>
         </TemplateColumn>
     </Columns>
+    <ChildRowContent>
+        <MudStack Class="pa-4" Spacing="3" data-testid="@($"filters-{context.Item.EntitySet}")">
+            <DataFilterList Layer="DataFilterLayer.System" EntitySet="@context.Item.EntitySet" Title="Filter for every organisation (system)" />
+            <DataFilterList Layer="DataFilterLayer.Tenant" EntitySet="@context.Item.EntitySet" Title="Filter for this organisation" />
+            <DataFilterLinkEditor EntitySet="@context.Item.EntitySet" />
+        </MudStack>
+    </ChildRowContent>
     <NoRecordsContent>
         <MudText Class="mud-text-secondary pa-4">@L["No entity set can have a local copy: only OData sets with a Guid Id can."]</MudText>
     </NoRecordsContent>
