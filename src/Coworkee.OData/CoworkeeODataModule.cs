@@ -48,6 +48,7 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         services.AddSingleton<Coworkee.Application.Authorization.IPermissionDefinitionContributor, DataFilters.DataFilterPermissionDefinitions>();
         services.AddSingleton<DataFilters.DataFilterCache>();
         services.AddScoped<DataFilters.DataFilterResolver>();
+        services.AddScoped<ClientEntities.IClientEntityPartitionPart, DataFilters.DataFilterPartitionPart>();
         services.AddScoped(typeof(IODataEntityFilter<>), typeof(DataFilters.DataFilterEntityFilter<>));
         services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, DataFilters.DataFilterCacheInterceptor>();
         services.AddScoped<ClientEntityChangeLog>();

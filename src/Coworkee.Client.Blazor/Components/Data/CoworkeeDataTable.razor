@@ -198,6 +198,7 @@ if (ShowAdvanced && _advancedOpen)
 }
 }
 <RealtimeSubscription Topic="@LiveTopic" OnEvent="LiveEvent" />
+<RealtimeSubscription Topic="@FilterTopic" OnEvent="LiveEvent" />
 <div class="@(PanelLayout ? "cw-table-layout cw-table-paneled" : "cw-table-layout")">
 @if (PanelLayout)
 {

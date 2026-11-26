@@ -73,7 +73,13 @@ internal sealed class DataFilterHandlers(
             return Error.Validation("query", problem);
         }
 
+        // without an organisation a non-System filter would belong to nobody
         var tenantId = request.Layer == DataFilterLayer.System ? null : currentUser.TenantId;
+        if (request.Layer != DataFilterLayer.System && tenantId is null)
+        {
+            return Forbidden;
+        }
+
         var filter = await db.Set<DataFilter>().FirstOrDefaultAsync(
             f => f.TenantId == tenantId && f.EntitySet == entity.EntitySet && f.Layer == request.Layer && f.LayerKey == request.LayerKey, cancellationToken);
         if (filter is null)

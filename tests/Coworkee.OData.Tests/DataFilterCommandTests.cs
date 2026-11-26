@@ -161,6 +161,20 @@ public sealed class DataFilterCommandTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_user_without_an_organisation_cannot_save_a_filter_that_would_belong_to_nobody()
+    {
+        var (_, userId) = await UserWithAsync(_setup.TenantId, DataFilterPermissions.ManageTenant);
+
+        using var actor = Coworkee.Core.Security.CurrentUserScope.Begin(new Coworkee.Core.Security.ImpersonatedUser(userId, null));
+        await using var scope = app.App.Services.CreateAsyncScope();
+        var result = await scope.ServiceProvider.GetRequiredService<Coworkee.Application.Messaging.IDispatcher>()
+            .SendAsync(new SaveDataFilterCommand(Request(DataFilterLayer.Tenant)), Ct);
+
+        result.IsSuccess.ShouldBeFalse();
+        (await InDbAsync(db => db.Set<DataFilter>().IgnoreQueryFilters().CountAsync(Ct))).ShouldBe(0);
+    }
+
+    [Fact]
     public async Task An_admin_outside_the_system_tenant_cannot_write_system_filters_or_links()
     {
         var systemFilter = await (await Admin().PutAsJsonAsync(Root, Request(DataFilterLayer.System), CoworkeeJson.Web, Ct)).Content.ReadFromJsonAsync<DataFilterDto>(CoworkeeJson.Web, Ct);
