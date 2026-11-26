@@ -7,6 +7,7 @@ using Coworkee.Contracts.Query;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.OData.DataFilters;
 using Coworkee.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -139,5 +140,65 @@ public sealed class DataFilterCommandTests(ODataApp app) : IAsyncLifetime
 
         (await InDbAsync(db => db.Set<DataFilter>().Where(f => f.Layer == DataFilterLayer.System).Select(f => f.TenantId).SingleAsync(Ct))).ShouldBeNull();
         (await Admin().GetFromJsonAsync<DataFilterDto[]>($"{Root}?layer=System", CoworkeeJson.Web, Ct))!.ShouldHaveSingleItem();
+    }
+
+    private async Task<(HttpClient Client, Guid UserId)> UserWithAsync(Guid tenantId, params string[] permissions)
+    {
+        var email = $"perm-{Guid.NewGuid():N}@acme.test";
+        var user = await (await Admin().PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest(email, "Passw0rd!x", null, null), Ct)).Content.ReadFromJsonAsync<UserDto>(Ct);
+        await using (var scope = app.App.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<CoworkeeDbContext>();
+            foreach (var name in permissions)
+            {
+                db.Add(new Coworkee.Identity.Domain.PermissionGrant { TenantId = null, Name = name, ProviderType = PermissionProviderType.User, ProviderKey = user!.Id });
+            }
+
+            await db.SaveChangesAsync(Ct);
+        }
+
+        return (app.As(user!.Id, tenantId), user.Id);
+    }
+
+    [Fact]
+    public async Task An_admin_outside_the_system_tenant_cannot_write_system_filters_or_links()
+    {
+        var systemFilter = await (await Admin().PutAsJsonAsync(Root, Request(DataFilterLayer.System), CoworkeeJson.Web, Ct)).Content.ReadFromJsonAsync<DataFilterDto>(CoworkeeJson.Web, Ct);
+        (await Admin().PutAsJsonAsync(Root + "/links", new SaveDataFilterLinkRequest("Gadgets", "Id", "Widgets"), CoworkeeJson.Web, Ct)).EnsureSuccessStatusCode();
+        var link = (await Admin().GetFromJsonAsync<DataFilterLinkDto[]>(Root + "/links", CoworkeeJson.Web, Ct))!.Single();
+
+        // the admin's organisation stops being the system (default) one: it still holds every permission, a plain tenant admin
+        await using (var scope = app.App.Services.CreateAsyncScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<CoworkeeDbContext>().Database
+                .ExecuteSqlRawAsync("UPDATE cw.\"Tenants\" SET \"IsDefault\" = false", Ct);
+        }
+
+        await using var other = await app.StartAnotherAsync(new Dictionary<string, string>());
+        var client = other.GetTestClient().AsUser(_setup.AdminUserId, _setup.TenantId);
+        (await client.PutAsJsonAsync(Root, Request(DataFilterLayer.System), CoworkeeJson.Web, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await client.DeleteAsync($"{Root}/{systemFilter!.Id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await client.PutAsJsonAsync(Root + "/links", new SaveDataFilterLinkRequest("Gadgets", "Id", "Lockets"), CoworkeeJson.Web, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await client.DeleteAsync($"{Root}/links/{link.Id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await client.PutAsJsonAsync(Root, Request(DataFilterLayer.Tenant), CoworkeeJson.Web, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task A_user_with_one_manage_permission_writes_only_that_layer()
+    {
+        var (client, _) = await UserWithAsync(_setup.TenantId, DataFilterPermissions.ManageGroups);
+        var tenantFilter = await (await Admin().PutAsJsonAsync(Root, Request(DataFilterLayer.Tenant), CoworkeeJson.Web, Ct)).Content.ReadFromJsonAsync<DataFilterDto>(CoworkeeJson.Web, Ct);
+
+        foreach (var layer in new[] { DataFilterLayer.System, DataFilterLayer.Tenant, DataFilterLayer.Role })
+        {
+            (await client.PutAsJsonAsync(Root, Request(layer), CoworkeeJson.Web, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        }
+
+        (await client.PutAsJsonAsync(Root + "/links", new SaveDataFilterLinkRequest("Gadgets", "Id", "Widgets"), CoworkeeJson.Web, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await client.DeleteAsync($"{Root}/{tenantFilter!.Id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        var group = await (await client.PutAsJsonAsync(Root, Request(DataFilterLayer.Group), CoworkeeJson.Web, Ct)).Content.ReadFromJsonAsync<DataFilterDto>(CoworkeeJson.Web, Ct);
+        // the list shows only what the user may manage
+        (await client.GetFromJsonAsync<DataFilterDto[]>(Root, CoworkeeJson.Web, Ct))!.ShouldHaveSingleItem().Id.ShouldBe(group!.Id);
+        (await client.DeleteAsync($"{Root}/{group.Id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
     }
 }
