@@ -20,10 +20,10 @@
         {
             <MudMenuItem OnClick="() => state.EditAsync(() => QueryTree.MoveOut(state.Root, Node, state.MaxDepth))" data-testid="query-move-out">@T("Move out of group")</MudMenuItem>
         }
-        <MudMenuItem OnClick="() => state.EditAsync(() => QueryTree.Wrap(state.Root, WrapNodes(), state.MaxDepth) is not null)" data-testid="query-wrap">@T("Wrap in a group")</MudMenuItem>
-        @if (Node is QueryGroup { Not: false } unwrappable)
+        <MudMenuItem Disabled="@(!QueryTree.CanWrap(state.Root, WrapNodes(), state.MaxDepth))" OnClick="() => state.EditAsync(() => QueryTree.Wrap(state.Root, WrapNodes(), state.MaxDepth) is not null)" data-testid="query-wrap">@T("Wrap in a group")</MudMenuItem>
+        @if (Node is QueryGroup unwrappable)
         {
-            <MudMenuItem OnClick="() => state.EditAsync(() => QueryTree.Unwrap(state.Root, unwrappable))" data-testid="query-unwrap">@T("Unwrap group")</MudMenuItem>
+            <MudMenuItem Disabled="@(!QueryTree.CanUnwrap(state.Root, unwrappable))" OnClick="() => state.EditAsync(() => QueryTree.Unwrap(state.Root, unwrappable))" data-testid="query-unwrap">@T("Unwrap group")</MudMenuItem>
         }
     </MudMenu>
 }

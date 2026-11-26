@@ -43,7 +43,7 @@ The component, its model and both translators live in `Coworkee.Client.Blazor.Co
 Every condition and group has a drag handle, up and down buttons and an actions menu, so the keyboard reaches everything the mouse does:
 
 - drag a condition onto another to put it in front of it, or onto a group to put it at the end of that group; a group moves with its conditions
-- the menu moves a node *into* any other group, *out of* its group, *wraps* it in a new group and *unwraps* a group (not a negated one, its meaning would change)
+- the menu moves a node *into* any other group, *out of* its group, *wraps* it in a new group and *unwraps* a group (only a group whose meaning survives: not negated, and with one condition or the same *All* / *Any* as the group around it)
 - tick conditions and press *Wrap selected* in their group to put them together in a new group
 - the *All* / *Any* switch of a group changes at any time
 

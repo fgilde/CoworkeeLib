@@ -91,12 +91,7 @@ public static class QueryTree
     /// <summary>Puts the given children of one group into a new group (joined the other way round) that takes the place of the first of them.</summary>
     public static QueryGroup? Wrap(QueryGroup root, IReadOnlyCollection<QueryNode> nodes, int maxDepth)
     {
-        if (nodes.Count == 0 || ParentOf(root, nodes.First()) is not { } parent || nodes.Any(n => ParentOf(root, n) != parent))
-        {
-            return null;
-        }
-
-        if (DepthOf(root, parent) + 1 + nodes.Max(Levels) > maxDepth)
+        if (!CanWrap(root, nodes, maxDepth) || ParentOf(root, nodes.First()) is not { } parent)
         {
             return null;
         }
@@ -109,10 +104,18 @@ public static class QueryTree
         return wrapper;
     }
 
-    /// <summary>Replaces a group by its children; not for the root and not for a negated group, whose meaning would change.</summary>
+    public static bool CanWrap(QueryGroup root, IReadOnlyCollection<QueryNode> nodes, int maxDepth) =>
+        nodes.Count > 0 && ParentOf(root, nodes.First()) is { } parent && nodes.All(n => ParentOf(root, n) == parent)
+        && DepthOf(root, parent) + 1 + nodes.Max(Levels) <= maxDepth;
+
+    /// <summary>True when replacing the group by its children keeps the query's meaning: not the root, not negated, and one child or the same join as its parent.</summary>
+    public static bool CanUnwrap(QueryGroup root, QueryGroup group) =>
+        !group.Not && ParentOf(root, group) is { } parent && (group.Children.Count <= 1 || group.Logic == parent.Logic);
+
+    /// <summary>Replaces a group by its children; refused when that would change the query's meaning (see <see cref="CanUnwrap"/>).</summary>
     public static bool Unwrap(QueryGroup root, QueryGroup group)
     {
-        if (group.Not || ParentOf(root, group) is not { } parent)
+        if (!CanUnwrap(root, group) || ParentOf(root, group) is not { } parent)
         {
             return false;
         }

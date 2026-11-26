@@ -271,8 +271,24 @@ public sealed class QueryBuilderTests : ClientTestBase
         wrapper.Children.Cast<QueryRule>().Select(r => r.Value).ShouldBe(["a", "c"]);
         query.Children[0].ShouldBe(wrapper);
 
-        await Menu(popovers, builder, "[data-testid='query-group'][data-depth='1'] > .qb-group-head", 0, "query-unwrap");
+        // (a or c) and b: unwrapping would turn it into a and c and b, so it is refused
+        const string head = "[data-testid='query-group'][data-depth='1'] > .qb-group-head";
+        var before = Text(query);
+        await builder.FindAll(head)[0].QuerySelector("[data-testid='query-node-menu'] button, button[data-testid='query-node-menu']")!.ClickAsync(new());
+        popovers.WaitForElement("[data-testid='query-unwrap']").ClassList.ShouldContain("mud-disabled");
+        await builder.FindAll(head)[0].QuerySelector("[data-testid='query-node-menu'] button, button[data-testid='query-node-menu']")!.ClickAsync(new());
+        QueryTree.Unwrap(query, wrapper).ShouldBeFalse();
+        query.Children[0].ShouldBe(wrapper);
+        Text(query).ShouldBe(before);
+
+        // joined like its parent it keeps its meaning and unwraps
+        await builder.Find(head + " .mud-toggle-item:nth-of-type(1)").ClickAsync(new());
+        wrapper.Logic.ShouldBe(QueryLogic.And);
+        var same = Text(query);
+        await Menu(popovers, builder, head, 0, "query-unwrap");
         query.Children.Cast<QueryRule>().Select(r => r.Value).ShouldBe(["a", "c", "b"]);
+        same.ShouldBe("((contains(tolower(Name),'a') and contains(tolower(Name),'c')) and contains(tolower(Name),'b'))");
+        Text(query).ShouldBe("(contains(tolower(Name),'a') and contains(tolower(Name),'c') and contains(tolower(Name),'b'))");
 
         // a single node wraps from its menu
         await Menu(popovers, builder, "[data-testid='query-rule']", 1, "query-wrap");
@@ -300,8 +316,10 @@ public sealed class QueryBuilderTests : ClientTestBase
         QueryTree.Wrap(query, [query.Children[2]], 1).ShouldNotBeNull();
 
         // with MaxDepth 0 the builder offers no groups at all
-        var (_, builder) = Build(new QueryGroup { Children = [R("a")] }, maxDepth: 0);
+        var (popovers, builder) = Build(new QueryGroup { Children = [R("a")] }, maxDepth: 0);
         builder.FindAll("[data-testid='query-add-group']").ShouldBeEmpty();
+        builder.Find("[data-testid='query-rule'] [data-testid='query-node-menu'] button, [data-testid='query-rule'] button[data-testid='query-node-menu']").Click();
+        popovers.WaitForElement("[data-testid='query-wrap']").ClassList.ShouldContain("mud-disabled");
     }
 
     [Fact]

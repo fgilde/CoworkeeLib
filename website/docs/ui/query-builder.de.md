@@ -43,7 +43,7 @@ Komponente, Modell und beide Übersetzer liegen in `Coworkee.Client.Blazor.Compo
 Jede Bedingung und Gruppe hat einen Ziehgriff, Hoch-/Runter-Knöpfe und ein Aktionsmenü, damit die Tastatur alles erreicht, was die Maus kann:
 
 - eine Bedingung auf eine andere ziehen setzt sie davor, auf eine Gruppe gezogen ans Ende dieser Gruppe; eine Gruppe wandert mit ihren Bedingungen
-- das Menü verschiebt einen Knoten *in* eine andere Gruppe oder *aus* seiner Gruppe, *packt* ihn in eine neue Gruppe und *löst* eine Gruppe *auf* (nicht, wenn sie negiert ist, sonst ändert sich die Bedeutung)
+- das Menü verschiebt einen Knoten *in* eine andere Gruppe oder *aus* seiner Gruppe, *packt* ihn in eine neue Gruppe und *löst* eine Gruppe *auf* (nur wenn die Bedeutung bleibt: nicht negiert, und mit einer Bedingung oder demselben *Alle* / *Beliebige* wie die umgebende Gruppe)
 - Bedingungen ankreuzen und in ihrer Gruppe *Auswahl gruppieren* drücken, um sie in einer neuen Gruppe zusammenzufassen
 - der *Alle* / *Beliebige*-Schalter einer Gruppe lässt sich jederzeit ändern
 
