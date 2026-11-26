@@ -9,6 +9,7 @@ public static class PermissionCatalog
             "Identity.Users.View", "Identity.Users.Manage", "Identity.Groups.View", "Identity.Groups.Manage", "Identity.Roles.View", "Identity.Roles.Manage",
             "Identity.Permissions.Manage", "Identity.ResourcePermissions.Manage", "Identity.Clients.Manage", "Settings.Manage", "Themes.Manage", "Localization.Manage",
             "Mail.Templates.Manage", "Mail.Log.View", "Jobs.View", "ApiDocs.View",
+            "DataFilters.ManageSystem", "DataFilters.ManageTenant", "DataFilters.ManageGroups", "DataFilters.ManageRoles", "DataFilters.Bypass",
         ]),
         ("auditing", ["Audit.View"]),
         ("chat", ["Chat.Use"]),

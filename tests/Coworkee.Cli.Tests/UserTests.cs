@@ -43,6 +43,8 @@ public sealed class UserTests(TemplateFixture template)
         errors.Count.ShouldBe(9);
         PermissionCatalog.For(SpecJson.Example()).ShouldContain("Sales.Orders.Edit");
         PermissionCatalog.For(new AppSpec { Name = "Shop" }).ShouldContain("Catalog.Products.View");
+        PermissionCatalog.For(new AppSpec { Name = "Shop" }).ShouldContain("DataFilters.ManageGroups");
+        PermissionCatalog.For(new AppSpec { Name = "Shop" }).ShouldContain("DataFilters.Bypass");
     }
 
     [Theory]

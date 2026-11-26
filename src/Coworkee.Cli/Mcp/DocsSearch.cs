@@ -17,6 +17,7 @@ internal static partial class DocsSearch
         ("Identity and security", "features/identity/"),
         ("Multi-tenancy and settings", "features/multi-tenancy/"),
         ("Data and queries", "features/data/"),
+        ("Layered data filters", "features/data-filters/"),
         ("Blazor admin UI", "features/blazor-ui/"),
         ("Realtime and collaboration", "features/realtime/"),
         ("AI assistant and MCP", "features/ai/"),

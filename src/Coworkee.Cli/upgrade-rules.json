@@ -997,11 +997,16 @@
     {
       "version": "0.1.7",
       "breaking": [
-        "The query model (QueryGroup, QueryRule, QueryField, QueryOperator, QueryFieldType, QueryOption, QueryLogic, QueryJson, QueryDescriber, QueryDates, QueryOperators) and ODataQueryTranslator moved from Coworkee.Client.Blazor.Components.Query to Coworkee.Contracts.Query, so the server can use them; the editors (QueryBuilder and friends) and LinqQueryTranslator stay."
+        "The query model (QueryGroup, QueryRule, QueryField, QueryOperator, QueryFieldType, QueryOption, QueryLogic, QueryJson, QueryDescriber, QueryDates, QueryOperators) and ODataQueryTranslator moved from Coworkee.Client.Blazor.Components.Query to Coworkee.Contracts.Query, so the server can use them; the editors (QueryBuilder and friends) and LinqQueryTranslator stay. Fully qualified references to Components.Query must be updated by hand.",
+        "New tables cw.DataFilters and cw.DataFilterLinks (layered data filters): the migration is required before any read works, because every entity-set read queries them on a cold cache; add and apply it before starting the upgraded app."
       ],
+      "needsMigration": true,
       "renames": [
         {"find": "(?m)^using Coworkee\\.Client\\.Blazor\\.Components\\.Query;", "replace": "using Coworkee.Client.Blazor.Components.Query;\nusing Coworkee.Contracts.Query;", "files": ["src/**/*.cs", "tests/**/*.cs"], "unless": "using Coworkee.Contracts.Query;"},
         {"find": "(?m)^@using Coworkee\\.Client\\.Blazor\\.Components\\.Query[ \\t]*$", "replace": "@using Coworkee.Client.Blazor.Components.Query\n@using Coworkee.Contracts.Query", "files": ["src/**/*.razor", "tests/**/*.razor"], "unless": "@using Coworkee.Contracts.Query"}
+      ],
+      "manual": [
+        { "text": "A fully qualified reference to Components.Query (in code or in a razor file) now names Coworkee.Contracts.Query for the moved query model types (QueryGroup, QueryRule, QueryField, QueryJson, ODataQueryTranslator, ...).", "find": "Components\\.Query\\.", "files": [ "src/**/*.cs", "src/**/*.razor", "tests/**/*.cs", "tests/**/*.razor" ] }
       ]
     }
   ]

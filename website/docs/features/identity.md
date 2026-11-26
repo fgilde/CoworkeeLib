@@ -87,6 +87,8 @@ Users are members of any number of groups. **Units grant nothing by themselves**
 
 When units are customers, `Coworkee:Identity:GroupScopedAdministration` limits administrators without `ScopeAll` to their groups, the sub-groups and their members: the users and groups pages, the group tree (it starts at the top groups of their reach), the *New user* dialog (the new user joins one of their groups), OData, search and the AI tools show only those, and users who also belong to another unit are changed only by someone reaching all their groups. See [group-scoped administration](../security/permissions.md#group-scoped-administration).
 
+Which rows the members of a group see can be narrowed further with [data filters](data-filters.md): filters per group and role that users never see.
+
 On the groups page the tree loads lazily, with a search, counts, and tabs for General, Members and Roles. `?group={id}` deep-links to a group. Apps add their own tabs:
 
 ```csharp

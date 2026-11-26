@@ -135,6 +135,8 @@ A set can have its own cap, and keeps its filters above it: `AddODataEntity<Ship
 
 Some rows are not for everyone. An entity filter narrows lists, counts, facets and single reads alike:
 
+Administrators can add filters per system, tenant, group and role without code; see [layered data filters](../features/data-filters.md).
+
 ```csharp
 internal sealed class DocumentODataFilter(DocumentVisibility visibility) : IODataEntityFilter<Document>
 {

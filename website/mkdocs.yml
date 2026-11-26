@@ -75,6 +75,7 @@ plugins:
             Identity and security: Identity und Sicherheit
             Multi-tenancy and settings: Mandanten und Einstellungen
             Data and queries: Daten und Abfragen
+            Layered data filters: Gestaffelte Datenfilter
             Blazor admin UI: Blazor-Admin-Oberfläche
             Realtime and collaboration: Realtime und Zusammenarbeit
             Reporting and dashboards: Berichte und Dashboards
@@ -192,6 +193,7 @@ nav:
       - Identity and security: features/identity.md
       - Multi-tenancy and settings: features/multi-tenancy.md
       - Data and queries: features/data.md
+      - Layered data filters: features/data-filters.md
       - Blazor admin UI: features/blazor-ui.md
       - Realtime and collaboration: features/realtime.md
       - AI assistant and MCP: features/ai.md

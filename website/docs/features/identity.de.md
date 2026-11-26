@@ -87,6 +87,8 @@ Benutzer sind Mitglied in beliebig vielen Gruppen. **Einheiten vergeben von sich
 
 Sind Einheiten Kunden, beschränkt `Coworkee:Identity:GroupScopedAdministration` Verwalter ohne `ScopeAll` auf ihre Gruppen, deren Untergruppen und Mitglieder: Die Seiten Benutzer und Gruppen, der Gruppenbaum (er beginnt bei den obersten Gruppen ihrer Reichweite), der Dialog *Neuer Benutzer* (der neue Benutzer tritt einer ihrer Gruppen bei), OData, Suche und KI-Werkzeuge zeigen nur diese, und Benutzer, die auch zu einer anderen Einheit gehören, ändert nur, wer alle ihre Gruppen erreicht. Siehe [gruppenbezogene Verwaltung](../security/permissions.md#gruppenbezogene-verwaltung).
 
+Welche Zeilen die Mitglieder einer Gruppe sehen, lässt sich mit [Datenfiltern](data-filters.de.md) weiter einschränken: Filter pro Gruppe und Rolle, die Benutzer nie sehen.
+
 Auf der Gruppenseite lädt der Baum bei Bedarf nach, mit Suche, Zählern und den Reitern Allgemein, Mitglieder und Rollen. `?group={id}` springt direkt zu einer Gruppe. Apps ergänzen eigene Reiter:
 
 ```csharp

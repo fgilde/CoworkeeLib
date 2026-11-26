@@ -2,6 +2,21 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Geändert
+
+- Das Abfragemodell (`QueryGroup`, `QueryRule`, `QueryField`, `QueryOption`, `QueryOperator`, `QueryFieldType`, `QueryLogic`, `QueryJson`, `QueryDescriber`, `QueryDates`, `QueryOperators`) und `ODataQueryTranslator` sind von `Coworkee.Client.Blazor.Components.Query` nach `Coworkee.Contracts.Query` umgezogen, damit Servercode eine gespeicherte Abfrage in `$filter` übersetzen kann. Die Editoren (`QueryBuilder`, `QueryGroupEditor`, ...) und `LinqQueryTranslator` bleiben im Client-Namespace; `coworkee update` ergänzt `using Coworkee.Contracts.Query;` neben dem alten. Neu: `EdmQueryFields.For(model, entitySet)` (`Coworkee.OData.Query`) listet die Abfragefelder eines Sets aus seinem EDM-Modell. Voll qualifizierte Verweise auf `Components.Query` im Code müssen von Hand nach `Coworkee.Contracts.Query` umgestellt werden.
+- **Vor dem ersten Start nötig:** die Migration für `cw.DataFilters` und `cw.DataFilterLinks`. Jede Abfrage eines Entity-Sets liest sie bei kaltem Cache, ohne die Tabellen schlagen Abfragen fehl. `coworkee migrations add AddDataFilters` ausführen (oder die Bibliotheksmigration anwenden), bevor die aktualisierte App startet.
+
+### Hinzugefügt
+
+- `QueryBuilder` verschiebt, gruppiert um und packt nachträglich aus: Drag and Drop plus ein Aktionsmenü pro Knoten (hoch, runter, in eine Gruppe, aus einer Gruppe, einpacken, auspacken), *Wrap selected* für angehakte Bedingungen, alles innerhalb von `MaxDepth`. `QueryMoveButtons` heißt jetzt `QueryNodeMenu`; `QueryTree` hält die Änderungen. Kein Handlungsbedarf, außer Sie nutzten `QueryMoveButtons` direkt.
+- **Gestaffelte Datenfilter.** Administratoren legen pro Entity-Set Filter auf vier Ebenen fest (System, Mandant, Gruppe, Rolle), die Benutzer nie sehen; sie gelten für OData-Listen und -Zähler, `$expand`, Client-Entities, Suche, Berichte und Exporte. Neue Berechtigungen `DataFilters.ManageSystem`, `ManageTenant`, `ManageGroups`, `ManageRoles` und `DataFilters.Bypass`, Tabellen `cw.DataFilters` und `cw.DataFilterLinks`, `DataFilterScope.ByKey()`, verknüpfte Sets, die Seite „Datentypen“ und ein Reiter „Datenfilter“ auf Gruppen- und Rollenseite. Siehe [gestaffelte Datenfilter](../features/data-filters.de.md).
+- `IGroupRowSource<T>` (`Coworkee.OData.DataFilters`): Eine App sagt, welche Zeilen eines Sets über welche Gruppe kommen, damit ein Gruppenfilter nur diese Zeilen einschränkt. Ohne Quelle gilt „Filter irgendeiner Gruppe“. Mit `UseRelationalNulls(true)` bleiben Zeilen mit leerer Gruppenverknüpfung verborgen.
+- `IActiveRoles` (`Coworkee.Identity`) und `IPermissionChecker.GetRoleIdsAsync`: die Rollen, in denen ein Benutzer arbeitet, für Regeln, die an Rollen hängen. Ein eigener Berechtigungsprüfer ohne `GetRoleIdsAsync` bekommt keine Rollenfilter.
+- `IHasRealtimeSignals` und `RealtimeEventTypes.Signal`: Echtzeit-Signale ohne Nutzdaten und ohne Akteur. „Signal“ ist ein reservierter Ereignisname.
+
 ## 0.1.6 (2026-11-26)
 
 ### Geändert

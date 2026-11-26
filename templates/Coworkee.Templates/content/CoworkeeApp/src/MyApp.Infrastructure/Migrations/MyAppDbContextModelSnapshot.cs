@@ -2133,6 +2133,99 @@ namespace MyApp.Infrastructure.Migrations
                     b.ToTable("ClientEntityTouches", "cw");
                 });
 
+            modelBuilder.Entity("Coworkee.OData.DataFilters.DataFilter", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("AppliesToDetails")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EntitySet")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Layer")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid?>("LayerKey")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Query")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "EntitySet", "Layer", "LayerKey")
+                        .IsUnique();
+
+                    b.ToTable("DataFilters", "cw");
+                });
+
+            modelBuilder.Entity("Coworkee.OData.DataFilters.DataFilterLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EntitySet")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Property")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("TargetSet")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntitySet")
+                        .IsUnique();
+
+                    b.ToTable("DataFilterLinks", "cw");
+                });
+
             modelBuilder.Entity("Coworkee.OData.Transfer.DataTransferJob", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3570,7 +3663,7 @@ namespace MyApp.Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("Coworkee.Identity.Domain.User", null)
-                        .WithMany()
+                        .WithMany("Roles")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -3638,6 +3731,8 @@ namespace MyApp.Infrastructure.Migrations
             modelBuilder.Entity("Coworkee.Identity.Domain.User", b =>
                 {
                     b.Navigation("Groups");
+
+                    b.Navigation("Roles");
                 });
 
             modelBuilder.Entity("Coworkee.Identity.Domain.UserGroup", b =>
@@ -5723,6 +5818,99 @@ namespace MyApp.Infrastructure.Migrations
                     b.ToTable("ClientEntityTouches", "cw");
                 });
 
+            modelBuilder.Entity("Coworkee.OData.DataFilters.DataFilter", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("AppliesToDetails")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EntitySet")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Layer")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid?>("LayerKey")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Query")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "EntitySet", "Layer", "LayerKey")
+                        .IsUnique();
+
+                    b.ToTable("DataFilters", "cw");
+                });
+
+            modelBuilder.Entity("Coworkee.OData.DataFilters.DataFilterLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EntitySet")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Property")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("TargetSet")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntitySet")
+                        .IsUnique();
+
+                    b.ToTable("DataFilterLinks", "cw");
+                });
+
             modelBuilder.Entity("Coworkee.OData.Transfer.DataTransferJob", b =>
                 {
                     b.Property<Guid>("Id")
@@ -6954,7 +7142,7 @@ namespace MyApp.Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("Coworkee.Identity.Domain.User", null)
-                        .WithMany()
+                        .WithMany("Roles")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -7001,6 +7189,8 @@ namespace MyApp.Infrastructure.Migrations
             modelBuilder.Entity("Coworkee.Identity.Domain.User", b =>
                 {
                     b.Navigation("Groups");
+
+                    b.Navigation("Roles");
                 });
 
             modelBuilder.Entity("Coworkee.Identity.Domain.UserGroup", b =>

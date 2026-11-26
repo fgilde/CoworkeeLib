@@ -135,6 +135,8 @@ Ein Set kann eine eigene Grenze haben und behält darüber seine Filter: `AddODa
 
 Manche Zeilen sind nicht für alle. Ein Entity-Filter schränkt Listen, Zähler, Facetten und Einzelabfragen gleichermaßen ein:
 
+Administratoren können ohne Code Filter pro System, Mandant, Gruppe und Rolle ergänzen; siehe [gestaffelte Datenfilter](../features/data-filters.de.md).
+
 ```csharp
 internal sealed class DocumentODataFilter(DocumentVisibility visibility) : IODataEntityFilter<Document>
 {

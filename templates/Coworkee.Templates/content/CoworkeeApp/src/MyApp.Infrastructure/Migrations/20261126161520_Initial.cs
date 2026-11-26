@@ -363,6 +363,48 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "DataFilterLinks",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    EntitySet = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Property = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    TargetSet = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    ModifiedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ModifiedBy = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DataFilterLinks", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DataFilters",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: true),
+                    EntitySet = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Layer = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    LayerKey = table.Column<Guid>(type: "uuid", nullable: true),
+                    Query = table.Column<string>(type: "text", nullable: false),
+                    AppliesToDetails = table.Column<bool>(type: "boolean", nullable: false),
+                    Version = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    ModifiedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ModifiedBy = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DataFilters", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "DataProtectionKeys",
                 schema: "cw",
                 columns: table => new
@@ -1879,6 +1921,20 @@ namespace MyApp.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_DataFilterLinks_EntitySet",
+                schema: "cw",
+                table: "DataFilterLinks",
+                column: "EntitySet",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DataFilters_TenantId_EntitySet_Layer_LayerKey",
+                schema: "cw",
+                table: "DataFilters",
+                columns: new[] { "TenantId", "EntitySet", "Layer", "LayerKey" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_DataTransferJobs_TenantId_UserId_CreatedAt",
                 schema: "cw",
                 table: "DataTransferJobs",
@@ -2470,6 +2526,14 @@ namespace MyApp.Infrastructure.Migrations
                 schema: "cw");
 
             migrationBuilder.DropTable(
+                name: "DataFilterLinks",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "DataFilters",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
                 name: "DataProtectionKeys",
                 schema: "cw");
 
@@ -3034,6 +3098,48 @@ namespace MyApp.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_DatabaseBackups", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DataFilterLinks",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    EntitySet = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Property = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    TargetSet = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    ModifiedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ModifiedBy = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DataFilterLinks", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DataFilters",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: true),
+                    EntitySet = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Layer = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    LayerKey = table.Column<Guid>(type: "uuid", nullable: true),
+                    Query = table.Column<string>(type: "text", nullable: false),
+                    AppliesToDetails = table.Column<bool>(type: "boolean", nullable: false),
+                    Version = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    ModifiedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ModifiedBy = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DataFilters", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -4432,6 +4538,20 @@ namespace MyApp.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_DataFilterLinks_EntitySet",
+                schema: "cw",
+                table: "DataFilterLinks",
+                column: "EntitySet",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DataFilters_TenantId_EntitySet_Layer_LayerKey",
+                schema: "cw",
+                table: "DataFilters",
+                columns: new[] { "TenantId", "EntitySet", "Layer", "LayerKey" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_DataTransferJobs_TenantId_UserId_CreatedAt",
                 schema: "cw",
                 table: "DataTransferJobs",
@@ -4988,6 +5108,14 @@ namespace MyApp.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "DatabaseBackups",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "DataFilterLinks",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "DataFilters",
                 schema: "cw");
 
             migrationBuilder.DropTable(

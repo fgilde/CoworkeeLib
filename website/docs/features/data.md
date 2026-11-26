@@ -49,6 +49,8 @@ The same sets serve files. Exports write the current view as Excel, CSV or JSON,
 
 For conditions users assemble themselves, `QueryBuilder` produces nested *all / any* groups. `ODataQueryTranslator.ToFilter` turns the result into `$filter` text, `LinqQueryTranslator.ToExpression<T>` into an expression EF Core can run, and the tests make sure both return the same rows.
 
+Filters that administrators set per system, tenant, group or role, and that users never see, are covered in [layered data filters](data-filters.md).
+
 ## Client entities: the browser answers
 
 Put `[ClientEntity]` on an entity and the Blazor client keeps a copy of its OData set. While the copy downloads, queries go to the server. Once it is complete, filters, search, sorting and facet counts run locally, and changes arrive as deltas.

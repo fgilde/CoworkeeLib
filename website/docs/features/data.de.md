@@ -49,6 +49,8 @@ Dieselben Sets bedienen auch Dateien. Exporte schreiben die aktuelle Ansicht als
 
 Für Bedingungen, die Benutzer selbst zusammenklicken, gibt es den `QueryBuilder` mit verschachtelten *alle / irgendeine*-Gruppen. `ODataQueryTranslator.ToFilter` macht daraus `$filter`-Text, `LinqQueryTranslator.ToExpression<T>` einen Ausdruck, den EF Core ausführt, und die Tests prüfen, dass beide dieselben Zeilen liefern.
 
+Filter, die Administratoren pro System, Mandant, Gruppe oder Rolle setzen und die Benutzer nie sehen, stehen in [gestaffelte Datenfilter](data-filters.de.md).
+
 ## Client-Entities: der Browser antwortet
 
 Setz `[ClientEntity]` an eine Entity, und der Blazor-Client hält eine Kopie ihres OData-Sets. Solange die Kopie lädt, gehen Abfragen an den Server. Ist sie vollständig, laufen Filter, Suche, Sortierung und Facettenzählung lokal, und Änderungen kommen als Deltas nach.
