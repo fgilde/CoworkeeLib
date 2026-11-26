@@ -11,8 +11,9 @@ namespace Coworkee.OData.DataFilters;
 
 /// <summary>
 /// The hidden data filters of an entity set for the current user, as one predicate: System AND Tenant AND each active role AND the group part. The group part
-/// keeps a row that comes through one of the user's active groups and passes that group's filters and its ancestors' (rows of groups without any pass as
-/// they are); for sets without an <see cref="IGroupRowSource{TEntity}"/> a row passes when one active group's filters let it through.
+/// only narrows, it never scopes: a row that comes through none of the user's active groups is left to the app's own scope; one that comes through an active
+/// group without filters (own and ancestors') passes; one that comes only through filtered active groups must pass the filters of one of them. For sets
+/// without an <see cref="IGroupRowSource{TEntity}"/> a row passes when one active group's filters let it through.
 /// </summary>
 public sealed class DataFilterResolver(IServiceProvider services, ICurrentUser user, IPermissionChecker permissions, ODataEntityRegistry registry)
 {
@@ -113,7 +114,13 @@ public sealed class DataFilterResolver(IServiceProvider services, ICurrentUser u
             return unfiltered.Count > 0 ? null : filtered.Select(f => f.Filter).Aggregate(Or);
         }
 
-        var terms = unfiltered.Count > 0 ? [await source.RowsOfAsync(unfiltered, ct)] : new List<Expression<Func<TEntity, bool>>>();
+        // NOT rowsOf(all active) OR rowsOf(unfiltered) OR rowsOf(G1) AND f1 OR ...: joining a filtered group never hides what another group or the app shows
+        var terms = new List<Expression<Func<TEntity, bool>>> { Not(await source.RowsOfAsync(active, ct)) };
+        if (unfiltered.Count > 0)
+        {
+            terms.Add(await source.RowsOfAsync(unfiltered, ct));
+        }
+
         foreach (var (groups, filter) in filtered)
         {
             terms.Add(And(await source.RowsOfAsync(groups, ct), filter));
@@ -132,6 +139,8 @@ public sealed class DataFilterResolver(IServiceProvider services, ICurrentUser u
     private static Expression<Func<TEntity, bool>> And<TEntity>(Expression<Func<TEntity, bool>> a, Expression<Func<TEntity, bool>> b) => Combine(a, b, ExpressionType.AndAlso);
 
     private static Expression<Func<TEntity, bool>> Or<TEntity>(Expression<Func<TEntity, bool>> a, Expression<Func<TEntity, bool>> b) => Combine(a, b, ExpressionType.OrElse);
+
+    private static Expression<Func<TEntity, bool>> Not<TEntity>(Expression<Func<TEntity, bool>> a) => Expression.Lambda<Func<TEntity, bool>>(Expression.Not(a.Body), a.Parameters);
 
     private static Expression<Func<TEntity, bool>> Combine<TEntity>(Expression<Func<TEntity, bool>> a, Expression<Func<TEntity, bool>> b, ExpressionType type) =>
         Expression.Lambda<Func<TEntity, bool>>(Expression.MakeBinary(type, a.Body, ReplacingExpressionVisitor.Replace(b.Parameters[0], a.Parameters[0], b.Body)), a.Parameters);

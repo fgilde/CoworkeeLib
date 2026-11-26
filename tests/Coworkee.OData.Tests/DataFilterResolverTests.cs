@@ -95,8 +95,51 @@ public sealed class DataFilterResolverTests(ODataApp app) : IAsyncLifetime
         var user = await UserAsync();
         await FilterAsync("Crates", DataFilterLayer.Group, A, Rule("Quantity", QueryOperator.GreaterThan, "5"));
 
-        // B's rows stay complete; rows of no group of the user do not come through
-        (await CratesAsync(user)).ShouldBe(["a-big", "b-big", "b-small"]);
+        // B's rows stay complete, A's pass A's filter, rows of groups the user is not in are left to the app's scope
+        (await CratesAsync(user)).ShouldBe(["a-big", "b-big", "b-small", "c-big", "c-small", "p-big", "p-small", "x-big", "z-big"]);
+    }
+
+    [Fact]
+    public async Task A_filter_of_a_group_the_user_is_not_in_changes_nothing()
+    {
+        Groups.Accessible = [B];
+        var user = await UserAsync();
+        await FilterAsync("Crates", DataFilterLayer.Group, A, Rule("Quantity", QueryOperator.GreaterThan, "5"));
+
+        // the group layer narrows, it does not scope: A's rows that fail A's filter stay too
+        (await PredicateAsync<Crate>(user, "Crates")).ShouldBeNull();
+        (await CratesAsync(user)).Length.ShouldBe(10);
+    }
+
+    [Fact]
+    public async Task Joining_a_filtered_group_hides_no_row_of_an_unfiltered_group()
+    {
+        var user = await UserAsync();
+        await FilterAsync("Crates", DataFilterLayer.Group, A, Rule("Quantity", QueryOperator.GreaterThan, "5"));
+        Groups.Accessible = [B];
+        var before = await CratesAsync(user);
+
+        Groups.Accessible = [A, B];
+        var after = await CratesAsync(user);
+
+        // only A's row that fails A's filter goes; B's rows and everything else stay
+        before.Except(after).ShouldBe(["a-small"]);
+        after.Except(before).ShouldBeEmpty();
+        after.ShouldContain("b-small");
+        after.ShouldContain("b-big");
+    }
+
+    [Fact]
+    public async Task A_row_source_that_sees_all_skips_the_group_layer()
+    {
+        CrateUnits.SeesAll = true;
+        var user = await UserAsync();
+        await FilterAsync("Crates", DataFilterLayer.Group, A, Rule("Quantity", QueryOperator.LessThan, "5"));
+        await FilterAsync("Crates", DataFilterLayer.Group, B, Rule("Quantity", QueryOperator.LessThan, "5"));
+        await FilterAsync("Crates", DataFilterLayer.Tenant, null, Rule("Name", QueryOperator.EndsWith, "big"));
+
+        // the tenant filter still applies
+        (await CratesAsync(user)).ShouldBe(["a-big", "b-big", "c-big", "p-big", "x-big", "z-big"]);
     }
 
     [Fact]
@@ -107,12 +150,12 @@ public sealed class DataFilterResolverTests(ODataApp app) : IAsyncLifetime
         await FilterAsync("Crates", DataFilterLayer.Group, Parent, Rule("Quantity", QueryOperator.GreaterThan, "5"));
         await FilterAsync("Crates", DataFilterLayer.Group, Child, Rule("Name", QueryOperator.StartsWith, "c-"));
 
-        // a member of the child only: the parent's filter applies too
+        // a member of the child only: the parent's filter applies to the child's rows too (rows of other groups are left as they are)
         Groups.Accessible = [Child];
-        (await CratesAsync(user)).ShouldBe(["c-big"]);
+        (await CratesAsync(user)).ShouldBe(["a-big", "a-small", "b-big", "b-small", "c-big", "p-big", "p-small", "z-big"]);
         // a member of the parent reaches the child: the parent's rows pass its filter, the child's rows both
         Groups.Accessible = [Parent, Child, B];
-        (await CratesAsync(user)).ShouldBe(["b-big", "b-small", "c-big", "p-big"]);
+        (await CratesAsync(user)).ShouldBe(["a-big", "a-small", "b-big", "b-small", "c-big", "p-big", "z-big"]);
     }
 
     [Fact]
@@ -177,7 +220,7 @@ public sealed class DataFilterResolverTests(ODataApp app) : IAsyncLifetime
         (await GadgetsAsync(user)).ShouldBeEmpty();
         (await GadgetsAsync(user)).ShouldBeEmpty();
         // only the broken group's rows go
-        (await CratesAsync(user)).ShouldBe(["b-big", "b-small"]);
+        (await CratesAsync(user)).ShouldBe(["b-big", "b-small", "c-big", "c-small", "p-big", "p-small", "x-big", "z-big"]);
         app.Logs.Warnings.Count(w => w.Contains(broken.ToString(), StringComparison.Ordinal)).ShouldBe(1);
     }
 

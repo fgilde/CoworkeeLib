@@ -37,7 +37,10 @@ internal sealed class CrateUnits : Coworkee.OData.DataFilters.IGroupRowSource<Cr
         return Task.FromResult<System.Linq.Expressions.Expression<Func<Crate, bool>>>(c => ids.Contains(c.UnitId));
     }
 
-    public Task<bool> SeesAllAsync(CancellationToken ct) => Task.FromResult(false);
+    /// <summary>Every user sees all crates without a group (an app's "sees all"); reset by <see cref="ODataApp.SetupAsync"/>.</summary>
+    public static bool SeesAll { get; set; }
+
+    public Task<bool> SeesAllAsync(CancellationToken ct) => Task.FromResult(SeesAll);
 }
 
 public sealed class CrateRow

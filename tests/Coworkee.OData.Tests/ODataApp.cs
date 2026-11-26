@@ -106,6 +106,7 @@ public sealed class ODataApp : DatabaseFixture
         await ResetAsync();
         var groups = App.Services.GetRequiredService<FakeGroupScope>();
         (groups.Stored, groups.Accessible, groups.Nodes) = ([], [FakeGroupScope.A, FakeGroupScope.B], []);
+        CrateUnits.SeesAll = false;
         Mails.Sent.Clear();
         Mails.Fail = false;
         Mails.During = null;
