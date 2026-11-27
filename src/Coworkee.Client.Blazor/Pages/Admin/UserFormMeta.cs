@@ -24,7 +24,7 @@ public static class UserFormMeta
         language.RenderWith<MudExSelect<string>, string?>(s => s.Value, s =>
         {
             s.ItemCollection = [string.Empty, .. l.Languages.Select(c => c.Culture)];
-            s.ToStringFunc = culture => string.IsNullOrEmpty(culture) ? l["Organisation default"] : l.Languages.FirstOrDefault(c => c.Culture == culture)?.Name ?? culture!;
+            s.ToStringFunc = culture => string.IsNullOrEmpty(culture) ? l["Tenant default"] : l.Languages.FirstOrDefault(c => c.Culture == culture)?.Name ?? culture!;
         });
         language.WrapInMudItem(i =>
         {

@@ -57,7 +57,7 @@ public partial class Services : IDisposable
         }
         catch (ApiException exception)
         {
-            _error = exception.Status == 403 ? L["The services are shown in the system organisation."] : exception.Message;
+            _error = exception.Status == 403 ? L["The services are shown in the system tenant."] : exception.Message;
         }
         finally
         {

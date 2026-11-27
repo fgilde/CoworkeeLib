@@ -28,7 +28,7 @@ internal sealed class ServiceClientRights(CoworkeeDbContext db, ICurrentUser cur
         var roleIds = (request.Roles ?? []).Distinct().ToList();
         if (await db.Set<Role>().CountAsync(r => roleIds.Contains(r.Id) && r.TenantId == currentUser.TenantId && !r.IsSystem, cancellationToken) != roleIds.Count)
         {
-            return Error.Validation(nameof(ClientRequest.Roles), "Choose roles of this organisation; system roles cannot be given to clients.");
+            return Error.Validation(nameof(ClientRequest.Roles), "Choose roles of this tenant; system roles cannot be given to clients.");
         }
 
         var permissions = request.Permissions ?? [];

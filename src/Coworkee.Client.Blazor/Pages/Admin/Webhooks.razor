@@ -1,7 +1,7 @@
 @using Coworkee.Contracts.Webhooks
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + WebhookPermissions.Manage)]
 
-<PageHeader Title="Webhooks" Description="Endpoints that get a signed POST when something happens in the organisation; they receive only what the person who saved them may read." />
+<PageHeader Title="Webhooks" Description="Endpoints that get a signed POST when something happens in the tenant; they receive only what the person who saved them may read." />
 <MudStack Row="true" Class="mb-2">
     <MudSpacer />
     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" Size="Size.Small" Disabled="_busy"

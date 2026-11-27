@@ -7,18 +7,18 @@ description: "Administrators define filters per entity set on four layers (syste
 
 Administrators define, per entity set, filters that are always applied and that users never see. They sit on four layers: **System**, **Tenant**, **Group** and **Role**. A user's own filtering, facets and counts work on what is left. Nothing tells a user that rows were removed: counts, facets, search and paging are computed on the filtered rows.
 
-The filters apply wherever the library decides which rows a user may see: OData lists and `$count`, `$expand` targets, client entities (local copies, snapshots and deltas), global search, dynamic reports and exports. With no filter configured for a set there is no extra `Where`; finding that out costs one cached lookup of the organisation's filters (read from the database on a cold cache and inside a transaction).
+The filters apply wherever the library decides which rows a user may see: OData lists and `$count`, `$expand` targets, client entities (local copies, snapshots and deltas), global search, dynamic reports and exports. With no filter configured for a set there is no extra `Where`; finding that out costs one cached lookup of the tenant's filters (read from the database on a cold cache and inside a transaction).
 
 ## The four layers
 
 | Layer | Applies to | Written with |
 |---|---|---|
-| System | every organisation | `DataFilters.ManageSystem` (system organisation only) |
-| Tenant | the own organisation | `DataFilters.ManageTenant` |
+| System | every tenant | `DataFilters.ManageSystem` (system tenant only) |
+| Tenant | the own tenant | `DataFilters.ManageTenant` |
 | Group | members of a group (and its sub-groups) | `DataFilters.ManageGroups` |
 | Role | users acting in a role | `DataFilters.ManageRoles` |
 
-`DataFilters.Bypass` ("see every row") switches the Tenant, Group and Role layers off for its holder, and the System layer too when he belongs to the system organisation. The built-in Admin role holds every defined permission, so the administrators of every organisation hold Bypass: they see their organisation's data without its own filters, but System filters still apply to them; only the system organisation's administrators see the unfiltered data. Filters are stored as the `QueryGroup` of the [`QueryBuilder`](data.md) and translated to `$filter` on the server; saving validates them against the model of the set and refuses a filter that uses a property the saving administrator may not read (`HideUnless`).
+`DataFilters.Bypass` ("see every row") switches the Tenant, Group and Role layers off for its holder, and the System layer too when he belongs to the system tenant. The built-in Admin role holds every defined permission, so the administrators of every tenant hold Bypass: they see their tenant's data without its own filters, but System filters still apply to them; only the system tenant's administrators see the unfiltered data. Filters are stored as the `QueryGroup` of the [`QueryBuilder`](data.md) and translated to `$filter` on the server; saving validates them against the model of the set and refuses a filter that uses a property the saving administrator may not read (`HideUnless`).
 
 ## How the layers combine
 
@@ -108,7 +108,7 @@ The layer is `System` in the system tenant (needs `DataFilters.ManageSystem`) an
 
 ## Realtime
 
-Every change reloads open tables and resynchronises local copies; the partition of a client copy includes a fingerprint of all filters of the user's organisation and the System ones (ids and versions, links included), of his active roles that carry a role filter and, when there are group filters, of his active groups, so a changed filter, a role switch or another group drops the copy and fetches the visible rows again. Without filters the partition gets nothing extra. Changes publish payload-free, actor-free signals: entities implement `IHasRealtimeSignals` to name the topics, and the event type is `RealtimeEventTypes.Signal`. A signal carries an empty payload (no entity name, id or filter content) and no actor. Tenant, group and role filters signal on `tenant:data-filters` (their own organisation only), System filters and links on `global:data-filters`. "Signal" is a reserved event name: an app must not use it for events of its own.
+Every change reloads open tables and resynchronises local copies; the partition of a client copy includes a fingerprint of all filters of the user's tenant and the System ones (ids and versions, links included), of his active roles that carry a role filter and, when there are group filters, of his active groups, so a changed filter, a role switch or another group drops the copy and fetches the visible rows again. Without filters the partition gets nothing extra. Changes publish payload-free, actor-free signals: entities implement `IHasRealtimeSignals` to name the topics, and the event type is `RealtimeEventTypes.Signal`. A signal carries an empty payload (no entity name, id or filter content) and no actor. Tenant, group and role filters signal on `tenant:data-filters` (their own tenant only), System filters and links on `global:data-filters`. "Signal" is a reserved event name: an app must not use it for events of its own.
 
 ## Admin UI
 

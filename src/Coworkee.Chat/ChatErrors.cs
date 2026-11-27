@@ -4,7 +4,7 @@ namespace Coworkee.Chat;
 
 internal static class ChatErrors
 {
-    public static readonly Error UnknownPerson = Error.NotFound("chat.unknown_person", "There is no such person in the organisation.");
+    public static readonly Error UnknownPerson = Error.NotFound("chat.unknown_person", "There is no such person in the tenant.");
     public static readonly Error NotFound = Error.NotFound("chat.not_found", "There is no such chat.");
     public static readonly Error MessageNotFound = Error.NotFound("chat.message_not_found", "There is no such message.");
     public static readonly Error NotYours = Error.Forbidden("chat.not_yours", "Only the sender changes or deletes a message.");

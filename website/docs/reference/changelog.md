@@ -17,6 +17,41 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Changed
 
+- UI texts say tenant (German Mandant) and group, never organisation; identifiers (`ReportVisibility.Organisation`, `SetOrganisationDashboardReportCommand`, `DashboardReportDto.Organisation`, the route `dashboard/organisation`) stay. Localization keys are the English texts, so an English text that changed is a new key in all 22 language files; apps that override a library text by its English key re-key the override (old -> new):
+  - "Accounts of this organisation, their roles and whether they may sign in." -> "Accounts of this tenant, their roles and whether they may sign in."
+  - "Direct messages with the people of your organisation." -> "Direct messages with the people of your tenant."
+  - "Chat with people of the organisation" -> "Chat with people of the tenant"
+  - "Endpoints that get a signed POST when something happens in the organisation; they receive only what the person who saved them may read." -> "Endpoints that get a signed POST when something happens in the tenant; they receive only what the person who saved them may read."
+  - "The language the app starts in. An organisation overrides the system, a user overrides both; empty inherits." -> "The language the app starts in. A tenant overrides the system, a user overrides both; empty inherits."
+  - "Your picture and name show next to your messages, changes and documents for everyone in the organisation." -> "Your picture and name show next to your messages, changes and documents for everyone in the tenant."
+  - "Organisations using this installation: their edition, features and whether they may sign in." -> "Tenants using this installation: their edition, features and whether they may sign in."
+  - "The organisation's drive: folders and files with permissions per folder. Double-click a file to preview it, drag files in to upload them." -> "The tenant's drive: folders and files with permissions per folder. Double-click a file to preview it, drag files in to upload them."
+  - "These roles, groups and users lose this permission, in every organisation:" -> "These roles, groups and users lose this permission, in every tenant:"
+  - "Choose roles of this organisation; system roles cannot be given to clients." -> "Choose roles of this tenant; system roles cannot be given to clients."
+  - "Organisation" -> "Tenant"
+  - "The app configuration is managed from the system organisation." -> "The app configuration is managed from the system tenant."
+  - "The services are shown in the system organisation." -> "The services are shown in the system tenant."
+  - "Organisation default" -> "Tenant default"
+  - "The personal keys of the organisation's users; revoking one stops its clients at once." -> "The personal keys of the tenant's users; revoking one stops its clients at once."
+  - "On: this organisation sends with the settings below. Off: mails go through the system's server." -> "On: this tenant sends with the settings below. Off: mails go through the system's server."
+  - "Everybody in the organisation" -> "Everybody in the tenant"
+  - "Each recipient gets the mail in their own language: the user's, else the organisation's, else the default." -> "Each recipient gets the mail in their own language: the user's, else the tenant's, else the default."
+  - "Send one of your mail templates to many users of this organisation, now or at a chosen time." -> "Send one of your mail templates to many users of this tenant, now or at a chosen time."
+  - "The status of the installation is shown in the system organisation." -> "The status of the installation is shown in the system tenant."
+  - "Set as organisation dashboard" -> "Set as tenant dashboard"
+  - "Remove as organisation dashboard" -> "Remove as tenant dashboard"
+  - "How long data is kept. A nightly job deletes what is older, across all organisations. Empty keeps everything." -> "How long data is kept. A nightly job deletes what is older, across all tenants. Empty keeps everything."
+  - "Retention is managed from the system organisation." -> "Retention is managed from the system tenant."
+  - "Direct and group chats with the people of your organisation." -> "Direct and group chats with the people of your tenant."
+  - "Organisation name" -> "Tenant name"
+  - "Enter the name of the organisation." -> "Enter the name of the tenant."
+  - "Colors, fonts, radius, shadows, density, navigation and logo. Users choose among the themes switched on for them. Changes to a built-in theme apply to this organisation and can be reset." -> "Colors, fonts, radius, shadows, density, navigation and logo. Users choose among the themes switched on for them. Changes to a built-in theme apply to this tenant and can be reset."
+  - "Reset {0} to its built-in look? The changes of this organisation are discarded." -> "Reset {0} to its built-in look? The changes of this tenant are discarded."
+  - "Empty: the organisation's setting. 0: unlimited." -> "Empty: the tenant's setting. 0: unlimited."
+  - "{0} (organisation setting)" -> "{0} (tenant setting)"
+  - "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows each organisation and user sees at all (data filters). Changes reach every open client at once, without a deployment." -> "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows each tenant and user sees at all (data filters). Changes reach every open client at once, without a deployment."
+  - Also reworded without a translation key: the permission names "Write the data filters of all tenants", "Write the data filters of the tenant", "See all rows: no data filter of the own tenant applies (System filters neither, in the system tenant)", "Chat with people of the tenant", the three report permissions ("... of the tenant"), and the error messages that said "system organisation".
+- Removed the texts "Filter for every organisation (system)" and "Filter for this organisation" (no longer used since the Data types page names the layer itself).
 - Nextended 10.1.71, MudBlazor.Extensions 9.14.0 and MudBlazor 9.14.0.
 - The Data types page: a search field and two quick filters ("Local copies only", "With data filters only"), one action pattern per row (pencil, reset, then a filter icon that opens the filters of the row and shows with a badge how many filters and links the set has), and one filter layer per administrator: the system tenant edits the System layer and the links ("Filter for all tenants"), every other tenant its own ("Filter for tenant {name}"). Group filters stay on the group page.
 - Dropping a column header on the grouping row of the data table works again with MudBlazor 9.14, which no longer reports drops outside its own columns to the grid; the row listens to the drop container itself.

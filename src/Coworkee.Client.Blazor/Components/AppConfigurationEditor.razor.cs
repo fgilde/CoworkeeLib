@@ -145,7 +145,7 @@ public partial class AppConfigurationEditor<T>
         }
         catch (ApiException exception)
         {
-            _error = exception.Status == 403 ? L["The app configuration is managed from the system organisation."] : exception.Message;
+            _error = exception.Status == 403 ? L["The app configuration is managed from the system tenant."] : exception.Message;
         }
         finally
         {

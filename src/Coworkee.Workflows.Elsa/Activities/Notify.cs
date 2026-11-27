@@ -25,7 +25,7 @@ public sealed class Notify : CodeActivity
     [Input(Description = "Where the notification leads, e.g. /catalog/products.")]
     public Input<string?> Link { get; set; } = default!;
 
-    [Input(Description = "The organisation is the one of this user; empty: the user who started the workflow.")]
+    [Input(Description = "The tenant is the one of this user; empty: the user who started the workflow.")]
     public Input<Guid?> RunAs { get; set; } = default!;
 
     protected override async ValueTask ExecuteAsync(ActivityExecutionContext context)

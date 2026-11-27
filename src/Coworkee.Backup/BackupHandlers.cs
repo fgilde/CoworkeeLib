@@ -19,7 +19,7 @@ internal sealed class BackupHandlers(
       IHandler<OpenBackupQuery, Result<BackupFile>>
 {
     private static readonly Error SystemOnly =
-        Error.Forbidden("backup.system_only", "Backups hold every organisation; they are managed from the system organisation.");
+        Error.Forbidden("backup.system_only", "Backups hold every tenant; they are managed from the system tenant.");
 
     private static readonly Error NotFound = Error.NotFound("backup.not_found", "There is no such backup.");
 

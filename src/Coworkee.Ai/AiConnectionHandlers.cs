@@ -26,7 +26,7 @@ internal sealed class AiConnectionHandlers(AiConnections connections, AiConnecti
             : new AiConnectionTestDto(false, 0, null, false, "The connection lacks a key, an endpoint or a model.");
     }
 
-    private static readonly Error Forbidden = Error.Forbidden("ai.global_forbidden", "The AI connection can only be changed from the system organisation.");
+    private static readonly Error Forbidden = Error.Forbidden("ai.global_forbidden", "The AI connection can only be changed from the system tenant.");
 
     // the AI settings are system wide; the stored key only goes to the provider and endpoint it was saved for
     private async Task<AiConnection?> ResolveAsync(AiConnectionDraft draft, CancellationToken cancellationToken)

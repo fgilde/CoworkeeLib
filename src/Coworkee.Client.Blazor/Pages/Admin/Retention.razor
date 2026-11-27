@@ -1,7 +1,7 @@
 @using Coworkee.Client.Blazor.Retention
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + RetentionPermissions.Manage)]
 
-<PageHeader Title="Retention" Description="How long data is kept. A nightly job deletes what is older, across all organisations. Empty keeps everything." />
+<PageHeader Title="Retention" Description="How long data is kept. A nightly job deletes what is older, across all tenants. Empty keeps everything." />
 @if (_error is not null)
 {
     <MudAlert Severity="Severity.Error" Dense="true" Class="mb-4">@_error</MudAlert>

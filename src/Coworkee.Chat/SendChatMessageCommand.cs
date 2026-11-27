@@ -7,5 +7,5 @@ using Coworkee.Core.Results;
 namespace Coworkee.Chat;
 
 [RequiresPermission(ChatPermissions.Use)]
-[Description("Sends a plain text chat message to a person of the organisation.")]
+[Description("Sends a plain text chat message to a person of the tenant.")]
 public sealed record SendChatMessageCommand(Guid ToUserId, string Text) : ICommand<Result<ChatMessageDto>>;

@@ -73,7 +73,7 @@ internal sealed class SettingValueHandlers(
     }
 
     private static readonly Error GlobalForbidden =
-        Error.Forbidden("settings.global_forbidden", "System wide settings can only be changed from the system organisation.");
+        Error.Forbidden("settings.global_forbidden", "System wide settings can only be changed from the system tenant.");
 
     private async Task<bool> MayUseAsync(SettingScope scope, CancellationToken cancellationToken) =>
         scope != SettingScope.Global

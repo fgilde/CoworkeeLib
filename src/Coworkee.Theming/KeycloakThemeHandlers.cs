@@ -11,7 +11,7 @@ internal sealed class KeycloakThemeHandlers(KeycloakThemeSync sync, ICurrentUser
     : IHandler<GetKeycloakThemeStatus, Result<KeycloakThemeStatusDto>>,
       IHandler<ApplyKeycloakTheme, Result<KeycloakThemeStatusDto>>
 {
-    private static readonly Error HostOnly = Error.Forbidden("themes.keycloak_host_only", "The Keycloak sign-in page is managed from the system organisation.");
+    private static readonly Error HostOnly = Error.Forbidden("themes.keycloak_host_only", "The Keycloak sign-in page is managed from the system tenant.");
 
     public async Task<Result<KeycloakThemeStatusDto>> HandleAsync(GetKeycloakThemeStatus query, CancellationToken cancellationToken) =>
         await IsSystemAsync(cancellationToken) ? sync.Status : new KeycloakThemeStatusDto(false, null, null, null);

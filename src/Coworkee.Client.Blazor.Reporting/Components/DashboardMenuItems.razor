@@ -9,10 +9,10 @@ else
 <PermissionGate Permission="@ReportPermissions.Dashboard">
     @if (Dashboard?.Organisation == ReportId)
     {
-        <MudMenuItem Icon="@Icons.Material.Outlined.DashboardCustomize" OnClick="() => SetAsync(null, true)" data-testid="dashboard-organisation-clear">@L["Remove as organisation dashboard"]</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Outlined.DashboardCustomize" OnClick="() => SetAsync(null, true)" data-testid="dashboard-organisation-clear">@L["Remove as tenant dashboard"]</MudMenuItem>
     }
     else
     {
-        <MudMenuItem Icon="@Icons.Material.Outlined.Business" OnClick="() => SetAsync(ReportId, true)" data-testid="dashboard-organisation">@L["Set as organisation dashboard"]</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Outlined.Business" OnClick="() => SetAsync(ReportId, true)" data-testid="dashboard-organisation">@L["Set as tenant dashboard"]</MudMenuItem>
     }
 </PermissionGate>

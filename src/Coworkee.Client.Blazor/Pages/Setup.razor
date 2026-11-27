@@ -72,7 +72,7 @@
                     }
                     break;
                 case 2:
-                    <MudTextField Margin="Density.Margin" @bind-Value="_request.TenantName" Label="@L["Organisation name"]" Variant="Variant.Outlined" data-testid="tenant-name" Required="true" Immediate="true" />
+                    <MudTextField Margin="Density.Margin" @bind-Value="_request.TenantName" Label="@L["Tenant name"]" Variant="Variant.Outlined" data-testid="tenant-name" Required="true" Immediate="true" />
                     break;
                 case 3:
                     <ThemePicker Themes="_themes" SelectedId="SelectedThemeId" SelectedIdChanged="Choose" Mode="@ThemeService.Mode" ModeChanged="ThemeService.SetMode" />

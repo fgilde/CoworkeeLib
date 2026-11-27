@@ -11,7 +11,7 @@ internal sealed partial class SystemStatusHandler(
     IEnumerable<ISystemStatusContributor> contributors, ICurrentUser currentUser, IServiceProvider services, TimeProvider time, ILogger<SystemStatusHandler> logger)
     : IHandler<GetSystemStatus, Result<SystemStatusDto>>
 {
-    private static readonly Error SystemOnly = Error.Forbidden("system_status.system_only", "The status of the installation is shown in the system organisation.");
+    private static readonly Error SystemOnly = Error.Forbidden("system_status.system_only", "The status of the installation is shown in the system tenant.");
 
     public async Task<Result<SystemStatusDto>> HandleAsync(GetSystemStatus query, CancellationToken cancellationToken)
     {

@@ -13,7 +13,7 @@ internal sealed class MailSettingDefinitions : ISettingDefinitionContributor
     public void Define(SettingDefinitionContext context) =>
         context.Group("Mail", "Mail", page: "/admin/mail-settings")
             .Add(MailSettings.UseOwnServer, "Own mail server", SettingType.Bool, [SettingScope.Tenant], "false",
-                description: "On: this organisation sends with the settings below. Off: mails go through the system's server.")
+                description: "On: this tenant sends with the settings below. Off: mails go through the system's server.")
             .Add(MailSettings.Provider, "Provider", SettingType.Choice, Scopes, MailProviders.Smtp, choices: [.. MailProviders.All])
             .Add(MailSettings.Host, "SMTP host", SettingType.String, Scopes, enabledWhen: Provider(MailProviders.Smtp))
             .Add(MailSettings.Port, "SMTP port", SettingType.Int, Scopes, "25", enabledWhen: Provider(MailProviders.Smtp))

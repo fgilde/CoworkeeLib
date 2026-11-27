@@ -7,5 +7,5 @@ using Coworkee.Core.Results;
 namespace Coworkee.Reporting;
 
 [RequiresPermission(ReportPermissions.View)]
-[Description("Reads which report the signed-in user sees as dashboard: the own choice, else the default of the organisation.")]
+[Description("Reads which report the signed-in user sees as dashboard: the own choice, else the default of the tenant.")]
 public sealed record GetDashboardReportQuery : IQuery<Result<DashboardReportDto>>;

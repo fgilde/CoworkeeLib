@@ -31,7 +31,7 @@ internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUs
     private static readonly Error NotFound = Error.NotFound("themes.not_found", "The theme does not exist.");
     private static readonly Error ReadOnly = Error.Forbidden("themes.read_only", "Built-in themes cannot be deleted.");
     private static readonly Error NotBuiltIn = Error.Validation("themes.not_built_in", "Only built-in themes can be reset.");
-    private static readonly Error NoTenant = Error.Validation("Tenant", "Themes belong to an organisation.");
+    private static readonly Error NoTenant = Error.Validation("Tenant", "Themes belong to a tenant.");
 
     public async Task<Result<IReadOnlyList<ThemeDto>>> HandleAsync(GetThemes query, CancellationToken cancellationToken)
     {

@@ -22,7 +22,7 @@ internal sealed class RetentionHandlers(
       IHandler<RunRetentionCommand, Result>
 {
     private static readonly Error SystemOnly =
-        Error.Forbidden("retention.system_only", "Retention applies to every organisation; it is managed from the system organisation.");
+        Error.Forbidden("retention.system_only", "Retention applies to every tenant; it is managed from the system tenant.");
 
     private static readonly Error Running = Error.Conflict("retention.running", "This data is being deleted already.");
 

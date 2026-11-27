@@ -38,7 +38,7 @@
                     <tr><th>@L["Recipients"]</th><td data-testid="summary-count">@L["{0} recipients", _preview?.Count ?? 0]</td></tr>
                 </tbody>
             </MudSimpleTable>
-            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">@L["Each recipient gets the mail in their own language: the user's, else the organisation's, else the default."]</MudAlert>
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">@L["Each recipient gets the mail in their own language: the user's, else the tenant's, else the default."]</MudAlert>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Send" Disabled="_busy" OnClick="SendTestAsync" data-testid="send-test">@L["Send test to me"]</MudButton>
             <MudDivider Class="my-4" />
             <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_busy" OnClick="() => StartAsync(null)" data-testid="send-now">@L["Send now"]</MudButton>

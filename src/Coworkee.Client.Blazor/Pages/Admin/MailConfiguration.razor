@@ -15,7 +15,7 @@ else
                 <MudIcon Icon="@Icons.Material.Outlined.Dns" Color="Color.Primary" />
                 <div class="flex-grow-1">
                     <MudText Typo="Typo.subtitle1">@L["Own mail server"]</MudText>
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["On: this organisation sends with the settings below. Off: mails go through the system's server."]</MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["On: this tenant sends with the settings below. Off: mails go through the system's server."]</MudText>
                 </div>
                 <MudSwitch T="bool" @bind-Value="_form.OwnServer" Color="Color.Primary" data-testid="mail-own-server" aria-label="@L["Own mail server"]" />
             </MudPaper>

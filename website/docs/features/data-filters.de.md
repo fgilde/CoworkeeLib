@@ -7,18 +7,18 @@ description: "Administratoren legen pro Entity-Set Filter auf vier Ebenen fest (
 
 Administratoren legen pro Entity-Set Filter fest, die immer gelten und die Benutzer nie sehen. Sie liegen auf vier Ebenen: **System**, **Mandant**, **Gruppe** und **Rolle**. Die eigene Filterung, Facetten und Zähler eines Benutzers arbeiten auf dem, was übrig bleibt. Nichts verrät dem Benutzer, dass Zeilen fehlen: Zähler, Facetten, Suche und Paging werden auf den gefilterten Zeilen berechnet.
 
-Die Filter gelten überall, wo die Bibliothek entscheidet, welche Zeilen ein Benutzer sehen darf: OData-Listen und `$count`, `$expand`-Ziele, Client-Entities (lokale Kopien, Snapshots und Deltas), globale Suche, dynamische Berichte und Exporte. Ist für ein Set kein Filter eingerichtet, gibt es kein zusätzliches `Where`; das festzustellen kostet einen gecachten Nachschlag der Filter der Organisation (bei kaltem Cache und innerhalb einer Transaktion aus der Datenbank gelesen).
+Die Filter gelten überall, wo die Bibliothek entscheidet, welche Zeilen ein Benutzer sehen darf: OData-Listen und `$count`, `$expand`-Ziele, Client-Entities (lokale Kopien, Snapshots und Deltas), globale Suche, dynamische Berichte und Exporte. Ist für ein Set kein Filter eingerichtet, gibt es kein zusätzliches `Where`; das festzustellen kostet einen gecachten Nachschlag der Filter des Mandanten (bei kaltem Cache und innerhalb einer Transaktion aus der Datenbank gelesen).
 
 ## Die vier Ebenen
 
 | Ebene | Gilt für | Geschrieben mit |
 |---|---|---|
-| System | jede Organisation | `DataFilters.ManageSystem` (nur Systemorganisation) |
-| Mandant | die eigene Organisation | `DataFilters.ManageTenant` |
+| System | jeder Mandant | `DataFilters.ManageSystem` (nur im System-Mandanten) |
+| Mandant | der eigene Mandant | `DataFilters.ManageTenant` |
 | Gruppe | Mitglieder einer Gruppe (und ihrer Untergruppen) | `DataFilters.ManageGroups` |
 | Rolle | Benutzer, die in einer Rolle arbeiten | `DataFilters.ManageRoles` |
 
-`DataFilters.Bypass` („alle Zeilen sehen“) schaltet für den Inhaber die Ebenen Mandant, Gruppe und Rolle ab, und die Systemebene ebenfalls, wenn er zur Systemorganisation gehört. Die eingebaute Rolle Admin hat jede definierte Berechtigung, also haben die Administratoren jeder Organisation Bypass: Sie sehen die Daten ihrer Organisation ohne deren eigene Filter, die Systemfilter gelten für sie aber weiter; nur die Administratoren der Systemorganisation sehen die ungefilterten Daten. Filter werden als `QueryGroup` des [`QueryBuilder`](data.md) gespeichert und auf dem Server in `$filter` übersetzt; das Speichern prüft sie gegen das Modell des Sets und lehnt einen Filter ab, der eine Eigenschaft verwendet, die der speichernde Administrator nicht lesen darf (`HideUnless`).
+`DataFilters.Bypass` („alle Zeilen sehen“) schaltet für den Inhaber die Ebenen Mandant, Gruppe und Rolle ab, und die Systemebene ebenfalls, wenn er zum System-Mandanten gehört. Die eingebaute Rolle Admin hat jede definierte Berechtigung, also haben die Administratoren jedes Mandanten Bypass: Sie sehen die Daten ihres Mandanten ohne dessen eigene Filter, die Systemfilter gelten für sie aber weiter; nur die Administratoren des System-Mandanten sehen die ungefilterten Daten. Filter werden als `QueryGroup` des [`QueryBuilder`](data.md) gespeichert und auf dem Server in `$filter` übersetzt; das Speichern prüft sie gegen das Modell des Sets und lehnt einen Filter ab, der eine Eigenschaft verwendet, die der speichernde Administrator nicht lesen darf (`HideUnless`).
 
 ## So greifen die Ebenen ineinander
 
@@ -108,7 +108,7 @@ Die Ebene ist `System` im Systemmandanten (braucht `DataFilters.ManageSystem`), 
 
 ## Echtzeit
 
-Jede Änderung lädt offene Tabellen neu und gleicht lokale Kopien ab; die Partition einer Client-Kopie enthält einen Fingerabdruck aller Filter der Organisation des Benutzers und der Systemfilter (Ids und Versionen, Verknüpfungen eingeschlossen), seiner aktiven Rollen, die einen Rollenfilter tragen, und, wenn es Gruppenfilter gibt, seiner aktiven Gruppen; ein geänderter Filter, ein Rollenwechsel oder eine andere Gruppe verwirft also die Kopie und holt die sichtbaren Zeilen neu. Ohne Filter bekommt die Partition nichts dazu. Änderungen senden Signale ohne Nutzdaten und ohne Akteur: Entities implementieren `IHasRealtimeSignals`, um die Topics zu nennen, der Ereignistyp ist `RealtimeEventTypes.Signal`. Ein Signal trägt eine leere Nutzlast (weder Entity-Name noch Id noch Filterinhalt) und keinen Akteur. Mandanten-, Gruppen- und Rollenfilter signalisieren auf `tenant:data-filters` (nur die eigene Organisation), Systemfilter und Verknüpfungen auf `global:data-filters`. „Signal“ ist ein reservierter Ereignisname: Eine App darf ihn nicht für eigene Ereignisse verwenden.
+Jede Änderung lädt offene Tabellen neu und gleicht lokale Kopien ab; die Partition einer Client-Kopie enthält einen Fingerabdruck aller Filter des Mandanten des Benutzers und der Systemfilter (Ids und Versionen, Verknüpfungen eingeschlossen), seiner aktiven Rollen, die einen Rollenfilter tragen, und, wenn es Gruppenfilter gibt, seiner aktiven Gruppen; ein geänderter Filter, ein Rollenwechsel oder eine andere Gruppe verwirft also die Kopie und holt die sichtbaren Zeilen neu. Ohne Filter bekommt die Partition nichts dazu. Änderungen senden Signale ohne Nutzdaten und ohne Akteur: Entities implementieren `IHasRealtimeSignals`, um die Topics zu nennen, der Ereignistyp ist `RealtimeEventTypes.Signal`. Ein Signal trägt eine leere Nutzlast (weder Entity-Name noch Id noch Filterinhalt) und keinen Akteur. Mandanten-, Gruppen- und Rollenfilter signalisieren auf `tenant:data-filters` (nur der eigene Mandant), Systemfilter und Verknüpfungen auf `global:data-filters`. „Signal“ ist ein reservierter Ereignisname: Eine App darf ihn nicht für eigene Ereignisse verwenden.
 
 ## Admin-Oberfläche
 

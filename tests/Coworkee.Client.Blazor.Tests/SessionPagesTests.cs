@@ -161,7 +161,7 @@ public sealed class SessionPagesTests : ClientTestBase
     {
         _sessions.GetOfUserAsync(default).ReturnsForAnyArgs(new UserSessionsDto(null, [Session("Windows")]));
         var part = Render<Pages.Admin.UserSessions>(p => p.Add(c => c.UserId, Guid.CreateVersion7()).Add(c => c.UserName, "Bob"));
-        part.WaitForAssertion(() => part.Find("[data-testid='session-limit-text']").TextContent.ShouldContain("unlimited (organisation setting)"));
+        part.WaitForAssertion(() => part.Find("[data-testid='session-limit-text']").TextContent.ShouldContain("unlimited (tenant setting)"));
 
         _sessions.GetOfUserAsync(default).ReturnsForAnyArgs(new UserSessionsDto(1, []));
         Services.GetRequiredService<FakeRealtimeConnection>().Push(RealtimeTopics.Type("UserSession"));

@@ -1,7 +1,7 @@
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + IdentityPermissions.Users.View)]
 @using Coworkee.Client.Blazor.Components.Users
 
-<PageHeader Title="Users" Description="Accounts of this organisation, their roles and whether they may sign in." />
+<PageHeader Title="Users" Description="Accounts of this tenant, their roles and whether they may sign in." />
 <RealtimeSubscription Topic="@Coworkee.Contracts.Realtime.RealtimeTopics.Type("Role")" OnEvent="_ => ReloadRolesAsync()" />
 <CoworkeeDataTable @ref="_table" RealtimeTopic="type:User" T="UserRow" EntitySet="Users" SearchFields="SearchFields" ExportFileName="users" OnLoaded="LoadRolesAsync"
                    CreateText="New user" CreatePermission="@IdentityPermissions.Users.Manage" OnCreate="CreateAsync">

@@ -79,7 +79,7 @@ public partial class Reports
 
     internal static string VisibilityText(ReportVisibility visibility) => visibility switch
     {
-        ReportVisibility.Organisation => "Organisation",
+        ReportVisibility.Organisation => "Tenant",
         ReportVisibility.Roles => "Roles",
         ReportVisibility.Groups => "Groups",
         _ => "Private",

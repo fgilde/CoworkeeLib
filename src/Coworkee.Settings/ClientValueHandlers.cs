@@ -16,7 +16,7 @@ internal sealed class ClientValueHandlers(CoworkeeDbContext db, ICurrentUser cur
       IHandler<SetClientValue, Result>,
       IHandler<DeleteClientValue, Result>
 {
-    private static readonly Error SignInRequired = Error.Unauthorized("client_values.sign_in", "Client values belong to a signed-in user of an organisation.");
+    private static readonly Error SignInRequired = Error.Unauthorized("client_values.sign_in", "Client values belong to a signed-in user of a tenant.");
 
     public async Task<Result<IReadOnlyList<ClientValueDto>>> HandleAsync(GetClientValues query, CancellationToken cancellationToken) =>
         SignedIn ? await MergedAsync(null, cancellationToken) : SignInRequired;

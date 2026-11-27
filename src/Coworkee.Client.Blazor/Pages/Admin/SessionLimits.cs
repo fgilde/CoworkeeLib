@@ -15,14 +15,14 @@ internal static class SessionLimits
     public static Task<bool> EditAsync(IDialogService dialogs, ISessionsApi api, CoworkeeLocalizer l, Guid userId, string userName, int? current) =>
         dialogs.ShowEditAsync($"{l["Session limit"]}: {userName}", new SessionLimitForm { MaxSessions = current }, form => api.SetLimitAsync(userId, form.MaxSessions),
             meta => meta.Property(f => f.MaxSessions).WithLabel(l["Session limit"])
-                .WithAdditionalAttribute(nameof(MudNumericField<int?>.HelperText), l["Empty: the organisation's setting. 0: unlimited."]));
+                .WithAdditionalAttribute(nameof(MudNumericField<int?>.HelperText), l["Empty: the tenant's setting. 0: unlimited."]));
 
     /// <summary>The limit in words; the organisation's comes from the client settings.</summary>
     public static string Describe(CoworkeeLocalizer l, int? own, IReadOnlyDictionary<string, string?> settings)
     {
         var limit = own ?? (int.TryParse(settings.GetValueOrDefault(AuthSettings.MaxSessionsPerUser), out var organisation) ? organisation : 0);
         var text = limit <= 0 ? l["unlimited"] : limit.ToString(System.Globalization.CultureInfo.CurrentCulture);
-        return own is null ? l["{0} (organisation setting)", text] : text;
+        return own is null ? l["{0} (tenant setting)", text] : text;
     }
 }
 

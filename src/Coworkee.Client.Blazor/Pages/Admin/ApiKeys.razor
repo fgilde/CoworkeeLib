@@ -1,6 +1,6 @@
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + ApiKeyPermissions.Manage)]
 
-<PageHeader Title="API keys" Description="The personal keys of the organisation's users; revoking one stops its clients at once." />
+<PageHeader Title="API keys" Description="The personal keys of the tenant's users; revoking one stops its clients at once." />
 <CoworkeeDataTable @ref="_table" T="ApiKeyDto" EntitySet="ApiKeys" RealtimeTopic="type:ApiKey" SearchFields="SearchFields" ExportFileName="api-keys" OnLoaded="LoadNamesAsync">
     <Columns>
         <PropertyColumn Property="k => k.Name" Title="@L["Name"]">

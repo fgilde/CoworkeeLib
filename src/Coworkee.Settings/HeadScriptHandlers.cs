@@ -31,7 +31,7 @@ internal sealed class HeadScriptHandlers(ISettingDefinitionManager definitions, 
         var system = services.GetService<ITenantDirectory>() is { } tenants && await tenants.IsSystemTenantAsync(tenantId, cancellationToken);
         if (!system && !definition.Scopes.Contains(SettingScope.Tenant))
         {
-            return Error.Forbidden("settings.head_script", "Only the system organisation sets the head script.");
+            return Error.Forbidden("settings.head_script", "Only the system tenant sets the head script.");
         }
 
         var (scope, key) = system ? (SettingScope.Global, (Guid?)null) : (SettingScope.Tenant, tenantId);

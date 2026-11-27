@@ -57,7 +57,7 @@ internal sealed class TenantHandlers(CoworkeeDbContext db, UserManager<User> use
 
         if (tenant.IsDefault && !command.Tenant.IsActive)
         {
-            return Error.Validation(nameof(TenantRequest.IsActive), "The system organisation cannot be deactivated.");
+            return Error.Validation(nameof(TenantRequest.IsActive), "The system tenant cannot be deactivated.");
         }
 
         return await ApplyAsync(tenant, command.Tenant, cancellationToken) is { } error ? error : Result.Success();

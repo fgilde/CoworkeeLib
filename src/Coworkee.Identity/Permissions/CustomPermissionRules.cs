@@ -15,7 +15,7 @@ namespace Coworkee.Identity.Permissions;
 /// </summary>
 internal static partial class CustomPermissionRules
 {
-    public static readonly Error HostOnly = Error.Forbidden("identity.permission_host_only", "Custom permissions are managed from the system organisation.");
+    public static readonly Error HostOnly = Error.Forbidden("identity.permission_host_only", "Custom permissions are managed from the system tenant.");
 
     public static readonly Error NotFound = Error.NotFound("identity.permission_not_found", "The custom permission does not exist.");
 

@@ -8,7 +8,7 @@ namespace Coworkee.Settings;
 internal sealed class ServiceDirectoryHandler(IServiceDirectory directory, ICurrentUser currentUser, IServiceProvider services)
     : IHandler<GetServices, Result<ServiceDirectoryResult>>
 {
-    private static readonly Error SystemOnly = Error.Forbidden("services.system_only", "The services of the app are shown in the system organisation.");
+    private static readonly Error SystemOnly = Error.Forbidden("services.system_only", "The services of the app are shown in the system tenant.");
 
     public async Task<Result<ServiceDirectoryResult>> HandleAsync(GetServices query, CancellationToken cancellationToken)
     {

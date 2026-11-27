@@ -31,7 +31,7 @@ public partial class Setup : IAsyncDisposable
     private const int LastStep = 5;
     private const int LookStep = 3;
     private const int AdministratorStep = 4;
-    private static readonly string[] StepTitles = ["Welcome", "System check", "Organisation", "Look and feel", "Administrator", "Mail"];
+    private static readonly string[] StepTitles = ["Welcome", "System check", "Tenant", "Look and feel", "Administrator", "Mail"];
     private static readonly string[] StepHints =
     [
         "A few steps and the system is ready. Start with the setup token.",
@@ -173,7 +173,7 @@ public partial class Setup : IAsyncDisposable
     private string? Problem() => _step switch
     {
         0 when string.IsNullOrWhiteSpace(_request.SetupToken) => L["Enter the setup token."],
-        2 when string.IsNullOrWhiteSpace(_request.TenantName) => L["Enter the name of the organisation."],
+        2 when string.IsNullOrWhiteSpace(_request.TenantName) => L["Enter the name of the tenant."],
         AdministratorStep when string.IsNullOrWhiteSpace(_request.AdminEmail) || !_request.AdminEmail.Contains('@') => L["Enter the administrator's email address."],
         AdministratorStep when string.IsNullOrEmpty(_request.AdminPassword) => L["Choose a password."],
         AdministratorStep when _request.AdminPassword != _confirmPassword => L["The passwords do not match."],

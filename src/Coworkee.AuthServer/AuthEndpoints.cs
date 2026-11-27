@@ -88,7 +88,7 @@ internal static class AuthEndpoints
 
         if (!await MaySignInAsync(context, db, request, user))
         {
-            return Results.Forbid(Error(Errors.AccessDenied, "Only administrators of the system organisation may use this application."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
+            return Results.Forbid(Error(Errors.AccessDenied, "Only administrators of the system tenant may use this application."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
         }
 
         var consent = await ConsentAsync(context, request, user, impersonating);

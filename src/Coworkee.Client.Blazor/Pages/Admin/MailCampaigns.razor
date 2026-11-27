@@ -1,6 +1,6 @@
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + MailPermissions.Campaigns.Send)]
 
-<PageHeader Title="Mail campaigns" Description="Send one of your mail templates to many users of this organisation, now or at a chosen time.">
+<PageHeader Title="Mail campaigns" Description="Send one of your mail templates to many users of this tenant, now or at a chosen time.">
     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" OnClick="CreateAsync" data-testid="new-campaign">@L["New campaign"]</MudButton>
 </PageHeader>
 <MudSimpleTable Dense="Density.Dense" Hover="true">

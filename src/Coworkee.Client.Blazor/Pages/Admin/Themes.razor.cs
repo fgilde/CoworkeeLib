@@ -92,7 +92,7 @@ public partial class Themes
 
     private async Task ResetAsync(ThemeDto dto)
     {
-        if (await Dialogs.ConfirmAsync(L["Reset theme"], L["Reset {0} to its built-in look? The changes of this organisation are discarded.", dto.Name], L["Reset"], L["Cancel"],
+        if (await Dialogs.ConfirmAsync(L["Reset theme"], L["Reset {0} to its built-in look? The changes of this tenant are discarded.", dto.Name], L["Reset"], L["Cancel"],
                 Icons.Material.Outlined.SettingsBackupRestore)
             && await Snackbar.RunAsync(() => Api.ResetThemeAsync(dto.Id), L["Theme {0} reset", dto.Name]))
         {

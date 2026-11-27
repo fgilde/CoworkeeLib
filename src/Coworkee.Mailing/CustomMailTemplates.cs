@@ -7,7 +7,7 @@ namespace Coworkee.Mailing;
 
 internal static partial class CustomMailTemplates
 {
-    public static readonly Error SystemOnly = Error.Forbidden("mail.template_global_system_only", "Only the system organisation manages global mail templates.");
+    public static readonly Error SystemOnly = Error.Forbidden("mail.template_global_system_only", "Only the system tenant manages global mail templates.");
 
     [GeneratedRegex("^[A-Za-z0-9._-]+$")]
     public static partial Regex NamePattern();

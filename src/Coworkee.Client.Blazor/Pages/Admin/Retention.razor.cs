@@ -46,7 +46,7 @@ public partial class Retention : IDisposable
         }
         catch (ApiException exception)
         {
-            _error = exception.Status == 403 ? L["Retention is managed from the system organisation."] : exception.Message;
+            _error = exception.Status == 403 ? L["Retention is managed from the system tenant."] : exception.Message;
         }
         finally
         {

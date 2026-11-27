@@ -193,7 +193,7 @@ internal sealed partial class AppConfigurationHandlers(
     private static readonly Error NotFound = Error.NotFound("configuration.not_found", "There is no such configuration section.");
 
     private static readonly Error SystemOnly =
-        Error.Forbidden("configuration.system_only", "The app configuration applies to every organisation; it is managed from the system organisation.");
+        Error.Forbidden("configuration.system_only", "The app configuration applies to every tenant; it is managed from the system tenant.");
 
     public async Task<Result<IReadOnlyList<AppConfigurationDto>>> HandleAsync(GetAppConfigurations query, CancellationToken cancellationToken) =>
         await IsSystemAsync(cancellationToken)

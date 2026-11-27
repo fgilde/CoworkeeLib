@@ -6,7 +6,7 @@
         }
         else
         {
-            <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3">@L["These roles, groups and users lose this permission, in every organisation:"]</MudAlert>
+            <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3">@L["These roles, groups and users lose this permission, in every tenant:"]</MudAlert>
             @foreach (var (title, names) in Holders)
             {
                 <MudText Typo="Typo.subtitle2">@title</MudText>

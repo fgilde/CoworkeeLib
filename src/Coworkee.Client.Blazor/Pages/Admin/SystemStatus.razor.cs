@@ -45,7 +45,7 @@ public partial class SystemStatus
         }
         catch (ApiException exception)
         {
-            _error = exception.Status == 403 ? L["The status of the installation is shown in the system organisation."] : exception.Message;
+            _error = exception.Status == 403 ? L["The status of the installation is shown in the system tenant."] : exception.Message;
         }
         finally
         {
