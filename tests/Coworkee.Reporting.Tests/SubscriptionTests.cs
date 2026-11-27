@@ -153,7 +153,7 @@ public sealed partial class SubscriptionTests(ReportingApp app) : ReportingTestB
         var report = await CreateReportAsync(Report() with { Definition = new ReportDefinition { Widgets =
         [
             new ReportWidget { Id = "chips", Type = WidgetType.Chart, Title = "Share by region", Query = new WidgetQuery { EntitySet = "Sales", GroupBy = new ReportGroupBy("Region") },
-                Options = new WidgetOptions { Chart = ChartKind.Chips, ValueIcons = new() { ["South"] = "<svg/>" } } },
+                Options = new WidgetOptions { Chart = ChartKind.Chips, ValueIcons = [new("South", "<svg/>")] } },
         ] } });
         var subscription = await SubscribeAsync(Admin, report.Id);
 

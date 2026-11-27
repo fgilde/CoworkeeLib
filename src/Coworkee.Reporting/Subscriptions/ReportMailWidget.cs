@@ -105,8 +105,8 @@ internal sealed class ReportMailWidget(
     {
         var total = result.Rows.Sum(r => r.Values.FirstOrDefault() ?? 0);
         List<string> headers = [FieldLabel(source, query.GroupBy!.Field), text("Share", culture)];
-        var rows = widget.Options.ValueIcons.Keys
-            .Select(value => result.Rows.FirstOrDefault(r => (r.Key?.Value ?? string.Empty) == value))
+        var rows = widget.Options.ValueIcons
+            .Select(icon => result.Rows.FirstOrDefault(r => (r.Key?.Value ?? string.Empty) == icon.Value))
             .OfType<ReportQueryRow>()
             .Select(r => (IReadOnlyList<object?>)[Key(r.Key), total == 0 ? 0 : Math.Round((r.Values.FirstOrDefault() ?? 0) / total * 100, MidpointRounding.AwayFromZero)])
             .ToList();

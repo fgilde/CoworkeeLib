@@ -191,13 +191,25 @@ public sealed class DesignerTests : ReportingTestBase
         settings.FindAll("[data-testid='value-icon'] input")[1].Change("Sea");
         settings.FindAll("[data-testid='value-icon']")[1].QuerySelector("[data-icon='DirectionsBoat']")!.Click();
 
-        widget.Options.ValueIcons.ShouldBe(new Dictionary<string, string> { ["Air"] = Icons.Material.Outlined.Flight, ["Sea"] = Icons.Material.Outlined.DirectionsBoat });
+        widget.Options.ValueIcons.ShouldBe([new("Air", Icons.Material.Outlined.Flight), new("Sea", Icons.Material.Outlined.DirectionsBoat)]);
 
         settings.FindAll("[data-testid='value-icon'] button[aria-label='Move down']")[0].Click();
 
-        widget.Options.ValueIcons.Keys.ShouldBe(["Sea", "Air"]);
+        widget.Options.ValueIcons.Select(v => v.Value).ShouldBe(["Sea", "Air"]);
         settings.FindAll("[data-testid='value-icon'] button[aria-label='Remove']")[0].Click();
-        widget.Options.ValueIcons.Keys.ShouldBe(["Air"]);
+        widget.Options.ValueIcons.Select(v => v.Value).ShouldBe(["Air"]);
         changes.ShouldBeGreaterThan(5);
+    }
+
+    [Fact]
+    public void A_new_chip_for_an_enum_field_starts_with_the_next_member_name_not_its_label()
+    {
+        var widget = new ReportWidget { Type = WidgetType.Chart, Query = new WidgetQuery { EntitySet = "SalesOrders", GroupBy = new ReportGroupBy("Status") }, Options = new() { Chart = ChartKind.Chips } };
+        var settings = Render<WidgetSettings>(p => p.Add(x => x.Widget, widget).Add(x => x.State, State(widget)));
+
+        settings.Find("[data-testid='add-value-icon']").Click();
+        settings.Find("[data-testid='add-value-icon']").Click();
+
+        widget.Options.ValueIcons.Select(v => v.Value).ShouldBe(["Open", "Shipped"]);
     }
 }

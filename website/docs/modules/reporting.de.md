@@ -199,7 +199,7 @@ Diagramme nutzen [Blazor-ApexCharts](https://github.com/apexcharts/Blazor-ApexCh
 
 ### Chips-Diagramm
 
-`ChartKind.Chips` zeigt die Werte des Gruppierungsfelds als Chips mit ihrem Anteil am Ganzen („25 % Air“) und dient als Filter: Ein Klick schaltet den Wert um und schränkt die übrigen Widgets ein (mehrere Chips werden mit „oder“ verknüpft; ein gewählter Chip filtert beim erneuten Klick nicht mehr). `WidgetOptions.ValueIcons` nennt die Werte, die einen Chip bekommen, in Reihenfolge, jeweils mit einem MudBlazor-Symbol (SVG); andere Werte zählen weiter zu den 100 %. Gewählte Chips sind gefüllt, die übrigen umrandet. Ein Chips-Widget ignoriert seinen eigenen Filter, die Anteile beziehen sich also immer auf alle Werte; sein Filter trägt das Gruppierungsfeld und schränkt deshalb auch Widgets anderer Datenmengen mit demselben Feld ein. Der Designer bietet „Chips“ unter den Diagrammarten und einen Editor für Werte und Symbole (Reihenfolge, Symbolauswahl); Abo-Mails listen die Anteile als Tabelle.
+`ChartKind.Chips` zeigt die Werte des Gruppierungsfelds als Chips mit ihrem Anteil am Ganzen („25 % Air“) und dient als Filter: Ein Klick schaltet den Wert um und schränkt die übrigen Widgets ein (mehrere Chips werden mit „oder“ verknüpft; ein gewählter Chip filtert beim erneuten Klick nicht mehr). `WidgetOptions.ValueIcons` ist eine geordnete Liste von `ValueIcon(Value, Icon)` mit den Werten, die einen Chip bekommen, jeweils mit einem MudBlazor-Symbol (SVG); eine Liste statt eines Wörterbuchs, weil ein gespeicherter Bericht die Reihenfolge behält. `Value` ist der Schlüssel der Daten: bei Enums der Membername (nicht das Label), für Zeilen ohne Wert eine leere Zeichenkette. Andere Werte zählen weiter zu den 100 %. Gewählte Werte, die aus den Daten verschwinden (Neuladen, Filter eines anderen Widgets), verlassen den Filter. Gewählte Chips sind gefüllt, die übrigen umrandet. Ein Chips-Widget ignoriert seinen eigenen Filter, die Anteile beziehen sich also immer auf alle Werte; sein Filter trägt das Gruppierungsfeld und schränkt deshalb auch Widgets anderer Datenmengen mit demselben Feld ein. Der Designer bietet „Chips“ unter den Diagrammarten und einen Editor für Werte und Symbole (Reihenfolge, Symbolauswahl); Abo-Mails listen die Anteile als Tabelle.
 
 ```csharp
 new ReportWidget
@@ -209,7 +209,7 @@ new ReportWidget
     Options = new WidgetOptions
     {
         Chart = ChartKind.Chips,
-        ValueIcons = new() { ["Air"] = Icons.Material.Outlined.Flight, ["Sea"] = Icons.Material.Outlined.DirectionsBoat },
+        ValueIcons = [new("Air", Icons.Material.Outlined.Flight), new("Sea", Icons.Material.Outlined.DirectionsBoat)],
     },
 }
 ```

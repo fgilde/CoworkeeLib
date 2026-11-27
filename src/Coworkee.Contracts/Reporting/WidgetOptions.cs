@@ -54,6 +54,6 @@ public sealed class WidgetOptions
     /// <summary>The number column of a table whose cells the thresholds colour.</summary>
     public string? ThresholdColumn { get; set; }
 
-    /// <summary>Chips charts: the category values that get a chip, in order, each with its MudBlazor icon (SVG). Other values still count towards the 100 %.</summary>
-    public Dictionary<string, string> ValueIcons { get; set; } = [];
+    /// <summary>Chips charts: the category values that get a chip, in order, each with its MudBlazor icon (SVG); empty means no chips. Other values still count towards the 100 %.</summary>
+    public List<ValueIcon> ValueIcons { get; set; } = [];
 }

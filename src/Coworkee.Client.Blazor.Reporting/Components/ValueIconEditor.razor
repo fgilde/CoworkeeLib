@@ -1,23 +1,23 @@
 <div class="cw-settings-label">@L["Chips"]</div>
-@foreach (var (pair, index) in Pairs.Select((p, i) => (p, i)))
+@foreach (var (pair, index) in Options.ValueIcons.Select((p, i) => (p, i)).ToList())
 {
     <div class="cw-alternative" data-testid="value-icon">
         <div class="cw-settings-row">
-            <MudTextField T="string" Value="@pair.Key" ValueChanged="v => Rename(index, v)" Label="@L["Value"]" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="100" />
-            <Reorder Index="index" Count="Pairs.Count" Move="i => Move(index, i)" Remove="() => Change(() => Set(Pairs.Where((_, i) => i != index)))" />
+            <MudTextField T="string" Value="@pair.Value" ValueChanged="v => Rename(index, v)" Label="@L["Value"]" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="100" />
+            <Reorder Index="index" Count="Options.ValueIcons.Count" Move="i => Move(index, i)" Remove="() => Change(() => Options.ValueIcons.RemoveAt(index))" />
         </div>
         <div class="cw-threshold-colors" role="radiogroup" aria-label="@L["Icon"]">
             @foreach (var (name, label, svg) in Choices)
             {
                 <MudTooltip Text="@L[label]">
-                    <MudIconButton Icon="@svg" Size="Size.Small" Variant="@(pair.Value == svg ? Variant.Filled : Variant.Text)" Color="@(pair.Value == svg ? Color.Primary : Color.Default)"
-                                   role="radio" aria-checked="@(pair.Value == svg ? "true" : "false")" aria-label="@L[label]"
-                                   OnClick="() => Change(() => Set(Pairs.Select((p, i) => i == index ? new(p.Key, svg) : p)))" data-icon="@name" />
+                    <MudIconButton Icon="@svg" Size="Size.Small" Variant="@(pair.Icon == svg ? Variant.Filled : Variant.Text)" Color="@(pair.Icon == svg ? Color.Primary : Color.Default)"
+                                   role="radio" aria-checked="@(pair.Icon == svg ? "true" : "false")" aria-label="@L[label]"
+                                   OnClick="() => Change(() => Options.ValueIcons[index] = pair with { Icon = svg })" data-icon="@name" />
                 </MudTooltip>
             }
         </div>
     </div>
 }
 <div class="cw-settings-row">
-    <MudButton StartIcon="@Icons.Material.Filled.Add" Size="Size.Small" Variant="Variant.Text" Disabled="@Options.ValueIcons.ContainsKey(string.Empty)" OnClick="Add" data-testid="add-value-icon">@L["Add chip"]</MudButton>
+    <MudButton StartIcon="@Icons.Material.Filled.Add" Size="Size.Small" Variant="Variant.Text" Disabled="@Options.ValueIcons.Any(v => v.Value.Length == 0)" OnClick="Add" data-testid="add-value-icon">@L["Add chip"]</MudButton>
 </div>

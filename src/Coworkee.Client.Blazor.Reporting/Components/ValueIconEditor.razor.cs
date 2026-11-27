@@ -40,41 +40,34 @@ public partial class ValueIconEditor
 
     private WidgetOptions Options => Widget.Options;
 
-    private List<KeyValuePair<string, string>> Pairs => [.. Options.ValueIcons];
-
     private Task Change(Action change)
     {
         change();
         return OnChanged.InvokeAsync();
     }
 
-    // the dictionary is rebuilt so that the order of the list is the order of the chips
-    private void Set(IEnumerable<KeyValuePair<string, string>> pairs) => Options.ValueIcons = new Dictionary<string, string>(pairs);
-
     // a value that another chip has already is refused (the field shows the old one again)
     private Task Rename(int index, string? value) => Change(() =>
     {
         var name = value?.Trim() ?? string.Empty;
-        if (!Options.ValueIcons.ContainsKey(name) || Pairs[index].Key == name)
+        if (!Options.ValueIcons.Where((_, i) => i != index).Any(v => v.Value == name))
         {
-            Set(Pairs.Select((p, i) => i == index ? new(name, p.Value) : p));
+            Options.ValueIcons[index] = Options.ValueIcons[index] with { Value = name };
         }
     });
 
     private Task Move(int from, int to) => Change(() =>
     {
-        var pairs = Pairs;
-        var pair = pairs[from];
-        pairs.RemoveAt(from);
-        pairs.Insert(to, pair);
-        Set(pairs);
+        var chip = Options.ValueIcons[from];
+        Options.ValueIcons.RemoveAt(from);
+        Options.ValueIcons.Insert(to, chip);
     });
 
-    // a new chip starts with the next value of the group-by field that has none yet
+    // a new chip starts with the next member (its name, which is what the data's keys carry) of the group-by field that has none yet
     private Task Add() => Change(() =>
     {
-        var values = State.Field(Widget.Query?.EntitySet, Widget.Query?.GroupBy?.Field)?.Members ?? [];
-        var next = values.FirstOrDefault(v => !Options.ValueIcons.ContainsKey(v)) ?? string.Empty;
-        Options.ValueIcons[next] = Choices[^1].Svg;
+        var members = State.Field(Widget.Query?.EntitySet, Widget.Query?.GroupBy?.Field)?.Members ?? [];
+        var next = members.FirstOrDefault(m => Options.ValueIcons.All(v => v.Value != m)) ?? string.Empty;
+        Options.ValueIcons.Add(new ValueIcon(next, Choices[^1].Svg));
     });
 }

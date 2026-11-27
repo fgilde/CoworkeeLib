@@ -48,9 +48,9 @@ public partial class ChartWidget
             var total = points.Sum(p => p.Value ?? 0);
             return
             [
-                .. Widget.Options.ValueIcons.Select(icon => (icon, point: points.FirstOrDefault(p => p.Key is not null && (p.Key.Value ?? string.Empty) == icon.Key)))
+                .. Widget.Options.ValueIcons.Select(icon => (icon, point: points.FirstOrDefault(p => p.Key is not null && (p.Key.Value ?? string.Empty) == icon.Value)))
                     .Where(c => c.point?.Key is not null)
-                    .Select(c => new Chip(c.icon.Key, c.point!.Label, c.icon.Value, total == 0 ? 0 : (int)Math.Round((c.point.Value ?? 0) / total * 100, MidpointRounding.AwayFromZero), c.point.Key!)),
+                    .Select(c => new Chip(c.icon.Value, c.point!.Label, c.icon.Icon, total == 0 ? 0 : (int)Math.Round((c.point.Value ?? 0) / total * 100, MidpointRounding.AwayFromZero), c.point.Key!)),
             ];
         }
     }
@@ -68,6 +68,12 @@ public partial class ChartWidget
             selected.Remove(chip.Value);
         }
 
+        Apply(selected);
+    }
+
+    // the widget's one cross filter: the chosen chips in their order, joined with "or"; none removes it
+    private void Apply(HashSet<string> selected)
+    {
         _selected.Clear();
         _selected.UnionWith(selected);
         var chosen = ChipList.Where(c => selected.Contains(c.Value)).ToList();
@@ -84,6 +90,22 @@ public partial class ChartWidget
         var filters = chosen.Select(c => c.Key.Filter).ToList();
         State.ToggleCross(new CrossFilter(Widget.Id, Query!.EntitySet, string.Join(", ", chosen.Select(c => c.Label)),
             filters.Count == 1 ? filters[0] : string.Join(" or ", filters.Select(f => $"({f})")), Query.GroupBy?.Field));
+    }
+
+    // chosen values that no longer appear in the data (reload, another widget's filter) leave the filter
+    private void Prune()
+    {
+        var selected = Selected;
+        if (selected.Count == 0)
+        {
+            return;
+        }
+
+        var present = ChipList.Select(c => c.Value).ToHashSet();
+        if (selected.Any(v => !present.Contains(v)))
+        {
+            Apply([.. selected.Where(present.Contains)]);
+        }
     }
 
     // pies, donuts and treemaps show one series
@@ -116,6 +138,10 @@ public partial class ChartWidget
             ? ChartData.Scatter(result, names.LastOrDefault() ?? string.Empty, Category)
             : ChartData.From(result, names, Category, Series, Widget.Options.Chart == ChartKind.StackedBar);
         _options = Options(await Theme.GetAsync());
+        if (Chips)
+        {
+            Prune();
+        }
 
         _render++;
         await ReportInfoAsync(L["{0} rows · {1} ms", result.Rows.Count, result.ElapsedMilliseconds]);
