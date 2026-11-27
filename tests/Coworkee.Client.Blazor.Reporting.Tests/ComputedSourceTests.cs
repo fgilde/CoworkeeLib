@@ -90,4 +90,20 @@ public sealed class ComputedSourceTests : ReportingTestBase
         popovers.FindAll("[data-testid='drill-down']").ShouldBeEmpty();
         OData.DidNotReceiveWithAnyArgs().QueryAsync<JsonElement>(default!, default!, default);
     }
+
+    [Fact]
+    public void An_unreadable_computed_source_gets_no_filter_block_and_no_set_label()
+    {
+        Reports.QueryAsync(default!, default).ReturnsForAnyArgs(Rows((null, null, 40)));
+        var orders = new ReportWidget { Id = "o", Type = WidgetType.Kpi, Query = new WidgetQuery { EntitySet = "SalesOrders" } };
+        var headcount = new ReportWidget { Id = "h", Type = WidgetType.Kpi, Query = new WidgetQuery { EntitySet = "HeadcountByMonth", Aggregates = [new(AggregateFunction.Sum, "Headcount")] } };
+        // the viewer may not read the computed source: it is not among his sources
+        var state = State(orders, headcount);
+
+        var bar = Render<ReportFilterBar>(p => p.Add(x => x.State, state));
+
+        bar.FindAll(".cw-filter-set").Count.ShouldBe(1);
+        bar.FindAll(".cw-filter-set-label").ShouldBeEmpty();
+        OData.DidNotReceive().QueryAsync<JsonElement>("HeadcountByMonth", Arg.Any<Coworkee.Client.Blazor.Data.ODataQuery>(), Arg.Any<CancellationToken>());
+    }
 }

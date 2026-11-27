@@ -148,6 +148,37 @@ public sealed partial class SubscriptionTests(ReportingApp app) : ReportingTestB
     }
 
     [Fact]
+    public async Task A_mail_shows_a_subscriber_the_first_readable_value_and_leaves_out_widgets_and_joins_without_one()
+    {
+        var report = await CreateReportAsync(Report() with { Definition = new ReportDefinition { Widgets =
+        [
+            new ReportWidget { Id = "fallback", Type = WidgetType.Kpi, Title = "Fallback", Query = new WidgetQuery { EntitySet = "Costs" },
+                Options = new WidgetOptions { Metrics = [new MetricView("Sales", [new()], EntitySet: "Sales")] } },
+            new ReportWidget { Id = "hidden", Type = WidgetType.Kpi, Title = "Hidden costs", Y = 2, Query = new WidgetQuery { EntitySet = "Costs" } },
+            new ReportWidget { Id = "lanes", Type = WidgetType.GroupedTable, Title = "Lanes", Y = 4, Query = new WidgetQuery
+            {
+                EntitySet = "Sales", GroupFields = ["Region"], Aggregates = [new(AggregateFunction.Sum, "Amount", "Revenue")],
+                Joins = [new WidgetJoin { EntitySet = "SaleRows", Aggregates = [new(AggregateFunction.Sum, "Amount", "Cost total")] }], OrderBy = "Cost total desc",
+            } },
+        ] } });
+        var seller = await CreateUserAsync("seller@acme.test", ReportPermissions.View, ReportingApp.ViewSales);
+        var subscription = await SubscribeAsync(App.As(seller.Id, Setup.TenantId), report.Id);
+
+        await RunDueAsync(subscription.Id);
+
+        var (mail, files) = (await MailsAsync()).ShouldHaveSingleItem();
+        var html = mail.HtmlBody;
+        html.ShouldNotContain("You may not read this data.");
+        html.ShouldNotContain("Hidden costs");
+        html.ShouldNotContain("Cost total");
+        html.ShouldContain(">Revenue<");
+        (await StoredAsync(subscription.Id)).LastError.ShouldBeNull();
+        using var workbook = new XLWorkbook(new MemoryStream(files.Single().Content));
+        workbook.Worksheets.Select(w => w.Name).ShouldBe(["Fallback", "Lanes"]);
+        workbook.Worksheet("Fallback").Cell(2, 1).GetDouble().ShouldBe(Visible.Count());
+    }
+
+    [Fact]
     public async Task A_mail_lists_the_chips_as_shares()
     {
         var report = await CreateReportAsync(Report() with { Definition = new ReportDefinition { Widgets =

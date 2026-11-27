@@ -379,7 +379,7 @@ A report is *private*, shared with *roles* (holders of one of them, directly or 
 
 The mail (template `Reports.Subscription`, in every shipped language, editable under *Mail templates*) shows each KPI with its value, threshold colour, sign and label, and the first ten rows of every chart, pivot and table (a chart over a date bucket shows its latest ten, oldest first; a grouped table its first 20), with a link to the report. It is written in the subscriber's language, else in the default language of the tenant (Languages page), like the unsubscribe page. The attached workbook has one sheet per widget with all its rows (tables up to 1,000), written like *Export Excel*. Images of the widgets or a PDF are not rendered on the server.
 
-The recurring job `coworkee-report-subscriptions` (every five minutes, `Coworkee:Reporting:SubscriptionCron`) runs the due subscriptions tenant by tenant, each **as the subscriber**: the report must still be shared with them, and their permissions, protected fields and row filters decide what the mail shows. When something is in the way (report no longer shared, no active mail address, `Reports.View` gone) nothing is sent and the subscription shows the reason; the next run tries again. Mails need `Coworkee:Notifications:PublicAppUrl` for their links.
+The recurring job `coworkee-report-subscriptions` (every five minutes, `Coworkee:Reporting:SubscriptionCron`) runs the due subscriptions tenant by tenant, each **as the subscriber**: the report must still be shared with them, and their permissions, protected fields and row filters decide what the mail shows. As on the report page (`ReportViews.ForReader`), a widget on a data set the subscriber may not read shows its first readable value instead, one without any is left out (no block, no sheet), and joins of a grouped table on such sets are left out with their columns. When something is in the way (report no longer shared, no active mail address, `Reports.View` gone) nothing is sent and the subscription shows the reason; the next run tries again. Mails need `Coworkee:Notifications:PublicAppUrl` for their links.
 
 Every mail ends with a link that ends the subscription without signing in (a protected token; opening it asks first, the confirm button posts). *Reports › Subscriptions* (`reports/subscriptions`) lists the user's subscriptions with schedule, next and last mail and the last error, to edit, send now or end them. Holders of `Reports.Subscriptions` switch to *Everybody in the tenant* to see and end all of them. Sent mails and their attachments are part of the mail log and go with its retention.
 
@@ -420,9 +420,10 @@ The template's dashboard page (*Personal > Dashboard*, above *Reports*) does thi
 
 | | |
 |---|---|
-| Report | name 200 characters, description 2,000, 60 widgets, refresh every 10 seconds to a day or never, shared with at most 100 groups |
+| Report | name 200 characters, description 2,000, 60 widgets, refresh every 10 seconds to a day or never, shared with at most 100 groups, 8 date fields to choose from, 20 filter bar fields |
 | Widget | id 40 characters, title 200, text 20,000, `AppData` 20,000; width 1 to 12 columns, height 1 to 40 rows |
-| Values and switches | 8 values per query or switch, 8 value and 8 grouping switches, labels 100 characters |
+| Values and switches | 8 values per query or switch, 8 value and 8 grouping switches, labels 100 characters, units 16 |
+| Chips | 50 values per widget, value 200 characters, icon 4,000 |
 | Thresholds | 10 per widget |
 | Aggregation | 5,000 groups, top 1 to 1,000; grouped tables 1 to 8 fields, 3 joins, 50,000 groups per set |
 | AI prompt | 4,000 characters, three tries |

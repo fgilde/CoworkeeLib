@@ -92,7 +92,8 @@ public partial class WidgetFrame : IDisposable
             choice = choice with { Metric = null };
         }
 
-        var shown = ReportViews.Apply(basis, choice);
+        // a chosen value (always on a readable set) replaces the widget's own; on the fallback value it would stack its filter and keep its format
+        var shown = ReportViews.Apply(choice?.Metric is not null ? Widget : basis, choice);
         _dateField = Editing ? null : State.DateField;
         shown = _dateField is { } chosen && State.DefaultDateField is { } first && State.Field(shown.Query?.EntitySet, chosen) is not null
             ? ReportViews.WithDateField(shown, first, chosen) : shown;

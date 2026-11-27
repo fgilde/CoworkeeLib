@@ -76,7 +76,8 @@ public partial class ReportFilterBar : IDisposable
         }
     }
 
-    private IEnumerable<string> FilterSets => State.EntitySets.Where(s => State.Source(s) is not { Computed: true });
+    // readable sets the facets can query: computed sources have no facets, a set without a source is one the viewer may not read
+    private IEnumerable<string> FilterSets => State.EntitySets.Where(s => State.Source(s) is { Computed: false });
 
     /// <summary>A group of two sets with the same key shows once, at the first set; the facet then narrows every set with its field.</summary>
     private bool IsShared(string set, FacetGroupDto group) =>

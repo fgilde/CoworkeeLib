@@ -104,16 +104,23 @@ internal sealed class ReportMailWidget(
     // chips as a list of shares of everything the query returned, for the values with an icon in their order
     private (object, ReportSheetRequest?) Chips(WidgetQuery query, ReportSource source, ReportQueryResult result)
     {
-        // a stored definition may still split into series: every value adds up over all of them
-        var sums = result.Rows.GroupBy(r => r.Key?.Value ?? string.Empty).ToDictionary(g => g.Key, g => (Key: g.First().Key, Sum: g.Sum(r => r.Values.FirstOrDefault() ?? 0)));
-        var total = sums.Values.Sum(v => v.Sum);
         List<string> headers = [FieldLabel(source, query.GroupBy!.Field), text("Share", culture)];
-        var rows = widget.Options.ValueIcons
-            .Where(icon => sums.ContainsKey(icon.Value))
-            .Select(icon => sums[icon.Value])
-            .Select(s => (IReadOnlyList<object?>)[Key(s.Key), total == 0 ? 0 : Math.Round(s.Sum / total * 100, MidpointRounding.AwayFromZero)])
-            .ToList();
+        var rows = ChipShares(result.Rows, widget.Options.ValueIcons).Select(s => (IReadOnlyList<object?>)[Key(s.Key), s.Share]).ToList();
         return (Table(headers, rows, cell => cell is double share ? $"{share:0} %" : cell?.ToString() ?? string.Empty), Sheet(headers, rows));
+    }
+
+    /// <summary>
+    /// The share in percent of each value with an icon, in the icons' order, as the chips widget shows it: rows without a key are left out of the whole,
+    /// a row whose key has no value counts for the icon with an empty value ("(empty)").
+    /// </summary>
+    internal static List<(ReportKey Key, double Share)> ChipShares(IEnumerable<ReportQueryRow> rows, IEnumerable<ValueIcon> icons)
+    {
+        // a stored definition may still split into series: every value adds up over all of them
+        var sums = rows.Where(r => r.Key is not null).GroupBy(r => r.Key!.Value ?? string.Empty)
+            .ToDictionary(g => g.Key, g => (Key: g.First().Key!, Sum: g.Sum(r => r.Values.FirstOrDefault() ?? 0)));
+        var total = sums.Values.Sum(v => v.Sum);
+        return [.. icons.Where(icon => sums.ContainsKey(icon.Value)).Select(icon => sums[icon.Value])
+            .Select(s => (s.Key, total == 0 ? 0 : Math.Round(s.Sum / total * 100, MidpointRounding.AwayFromZero)))];
     }
 
     private async Task<(object, ReportSheetRequest?)> TableAsync(WidgetQuery query, string? filter, ReportSource source, CancellationToken cancellationToken)
@@ -127,10 +134,10 @@ internal sealed class ReportMailWidget(
         return (Table(headers, cells, Format), Sheet(headers, cells));
     }
 
-    // the first page as the widget shows it, its rows up to the workbook's limit; joins on sets the subscriber may not read are left out
+    // the first page as the widget shows it, its rows up to the workbook's limit; joins on sets the subscriber may not read were left out (ReportViews.ForReader)
     private async Task<(object, ReportSheetRequest?)> GroupedTableAsync(ReportSource source, CancellationToken cancellationToken)
     {
-        var query = ReportViews.ForReader(widget, set => Source(set) is not null)!.Query!;
+        var query = widget.Query!;
         var columns = ReportTableColumns.Of(query);
         var request = ReportTableColumns.Request(query, q => FilterOf(q, definition, sources, today), ReportTableColumns.Sorts(query.OrderBy, columns), 0, ReportSubscriptionMail.SheetRows);
         var result = await queries.TableAsync(request, cancellationToken);

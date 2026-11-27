@@ -123,27 +123,35 @@ public partial class ReportFacetFilter : IDisposable
         await GroupsLoaded.InvokeAsync(_groups);
     }
 
-    // the report's fields in its order: the set's facet of a field, else the field's values counted by a report query (without the group's own choice)
+    // the report's fields in its order: the set's facet of a field, else the field's values counted by a report query (without the group's own choice); the queries run at once
     private async Task<IReadOnlyList<FacetGroupDto>> ChosenAsync(IReadOnlyList<FacetGroupDto> facets)
     {
-        var chosen = new List<FacetGroupDto>();
-        var unavailable = new List<string>();
+        var entries = new List<(string? Label, Task<FacetGroupDto?> Group)>();
         foreach (var name in FacetFields)
         {
             if (facets.FirstOrDefault(g => Is(g.Field, name) || Is(g.Key, name)) is { } facet)
             {
-                chosen.Add(facet with { Order = chosen.Count });
+                entries.Add((null, Task.FromResult<FacetGroupDto?>(facet)));
             }
             else if (Fields.FirstOrDefault(f => Is(f.Path, name)) is { } field)
             {
-                if (await FieldGroupAsync(field, chosen.Count) is { } group)
-                {
-                    chosen.Add(group);
-                }
-                else
-                {
-                    unavailable.Add(field.Label);
-                }
+                entries.Add((field.Label, FieldGroupAsync(field)));
+            }
+        }
+
+        await Task.WhenAll(entries.Select(e => e.Group));
+
+        var chosen = new List<FacetGroupDto>();
+        var unavailable = new List<string>();
+        foreach (var (label, task) in entries)
+        {
+            if (task.Result is { } group)
+            {
+                chosen.Add(group with { Order = chosen.Count });
+            }
+            else if (label is not null)
+            {
+                unavailable.Add(label);
             }
         }
 
@@ -152,7 +160,7 @@ public partial class ReportFacetFilter : IDisposable
         return chosen;
     }
 
-    private async Task<FacetGroupDto?> FieldGroupAsync(ReportFieldDto field, int order)
+    private async Task<FacetGroupDto?> FieldGroupAsync(ReportFieldDto field)
     {
         var context = Selection.Context(Filter, _groups);
         var filter = context?.Without(field.Path) ?? Filter;
@@ -161,7 +169,7 @@ public partial class ReportFacetFilter : IDisposable
             var result = await Reports.QueryAsync(new ReportQueryRequest(EntitySet, filter, new ReportGroupBy(field.Path), Aggregates: [new ReportAggregate()], Top: FieldValues));
             var options = result.Rows.Where(r => r.Key is not null)
                 .Select(r => new FacetOptionDto(JsonSerializer.SerializeToElement(r.Key!.Value), r.Key.Label, true, (int)(r.Values.FirstOrDefault() ?? 0), r.Key.Filter)).ToList();
-            return new FacetGroupDto(field.Path, field.Label, field.Path, FacetKind.CheckboxList, FacetOperator.Or, options, true, order);
+            return new FacetGroupDto(field.Path, field.Label, field.Path, FacetKind.CheckboxList, FacetOperator.Or, options, true, 0);
         }
         catch (ApiException exception)
         {

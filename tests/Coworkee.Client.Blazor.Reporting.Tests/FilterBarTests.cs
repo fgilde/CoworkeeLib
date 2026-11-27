@@ -283,6 +283,22 @@ public sealed class FilterBarTests : ReportingTestBase
     }
 
     [Fact]
+    public void The_values_of_several_fields_load_at_once_and_keep_the_reports_order()
+    {
+        var region = new TaskCompletionSource<ReportQueryResult>();
+        Reports.QueryAsync(Arg.Is<ReportQueryRequest>(r => r.GroupBy!.Field == "Region"), Arg.Any<CancellationToken>()).Returns(region.Task);
+        Reports.QueryAsync(Arg.Is<ReportQueryRequest>(r => r.GroupBy!.Field == "Carrier"), Arg.Any<CancellationToken>()).Returns(Rows(("Maersk", null, 2)));
+        var state = Shipping(new ReportDefinition { Widgets = [ShipmentChart], FacetFields = ["Region", "Carrier"] });
+
+        var bar = Render<ReportFilterBar>(p => p.Add(x => x.State, state));
+
+        // the carrier query starts while the region query is still running
+        bar.WaitForAssertion(() => Reports.Received().QueryAsync(Arg.Is<ReportQueryRequest>(r => r.GroupBy!.Field == "Carrier"), Arg.Any<CancellationToken>()));
+        region.SetResult(Rows(("North", null, 3)));
+        bar.WaitForAssertion(() => bar.FindAll("[data-facet]").Select(e => e.GetAttribute("data-facet")).ShouldBe(["Region", "Carrier"]));
+    }
+
+    [Fact]
     public void A_field_whose_values_cannot_be_loaded_stays_in_the_bar_with_a_hint()
     {
         OData.QueryAsync<JsonElement>("Shipments", Arg.Is<Data.ODataQuery>(q => q.Facets), Arg.Any<CancellationToken>()).Returns(new ODataPage<JsonElement>([], 0, [Group("region", "Region", "North")]));

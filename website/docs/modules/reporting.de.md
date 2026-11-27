@@ -379,7 +379,7 @@ Ein Bericht ist *privat*, mit *Rollen* geteilt (Inhaber einer davon, direkt oder
 
 Die Mail (Vorlage `Reports.Subscription`, in jeder mitgelieferten Sprache, bearbeitbar unter *Mail-Vorlagen*) zeigt jede Kennzahl mit Wert, Schwellenwert-Farbe, Zeichen und Bezeichnung und die ersten zehn Zeilen jedes Diagramms, Pivots und jeder Tabelle (ein Diagramm über einen Datumsbereich zeigt seine neuesten zehn, die älteste zuerst; eine gruppierte Tabelle ihre ersten 20), mit einem Link zum Bericht. Sie ist in der Sprache des Abonnenten geschrieben, sonst in der Standardsprache des Mandanten (Seite Sprachen), wie die Abmeldeseite. Die angehängte Arbeitsmappe hat ein Blatt je Widget mit allen Zeilen (Tabellen bis 1.000), geschrieben wie *Excel exportieren*. Bilder der Widgets oder ein PDF werden auf dem Server nicht erzeugt.
 
-Der wiederkehrende Job `coworkee-report-subscriptions` (alle fünf Minuten, `Coworkee:Reporting:SubscriptionCron`) führt die fälligen Abos Mandant für Mandant aus, jedes **als der Abonnent**: der Bericht muss ihm noch freigegeben sein, und seine Berechtigungen, geschützten Felder und Zeilenfilter bestimmen, was die Mail zeigt. Steht etwas im Weg (Bericht nicht mehr freigegeben, keine aktive Mail-Adresse, `Reports.View` entzogen), wird nichts gesendet und das Abo zeigt den Grund; der nächste Lauf versucht es erneut. Für ihre Links brauchen die Mails `Coworkee:Notifications:PublicAppUrl`.
+Der wiederkehrende Job `coworkee-report-subscriptions` (alle fünf Minuten, `Coworkee:Reporting:SubscriptionCron`) führt die fälligen Abos Mandant für Mandant aus, jedes **als der Abonnent**: der Bericht muss ihm noch freigegeben sein, und seine Berechtigungen, geschützten Felder und Zeilenfilter bestimmen, was die Mail zeigt. Wie auf der Berichtsseite (`ReportViews.ForReader`) zeigt ein Widget auf einer Datenmenge, die der Abonnent nicht lesen darf, stattdessen seinen ersten lesbaren Wert, eines ohne einen solchen fällt weg (kein Block, kein Blatt), und verbundene Mengen einer gruppierten Tabelle, die er nicht lesen darf, fallen mit ihren Spalten weg. Steht etwas im Weg (Bericht nicht mehr freigegeben, keine aktive Mail-Adresse, `Reports.View` entzogen), wird nichts gesendet und das Abo zeigt den Grund; der nächste Lauf versucht es erneut. Für ihre Links brauchen die Mails `Coworkee:Notifications:PublicAppUrl`.
 
 Jede Mail endet mit einem Link, der das Abo ohne Anmeldung beendet (ein geschütztes Token; das Öffnen fragt zuerst, die Bestätigung schickt ein Formular). *Berichte › Abos* (`reports/subscriptions`) listet die Abos des Benutzers mit Plan, nächster und letzter Mail und dem letzten Fehler, zum Ändern, sofort Senden oder Beenden. Inhaber von `Reports.Subscriptions` wechseln zu *Alle im Mandanten* und sehen und beenden alle. Gesendete Mails samt Anhängen gehören zum Mail-Log und folgen dessen Aufbewahrung.
 
@@ -420,9 +420,10 @@ Die Dashboard-Seite des Templates (*Persönlich > Dashboard*, über *Berichte*) 
 
 | | |
 |---|---|
-| Bericht | Name 200 Zeichen, Beschreibung 2.000, 60 Widgets, Aktualisierung alle 10 Sekunden bis einmal am Tag oder nie, mit höchstens 100 Gruppen geteilt |
+| Bericht | Name 200 Zeichen, Beschreibung 2.000, 60 Widgets, Aktualisierung alle 10 Sekunden bis einmal am Tag oder nie, mit höchstens 100 Gruppen geteilt, 8 Datumsfelder zur Wahl, 20 Felder der Filterleiste |
 | Widget | Id 40 Zeichen, Titel 200, Text 20.000, `AppData` 20.000; Breite 1 bis 12 Spalten, Höhe 1 bis 40 Zeilen |
-| Werte und Umschalter | 8 Werte je Abfrage oder Umschalter, 8 Wert- und 8 Gruppierungs-Umschalter, Bezeichnungen 100 Zeichen |
+| Werte und Umschalter | 8 Werte je Abfrage oder Umschalter, 8 Wert- und 8 Gruppierungs-Umschalter, Bezeichnungen 100 Zeichen, Einheiten 16 |
+| Chips | 50 Werte je Widget, Wert 200 Zeichen, Symbol 4.000 |
 | Schwellenwerte | 10 je Widget |
 | Aggregation | 5.000 Gruppen, Top 1 bis 1.000; gruppierte Tabellen 1 bis 8 Felder, 3 Joins, 50.000 Gruppen je Menge |
 | KI-Prompt | 4.000 Zeichen, drei Versuche |

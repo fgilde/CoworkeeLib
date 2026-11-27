@@ -187,6 +187,27 @@ public sealed class ViewSwitchTests : ReportingTestBase
     }
 
     [Fact]
+    public void A_stored_metric_on_an_unreadable_widget_set_does_not_stack_on_the_fallback_metric()
+    {
+        var widget = WithCostMetric();
+        widget.Query!.EntitySet = "InsightCosts";
+        widget.Options.Metrics =
+        [
+            new MetricView("Open", [new()], Filter: "Status eq Shop.Status'Open'", EntitySet: "SalesOrders"),
+            new MetricView("North", [new(AggregateFunction.Sum, "Total")], Filter: "Region eq 'North'", EntitySet: "SalesOrders"),
+        ];
+        Settings.GetSettingsAsync(SettingScope.User, default).ReturnsForAnyArgs([new SettingValueDto(TableSettings.ReportViews, "{\"" + ReportId.ToString("N") + ":c\":{\"metric\":1}}", true)]);
+        Reports.QueryAsync(default!, default).ReturnsForAnyArgs(Rows(("North", null, 3)));
+
+        var frame = Render<WidgetFrame>(p => p.Add(x => x.Widget, widget).Add(x => x.State, State(widget)).Add(x => x.ReportId, ReportId));
+
+        frame.WaitForAssertion(() => Reports.Received().QueryAsync(
+            Arg.Is<ReportQueryRequest>(r => r.Filter != null && r.Filter.Contains("Region eq 'North'") && r.Aggregates![0].Field == "Total"), Arg.Any<CancellationToken>()));
+        Reports.DidNotReceive().QueryAsync(
+            Arg.Is<ReportQueryRequest>(r => r.Filter != null && r.Filter.Contains("Region eq 'North'") && r.Filter.Contains("Status")), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public void A_report_leaves_out_widgets_without_a_readable_metric()
     {
         var id = Guid.NewGuid();

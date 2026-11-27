@@ -91,7 +91,10 @@ internal sealed partial class ReportSubscriptionMail(
         var widgets = new List<object>();
         var sheets = new List<ReportSheetRequest>();
         var sources = await queries.SourcesAsync(cancellationToken);
-        foreach (var widget in definition.Widgets.Where(w => w.Query is { EntitySet.Length: > 0 } && w.Type is not (WidgetType.Markdown or WidgetType.Image or WidgetType.Embed)).OrderBy(w => w.Y).ThenBy(w => w.X))
+        // like the report page: a widget on a set the subscriber may not read shows its first readable value or is left out, joins on such sets are dropped
+        bool Readable(string set) => sources.Any(s => string.Equals(s.EntitySet, set, StringComparison.OrdinalIgnoreCase));
+        foreach (var widget in definition.Widgets.Where(w => w.Query is { EntitySet.Length: > 0 } && w.Type is not (WidgetType.Markdown or WidgetType.Image or WidgetType.Embed))
+            .Select(w => ReportViews.ForReader(w, Readable)).OfType<ReportWidget>().OrderBy(w => w.Y).ThenBy(w => w.X))
         {
             var section = await new ReportMailWidget(services, queries, sources, definition, widget, today, culture, Text).BuildAsync(cancellationToken);
             widgets.Add(section.Model);

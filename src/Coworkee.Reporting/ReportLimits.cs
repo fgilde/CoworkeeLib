@@ -11,4 +11,8 @@ internal static class ReportLimits
     public const int TextLength = 20_000;
     public const int Groups = 100;
     public const int AppDataLength = 20_000;
+    public const int DateFields = 8;
+    public const int FacetFields = 20;
+    public const int ValueIcons = 50;
+    public const int UnitLength = 16;
 }

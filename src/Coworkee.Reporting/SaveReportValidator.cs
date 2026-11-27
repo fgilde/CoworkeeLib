@@ -16,6 +16,8 @@ internal sealed class SaveReportValidator : AbstractValidator<SaveReportRequest>
         RuleFor(r => r.Definition).NotNull();
         RuleFor(r => r.Definition.RefreshSeconds).Must(s => s == 0 || s is >= 10 and <= 86_400).WithMessage("Refresh every 10 seconds to a day, or never.");
         RuleFor(r => r.Definition.Widgets).Must(w => w.Count <= ReportLimits.Widgets).WithMessage($"At most {ReportLimits.Widgets} widgets.");
+        RuleFor(r => r.Definition.DateFields).Must(f => f.Count <= ReportLimits.DateFields).WithMessage($"At most {ReportLimits.DateFields} date fields.");
+        RuleFor(r => r.Definition.FacetFields).Must(f => f.Count <= ReportLimits.FacetFields).WithMessage($"At most {ReportLimits.FacetFields} filter bar fields.");
         RuleFor(r => r.Definition.Widgets).Must(w => w.Select(x => x.Id).Distinct().Count() == w.Count).WithMessage("Widget ids are unique.");
         RuleForEach(r => r.Definition.Widgets).ChildRules(widget =>
         {
@@ -35,6 +37,18 @@ internal sealed class SaveReportValidator : AbstractValidator<SaveReportRequest>
             {
                 metric.RuleFor(m => m.Label).NotEmpty().MaximumLength(ReportViews.LabelLength);
                 metric.RuleFor(m => m.Aggregates).Must(a => a.Count <= ReportLimits.Aggregates).WithMessage($"At most {ReportLimits.Aggregates} values.");
+                metric.RuleForEach(m => m.Aggregates).ChildRules(Value);
+            });
+            widget.RuleFor(w => w.Options.ValueIcons).Must(v => v.Count <= ReportLimits.ValueIcons).WithMessage($"At most {ReportLimits.ValueIcons} chips.");
+            widget.RuleForEach(w => w.Options.ValueIcons).ChildRules(icon =>
+            {
+                icon.RuleFor(i => i.Value).MaximumLength(ReportLimits.NameLength);
+                icon.RuleFor(i => i.Icon).MaximumLength(ReportLimits.IconLength);
+            });
+            widget.When(w => w.Query is not null, () =>
+            {
+                widget.RuleForEach(w => w.Query!.Aggregates).ChildRules(Value);
+                widget.RuleForEach(w => w.Query!.Joins).ChildRules(join => join.RuleForEach(j => j.Aggregates).ChildRules(Value));
             });
             widget.RuleForEach(w => w.Options.Buckets).ChildRules(bucket => bucket.RuleFor(b => b.Label).NotEmpty().MaximumLength(ReportViews.LabelLength));
             widget.RuleFor(w => w.Options.Thresholds).Must(t => t.Count <= ReportThresholds.Max).WithMessage($"At most {ReportThresholds.Max} thresholds.");
@@ -54,6 +68,13 @@ internal sealed class SaveReportValidator : AbstractValidator<SaveReportRequest>
                 widget.RuleFor(w => w.Options.HiddenColumns).Must(h => h.Count <= ReportLimits.HiddenColumns).WithMessage($"At most {ReportLimits.HiddenColumns} hidden columns.");
             });
         });
+    }
+
+    // a value's texts show in headers, legends and mails
+    private static void Value(InlineValidator<ReportAggregate> value)
+    {
+        value.RuleFor(a => a.Label).MaximumLength(ReportViews.LabelLength);
+        value.RuleFor(a => a.Unit).MaximumLength(ReportLimits.UnitLength);
     }
 
     // images and embedded pages must not run script through javascript: or data: addresses

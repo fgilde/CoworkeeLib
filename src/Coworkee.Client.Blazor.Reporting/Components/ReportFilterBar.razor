@@ -31,7 +31,7 @@
     @foreach (var set in FilterSets)
     {
         <div class="cw-filter-set">
-            @if (State.EntitySets.Skip(1).Any())
+            @if (FilterSets.Skip(1).Any())
             {
                 <span class="cw-filter-set-label">@(State.Source(set)?.Label ?? set)</span>
             }
