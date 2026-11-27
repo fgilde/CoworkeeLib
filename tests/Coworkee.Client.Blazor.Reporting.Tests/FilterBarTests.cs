@@ -230,4 +230,69 @@ public sealed class FilterBarTests : ReportingTestBase
         state.CanShare("Mode", null, "SalesOrders", "Costs").ShouldBeFalse();
         state.FilterFor(new WidgetQuery { EntitySet = "Costs" }).ShouldBe("Region eq 'North'");
     }
+
+    private static readonly ReportSourceDto Costs = new("Costs", "Costs",
+    [
+        new ReportFieldDto("Region", "Region", ReportFieldKind.Text),
+        new ReportFieldDto("Carrier", "Carrier", ReportFieldKind.Text),
+        new ReportFieldDto("Amount", "Amount", ReportFieldKind.Number),
+    ]);
+
+    private static readonly ReportWidget CostsChart = new() { Id = "k", Type = WidgetType.Chart, Query = new WidgetQuery { EntitySet = "Costs" } };
+
+    private ReportState Carriers()
+    {
+        OData.QueryAsync<JsonElement>(Arg.Any<string>(), Arg.Is<Data.ODataQuery>(q => q.Facets), Arg.Any<CancellationToken>()).Returns(new ODataPage<JsonElement>([], 0, [Group("region", "Region", "North")]));
+        Reports.QueryAsync(default!, default).ReturnsForAnyArgs(new ReportQueryResult([new ReportQueryRow(new ReportKey("Maersk", "Maersk", "Carrier eq 'Maersk'"), null, [4])], 1));
+        return Shipping(new ReportDefinition { Widgets = [ShipmentChart, CostsChart], FacetFields = ["Carrier"] }, Shipments, Costs);
+    }
+
+    [Fact]
+    public void The_values_of_a_field_without_facet_see_a_shared_facet_chosen_on_another_set()
+    {
+        var state = Carriers();
+        state.Definition.Filters = [new ReportFilterValue("Costs", "region", "Region", "North", "Region eq 'North'", Field: "Region")];
+        state.Load(state.Definition);
+
+        var bar = Render<ReportFilterBar>(p => p.Add(x => x.State, state));
+
+        bar.WaitForAssertion(() => Reports.Received().QueryAsync(Arg.Is<ReportQueryRequest>(r => r.EntitySet == "Shipments" && r.GroupBy!.Field == "Carrier" && r.Filter == "Region eq 'North'"), Arg.Any<CancellationToken>()));
+    }
+
+    [Fact]
+    public void The_values_of_a_field_without_facet_see_cross_filters_and_the_other_choices_of_their_set()
+    {
+        var state = Carriers();
+        var bar = Render<ReportFilterBar>(p => p.Add(x => x.State, state));
+        bar.WaitForAssertion(() => Reports.Received().QueryAsync(Arg.Is<ReportQueryRequest>(r => r.EntitySet == "Shipments" && r.Filter == null), Arg.Any<CancellationToken>()));
+
+        state.ToggleCross(new CrossFilter("c", "Shipments", "South", "Region eq 'South'", "Region"));
+
+        bar.WaitForAssertion(() => Reports.Received().QueryAsync(Arg.Is<ReportQueryRequest>(r => r.EntitySet == "Shipments" && r.GroupBy!.Field == "Carrier" && r.Filter == "Region eq 'South'"), Arg.Any<CancellationToken>()));
+
+        // a facet group of the set narrows it too, the field's own choice does not
+        var region = Group("region", "Region", "North");
+        state.Facets("Shipments").Toggle(region, region.Options[0]);
+        bar.WaitForAssertion(() => Reports.Received().QueryAsync(Arg.Is<ReportQueryRequest>(r => r.EntitySet == "Shipments" && r.Filter != null && r.Filter.Contains("Region eq 'North'") && r.Filter.Contains("Region eq 'South'")), Arg.Any<CancellationToken>()));
+        var carrier = new FacetGroupDto("Carrier", "Carrier", "Carrier", FacetKind.CheckboxList, FacetOperator.Or, [], true, 0);
+        state.Facets("Shipments").Toggle(carrier, new FacetOptionDto(JsonSerializer.SerializeToElement("Maersk"), "Maersk", true, 4, "Carrier eq 'Maersk'"));
+        Reports.ClearReceivedCalls();
+        state.ToggleCross(new CrossFilter("d", "Shipments", "West", "Region eq 'West'", "Region"));
+        bar.WaitForAssertion(() => Reports.Received().QueryAsync(Arg.Is<ReportQueryRequest>(r => r.EntitySet == "Shipments" && r.Filter != null && r.Filter.Contains("West")), Arg.Any<CancellationToken>()));
+        Reports.DidNotReceive().QueryAsync(Arg.Is<ReportQueryRequest>(r => r.EntitySet == "Shipments" && r.Filter != null && r.Filter.Contains("Carrier eq")), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public void A_field_whose_values_cannot_be_loaded_stays_in_the_bar_with_a_hint()
+    {
+        OData.QueryAsync<JsonElement>("Shipments", Arg.Is<Data.ODataQuery>(q => q.Facets), Arg.Any<CancellationToken>()).Returns(new ODataPage<JsonElement>([], 0, [Group("region", "Region", "North")]));
+        Reports.QueryAsync(default!, default).ReturnsForAnyArgs<Task<ReportQueryResult>>(_ => throw new ApiException(500, null, null));
+        var state = Shipping(new ReportDefinition { Widgets = [ShipmentChart], FacetFields = ["Region", "Carrier"] });
+
+        var bar = Render<ReportFilterBar>(p => p.Add(x => x.State, state));
+
+        bar.WaitForAssertion(() => bar.Find("[data-testid='facet-unavailable']").TextContent.ShouldContain("Carrier"));
+        bar.Find("[data-testid='facet-unavailable']").TextContent.ShouldContain("Values not available");
+        bar.FindAll("[data-facet='region']").Count.ShouldBe(1);
+    }
 }

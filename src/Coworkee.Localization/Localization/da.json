@@ -2393,5 +2393,11 @@
   "Filter for tenant {0}": "Filter for lejer {0}",
   "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Pr. entitetssæt: hvilke data browserne beholder en kopi af, og hvordan de holder den synkroniseret, og hvilke rækker lejere ser (datafiltre). Ændringer når alle åbne klienter med det samme, uden udrulning.",
   "No data type matches the search or filters.": "Ingen datatype matcher søgningen eller filtrene.",
-  "No group has data filters.": "Ingen gruppe har datafiltre."
+  "No group has data filters.": "Ingen gruppe har datafiltre.",
+  "Only rows with a date": "Kun rækker med en dato",
+  "Date fields to choose from": "Datofelter at vælge imellem",
+  "The first date field is the default; viewers can switch to the others.": "Det første datofelt er standard; seerne kan skifte til de andre.",
+  "Filter bar fields": "Felter i filterlinjen",
+  "In this order; empty shows every facet of the data.": "I denne rækkefølge; tom viser alle facetter af data.",
+  "Values not available": "Værdier er ikke tilgængelige"
 }

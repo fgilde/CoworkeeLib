@@ -84,11 +84,15 @@ Ein Bericht mit mehreren Datumsfeldern (ETA und ETD) bietet die Wahl in der Filt
 }
 ```
 
+Im Designer hat „Berichtseinstellungen“ die Auswahl „Datumsfelder zur Auswahl“ (die Datumsfelder der Datenmengen, die die Widgets nutzen; die Reihenfolge der Auswahl ist die Reihenfolge, das erste ist der Standard), und ein Widget mit Datumsfeld hat den Schalter „Nur Zeilen mit Datum“.
+
 Eine Definition, die ein Datumsfeld nennt, das keine Datenmenge hat (oder das kein Datum ist), wird beim Speichern abgelehnt.
 
 ## Felder der Filterleiste
 
 `FacetFields` wählt die Gruppen der Filterleiste und ihre Reihenfolge. Jeder Eintrag ist ein Feldpfad: Die Facette der Menge dazu erscheint wie gewohnt, ein Feld ohne Facette bekommt seine Werte aus einer Berichtsabfrage (nach dem Feld gruppiert, Anzahl, die ersten 1000), gezählt mit den übrigen Auswahlen wie jede Gruppe. Ein solcher Wert ist ein gewöhnlicher Berichtsfilter mit dem Pfad des Felds, andere Mengen mit dem Feld teilen ihn also. Felder, die eine Menge nicht hat, werden für sie übersprungen; eine leere Liste zeigt jede Facette. Unbekannte Felder werden beim Speichern abgelehnt.
+
+In den „Berichtseinstellungen“ wählt und ordnet die Auswahl „Felder der Filterleiste“ sie. Ein Feld, dessen Werte sich nicht laden lassen, bleibt mit dem Hinweis „Werte nicht verfügbar“ in der Leiste (und wird als Warnung protokolliert), statt zu verschwinden.
 
 ```json
 { "facetFields": ["Region", "Carrier", "Status"] }

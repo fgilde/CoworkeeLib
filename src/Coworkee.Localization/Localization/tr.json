@@ -2393,5 +2393,11 @@
   "Filter for tenant {0}": "{0} kiracısı için filtre",
   "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Varlık kümesi başına: tarayıcıların hangi verilerin kopyasını tuttuğu ve bunu nasıl senkron tuttuğu ve kiracıların hangi satırları gördüğü (veri filtreleri). Değişiklikler dağıtım olmadan her açık istemciye anında ulaşır.",
   "No data type matches the search or filters.": "Aramaya veya filtrelere uyan veri türü yok.",
-  "No group has data filters.": "Hiçbir grupta veri filtresi yok."
+  "No group has data filters.": "Hiçbir grupta veri filtresi yok.",
+  "Only rows with a date": "Yalnızca tarihi olan satırlar",
+  "Date fields to choose from": "Aralarından seçilecek tarih alanları",
+  "The first date field is the default; viewers can switch to the others.": "İlk tarih alanı varsayılandır; görüntüleyenler diğerlerine geçebilir.",
+  "Filter bar fields": "Filtre çubuğu alanları",
+  "In this order; empty shows every facet of the data.": "Bu sırayla; boş olursa verilerin tüm yönleri gösterilir.",
+  "Values not available": "Değerler kullanılamıyor"
 }

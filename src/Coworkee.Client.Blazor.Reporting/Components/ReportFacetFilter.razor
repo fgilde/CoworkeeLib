@@ -1,1 +1,5 @@
 <FacetBar Groups="Visible" Selection="Selection" Views="_views" ViewsChanged="StateHasChanged" />
+@foreach (var label in _unavailable)
+{
+    <span class="cw-facet-unavailable" title="@L["Values not available"]" data-testid="facet-unavailable">@label: @L["Values not available"]</span>
+}

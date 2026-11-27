@@ -2393,5 +2393,11 @@
   "Filter for tenant {0}": "Filtre pour le locataire {0}",
   "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Par ensemble d'entités : de quelles données les navigateurs gardent une copie et comment ils la synchronisent, et quelles lignes les locataires voient (filtres de données). Les modifications atteignent immédiatement tous les clients ouverts, sans déploiement.",
   "No data type matches the search or filters.": "Aucun type de données ne correspond à la recherche ou aux filtres.",
-  "No group has data filters.": "Aucun groupe n’a de filtres de données."
+  "No group has data filters.": "Aucun groupe n’a de filtres de données.",
+  "Only rows with a date": "Uniquement les lignes avec une date",
+  "Date fields to choose from": "Champs de date au choix",
+  "The first date field is the default; viewers can switch to the others.": "Le premier champ de date est celui par défaut ; les lecteurs peuvent passer aux autres.",
+  "Filter bar fields": "Champs de la barre de filtres",
+  "In this order; empty shows every facet of the data.": "Dans cet ordre ; vide affiche toutes les facettes des données.",
+  "Values not available": "Valeurs non disponibles"
 }

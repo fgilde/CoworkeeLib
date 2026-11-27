@@ -2393,5 +2393,11 @@
   "Filter for tenant {0}": "Filter untuk tenant {0}",
   "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Per set entitas: data apa yang disalin browser dan bagaimana menyinkronkannya, serta baris mana yang dilihat tenant (filter data). Perubahan langsung sampai ke setiap klien yang terbuka, tanpa deployment.",
   "No data type matches the search or filters.": "Tidak ada tipe data yang cocok dengan pencarian atau filter.",
-  "No group has data filters.": "Tidak ada grup yang memiliki filter data."
+  "No group has data filters.": "Tidak ada grup yang memiliki filter data.",
+  "Only rows with a date": "Hanya baris dengan tanggal",
+  "Date fields to choose from": "Bidang tanggal untuk dipilih",
+  "The first date field is the default; viewers can switch to the others.": "Bidang tanggal pertama adalah bawaan; pemirsa dapat beralih ke yang lain.",
+  "Filter bar fields": "Bidang bilah filter",
+  "In this order; empty shows every facet of the data.": "Dalam urutan ini; kosong menampilkan semua faset data.",
+  "Values not available": "Nilai tidak tersedia"
 }

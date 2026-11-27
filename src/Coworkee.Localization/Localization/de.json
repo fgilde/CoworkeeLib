@@ -2393,5 +2393,11 @@
   "Filter for tenant {0}": "Filter für Mandant {0}",
   "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Pro Entitätsmenge: von welchen Daten die Browser eine Kopie halten und wie sie sie synchron halten, und welche Zeilen Mandanten überhaupt sehen (Datenfilter). Änderungen erreichen jeden offenen Client sofort, ohne Deployment.",
   "No data type matches the search or filters.": "Kein Datentyp passt zur Suche oder zu den Filtern.",
-  "No group has data filters.": "Keine Gruppe hat Datenfilter."
+  "No group has data filters.": "Keine Gruppe hat Datenfilter.",
+  "Only rows with a date": "Nur Zeilen mit Datum",
+  "Date fields to choose from": "Datumsfelder zur Auswahl",
+  "The first date field is the default; viewers can switch to the others.": "Das erste Datumsfeld ist der Standard; Betrachter können zu den anderen wechseln.",
+  "Filter bar fields": "Felder der Filterleiste",
+  "In this order; empty shows every facet of the data.": "In dieser Reihenfolge; leer zeigt jede Facette der Daten.",
+  "Values not available": "Werte nicht verfügbar"
 }

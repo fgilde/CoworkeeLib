@@ -2393,5 +2393,11 @@
   "Filter for tenant {0}": "Filtar za zakupca {0}",
   "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Po skupu entiteta: čiju kopiju podataka preglednici čuvaju i kako je sinkroniziraju te koje retke zakupci vide (filtri podataka). Promjene odmah stižu do svakog otvorenog klijenta, bez postavljanja.",
   "No data type matches the search or filters.": "Nijedna vrsta podataka ne odgovara pretrazi ili filtrima.",
-  "No group has data filters.": "Nijedna grupa nema filtre podataka."
+  "No group has data filters.": "Nijedna grupa nema filtre podataka.",
+  "Only rows with a date": "Samo retci s datumom",
+  "Date fields to choose from": "Polja datuma za odabir",
+  "The first date field is the default; viewers can switch to the others.": "Prvo polje datuma je zadano; gledatelji mogu prijeći na ostala.",
+  "Filter bar fields": "Polja trake filtara",
+  "In this order; empty shows every facet of the data.": "Ovim redoslijedom; prazno prikazuje sve fasete podataka.",
+  "Values not available": "Vrijednosti nisu dostupne"
 }

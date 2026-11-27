@@ -84,11 +84,15 @@ A report that has several date fields (an ETA and an ETD) offers the choice in t
 }
 ```
 
+In the designer, "Report settings" has "Date fields to choose from" (the date fields of the data sets the widgets use; the order of choosing is the order, the first is the default) and a widget with a date field has the switch "Only rows with a date".
+
 A definition that names a date field no data set has (or one that is not a date) is refused when it is saved.
 
 ## Filter bar fields
 
 `FacetFields` chooses the filter bar's groups and their order. Each entry is a field path: the set's facet on it shows as usual, a field without a facet gets its values from a report query (grouped by the field, count, the first 1000), counted with the other choices like any group. Choosing such a value is a normal report filter with the field's path, so other sets with the field share it. Fields a set does not have are skipped for that set; an empty list shows every facet. Unknown fields are refused when the report is saved.
+
+In "Report settings" the "Filter bar fields" select chooses and orders them. A field whose values cannot be loaded stays in the bar with the hint "Values not available" (and is logged as a warning) instead of disappearing.
 
 ```json
 { "facetFields": ["Region", "Carrier", "Status"] }

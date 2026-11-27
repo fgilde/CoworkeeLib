@@ -108,6 +108,11 @@
                 }
             </MudSelect>
 
+            @if (Widget.Type is WidgetType.Chart or WidgetType.Kpi && query.DateField is { Length: > 0 })
+            {
+                <MudSwitch T="bool" Value="query.RequireDate" ValueChanged="v => Change(() => query.RequireDate = v)" Color="Color.Primary" Label="@L["Only rows with a date"]" data-testid="widget-require-date" />
+            }
+
             @if (Widget.Type is WidgetType.Chart or WidgetType.Pivot)
             {
                 <div class="cw-settings-row">

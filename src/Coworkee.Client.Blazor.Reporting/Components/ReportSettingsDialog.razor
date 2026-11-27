@@ -18,6 +18,26 @@
                     <MudSelectItem Value="seconds">@L[label]</MudSelectItem>
                 }
             </MudSelect>
+            @if (DateFieldOptions.Count > 1)
+            {
+                <MudSelect T="string" SelectedValues="Model.DateFields" SelectedValuesChanged="v => Model.DateFields = Ordered(Model.DateFields, v)" MultiSelection="true" Label="@L["Date fields to choose from"]"
+                           HelperText="@L["The first date field is the default; viewers can switch to the others."]" Variant="Variant.Outlined" MultiSelectionTextFunc="@(ids => Labels(ids, DateFieldOptions))" data-testid="report-date-fields">
+                    @foreach (var field in DateFieldOptions)
+                    {
+                        <MudSelectItem Value="field.Path">@field.Label</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            @if (FacetFieldOptions.Count > 0)
+            {
+                <MudSelect T="string" SelectedValues="Model.FacetFields" SelectedValuesChanged="v => Model.FacetFields = Ordered(Model.FacetFields, v)" MultiSelection="true" Label="@L["Filter bar fields"]"
+                           HelperText="@L["In this order; empty shows every facet of the data."]" Variant="Variant.Outlined" MultiSelectionTextFunc="@(ids => Labels(ids, FacetFieldOptions))" data-testid="report-facet-fields">
+                    @foreach (var field in FacetFieldOptions)
+                    {
+                        <MudSelectItem Value="field.Path">@field.Label</MudSelectItem>
+                    }
+                </MudSelect>
+            }
             <MudText Typo="Typo.subtitle2">@L["Shared with"]</MudText>
             <MudRadioGroup T="ReportVisibility" @bind-Value="Model.Visibility" Disabled="!CanShare">
                 <MudRadio Value="ReportVisibility.Private" Color="Color.Primary">@L["Only me"]</MudRadio>

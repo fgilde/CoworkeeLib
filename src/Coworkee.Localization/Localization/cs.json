@@ -2393,5 +2393,11 @@
   "Filter for tenant {0}": "Filtr pro nájemce {0}",
   "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Pro každou sadu entit: jaká data si prohlížeče uchovávají v kopii a jak ji synchronizují, a které řádky nájemci vidí (filtry dat). Změny okamžitě dorazí ke všem otevřeným klientům, bez nasazení.",
   "No data type matches the search or filters.": "Hledání ani filtrům neodpovídá žádný datový typ.",
-  "No group has data filters.": "Žádná skupina nemá filtry dat."
+  "No group has data filters.": "Žádná skupina nemá filtry dat.",
+  "Only rows with a date": "Pouze řádky s datem",
+  "Date fields to choose from": "Datová pole k výběru",
+  "The first date field is the default; viewers can switch to the others.": "První datové pole je výchozí; diváci mohou přepnout na ostatní.",
+  "Filter bar fields": "Pole lišty filtrů",
+  "In this order; empty shows every facet of the data.": "V tomto pořadí; prázdné zobrazí všechny fasety dat.",
+  "Values not available": "Hodnoty nejsou k dispozici"
 }

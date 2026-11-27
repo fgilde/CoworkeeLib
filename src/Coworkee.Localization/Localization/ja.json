@@ -2393,5 +2393,11 @@
   "Filter for tenant {0}": "テナント {0} 向けフィルター",
   "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "エンティティセットごとに、ブラウザーがどのデータのコピーを保持し、どのように同期するか、またテナントにどの行が見えるか(データフィルター)を設定します。変更はデプロイなしで、開いているすべてのクライアントにすぐ反映されます。",
   "No data type matches the search or filters.": "検索条件またはフィルターに一致するデータタイプはありません。",
-  "No group has data filters.": "データフィルターを持つグループはありません。"
+  "No group has data filters.": "データフィルターを持つグループはありません。",
+  "Only rows with a date": "日付のある行のみ",
+  "Date fields to choose from": "選択できる日付フィールド",
+  "The first date field is the default; viewers can switch to the others.": "最初の日付フィールドが既定です。閲覧者は他のフィールドに切り替えられます。",
+  "Filter bar fields": "フィルターバーのフィールド",
+  "In this order; empty shows every facet of the data.": "この順序で表示します。空の場合はデータのすべてのファセットを表示します。",
+  "Values not available": "値を取得できません"
 }

@@ -2393,5 +2393,11 @@
   "Filter for tenant {0}": "Φίλτρο για τον ενοικιαστή {0}",
   "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Ανά σύνολο οντοτήτων: από ποια δεδομένα κρατούν αντίγραφο τα προγράμματα περιήγησης και πώς το συγχρονίζουν, και ποιες γραμμές βλέπουν οι ενοικιαστές (φίλτρα δεδομένων). Οι αλλαγές φτάνουν αμέσως σε κάθε ανοιχτό πελάτη, χωρίς ανάπτυξη.",
   "No data type matches the search or filters.": "Κανένας τύπος δεδομένων δεν ταιριάζει με την αναζήτηση ή τα φίλτρα.",
-  "No group has data filters.": "Καμία ομάδα δεν έχει φίλτρα δεδομένων."
+  "No group has data filters.": "Καμία ομάδα δεν έχει φίλτρα δεδομένων.",
+  "Only rows with a date": "Μόνο γραμμές με ημερομηνία",
+  "Date fields to choose from": "Πεδία ημερομηνίας προς επιλογή",
+  "The first date field is the default; viewers can switch to the others.": "Το πρώτο πεδίο ημερομηνίας είναι το προεπιλεγμένο· οι θεατές μπορούν να αλλάξουν στα υπόλοιπα.",
+  "Filter bar fields": "Πεδία της γραμμής φίλτρων",
+  "In this order; empty shows every facet of the data.": "Με αυτή τη σειρά· κενό εμφανίζει όλες τις όψεις των δεδομένων.",
+  "Values not available": "Οι τιμές δεν είναι διαθέσιμες"
 }

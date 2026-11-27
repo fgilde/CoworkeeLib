@@ -2393,5 +2393,11 @@
   "Filter for tenant {0}": "مرشح للمستأجر {0}",
   "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "لكل مجموعة كيانات: أي بيانات تحتفظ المتصفحات بنسخة منها وكيف تزامنها، وأي صفوف يراها المستأجرون (مرشحات البيانات). تصل التغييرات إلى كل عميل مفتوح فورًا، دون نشر.",
   "No data type matches the search or filters.": "لا يوجد نوع بيانات يطابق البحث أو المرشحات.",
-  "No group has data filters.": "لا توجد مجموعة بها مرشحات بيانات."
+  "No group has data filters.": "لا توجد مجموعة بها مرشحات بيانات.",
+  "Only rows with a date": "الصفوف التي لها تاريخ فقط",
+  "Date fields to choose from": "حقول التاريخ للاختيار",
+  "The first date field is the default; viewers can switch to the others.": "حقل التاريخ الأول هو الافتراضي؛ يمكن للمشاهدين التبديل إلى الباقي.",
+  "Filter bar fields": "حقول شريط التصفية",
+  "In this order; empty shows every facet of the data.": "بهذا الترتيب؛ إذا تُرك فارغاً تظهر كل جوانب البيانات.",
+  "Values not available": "القيم غير متاحة"
 }

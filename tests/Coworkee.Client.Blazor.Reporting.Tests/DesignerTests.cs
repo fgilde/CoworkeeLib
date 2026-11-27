@@ -4,6 +4,8 @@ using Coworkee.Client.Blazor.Reporting.Components;
 using Coworkee.Client.Blazor.Reporting.Pages;
 using Coworkee.Contracts.Reporting;
 using Microsoft.AspNetCore.Components;
+using Coworkee.Client.Blazor.Reporting.State;
+using MudBlazor;
 using NSubstitute;
 
 namespace Coworkee.Client.Blazor.Reporting.Tests;
@@ -89,5 +91,67 @@ public sealed class DesignerTests : ReportingTestBase
 
         page.WaitForAssertion(() => Reports.Received().UpdateAsync(Id, Arg.Is<SaveReportRequest>(r => r.Definition.Widgets.Single().Id == "b"), Arg.Any<CancellationToken>()));
         page.WaitForElement("[data-testid='report-edit']");
+    }
+
+    private static readonly ReportSourceDto Trips = new("Trips", "Trips",
+    [
+        new ReportFieldDto("Eta", "ETA", ReportFieldKind.Date),
+        new ReportFieldDto("Etd", "ETD", ReportFieldKind.Date),
+        new ReportFieldDto("Carrier", "Carrier", ReportFieldKind.Text),
+        new ReportFieldDto("Weight", "Weight", ReportFieldKind.Number),
+    ]);
+
+    private static readonly ReportWidget TripChart = new() { Id = "t", Type = WidgetType.Chart, Query = new WidgetQuery { EntitySet = "Trips", DateField = "Eta", GroupBy = new ReportGroupBy("Eta", DateBucket.Month) } };
+
+    private static MudSelect<string> Select(IRenderedComponent<MudDialogProvider> dialogs, string testId) =>
+        dialogs.FindComponents<MudSelect<string>>().Single(s => s.Instance.UserAttributes.GetValueOrDefault("data-testid") as string == testId).Instance;
+
+    [Fact]
+    public async Task The_report_settings_choose_the_date_fields_and_the_filter_bar_fields_and_the_viewer_follows()
+    {
+        Reports.GetSourcesAsync(default).ReturnsForAnyArgs([Trips]);
+        var report = Report(TripChart);
+        Reports.UpdateAsync(default, default!, default).ReturnsForAnyArgs(report);
+        var dialogs = Render<MudDialogProvider>();
+        var page = Open(report);
+        page.FindAll("[data-testid='date-field']").ShouldBeEmpty();
+        page.Find("[data-testid='report-settings-open']").Click();
+        dialogs.WaitForElement("[data-testid='report-settings']");
+
+        // only date fields of the widgets' sets are offered for the date choice, any non-key field for the filter bar
+        var dates = Select(dialogs, "report-date-fields");
+        await dialogs.InvokeAsync(() => dates.SelectedValuesChanged.InvokeAsync(new[] { "Etd", "Eta" }));
+        await dialogs.InvokeAsync(() => Select(dialogs, "report-facet-fields").SelectedValuesChanged.InvokeAsync(new[] { "Carrier", "Eta", "Weight" }));
+        dialogs.Find("[data-testid='report-settings-ok']").Click();
+
+        page.WaitForElement("[data-testid='date-field']");
+        page.Find("[data-testid='report-save']").Click();
+        page.WaitForAssertion(() => Reports.Received().UpdateAsync(Id,
+            Arg.Is<SaveReportRequest>(r => r.Definition.DateFields.SequenceEqual(new[] { "Etd", "Eta" }) && r.Definition.FacetFields.SequenceEqual(new[] { "Carrier", "Eta", "Weight" })), Arg.Any<CancellationToken>()));
+    }
+
+    [Fact]
+    public void The_report_settings_offer_only_date_fields_for_the_date_choice_and_every_plain_field_for_the_filter_bar()
+    {
+        ReportFieldChoices.Dates([Trips, Orders]).Select(f => f.Path).ShouldBe(["Eta", "Etd", "OrderDate"]);
+        ReportFieldChoices.Facets([Trips]).Select(f => f.Path).ShouldBe(["Eta", "Etd", "Carrier", "Weight"]);
+    }
+
+    [Fact]
+    public void Only_rows_with_a_date_is_a_switch_of_charts_and_kpis_with_a_date_field()
+    {
+        var chart = new ReportWidget { Id = "c", Type = WidgetType.Chart, Query = new WidgetQuery { EntitySet = "Trips", DateField = "Eta" } };
+        var changed = 0;
+        var state = new ReportState(new ReportDefinition { Widgets = [chart] }, [Trips]);
+        var settings = Render<WidgetSettings>(p => p.Add(x => x.Widget, chart).Add(x => x.State, state).Add(x => x.OnChanged, () => changed++));
+
+        var toggle = settings.FindComponents<MudSwitch<bool>>().Single(s => s.Instance.UserAttributes.GetValueOrDefault("data-testid") as string == "widget-require-date").Instance;
+        settings.InvokeAsync(() => toggle.ValueChanged.InvokeAsync(true)).GetAwaiter().GetResult();
+
+        chart.Query!.RequireDate.ShouldBeTrue();
+        changed.ShouldBe(1);
+        chart.Query.DateField = null;
+        var without = Render<WidgetSettings>(p => p.Add(x => x.Widget, chart).Add(x => x.State, state));
+        without.FindComponents<MudSwitch<bool>>().Any(s => s.Instance.UserAttributes.GetValueOrDefault("data-testid") as string == "widget-require-date").ShouldBeFalse();
     }
 }

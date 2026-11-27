@@ -34,6 +34,12 @@ public partial class ReportSettingsDialog
 
     [Parameter] public ReportSettings Model { get; set; } = new();
 
+    /// <summary>The date fields of the sets the widgets use.</summary>
+    [Parameter] public IReadOnlyList<ReportFieldDto> DateFieldOptions { get; set; } = [];
+
+    /// <summary>The fields the filter bar can offer.</summary>
+    [Parameter] public IReadOnlyList<ReportFieldDto> FacetFieldOptions { get; set; } = [];
+
     private bool CanShare { get; set; }
 
     protected override async Task OnInitializedAsync()
@@ -58,9 +64,25 @@ public partial class ReportSettingsDialog
     private string GroupNames(IReadOnlyList<string> ids) =>
         string.Join(", ", ids.Select(id => _groups.FirstOrDefault(g => g.Id.ToString() == id)?.Name ?? id));
 
-    public static async Task<ReportSettings?> ShowAsync(IDialogService dialogs, string title, ReportSettings model)
+    // the choice keeps the order it was made in: fields still chosen first, new ones after them
+    private static List<string> Ordered(List<string> before, IEnumerable<string>? now)
     {
-        var dialog = await dialogs.ShowSideSheetAsync<ReportSettingsDialog>(title, new DialogParameters<ReportSettingsDialog> { { d => d.Model, model } });
+        var chosen = now?.ToList() ?? [];
+        return [.. before.Where(chosen.Contains), .. chosen.Where(c => !before.Contains(c))];
+    }
+
+    private static string Labels(IEnumerable<string> paths, IReadOnlyList<ReportFieldDto> options) =>
+        string.Join(", ", paths.Select(p => options.FirstOrDefault(o => o.Path == p)?.Label ?? p));
+
+    public static async Task<ReportSettings?> ShowAsync(IDialogService dialogs, string title, ReportSettings model,
+        IReadOnlyList<ReportFieldDto>? dateFields = null, IReadOnlyList<ReportFieldDto>? facetFields = null)
+    {
+        var dialog = await dialogs.ShowSideSheetAsync<ReportSettingsDialog>(title, new DialogParameters<ReportSettingsDialog>
+        {
+            { d => d.Model, model },
+            { d => d.DateFieldOptions, dateFields ?? [] },
+            { d => d.FacetFieldOptions, facetFields ?? [] },
+        });
         var result = await dialog.Result;
         return result is { Canceled: false, Data: ReportSettings settings } ? settings : null;
     }

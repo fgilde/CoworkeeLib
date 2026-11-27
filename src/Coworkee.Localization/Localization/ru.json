@@ -2393,5 +2393,11 @@
   "Filter for tenant {0}": "Фильтр для арендатора {0}",
   "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "По каждому набору сущностей: копию каких данных хранят браузеры и как они её синхронизируют, и какие строки видят арендаторы (фильтры данных). Изменения сразу доходят до каждого открытого клиента, без развёртывания.",
   "No data type matches the search or filters.": "Ни один тип данных не соответствует поиску или фильтрам.",
-  "No group has data filters.": "Ни у одной группы нет фильтров данных."
+  "No group has data filters.": "Ни у одной группы нет фильтров данных.",
+  "Only rows with a date": "Только строки с датой",
+  "Date fields to choose from": "Поля даты на выбор",
+  "The first date field is the default; viewers can switch to the others.": "Первое поле даты используется по умолчанию; зрители могут переключиться на остальные.",
+  "Filter bar fields": "Поля панели фильтров",
+  "In this order; empty shows every facet of the data.": "В этом порядке; пусто показывает все фасеты данных.",
+  "Values not available": "Значения недоступны"
 }

@@ -4,7 +4,9 @@ using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Reporting.Api;
 using Coworkee.Contracts.Data;
 using Coworkee.Contracts.Reporting;
+using Coworkee.Client.Blazor.Localization;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
 
 namespace Coworkee.Client.Blazor.Reporting.Components;
 
@@ -19,11 +21,16 @@ public partial class ReportFacetFilter : IDisposable
     private IReadOnlyList<FacetGroupDto> _groups = [];
     private FacetSelection? _subscribed;
     private string? _loaded;
+    private List<string> _unavailable = [];
 
     /// <summary>The most values of a field without a facet that the bar offers.</summary>
     internal const int FieldValues = 1000;
 
     [Inject] private IODataClient OData { get; set; } = null!;
+
+    [Inject] private CoworkeeLocalizer L { get; set; } = null!;
+
+    [Inject] private ILogger<ReportFacetFilter> Log { get; set; } = null!;
 
     [Inject] private IReportsApi Reports { get; set; } = null!;
 
@@ -108,6 +115,10 @@ public partial class ReportFacetFilter : IDisposable
         {
             _groups = await ChosenAsync(_groups);
         }
+        else
+        {
+            _unavailable = [];
+        }
 
         await GroupsLoaded.InvokeAsync(_groups);
     }
@@ -116,17 +127,27 @@ public partial class ReportFacetFilter : IDisposable
     private async Task<IReadOnlyList<FacetGroupDto>> ChosenAsync(IReadOnlyList<FacetGroupDto> facets)
     {
         var chosen = new List<FacetGroupDto>();
+        var unavailable = new List<string>();
         foreach (var name in FacetFields)
         {
             if (facets.FirstOrDefault(g => Is(g.Field, name) || Is(g.Key, name)) is { } facet)
             {
                 chosen.Add(facet with { Order = chosen.Count });
             }
-            else if (Fields.FirstOrDefault(f => Is(f.Path, name)) is { } field && await FieldGroupAsync(field, chosen.Count) is { } group)
+            else if (Fields.FirstOrDefault(f => Is(f.Path, name)) is { } field)
             {
-                chosen.Add(group);
+                if (await FieldGroupAsync(field, chosen.Count) is { } group)
+                {
+                    chosen.Add(group);
+                }
+                else
+                {
+                    unavailable.Add(field.Label);
+                }
             }
         }
+
+        _unavailable = unavailable;
 
         return chosen;
     }
@@ -142,8 +163,9 @@ public partial class ReportFacetFilter : IDisposable
                 .Select(r => new FacetOptionDto(JsonSerializer.SerializeToElement(r.Key!.Value), r.Key.Label, true, (int)(r.Values.FirstOrDefault() ?? 0), r.Key.Filter)).ToList();
             return new FacetGroupDto(field.Path, field.Label, field.Path, FacetKind.CheckboxList, FacetOperator.Or, options, true, order);
         }
-        catch (ApiException)
+        catch (ApiException exception)
         {
+            Log.LogWarning(exception, "The values of the filter bar field {Field} of {EntitySet} could not be loaded", field.Path, EntitySet);
             return null;
         }
     }

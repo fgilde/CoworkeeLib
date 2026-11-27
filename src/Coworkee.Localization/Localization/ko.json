@@ -2393,5 +2393,11 @@
   "Filter for tenant {0}": "테넌트 {0}용 필터",
   "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "엔터티 집합별로 브라우저가 어떤 데이터의 사본을 보관하고 어떻게 동기화하는지, 그리고 테넌트가 어떤 행을 볼 수 있는지(데이터 필터)를 설정합니다. 변경 사항은 배포 없이 열려 있는 모든 클라이언트에 즉시 반영됩니다.",
   "No data type matches the search or filters.": "검색어나 필터와 일치하는 데이터 유형이 없습니다.",
-  "No group has data filters.": "데이터 필터가 있는 그룹이 없습니다."
+  "No group has data filters.": "데이터 필터가 있는 그룹이 없습니다.",
+  "Only rows with a date": "날짜가 있는 행만",
+  "Date fields to choose from": "선택할 날짜 필드",
+  "The first date field is the default; viewers can switch to the others.": "첫 번째 날짜 필드가 기본값이며, 보는 사람은 다른 필드로 전환할 수 있습니다.",
+  "Filter bar fields": "필터 막대 필드",
+  "In this order; empty shows every facet of the data.": "이 순서로 표시하며, 비어 있으면 데이터의 모든 패싯을 표시합니다.",
+  "Values not available": "값을 사용할 수 없음"
 }

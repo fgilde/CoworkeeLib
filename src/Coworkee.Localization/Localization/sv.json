@@ -2393,5 +2393,11 @@
   "Filter for tenant {0}": "Filter för hyresgästen {0}",
   "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Per entitetsuppsättning: vilka data webbläsarna håller en kopia av och hur de synkroniserar den, och vilka rader hyresgäster ser (datafilter). Ändringar når alla öppna klienter direkt, utan driftsättning.",
   "No data type matches the search or filters.": "Ingen datatyp matchar sökningen eller filtren.",
-  "No group has data filters.": "Ingen grupp har datafilter."
+  "No group has data filters.": "Ingen grupp har datafilter.",
+  "Only rows with a date": "Endast rader med datum",
+  "Date fields to choose from": "Datumfält att välja bland",
+  "The first date field is the default; viewers can switch to the others.": "Det första datumfältet är standard; tittare kan byta till de andra.",
+  "Filter bar fields": "Fält i filterfältet",
+  "In this order; empty shows every facet of the data.": "I denna ordning; tomt visar alla fasetter av data.",
+  "Values not available": "Värden är inte tillgängliga"
 }

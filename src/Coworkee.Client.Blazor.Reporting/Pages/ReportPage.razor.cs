@@ -157,20 +157,26 @@ public partial class ReportPage : IAsyncDisposable
 
     private async Task SettingsAsync()
     {
+        var used = _state!.EntitySets.Select(_state.Source).OfType<ReportSourceDto>().ToList();
         var settings = await ReportSettingsDialog.ShowAsync(Dialogs, L["Report settings"], new ReportSettings
         {
             Name = _report!.Name,
             Description = _report.Description,
             Icon = _report.Icon,
             RefreshSeconds = _definition!.RefreshSeconds,
+            DateFields = [.. _definition.DateFields],
+            FacetFields = [.. _definition.FacetFields],
             Visibility = _report.Visibility,
             RoleIds = [.. _report.RoleIds],
             GroupIds = [.. _report.GroupIds ?? []],
-        });
+        }, ReportFieldChoices.Dates(used), ReportFieldChoices.Facets(used));
         if (settings is not null)
         {
             Remember();
             _definition.RefreshSeconds = settings.RefreshSeconds;
+            _definition.DateFields = settings.DateFields;
+            _definition.FacetFields = settings.FacetFields;
+            _state.Refresh();
             _report = _report with { Name = settings.Name, Description = settings.Description, Icon = settings.Icon, Visibility = settings.Visibility, RoleIds = settings.RoleIds, GroupIds = settings.GroupIds };
         }
     }
