@@ -175,7 +175,7 @@ public sealed class UpgradeTests
         var rules = UpgradeRules.Between("0.1.7", "0.1.8");
 
         rules.Single().Breaking!.ShouldContain(b => b.StartsWith("Notifications:") && b.Contains("NotificationAudience"));
-        rules.Single().Breaking!.ShouldContain(b => b.Contains("tenant instead of organisation"));
+        rules.Single().Breaking!.ShouldContain(b => b.Contains("where they said something else"));
         UpgradeRules.Apply(folder.Path, rules, dryRun: false);
 
         var props = Read(folder.Path, "Directory.Packages.props");
