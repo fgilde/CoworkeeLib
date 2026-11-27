@@ -161,19 +161,6 @@ internal sealed partial class Notifier(
             followers.IntersectWith(audience);
         }
 
-        // followers and audience members must still see the record (each user checked once, as himself); addressed users are not checked
-        if (message is { EntityType: { } checkedType, EntityId: { } checkedId } && (followers.Count > 0 || audience is { Count: > 0 }))
-        {
-            if (services.GetService<NotificationTypeOptions>()?.FollowTargets.GetValueOrDefault(checkedType)?.VisibleIdsAsync is null)
-            {
-                LogNoVisibilitySource(checkedType);
-            }
-
-            var seeing = await services.GetRequiredService<NotificationAudience>().SeeingAsync([.. followers.Concat(audience ?? [])], checkedType, checkedId, cancellationToken);
-            followers.IntersectWith(seeing);
-            audience?.IntersectWith(seeing);
-        }
-
         var candidates = direct.Concat(followers).Concat(audience ?? []).Where(id => id != Guid.Empty).Distinct().ToList();
         var defaults = new NotificationPreference
         {
@@ -188,7 +175,7 @@ internal sealed partial class Notifier(
             ? []
             : await db.Set<NotificationPreference>().AsNoTracking().Where(p => p.Type == type.Type && candidates.Contains(p.UserId)).ToDictionaryAsync(p => p.UserId, cancellationToken);
         var actor = currentUser.UserId;
-        var result = new List<(Guid, NotificationPreference)>();
+        var result = new List<(Guid UserId, NotificationPreference Preference)>();
         foreach (var userId in candidates)
         {
             var preference = chosen.GetValueOrDefault(userId) ?? defaults;
@@ -200,6 +187,19 @@ internal sealed partial class Notifier(
             {
                 result.Add((userId, preference));
             }
+        }
+
+        // wanted followers and audience members must still see the record (each user checked once, as himself); addressed users are not checked
+        var toCheck = result.Where(r => !direct.Contains(r.UserId)).Select(r => r.UserId).ToList();
+        if (message is { EntityType: { } checkedType, EntityId: { } checkedId } && toCheck.Count > 0)
+        {
+            if (services.GetService<NotificationTypeOptions>()?.FollowTargets.GetValueOrDefault(checkedType)?.VisibleIdsAsync is null)
+            {
+                LogNoVisibilitySource(checkedType);
+            }
+
+            var seeing = await services.GetRequiredService<NotificationAudience>().SeeingAsync(toCheck, checkedType, checkedId, cancellationToken);
+            result.RemoveAll(r => !direct.Contains(r.UserId) && !seeing.Contains(r.UserId));
         }
 
         return result;

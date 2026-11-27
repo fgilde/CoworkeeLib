@@ -169,6 +169,27 @@ public sealed class PreferenceTests(NotificationApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Only_wanted_followers_and_audience_members_are_checked_for_visibility()
+    {
+        await FollowAsync(_bob, _carl);
+        (await Bob.PutAsJsonAsync($"/api/v1/notifications/preferences/{TestNotificationModule.Eta}", new SaveNotificationPreferenceRequest(NotificationScope.Off, true, false), Ct))
+            .EnsureSuccessStatusCode();
+        foreach (var user in new[] { _bob.Id, _carl.Id, _setup.AdminUserId })
+        {
+            HiddenShipments.Calls.TryRemove(user, out _);
+        }
+
+        await app.PublishAsync(_setup.AdminUserId, _setup.TenantId,
+            Message(TestNotificationModule.Eta) with { EntityType = "Shipments", EntityId = _shipment, Audience = [_bob.Id, _carl.Id, _setup.AdminUserId] });
+
+        HiddenShipments.Calls.ContainsKey(_bob.Id).ShouldBeFalse();
+        HiddenShipments.Calls.ContainsKey(_setup.AdminUserId).ShouldBeFalse();
+        HiddenShipments.Calls[_carl.Id].ShouldBe(1);
+        (await InboxAsync(Bob)).ShouldBeEmpty();
+        (await InboxAsync(app.As(_carl.Id, _setup.TenantId))).ShouldHaveSingleItem();
+    }
+
+    [Fact]
     public async Task Without_audience_followers_are_checked_as_before()
     {
         await FollowAsync(_bob, _carl);
