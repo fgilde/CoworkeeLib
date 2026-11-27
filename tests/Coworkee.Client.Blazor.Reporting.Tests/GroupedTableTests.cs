@@ -197,6 +197,86 @@ public sealed class GroupedTableTests : ReportingTestBase
     }
 
     [Fact]
+    public void Values_show_their_own_format_and_unit_and_the_currency_of_their_own_set()
+    {
+        Reports.TableAsync(default!, default).ReturnsForAnyArgs(Page(false, Row("North", "Open", 3, 1200.5, 400.25, 70)));
+        var widget = Lanes();
+        widget.Query!.Aggregates = [new(), new(AggregateFunction.Sum, "Total", "Revenue", Format: NumberFormat.Currency), new(AggregateFunction.Average, "Total", "Weight", Unit: "kg")];
+        widget.Query.Joins[0].Aggregates = [new(AggregateFunction.Sum, "Amount", "Returned", Format: NumberFormat.Currency)];
+        widget.Options.Format = NumberFormat.Integer;
+        var state = StateOf(widget, Orders with { Currency = "CHF" }, Returns with { Currency = "USD" });
+
+        var frame = Render<WidgetFrame>(p => p.Add(x => x.Widget, widget).Add(x => x.State, state));
+
+        frame.WaitForAssertion(() => frame.FindAll("[data-testid='grouped-row']").Count.ShouldBe(1));
+        frame.FindAll("[data-testid='grouped-row'] td").Skip(2).Select(c => c.TextContent.Trim()).ShouldBe(
+        [
+            "3",
+            ReportNumbers.Format(1200.5, new WidgetOptions { Format = NumberFormat.Currency, Currency = "CHF" }, CultureInfo.CurrentCulture),
+            ReportNumbers.Format(400.25, new WidgetOptions { Format = NumberFormat.Integer }, CultureInfo.CurrentCulture) + " kg",
+            ReportNumbers.Format(70, new WidgetOptions { Format = NumberFormat.Currency, Currency = "USD" }, CultureInfo.CurrentCulture),
+        ]);
+    }
+
+    [Fact]
+    public void An_unlabeled_value_of_a_join_is_named_after_its_set()
+    {
+        Reports.TableAsync(default!, default).ReturnsForAnyArgs(Page(false, Row("North", "Open", 3, 1200.5, 400.25, 7)));
+        var widget = Lanes(null, "Count");
+        widget.Query!.Joins[0].Aggregates = [new()];
+
+        var table = Show(widget);
+
+        ReportTableColumns.Of(widget.Query).Select(c => c.Name).ShouldBe(["Region", "Status", "Count", "Revenue", "Average Total", "Count (Returns)"]);
+        table.WaitForAssertion(() => table.FindAll("[data-testid='grouped-row']").Count.ShouldBe(1));
+        table.FindAll("[data-testid='grouped-table'] th").Select(h => h.TextContent.Trim()).ShouldBe(["Region", "Status", "Revenue", "Average Total", "Count (Returns)"]);
+    }
+
+    [Fact]
+    public void The_designer_edits_label_format_and_unit_of_a_value_and_renames_its_order_and_hidden_entries()
+    {
+        var widget = Lanes("Revenue desc, Count", "Revenue");
+        Render<MudPopoverProvider>();
+        var settings = Render<WidgetSettings>(p => p.Add(x => x.Widget, widget).Add(x => x.State, StateOf(widget)));
+        MudTextField<string> Text(string testId, int index) =>
+            settings.FindComponents<MudTextField<string>>().Where(s => s.Instance.UserAttributes.GetValueOrDefault("data-testid") as string == testId).ElementAt(index).Instance;
+
+        settings.InvokeAsync(() => Text("aggregate-label", 1).ValueChanged.InvokeAsync("Turnover")).GetAwaiter().GetResult();
+        settings.InvokeAsync(() => Text("aggregate-unit", 1).ValueChanged.InvokeAsync("EUR net")).GetAwaiter().GetResult();
+        var format = settings.FindComponents<MudSelect<NumberFormat?>>().Where(s => s.Instance.UserAttributes.GetValueOrDefault("data-testid") as string == "aggregate-format").ElementAt(1).Instance;
+        settings.InvokeAsync(() => format.ValueChanged.InvokeAsync(NumberFormat.Currency)).GetAwaiter().GetResult();
+
+        widget.Query!.Aggregates[1].ShouldBe(new ReportAggregate(AggregateFunction.Sum, "Total", "Turnover", Format: NumberFormat.Currency, Unit: "EUR net"));
+        widget.Query.OrderBy.ShouldBe("Turnover desc, Count");
+        widget.Options.HiddenColumns.ShouldBe(["Turnover"]);
+
+        // a name another column has is shown as a clash
+        settings.InvokeAsync(() => Text("aggregate-label", 2).ValueChanged.InvokeAsync("count")).GetAwaiter().GetResult();
+        settings.WaitForAssertion(() => Text("aggregate-label", 2).Error.ShouldBeTrue());
+        Text("aggregate-label", 2).ErrorText.ShouldBe("Another column has this name.");
+        Text("aggregate-label", 1).Error.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Rows_stay_while_a_new_sort_loads()
+    {
+        var sorted = new TaskCompletionSource<ReportTableResult>();
+        Reports.TableAsync(Arg.Is<ReportTableRequest>(r => r.OrderBy!.Count == 0), Arg.Any<CancellationToken>()).Returns(Page(false, Row("North", "Open", 3, 1, 1, 1)));
+        Reports.TableAsync(Arg.Is<ReportTableRequest>(r => r.OrderBy!.Count == 1), Arg.Any<CancellationToken>()).Returns(sorted.Task);
+        var table = Show(Lanes());
+        table.WaitForAssertion(() => table.FindAll("[data-testid='grouped-row']").Count.ShouldBe(1));
+
+        table.Find("th button[data-column='2']").Click();
+
+        table.FindAll("[data-testid='grouped-row']").Single().TextContent.ShouldContain("North");
+        table.FindAll(".cw-grouped-skeleton").ShouldBeEmpty();
+        table.Find("[data-testid='grouped-table']").ClassList.ShouldContain("cw-grouped-reloading");
+        sorted.SetResult(Page(false, Row("South", "Open", 1, 1, 1, 1)));
+        table.WaitForAssertion(() => table.FindAll("[data-testid='grouped-row']").Single().TextContent.ShouldContain("South"));
+        table.Find("[data-testid='grouped-table']").ClassList.ShouldNotContain("cw-grouped-reloading");
+    }
+
+    [Fact]
     public void A_new_grouped_table_groups_by_the_first_category()
     {
         var widget = WidgetPresets.Create(WidgetPresets.All.Single(p => p.Type == WidgetType.GroupedTable), [Orders], []);

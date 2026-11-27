@@ -1,7 +1,7 @@
 @inherits WidgetBase
 
 <WidgetStatus Loading="Loading" Error="@Error" Empty="@(_rows.Count == 0 && !Loading)" Hint="@(Query is { GroupFields.Count: 0 } ? L["Choose the fields to group by."] : null)">
-    <div class="cw-grouped" data-testid="grouped-table">
+    <div class="cw-grouped @(Loading && _rows.Count > 0 ? "cw-grouped-reloading" : null)" data-testid="grouped-table" aria-busy="@(Loading ? "true" : "false")">
         <table>
             <thead>
                 <tr>
@@ -27,7 +27,7 @@
                         {
                             @if (column.Aggregate is { } aggregate)
                             {
-                                <td class="number">@ReportTableColumns.Format(row.Values.ElementAtOrDefault(column.Index - Keys), aggregate, Widget.Options)</td>
+                                <td class="number">@ReportTableColumns.Format(row.Values.ElementAtOrDefault(column.Index - Keys), aggregate, Widget.Options, currency: Currency(column))</td>
                             }
                             else
                             {

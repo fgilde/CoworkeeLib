@@ -2428,5 +2428,7 @@
   "They come from the report file (JSON); remove them here.": "Ze komen uit het rapportbestand (JSON); verwijder ze hier.",
   "Hidden columns": "Verborgen kolommen",
   "Still grouped by, just not shown": "Er wordt nog steeds op gegroepeerd, ze worden alleen niet getoond",
-  "Add sort column": "Sorteerkolom toevoegen"
+  "Add sort column": "Sorteerkolom toevoegen",
+  "Another column has this name.": "Een andere kolom heeft deze naam.",
+  "Like the widget": "Zoals de widget"
 }

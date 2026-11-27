@@ -52,6 +52,13 @@ internal sealed class ReportDefinitionCheck(ReportQueries queries)
     {
         var query = widget.Query!;
         var grouped = widget.Type == WidgetType.GroupedTable;
+
+        // a grouped table's columns are named (order, hidden columns): two of the same name would be one
+        if (grouped && ReportTableColumns.Clashes(ReportTableColumns.Of(query)) is [var clash, ..])
+        {
+            return Error.Validation($"{key}.{clash.Key}{(clash.Aggregate is null ? string.Empty : ".Label")}", $"Another column is named '{clash.Name}'; give this one another label.");
+        }
+
         var check = grouped
             ? queries.CheckTableAsync(ReportTableColumns.Request(query, q => q.Filter, null, 0, 1), cancellationToken)
             : queries.CheckAsync(ReportQueryRequest.From(query, query.Filter), cancellationToken);

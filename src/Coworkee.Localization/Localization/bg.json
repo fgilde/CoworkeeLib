@@ -2428,5 +2428,7 @@
   "They come from the report file (JSON); remove them here.": "Идват от файла на отчета (JSON); премахнете ги тук.",
   "Hidden columns": "Скрити колони",
   "Still grouped by, just not shown": "Групира се по тях, но не се показват",
-  "Add sort column": "Добавяне на колона за сортиране"
+  "Add sort column": "Добавяне на колона за сортиране",
+  "Another column has this name.": "Друга колона има това име.",
+  "Like the widget": "Като уиджета"
 }

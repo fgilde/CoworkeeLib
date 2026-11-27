@@ -2428,5 +2428,7 @@
   "They come from the report file (JSON); remove them here.": "Elles proviennent du fichier de rapport (JSON) ; retirez-les ici.",
   "Hidden columns": "Colonnes masquées",
   "Still grouped by, just not shown": "Toujours utilisées pour regrouper, simplement non affichées",
-  "Add sort column": "Ajouter une colonne de tri"
+  "Add sort column": "Ajouter une colonne de tri",
+  "Another column has this name.": "Une autre colonne porte ce nom.",
+  "Like the widget": "Comme le widget"
 }

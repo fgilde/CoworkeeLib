@@ -2428,5 +2428,7 @@
   "They come from the report file (JSON); remove them here.": "Rapor dosyasından (JSON) gelirler; buradan kaldırabilirsiniz.",
   "Hidden columns": "Gizli sütunlar",
   "Still grouped by, just not shown": "Gruplandırmada kullanılmaya devam eder, yalnızca gösterilmez",
-  "Add sort column": "Sıralama sütunu ekle"
+  "Add sort column": "Sıralama sütunu ekle",
+  "Another column has this name.": "Başka bir sütun bu adı kullanıyor.",
+  "Like the widget": "Widget'taki gibi"
 }

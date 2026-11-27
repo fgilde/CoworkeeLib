@@ -268,20 +268,25 @@ new ReportWidget
     {
         EntitySet = "Shipments", DateField = "Etd",
         GroupFields = ["OriginCountry", "DestinationCountry", "Mode", "Supplier"],
-        Aggregates = [new(Label: "Shipments"), new(AggregateFunction.Average, "TransitDays", "Avg transit (days)", EmptyAsZero: true)],
-        Joins = [new WidgetJoin { EntitySet = "ShipmentCosts", Aggregates = [new(AggregateFunction.Sum, "Amount", "Total cost")] }],
+        Aggregates =
+        [
+            new(Label: "Shipments"),
+            new(AggregateFunction.Sum, "Weight", "Weight", Unit: "kg"),
+            new(AggregateFunction.Average, "TransitDays", "Avg transit", EmptyAsZero: true, Format: NumberFormat.Integer, Unit: "days"),
+        ],
+        Joins = [new WidgetJoin { EntitySet = "ShipmentCosts", Aggregates = [new(AggregateFunction.Sum, "Amount", "Total cost", Format: NumberFormat.Currency)] }],
         OrderBy = "Total cost desc, Shipments desc",
     },
     Options = new WidgetOptions { HiddenColumns = ["Supplier"] },
 }
 ```
 
-- **Columns** are named by the group field's path or the value's label (without a label e.g. `Count` or `Sum Amount`; `ReportTableColumns.Of(query)`). `WidgetOptions.HiddenColumns` lists columns that still group (or are still computed) but are not shown, e.g. the supplier columns of a brokerage variant that groups by all lane fields.
+- **Columns** are named by the group field's path or the value's label (without a label e.g. `Count` or `Sum Amount`, a join's value with its set: `Count (InsightContainers)`, shown with the set's label; `ReportTableColumns.Of(query)`). Names are unique ignoring case: saving refuses a second column of the same name with the key of its label, e.g. `Widgets[lanes].Aggregates[1].Label` (`ReportTableColumns.Clashes`). `WidgetOptions.HiddenColumns` lists columns that still group (or are still computed) but are not shown, e.g. the supplier columns of a brokerage variant that groups by all lane fields.
 - **Order**: `WidgetQuery.OrderBy` is a list like `"Total cost desc, Shipments desc"`; entries naming no column are skipped, so for a reader who may not read the joined costs the table starts sorted by shipments. Clicking a header sorts by that column on the server (ascending, descending, back to the widget's order); ties are broken by the group fields.
 - **Filters**: the widget's filter, facets, date field and the report's facets and cross filters narrow the main set and every joined set, each through its own fields (the joined set needs the fields of the widget's filter too).
 - **Readers**: a joined set the reader may not read is left out with its columns, without an error (`ReportViews.ForReader`); without the main set's permission the widget is left out.
-- **Display**: pages of 20 rows (`ReportTableColumns.PageSize`), scrolling to the end loads the next one; a sticky header, skeleton rows while loading, "No data for these filters." when empty. Numbers are right-aligned: counts as whole numbers, other values in the widget's number format (its currency from the source, see `{currency}`), "–" where a join has no value.
-- **Designer**: the widget panel edits the group fields (add, change, move, remove), the values, the hidden columns and the order (columns, direction, sequence). Joins come from the report file or an app; the panel shows them as chips that can be removed, it does not add them, because a joined set needs every group field.
+- **Display**: pages of 20 rows (`ReportTableColumns.PageSize`), scrolling to the end loads the next one; a sticky header, skeleton rows while loading, "No data for these filters." when empty. Numbers are right-aligned, each value in its own `ReportAggregate.Format` (else counts as whole numbers and other values in the widget's number format) with its `ReportAggregate.Unit` after the number ("1,234 kg"); a currency value takes the currency of its own set (the widget's source or the join's), "–" where a join has no value. Sorting again or a new filter keeps the rows shown, dimmed under the progress line, until the new first page arrives.
+- **Designer**: the widget panel edits the group fields (add, change, move, remove), the values with label, number format and unit, the hidden columns and the order (columns, direction, sequence). A new label moves the order and hidden entries of the old name along; a label another column has is marked. Joins come from the report file or an app; the panel shows them as chips that can be removed, it does not add them, because a joined set needs every group field.
 - **Mails** show the first 20 rows with the shown columns; the workbook holds up to 1,000.
 
 ### App data of a widget

@@ -2428,5 +2428,7 @@
   "They come from the report file (JSON); remove them here.": "Sie stammen aus der Berichtsdatei (JSON); hier kannst du sie entfernen.",
   "Hidden columns": "Ausgeblendete Spalten",
   "Still grouped by, just not shown": "Weiterhin gruppiert, nur nicht angezeigt",
-  "Add sort column": "Sortierspalte hinzufügen"
+  "Add sort column": "Sortierspalte hinzufügen",
+  "Another column has this name.": "Eine andere Spalte hat diesen Namen.",
+  "Like the widget": "Wie das Widget"
 }

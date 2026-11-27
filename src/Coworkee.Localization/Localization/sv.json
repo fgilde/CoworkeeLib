@@ -2428,5 +2428,7 @@
   "They come from the report file (JSON); remove them here.": "De kommer från rapportfilen (JSON); ta bort dem här.",
   "Hidden columns": "Dolda kolumner",
   "Still grouped by, just not shown": "Grupperas fortfarande efter, visas bara inte",
-  "Add sort column": "Lägg till sorteringskolumn"
+  "Add sort column": "Lägg till sorteringskolumn",
+  "Another column has this name.": "En annan kolumn har det här namnet.",
+  "Like the widget": "Som widgeten"
 }

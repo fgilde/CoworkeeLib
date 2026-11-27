@@ -2428,5 +2428,7 @@
   "They come from the report file (JSON); remove them here.": "Они взяты из файла отчёта (JSON); удалите их здесь.",
   "Hidden columns": "Скрытые столбцы",
   "Still grouped by, just not shown": "Группировка по ним сохраняется, они просто не показываются",
-  "Add sort column": "Добавить столбец сортировки"
+  "Add sort column": "Добавить столбец сортировки",
+  "Another column has this name.": "Другой столбец уже называется так.",
+  "Like the widget": "Как у виджета"
 }

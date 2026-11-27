@@ -108,6 +108,23 @@
                             <MudIconButton Icon="@Icons.Material.Outlined.RemoveCircleOutline" Size="Size.Small" aria-label="@L["Remove"]" OnClick="() => Change(() => query.Aggregates.RemoveAt(index))" />
                         }
                     </div>
+                    <div class="cw-settings-row cw-aggregate-details">
+                        <MudTextField T="string" Value="aggregate.Label" ValueChanged="v => SetAggregate(index, aggregate with { Label = string.IsNullOrWhiteSpace(v) ? null : v.Trim() })"
+                                      Label="@L["Label"]" Placeholder="@AggregateLabel(aggregate with { Label = null })" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="100"
+                                      Immediate="true" DebounceInterval="400" Error="@Clashes(index)" ErrorText="@L["Another column has this name."]" data-testid="aggregate-label" />
+                        @if (Widget.Type == WidgetType.GroupedTable)
+                        {
+                            <MudSelect T="NumberFormat?" Value="aggregate.Format" ValueChanged="f => SetAggregate(index, aggregate with { Format = f })" Label="@L["Number format"]"
+                                       Placeholder="@L["Like the widget"]" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" data-testid="aggregate-format">
+                                @foreach (var format in Enum.GetValues<NumberFormat>())
+                                {
+                                    <MudSelectItem T="NumberFormat?" Value="format">@L[format.ToString()]</MudSelectItem>
+                                }
+                            </MudSelect>
+                            <MudTextField T="string" Value="aggregate.Unit" ValueChanged="v => SetAggregate(index, aggregate with { Unit = string.IsNullOrWhiteSpace(v) ? null : v.Trim() })"
+                                          Label="@L["Unit"]" Placeholder="kg" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="20" Immediate="true" DebounceInterval="400" data-testid="aggregate-unit" />
+                        }
+                    </div>
                 }
                 @if ((Widget.Type == WidgetType.Chart && query.SplitBy is null || Widget.Type == WidgetType.GroupedTable) && query.Aggregates.Count < 8)
                 {

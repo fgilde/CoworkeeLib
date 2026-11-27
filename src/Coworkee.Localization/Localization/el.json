@@ -2428,5 +2428,7 @@
   "They come from the report file (JSON); remove them here.": "Προέρχονται από το αρχείο αναφοράς (JSON)· αφαιρέστε τα εδώ.",
   "Hidden columns": "Κρυφές στήλες",
   "Still grouped by, just not shown": "Συνεχίζουν να ομαδοποιούν, απλώς δεν εμφανίζονται",
-  "Add sort column": "Προσθήκη στήλης ταξινόμησης"
+  "Add sort column": "Προσθήκη στήλης ταξινόμησης",
+  "Another column has this name.": "Άλλη στήλη έχει αυτό το όνομα.",
+  "Like the widget": "Όπως το widget"
 }

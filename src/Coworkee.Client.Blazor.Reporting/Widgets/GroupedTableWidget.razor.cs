@@ -39,17 +39,19 @@ public partial class GroupedTableWidget
     // the joins' filters follow the report's facets and cross filters of their own sets
     protected override string LoadKey => $"{base.LoadKey}|{_sort}|{string.Join('|', Query?.Joins.Select(j => State.FilterFor(j.QueryFor(Query), Widget.Id)) ?? [])}";
 
+    // the rows shown stay (dimmed) until the new first page replaces them, e.g. after a header click
     protected override async Task LoadAsync(CancellationToken cancellationToken)
     {
         _generation++;
-        _rows.Clear();
         _more = false;
         if (Query is not { GroupFields.Count: > 0 })
         {
+            _rows.Clear();
             return;
         }
 
         var page = await PageAsync(0, cancellationToken);
+        _rows.Clear();
         _rows.AddRange(page.Rows);
         _more = page.More;
         _watch = _more;
@@ -131,9 +133,10 @@ public partial class GroupedTableWidget
     private string? AriaSort(Column column) =>
         Sorts.Count > 0 && Sorts[0].Column == column.Index ? Sorts[0].Descending ? "descending" : "ascending" : null;
 
-    private string Header(Column column) => column.Aggregate is { } aggregate
-        ? ReportFormat.AggregateLabel(aggregate, State.Field(column.EntitySet, aggregate.Field), L)
-        : FieldOf(column.Field)?.Label ?? column.Name;
+    private string Header(Column column) => ReportFormat.ColumnLabel(column, State, L);
+
+    // a join's currency values show the currency of the join's set; the widget's own already have theirs (WidgetFrame)
+    private string? Currency(Column column) => column.Join is null ? null : State.Source(column.EntitySet)?.Currency;
 
     private string KeyText(ReportTableRow row, Column column) =>
         ReportFormat.Key(row.Keys.ElementAtOrDefault(column.Index), DateBucket.None, FieldOf(column.Field), s => L[s]);

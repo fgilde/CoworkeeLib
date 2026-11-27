@@ -2428,5 +2428,7 @@
   "They come from the report file (JSON); remove them here.": "Berasal dari file laporan (JSON); hapus di sini.",
   "Hidden columns": "Kolom tersembunyi",
   "Still grouped by, just not shown": "Tetap dikelompokkan, hanya tidak ditampilkan",
-  "Add sort column": "Tambah kolom pengurutan"
+  "Add sort column": "Tambah kolom pengurutan",
+  "Another column has this name.": "Kolom lain sudah memakai nama ini.",
+  "Like the widget": "Seperti widget"
 }

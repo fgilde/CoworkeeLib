@@ -2428,5 +2428,7 @@
   "They come from the report file (JSON); remove them here.": "Pocházejí ze souboru sestavy (JSON); zde je můžete odebrat.",
   "Hidden columns": "Skryté sloupce",
   "Still grouped by, just not shown": "Stále se podle nich seskupuje, jen se nezobrazují",
-  "Add sort column": "Přidat sloupec řazení"
+  "Add sort column": "Přidat sloupec řazení",
+  "Another column has this name.": "Tento název už má jiný sloupec.",
+  "Like the widget": "Jako widget"
 }

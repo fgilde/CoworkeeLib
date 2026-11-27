@@ -2428,5 +2428,7 @@
   "They come from the report file (JSON); remove them here.": "تأتي من ملف التقرير (JSON)؛ يمكنك إزالتها هنا.",
   "Hidden columns": "الأعمدة المخفية",
   "Still grouped by, just not shown": "يتم التجميع حسبها، لكنها لا تُعرض",
-  "Add sort column": "إضافة عمود فرز"
+  "Add sort column": "إضافة عمود فرز",
+  "Another column has this name.": "عمود آخر يحمل هذا الاسم.",
+  "Like the widget": "مثل عنصر الواجهة"
 }

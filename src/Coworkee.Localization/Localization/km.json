@@ -2428,5 +2428,7 @@
   "They come from the report file (JSON); remove them here.": "ពួកវាមកពីឯកសាររបាយការណ៍ (JSON); លុបពួកវាចេញនៅទីនេះ។",
   "Hidden columns": "ជួរឈរដែលលាក់",
   "Still grouped by, just not shown": "នៅតែដាក់ជាក្រុមតាម ប៉ុន្តែមិនបង្ហាញ",
-  "Add sort column": "បន្ថែមជួរឈរតម្រៀប"
+  "Add sort column": "បន្ថែមជួរឈរតម្រៀប",
+  "Another column has this name.": "ជួរឈរផ្សេងទៀតមានឈ្មោះនេះរួចហើយ។",
+  "Like the widget": "ដូច Widget"
 }

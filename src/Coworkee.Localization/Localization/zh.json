@@ -2428,5 +2428,7 @@
   "They come from the report file (JSON); remove them here.": "它们来自报表文件 (JSON)；可在此处移除。",
   "Hidden columns": "隐藏的列",
   "Still grouped by, just not shown": "仍用于分组，只是不显示",
-  "Add sort column": "添加排序列"
+  "Add sort column": "添加排序列",
+  "Another column has this name.": "另一列已使用此名称。",
+  "Like the widget": "与小组件相同"
 }

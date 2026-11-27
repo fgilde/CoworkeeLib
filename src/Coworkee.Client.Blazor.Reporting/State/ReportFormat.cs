@@ -70,6 +70,18 @@ public static partial class ReportFormat
         : aggregate.Function == AggregateFunction.Count ? l["Count"]
         : $"{l[Humanize(aggregate.Function.ToString())]} {field?.Label ?? aggregate.Field}";
 
+    /// <summary>The header of a grouped table's column: the field's label or the value's, a join's value without a label with its set ("Count (Containers)").</summary>
+    public static string ColumnLabel(ReportTableColumns.Column column, ReportState state, Localization.CoworkeeLocalizer l)
+    {
+        if (column.Aggregate is not { } aggregate)
+        {
+            return state.Field(column.EntitySet, column.Field)?.Label ?? column.Name;
+        }
+
+        var label = AggregateLabel(aggregate, state.Field(column.EntitySet, aggregate.Field), l);
+        return column.Join is null || aggregate.Label is { Length: > 0 } ? label : $"{label} ({l.Stored(state.Source(column.EntitySet)?.Label ?? column.EntitySet)})";
+    }
+
     /// <summary>"Last12Months" becomes "Last 12 months", "InProgress" "In progress".</summary>
     public static string Humanize(string name)
     {

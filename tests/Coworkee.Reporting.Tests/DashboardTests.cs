@@ -78,6 +78,29 @@ public sealed class DashboardTests(ReportingApp app) : ReportingTestBase(app)
     }
 
     [Fact]
+    public async Task Column_names_of_a_grouped_table_are_unique()
+    {
+        Task<HttpResponseMessage> SaveAsync(List<ReportAggregate> values, params ReportAggregate[] joined) => Admin.PostAsJsonAsync("/api/v1/reports", new SaveReportRequest("Lanes", null, null, ReportVisibility.Private, [],
+            new ReportDefinition { Widgets = [new ReportWidget { Id = "lanes", Type = WidgetType.GroupedTable, Query = new WidgetQuery
+            {
+                EntitySet = "Sales", GroupFields = ["Region"], Aggregates = values, Joins = [new WidgetJoin { EntitySet = "Returns", Aggregates = [.. joined] }],
+            } }] }), Ct);
+
+        var own = await SaveAsync([new(), new(AggregateFunction.Sum, "Amount", "count")]);
+        var field = await SaveAsync([new(Label: "Region")]);
+        var joined = await SaveAsync([new()], new ReportAggregate(Label: "Count"));
+        var qualified = await SaveAsync([new()], new ReportAggregate());
+
+        own.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await own.Content.ReadAsStringAsync(Ct)).ShouldContain("\"Widgets[lanes].Aggregates[1].Label\"");
+        (await field.Content.ReadAsStringAsync(Ct)).ShouldContain("\"Widgets[lanes].Aggregates[0].Label\"");
+        joined.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await joined.Content.ReadAsStringAsync(Ct)).ShouldContain("\"Widgets[lanes].Joins[0].Aggregates[0].Label\"");
+        // an unlabeled value of a join is named after its set: "Count (Returns)"
+        qualified.StatusCode.ShouldBe(HttpStatusCode.OK, await qualified.Content.ReadAsStringAsync(Ct));
+    }
+
+    [Fact]
     public async Task A_grouped_table_needs_one_to_eight_group_fields()
     {
         Task<HttpResponseMessage> SaveAsync(List<string> fields, params WidgetJoin[] joins) => Admin.PostAsJsonAsync("/api/v1/reports", new SaveReportRequest("Lanes", null, null, ReportVisibility.Private, [],

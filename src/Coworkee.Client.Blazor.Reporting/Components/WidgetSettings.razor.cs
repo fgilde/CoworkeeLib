@@ -37,7 +37,38 @@ public partial class WidgetSettings
         return Change(() => Widget.Query = fresh.Query);
     }
 
-    private Task SetAggregate(int index, ReportAggregate aggregate) => Change(() => Widget.Query!.Aggregates[index] = aggregate);
+    // a grouped table names its columns after their values: a new name moves the order and hidden entries of the old one along
+    private Task SetAggregate(int index, ReportAggregate aggregate) => Change(() =>
+    {
+        var query = Widget.Query!;
+        var before = ReportTableColumns.Name(query.Aggregates[index]);
+        query.Aggregates[index] = aggregate;
+        if (Widget.Type == WidgetType.GroupedTable)
+        {
+            Rename(before, ReportTableColumns.Name(aggregate));
+        }
+    });
+
+    private void Rename(string from, string to)
+    {
+        var query = Widget.Query!;
+        if (string.Equals(from, to, StringComparison.Ordinal) || ReportTableColumns.Of(query).Any(c => Same(c.Name, from)))
+        {
+            return;
+        }
+
+        query.OrderBy = ReportTableColumns.OrderBy(ReportTableColumns.Entries(query.OrderBy).Select(e => Same(e.Name, from) ? (to, e.Descending) : e));
+        Widget.Options.HiddenColumns = [.. Widget.Options.HiddenColumns.Select(h => Same(h, from) ? to : h)];
+    }
+
+    private static bool Same(string a, string b) => string.Equals(a.Trim(), b.Trim(), StringComparison.OrdinalIgnoreCase);
+
+    private string AggregateLabel(ReportAggregate aggregate) => ReportFormat.AggregateLabel(aggregate, State.Field(Widget.Query?.EntitySet, aggregate.Field), L);
+
+    // grouped tables: the value's column has a name another column has too
+    private bool Clashes(int index) =>
+        Widget.Type == WidgetType.GroupedTable && Widget.Query is { } query
+        && ReportTableColumns.Of(query).Count(c => Same(c.Name, ReportTableColumns.Name(query.Aggregates[index]))) > 1;
 
     private Task ColumnsChanged(IEnumerable<string> columns) => Change(() => Widget.Query!.Columns = [.. columns]);
 
@@ -49,12 +80,8 @@ public partial class WidgetSettings
 
     private List<ReportTableColumns.Column> TableColumns => [.. ReportTableColumns.Of(Widget.Query!).DistinctBy(c => c.Name, StringComparer.OrdinalIgnoreCase)];
 
-    private string ColumnLabel(string name) => TableColumns.FirstOrDefault(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase)) switch
-    {
-        { Aggregate: { } aggregate } column => ReportFormat.AggregateLabel(aggregate, State.Field(column.EntitySet, aggregate.Field), L),
-        { Field: { } field } => State.Field(Widget.Query!.EntitySet, field)?.Label ?? field,
-        _ => name,
-    };
+    private string ColumnLabel(string name) =>
+        TableColumns.FirstOrDefault(c => Same(c.Name, name)) is { } column ? ReportFormat.ColumnLabel(column, State, L) : name;
 
     private string JoinText(WidgetJoin join) =>
         $"{L.Stored(State.Source(join.EntitySet)?.Label ?? join.EntitySet)} · {string.Join(", ", join.Aggregates.Select(a => ReportFormat.AggregateLabel(a, State.Field(join.EntitySet, a.Field), L)))}";

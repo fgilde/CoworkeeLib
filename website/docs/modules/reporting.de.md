@@ -268,20 +268,25 @@ new ReportWidget
     {
         EntitySet = "Shipments", DateField = "Etd",
         GroupFields = ["OriginCountry", "DestinationCountry", "Mode", "Supplier"],
-        Aggregates = [new(Label: "Shipments"), new(AggregateFunction.Average, "TransitDays", "Avg transit (days)", EmptyAsZero: true)],
-        Joins = [new WidgetJoin { EntitySet = "ShipmentCosts", Aggregates = [new(AggregateFunction.Sum, "Amount", "Total cost")] }],
+        Aggregates =
+        [
+            new(Label: "Shipments"),
+            new(AggregateFunction.Sum, "Weight", "Weight", Unit: "kg"),
+            new(AggregateFunction.Average, "TransitDays", "Avg transit", EmptyAsZero: true, Format: NumberFormat.Integer, Unit: "days"),
+        ],
+        Joins = [new WidgetJoin { EntitySet = "ShipmentCosts", Aggregates = [new(AggregateFunction.Sum, "Amount", "Total cost", Format: NumberFormat.Currency)] }],
         OrderBy = "Total cost desc, Shipments desc",
     },
     Options = new WidgetOptions { HiddenColumns = ["Supplier"] },
 }
 ```
 
-- **Spalten** heißen nach dem Pfad des Gruppierungsfelds oder der Bezeichnung des Werts (ohne Bezeichnung z. B. `Count` oder `Sum Amount`; `ReportTableColumns.Of(query)`). `WidgetOptions.HiddenColumns` nennt Spalten, die weiter gruppieren (oder weiter berechnet werden), aber nicht angezeigt werden, z. B. die Lieferantenspalten einer Brokerage-Variante, die nach allen Lane-Feldern gruppiert.
+- **Spalten** heißen nach dem Pfad des Gruppierungsfelds oder der Bezeichnung des Werts (ohne Bezeichnung z. B. `Count` oder `Sum Amount`, der Wert eines Joins mit seiner Menge: `Count (InsightContainers)`, angezeigt mit der Bezeichnung der Menge; `ReportTableColumns.Of(query)`). Namen sind ohne Rücksicht auf Groß- und Kleinschreibung eindeutig: Das Speichern lehnt eine zweite Spalte gleichen Namens mit dem Schlüssel ihrer Bezeichnung ab, z. B. `Widgets[lanes].Aggregates[1].Label` (`ReportTableColumns.Clashes`). `WidgetOptions.HiddenColumns` nennt Spalten, die weiter gruppieren (oder weiter berechnet werden), aber nicht angezeigt werden, z. B. die Lieferantenspalten einer Brokerage-Variante, die nach allen Lane-Feldern gruppiert.
 - **Reihenfolge**: `WidgetQuery.OrderBy` ist eine Liste wie `"Total cost desc, Shipments desc"`; Einträge, die keine Spalte nennen, werden übersprungen, für einen Leser ohne Recht auf die verbundenen Kosten beginnt die Tabelle also nach Sendungen sortiert. Ein Klick auf eine Überschrift sortiert auf dem Server nach dieser Spalte (aufsteigend, absteigend, zurück zur Reihenfolge des Widgets); Gleichstände entscheiden die Gruppierungsfelder.
 - **Filter**: Filter, Facetten und Datumsfeld des Widgets sowie Facetten und Kreuzfilter des Berichts grenzen die Hauptmenge und jede verbundene Menge ein, jede über ihre eigenen Felder (die verbundene Menge braucht auch die Felder des Widget-Filters).
 - **Leser**: Eine verbundene Menge, die der Leser nicht lesen darf, fällt mit ihren Spalten ohne Fehler weg (`ReportViews.ForReader`); ohne die Berechtigung der Hauptmenge fällt das Widget weg.
-- **Anzeige**: Seiten zu 20 Zeilen (`ReportTableColumns.PageSize`), Scrollen ans Ende lädt die nächste; eine feste Kopfzeile, Platzhalterzeilen beim Laden, „Keine Daten für diese Filter.“, wenn nichts da ist. Zahlen stehen rechtsbündig: Anzahlen als ganze Zahlen, andere Werte im Zahlenformat des Widgets (mit der Währung der Quelle, siehe `{currency}`), „–“, wo ein Join keinen Wert hat.
-- **Designer**: Der Widget-Bereich bearbeitet die Gruppierungsfelder (hinzufügen, ändern, verschieben, entfernen), die Werte, die ausgeblendeten Spalten und die Reihenfolge (Spalten, Richtung, Abfolge). Joins kommen aus der Berichtsdatei oder einer App; der Bereich zeigt sie als entfernbare Chips, fügt aber keine hinzu, weil eine verbundene Menge jedes Gruppierungsfeld braucht.
+- **Anzeige**: Seiten zu 20 Zeilen (`ReportTableColumns.PageSize`), Scrollen ans Ende lädt die nächste; eine feste Kopfzeile, Platzhalterzeilen beim Laden, „Keine Daten für diese Filter.“, wenn nichts da ist. Zahlen stehen rechtsbündig, jeder Wert in seinem eigenen `ReportAggregate.Format` (sonst Anzahlen als ganze Zahlen und andere Werte im Zahlenformat des Widgets) mit seiner `ReportAggregate.Unit` hinter der Zahl („1.234 kg“); ein Währungswert nimmt die Währung seiner eigenen Menge (der Quelle des Widgets oder des Joins), „–“, wo ein Join keinen Wert hat. Erneutes Sortieren oder ein neuer Filter lässt die angezeigten Zeilen abgeblendet unter der Fortschrittslinie stehen, bis die neue erste Seite da ist.
+- **Designer**: Der Widget-Bereich bearbeitet die Gruppierungsfelder (hinzufügen, ändern, verschieben, entfernen), die Werte mit Bezeichnung, Zahlenformat und Einheit, die ausgeblendeten Spalten und die Reihenfolge (Spalten, Richtung, Abfolge). Eine neue Bezeichnung nimmt die Einträge des alten Namens in Reihenfolge und ausgeblendeten Spalten mit; eine Bezeichnung, die schon eine andere Spalte hat, wird markiert. Joins kommen aus der Berichtsdatei oder einer App; der Bereich zeigt sie als entfernbare Chips, fügt aber keine hinzu, weil eine verbundene Menge jedes Gruppierungsfeld braucht.
 - **Mails** zeigen die ersten 20 Zeilen mit den angezeigten Spalten; die Arbeitsmappe enthält bis zu 1.000.
 
 ### App-Daten eines Widgets

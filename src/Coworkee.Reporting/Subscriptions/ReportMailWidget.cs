@@ -141,11 +141,26 @@ internal sealed class ReportMailWidget(
 
         var shown = columns.Where(c => !ReportTableColumns.Hidden(c, widget.Options)).ToList();
         var keys = query.GroupFields.Count;
-        List<string> headers = [.. shown.Select(c => c.Aggregate is { } aggregate ? Label(aggregate, Source(c.EntitySet) ?? source) : FieldLabel(source, c.Field))];
+
+        // a currency value shows the currency of its own set; the widget's (already its source's) for its own values
+        var currencies = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        foreach (var join in query.Joins.Where(j => !currencies.ContainsKey(j.EntitySet)))
+        {
+            currencies[join.EntitySet] = Source(join.EntitySet) is { } joined ? await queries.CurrencyAsync(joined, cancellationToken) : null;
+        }
+
+        List<string> headers = [.. shown.Select(c => c.Aggregate is { } aggregate ? Header(c, aggregate, source) : FieldLabel(source, c.Field))];
         var rows = result.Value.Rows.Select(r => (IReadOnlyList<object?>)[.. shown.Select(c => c.Index < keys ? Key(r.Keys[c.Index]) : (object?)r.Values[c.Index - keys])]).ToList();
-        var cells = rows.Select(r => (IReadOnlyList<object?>)[.. r.Select((cell, i) => shown[i].Aggregate is { } aggregate ? ReportTableColumns.Format((double?)cell, aggregate, widget.Options, culture) : cell)]).ToList();
+        var cells = rows.Select(r => (IReadOnlyList<object?>)[.. r.Select((cell, i) => shown[i].Aggregate is { } aggregate
+            ? ReportTableColumns.Format((double?)cell, aggregate, widget.Options, culture, shown[i].Join is null ? null : currencies.GetValueOrDefault(shown[i].EntitySet))
+            : cell)]).ToList();
         return (Table(headers, cells, cell => cell?.ToString() ?? string.Empty, shown: ReportTableColumns.PageSize, more: result.Value.More), Sheet(headers, rows));
     }
+
+    // a join's value without a label is named with its set, like the column (ReportTableColumns.Name)
+    private string Header(ReportTableColumns.Column column, ReportAggregate aggregate, ReportSource main) =>
+        column.Join is null || aggregate.Label is { Length: > 0 } ? Label(aggregate, Source(column.EntitySet) ?? main)
+        : $"{Label(aggregate, Source(column.EntitySet) ?? main)} ({text(Source(column.EntitySet)?.Label ?? column.EntitySet, culture)})";
 
     private ReportSource? Source(string set) => sources.FirstOrDefault(s => string.Equals(s.EntitySet, set, StringComparison.OrdinalIgnoreCase));
 

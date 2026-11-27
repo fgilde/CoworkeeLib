@@ -2428,5 +2428,7 @@
   "They come from the report file (JSON); remove them here.": "Dolaze iz datoteke izvješća (JSON); ovdje ih uklonite.",
   "Hidden columns": "Skriveni stupci",
   "Still grouped by, just not shown": "I dalje se po njima grupira, samo se ne prikazuju",
-  "Add sort column": "Dodaj stupac sortiranja"
+  "Add sort column": "Dodaj stupac sortiranja",
+  "Another column has this name.": "Drugi stupac ima ovaj naziv.",
+  "Like the widget": "Kao widget"
 }

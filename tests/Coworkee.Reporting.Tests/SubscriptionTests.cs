@@ -321,6 +321,33 @@ public sealed partial class SubscriptionTests(ReportingApp app) : ReportingTestB
     }
 
     [Fact]
+    public async Task A_mail_formats_each_value_with_its_own_format_unit_and_set_currency()
+    {
+        CostRows.Currencies[Setup.AdminUserId] = "CHF";
+        var report = await CreateReportAsync(Report() with { Definition = new ReportDefinition { Widgets =
+        [
+            new ReportWidget { Id = "costs", Type = WidgetType.GroupedTable, Title = "Costs", Query = new WidgetQuery
+            {
+                EntitySet = "PlainCosts", GroupFields = ["Code"],
+                Aggregates = [new(AggregateFunction.Sum, "Amount", "Plain", Format: NumberFormat.Currency), new(AggregateFunction.Average, "Amount", "Weight", Unit: "kg")],
+                Joins = [new WidgetJoin { EntitySet = "Costs", Aggregates = [new(AggregateFunction.Sum, "Amount", Format: NumberFormat.Currency)] }],
+                OrderBy = "Code",
+            }, Options = new WidgetOptions { Currency = "GBP" } },
+        ] } });
+        var subscription = await SubscribeAsync(Admin, report.Id);
+
+        await RunDueAsync(subscription.Id);
+
+        var html = (await MailsAsync()).Single().Mail.HtmlBody;
+        var en = System.Globalization.CultureInfo.GetCultureInfo("en");
+        // the mail encodes "£" as an entity
+        html.ShouldContain($">{WebUtility.HtmlEncode(ReportNumbers.Format(500, new WidgetOptions { Format = NumberFormat.Currency, Currency = "GBP" }, en))}<");
+        html.ShouldContain($">{ReportNumbers.Format(500, new WidgetOptions { Format = NumberFormat.Currency, Currency = "CHF" }, en)}<");
+        html.ShouldContain(">500 kg<");
+        html.ShouldContain(">Sum Amount (Costs)<");
+    }
+
+    [Fact]
     public async Task A_time_series_shows_its_latest_buckets_in_chronological_order()
     {
         var report = await CreateReportAsync(new SaveReportRequest("Shipped by month", null, null, ReportVisibility.Organisation, [], new ReportDefinition
