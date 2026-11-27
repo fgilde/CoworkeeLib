@@ -18,6 +18,10 @@ public sealed record SelectedFacet(string GroupKey, string GroupLabel, FacetOper
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Display { get; init; }
 
+    /// <summary>The field the facet filters on (<see cref="FacetGroupDto.Field"/>); reports use it to share the facet with other data sets.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Field { get; init; }
+
     /// <summary>The OData path of a custom value (a range or a preset); <c>null</c> for an option of the facet.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Path { get; init; }

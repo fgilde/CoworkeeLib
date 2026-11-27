@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Bunit;
 using Coworkee.Client.Blazor.Reporting.Components;
+using Coworkee.Client.Blazor.Reporting.State;
 using Coworkee.Contracts.Data;
 using Coworkee.Contracts.Reporting;
 using NSubstitute;
@@ -26,6 +27,26 @@ public sealed class FilterBarTests : ReportingTestBase
 
         state.FilterFor(Chart.Query!, "other").ShouldBe("Region eq 'North'");
         bar.WaitForElement("[data-testid='facet-chips']");
+    }
+
+    [Fact]
+    public void The_filter_bar_merges_facets_by_key_across_sets()
+    {
+        var costs = new ReportSourceDto("Costs", "Costs", [new ReportFieldDto("Region", "Region", ReportFieldKind.Text)]);
+        var region = new FacetGroupDto("region", "Region", "Region", FacetKind.CheckboxList, FacetOperator.Or,
+            [new FacetOptionDto(JsonSerializer.SerializeToElement("North"), "North", true, 7, "Region eq 'North'")], true, 0);
+        OData.QueryAsync<JsonElement>(Arg.Any<string>(), Arg.Is<Data.ODataQuery>(q => q.Facets), Arg.Any<CancellationToken>()).Returns(new ODataPage<JsonElement>([], 0, [region]));
+        var costsWidget = new ReportWidget { Id = "k", Type = WidgetType.Chart, Query = new WidgetQuery { EntitySet = "Costs" } };
+        var state = new ReportState(new ReportDefinition { Widgets = [Chart, costsWidget] }, [Orders, costs]);
+        var popovers = Render<MudBlazor.MudPopoverProvider>();
+        var bar = Render<ReportFilterBar>(p => p.Add(x => x.State, state));
+
+        bar.WaitForAssertion(() => bar.FindAll("[data-facet='region']").Count.ShouldBe(1));
+        bar.Find("[data-facet='region'] [data-testid='facet-button']").Click();
+        popovers.WaitForElement("[data-option=\"Region eq 'North'\"]").Click();
+
+        state.Definition.Filters.ShouldHaveSingleItem().Field.ShouldBe("Region");
+        state.FilterFor(costsWidget.Query!).ShouldBe("Region eq 'North'");
     }
 
     [Fact]

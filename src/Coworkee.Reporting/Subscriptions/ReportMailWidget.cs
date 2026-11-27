@@ -21,7 +21,7 @@ internal sealed class ReportMailWidget(
             return (Failed(text("You may not read this data.", culture)), null);
         }
 
-        var filter = ReportFilters.For(query, definition, [.. source.Fields.Select(f => f.ToDto())], today);
+        var filter = FilterOf(query, definition, sources, today);
         try
         {
             return widget.Type switch
@@ -35,6 +35,13 @@ internal sealed class ReportMailWidget(
         {
             return (Failed(exception.Message), null);
         }
+    }
+
+    /// <summary>The widget's rows: its own filter and the report's facets, also those of other sets with the same field.</summary>
+    internal static string? FilterOf(WidgetQuery query, ReportDefinition definition, IReadOnlyList<ReportSource> sources, DateOnly today)
+    {
+        IReadOnlyList<ReportFieldDto>? FieldsOf(string set) => sources.FirstOrDefault(s => string.Equals(s.EntitySet, set, StringComparison.OrdinalIgnoreCase)) is { } found ? [.. found.Fields.Select(f => f.ToDto())] : null;
+        return ReportFilters.For(query, definition, FieldsOf(query.EntitySet) ?? [], today, FieldsOf);
     }
 
     private async Task<(object, ReportSheetRequest?)> KpiAsync(WidgetQuery query, string? filter, ReportSource source, CancellationToken cancellationToken)

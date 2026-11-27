@@ -95,7 +95,7 @@ public sealed class FacetSelection
         _selected.Remove(group.Key);
         if (label is not null && odata is not null)
         {
-            Group(group.Key)[Custom] = new SelectedFacet(group.Key, group.Label, FacetOperator.Or, label, odata) { Preset = preset, Path = group.ValuePath ?? group.Field };
+            Group(group.Key)[Custom] = new SelectedFacet(group.Key, group.Label, FacetOperator.Or, label, odata) { Preset = preset, Path = group.ValuePath ?? group.Field, Field = group.Field };
         }
 
         Changed?.Invoke();
@@ -225,7 +225,7 @@ public sealed class FacetSelection
     }
 
     private SelectedFacet Chosen(FacetGroupDto group, FacetOptionDto option) =>
-        new(group.Key, group.Label, Operator(CombineOf(group)), option.Label, option.OData) { Display = group.Display };
+        new(group.Key, group.Label, Operator(CombineOf(group)), option.Label, option.OData) { Display = group.Display, Field = group.Field };
 
     private static FacetOperator Operator(FacetCombine combine) => combine == FacetCombine.All ? FacetOperator.And : FacetOperator.Or;
 }

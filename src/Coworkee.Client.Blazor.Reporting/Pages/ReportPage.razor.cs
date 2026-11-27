@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Data;
@@ -52,6 +53,8 @@ public partial class ReportPage : IAsyncDisposable
 
     [Inject] private ReportingOptions Options { get; set; } = null!;
 
+    [Inject] private ILogger<ReportState> Log { get; set; } = null!;
+
     [Parameter] public Guid Id { get; set; }
 
     [SupplyParameterFromQuery(Name = "edit")] public bool Edit { get; set; }
@@ -74,7 +77,7 @@ public partial class ReportPage : IAsyncDisposable
             var draft = IsNew ? Drafts.Take() ?? new SaveReportRequest(L["New report"], null, null, ReportVisibility.Private, [], new ReportDefinition()) : null;
             _report = draft is null ? await Api.GetReportAsync(Id) : new ReportDto(Id, draft.Name, draft.Description, draft.Icon, draft.Visibility, draft.RoleIds, null, true, false, new ReportDefinition(), null, draft.GroupIds);
             _definition = Clone(_report.Definition);
-            _state = new ReportState(_definition, await sources);
+            _state = new ReportState(_definition, await sources, log: Log);
             _editing = (Edit || IsNew) && CanEdit;
             _snapshot = Serialize();
             if (draft is not null)

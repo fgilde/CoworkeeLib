@@ -10,6 +10,9 @@ public sealed class ReportStateTests
     private static readonly ReportSourceDto Orders = new("SalesOrders", "Sales orders",
         [new ReportFieldDto("OrderDate", "Order date", ReportFieldKind.Date), new ReportFieldDto("ShippedOn", "Shipped on", ReportFieldKind.Date, DateOnly: true)]);
 
+    private static readonly ReportSourceDto Orders2 = new("SalesOrders", "Sales orders",
+        [new ReportFieldDto("Region", "Region", ReportFieldKind.Text), new ReportFieldDto("Total", "Total", ReportFieldKind.Number)]);
+
     private static readonly FakeTimeProvider Clock = new(new DateTimeOffset(2026, 10, 11, 12, 0, 0, TimeSpan.Zero));
 
     [Fact]
@@ -58,7 +61,28 @@ public sealed class ReportStateTests
         state.Facets("SalesOrders").Toggle(new FacetGroupDto("region", "Region", "Region", FacetKind.CheckboxList, FacetOperator.Or, [], true, 0),
             new FacetOptionDto(default, "North", true, 3, "Region eq 'North'"));
 
-        definition.Filters.ShouldHaveSingleItem().ShouldBe(new ReportFilterValue("SalesOrders", "region", "Region", "North", "Region eq 'North'"));
+        definition.Filters.ShouldHaveSingleItem().ShouldBe(new ReportFilterValue("SalesOrders", "region", "Region", "North", "Region eq 'North'", Field: "Region"));
+    }
+
+    [Fact]
+    public void A_cross_filter_narrows_widgets_of_other_sets_with_the_field()
+    {
+        var costs = new ReportSourceDto("Costs", "Costs", [new ReportFieldDto("Region", "Region", ReportFieldKind.Text), new ReportFieldDto("Total", "Total", ReportFieldKind.Integer)]);
+        var state = new ReportState(new ReportDefinition(), [Orders2, costs]);
+        state.ToggleCross(new CrossFilter("chart", "SalesOrders", "Region: North", "Region eq 'North'", "Region"));
+        state.ToggleCross(new CrossFilter("kind", "SalesOrders", "Total", "Total gt 1", "Total"));
+        state.ToggleCross(new CrossFilter("plain", "SalesOrders", "Plain", "Plain eq 1"));
+
+        state.FilterFor(new WidgetQuery { EntitySet = "Costs" }, "table").ShouldBe("Region eq 'North'");
+    }
+
+    [Fact]
+    public void A_report_facet_of_one_set_narrows_the_others_with_the_field()
+    {
+        var costs = new ReportSourceDto("Costs", "Costs", [new ReportFieldDto("Region", "Region", ReportFieldKind.Text)]);
+        var definition = new ReportDefinition { Filters = [new ReportFilterValue("SalesOrders", "region", "Region", "North", "Region eq 'North'", Field: "Region")] };
+
+        new ReportState(definition, [Orders2, costs]).FilterFor(new WidgetQuery { EntitySet = "Costs" }).ShouldBe("Region eq 'North'");
     }
 
     [Theory]

@@ -55,6 +55,18 @@ Jede Gruppe kommt vom Server mit einem OData-Filter für genau ihre Zeilen zurü
 
 Ein Bericht ist privat, für Rollen, für Gruppen (deren Mitglieder und die der Gruppen darüber; eine Gruppenauswahl grenzt die Liste ein) oder für den ganzen Mandanten freigegeben (`Reports.Share`). Andere können ihn duplizieren, ändern darf ihn nur der Besitzer, und eine gespeicherte Änderung erreicht alle, die ihn gerade offen haben. Exportieren lässt er sich als PNG, als PDF über den Druckdialog oder je Widget als CSV und Excel.
 
+## Filter über Datenmengen hinweg
+
+Ein Bericht, der Datenmengen mischt (eine Auftragsmenge und zwei berechnete Quellen mit denselben Sendungsfeldern), filtert sie gemeinsam. Eine in der Filterleiste gewählte Facette gilt für jedes Widget, dessen Menge ein Feld mit **gleichem Pfad und gleicher Art** (`ReportFieldKind`) hat; die OData-Bedingung wird unverändert übernommen, die Mengen müssen das Feld also gleich benennen. Eine Facette, die zwei Mengen teilen, erscheint einmal bei der ersten Menge; ein Feld, dessen Art sich unterscheidet, wird nicht geteilt und je Menge angezeigt (einmal auf Information-Ebene protokolliert). Dasselbe gilt für den Klick auf einen Balken oder ein Tortenstück: Er schränkt die Widgets anderer Mengen ein, die das gruppierte Feld haben. Abo-Mails nutzen dieselbe Regel (`ReportFilters.For(query, definition, fields, today, fieldsOf)`, `ReportFilters.Applying(values, entitySet, fieldsOf)`).
+
+```csharp
+// "TransportMode eq 'Air'" bei Orders gewählt schränkt auch ein Costs-Widget ein, dessen Menge TransportMode hat
+var values = definition.Filters; // ReportFilterValue(..., Field: "TransportMode")
+var applying = ReportFilters.Applying(values, "Costs", set => fieldsOfSet(set));
+```
+
+Gespeicherte Definitionen ohne `Field` funktionieren weiter: Dann ist der Gruppenschlüssel der Pfad.
+
 ## Mehr als der Designer
 
 - **[Abos per Mail](../modules/reporting.md#abos-per-mail):** *Subscribe by mail* schickt einen Bericht täglich, wöchentlich oder monatlich zu einer Uhrzeit einer Zeitzone, mit Kennzahlen, den ersten Zeilen jedes Widgets und einer Excel-Mappe. Er läuft als der Abonnent, es gelten also dieselben Rechte und Zeilenfilter.

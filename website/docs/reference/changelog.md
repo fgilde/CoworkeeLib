@@ -6,6 +6,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Added
 
+- Reporting: facets and cross filters apply to every data set with the same field (same path and `ReportFieldKind`). `ReportFilterValue` gets `Field` (stored values without it use `GroupKey`), `CrossFilter` gets `Field`, `SelectedFacet` gets `Field`, `ReportFilters.Applying(values, entitySet, fieldsOf)` and an overload of `ReportFilters.For` with `fieldsOf` are new; subscription mails use them. The filter bar shows a shared facet once.
 - Data filters: `POST /api/v1/data-filters/preview` counts how many rows a draft filter lets through (`PreviewDataFilterRequest`, `DataFilterPreviewDto`, `ICoworkeeApi.PreviewDataFilterAsync`, timeout `CoworkeeODataOptions.DataFilterPreviewTimeout`), `GET /api/v1/data-filters/overview` lists per entity set the filters of the administrator's layer and its links (`DataFilterOverviewDto`, `ICoworkeeApi.GetDataFilterOverviewAsync`), and `DataFilterScope.Off()` switches the data filters off for the current flow.
 - Data filters: the filter editor says whom a filter does not bind (holders of "See all rows") and shows a live preview, "{passing} of {total} rows you can see pass this filter".
 - Groups and roles: the group tree and the roles table show a filter icon with the number of filters on every group or role that has data filters, a chip "With data filters only" narrows them to those (groups as a flat list with their path), and `?tab=data-filters` opens the Data filters tab of a group or role.

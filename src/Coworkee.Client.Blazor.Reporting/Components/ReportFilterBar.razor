@@ -18,14 +18,14 @@
         <MudDateRangePicker DateRange="CustomRange" DateRangeChanged="CustomChanged" Variant="Variant.Outlined" Margin="Margin.Dense" Class="cw-custom-range mr-2 mb-2"
                             PlaceholderStart="@L["From"]" PlaceholderEnd="@L["To"]" AutoClose="true" />
     }
-    @foreach (var set in State.EntitySets.Where(s => State.Source(s) is not { Computed: true }))
+    @foreach (var set in FilterSets)
     {
         <div class="cw-filter-set">
             @if (State.EntitySets.Skip(1).Any())
             {
                 <span class="cw-filter-set-label">@(State.Source(set)?.Label ?? set)</span>
             }
-            <ReportFacetFilter EntitySet="@set" Selection="State.Facets(set)" />
+            <ReportFacetFilter EntitySet="@set" Selection="State.Facets(set)" Hide="g => IsShared(set, g)" GroupsLoaded="g => GroupsLoaded(set, g)" />
         </div>
     }
 </div>

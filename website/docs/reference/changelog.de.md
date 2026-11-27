@@ -6,6 +6,7 @@
 
 ### Hinzugefügt
 
+- Berichte: Facetten und Kreuzfilter gelten für jede Datenmenge mit demselben Feld (gleicher Pfad und `ReportFieldKind`). `ReportFilterValue` bekommt `Field` (gespeicherte Werte ohne `Field` nutzen `GroupKey`), `CrossFilter` und `SelectedFacet` bekommen `Field`, neu sind `ReportFilters.Applying(values, entitySet, fieldsOf)` und eine Überladung von `ReportFilters.For` mit `fieldsOf`; Abo-Mails nutzen sie. Die Filterleiste zeigt eine geteilte Facette einmal.
 - Datenfilter: `POST /api/v1/data-filters/preview` zählt, wie viele Zeilen ein Filterentwurf durchlässt (`PreviewDataFilterRequest`, `DataFilterPreviewDto`, `ICoworkeeApi.PreviewDataFilterAsync`, Zeitlimit `CoworkeeODataOptions.DataFilterPreviewTimeout`), `GET /api/v1/data-filters/overview` listet pro Entity-Set die Filter der Ebene des Administrators und seine Verknüpfungen (`DataFilterOverviewDto`, `ICoworkeeApi.GetDataFilterOverviewAsync`), und `DataFilterScope.Off()` schaltet die Datenfilter für den aktuellen Ablauf aus.
 - Datenfilter: Der Filtereditor nennt, wen ein Filter nicht bindet (Inhaber von „Alle Zeilen sehen“), und zeigt eine Live-Vorschau „{passing} von {total} Zeilen, die Sie sehen, passieren diesen Filter“.
 - Gruppen und Rollen: Gruppenbaum und Rollentabelle zeigen bei jeder Gruppe oder Rolle mit Datenfiltern ein Filter-Symbol mit der Anzahl der Filter, ein Chip „Nur mit Datenfiltern“ grenzt auf diese ein (Gruppen als flache Liste mit Pfad), und `?tab=data-filters` öffnet den Reiter Datenfilter einer Gruppe oder Rolle.

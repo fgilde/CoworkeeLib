@@ -1,4 +1,5 @@
 using Coworkee.Client.Blazor.Data;
+using Microsoft.Extensions.Logging;
 using Coworkee.Contracts.Reporting;
 
 namespace Coworkee.Client.Blazor.Reporting.State;
@@ -10,8 +11,12 @@ public sealed class ReportState
     private readonly List<CrossFilter> _cross = [];
     private readonly TimeProvider _clock;
 
-    public ReportState(ReportDefinition definition, IReadOnlyList<ReportSourceDto> sources, TimeProvider? clock = null)
+    private readonly ILogger? _log;
+    private readonly HashSet<string> _logged = new(StringComparer.Ordinal);
+
+    public ReportState(ReportDefinition definition, IReadOnlyList<ReportSourceDto> sources, TimeProvider? clock = null, ILogger<ReportState>? log = null)
     {
+        _log = log;
         Definition = definition;
         Sources = sources;
         _clock = clock ?? TimeProvider.System;
@@ -54,8 +59,7 @@ public sealed class ReportState
         foreach (var (set, selection) in _facets)
         {
             selection.Changed -= Store;
-            selection.Restore(definition.Filters.Where(f => string.Equals(f.EntitySet, set, StringComparison.OrdinalIgnoreCase))
-                .Select(f => new SelectedFacet(f.GroupKey, f.GroupLabel, f.Operator, f.Label, f.OData)));
+            selection.Restore(definition.Filters.Where(f => string.Equals(f.EntitySet, set, StringComparison.OrdinalIgnoreCase)).Select(Facet));
             selection.Changed += Store;
         }
 
@@ -67,8 +71,7 @@ public sealed class ReportState
         if (!_facets.TryGetValue(entitySet, out var selection))
         {
             selection = new FacetSelection();
-            selection.Restore(Definition.Filters.Where(f => string.Equals(f.EntitySet, entitySet, StringComparison.OrdinalIgnoreCase))
-                .Select(f => new SelectedFacet(f.GroupKey, f.GroupLabel, f.Operator, f.Label, f.OData)));
+            selection.Restore(Definition.Filters.Where(f => string.Equals(f.EntitySet, entitySet, StringComparison.OrdinalIgnoreCase)).Select(Facet));
             selection.Changed += Store;
             _facets[entitySet] = selection;
         }
@@ -129,14 +132,33 @@ public sealed class ReportState
 
         var date = range is { } r && Field(query.EntitySet, query.DateField) is { } field ? DateRanges.Filter(field.Path, r, field.DateOnly) : null;
         var facets = Facets(query.EntitySet).ToFilter();
-        var cross = _cross.Where(c => c.WidgetId != widgetId && string.Equals(c.EntitySet, query.EntitySet, StringComparison.OrdinalIgnoreCase)).Select(c => c.Filter);
-        return ODataFilter.And([query.Filter, Selection(query.Facets).ToFilter(), facets, date, .. cross]);
+        // facets chosen on other sets with the same field (same kind) apply as well
+        var shared = Selection(ReportFilters.Applying(Definition.Filters, query.EntitySet, FieldsOf).Where(f => !string.Equals(f.EntitySet, query.EntitySet, StringComparison.OrdinalIgnoreCase))).ToFilter();
+        var cross = _cross.Where(c => c.WidgetId != widgetId && (string.Equals(c.EntitySet, query.EntitySet, StringComparison.OrdinalIgnoreCase)
+            || ReportFilters.Shares(FieldsOf(c.EntitySet), FieldsOf(query.EntitySet), c.Field))).Select(c => c.Filter);
+        return ODataFilter.And([query.Filter, Selection(query.Facets).ToFilter(), facets, shared, date, .. cross]);
     }
+
+    private IReadOnlyList<ReportFieldDto>? FieldsOf(string entitySet) => Source(entitySet)?.Fields;
+
+    /// <summary>Whether sets with the facet's field may share it: the kind must be the same in both. A clash is logged once.</summary>
+    public bool CanShare(string key, string field, string firstSet, string otherSet)
+    {
+        var (a, b) = (Field(firstSet, field)?.Kind, Field(otherSet, field)?.Kind);
+        if (a is not null && b is not null && a != b && _logged.Add($"{key}|{firstSet}|{otherSet}"))
+        {
+            _log?.LogInformation("Facet {Key} is a {First} in {FirstSet} and a {Other} in {OtherSet}: not shared", key, a, firstSet, b, otherSet);
+        }
+
+        return a is not null && a == b;
+    }
+
+    private static SelectedFacet Facet(ReportFilterValue f) => new(f.GroupKey, f.GroupLabel, f.Operator, f.Label, f.OData) { Field = f.Field };
 
     public static FacetSelection Selection(IEnumerable<ReportFilterValue> values)
     {
         var selection = new FacetSelection();
-        selection.Restore(values.Select(f => new SelectedFacet(f.GroupKey, f.GroupLabel, f.Operator, f.Label, f.OData)));
+        selection.Restore(values.Select(Facet));
         return selection;
     }
 
@@ -144,7 +166,7 @@ public sealed class ReportState
     {
         Definition.Filters =
         [
-            .. _facets.SelectMany(s => s.Value.All.Select(f => new ReportFilterValue(s.Key, f.GroupKey, f.GroupLabel, f.Label, f.OData, f.Operator))),
+            .. _facets.SelectMany(s => s.Value.All.Select(f => new ReportFilterValue(s.Key, f.GroupKey, f.GroupLabel, f.Label, f.OData, f.Operator, f.Field))),
             .. Definition.Filters.Where(f => !_facets.ContainsKey(f.EntitySet)),
         ];
         Changed?.Invoke();

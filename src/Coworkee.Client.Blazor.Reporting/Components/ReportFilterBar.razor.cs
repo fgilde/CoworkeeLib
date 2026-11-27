@@ -1,6 +1,7 @@
 using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Reporting.State;
+using Coworkee.Contracts.Data;
 using Coworkee.Contracts.Reporting;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -13,6 +14,8 @@ public partial class ReportFilterBar : IDisposable
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
     [Parameter, EditorRequired] public ReportState State { get; set; } = null!;
+
+    private readonly Dictionary<string, IReadOnlyList<FacetGroupDto>> _groups = new(StringComparer.OrdinalIgnoreCase);
 
     private string RangeLabel => State.DateRange switch
     {
@@ -49,6 +52,24 @@ public partial class ReportFilterBar : IDisposable
         if (State.CrossFilters.FirstOrDefault(c => c.WidgetId + "|" + c.Filter == chip.Key) is { } filter)
         {
             State.RemoveCross(filter);
+        }
+    }
+
+    private IEnumerable<string> FilterSets => State.EntitySets.Where(s => State.Source(s) is not { Computed: true });
+
+    /// <summary>A group of two sets with the same key shows once, at the first set; the facet then narrows every set with its field.</summary>
+    private bool IsShared(string set, FacetGroupDto group) =>
+        FilterSets.TakeWhile(s => !string.Equals(s, set, StringComparison.OrdinalIgnoreCase))
+            .Any(first => _groups.TryGetValue(first, out var groups) && groups.FirstOrDefault(g => g.Key == group.Key) is { } other
+                && State.CanShare(group.Key, other.Field, first, set));
+
+    private void GroupsLoaded(string set, IReadOnlyList<FacetGroupDto> groups)
+    {
+        var known = _groups.TryGetValue(set, out var before) ? before : null;
+        _groups[set] = groups;
+        if (known is null || !known.Select(g => g.Key).SequenceEqual(groups.Select(g => g.Key)))
+        {
+            StateHasChanged();
         }
     }
 

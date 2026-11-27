@@ -56,7 +56,7 @@ public partial class PivotWidget
         if (Widget.Options.CrossFilter && Query is { } query && row.Key is { } key)
         {
             var filter = column.Key is { } series ? $"{key.Filter} and {series.Filter}" : key.Filter;
-            State.ToggleCross(new CrossFilter(Widget.Id, query.EntitySet, column.Key is null ? row.Label : $"{row.Label} · {column.Label}", filter));
+            State.ToggleCross(new CrossFilter(Widget.Id, query.EntitySet, column.Key is null ? row.Label : $"{row.Label} · {column.Label}", filter, column.Key is null ? query.GroupBy?.Field : null));
         }
     }
 

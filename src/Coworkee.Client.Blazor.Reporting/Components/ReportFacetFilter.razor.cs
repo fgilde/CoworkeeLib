@@ -27,6 +27,14 @@ public partial class ReportFacetFilter : IDisposable
     /// <summary>The other filters, so option counts match what the widgets show.</summary>
     [Parameter] public string? Filter { get; set; }
 
+    /// <summary>Groups the filter bar shows for an earlier data set already, because both sets share them.</summary>
+    [Parameter] public Func<FacetGroupDto, bool>? Hide { get; set; }
+
+    /// <summary>The groups after each load, so the bar can tell which sets share a group.</summary>
+    [Parameter] public EventCallback<IReadOnlyList<FacetGroupDto>> GroupsLoaded { get; set; }
+
+    private IReadOnlyList<FacetGroupDto> Visible => Hide is null ? _groups : [.. _groups.Where(g => !Hide(g))];
+
     protected override async Task OnParametersSetAsync()
     {
         if (!ReferenceEquals(_subscribed, Selection))
@@ -82,5 +90,7 @@ public partial class ReportFacetFilter : IDisposable
         {
             _groups = [];
         }
+
+        await GroupsLoaded.InvokeAsync(_groups);
     }
 }

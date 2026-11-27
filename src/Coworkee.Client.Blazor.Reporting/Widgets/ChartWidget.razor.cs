@@ -89,7 +89,7 @@ public partial class ChartWidget
     {
         if (Widget.Options.CrossFilter && Query is { } query && selected.DataPoint?.Items?.FirstOrDefault()?.Key is { } key)
         {
-            State.ToggleCross(new CrossFilter(Widget.Id, query.EntitySet, $"{FieldOf(query.GroupBy?.Field)?.Label}: {selected.DataPoint.Items.First().Label}", key.Filter));
+            State.ToggleCross(new CrossFilter(Widget.Id, query.EntitySet, $"{FieldOf(query.GroupBy?.Field)?.Label}: {selected.DataPoint.Items.First().Label}", key.Filter, query.GroupBy?.Field));
         }
     }
 

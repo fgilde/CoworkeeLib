@@ -55,6 +55,18 @@ Each group comes back from the server with an OData filter for exactly its rows.
 
 A report is private, shared with roles, with groups (their members and those of the groups above; a group selection narrows the list) or with the tenant (`Reports.Share`). Others can duplicate it, only the owner changes it, and a saved change reaches everyone who has it open. Export goes to PNG, PDF via the print dialog, or CSV and Excel per widget.
 
+## Filters across data sets
+
+A report that mixes data sets (an order set and two computed sources with the same shipment fields) filters them together. A facet chosen in the filter bar applies to every widget whose set has a field with the **same path and the same kind** (`ReportFieldKind`); the OData clause is reused as it is, so the sets must name the field alike. A facet that two sets share shows once, at the first set; a field whose kind differs between sets is not shared and shows per set (logged once at information level). The same holds for a click on a bar or slice: it narrows the widgets of other sets that have the grouped field. Subscription mails use the same rule (`ReportFilters.For(query, definition, fields, today, fieldsOf)`, `ReportFilters.Applying(values, entitySet, fieldsOf)`).
+
+```csharp
+// "TransportMode eq 'Air'" chosen on Orders also narrows a Costs widget whose set has TransportMode
+var values = definition.Filters; // ReportFilterValue(..., Field: "TransportMode")
+var applying = ReportFilters.Applying(values, "Costs", set => fieldsOfSet(set));
+```
+
+Stored definitions without `Field` keep working: the group key is the path then.
+
 ## Beyond the designer
 
 - **[Subscriptions by mail](../modules/reporting.md#subscriptions-by-mail):** *Subscribe by mail* sends a report daily, weekly or monthly at a time of a time zone, with KPIs, the first rows of each widget and an Excel workbook. It runs as the subscriber, so the same permissions and row filters apply.
