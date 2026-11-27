@@ -162,7 +162,7 @@ public partial class Groups
         }
 
         var groups = (await GroupPaths.OfAsync(OData, [.. _counts.Keys])).ToList();
-        _filtered = [.. groups.Select(g => new GroupNodeDto(g.Key, null, g.Key.ToString(), g.Value, null, 0, 0))];
+        _filtered = [.. groups.OrderBy(g => g.Value, StringComparer.CurrentCultureIgnoreCase).Select(g => new GroupNodeDto(g.Key, null, g.Key.ToString(), g.Value, null, 0, 0))];
     }
 
     private async Task ToggleOnlyFilteredAsync()

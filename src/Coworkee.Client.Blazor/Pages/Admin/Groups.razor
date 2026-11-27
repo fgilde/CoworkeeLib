@@ -27,6 +27,10 @@
                 <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Outlined.FilterAlt" Variant="@(_onlyFiltered ? Variant.Filled : Variant.Outlined)" Color="@(_onlyFiltered ? Color.Primary : Color.Default)"
                          OnClick="ToggleOnlyFilteredAsync" Class="mb-2" data-testid="chip-filtered">@L["With data filters only"]</MudChip>
             }
+            @if (_onlyFiltered && _filtered is { Count: 0 })
+            {
+                <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2" data-testid="no-filtered-groups">@L["No group has data filters."]</MudText>
+            }
             @if (_ready)
             {
                 @* a flat list (names are the paths) while the chip is on, the tree otherwise: another tree instance each *@
@@ -41,7 +45,8 @@
                                 </MudBadge>
                             </MudTooltip>
                         }
-                        @if (_canManage)
+                        @* the flat list has stand-in nodes (the path as name): no menu that would read them *@
+                        @if (_canManage && !_onlyFiltered)
                         {
                             <GroupNodeMenu Node="node" Changed="NodeChangedAsync" Deleted="DeletedAsync" />
                         }

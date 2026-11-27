@@ -2394,5 +2394,6 @@
   "Filter for all tenants": "适用于所有租户的筛选器",
   "Filter for tenant {0}": "租户 {0} 的筛选器",
   "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "按实体集设置:浏览器保留哪些数据的副本以及如何同步,以及租户能看到哪些行(数据筛选器)。更改无需部署,立即到达所有已打开的客户端。",
-  "No data type matches the search or filters.": "没有与搜索或筛选条件匹配的数据类型。"
+  "No data type matches the search or filters.": "没有与搜索或筛选条件匹配的数据类型。",
+  "No group has data filters.": "没有任何群组设有数据筛选器。"
 }

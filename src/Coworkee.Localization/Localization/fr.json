@@ -2394,5 +2394,6 @@
   "Filter for all tenants": "Filtre pour tous les locataires",
   "Filter for tenant {0}": "Filtre pour le locataire {0}",
   "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Par ensemble d'entités : de quelles données les navigateurs gardent une copie et comment ils la synchronisent, et quelles lignes les locataires voient (filtres de données). Les modifications atteignent immédiatement tous les clients ouverts, sans déploiement.",
-  "No data type matches the search or filters.": "Aucun type de données ne correspond à la recherche ou aux filtres."
+  "No data type matches the search or filters.": "Aucun type de données ne correspond à la recherche ou aux filtres.",
+  "No group has data filters.": "Aucun groupe n’a de filtres de données."
 }

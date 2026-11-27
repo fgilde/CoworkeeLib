@@ -2394,5 +2394,6 @@
   "Filter for all tenants": "Filter for alle lejere",
   "Filter for tenant {0}": "Filter for lejer {0}",
   "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Pr. entitetssæt: hvilke data browserne beholder en kopi af, og hvordan de holder den synkroniseret, og hvilke rækker lejere ser (datafiltre). Ændringer når alle åbne klienter med det samme, uden udrulning.",
-  "No data type matches the search or filters.": "Ingen datatype matcher søgningen eller filtrene."
+  "No data type matches the search or filters.": "Ingen datatype matcher søgningen eller filtrene.",
+  "No group has data filters.": "Ingen gruppe har datafiltre."
 }

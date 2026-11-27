@@ -2394,5 +2394,6 @@
   "Filter for all tenants": "Filtr pro všechny nájemce",
   "Filter for tenant {0}": "Filtr pro nájemce {0}",
   "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Pro každou sadu entit: jaká data si prohlížeče uchovávají v kopii a jak ji synchronizují, a které řádky nájemci vidí (filtry dat). Změny okamžitě dorazí ke všem otevřeným klientům, bez nasazení.",
-  "No data type matches the search or filters.": "Hledání ani filtrům neodpovídá žádný datový typ."
+  "No data type matches the search or filters.": "Hledání ani filtrům neodpovídá žádný datový typ.",
+  "No group has data filters.": "Žádná skupina nemá filtry dat."
 }

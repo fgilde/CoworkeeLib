@@ -594,6 +594,27 @@ public sealed class GroupsPageTests : ClientTestBase
     }
 
     [Fact]
+    public async Task The_flat_list_has_no_node_menu_is_sorted_by_path_and_says_so_when_empty()
+    {
+        Grant(IdentityPermissions.Groups.View, IdentityPermissions.Groups.Manage, DataFilterPermissions.ManageGroups);
+        Filtered(GroupFilter(Supplier.Id, "Gadgets"), GroupFilter(Hamburg.Id, "Gadgets"), GroupFilter(Bremen.Id, "Gadgets"));
+        _odata.With("Groups", Row(Supplier), Row(Hamburg), Row(Bremen), Row(Customer));
+        var page = RenderPage();
+        page.WaitForElement($"[data-testid='group-actions-{Supplier.Id}']");
+
+        await page.Find("[data-testid='chip-filtered']").ClickAsync(new());
+
+        page.WaitForAssertion(() => page.FindAll("[data-group-node]").Select(n => n.TextContent).ShouldBe(["Customer A / Bremen", "Customer A / Hamburg", "Supplier"], ignoreOrder: false));
+        page.FindAll("[data-testid^='group-actions-']").ShouldBeEmpty();
+        page.FindAll("[data-testid='no-filtered-groups']").ShouldBeEmpty();
+
+        Filtered();
+        Services.GetRequiredService<FakeRealtimeConnection>().Push(DataFilterTopics.TenantChanged);
+
+        page.WaitForElement("[data-testid='no-filtered-groups']").TextContent.ShouldBe("No group has data filters.");
+    }
+
+    [Fact]
     public void Without_ManageGroups_no_icon_and_no_chip()
     {
         Grant(IdentityPermissions.Groups.View);
