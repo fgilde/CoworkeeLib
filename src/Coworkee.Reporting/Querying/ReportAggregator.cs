@@ -15,23 +15,13 @@ internal static class ReportAggregator
 {
     public const int MaxGroups = 5000;
 
-    private static readonly MethodInfo FetchMethod = typeof(ReportAggregator).GetMethod(nameof(FetchAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
+    internal static readonly MethodInfo FetchMethod = typeof(ReportAggregator).GetMethod(nameof(FetchAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
 
     /// <param name="scope">Narrows navigation fields to the rows their target set shows.</param>
     public static async Task<Result<IReadOnlyList<ReportQueryRow>>> RunAsync<TEntity>(IQueryable<TEntity> rows, ReportPlan plan, CancellationToken cancellationToken, OData.ODataNavigationScope? scope = null)
     {
         var entity = Expression.Parameter(typeof(TEntity), "e");
-        var (keyBody, keyType) = KeyOf(entity, plan);
-        var rowType = typeof(AggregateRow<>).MakeGenericType(keyType);
-        var groupType = typeof(IGrouping<,>).MakeGenericType(keyType, typeof(TEntity));
-
-        var grouped = Expression.Call(typeof(Queryable), nameof(Queryable.GroupBy), [typeof(TEntity), keyType], rows.Expression,
-            Expression.Quote(Expression.Lambda(keyBody, entity)));
-        var group = Expression.Parameter(groupType, "g");
-        var bindings = plan.Values.Select((value, i) => (MemberBinding)Expression.Bind(rowType.GetProperty($"V{i}")!, Aggregate(group, typeof(TEntity), value)))
-            .Prepend(Expression.Bind(rowType.GetProperty(nameof(AggregateRow<int>.Key))!, Expression.Property(group, nameof(IGrouping<int, int>.Key))));
-        Expression query = Expression.Call(typeof(Queryable), nameof(Queryable.Select), [groupType, rowType], grouped,
-            Expression.Quote(Expression.Lambda(Expression.MemberInit(Expression.New(rowType), bindings), group)));
+        var (query, rowType) = Grouped(rows, entity, KeyOf(entity, plan), plan.Values);
 
         // one dimension: the database sorts and cuts; with series the top applies to categories, which is easier on the fetched groups
         if (plan.Split is null)
@@ -54,25 +44,38 @@ internal static class ReportAggregator
         return plan.Split is null ? result : TopCategories(plan, result);
     }
 
-    private static (Expression Body, Type Type) KeyOf(ParameterExpression entity, ReportPlan plan)
+    /// <summary><c>rows.GroupBy(key).Select(g =&gt; new AggregateRow { Key = g.Key, V0 = ..., V1 = ... })</c>.</summary>
+    internal static (Expression Query, Type RowType) Grouped<TEntity>(IQueryable<TEntity> rows, ParameterExpression entity, Expression key, IReadOnlyList<ReportValue> values)
+    {
+        var rowType = typeof(AggregateRow<>).MakeGenericType(key.Type);
+        var groupType = typeof(IGrouping<,>).MakeGenericType(key.Type, typeof(TEntity));
+        var grouped = Expression.Call(typeof(Queryable), nameof(Queryable.GroupBy), [typeof(TEntity), key.Type], rows.Expression, Expression.Quote(Expression.Lambda(key, entity)));
+        var group = Expression.Parameter(groupType, "g");
+        var bindings = values.Select((value, i) => (MemberBinding)Expression.Bind(rowType.GetProperty($"V{i}")!, Aggregate(group, typeof(TEntity), value)))
+            .Prepend(Expression.Bind(rowType.GetProperty(nameof(AggregateRow<int>.Key))!, Expression.Property(group, nameof(IGrouping<int, int>.Key))));
+        return (Expression.Call(typeof(Queryable), nameof(Queryable.Select), [groupType, rowType], grouped,
+            Expression.Quote(Expression.Lambda(Expression.MemberInit(Expression.New(rowType), bindings), group))), rowType);
+    }
+
+    private static Expression KeyOf(ParameterExpression entity, ReportPlan plan)
     {
         if (plan.Group is null)
         {
-            return (Expression.Constant(1), typeof(int));
+            return Expression.Constant(1);
         }
 
         var first = Key(entity, plan.Group);
         if (plan.Split is null)
         {
-            return (first, first.Type);
+            return first;
         }
 
         var second = Key(entity, plan.Split);
         var type = typeof(GroupKey<,>).MakeGenericType(first.Type, second.Type);
-        return (Expression.MemberInit(Expression.New(type), Expression.Bind(type.GetProperty("A")!, first), Expression.Bind(type.GetProperty("B")!, second)), type);
+        return Expression.MemberInit(Expression.New(type), Expression.Bind(type.GetProperty("A")!, first), Expression.Bind(type.GetProperty("B")!, second));
     }
 
-    private static Expression Key(ParameterExpression entity, ReportGroup group)
+    internal static Expression Key(ParameterExpression entity, ReportGroup group)
     {
         var access = Access(entity, group.Field);
         return group.Field.Kind == ReportFieldKind.Date ? DateBuckets.Key(access, group.Bucket, group.WeekIndex, group.BinaryDate) : access;

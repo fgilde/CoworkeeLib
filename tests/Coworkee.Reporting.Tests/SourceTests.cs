@@ -12,7 +12,7 @@ public sealed class SourceTests(ReportingApp app) : ReportingTestBase(app)
     {
         var sources = (await Admin.GetFromJsonAsync<List<ReportSourceDto>>("/api/v1/reports/sources", Ct))!;
 
-        sources.SkipWhile(s => !s.Computed).Select(s => s.EntitySet).ShouldBe(["BrokenCosts", "Costs", "MonthlyNumbers", "PlainCosts", "SaleRows"]);
+        sources.SkipWhile(s => !s.Computed).Select(s => s.EntitySet).ShouldBe(["BrokenCosts", "Costs", "MonthlyNumbers", "PlainCosts", "Returns", "SaleRows"]);
         var numbers = sources.Single(s => s.EntitySet == "MonthlyNumbers");
         numbers.Computed.ShouldBeTrue();
         numbers.Label.ShouldBe("Monthly numbers");

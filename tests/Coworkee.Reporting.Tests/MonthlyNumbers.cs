@@ -29,6 +29,16 @@ public sealed class SaleRow
     public decimal Amount { get; init; }
 }
 
+/// <summary>A sale returned (more than 10 pieces), its region in upper or lower case, its empty channel as "" or null: the keys a join merges.</summary>
+public sealed class ReturnRow
+{
+    public string Region { get; init; } = string.Empty;
+
+    public string? Channel { get; init; }
+
+    public decimal Amount { get; init; }
+}
+
 /// <summary>Two teams over 2025; remembers the last context, so tests see the date range a widget passed.</summary>
 public static class MonthlyNumbers
 {
@@ -55,6 +65,17 @@ public static class MonthlyNumbers
     public static async Task<IEnumerable<SaleRow>> SalesAsync(ReportSourceContext context, CancellationToken cancellationToken) =>
         (await ODataEntityAccess.VisibleAsync<Sale>(context.Services, cancellationToken))
             .Select(s => new SaleRow { Region = s.Region, SoldAt = s.SoldAt, Amount = s.Amount });
+
+    /// <summary>Over the database too, so the sales' row filters and data filters apply.</summary>
+    public static async Task<IEnumerable<ReturnRow>> ReturnsAsync(ReportSourceContext context, CancellationToken cancellationToken) =>
+        (await ODataEntityAccess.VisibleAsync<Sale>(context.Services, cancellationToken))
+            .Where(s => s.Quantity > 10)
+            .Select(s => new ReturnRow
+            {
+                Region = s.Quantity % 2 == 0 ? s.Region.ToUpper() : s.Region.ToLower(),
+                Channel = s.Channel ?? (s.Quantity % 2 == 0 ? "" : null),
+                Amount = s.Amount,
+            });
 }
 
 /// <summary>A source whose amounts are in the currency of the signed-in user.</summary>

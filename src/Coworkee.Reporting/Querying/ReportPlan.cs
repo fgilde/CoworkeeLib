@@ -38,7 +38,7 @@ internal sealed record ReportPlan(ReportGroup? Group, ReportGroup? Split, IReadO
             : new ReportPlan(group, split, values!, request.SortBy, request.Descending, request.Top);
     }
 
-    private static ReportGroup? GroupOf(ReportSource source, ReportGroupBy? by, string key, IReadOnlySet<string> granted, Dictionary<string, string[]> errors, string provider, Func<ReportField, bool>? binaryDate)
+    internal static ReportGroup? GroupOf(ReportSource source, ReportGroupBy? by, string key, IReadOnlySet<string> granted, Dictionary<string, string[]> errors, string provider, Func<ReportField, bool>? binaryDate)
     {
         if (by is null)
         {
@@ -71,7 +71,7 @@ internal sealed record ReportPlan(ReportGroup? Group, ReportGroup? Split, IReadO
         return new ReportGroup(field, bucket, bucket == DateBucket.Week && provider == DatabaseProviders.SqlServer, offset);
     }
 
-    private static ReportValue? Value(ReportSource source, ReportAggregate aggregate, string key, IReadOnlySet<string> granted, Dictionary<string, string[]> errors)
+    internal static ReportValue? Value(ReportSource source, ReportAggregate aggregate, string key, IReadOnlySet<string> granted, Dictionary<string, string[]> errors)
     {
         if (aggregate.Function == AggregateFunction.Count)
         {

@@ -21,7 +21,8 @@ internal sealed class ReportHandlers(CoworkeeDbContext db, ReportAccess access, 
       IHandler<GetReportRolesQuery, Result<IReadOnlyList<ReportRoleDto>>>,
       IHandler<GetReportGroupsQuery, Result<IReadOnlyList<ReportGroupDto>>>,
       IHandler<GetReportSourcesQuery, Result<IReadOnlyList<ReportSourceDto>>>,
-      IHandler<RunReportQuery, Result<ReportQueryResult>>
+      IHandler<RunReportQuery, Result<ReportQueryResult>>,
+      IHandler<RunReportTableQuery, Result<ReportTableResult>>
 {
     internal static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -183,6 +184,8 @@ internal sealed class ReportHandlers(CoworkeeDbContext db, ReportAccess access, 
     }
 
     public Task<Result<ReportQueryResult>> HandleAsync(RunReportQuery query, CancellationToken cancellationToken) => queries.RunAsync(query.Request, cancellationToken);
+
+    public Task<Result<ReportTableResult>> HandleAsync(RunReportTableQuery query, CancellationToken cancellationToken) => queries.TableAsync(query.Request, cancellationToken);
 
     /// <summary>Sharing needs its permission and, with groups, groups of the author; every widget has to work for the author.</summary>
     private async Task<Error?> CheckAsync(SaveReportRequest request, Report? existing, CancellationToken cancellationToken)

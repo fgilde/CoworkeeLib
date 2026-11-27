@@ -184,6 +184,42 @@ All three database providers aggregate in SQL. On SQL Server weeks are counted w
 
 Measured on the demo's 100,000 sales orders (Postgres, warm): count by status 9 ms, sum by month 29 ms, count by week 55 ms, region by channel 23 ms, top 10 customers with join 30 ms, four KPI values 58 ms.
 
+### Grouped tables
+
+A table grouped by several fields (up to 8), with values of up to three other data sets grouped by the same fields next to them, sorted by any column and paged on the server. `IReportsApi.TableAsync` sends it; through the dispatcher it is `RunReportTableQuery`.
+
+```json
+POST /api/v1/reports/table
+{
+  "entitySet": "SalesOrders",
+  "filter": "OrderDate ge 2025-01-01",
+  "groupFields": [ "Region", "Channel" ],
+  "aggregates": [ { "function": "Count" }, { "function": "Average", "field": "DaysToShip", "emptyAsZero": true } ],
+  "joins": [
+    { "entitySet": "Returns", "filter": null, "aggregates": [ { "function": "Sum", "field": "Amount" } ] }
+  ],
+  "orderBy": [ { "column": 2, "descending": true } ],
+  "skip": 0, "top": 20
+}
+```
+
+```json
+{
+  "rows": [
+    { "keys": [ { "value": "North", "label": "North", "filter": "Region eq 'North'" }, { "value": null, "label": "", "filter": "Channel eq null" } ],
+      "values": [ 120, 3.5, 4200.5 ] }
+  ],
+  "more": true,
+  "elapsedMilliseconds": 12
+}
+```
+
+- Each source is grouped by all group fields in the database, through the same rows as the other report queries (row filters, data filters, navigation scope, or the rows of an own source); raw rows never leave it.
+- The rows are the groups of the main set. A join adds its values to the group with the same key: texts match ignoring case and an empty text equals null, like `ISNULL(x, '')` under SQL Server's case-insensitive collation. A group without rows in a join gets null values; groups only a join has are left out.
+- `orderBy` columns count the group fields first (0 to fields - 1), then the main values, then each join's values in order. Ties are broken by every group field ascending. Texts sort ignoring case, nulls first (last when descending), as on SQL Server.
+- `more` says whether rows follow the page.
+- Every joined set needs its read permission (403 otherwise) and every group field (400 otherwise). Limits: 1 to 8 group fields, 8 values per set, 3 joins, `top` 1 to 50,000, at most 50,000 groups per set.
+
 ## Widgets
 
 | Widget | Shows |
@@ -351,7 +387,7 @@ The template's dashboard page (*Personal > Dashboard*, above *Reports*) does thi
 | Widget | id 40 characters, title 200, text 20,000, `AppData` 20,000; width 1 to 12 columns, height 1 to 40 rows |
 | Values and switches | 8 values per query or switch, 8 value and 8 grouping switches, labels 100 characters |
 | Thresholds | 10 per widget |
-| Aggregation | 5,000 groups, top 1 to 1,000 |
+| Aggregation | 5,000 groups, top 1 to 1,000; grouped tables 1 to 8 fields, 3 joins, 50,000 groups per set |
 | AI prompt | 4,000 characters, three tries |
 | Subscriptions | 50 per user; mails show 10 rows per widget, the workbook up to 1,000 rows per table |
 
@@ -364,6 +400,7 @@ The template's dashboard page (*Personal > Dashboard*, above *Reports*) does thi
 | `POST /api/v1/reports/{id}/duplicate`, `PUT /api/v1/reports/{id}/favorite` | copy, favorite |
 | `GET /api/v1/reports/sources`, `GET /api/v1/reports/roles`, `GET /api/v1/reports/groups` | fields per set, roles and groups to share with |
 | `POST /api/v1/reports/query` | aggregate |
+| `POST /api/v1/reports/table` | a page of a [grouped table](#grouped-tables) with joined sets |
 | `POST /api/v1/reports/rows` | rows of an own source, for tables |
 | `POST /api/v1/reports/sheet` | rows to an Excel workbook |
 | `GET /api/v1/reports/ai`, `POST /api/v1/reports/generate` | whether AI is available, a definition from a prompt (not saved) |

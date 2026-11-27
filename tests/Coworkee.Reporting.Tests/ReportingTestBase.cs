@@ -69,6 +69,7 @@ public abstract class ReportingTestBase(ReportingApp app) : IAsyncLifetime
             Sales.Add(new Sale
             {
                 Region = regions[random.Next(regions.Length)],
+                Channel = (i % 5) switch { 0 or 1 => "Web", 2 or 3 => "Shop", _ => null },
                 Status = (SaleStatus)random.Next(3),
                 Amount = Math.Round((decimal)(random.NextDouble() * 1000), 2),
                 Quantity = random.Next(1, 20),
@@ -91,7 +92,7 @@ public abstract class ReportingTestBase(ReportingApp app) : IAsyncLifetime
             db.AddRange(shoppers);
             db.AddRange(Sales.Select(s => new Sale
             {
-                Region = s.Region, Status = s.Status, Amount = s.Amount, Quantity = s.Quantity, Days = s.Days, SoldAt = s.SoldAt, ShippedOn = s.ShippedOn,
+                Region = s.Region, Channel = s.Channel, Status = s.Status, Amount = s.Amount, Quantity = s.Quantity, Days = s.Days, SoldAt = s.SoldAt, ShippedOn = s.ShippedOn,
                 ShopperId = s.ShopperId, Secret = s.Secret, TenantId = s.TenantId,
             }));
             await db.SaveChangesAsync(Ct);

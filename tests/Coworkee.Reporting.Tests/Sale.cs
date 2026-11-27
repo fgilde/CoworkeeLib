@@ -13,6 +13,9 @@ public sealed class Sale : Entity, IMultiTenant
 {
     public required string Region { get; set; }
 
+    /// <summary>Web, Shop or empty.</summary>
+    public string? Channel { get; set; }
+
     public SaleStatus Status { get; set; }
 
     public decimal Amount { get; set; }

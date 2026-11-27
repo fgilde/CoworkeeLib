@@ -184,6 +184,42 @@ Alle drei Datenbank-Provider aggregieren in SQL. Auf SQL Server werden Wochen mi
 
 Gemessen an den 100.000 Aufträgen der Demo (Postgres, warm): Anzahl nach Status 9 ms, Summe nach Monat 29 ms, Anzahl nach Woche 55 ms, Region nach Kanal 23 ms, Top 10 Kunden mit Join 30 ms, vier KPI-Werte 58 ms.
 
+### Gruppierte Tabellen
+
+Eine Tabelle, gruppiert nach mehreren Feldern (bis zu 8), daneben Werte von bis zu drei weiteren Datenmengen, nach denselben Feldern gruppiert, auf dem Server nach jeder Spalte sortiert und seitenweise geliefert. `IReportsApi.TableAsync` sendet sie; über den Dispatcher ist es `RunReportTableQuery`.
+
+```json
+POST /api/v1/reports/table
+{
+  "entitySet": "SalesOrders",
+  "filter": "OrderDate ge 2025-01-01",
+  "groupFields": [ "Region", "Channel" ],
+  "aggregates": [ { "function": "Count" }, { "function": "Average", "field": "DaysToShip", "emptyAsZero": true } ],
+  "joins": [
+    { "entitySet": "Returns", "filter": null, "aggregates": [ { "function": "Sum", "field": "Amount" } ] }
+  ],
+  "orderBy": [ { "column": 2, "descending": true } ],
+  "skip": 0, "top": 20
+}
+```
+
+```json
+{
+  "rows": [
+    { "keys": [ { "value": "North", "label": "North", "filter": "Region eq 'North'" }, { "value": null, "label": "", "filter": "Channel eq null" } ],
+      "values": [ 120, 3.5, 4200.5 ] }
+  ],
+  "more": true,
+  "elapsedMilliseconds": 12
+}
+```
+
+- Jede Quelle wird in der Datenbank nach allen Gruppierungsfeldern gruppiert, über dieselben Zeilen wie die anderen Berichtsabfragen (Zeilenfilter, Datenfilter, Navigationsbereich oder die Zeilen einer eigenen Quelle); Rohzeilen verlassen sie nie.
+- Die Zeilen sind die Gruppen der Hauptmenge. Ein Join hängt seine Werte an die Gruppe mit demselben Schlüssel: Texte gleichen sich ohne Rücksicht auf Groß- und Kleinschreibung, ein leerer Text gleicht null, wie `ISNULL(x, '')` unter der Collation von SQL Server, die Groß- und Kleinschreibung nicht unterscheidet. Eine Gruppe ohne Zeilen in einem Join bekommt null-Werte; Gruppen, die nur ein Join hat, fallen weg.
+- `orderBy`-Spalten zählen zuerst die Gruppierungsfelder (0 bis Felder - 1), dann die Werte der Hauptmenge, dann die Werte jedes Joins der Reihe nach. Gleichstände entscheiden alle Gruppierungsfelder aufsteigend. Texte sortieren ohne Rücksicht auf Groß- und Kleinschreibung, null zuerst (absteigend zuletzt), wie auf SQL Server.
+- `more` sagt, ob nach der Seite weitere Zeilen folgen.
+- Jede verbundene Menge braucht ihr Leserecht (sonst 403) und jedes Gruppierungsfeld (sonst 400). Grenzen: 1 bis 8 Gruppierungsfelder, 8 Werte je Menge, 3 Joins, `top` 1 bis 50.000, höchstens 50.000 Gruppen je Menge.
+
 ## Widgets
 
 | Widget | Zeigt |
@@ -351,7 +387,7 @@ Die Dashboard-Seite des Templates (*Persönlich > Dashboard*, über *Berichte*) 
 | Widget | Id 40 Zeichen, Titel 200, Text 20.000, `AppData` 20.000; Breite 1 bis 12 Spalten, Höhe 1 bis 40 Zeilen |
 | Werte und Umschalter | 8 Werte je Abfrage oder Umschalter, 8 Wert- und 8 Gruppierungs-Umschalter, Bezeichnungen 100 Zeichen |
 | Schwellenwerte | 10 je Widget |
-| Aggregation | 5.000 Gruppen, Top 1 bis 1.000 |
+| Aggregation | 5.000 Gruppen, Top 1 bis 1.000; gruppierte Tabellen 1 bis 8 Felder, 3 Joins, 50.000 Gruppen je Menge |
 | KI-Prompt | 4.000 Zeichen, drei Versuche |
 | Abos | 50 je Benutzer; Mails zeigen 10 Zeilen je Widget, die Arbeitsmappe bis 1.000 Zeilen je Tabelle |
 
@@ -364,6 +400,7 @@ Die Dashboard-Seite des Templates (*Persönlich > Dashboard*, über *Berichte*) 
 | `POST /api/v1/reports/{id}/duplicate`, `PUT /api/v1/reports/{id}/favorite` | kopieren, Favorit |
 | `GET /api/v1/reports/sources`, `GET /api/v1/reports/roles`, `GET /api/v1/reports/groups` | Felder je Menge, Rollen und Gruppen zum Teilen |
 | `POST /api/v1/reports/query` | aggregieren |
+| `POST /api/v1/reports/table` | eine Seite einer [gruppierten Tabelle](#gruppierte-tabellen) mit verbundenen Mengen |
 | `POST /api/v1/reports/rows` | Zeilen einer eigenen Quelle, für Tabellen |
 | `POST /api/v1/reports/sheet` | Zeilen als Excel-Arbeitsmappe |
 | `GET /api/v1/reports/ai`, `POST /api/v1/reports/generate` | ob KI verfügbar ist, eine Definition aus einem Prompt (nicht gespeichert) |

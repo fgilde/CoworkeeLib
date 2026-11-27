@@ -15,6 +15,7 @@ namespace Coworkee.Reporting.Querying;
 internal sealed class ReportQueries(IServiceProvider services, ReportSchema schema, IPermissionChecker permissions, ILogger<ReportQueries> log)
 {
     private static readonly MethodInfo RunMethod = typeof(ReportQueries).GetMethod(nameof(RunTypedAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
+    private static readonly MethodInfo TableMethod = typeof(ReportQueries).GetMethod(nameof(TableTypedAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
     private static readonly MethodInfo CheckMethod = typeof(ReportQueries).GetMethod(nameof(CheckFilterAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
 
     private IReadOnlySet<string>? _granted;
@@ -105,11 +106,114 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
             return (null, source.Error);
         }
 
-        // an app source aggregates in memory unless it hands out a query of the database
-        var provider = source.Value.Computed is null ? CoworkeeDatabase.Provider(services.DbContextFor(source.Value.RowType).Database) : DatabaseProviders.Postgres;
-        var model = source.Value.Computed is null ? services.DbContextFor(source.Value.RowType).Model : null;
-        return (source.Value, ReportPlan.Create(source.Value, request, await GrantedAsync(cancellationToken), provider,
-            model is null ? null : field => StoredAsNumber(model, source.Value.RowType, field.Chain)));
+        var (provider, binaryDate) = Storage(source.Value);
+        return (source.Value, ReportPlan.Create(source.Value, request, await GrantedAsync(cancellationToken), provider, binaryDate));
+    }
+
+    // an app source aggregates in memory unless it hands out a query of the database
+    private (string Provider, Func<ReportField, bool>? BinaryDate) Storage(ReportSource source)
+    {
+        if (source.Computed is not null)
+        {
+            return (DatabaseProviders.Postgres, null);
+        }
+
+        var db = services.DbContextFor(source.RowType);
+        return (CoworkeeDatabase.Provider(db.Database), field => StoredAsNumber(db.Model, source.RowType, field.Chain));
+    }
+
+    /// <summary>A grouped table: every source readable (Forbidden otherwise) and grouped by all group fields, the joins merged onto the main groups.</summary>
+    public async Task<Result<ReportTableResult>> TableAsync(ReportTableRequest request, CancellationToken cancellationToken)
+    {
+        var fields = request.GroupFields ?? [];
+        var joins = request.Joins ?? [];
+        var orderBy = request.OrderBy ?? [];
+        var errors = new Dictionary<string, string[]>(StringComparer.Ordinal);
+        if (fields.Count is < 1 or > ReportTables.MaxGroupFields)
+        {
+            errors[nameof(request.GroupFields)] = [$"Group by 1 to {ReportTables.MaxGroupFields} fields."];
+        }
+
+        if (joins.Count > ReportTables.MaxJoins)
+        {
+            errors[nameof(request.Joins)] = [$"At most {ReportTables.MaxJoins} joins."];
+        }
+
+        if (request.Top < 1 || request.Top > ReportTables.MaxRows)
+        {
+            errors[nameof(request.Top)] = [$"Top is between 1 and {ReportTables.MaxRows}."];
+        }
+
+        if (request.Skip < 0)
+        {
+            errors[nameof(request.Skip)] = ["Skip is 0 or more."];
+        }
+
+        if (errors.Count > 0)
+        {
+            return Error.Validation(errors);
+        }
+
+        var sets = new List<(ReportSource Source, string? Filter, IReadOnlyList<ReportAggregate> Aggregates, string Prefix)>();
+        foreach (var (set, filter, aggregates, prefix) in joins.Select((j, i) => (j.EntitySet, j.Filter, j.Aggregates, $"{nameof(request.Joins)}[{i}].")).Prepend((request.EntitySet, request.Filter, request.Aggregates, "")))
+        {
+            var source = await ReadableAsync(set, cancellationToken);
+            if (!source.IsSuccess)
+            {
+                return source.Error;
+            }
+
+            sets.Add((source.Value, filter, aggregates ?? [], prefix));
+        }
+
+        var granted = await GrantedAsync(cancellationToken);
+        var plans = sets.Select(s =>
+        {
+            var (provider, binaryDate) = Storage(s.Source);
+            var groups = fields.Select((f, i) => ReportPlan.GroupOf(s.Source, new ReportGroupBy(f), $"{s.Prefix}{nameof(request.GroupFields)}[{i}]", granted, errors, provider, binaryDate)).ToList();
+            if (s.Aggregates.Count > ReportLimits.Aggregates)
+            {
+                errors[$"{s.Prefix}{nameof(request.Aggregates)}"] = [$"At most {ReportLimits.Aggregates} values."];
+            }
+
+            var values = s.Aggregates.Select((a, i) => ReportPlan.Value(s.Source, a, $"{s.Prefix}{nameof(request.Aggregates)}[{i}]", granted, errors)).ToList();
+            return (s.Source, s.Filter, s.Prefix, Groups: (IReadOnlyList<ReportGroup>)groups!, Values: (IReadOnlyList<ReportValue>)values!);
+        }).ToList();
+
+        var columns = fields.Count + plans.Sum(p => p.Values.Count);
+        foreach (var (sort, i) in orderBy.Select((sort, i) => (sort, i)).Where(s => s.sort.Column < 0 || s.sort.Column >= columns))
+        {
+            errors[$"{nameof(request.OrderBy)}[{i}]"] = [$"Column {sort.Column} is not between 0 and {columns - 1}."];
+        }
+
+        if (errors.Count > 0)
+        {
+            return Error.Validation(errors);
+        }
+
+        var watch = Stopwatch.StartNew();
+        var grouped = new List<List<(object?[] Keys, double?[] Values)>>();
+        foreach (var plan in plans)
+        {
+            try
+            {
+                var rows = await (Task<List<(object?[] Keys, double?[] Values)>?>)TableMethod.MakeGenericMethod(plan.Source.RowType)
+                    .Invoke(null, [services, plan.Source, plan.Filter, plan.Groups, plan.Values, plan.Prefix.Length > 0, cancellationToken])!;
+                if (rows is null)
+                {
+                    return Error.Validation($"{plan.Prefix}{nameof(request.GroupFields)}", $"More than {ReportTables.MaxRows} groups in {plan.Source.EntitySet}; filter the rows or group by fewer fields.");
+                }
+
+                grouped.Add(rows);
+            }
+            catch (ODataException exception)
+            {
+                return Error.Validation($"{plan.Prefix}{nameof(request.Filter)}", exception.Message);
+            }
+        }
+
+        var (page, more) = ReportTables.Merge(plans[0].Groups, grouped[0], [.. plans.Skip(1).Select((p, i) => (p.Groups, grouped[i + 1], p.Values.Count))], orderBy, request.Skip, request.Top);
+        return new ReportTableResult(page, more, watch.ElapsedMilliseconds);
     }
 
     internal async Task<Result<ReportSource>> ReadableAsync(string name, CancellationToken cancellationToken)
@@ -156,6 +260,20 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
 
         var scope = ODataNavigationScope.For(services, typeof(TEntity));
         return await ReportAggregator.RunAsync(await ODataEntityAccess.FilteredAsync<TEntity>(services, filter, cancellationToken, scope), plan, cancellationToken, scope);
+    }
+
+    // the same rows as RunTypedAsync: a computed source's own, an entity set's with its row filters, data filters and navigation scope
+    private static async Task<List<(object?[] Keys, double?[] Values)>?> TableTypedAsync<TEntity>(
+        IServiceProvider services, ReportSource source, string? filter, IReadOnlyList<ReportGroup> groups, IReadOnlyList<ReportValue> values, bool join, CancellationToken cancellationToken)
+        where TEntity : class
+    {
+        if (source.Computed is { } computed)
+        {
+            return await ReportTables.GroupAsync((IQueryable<TEntity>)await computed.RowsAsync(services, filter, cancellationToken), groups, values, join, cancellationToken);
+        }
+
+        var scope = ODataNavigationScope.For(services, typeof(TEntity));
+        return await ReportTables.GroupAsync(await ODataEntityAccess.FilteredAsync<TEntity>(services, filter, cancellationToken, scope), groups, values, join, cancellationToken, scope);
     }
 
     private static Task CheckFilterAsync<TEntity>(IServiceProvider services, string? filter, CancellationToken cancellationToken)
