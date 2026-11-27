@@ -2401,5 +2401,9 @@
   "In this order; empty shows every facet of the data.": "V tomto pořadí; prázdné zobrazí všechny fasety dat.",
   "Values not available": "Hodnoty nejsou k dispozici",
   "Empty counts as zero": "Prázdné se počítá jako nula",
-  "Rows without a value count as 0 in the average": "Řádky bez hodnoty se v průměru počítají jako 0"
+  "Rows without a value count as 0 in the average": "Řádky bez hodnoty se v průměru počítají jako 0",
+  "Data set": "Datová sada",
+  "Same as the widget": "Jako u widgetu",
+  "Split into series by": "Rozdělit do řad podle",
+  "No split": "Bez rozdělení"
 }

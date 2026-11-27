@@ -2401,5 +2401,9 @@
   "In this order; empty shows every facet of the data.": "按此顺序显示；留空则显示数据的所有分面。",
   "Values not available": "无法获取值",
   "Empty counts as zero": "空值按零计算",
-  "Rows without a value count as 0 in the average": "没有值的行在平均值中按 0 计算"
+  "Rows without a value count as 0 in the average": "没有值的行在平均值中按 0 计算",
+  "Data set": "数据集",
+  "Same as the widget": "与小部件相同",
+  "Split into series by": "按以下字段拆分系列",
+  "No split": "不拆分"
 }

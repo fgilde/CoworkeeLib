@@ -2401,5 +2401,9 @@
   "In this order; empty shows every facet of the data.": "W tej kolejności; puste pokazuje wszystkie fasety danych.",
   "Values not available": "Wartości niedostępne",
   "Empty counts as zero": "Puste liczy się jako zero",
-  "Rows without a value count as 0 in the average": "Wiersze bez wartości liczą się w średniej jako 0"
+  "Rows without a value count as 0 in the average": "Wiersze bez wartości liczą się w średniej jako 0",
+  "Data set": "Zbiór danych",
+  "Same as the widget": "Jak w widżecie",
+  "Split into series by": "Podziel na serie według",
+  "No split": "Bez podziału"
 }

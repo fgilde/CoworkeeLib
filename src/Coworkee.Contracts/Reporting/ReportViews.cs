@@ -43,6 +43,7 @@ public static class ReportViews
 
             copy.Options.Format = metric.Format ?? copy.Options.Format;
             query.Filter = And(query.Filter, metric.Filter);
+            query.EntitySet = metric.EntitySet is { Length: > 0 } set ? set : query.EntitySet;
         }
 
         if (bucket is not null)
@@ -60,10 +61,37 @@ public static class ReportViews
                 query.GroupBy = group with { Bucket = bucket.Bucket };
             }
 
+            if (widget.Type != WidgetType.Kpi)
+            {
+                query.SplitBy = bucket.NoSplit ? null : bucket.SplitBy ?? query.SplitBy;
+            }
+
             query.DateField = bucket.DateField ?? query.DateField;
         }
 
         return copy;
+    }
+
+    /// <summary>
+    /// The widget as the reader may see it: itself when its data set is readable, else a copy showing its first value on a readable set; null when it has none
+    /// (the widget is left out). A reader who lacks a permission of a source never gets an error for it.
+    /// </summary>
+    public static ReportWidget? ForReader(ReportWidget widget, Func<string, bool> readable)
+    {
+        if (widget.Query is not { } query || readable(query.EntitySet))
+        {
+            return widget;
+        }
+
+        for (var i = 0; i < widget.Options.Metrics.Count && HasMetrics(widget.Type); i++)
+        {
+            if (widget.Options.Metrics[i].EntitySet is { Length: > 0 } set && readable(set))
+            {
+                return Apply(widget, new ReportViewChoice(Metric: i));
+            }
+        }
+
+        return null;
     }
 
     /// <summary>

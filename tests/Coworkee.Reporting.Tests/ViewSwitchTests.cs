@@ -114,4 +114,75 @@ public sealed class ViewSwitchTests(ReportingApp app) : ReportingTestBase(app)
         saved.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await saved.Content.ReadFromJsonAsync<ReportDto>(Ct))!.Definition.DateFields.ShouldBe(["SoldAt", "ShippedOn"]);
     }
+
+    private static ReportWidget OnCosts() => new()
+    {
+        Id = "cost",
+        Type = WidgetType.Chart,
+        Query = new WidgetQuery { EntitySet = "Costs", GroupBy = new ReportGroupBy("Code"), Aggregates = [new(AggregateFunction.Sum, "Amount")] },
+        Options = new WidgetOptions
+        {
+            Metrics = [new MetricView("Cost", [new(AggregateFunction.Sum, "Amount")], EntitySet: "Costs"), new MetricView("Count", [new()], EntitySet: "SaleRows"), new MetricView("Plain", [new()])],
+        },
+    };
+
+    [Fact]
+    public void A_metric_view_can_switch_the_source()
+    {
+        var widget = Chart([new MetricView("Count", [new()]), new MetricView("Cost", [new(AggregateFunction.Sum, "TotalCost")], EntitySet: "Costs")]);
+
+        var shown = ReportViews.Apply(widget, new ReportViewChoice(Metric: 1));
+
+        shown.Query!.EntitySet.ShouldBe("Costs");
+        shown.Query.Aggregates.ShouldHaveSingleItem().Field.ShouldBe("TotalCost");
+        widget.Query!.EntitySet.ShouldBe("Sales");
+        ReportViews.Apply(widget, new ReportViewChoice(Metric: 0)).Query!.EntitySet.ShouldBe("Sales");
+    }
+
+    [Fact]
+    public void A_bucket_view_can_set_or_clear_the_split()
+    {
+        var widget = Chart(buckets: [new BucketView("Year", "SoldAt", DateBucket.Year, SplitBy: new ReportGroupBy("TransportMode")), new BucketView("Month", "SoldAt", DateBucket.Month, NoSplit: true), new BucketView("Keep", "SoldAt", DateBucket.Day)]);
+        widget.Query!.SplitBy = new ReportGroupBy("Status");
+
+        ReportViews.Apply(widget, new ReportViewChoice(Bucket: 0)).Query!.SplitBy.ShouldBe(new ReportGroupBy("TransportMode"));
+        ReportViews.Apply(widget, new ReportViewChoice(Bucket: 1)).Query!.SplitBy.ShouldBeNull();
+        ReportViews.Apply(widget, new ReportViewChoice(Bucket: 2)).Query!.SplitBy.ShouldBe(new ReportGroupBy("Status"));
+    }
+
+    [Fact]
+    public void A_widget_on_an_unreadable_source_shows_its_first_readable_metric()
+    {
+        var widget = OnCosts();
+
+        ReportViews.ForReader(widget, _ => true).ShouldBeSameAs(widget);
+        var shown = ReportViews.ForReader(widget, set => set != "Costs")!;
+
+        shown.Query!.EntitySet.ShouldBe("SaleRows");
+        shown.Options.Metrics.Count.ShouldBe(3);
+        widget.Query!.EntitySet.ShouldBe("Costs");
+    }
+
+    [Fact]
+    public void A_widget_without_a_readable_metric_is_left_out()
+    {
+        var widget = OnCosts();
+        widget.Options.Metrics = [new MetricView("Cost", [new()], EntitySet: "Costs")];
+
+        ReportViews.ForReader(widget, set => set != "Costs").ShouldBeNull();
+        widget.Options.Metrics = [];
+        ReportViews.ForReader(widget, set => set != "Costs").ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task The_check_runs_every_alternative_including_other_sources()
+    {
+        var widget = Chart([new MetricView("Cost", [new(AggregateFunction.Sum, "Quantity")], EntitySet: "Costs")]);
+        widget.Query!.GroupBy = null;
+
+        var response = await Admin.PostAsJsonAsync("/api/v1/reports", Request(widget), Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync(Ct)).ShouldContain("Widgets[chart].Metrics[0]");
+    }
 }

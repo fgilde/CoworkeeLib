@@ -21,9 +21,18 @@ public partial class WidgetViewSwitch
     private ReportViewChoice Current => Choice ?? new ReportViewChoice();
 
     // the widget's own entry first (index -1), the alternatives after it; empty without alternatives
+    // choices on a source the user may not read are not offered (indices stay the author's)
     private IReadOnlyList<(string Label, int Index)> Metrics => Widget.Query is { } query && ReportViews.HasMetrics(Widget.Type) && Widget.Options.Metrics.Count > 0
-        ? [(OwnMetric(query), -1), .. Widget.Options.Metrics.Select((m, i) => (L.Stored(m.Label) ?? m.Label, i))]
+        ? [.. Own(query), .. Widget.Options.Metrics.Select((m, i) => (Metric: m, Index: i)).Where(x => State.CanRead(x.Metric.EntitySet)).Select(x => (L.Stored(x.Metric.Label) ?? x.Metric.Label, x.Index))]
         : [];
+
+    private IEnumerable<(string Label, int Index)> Own(WidgetQuery query)
+    {
+        if (State.CanRead(query.EntitySet))
+        {
+            yield return (OwnMetric(query), -1);
+        }
+    }
 
     private IReadOnlyList<(string Label, int Index)> Buckets => Widget.Query is { } query && ReportViews.HasBuckets(Widget.Type) && Widget.Options.Buckets.Count > 0
         ? [(OwnBucket(query), -1), .. Widget.Options.Buckets.Select((b, i) => (L.Stored(b.Label) ?? b.Label, i))]

@@ -85,7 +85,14 @@ public partial class WidgetFrame : IDisposable
 
     private ReportWidget Shown(ReportViewChoice? choice)
     {
-        var shown = ReportViews.Apply(Widget, choice);
+        // a reader without the permission of a source gets the first value on a source they may read (the report page leaves out widgets without one)
+        var basis = Editing ? Widget : ReportViews.ForReader(Widget, State.CanRead) ?? Widget;
+        if (choice?.Metric is { } metric && !State.CanRead(basis.Options.Metrics.ElementAtOrDefault(metric)?.EntitySet ?? basis.Query?.EntitySet))
+        {
+            choice = choice with { Metric = null };
+        }
+
+        var shown = ReportViews.Apply(basis, choice);
         _dateField = Editing ? null : State.DateField;
         shown = _dateField is { } chosen && State.DefaultDateField is { } first && State.Field(shown.Query?.EntitySet, chosen) is not null
             ? ReportViews.WithDateField(shown, first, chosen) : shown;

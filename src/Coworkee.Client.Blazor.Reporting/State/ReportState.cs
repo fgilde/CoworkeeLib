@@ -73,6 +73,9 @@ public sealed class ReportState
 
     public ReportSourceDto? Source(string? entitySet) => Sources.FirstOrDefault(s => string.Equals(s.EntitySet, entitySet, StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>Whether the user may read the data set: the server lists only those.</summary>
+    public bool CanRead(string? entitySet) => entitySet is null || Source(entitySet) is not null;
+
     public ReportFieldDto? Field(string? entitySet, string? path) =>
         Source(entitySet)?.Fields.FirstOrDefault(f => string.Equals(f.Path, path, StringComparison.OrdinalIgnoreCase));
 

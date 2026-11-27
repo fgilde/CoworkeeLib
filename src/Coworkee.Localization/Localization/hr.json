@@ -2401,5 +2401,9 @@
   "In this order; empty shows every facet of the data.": "Ovim redoslijedom; prazno prikazuje sve fasete podataka.",
   "Values not available": "Vrijednosti nisu dostupne",
   "Empty counts as zero": "Prazno se računa kao nula",
-  "Rows without a value count as 0 in the average": "Retci bez vrijednosti u prosjeku se računaju kao 0"
+  "Rows without a value count as 0 in the average": "Retci bez vrijednosti u prosjeku se računaju kao 0",
+  "Data set": "Skup podataka",
+  "Same as the widget": "Kao kod widgeta",
+  "Split into series by": "Podijeli u serije prema",
+  "No split": "Bez podjele"
 }

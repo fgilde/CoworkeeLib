@@ -2401,5 +2401,9 @@
   "In this order; empty shows every facet of the data.": "In questo ordine; vuoto mostra tutte le faccette dei dati.",
   "Values not available": "Valori non disponibili",
   "Empty counts as zero": "Vuoto vale zero",
-  "Rows without a value count as 0 in the average": "Le righe senza valore contano come 0 nella media"
+  "Rows without a value count as 0 in the average": "Le righe senza valore contano come 0 nella media",
+  "Data set": "Origine dati",
+  "Same as the widget": "Come il widget",
+  "Split into series by": "Suddividi in serie per",
+  "No split": "Nessuna suddivisione"
 }

@@ -2401,5 +2401,9 @@
   "In this order; empty shows every facet of the data.": "У цьому порядку; порожньо показує всі фасети даних.",
   "Values not available": "Значення недоступні",
   "Empty counts as zero": "Порожнє рахувати як нуль",
-  "Rows without a value count as 0 in the average": "Рядки без значення враховуються в середньому як 0"
+  "Rows without a value count as 0 in the average": "Рядки без значення враховуються в середньому як 0",
+  "Data set": "Набір даних",
+  "Same as the widget": "Як у віджета",
+  "Split into series by": "Розбити на серії за",
+  "No split": "Без розбиття"
 }

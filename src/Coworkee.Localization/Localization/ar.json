@@ -2401,5 +2401,9 @@
   "In this order; empty shows every facet of the data.": "بهذا الترتيب؛ إذا تُرك فارغاً تظهر كل جوانب البيانات.",
   "Values not available": "القيم غير متاحة",
   "Empty counts as zero": "الفراغ يُحتسب صفرًا",
-  "Rows without a value count as 0 in the average": "الصفوف بلا قيمة تُحتسب 0 في المتوسط"
+  "Rows without a value count as 0 in the average": "الصفوف بلا قيمة تُحتسب 0 في المتوسط",
+  "Data set": "مجموعة البيانات",
+  "Same as the widget": "مثل الأداة",
+  "Split into series by": "التقسيم إلى سلاسل حسب",
+  "No split": "بدون تقسيم"
 }

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using Coworkee.Client.Blazor.Api;
+using Coworkee.Client.Blazor.Components.Groups;
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Reporting.Api;
@@ -30,6 +31,7 @@ public partial class ReportPage : IAsyncDisposable
     private bool _editing;
     private bool _saving;
     private bool _ai;
+    private GroupScopeState? _groups;
     private CancellationTokenSource? _timer;
     private CancellationTokenSource? _debounce;
 
@@ -53,6 +55,8 @@ public partial class ReportPage : IAsyncDisposable
 
     [Inject] private ReportingOptions Options { get; set; } = null!;
 
+    [Inject] private IServiceProvider Services { get; set; } = null!;
+
     [Inject] private ILogger<ReportState> Log { get; set; } = null!;
 
     [Parameter] public Guid Id { get; set; }
@@ -61,6 +65,10 @@ public partial class ReportPage : IAsyncDisposable
 
     /// <summary>False shows the report read-only, also to its owner (e.g. while a feature of the host app keeps editing off).</summary>
     [Parameter] public bool AllowEdit { get; set; } = true;
+
+    // the widgets this user sees: those on a source they may not read and without a value on another one are left out (not while designing)
+    private List<ReportWidget> Visible => _editing || _state is null ? _definition!.Widgets
+        : [.. _definition!.Widgets.Where(w => ReportViews.ForReader(w, _state.CanRead) is not null)];
 
     private bool CanEdit => AllowEdit && _report?.CanEdit == true;
 
@@ -103,6 +111,18 @@ public partial class ReportPage : IAsyncDisposable
         {
         }
     }
+
+    // another group selection shows other rows (the Frontend client relies on this)
+    protected override void OnInitialized()
+    {
+        _groups = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<GroupScopeState>(Services);
+        if (_groups is not null)
+        {
+            _groups.Changed += GroupsChanged;
+        }
+    }
+
+    private void GroupsChanged() => InvokeAsync(() => _state?.Refresh());
 
     private void StartEdit()
     {
@@ -403,6 +423,11 @@ public partial class ReportPage : IAsyncDisposable
 
     public ValueTask DisposeAsync()
     {
+        if (_groups is not null)
+        {
+            _groups.Changed -= GroupsChanged;
+        }
+
         _timer?.Cancel();
         _debounce?.Cancel();
         GC.SuppressFinalize(this);

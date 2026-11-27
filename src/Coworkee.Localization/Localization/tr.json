@@ -2401,5 +2401,9 @@
   "In this order; empty shows every facet of the data.": "Bu sırayla; boş olursa verilerin tüm yönleri gösterilir.",
   "Values not available": "Değerler kullanılamıyor",
   "Empty counts as zero": "Boş sıfır sayılır",
-  "Rows without a value count as 0 in the average": "Değeri olmayan satırlar ortalamada 0 olarak sayılır"
+  "Rows without a value count as 0 in the average": "Değeri olmayan satırlar ortalamada 0 olarak sayılır",
+  "Data set": "Veri kümesi",
+  "Same as the widget": "Widget ile aynı",
+  "Split into series by": "Şuna göre serilere böl",
+  "No split": "Bölme yok"
 }

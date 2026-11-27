@@ -2401,5 +2401,9 @@
   "In this order; empty shows every facet of the data.": "Με αυτή τη σειρά· κενό εμφανίζει όλες τις όψεις των δεδομένων.",
   "Values not available": "Οι τιμές δεν είναι διαθέσιμες",
   "Empty counts as zero": "Το κενό μετράει ως μηδέν",
-  "Rows without a value count as 0 in the average": "Οι γραμμές χωρίς τιμή μετρούν ως 0 στον μέσο όρο"
+  "Rows without a value count as 0 in the average": "Οι γραμμές χωρίς τιμή μετρούν ως 0 στον μέσο όρο",
+  "Data set": "Σύνολο δεδομένων",
+  "Same as the widget": "Όπως το γραφικό στοιχείο",
+  "Split into series by": "Διαίρεση σε σειρές ανά",
+  "No split": "Χωρίς διαίρεση"
 }

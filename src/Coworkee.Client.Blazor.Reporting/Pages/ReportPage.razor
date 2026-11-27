@@ -123,7 +123,7 @@ else
                         }
                     </div>
                 }
-                <ReportGrid @ref="_grid" Widgets="_definition.Widgets" Editable="_editing" LayoutChanged="LayoutChanged">
+                <ReportGrid @ref="_grid" Widgets="Visible" Editable="_editing" LayoutChanged="LayoutChanged">
                     <ItemTemplate Context="widget">
                         <WidgetFrame Widget="widget" State="_state" ReportId="_report.Id" Editing="_editing" Selected="@(_selected == widget)" OnSettings="() => Select(widget)"
                                      OnRemove="() => Remove(widget)" OnDuplicate="() => Duplicate(widget)" OnChanged="StateHasChanged" />

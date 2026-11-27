@@ -2401,5 +2401,9 @@
   "In this order; empty shows every facet of the data.": "In deze volgorde; leeg toont elke facet van de gegevens.",
   "Values not available": "Waarden niet beschikbaar",
   "Empty counts as zero": "Leeg telt als nul",
-  "Rows without a value count as 0 in the average": "Rijen zonder waarde tellen als 0 in het gemiddelde"
+  "Rows without a value count as 0 in the average": "Rijen zonder waarde tellen als 0 in het gemiddelde",
+  "Data set": "Gegevensset",
+  "Same as the widget": "Zoals de widget",
+  "Split into series by": "Splitsen in reeksen op",
+  "No split": "Geen splitsing"
 }

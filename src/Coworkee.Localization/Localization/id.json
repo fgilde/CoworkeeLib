@@ -2401,5 +2401,9 @@
   "In this order; empty shows every facet of the data.": "Dalam urutan ini; kosong menampilkan semua faset data.",
   "Values not available": "Nilai tidak tersedia",
   "Empty counts as zero": "Kosong dihitung sebagai nol",
-  "Rows without a value count as 0 in the average": "Baris tanpa nilai dihitung sebagai 0 dalam rata-rata"
+  "Rows without a value count as 0 in the average": "Baris tanpa nilai dihitung sebagai 0 dalam rata-rata",
+  "Data set": "Kumpulan data",
+  "Same as the widget": "Sama seperti widget",
+  "Split into series by": "Pisahkan menjadi seri berdasarkan",
+  "No split": "Tanpa pemisahan"
 }

@@ -10,6 +10,16 @@
                               MaxLength="ReportViews.LabelLength" Immediate="true" DebounceInterval="300" />
                 <Reorder Index="index" Count="Options.Metrics.Count" Move="i => Move(Options.Metrics, index, i)" Remove="() => Change(() => Options.Metrics.RemoveAt(index))" />
             </div>
+            @if (State.Sources.Count > 1)
+            {
+                <MudSelect T="string" Value="metric.EntitySet" ValueChanged="v => SetSource(index, metric, v)" Label="@L["Data set"]" Placeholder="@L["Same as the widget"]" Variant="Variant.Outlined" Margin="Margin.Dense"
+                           Clearable="true" data-testid="metric-source">
+                    @foreach (var source in State.Sources)
+                    {
+                        <MudSelectItem Value="source.EntitySet">@source.Label</MudSelectItem>
+                    }
+                </MudSelect>
+            }
             @if (Widget.Type != WidgetType.Table)
             {
                 <div class="cw-aggregate">
@@ -23,7 +33,7 @@
                     @if (aggregate.Function != AggregateFunction.Count)
                     {
                         <MudSelect T="string" Value="aggregate.Field" ValueChanged="f => SetAggregate(index, metric, aggregate with { Field = f })" Variant="Variant.Outlined" Margin="Margin.Dense" Class="cw-aggregate-field">
-                            @foreach (var field in aggregate.Function == AggregateFunction.DistinctCount ? Fields : NumberFields)
+                            @foreach (var field in aggregate.Function == AggregateFunction.DistinctCount ? FieldsOf(metric) : NumbersOf(metric))
                             {
                                 <MudSelectItem Value="field.Path">@field.Label</MudSelectItem>
                             }
@@ -77,6 +87,17 @@
             {
                 <GroupByEditor Label="@L["Group by"]" Fields="Fields" Value="@(bucket.Field is { } path ? new ReportGroupBy(path, bucket.Bucket) : null)"
                                ValueChanged="g => SetBucket(index, bucket with { Field = g?.Field, Bucket = g?.Bucket ?? DateBucket.None })" />
+            }
+            @if (Widget.Type != WidgetType.Kpi && Widget.Type != WidgetType.Table)
+            {
+                <MudSelect T="string" Value="SplitMode(bucket)" ValueChanged="v => SetSplit(index, bucket, v)" Label="@L["Split into series by"]" Variant="Variant.Outlined" Margin="Margin.Dense" data-testid="bucket-split">
+                    <MudSelectItem Value="@string.Empty">@L["Same as the widget"]</MudSelectItem>
+                    <MudSelectItem Value="@NoSplitValue">@L["No split"]</MudSelectItem>
+                    @foreach (var field in Fields.Where(f => f.Kind is ReportFieldKind.Text or ReportFieldKind.Enum or ReportFieldKind.Boolean))
+                    {
+                        <MudSelectItem Value="field.Path">@field.Label</MudSelectItem>
+                    }
+                </MudSelect>
             }
             <MudSelect T="string" Value="bucket.DateField" ValueChanged="v => SetBucket(index, bucket with { DateField = v })" Label="@L["Date for the report's date range"]" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">
                 @foreach (var field in Fields.Where(f => f.Kind == ReportFieldKind.Date))

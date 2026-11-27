@@ -2401,5 +2401,9 @@
   "In this order; empty shows every facet of the data.": "В този ред; празно показва всички фасети на данните.",
   "Values not available": "Стойностите не са налични",
   "Empty counts as zero": "Празното се брои за нула",
-  "Rows without a value count as 0 in the average": "Редовете без стойност се броят като 0 в средната стойност"
+  "Rows without a value count as 0 in the average": "Редовете без стойност се броят като 0 в средната стойност",
+  "Data set": "Набор от данни",
+  "Same as the widget": "Както при уиджета",
+  "Split into series by": "Разделяне на серии по",
+  "No split": "Без разделяне"
 }

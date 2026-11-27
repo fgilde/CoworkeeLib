@@ -2401,5 +2401,9 @@
   "In this order; empty shows every facet of the data.": "이 순서로 표시하며, 비어 있으면 데이터의 모든 패싯을 표시합니다.",
   "Values not available": "값을 사용할 수 없음",
   "Empty counts as zero": "빈 값을 0으로 계산",
-  "Rows without a value count as 0 in the average": "값이 없는 행은 평균에서 0으로 계산됩니다"
+  "Rows without a value count as 0 in the average": "값이 없는 행은 평균에서 0으로 계산됩니다",
+  "Data set": "데이터 세트",
+  "Same as the widget": "위젯과 동일",
+  "Split into series by": "시리즈 분할 기준",
+  "No split": "분할 안 함"
 }

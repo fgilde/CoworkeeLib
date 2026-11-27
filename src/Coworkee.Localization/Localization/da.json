@@ -2401,5 +2401,9 @@
   "In this order; empty shows every facet of the data.": "I denne rækkefølge; tom viser alle facetter af data.",
   "Values not available": "Værdier er ikke tilgængelige",
   "Empty counts as zero": "Tom tæller som nul",
-  "Rows without a value count as 0 in the average": "Rækker uden værdi tæller som 0 i gennemsnittet"
+  "Rows without a value count as 0 in the average": "Rækker uden værdi tæller som 0 i gennemsnittet",
+  "Data set": "Datasæt",
+  "Same as the widget": "Samme som widgetten",
+  "Split into series by": "Opdel i serier efter",
+  "No split": "Ingen opdeling"
 }

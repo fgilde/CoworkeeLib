@@ -2401,5 +2401,9 @@
   "In this order; empty shows every facet of the data.": "この順序で表示します。空の場合はデータのすべてのファセットを表示します。",
   "Values not available": "値を取得できません",
   "Empty counts as zero": "空は0として数える",
-  "Rows without a value count as 0 in the average": "値のない行は平均で0として数えます"
+  "Rows without a value count as 0 in the average": "値のない行は平均で0として数えます",
+  "Data set": "データセット",
+  "Same as the widget": "ウィジェットと同じ",
+  "Split into series by": "系列の分割基準",
+  "No split": "分割しない"
 }
