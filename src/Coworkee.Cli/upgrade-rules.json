@@ -1008,6 +1008,21 @@
       "manual": [
         { "text": "A fully qualified reference to Components.Query (in code or in a razor file) must name Coworkee.Contracts.Query only for the moved query model types (QueryGroup, QueryRule, QueryField, QueryJson, ODataQueryTranslator, ...); QueryBuilder and the other editors stay in Components.Query, so check each hit.", "find": "Components\\.Query\\.", "files": [ "src/**/*.cs", "src/**/*.razor", "tests/**/*.cs", "tests/**/*.razor" ] }
       ]
+    },
+    {
+      "version": "0.1.8",
+      "breaking": [
+        "Notifications: an Audience no longer replaces the visibility check; followers and audience members must still see the record (NotificationAudience).",
+        "UI texts say tenant instead of organisation; apps overriding these texts by their English key re-key them (list in the changelog).",
+        "Nextended 10.1.71, MudBlazor 9.14.0 and MudBlazor.Extensions 9.14.0: apps that pin these packages move up."
+      ],
+      "packages": [
+        { "id": "Nextended.Aspire.Hosting.AspireUI", "version": "10.1.71" },
+        { "id": "Nextended.Core", "version": "10.1.71" },
+        { "id": "Nextended.Web", "version": "10.1.71" },
+        { "id": "MudBlazor", "version": "9.14.0" },
+        { "id": "MudBlazor.Extensions", "version": "9.14.0" }
+      ]
     }
   ]
 }

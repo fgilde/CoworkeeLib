@@ -159,5 +159,31 @@ public sealed class UpgradeTests
         UpgradeRules.Apply(folder.Path, rules, dryRun: false).ShouldBeEmpty();
     }
 
+    [Fact]
+    public void Update_to_0_1_8_names_the_breaking_changes_and_bumps_the_ui_packages_once()
+    {
+        using var folder = new TempFolder();
+        File.WriteAllText(folder.File("Directory.Packages.props"), """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="Nextended.Core" Version="10.1.59" />
+                <PackageVersion Include="MudBlazor" Version="9.12.0" />
+                <PackageVersion Include="MudBlazor.Extensions" Version="9.12.2" />
+              </ItemGroup>
+            </Project>
+            """);
+        var rules = UpgradeRules.Between("0.1.7", "0.1.8");
+
+        rules.Single().Breaking!.ShouldContain(b => b.StartsWith("Notifications:") && b.Contains("NotificationAudience"));
+        rules.Single().Breaking!.ShouldContain(b => b.Contains("tenant instead of organisation"));
+        UpgradeRules.Apply(folder.Path, rules, dryRun: false);
+
+        var props = Read(folder.Path, "Directory.Packages.props");
+        props.ShouldContain("""Include="Nextended.Core" Version="10.1.71" """.TrimEnd());
+        props.ShouldContain("""Include="MudBlazor" Version="9.14.0" """.TrimEnd());
+        props.ShouldContain("""Include="MudBlazor.Extensions" Version="9.14.0" """.TrimEnd());
+        UpgradeRules.Apply(folder.Path, rules, dryRun: false).ShouldBeEmpty();
+    }
+
     private static string Read(string root, string path) => File.ReadAllText(Path.Combine(root, path));
 }
