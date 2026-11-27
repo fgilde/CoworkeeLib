@@ -168,6 +168,40 @@ public sealed partial class SubscriptionTests(ReportingApp app) : ReportingTestB
     }
 
     [Fact]
+    public async Task A_failing_currency_resolver_does_not_stop_the_mail()
+    {
+        var report = await CreateReportAsync(Report() with { Definition = new ReportDefinition { Widgets =
+        [
+            new ReportWidget { Id = "cost", Type = WidgetType.Kpi, Title = "Total cost in {currency}",
+                Query = new WidgetQuery { EntitySet = "BrokenCosts", Aggregates = [new(AggregateFunction.Sum, "Amount")] }, Options = new WidgetOptions { Format = NumberFormat.Currency, Currency = "GBP" } },
+        ] } });
+        var subscription = await SubscribeAsync(Admin, report.Id);
+
+        await RunDueAsync(subscription.Id);
+
+        var html = (await MailsAsync()).Single().Mail.HtmlBody;
+        html.ShouldContain("Total cost in GBP");
+        (await StoredAsync(subscription.Id)).LastError.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task The_currency_placeholder_never_shows_literally_in_mails()
+    {
+        var report = await CreateReportAsync(Report() with { Definition = new ReportDefinition { Widgets =
+        [
+            new ReportWidget { Id = "cost", Type = WidgetType.Kpi, Title = "in {currency}",
+                Query = new WidgetQuery { EntitySet = "PlainCosts", Aggregates = [new(AggregateFunction.Sum, "Amount")] }, Options = new WidgetOptions { Format = NumberFormat.Currency } },
+        ] } });
+        var subscription = await SubscribeAsync(Admin, report.Id);
+
+        await RunDueAsync(subscription.Id);
+
+        var html = (await MailsAsync()).Single().Mail.HtmlBody;
+        html.ShouldContain("in EUR");
+        html.ShouldNotContain("{currency}");
+    }
+
+    [Fact]
     public async Task A_report_that_is_no_longer_shared_sends_nothing_and_says_why()
     {
         var report = await CreateReportAsync();

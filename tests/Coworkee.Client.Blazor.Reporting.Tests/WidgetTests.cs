@@ -46,6 +46,22 @@ public sealed class WidgetTests : ReportingTestBase
     }
 
     [Fact]
+    public void The_currency_placeholder_never_shows_literally_on_a_source_without_a_currency()
+    {
+        Reports.QueryAsync(default!, default).ReturnsForAnyArgs(Rows((null, null, 5)));
+        var widget = new ReportWidget
+        {
+            Type = WidgetType.Kpi, Title = "in {currency}", Query = new WidgetQuery { EntitySet = "SalesOrders", Aggregates = [new(AggregateFunction.Sum, "Total")] },
+            Options = new() { Format = NumberFormat.Currency, Currency = "GBP" },
+        };
+
+        var frame = Render<Components.WidgetFrame>(p => p.Add(x => x.Widget, widget).Add(x => x.State, State(widget)));
+
+        frame.Find(".cw-widget-title").TextContent.ShouldBe("in GBP");
+        frame.Markup.ShouldNotContain("{currency}");
+    }
+
+    [Fact]
     public void A_chart_asks_the_server_for_groups_and_draws_them()
     {
         Reports.QueryAsync(default!, default).ReturnsForAnyArgs(Rows(("North", null, 3), ("South", null, 5)));

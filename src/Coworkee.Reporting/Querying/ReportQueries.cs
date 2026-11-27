@@ -6,12 +6,13 @@ using Coworkee.Contracts.Reporting;
 using Coworkee.Core.Results;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.OData;
+using Microsoft.Extensions.Logging;
 using Microsoft.OData;
 
 namespace Coworkee.Reporting.Querying;
 
 /// <summary>Sources the user may read and aggregates over them, with the entity set's permission, tenant and row filters.</summary>
-internal sealed class ReportQueries(IServiceProvider services, ReportSchema schema, IPermissionChecker permissions)
+internal sealed class ReportQueries(IServiceProvider services, ReportSchema schema, IPermissionChecker permissions, ILogger<ReportQueries> log)
 {
     private static readonly MethodInfo RunMethod = typeof(ReportQueries).GetMethod(nameof(RunTypedAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
     private static readonly MethodInfo CheckMethod = typeof(ReportQueries).GetMethod(nameof(CheckFilterAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
@@ -28,8 +29,24 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
     }
 
     /// <summary>The ISO code the source states for the current user (a computed source with a currency resolver), null otherwise.</summary>
-    public Task<string?> CurrencyAsync(ReportSource source, CancellationToken cancellationToken) =>
-        source.Computed?.CurrencyAsync(services, cancellationToken) ?? Task.FromResult<string?>(null);
+    /// <remarks>The resolver is app code: when it throws the source states no currency (a warning is logged) instead of breaking the source list or a mail.</remarks>
+    public async Task<string?> CurrencyAsync(ReportSource source, CancellationToken cancellationToken)
+    {
+        if (source.Computed is not { } computed)
+        {
+            return null;
+        }
+
+        try
+        {
+            return await computed.CurrencyAsync(services, cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            log.LogWarning(exception, "The currency resolver of the report source {Source} failed; the source states no currency.", source.EntitySet);
+            return null;
+        }
+    }
 
     public async Task<Result<ReportQueryResult>> RunAsync(ReportQueryRequest request, CancellationToken cancellationToken)
     {

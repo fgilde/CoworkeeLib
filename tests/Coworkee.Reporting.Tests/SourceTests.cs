@@ -12,7 +12,7 @@ public sealed class SourceTests(ReportingApp app) : ReportingTestBase(app)
     {
         var sources = (await Admin.GetFromJsonAsync<List<ReportSourceDto>>("/api/v1/reports/sources", Ct))!;
 
-        sources.TakeLast(2).Select(s => s.EntitySet).ShouldBe(["MonthlyNumbers", "SaleRows"]);
+        sources.SkipWhile(s => !s.Computed).Select(s => s.EntitySet).ShouldBe(["BrokenCosts", "Costs", "MonthlyNumbers", "PlainCosts", "SaleRows"]);
         var numbers = sources.Single(s => s.EntitySet == "MonthlyNumbers");
         numbers.Computed.ShouldBeTrue();
         numbers.Label.ShouldBe("Monthly numbers");
@@ -34,6 +34,31 @@ public sealed class SourceTests(ReportingApp app) : ReportingTestBase(app)
 
         sources.Single(s => s.EntitySet == "Costs").Currency.ShouldBe("CHF");
         sources.Single(s => s.EntitySet == "MonthlyNumbers").Currency.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Users_with_different_currencies_get_their_own_currency_of_the_same_source()
+    {
+        var eur = await CreateUserAsync("eur@acme.test", ReportPermissions.View, MonthlyNumbers.ViewNumbers);
+        var usd = await CreateUserAsync("usd@acme.test", ReportPermissions.View, MonthlyNumbers.ViewNumbers);
+        CostRows.Currencies[eur.Id] = "EUR";
+        CostRows.Currencies[usd.Id] = "USD";
+
+        async Task<string?> CurrencyOf(Guid id) =>
+            (await App.As(id, Setup.TenantId).GetFromJsonAsync<List<ReportSourceDto>>("/api/v1/reports/sources", Ct))!.Single(s => s.EntitySet == "Costs").Currency;
+
+        (await CurrencyOf(eur.Id)).ShouldBe("EUR");
+        (await CurrencyOf(usd.Id)).ShouldBe("USD");
+        (await CurrencyOf(eur.Id)).ShouldBe("EUR");
+    }
+
+    [Fact]
+    public async Task A_failing_currency_resolver_leaves_the_source_list_intact()
+    {
+        var sources = (await Admin.GetFromJsonAsync<List<ReportSourceDto>>("/api/v1/reports/sources", Ct))!;
+
+        sources.Single(s => s.EntitySet == "BrokenCosts").Currency.ShouldBeNull();
+        sources.Single(s => s.EntitySet == "Sales").Computed.ShouldBeFalse();
     }
 
     [Theory]

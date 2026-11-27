@@ -165,6 +165,9 @@ public sealed class SalesReportingModule : CoworkeeModule
         context.Services.AddReportSource<MonthlyNumber>("MonthlyNumbers", "Monthly numbers", MonthlyNumbers.ViewNumbers, MonthlyNumbers.RowsAsync);
         context.Services.AddReportSource<SaleRow>("SaleRows", "Sale rows", MonthlyNumbers.ViewNumbers, MonthlyNumbers.SalesAsync);
         context.Services.AddReportSource<CostRow>("Costs", "Costs", MonthlyNumbers.ViewNumbers, CostRows.RowsAsync, CostRows.CurrencyAsync);
+        context.Services.AddReportSource<CostRow>("BrokenCosts", "Broken costs", MonthlyNumbers.ViewNumbers, CostRows.RowsAsync,
+            (_, _) => throw new InvalidOperationException("preferences are down"));
+        context.Services.AddReportSource<CostRow>("PlainCosts", "Plain costs", MonthlyNumbers.ViewNumbers, CostRows.RowsAsync);
     }
 }
 
