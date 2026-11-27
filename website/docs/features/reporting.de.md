@@ -67,6 +67,33 @@ var applying = ReportFilters.Applying(values, "Costs", set => fieldsOfSet(set));
 
 Gespeicherte Definitionen ohne `Field` funktionieren weiter: Dann ist der Gruppenschlüssel der Pfad.
 
+Facettenzählungen schränken sich gegenseitig ein, auch über Datenmengen hinweg: Die Zähler einer Gruppe der Filterleiste berücksichtigen jede andere gewählte Facette ihrer Menge, die Facetten anderer Mengen, die für sie gelten (gleiche Regel wie bei den Widgets), und die Kreuzfilter aus Klicks, nie aber die eigene Auswahl der Gruppe. Wer „Nord“ in einer Gruppe wählt, sieht bei den Reedereien nur noch die im Norden, und eine bei der ersten Menge gewählte Facette schränkt die Zähler der zweiten ein. Eine Gruppe ohne Feld wird über ihren Schlüssel geteilt (derselbe Ersatz wie bei gespeicherten Werten ohne `Field`), in der Leiste und im Filter.
+
+## Datumsfeld
+
+Ein Bericht mit mehreren Datumsfeldern (ETA und ETD) bietet die Wahl in der Filterleiste links vom Zeitraum an. `DateFields` listet die Pfade; das erste ist der Standard, mit dem die Widgets entworfen sind, weniger als zwei bedeuten keine Wahl. Die Wahl des Betrachters verschiebt Zeitraum und Datumsgruppierung jedes Widgets, das den Standard nutzt (`ReportViews.WithDateField(widget, defaultField, chosen)`: `DateField` und ein `GroupBy`/`SplitBy` auf diesem Feld, Zeiträume bleiben), und wird je Benutzer und Bericht unter `ReportViews.DateKey(reportId)` gemerkt; Widgets mit einem anderen Datum bleiben unverändert. `RequireDate` an einer Widget-Abfrage lässt Zeilen ohne Wert im Datumsfeld weg (`{DateField} ne null`), damit ein nach Monat gruppiertes Widget keine leere Gruppe zeigt; es folgt dem gewählten Feld.
+
+```json
+{
+  "dateFields": ["Eta", "Etd"],
+  "widgets": [
+    { "id": "perMonth", "type": "Chart",
+      "query": { "entitySet": "Shipments", "dateField": "Eta", "requireDate": true,
+                 "groupBy": { "field": "Eta", "bucket": "Month" } } }
+  ]
+}
+```
+
+Eine Definition, die ein Datumsfeld nennt, das keine Datenmenge hat (oder das kein Datum ist), wird beim Speichern abgelehnt.
+
+## Felder der Filterleiste
+
+`FacetFields` wählt die Gruppen der Filterleiste und ihre Reihenfolge. Jeder Eintrag ist ein Feldpfad: Die Facette der Menge dazu erscheint wie gewohnt, ein Feld ohne Facette bekommt seine Werte aus einer Berichtsabfrage (nach dem Feld gruppiert, Anzahl, die ersten 1000), gezählt mit den übrigen Auswahlen wie jede Gruppe. Ein solcher Wert ist ein gewöhnlicher Berichtsfilter mit dem Pfad des Felds, andere Mengen mit dem Feld teilen ihn also. Felder, die eine Menge nicht hat, werden für sie übersprungen; eine leere Liste zeigt jede Facette. Unbekannte Felder werden beim Speichern abgelehnt.
+
+```json
+{ "facetFields": ["Region", "Carrier", "Status"] }
+```
+
 ## Mehr als der Designer
 
 - **[Abos per Mail](../modules/reporting.md#abos-per-mail):** *Subscribe by mail* schickt einen Bericht täglich, wöchentlich oder monatlich zu einer Uhrzeit einer Zeitzone, mit Kennzahlen, den ersten Zeilen jedes Widgets und einer Excel-Mappe. Er läuft als der Abonnent, es gelten also dieselben Rechte und Zeilenfilter.

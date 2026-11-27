@@ -12,13 +12,20 @@ public sealed class ReportViewChoices(ICoworkeeApi api)
     private Task<Dictionary<string, ReportViewChoice>>? _loading;
     private bool _readOnly;
 
-    public async Task<ReportViewChoice?> GetAsync(Guid reportId, string widgetId) =>
-        (await AllAsync()).GetValueOrDefault(ReportViews.Key(reportId, widgetId));
+    public Task<ReportViewChoice?> GetAsync(Guid reportId, string widgetId) => GetAsync(ReportViews.Key(reportId, widgetId));
 
-    public async Task SetAsync(Guid reportId, string widgetId, ReportViewChoice choice)
+    public Task SetAsync(Guid reportId, string widgetId, ReportViewChoice choice) => SetAsync(ReportViews.Key(reportId, widgetId), choice);
+
+    /// <summary>The report-wide choice of the date field, null for the report's own.</summary>
+    public async Task<string?> GetDateFieldAsync(Guid reportId) => (await GetAsync(ReportViews.DateKey(reportId)))?.DateField;
+
+    public Task SetDateFieldAsync(Guid reportId, string? field) => SetAsync(ReportViews.DateKey(reportId), new ReportViewChoice(DateField: field));
+
+    private async Task<ReportViewChoice?> GetAsync(string key) => (await AllAsync()).GetValueOrDefault(key);
+
+    private async Task SetAsync(string key, ReportViewChoice choice)
     {
         var all = await AllAsync();
-        var key = ReportViews.Key(reportId, widgetId);
         if (choice.IsDefault)
         {
             all.Remove(key);

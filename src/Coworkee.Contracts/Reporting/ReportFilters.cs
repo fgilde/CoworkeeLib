@@ -13,8 +13,11 @@ public static class ReportFilters
             ? DateRanges.Filter(field.Path, DateRanges.Resolve(range, today), field.DateOnly)
             : null;
         var report = Applying(definition.Filters, query.EntitySet, fieldsOf);
-        return ReportViews.And(query.Filter, Facets(query.Facets), Facets(report), date);
+        return ReportViews.And(query.Filter, Facets(query.Facets), Facets(report), date, RequiredDate(query));
     }
+
+    /// <summary>The clause of <see cref="WidgetQuery.RequireDate"/>: rows without a date are left out.</summary>
+    public static string? RequiredDate(WidgetQuery query) => query.RequireDate && query.DateField is { Length: > 0 } field ? $"{field} ne null" : null;
 
     /// <summary>
     /// The values that narrow <paramref name="entitySet"/>: its own and those of other sets whose field (<see cref="ReportFilterValue.Path"/>) it has too, with the same kind.

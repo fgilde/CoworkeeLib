@@ -96,7 +96,7 @@ else
             </div>
         </div>
 
-        <ReportFilterBar State="_state" />
+        <ReportFilterBar State="_state" ReportId="@(IsNew ? null : _report.Id)" />
 
         <div class="cw-report-canvas">
             <div class="cw-report-board" @ref="_board">

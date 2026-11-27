@@ -35,6 +35,19 @@ public sealed class AggregationTests(ReportingApp app) : ReportingTestBase(app)
     }
 
     [Fact]
+    public async Task RequireDate_drops_rows_without_the_chosen_date()
+    {
+        var query = new WidgetQuery { EntitySet = "Sales", DateField = "ShippedOn", RequireDate = true };
+
+        var filter = ReportFilters.For(query, new ReportDefinition(), [], new DateOnly(2026, 1, 1));
+        var result = await QueryAsync(new ReportQueryRequest("Sales", filter, Aggregates: [new()]));
+
+        filter.ShouldBe("ShippedOn ne null");
+        result.Rows.Single().Values[0].ShouldBe(Visible.Count(s => s.ShippedOn is not null));
+        Visible.Any(s => s.ShippedOn is null).ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task Totals_without_group_cover_only_visible_rows_of_the_tenant()
     {
         var result = await QueryAsync(new ReportQueryRequest("Sales", Aggregates: [new(AggregateFunction.Count), new(AggregateFunction.Sum, "Amount")]));

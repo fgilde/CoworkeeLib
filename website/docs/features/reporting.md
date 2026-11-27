@@ -67,6 +67,33 @@ var applying = ReportFilters.Applying(values, "Costs", set => fieldsOfSet(set));
 
 Stored definitions without `Field` keep working: the group key is the path then.
 
+Facet counts narrow each other, also across data sets: the counts of a filter-bar group consider every other facet chosen on its set, the facets of other sets that apply to it (same rule as for the widgets) and the cross filters from clicks, but never the group's own choice. Choosing "North" at one group therefore leaves only the carriers that exist in the north, and a facet chosen at the first set narrows the counts of the second. A group without a field is shared by its key (the same fallback as stored values without `Field`), in the bar and in the filter.
+
+## Date field
+
+A report that has several date fields (an ETA and an ETD) offers the choice in the filter bar, left of the date range. `DateFields` lists the paths; the first is the default the widgets are designed with, fewer than two means no choice. The viewer's pick moves the date range and the date grouping of every widget that uses the default (`ReportViews.WithDateField(widget, defaultField, chosen)`: `DateField` and a `GroupBy`/`SplitBy` on that field, buckets stay) and is remembered per user and report under `ReportViews.DateKey(reportId)`; widgets bound to another date stay as they are. `RequireDate` on a widget query leaves out rows without a value in its date field (`{DateField} ne null`), so a widget grouped by month does not show an empty group; it follows the chosen field.
+
+```json
+{
+  "dateFields": ["Eta", "Etd"],
+  "widgets": [
+    { "id": "perMonth", "type": "Chart",
+      "query": { "entitySet": "Shipments", "dateField": "Eta", "requireDate": true,
+                 "groupBy": { "field": "Eta", "bucket": "Month" } } }
+  ]
+}
+```
+
+A definition that names a date field no data set has (or one that is not a date) is refused when it is saved.
+
+## Filter bar fields
+
+`FacetFields` chooses the filter bar's groups and their order. Each entry is a field path: the set's facet on it shows as usual, a field without a facet gets its values from a report query (grouped by the field, count, the first 1000), counted with the other choices like any group. Choosing such a value is a normal report filter with the field's path, so other sets with the field share it. Fields a set does not have are skipped for that set; an empty list shows every facet. Unknown fields are refused when the report is saved.
+
+```json
+{ "facetFields": ["Region", "Carrier", "Status"] }
+```
+
 ## Beyond the designer
 
 - **[Subscriptions by mail](../modules/reporting.md#subscriptions-by-mail):** *Subscribe by mail* sends a report daily, weekly or monthly at a time of a time zone, with KPIs, the first rows of each widget and an Excel workbook. It runs as the subscriber, so the same permissions and row filters apply.

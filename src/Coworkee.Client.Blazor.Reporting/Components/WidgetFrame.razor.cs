@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Components;
 namespace Coworkee.Client.Blazor.Reporting.Components;
 
 /// <summary>A widget's card: title, view switch, info, full screen, drill-down, export and, while editing, its settings.</summary>
-public partial class WidgetFrame
+public partial class WidgetFrame : IDisposable
 {
     private ReportSheetRequest? _sheet;
     private ReportViewChoice? _choice;
@@ -52,22 +52,49 @@ public partial class WidgetFrame
 
     [Parameter] public EventCallback OnChanged { get; set; }
 
+    protected override void OnInitialized() => State.Changed += DateChanged;
+
     protected override async Task OnParametersSetAsync()
     {
         // the frame renders while the remembered choice loads: the widget as it is until then
-        _shown = ReportViews.Apply(Widget, Editing ? null : _choice);
+        _shown = Shown(Editing ? null : _choice);
         if (!_choiceRead && ReportId is { } report)
         {
             _choiceRead = true;
             _choice = await Choices.GetAsync(report, Widget.Id);
-            _shown = ReportViews.Apply(Widget, Editing ? null : _choice);
+            _shown = Shown(Editing ? null : _choice);
         }
+    }
+
+    public void Dispose() => State.Changed -= DateChanged;
+
+    // the viewer's date field of the report: the date range and the date grouping follow it (not while designing)
+    private string? _dateField;
+
+    private void DateChanged()
+    {
+        if ((Editing ? null : State.DateField) != _dateField)
+        {
+            InvokeAsync(() =>
+            {
+                _shown = Shown(Editing ? null : _choice);
+                StateHasChanged();
+            });
+        }
+    }
+
+    private ReportWidget Shown(ReportViewChoice? choice)
+    {
+        var shown = ReportViews.Apply(Widget, choice);
+        _dateField = Editing ? null : State.DateField;
+        return _dateField is { } chosen && State.DefaultDateField is { } first && State.Field(shown.Query?.EntitySet, chosen) is not null
+            ? ReportViews.WithDateField(shown, first, chosen) : shown;
     }
 
     private async Task ChooseAsync(ReportViewChoice choice)
     {
         _choice = choice;
-        _shown = ReportViews.Apply(Widget, choice);
+        _shown = Shown(choice);
         if (ReportId is { } report)
         {
             await Choices.SetAsync(report, Widget.Id, choice);

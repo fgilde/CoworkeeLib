@@ -14,6 +14,9 @@ public static class ReportViews
     /// <summary>The key of a choice in the user's stored choices.</summary>
     public static string Key(Guid reportId, string widgetId) => $"{reportId:N}:{widgetId}";
 
+    /// <summary>The key of the report-wide date field choice.</summary>
+    public static string DateKey(Guid reportId) => $"{reportId:N}:date";
+
     /// <summary>Which widget types offer which switch: values for KPIs, charts, pivots and tables (filter only), groupings for charts, pivots and KPI curves.</summary>
     public static bool HasMetrics(WidgetType type) => type is WidgetType.Kpi or WidgetType.Chart or WidgetType.Pivot or WidgetType.Table;
 
@@ -62,6 +65,28 @@ public static class ReportViews
 
         return copy;
     }
+
+    /// <summary>
+    /// A copy of the widget with <paramref name="chosen"/> in place of <paramref name="defaultField"/>: its date field and a grouping by that field (buckets stay).
+    /// The widget itself when nothing changes, e.g. it is bound to another date.
+    /// </summary>
+    public static ReportWidget WithDateField(ReportWidget widget, string defaultField, string chosen)
+    {
+        if (widget.Query is not { } query || string.Equals(defaultField, chosen, StringComparison.OrdinalIgnoreCase)
+            || !(Is(query.DateField, defaultField) || Is(query.GroupBy?.Field, defaultField) || Is(query.SplitBy?.Field, defaultField)))
+        {
+            return widget;
+        }
+
+        var copy = JsonSerializer.Deserialize<ReportWidget>(JsonSerializer.Serialize(widget, Json), Json)!;
+        var shown = copy.Query!;
+        shown.DateField = Is(shown.DateField, defaultField) ? chosen : shown.DateField;
+        shown.GroupBy = Is(shown.GroupBy?.Field, defaultField) ? shown.GroupBy! with { Field = chosen } : shown.GroupBy;
+        shown.SplitBy = Is(shown.SplitBy?.Field, defaultField) ? shown.SplitBy! with { Field = chosen } : shown.SplitBy;
+        return copy;
+    }
+
+    private static bool Is(string? field, string other) => string.Equals(field, other, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>The widget as designed and with every single alternative, e.g. to check that each of them works.</summary>
     public static IEnumerable<(string Key, ReportWidget Widget)> All(ReportWidget widget)

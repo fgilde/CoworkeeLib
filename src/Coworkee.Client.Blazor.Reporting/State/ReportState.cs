@@ -43,6 +43,30 @@ public sealed class ReportState
         }
     }
 
+    private string? _dateField;
+
+    /// <summary>The report's date field the widgets are designed with (the first of <see cref="ReportDefinition.DateFields"/>), null without a choice.</summary>
+    public string? DefaultDateField => Definition.DateFields.Count > 1 ? Definition.DateFields[0] : null;
+
+    /// <summary>The report's <see cref="ReportDefinition.DateFields"/> with their labels, when there is a choice (two or more).</summary>
+    public IReadOnlyList<ReportFieldDto> DateFields => DefaultDateField is null ? []
+        : [.. Definition.DateFields.Select(f => Sources.SelectMany(s => s.Fields).FirstOrDefault(x => string.Equals(x.Path, f, StringComparison.OrdinalIgnoreCase)) ?? new ReportFieldDto(f, f, ReportFieldKind.Date))];
+
+    /// <summary>The date field the viewer chose; null for the default (also when the report no longer offers the choice).</summary>
+    public string? DateField
+    {
+        get => DefaultDateField is { } first && _dateField is { } chosen && !string.Equals(chosen, first, StringComparison.OrdinalIgnoreCase)
+            ? Definition.DateFields.FirstOrDefault(f => string.Equals(f, chosen, StringComparison.OrdinalIgnoreCase)) : null;
+        set
+        {
+            if (!string.Equals(_dateField, value, StringComparison.OrdinalIgnoreCase))
+            {
+                _dateField = value;
+                Changed?.Invoke();
+            }
+        }
+    }
+
     public (DateOnly From, DateOnly To)? Range => DateRange is { } range ? DateRanges.Resolve(range, DateOnly.FromDateTime(_clock.GetLocalNow().DateTime)) : null;
 
     public IEnumerable<string> EntitySets => Definition.Widgets.Select(w => w.Query?.EntitySet).OfType<string>().Where(s => s.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase);
@@ -132,18 +156,31 @@ public sealed class ReportState
 
         var date = range is { } r && Field(query.EntitySet, query.DateField) is { } field ? DateRanges.Filter(field.Path, r, field.DateOnly) : null;
         var facets = Facets(query.EntitySet).ToFilter();
-        // facets chosen on other sets with the same field (same kind) apply as well
-        var shared = Selection(ReportFilters.Applying(Definition.Filters, query.EntitySet, FieldsOf).Where(f => !string.Equals(f.EntitySet, query.EntitySet, StringComparison.OrdinalIgnoreCase))).ToFilter();
-        var cross = _cross.Where(c => c.WidgetId != widgetId && (string.Equals(c.EntitySet, query.EntitySet, StringComparison.OrdinalIgnoreCase)
-            || ReportFilters.Shares(FieldsOf(c.EntitySet), FieldsOf(query.EntitySet), c.Field))).Select(c => c.Filter);
-        return ODataFilter.And([query.Filter, Selection(query.Facets).ToFilter(), facets, shared, date, .. cross]);
+        return ODataFilter.And([query.Filter, Selection(query.Facets).ToFilter(), facets, Shared(query.EntitySet), date, .. Cross(query.EntitySet, widgetId), ReportFilters.RequiredDate(query)]);
     }
+
+    /// <summary>
+    /// What narrows the facet counts of <paramref name="entitySet"/> besides its own selection: facets chosen on other sets with the same field and the cross filters.
+    /// The set's own groups count without their own choice (the facet context); this is the rest of the filter.
+    /// </summary>
+    public string? ContextFor(string entitySet) => ODataFilter.And([Shared(entitySet), .. Cross(entitySet, null)]);
+
+    // facets chosen on other sets with the same field (same kind) apply as well
+    private string? Shared(string entitySet) =>
+        Selection(ReportFilters.Applying(Definition.Filters, entitySet, FieldsOf).Where(f => !string.Equals(f.EntitySet, entitySet, StringComparison.OrdinalIgnoreCase))).ToFilter();
+
+    // the cross filters of other widgets on the set or on a set with the field
+    private IEnumerable<string> Cross(string entitySet, string? widgetId) =>
+        _cross.Where(c => c.WidgetId != widgetId && (string.Equals(c.EntitySet, entitySet, StringComparison.OrdinalIgnoreCase)
+            || ReportFilters.Shares(FieldsOf(c.EntitySet), FieldsOf(entitySet), c.Field))).Select(c => c.Filter);
 
     private IReadOnlyList<ReportFieldDto>? FieldsOf(string entitySet) => Source(entitySet)?.Fields;
 
     /// <summary>Whether sets with the facet's field may share it: the kind must be the same in both. A clash is logged once.</summary>
-    public bool CanShare(string key, string field, string firstSet, string otherSet)
+    public bool CanShare(string key, string? field, string firstSet, string otherSet)
     {
+        // a group without a field is shared by its key, as FilterFor takes it (ReportFilterValue.Path)
+        field ??= key;
         var (a, b) = (Field(firstSet, field)?.Kind, Field(otherSet, field)?.Kind);
         if (a is not null && b is not null && a != b && _logged.Add($"{key}|{firstSet}|{otherSet}"))
         {

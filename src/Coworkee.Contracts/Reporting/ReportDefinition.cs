@@ -13,6 +13,15 @@ public sealed class ReportDefinition
     /// <summary>Applies to every widget with a date field.</summary>
     public ReportDateRange? DateRange { get; set; }
 
+    /// <summary>
+    /// Date fields the viewer chooses between for the date range and the date grouping of widgets; the first is the default the widgets are designed with.
+    /// Fewer than two: no choice.
+    /// </summary>
+    public List<string> DateFields { get; set; } = [];
+
+    /// <summary>The fields of the filter bar, in this order: facets of the data sets or any other field (its values are the groups of a query). Empty: every facet.</summary>
+    public List<string> FacetFields { get; set; } = [];
+
     /// <summary>Reloads the widgets every so many seconds; 0 keeps them until a change arrives.</summary>
     public int RefreshSeconds { get; set; }
 }

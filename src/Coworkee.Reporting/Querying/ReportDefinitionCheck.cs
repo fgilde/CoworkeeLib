@@ -10,6 +10,12 @@ internal sealed class ReportDefinitionCheck(ReportQueries queries)
     {
         var errors = new List<Error>();
         var sources = await queries.SourcesAsync(cancellationToken);
+        errors.AddRange(Fields(definition, sources));
+        if (stopAtFirst && errors.Count > 0)
+        {
+            return errors;
+        }
+
         foreach (var widget in definition.Widgets.Where(w => w.Query is not null && w.Type is not (WidgetType.Markdown or WidgetType.Image or WidgetType.Embed)))
         {
             foreach (var (view, shown) in ReportViews.All(widget))
@@ -26,6 +32,20 @@ internal sealed class ReportDefinitionCheck(ReportQueries queries)
         }
 
         return errors;
+    }
+
+    // the choosable date fields and the filter bar's fields must exist in a data set of the report engine
+    private static IEnumerable<Error> Fields(ReportDefinition definition, IReadOnlyList<ReportSource> sources)
+    {
+        foreach (var path in definition.DateFields.Where(d => !sources.Any(s => s.Find(d) is { Kind: ReportFieldKind.Date })))
+        {
+            yield return Error.Validation("Definition.DateFields", $"'{path}' is not a date field of any data set.");
+        }
+
+        foreach (var path in definition.FacetFields.Where(f => !sources.Any(s => s.Find(f) is not null)))
+        {
+            yield return Error.Validation("Definition.FacetFields", $"'{path}' is not a field of any data set.");
+        }
     }
 
     private async Task<Error?> WidgetAsync(ReportWidget widget, string key, IReadOnlyList<ReportSource> sources, CancellationToken cancellationToken)

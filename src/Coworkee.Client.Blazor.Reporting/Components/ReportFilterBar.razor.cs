@@ -13,7 +13,12 @@ public partial class ReportFilterBar : IDisposable
 {
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
+    [Inject] private ReportViewChoices Choices { get; set; } = null!;
+
     [Parameter, EditorRequired] public ReportState State { get; set; } = null!;
+
+    /// <summary>The report, to remember the viewer's date field.</summary>
+    [Parameter] public Guid? ReportId { get; set; }
 
     private readonly Dictionary<string, IReadOnlyList<FacetGroupDto>> _groups = new(StringComparer.OrdinalIgnoreCase);
 
@@ -26,7 +31,23 @@ public partial class ReportFilterBar : IDisposable
 
     private DateRange CustomRange => new(State.DateRange?.From?.ToDateTime(TimeOnly.MinValue), State.DateRange?.To?.ToDateTime(TimeOnly.MinValue));
 
-    protected override void OnInitialized() => State.Changed += Changed;
+    protected override async Task OnInitializedAsync()
+    {
+        State.Changed += Changed;
+        if (ReportId is { } report && await Choices.GetDateFieldAsync(report) is { } field)
+        {
+            State.DateField = field;
+        }
+    }
+
+    private async Task DateFieldChosenAsync(string field)
+    {
+        State.DateField = string.Equals(field, State.DefaultDateField, StringComparison.OrdinalIgnoreCase) ? null : field;
+        if (ReportId is { } report)
+        {
+            await Choices.SetDateFieldAsync(report, State.DateField);
+        }
+    }
 
     public void Dispose() => State.Changed -= Changed;
 

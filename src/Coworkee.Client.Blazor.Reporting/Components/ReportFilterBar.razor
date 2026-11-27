@@ -1,4 +1,14 @@
 <div class="cw-report-filters" data-testid="report-filters">
+    @if (State.DateFields.Count > 1)
+    {
+        <MudSelect T="string" Value="State.DateField ?? State.DefaultDateField" ValueChanged="DateFieldChosenAsync" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true"
+                   aria-label="@L["Date"]" Class="cw-date-field mr-2 mb-2" data-testid="date-field">
+            @foreach (var field in State.DateFields)
+            {
+                <MudSelectItem Value="field.Path">@field.Label</MudSelectItem>
+            }
+        </MudSelect>
+    }
     <MudMenu Dense="Density.Dense" AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft" data-testid="date-range">
         <ActivatorContent Context="menu">
             <MudButton Variant="@(State.DateRange is null ? Variant.Outlined : Variant.Filled)" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Outlined.DateRange" OnClick="@(() => menu.ToggleAsync())"
@@ -25,7 +35,8 @@
             {
                 <span class="cw-filter-set-label">@(State.Source(set)?.Label ?? set)</span>
             }
-            <ReportFacetFilter EntitySet="@set" Selection="State.Facets(set)" Hide="g => IsShared(set, g)" GroupsLoaded="g => GroupsLoaded(set, g)" />
+            <ReportFacetFilter EntitySet="@set" Selection="State.Facets(set)" Hide="g => IsShared(set, g)" Filter="@State.ContextFor(set)"
+                              FacetFields="State.Definition.FacetFields" Fields="State.Source(set)?.Fields ?? []" GroupsLoaded="g => GroupsLoaded(set, g)" />
         </div>
     }
 </div>

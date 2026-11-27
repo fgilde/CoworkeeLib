@@ -69,4 +69,49 @@ public sealed class ViewSwitchTests(ReportingApp app) : ReportingTestBase(app)
         widget.Query.Aggregates.ShouldHaveSingleItem().Function.ShouldBe(AggregateFunction.Count);
         ReportViews.Apply(widget, new ReportViewChoice(5)).ShouldBeSameAs(widget);
     }
+
+    [Fact]
+    public void Choosing_a_date_field_moves_the_range_and_the_date_grouping()
+    {
+        var widget = Chart();
+        widget.Query!.GroupBy = new ReportGroupBy("Eta", DateBucket.Month);
+        widget.Query.SplitBy = new ReportGroupBy("Region");
+        widget.Query.DateField = "Eta";
+
+        var shown = ReportViews.WithDateField(widget, "Eta", "Etd");
+
+        shown.Query!.DateField.ShouldBe("Etd");
+        shown.Query.GroupBy.ShouldBe(new ReportGroupBy("Etd", DateBucket.Month));
+        shown.Query.SplitBy.ShouldBe(new ReportGroupBy("Region"));
+        widget.Query.DateField.ShouldBe("Eta");
+        ReportViews.WithDateField(widget, "Eta", "eta").ShouldBeSameAs(widget);
+        widget.Query.DateField = "Created";
+        widget.Query.GroupBy = new ReportGroupBy("Region");
+        ReportViews.WithDateField(widget, "Eta", "Etd").ShouldBeSameAs(widget);
+    }
+
+    [Fact]
+    public async Task A_definition_naming_unknown_date_or_facet_fields_is_refused()
+    {
+        var request = Request(Chart());
+        request.Definition.DateFields = ["SoldAt", "Region"];
+
+        var dates = await Admin.PostAsJsonAsync("/api/v1/reports", request, Ct);
+
+        dates.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await dates.Content.ReadAsStringAsync(Ct)).ShouldContain("Definition.DateFields");
+
+        request.Definition.DateFields = [];
+        request.Definition.FacetFields = ["Region", "Nope"];
+        var facets = await Admin.PostAsJsonAsync("/api/v1/reports", request, Ct);
+
+        facets.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await facets.Content.ReadAsStringAsync(Ct)).ShouldContain("Definition.FacetFields");
+
+        request.Definition.DateFields = ["SoldAt", "ShippedOn"];
+        request.Definition.FacetFields = ["Region", "Status"];
+        var saved = await Admin.PostAsJsonAsync("/api/v1/reports", request, Ct);
+        saved.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await saved.Content.ReadFromJsonAsync<ReportDto>(Ct))!.Definition.DateFields.ShouldBe(["SoldAt", "ShippedOn"]);
+    }
 }

@@ -24,6 +24,9 @@ public sealed class WidgetQuery
     /// <summary>The field the report's date range applies to.</summary>
     public string? DateField { get; set; }
 
+    /// <summary>Only rows with a value in <see cref="DateField"/> (<c>{DateField} ne null</c>), also without a date range.</summary>
+    public bool RequireDate { get; set; }
+
     public ReportSortBy SortBy { get; set; }
 
     public bool Descending { get; set; }
