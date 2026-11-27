@@ -189,13 +189,30 @@ Measured on the demo's 100,000 sales orders (Postgres, warm): count by status 9 
 | Widget | Shows |
 |---|---|
 | KPI | one value with trend against the period before, a curve over time and a gauge towards a target |
-| Chart | bar, horizontal bar, stacked bar, line, area, pie, donut, scatter, radar, treemap, heatmap; dates on a time axis |
+| Chart | bar, horizontal bar, stacked bar, line, area, pie, donut, scatter, radar, treemap, heatmap, chips; dates on a time axis |
 | Table | rows of the set with endless scrolling (each scroll loads the next page), sortable, as table, cards or list |
 | Data table | the library's [`CoworkeeDataTable`](../ui/data-table.md): paging, grouping, column chooser, facets, search |
 | Pivot | categories as rows, series as columns, shaded by size, with totals |
 | Text, image, web page | Markdown (HTML is not rendered), an image or a sandboxed page from an http(s) address |
 
 Charts use [Blazor-ApexCharts](https://github.com/apexcharts/Blazor-ApexCharts): maintained, animated and good looking out of the box, with click events for cross filters. Colours, font and dark mode come from the MudBlazor theme's CSS variables, so custom themes need no extra setup.
+
+### Chips chart
+
+`ChartKind.Chips` shows the values of the group-by field as chips with their share of the total ("25 % Air"), as a filter: a click toggles the value and narrows the other widgets (several chips combine with "or"; clicking a selected chip again removes it). `WidgetOptions.ValueIcons` names the values that get a chip, in order, each with a MudBlazor icon (SVG); other values still count towards the 100 %. Selected chips are filled, others outlined. A chips widget ignores its own filter, so the shares always cover all values; its filter carries the group-by field and therefore narrows widgets of other data sets with the same field too. The designer offers "Chips" among the chart kinds and an editor for the values and icons (order, icon choice); subscription mails list the shares as a table.
+
+```csharp
+new ReportWidget
+{
+    Type = WidgetType.Chart, Title = "Transport mode",
+    Query = new WidgetQuery { EntitySet = "Shipments", GroupBy = new ReportGroupBy("TransportMode") },
+    Options = new WidgetOptions
+    {
+        Chart = ChartKind.Chips,
+        ValueIcons = new() { ["Air"] = Icons.Material.Outlined.Flight, ["Sea"] = Icons.Material.Outlined.DirectionsBoat },
+    },
+}
+```
 
 ![The same dashboard in dark mode](../assets/screenshots/reporting-dark.png){ .shot }
 

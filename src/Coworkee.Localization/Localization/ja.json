@@ -2405,5 +2405,20 @@
   "Data set": "データセット",
   "Same as the widget": "ウィジェットと同じ",
   "Split into series by": "系列の分割基準",
-  "No split": "分割しない"
+  "No split": "分割しない",
+  "Share": "構成比",
+  "Plane": "飛行機",
+  "Ship": "船",
+  "Truck": "トラック",
+  "Train": "列車",
+  "Car": "自動車",
+  "Parcel": "荷物",
+  "Warehouse": "倉庫",
+  "Globe": "地球",
+  "Clock": "時計",
+  "Star": "星",
+  "Flag": "旗",
+  "Person": "人",
+  "Add chip": "チップを追加",
+  "Add the values that get a chip, each with an icon.": "チップにする値を、アイコンとともに追加してください。"
 }

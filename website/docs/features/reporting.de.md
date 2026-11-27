@@ -49,7 +49,7 @@ Gemessen an den 100.000 Aufträgen der Demo (Postgres, warm): Anzahl nach Status
 
 Das Raster ist GridStack mit 12 Spalten, auf dem Handy eine Spalte. Im Bearbeitungsmodus ziehst du Widgets am Titel, änderst ihre Größe an den Rändern und stellst jedes im Seitenbereich ein; es zeichnet sich neu, während du tippst. Rückgängig geht bis zum Speichern.
 
-Widget-Typen: Kennzahl mit Trend und Ziel, Diagramme (Balken, Linie, Fläche, Torte, Ring, Streuung, Netz, Treemap, Heatmap und ein paar Varianten), eine scrollende Tabelle, die vollständige `CoworkeeDataTable`, ein Pivot, dazu Markdown, Bild oder eingebettete Seite für den Text rund um die Zahlen. Die Farben folgen dem MudBlazor-Theme, Dunkelmodus inklusive.
+Widget-Typen: Kennzahl mit Trend und Ziel, Diagramme (Balken, Linie, Fläche, Torte, Ring, Streuung, Netz, Treemap, Heatmap, Chips und ein paar Varianten), eine scrollende Tabelle, die vollständige `CoworkeeDataTable`, ein Pivot, dazu Markdown, Bild oder eingebettete Seite für den Text rund um die Zahlen. Die Farben folgen dem MudBlazor-Theme, Dunkelmodus inklusive.
 
 Jede Gruppe kommt vom Server mit einem OData-Filter für genau ihre Zeilen zurück. Ein Klick auf einen Balken oder ein Tortenstück grenzt damit die anderen Widgets derselben Menge ein; *Daten öffnen* springt auf die Seite, die du mit `DrillDown` registriert hast, schon gefiltert auf die Zeilen hinter der Zahl.
 

@@ -100,6 +100,76 @@ public sealed class WidgetTests : ReportingTestBase
         state.CrossFilters.ShouldHaveSingleItem().Filter.ShouldBe("Region eq 'North' and Status eq Shop.Status'Shipped'");
     }
 
+    private static ReportWidget Chips(Dictionary<string, string> icons) => new()
+    {
+        Id = "modes", Type = WidgetType.Chart, Query = new WidgetQuery { EntitySet = "SalesOrders", GroupBy = new ReportGroupBy("Region") },
+        Options = new() { Chart = ChartKind.Chips, ValueIcons = icons },
+    };
+
+    [Fact]
+    public void Chips_show_each_values_share_with_its_icon()
+    {
+        Reports.QueryAsync(default!, default).ReturnsForAnyArgs(Rows(("Air", null, 25), ("Sea", null, 75)));
+        var widget = Chips(new() { ["Air"] = MudBlazor.Icons.Material.Outlined.Flight, ["Sea"] = MudBlazor.Icons.Material.Outlined.DirectionsBoat });
+
+        var chips = Show(widget);
+
+        chips.WaitForAssertion(() => chips.FindAll("[data-testid='chip']").Select(c => c.TextContent.Trim()).ShouldBe(["25 % Air", "75 % Sea"]));
+        chips.FindAll("[data-testid='chip']").ShouldAllBe(c => c.QuerySelector("svg") != null);
+        chips.Find("[data-testid='chart']").GetAttribute("data-kind").ShouldBe("Chips");
+    }
+
+    [Fact]
+    public void Clicking_chips_toggles_a_multi_value_cross_filter()
+    {
+        Reports.QueryAsync(default!, default).ReturnsForAnyArgs(Rows(("Air", null, 25), ("Sea", null, 75)));
+        var widget = Chips(new() { ["Air"] = MudBlazor.Icons.Material.Outlined.Flight, ["Sea"] = MudBlazor.Icons.Material.Outlined.DirectionsBoat });
+        var state = State(widget);
+        var chips = Render<WidgetHost>(p => p.Add(x => x.Widget, widget).Add(x => x.State, state));
+        chips.WaitForAssertion(() => chips.FindAll("[data-testid='chip']").Count.ShouldBe(2));
+
+        chips.FindAll("[data-testid='chip']").ShouldAllBe(c => c.TagName == "BUTTON" || c.GetAttribute("tabindex") == "0");
+        chips.FindAll("[data-testid='chip']")[0].Click();
+        chips.FindAll("[data-testid='chip']")[1].Click();
+
+        var cross = state.CrossFilters.ShouldHaveSingleItem();
+        cross.Filter.ShouldBe("(Region eq 'Air') or (Region eq 'Sea')");
+        cross.Label.ShouldBe("Air, Sea");
+        cross.Field.ShouldBe("Region");
+        cross.WidgetId.ShouldBe("modes");
+        chips.FindAll("[data-testid='chip']").Select(c => c.GetAttribute("aria-pressed")).ShouldBe(["true", "true"]);
+        chips.FindAll("[data-testid='chip']").Select(c => c.TextContent.Trim()).ShouldBe(["25 % Air", "75 % Sea"]);
+
+        chips.FindAll("[data-testid='chip']")[0].Click();
+
+        state.CrossFilters.ShouldHaveSingleItem().Filter.ShouldBe("Region eq 'Sea'");
+        chips.FindAll("[data-testid='chip']").Select(c => c.GetAttribute("aria-pressed")).ShouldBe(["false", "true"]);
+
+        chips.FindAll("[data-testid='chip']")[1].Click();
+
+        state.CrossFilters.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Values_without_an_icon_count_towards_the_share_but_get_no_chip()
+    {
+        Reports.QueryAsync(default!, default).ReturnsForAnyArgs(Rows(("Air", null, 50), ("Sea", null, 100), ("Other", null, 50)));
+        var widget = Chips(new() { ["Air"] = MudBlazor.Icons.Material.Outlined.Flight });
+
+        var chips = Show(widget);
+
+        chips.WaitForAssertion(() => chips.FindAll("[data-testid='chip']").Select(c => c.TextContent.Trim()).ShouldBe(["25 % Air"]));
+    }
+
+    [Fact]
+    public void Chips_follow_the_order_of_their_icons()
+    {
+        Reports.QueryAsync(default!, default).ReturnsForAnyArgs(Rows(("Air", null, 25), ("Sea", null, 75)));
+        var chips = Show(Chips(new() { ["Sea"] = MudBlazor.Icons.Material.Outlined.DirectionsBoat, ["Air"] = MudBlazor.Icons.Material.Outlined.Flight }));
+
+        chips.WaitForAssertion(() => chips.FindAll("[data-testid='chip']").Select(c => c.TextContent.Trim()).ShouldBe(["75 % Sea", "25 % Air"]));
+    }
+
     [Fact]
     public void A_table_pages_rows_from_the_entity_set_with_its_columns()
     {

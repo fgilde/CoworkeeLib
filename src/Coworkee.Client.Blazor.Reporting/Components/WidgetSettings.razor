@@ -21,6 +21,10 @@
                     </MudTooltip>
                 }
             </div>
+            @if (Widget.Options.Chart == ChartKind.Chips)
+            {
+                <ValueIconEditor Widget="Widget" State="State" OnChanged="() => Change(() => { })" />
+            }
         }
 
         @if (Query is { } query)

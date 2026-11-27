@@ -2405,5 +2405,20 @@
   "Data set": "Kumpulan data",
   "Same as the widget": "Sama seperti widget",
   "Split into series by": "Pisahkan menjadi seri berdasarkan",
-  "No split": "Tanpa pemisahan"
+  "No split": "Tanpa pemisahan",
+  "Share": "Pangsa",
+  "Plane": "Pesawat",
+  "Ship": "Kapal",
+  "Truck": "Truk",
+  "Train": "Kereta",
+  "Car": "Mobil",
+  "Parcel": "Paket",
+  "Warehouse": "Gudang",
+  "Globe": "Bola dunia",
+  "Clock": "Jam",
+  "Star": "Bintang",
+  "Flag": "Bendera",
+  "Person": "Orang",
+  "Add chip": "Tambah chip",
+  "Add the values that get a chip, each with an icon.": "Tambahkan nilai yang mendapat chip, masing-masing dengan ikon."
 }

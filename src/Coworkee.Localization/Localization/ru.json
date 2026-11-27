@@ -2405,5 +2405,20 @@
   "Data set": "Набор данных",
   "Same as the widget": "Как у виджета",
   "Split into series by": "Разбить на серии по",
-  "No split": "Без разбивки"
+  "No split": "Без разбивки",
+  "Share": "Доля",
+  "Plane": "Самолет",
+  "Ship": "Судно",
+  "Truck": "Грузовик",
+  "Train": "Поезд",
+  "Car": "Автомобиль",
+  "Parcel": "Посылка",
+  "Warehouse": "Склад",
+  "Globe": "Глобус",
+  "Clock": "Часы",
+  "Star": "Звезда",
+  "Flag": "Флаг",
+  "Person": "Человек",
+  "Add chip": "Добавить чип",
+  "Add the values that get a chip, each with an icon.": "Добавьте значения, для которых нужны чипы, каждое с иконкой."
 }

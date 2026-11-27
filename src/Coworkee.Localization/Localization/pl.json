@@ -2405,5 +2405,20 @@
   "Data set": "Zbiór danych",
   "Same as the widget": "Jak w widżecie",
   "Split into series by": "Podziel na serie według",
-  "No split": "Bez podziału"
+  "No split": "Bez podziału",
+  "Share": "Udział",
+  "Plane": "Samolot",
+  "Ship": "Statek",
+  "Truck": "Ciężarówka",
+  "Train": "Pociąg",
+  "Car": "Samochód",
+  "Parcel": "Paczka",
+  "Warehouse": "Magazyn",
+  "Globe": "Globus",
+  "Clock": "Zegar",
+  "Star": "Gwiazdka",
+  "Flag": "Flaga",
+  "Person": "Osoba",
+  "Add chip": "Dodaj chip",
+  "Add the values that get a chip, each with an icon.": "Dodaj wartości, które dostają chip, każdą z ikoną."
 }

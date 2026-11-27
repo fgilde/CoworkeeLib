@@ -16,4 +16,5 @@ public enum ChartKind
     Radar,
     Treemap,
     Heatmap,
+    Chips,
 }

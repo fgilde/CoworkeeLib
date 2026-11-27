@@ -2405,5 +2405,20 @@
   "Data set": "데이터 세트",
   "Same as the widget": "위젯과 동일",
   "Split into series by": "시리즈 분할 기준",
-  "No split": "분할 안 함"
+  "No split": "분할 안 함",
+  "Share": "비율",
+  "Plane": "비행기",
+  "Ship": "선박",
+  "Truck": "트럭",
+  "Train": "열차",
+  "Car": "자동차",
+  "Parcel": "소포",
+  "Warehouse": "창고",
+  "Globe": "지구본",
+  "Clock": "시계",
+  "Star": "별",
+  "Flag": "깃발",
+  "Person": "사람",
+  "Add chip": "칩 추가",
+  "Add the values that get a chip, each with an icon.": "칩으로 표시할 값을 아이콘과 함께 추가하세요."
 }

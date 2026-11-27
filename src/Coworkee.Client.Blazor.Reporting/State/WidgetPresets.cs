@@ -20,6 +20,7 @@ public static class WidgetPresets
         new("Radar chart", Icons.Material.Outlined.Radar, WidgetType.Chart, ChartKind.Radar, 4, 5),
         new("Treemap", Icons.Material.Outlined.Dashboard, WidgetType.Chart, ChartKind.Treemap, 6, 5),
         new("Heatmap", Icons.Material.Outlined.GridOn, WidgetType.Chart, ChartKind.Heatmap, 6, 5),
+        new("Chips", Icons.Material.Outlined.Label, WidgetType.Chart, ChartKind.Chips, 6, 2),
         new("Table", Icons.Material.Outlined.TableRows, WidgetType.Table, ChartKind.Bar, 12, 6),
         new("Data table", Icons.Material.Outlined.TableChart, WidgetType.DataTable, ChartKind.Bar, 12, 7),
         new("Pivot", Icons.Material.Outlined.PivotTableChart, WidgetType.Pivot, ChartKind.Bar, 6, 5),

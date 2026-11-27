@@ -2405,5 +2405,20 @@
   "Data set": "Skup podataka",
   "Same as the widget": "Kao kod widgeta",
   "Split into series by": "Podijeli u serije prema",
-  "No split": "Bez podjele"
+  "No split": "Bez podjele",
+  "Share": "Udio",
+  "Plane": "Zrakoplov",
+  "Ship": "Brod",
+  "Truck": "Kamion",
+  "Train": "Vlak",
+  "Car": "Automobil",
+  "Parcel": "Paket",
+  "Warehouse": "Skladište",
+  "Globe": "Globus",
+  "Clock": "Sat",
+  "Star": "Zvijezda",
+  "Flag": "Zastava",
+  "Person": "Osoba",
+  "Add chip": "Dodaj čip",
+  "Add the values that get a chip, each with an icon.": "Dodajte vrijednosti koje dobivaju čip, svaku s ikonom."
 }

@@ -2405,5 +2405,20 @@
   "Data set": "Datová sada",
   "Same as the widget": "Jako u widgetu",
   "Split into series by": "Rozdělit do řad podle",
-  "No split": "Bez rozdělení"
+  "No split": "Bez rozdělení",
+  "Share": "Podíl",
+  "Plane": "Letadlo",
+  "Ship": "Loď",
+  "Truck": "Nákladní auto",
+  "Train": "Vlak",
+  "Car": "Auto",
+  "Parcel": "Balík",
+  "Warehouse": "Sklad",
+  "Globe": "Zeměkoule",
+  "Clock": "Hodiny",
+  "Star": "Hvězda",
+  "Flag": "Vlajka",
+  "Person": "Osoba",
+  "Add chip": "Přidat štítek",
+  "Add the values that get a chip, each with an icon.": "Přidejte hodnoty, které dostanou štítek, každou s ikonou."
 }

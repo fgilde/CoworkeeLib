@@ -2405,5 +2405,20 @@
   "Data set": "Gegevensset",
   "Same as the widget": "Zoals de widget",
   "Split into series by": "Splitsen in reeksen op",
-  "No split": "Geen splitsing"
+  "No split": "Geen splitsing",
+  "Share": "Aandeel",
+  "Plane": "Vliegtuig",
+  "Ship": "Schip",
+  "Truck": "Vrachtwagen",
+  "Train": "Trein",
+  "Car": "Auto",
+  "Parcel": "Pakket",
+  "Warehouse": "Magazijn",
+  "Globe": "Wereldbol",
+  "Clock": "Klok",
+  "Star": "Ster",
+  "Flag": "Vlag",
+  "Person": "Persoon",
+  "Add chip": "Chip toevoegen",
+  "Add the values that get a chip, each with an icon.": "Voeg de waarden toe die een chip krijgen, elk met een pictogram."
 }

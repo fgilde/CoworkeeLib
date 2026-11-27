@@ -2405,5 +2405,20 @@
   "Data set": "Veri kümesi",
   "Same as the widget": "Widget ile aynı",
   "Split into series by": "Şuna göre serilere böl",
-  "No split": "Bölme yok"
+  "No split": "Bölme yok",
+  "Share": "Pay",
+  "Plane": "Uçak",
+  "Ship": "Gemi",
+  "Truck": "Kamyon",
+  "Train": "Tren",
+  "Car": "Araba",
+  "Parcel": "Koli",
+  "Warehouse": "Depo",
+  "Globe": "Küre",
+  "Clock": "Saat",
+  "Star": "Yıldız",
+  "Flag": "Bayrak",
+  "Person": "Kişi",
+  "Add chip": "Çip ekle",
+  "Add the values that get a chip, each with an icon.": "Çip alacak değerleri her biri bir simgeyle ekleyin."
 }

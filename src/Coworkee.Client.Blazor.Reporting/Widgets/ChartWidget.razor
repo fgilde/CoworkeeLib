@@ -3,7 +3,19 @@
 
 <WidgetStatus Loading="Loading" Error="@Error" Empty="@(_series.Count == 0 && !Loading)" Hint="@Hint">
     <div class="cw-chart" data-testid="chart" data-kind="@Widget.Options.Chart" data-markers="@Markers">
-        @if (_options is not null && _series.Count > 0)
+        @if (Chips)
+        {
+            <div class="cw-chips" role="group" aria-label="@(Widget.Title ?? L["Chips"])">
+                @foreach (var chip in ChipList)
+                {
+                    var on = Selected.Contains(chip.Value);
+                    <MudChip T="string" Variant="@(on ? Variant.Filled : Variant.Outlined)" Color="MudBlazor.Color.Primary" Icon="@chip.Icon" Size="MudBlazor.Size.Large" Class="cw-chip"
+                             OnClick="() => Toggle(chip)" Disabled="@(!Widget.Options.CrossFilter)"
+                             aria-pressed="@(on ? "true" : "false")" data-testid="chip" data-value="@chip.Value">@(chip.Percent) % @chip.Label</MudChip>
+                }
+            </div>
+        }
+        else if (_options is not null && _series.Count > 0)
         {
             <ApexChart @key="_render" TItem="ChartPoint" Options="_options" Height="@("100%")" Width="@("100%")" OnDataPointSelection="SelectAsync" XAxisType="@(Timeline ? XAxisType.Datetime : XAxisType.Category)">
                 @foreach (var series in Shown)

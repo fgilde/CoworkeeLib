@@ -148,6 +148,25 @@ public sealed partial class SubscriptionTests(ReportingApp app) : ReportingTestB
     }
 
     [Fact]
+    public async Task A_mail_lists_the_chips_as_shares()
+    {
+        var report = await CreateReportAsync(Report() with { Definition = new ReportDefinition { Widgets =
+        [
+            new ReportWidget { Id = "chips", Type = WidgetType.Chart, Title = "Share by region", Query = new WidgetQuery { EntitySet = "Sales", GroupBy = new ReportGroupBy("Region") },
+                Options = new WidgetOptions { Chart = ChartKind.Chips, ValueIcons = new() { ["South"] = "<svg/>" } } },
+        ] } });
+        var subscription = await SubscribeAsync(Admin, report.Id);
+
+        await RunDueAsync(subscription.Id);
+
+        var html = (await MailsAsync()).Single().Mail.HtmlBody;
+        var share = (int)Math.Round(100d * Visible.Count(s => s.Region == "South") / Visible.Count(), MidpointRounding.AwayFromZero);
+        html.ShouldContain($"{share} %");
+        html.ShouldContain("South");
+        html.ShouldNotContain("North");
+    }
+
+    [Fact]
     public async Task Mails_use_the_sources_currency()
     {
         CostRows.Currencies[Setup.AdminUserId] = "CHF";

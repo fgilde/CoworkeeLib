@@ -2405,5 +2405,20 @@
   "Data set": "សំណុំទិន្នន័យ",
   "Same as the widget": "ដូចធាតុក្រាហ្វិក",
   "Split into series by": "បំបែកជាស៊េរីតាម",
-  "No split": "មិនបំបែក"
+  "No split": "មិនបំបែក",
+  "Share": "ចំណែក",
+  "Plane": "យន្តហោះ",
+  "Ship": "ទូក",
+  "Truck": "ឡានដឹកទំនិញ",
+  "Train": "រថភ្លើង",
+  "Car": "ឡាន",
+  "Parcel": "កញ្ចប់",
+  "Warehouse": "ឃ្លាំង",
+  "Globe": "ផែនដី",
+  "Clock": "នាឡិកា",
+  "Star": "ផ្កាយ",
+  "Flag": "ទង់",
+  "Person": "មនុស្ស",
+  "Add chip": "បន្ថែមឈីប",
+  "Add the values that get a chip, each with an icon.": "បន្ថែមតម្លៃដែលទទួលបានឈីប ដោយមានរូបតំណាងនីមួយៗ។"
 }

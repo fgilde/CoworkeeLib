@@ -2405,5 +2405,20 @@
   "Data set": "数据集",
   "Same as the widget": "与小部件相同",
   "Split into series by": "按以下字段拆分系列",
-  "No split": "不拆分"
+  "No split": "不拆分",
+  "Share": "占比",
+  "Plane": "飞机",
+  "Ship": "船",
+  "Truck": "卡车",
+  "Train": "火车",
+  "Car": "汽车",
+  "Parcel": "包裹",
+  "Warehouse": "仓库",
+  "Globe": "地球",
+  "Clock": "时钟",
+  "Star": "星标",
+  "Flag": "旗帜",
+  "Person": "人员",
+  "Add chip": "添加标签",
+  "Add the values that get a chip, each with an icon.": "添加需要显示为标签的值，并为每个值选择图标。"
 }

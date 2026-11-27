@@ -189,13 +189,30 @@ Gemessen an den 100.000 Aufträgen der Demo (Postgres, warm): Anzahl nach Status
 | Widget | Zeigt |
 |---|---|
 | Kennzahl | einen Wert mit Trend gegenüber dem Zeitraum davor, einer Kurve über die Zeit und einem Tacho zum Ziel |
-| Diagramm | Balken, liegende Balken, gestapelte Balken, Linie, Fläche, Torte, Ring, Streuung, Netz, Treemap, Heatmap; Datumswerte auf einer Zeitachse |
+| Diagramm | Balken, liegende Balken, gestapelte Balken, Linie, Fläche, Torte, Ring, Streuung, Netz, Treemap, Heatmap, Chips; Datumswerte auf einer Zeitachse |
 | Tabelle | Zeilen der Menge mit endlosem Scrollen (jedes Scrollen lädt die nächste Seite), sortierbar, als Tabelle, Karten oder Liste |
 | Datentabelle | die [`CoworkeeDataTable`](../ui/data-table.md) der Bibliothek: Seiten, Gruppierung, Spaltenauswahl, Facetten, Suche |
 | Pivot | Kategorien als Zeilen, Reihen als Spalten, nach Größe eingefärbt, mit Summen |
 | Text, Bild, Webseite | Markdown (HTML wird nicht dargestellt), ein Bild oder eine abgeschottete Seite von einer http(s)-Adresse |
 
 Diagramme nutzen [Blazor-ApexCharts](https://github.com/apexcharts/Blazor-ApexCharts): gepflegt, animiert und ohne Nacharbeit ansehnlich, mit Klick-Ereignissen für Kreuzfilter. Farben, Schrift und Dunkelmodus kommen aus den CSS-Variablen des MudBlazor-Themes, eigene Themes brauchen keine weitere Einrichtung.
+
+### Chips-Diagramm
+
+`ChartKind.Chips` zeigt die Werte des Gruppierungsfelds als Chips mit ihrem Anteil am Ganzen („25 % Air“) und dient als Filter: Ein Klick schaltet den Wert um und schränkt die übrigen Widgets ein (mehrere Chips werden mit „oder“ verknüpft; ein gewählter Chip filtert beim erneuten Klick nicht mehr). `WidgetOptions.ValueIcons` nennt die Werte, die einen Chip bekommen, in Reihenfolge, jeweils mit einem MudBlazor-Symbol (SVG); andere Werte zählen weiter zu den 100 %. Gewählte Chips sind gefüllt, die übrigen umrandet. Ein Chips-Widget ignoriert seinen eigenen Filter, die Anteile beziehen sich also immer auf alle Werte; sein Filter trägt das Gruppierungsfeld und schränkt deshalb auch Widgets anderer Datenmengen mit demselben Feld ein. Der Designer bietet „Chips“ unter den Diagrammarten und einen Editor für Werte und Symbole (Reihenfolge, Symbolauswahl); Abo-Mails listen die Anteile als Tabelle.
+
+```csharp
+new ReportWidget
+{
+    Type = WidgetType.Chart, Title = "Transportart",
+    Query = new WidgetQuery { EntitySet = "Shipments", GroupBy = new ReportGroupBy("TransportMode") },
+    Options = new WidgetOptions
+    {
+        Chart = ChartKind.Chips,
+        ValueIcons = new() { ["Air"] = Icons.Material.Outlined.Flight, ["Sea"] = Icons.Material.Outlined.DirectionsBoat },
+    },
+}
+```
 
 ![Dasselbe Dashboard im Dunkelmodus](../assets/screenshots/reporting-dark.png){ .shot }
 

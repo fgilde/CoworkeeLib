@@ -85,6 +85,11 @@ internal sealed class ReportMailWidget(
             return (Failed(result.Error.Message), null);
         }
 
+        if (widget.Options.Chart == ChartKind.Chips && widget.Type == WidgetType.Chart)
+        {
+            return Chips(query, source, result.Value);
+        }
+
         var split = query.SplitBy is not null;
         var values = split ? [query.Aggregates.FirstOrDefault() ?? new ReportAggregate()] : query.Aggregates;
         List<string> headers = [FieldLabel(source, query.GroupBy.Field), .. split ? [FieldLabel(source, query.SplitBy!.Field)] : Array.Empty<string>(), .. values.Select(a => Label(a, source))];
@@ -93,6 +98,19 @@ internal sealed class ReportMailWidget(
         var ordered = series ? result.Value.Rows.OrderBy(r => r.Key?.Value, StringComparer.Ordinal) : result.Value.Rows.AsEnumerable();
         var rows = ordered.Select(r => (IReadOnlyList<object?>)[Key(r.Key), .. split ? [Key(r.Series)] : Array.Empty<object?>(), .. r.Values.Take(values.Count).Cast<object?>()]).ToList();
         return (Table(headers, rows, cell => cell is double number ? ReportNumbers.Format(number, widget.Options, culture) : cell?.ToString() ?? string.Empty, latest: series), Sheet(headers, rows));
+    }
+
+    // chips as a list of shares of everything the query returned, for the values with an icon in their order
+    private (object, ReportSheetRequest?) Chips(WidgetQuery query, ReportSource source, ReportQueryResult result)
+    {
+        var total = result.Rows.Sum(r => r.Values.FirstOrDefault() ?? 0);
+        List<string> headers = [FieldLabel(source, query.GroupBy!.Field), text("Share", culture)];
+        var rows = widget.Options.ValueIcons.Keys
+            .Select(value => result.Rows.FirstOrDefault(r => (r.Key?.Value ?? string.Empty) == value))
+            .OfType<ReportQueryRow>()
+            .Select(r => (IReadOnlyList<object?>)[Key(r.Key), total == 0 ? 0 : Math.Round((r.Values.FirstOrDefault() ?? 0) / total * 100, MidpointRounding.AwayFromZero)])
+            .ToList();
+        return (Table(headers, rows, cell => cell is double share ? $"{share:0} %" : cell?.ToString() ?? string.Empty), Sheet(headers, rows));
     }
 
     private async Task<(object, ReportSheetRequest?)> TableAsync(WidgetQuery query, string? filter, ReportSource source, CancellationToken cancellationToken)

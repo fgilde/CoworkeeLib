@@ -32,7 +32,59 @@ public partial class ChartWidget
     private string BarColor(ChartPoint point) =>
         ReportThresholds.Find(Widget.Options.Thresholds, (double?)point.Value) is { } band ? ThresholdColors.Chart(band.Color, _palette) : Widget.Options.Palette.FirstOrDefault() ?? _palette.Colors[0];
 
-    private string? Hint => Query?.GroupBy is null ? L["Choose what to group by."] : null;
+    private string? Hint => Query?.GroupBy is null ? L["Choose what to group by."]
+        : Chips && Widget.Options.ValueIcons.Count == 0 ? L["Add the values that get a chip, each with an icon."] : null;
+
+    private bool Chips => Widget.Options.Chart == ChartKind.Chips;
+
+    private sealed record Chip(string Value, string Label, string Icon, int Percent, ReportKey Key);
+
+    // the values of the icons in their order, each with its share of everything the query returned (values without an icon only count towards the whole)
+    private List<Chip> ChipList
+    {
+        get
+        {
+            var points = _series.FirstOrDefault()?.Points ?? [];
+            var total = points.Sum(p => p.Value ?? 0);
+            return
+            [
+                .. Widget.Options.ValueIcons.Select(icon => (icon, point: points.FirstOrDefault(p => p.Key is not null && (p.Key.Value ?? string.Empty) == icon.Key)))
+                    .Where(c => c.point?.Key is not null)
+                    .Select(c => new Chip(c.icon.Key, c.point!.Label, c.icon.Value, total == 0 ? 0 : (int)Math.Round((c.point.Value ?? 0) / total * 100, MidpointRounding.AwayFromZero), c.point.Key!)),
+            ];
+        }
+    }
+
+    // a chip stays selected only while the widget's cross filter exists: the filter bar or "clear all" may remove it
+    private HashSet<string> Selected => State.CrossFilters.Any(c => c.WidgetId == Widget.Id) ? _selected : [];
+
+    private readonly HashSet<string> _selected = [];
+
+    private void Toggle(Chip chip)
+    {
+        var selected = new HashSet<string>(Selected);
+        if (!selected.Add(chip.Value))
+        {
+            selected.Remove(chip.Value);
+        }
+
+        _selected.Clear();
+        _selected.UnionWith(selected);
+        var chosen = ChipList.Where(c => selected.Contains(c.Value)).ToList();
+        if (chosen.Count == 0)
+        {
+            if (State.CrossFilters.FirstOrDefault(c => c.WidgetId == Widget.Id) is { } own)
+            {
+                State.RemoveCross(own);
+            }
+
+            return;
+        }
+
+        var filters = chosen.Select(c => c.Key.Filter).ToList();
+        State.ToggleCross(new CrossFilter(Widget.Id, Query!.EntitySet, string.Join(", ", chosen.Select(c => c.Label)),
+            filters.Count == 1 ? filters[0] : string.Join(" or ", filters.Select(f => $"({f})")), Query.GroupBy?.Field));
+    }
 
     // pies, donuts and treemaps show one series
     private IEnumerable<ChartSeries> Shown => Widget.Options.Chart is ChartKind.Pie or ChartKind.Donut or ChartKind.Treemap ? _series.Take(1) : _series;

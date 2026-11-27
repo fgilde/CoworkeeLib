@@ -2405,5 +2405,20 @@
   "Data set": "Набор от данни",
   "Same as the widget": "Както при уиджета",
   "Split into series by": "Разделяне на серии по",
-  "No split": "Без разделяне"
+  "No split": "Без разделяне",
+  "Share": "Дял",
+  "Plane": "Самолет",
+  "Ship": "Кораб",
+  "Truck": "Камион",
+  "Train": "Влак",
+  "Car": "Кола",
+  "Parcel": "Пратка",
+  "Warehouse": "Склад",
+  "Globe": "Глобус",
+  "Clock": "Часовник",
+  "Star": "Звезда",
+  "Flag": "Флаг",
+  "Person": "Човек",
+  "Add chip": "Добавяне на чип",
+  "Add the values that get a chip, each with an icon.": "Добавете стойностите, които получават чип, всяка с икона."
 }

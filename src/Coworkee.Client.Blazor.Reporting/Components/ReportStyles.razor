@@ -51,6 +51,9 @@
     .cw-widget-message { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; padding: 8px; }
 
     .cw-chart { flex: 1; min-height: 0; position: relative; }
+    .cw-chart[data-kind='Chips'] { display: flex; align-items: center; }
+    .cw-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 4px 2px; min-width: 0; }
+    .cw-chips .cw-chip { margin: 0; font-weight: 600; max-width: 100%; }
     .cw-chart > div { height: 100%; }
     .cw-chart .apexcharts-canvas { margin: 0 auto; }
     .cw-chart[data-markers="false"] .apexcharts-series-markers-wrap { opacity: 0; }

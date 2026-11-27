@@ -2405,5 +2405,20 @@
   "Data set": "Σύνολο δεδομένων",
   "Same as the widget": "Όπως το γραφικό στοιχείο",
   "Split into series by": "Διαίρεση σε σειρές ανά",
-  "No split": "Χωρίς διαίρεση"
+  "No split": "Χωρίς διαίρεση",
+  "Share": "Μερίδιο",
+  "Plane": "Αεροπλάνο",
+  "Ship": "Πλοίο",
+  "Truck": "Φορτηγό",
+  "Train": "Τρένο",
+  "Car": "Αυτοκίνητο",
+  "Parcel": "Δέμα",
+  "Warehouse": "Αποθήκη",
+  "Globe": "Υδρόγειος",
+  "Clock": "Ρολόι",
+  "Star": "Αστέρι",
+  "Flag": "Σημαία",
+  "Person": "Άτομο",
+  "Add chip": "Προσθήκη chip",
+  "Add the values that get a chip, each with an icon.": "Προσθέστε τις τιμές που παίρνουν chip, κάθε μία με εικονίδιο."
 }

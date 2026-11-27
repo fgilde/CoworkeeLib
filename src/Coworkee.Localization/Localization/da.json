@@ -2405,5 +2405,20 @@
   "Data set": "Datasæt",
   "Same as the widget": "Samme som widgetten",
   "Split into series by": "Opdel i serier efter",
-  "No split": "Ingen opdeling"
+  "No split": "Ingen opdeling",
+  "Share": "Andel",
+  "Plane": "Fly",
+  "Ship": "Skib",
+  "Truck": "Lastbil",
+  "Train": "Tog",
+  "Car": "Bil",
+  "Parcel": "Pakke",
+  "Warehouse": "Lager",
+  "Globe": "Globus",
+  "Clock": "Ur",
+  "Star": "Stjerne",
+  "Flag": "Flag",
+  "Person": "Person",
+  "Add chip": "Tilføj chip",
+  "Add the values that get a chip, each with an icon.": "Tilføj de værdier, der får en chip, hver med et ikon."
 }

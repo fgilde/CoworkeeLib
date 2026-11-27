@@ -2405,5 +2405,20 @@
   "Data set": "مجموعة البيانات",
   "Same as the widget": "مثل الأداة",
   "Split into series by": "التقسيم إلى سلاسل حسب",
-  "No split": "بدون تقسيم"
+  "No split": "بدون تقسيم",
+  "Share": "الحصة",
+  "Plane": "طائرة",
+  "Ship": "سفينة",
+  "Truck": "شاحنة",
+  "Train": "قطار",
+  "Car": "سيارة",
+  "Parcel": "طرد",
+  "Warehouse": "مستودع",
+  "Globe": "الكرة الأرضية",
+  "Clock": "ساعة",
+  "Star": "نجمة",
+  "Flag": "علم",
+  "Person": "شخص",
+  "Add chip": "إضافة شريحة",
+  "Add the values that get a chip, each with an icon.": "أضف القيم التي تحصل على شريحة، لكل منها أيقونة."
 }

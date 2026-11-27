@@ -170,4 +170,34 @@ public sealed class DesignerTests : ReportingTestBase
         var sum = Render<WidgetSettings>(p => p.Add(x => x.Widget, kpi).Add(x => x.State, state));
         sum.FindComponents<MudSwitch<bool>>().Any(s => s.Instance.UserAttributes.GetValueOrDefault("data-testid") as string == "aggregate-empty-as-zero").ShouldBeFalse();
     }
+
+    [Fact]
+    public void Chips_are_a_chart_kind_with_an_editor_for_the_icons_of_their_values()
+    {
+        var widget = new ReportWidget { Type = WidgetType.Chart, Query = new WidgetQuery { EntitySet = "SalesOrders", GroupBy = new ReportGroupBy("Region") }, Options = new() { Chart = ChartKind.Bar } };
+        var changes = 0;
+        var settings = Render<WidgetSettings>(p => p.Add(x => x.Widget, widget).Add(x => x.State, State(widget)).Add(x => x.OnChanged, () => changes++));
+        settings.FindAll("[data-testid='value-icon']").ShouldBeEmpty();
+
+        settings.Find("[data-chart='Chips']").Click();
+
+        widget.Options.Chart.ShouldBe(ChartKind.Chips);
+        settings.Find("[data-testid='add-value-icon']").Click();
+        settings.Find("[data-testid='add-value-icon']").HasAttribute("disabled").ShouldBeTrue();
+        settings.FindAll("[data-testid='value-icon'] input")[0].Change("Air");
+        settings.FindAll("[data-testid='value-icon']")[0].QuerySelector("[data-icon='Flight']")!.Click();
+        settings.Find("[data-testid='add-value-icon']").Click();
+        settings.FindAll("[data-testid='value-icon']").Count.ShouldBe(2);
+        settings.FindAll("[data-testid='value-icon'] input")[1].Change("Sea");
+        settings.FindAll("[data-testid='value-icon']")[1].QuerySelector("[data-icon='DirectionsBoat']")!.Click();
+
+        widget.Options.ValueIcons.ShouldBe(new Dictionary<string, string> { ["Air"] = Icons.Material.Outlined.Flight, ["Sea"] = Icons.Material.Outlined.DirectionsBoat });
+
+        settings.FindAll("[data-testid='value-icon'] button[aria-label='Move down']")[0].Click();
+
+        widget.Options.ValueIcons.Keys.ShouldBe(["Sea", "Air"]);
+        settings.FindAll("[data-testid='value-icon'] button[aria-label='Remove']")[0].Click();
+        widget.Options.ValueIcons.Keys.ShouldBe(["Air"]);
+        changes.ShouldBeGreaterThan(5);
+    }
 }
