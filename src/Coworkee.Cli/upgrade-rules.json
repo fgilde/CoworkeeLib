@@ -549,7 +549,7 @@
       ],
       "manual": [
         {
-          "text": "Apps that keep customers apart in groups of one organisation turn on Coworkee:Identity:GroupScopedAdministration (appsettings). Administrators without Identity.Groups.ScopeAll then reach only their groups, the sub-groups and their members; give ScopeAll to operators and service clients that manage everyone. A scoped administrator creates users with CreateUserRequest.GroupIds (one of his groups, needs Identity.Groups.ManageMembers); top-level groups, the default group and roles need the whole organisation (403 identity.all_groups_required).",
+          "text": "Apps that keep customers apart in groups, one per customer, turn on Coworkee:Identity:GroupScopedAdministration (appsettings). Administrators without Identity.Groups.ScopeAll then reach only their groups, the sub-groups and their members; give ScopeAll to operators and service clients that manage everyone. A scoped administrator creates users with CreateUserRequest.GroupIds (one of his groups, needs Identity.Groups.ManageMembers); top-level groups, the default group and roles need the whole tenant (403 identity.all_groups_required).",
           "find": "IGroupScope|GroupScopePicker|Groups\\.ScopeAll",
           "files": [ "src/**/*.cs", "src/**/*.razor", "src/**/appsettings*.json" ],
           "unless": "GroupScopedAdministration"
@@ -733,7 +733,7 @@
     {
       "version": "0.0.1.65",
       "breaking": [
-        "Theming: cw.Themes gets the columns BuiltInId and IsCustomized (an organisation's own version of a built-in theme); ICoworkeeApi gets ResetThemeAsync and SetThemePublishedAsync.",
+        "Theming: cw.Themes gets the columns BuiltInId and IsCustomized (a tenant's own version of a built-in theme); ICoworkeeApi gets ResetThemeAsync and SetThemePublishedAsync.",
         "Navigation: HeaderPlacement gets SecondBar and SecondOverflow before Hidden; saved header settings keep working, they store the names.",
         "OData: a list of a set the user sees at most Coworkee:OData:KeyedRowLimit rows of (default 50,000) reads the keys of those rows first (the count of the visible rows is remembered for two minutes), then its page, count, groups and facets among them; a test that counts the statements of a list sees one or two more, KeyedRowLimit 0 reads as before."
       ],
