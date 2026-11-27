@@ -119,6 +119,10 @@ Jede Änderung lädt offene Tabellen neu und gleicht lokale Kopien ab; die Parti
 
 Lesen und Schreiben braucht die Berechtigung der Ebene; die Seite und der Navigationseintrag erscheinen für jeden mit einer der `DataFilters.Manage*`-Berechtigungen.
 
+## Gruppen- und Rollenfilter
+
+Der Gruppenbaum und die Rollentabelle zeigen, welche Gruppen und Rollen Datenfilter haben, man muss sie nicht einzeln öffnen. Eine Gruppe oder Rolle mit Filtern hat ein eingefärbtes Filter-Symbol mit Marke (Anzahl der Filter); die anderen zeigen nichts, ein Baum mit Tausenden Gruppen bleibt also ruhig. Das Symbol öffnet den Reiter **Datenfilter** der Gruppe oder Rolle (der Link `?group={id}&tab=data-filters` auf der Gruppenseite, `/admin/roles/{id}?tab=data-filters` auf der Rollenseite). Der Chip **Nur mit Datenfiltern** über dem Baum listet nur die gefilterten Gruppen, flach und mit ihrem Pfad benannt („Kunde A / Hamburg“); über der Rollentabelle grenzt er die Tabelle auf die gefilterten Rollen ein. Die Seite lädt die Filter einmal (`GetDataFiltersAsync(layer: Group)` oder `Role`, gezählt nach `LayerKey`), nicht einmal pro Knoten, und lädt sie neu, wenn das Echtzeit-Thema `DataFilterTopics.TenantChanged` feuert; geöffnete Baumknoten bleiben offen. Symbol und Chip brauchen `DataFilters.ManageGroups` oder `DataFilters.ManageRoles`.
+
 ## Umstieg auf eine Version mit Datenfiltern
 
 Die Tabellen `cw.DataFilters` und `cw.DataFilterLinks` müssen existieren, bevor die App startet: Jede Abfrage eines Entity-Sets schlägt sie bei kaltem Cache nach. Zuerst eine App-Migration anlegen und anwenden (`coworkee migrations add AddDataFilters`); die Bibliothek bringt keine eigene Migration mit. Das Abfragemodell ist nach `Coworkee.Contracts.Query` umgezogen; siehe das [Änderungsprotokoll](../reference/changelog.de.md).

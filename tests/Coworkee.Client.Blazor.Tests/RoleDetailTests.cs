@@ -1,6 +1,8 @@
 using Bunit;
 using Coworkee.Client.Blazor.Pages.Admin;
+using Coworkee.Contracts.DataFilters;
 using Coworkee.Contracts.Identity;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 
 namespace Coworkee.Client.Blazor.Tests;
@@ -52,5 +54,18 @@ public sealed class RoleDetailTests : ClientTestBase
 
         admin.WaitForAssertion(() => admin.Markup.ShouldContain("admin"));
         admin.FindAll("[data-testid='role-edit']").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void A_link_with_tab_data_filters_opens_that_tab()
+    {
+        Api.GetMyPermissionsAsync(Arg.Any<CancellationToken>()).Returns([DataFilterPermissions.ManageRoles]);
+        Api.GetDataFiltersAsync(Arg.Any<string?>(), Arg.Any<DataFilterLayer?>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>()).Returns([]);
+        AddAuthorization().SetAuthorized("Ada");
+        Services.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>().NavigateTo($"/admin/roles/{_role}?tab=data-filters");
+
+        var page = Render<RoleDetail>(p => p.Add(r => r.Id, _role));
+
+        page.WaitForAssertion(() => page.Find(".mud-tab.mud-tab-active").TextContent.Trim().ShouldBe("Data filters"));
     }
 }

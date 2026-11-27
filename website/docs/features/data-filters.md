@@ -119,6 +119,10 @@ Every change reloads open tables and resynchronises local copies; the partition 
 
 Reading and writing needs the permission of the layer; the page and the navigation entry show for anyone with one of the `DataFilters.Manage*` permissions.
 
+## Group and role filters
+
+The group tree and the roles table show which groups and roles have data filters, so you do not have to open them one by one. A group or role with filters has a coloured filter icon with a badge (the number of filters); the others show nothing, so a tree of thousands of groups stays calm. The icon opens the group's or role's **Data filters** tab (the link `?group={id}&tab=data-filters` on the groups page, `/admin/roles/{id}?tab=data-filters` on the role page). The chip **With data filters only** above the tree lists just the filtered groups, flat and named by their path ("Customer A / Hamburg"); above the roles table it narrows the table to the filtered roles. The page loads the filters once (`GetDataFiltersAsync(layer: Group)` or `Role`, counted by `LayerKey`), not once per node, and reloads them when the realtime topic `DataFilterTopics.TenantChanged` fires; open tree nodes stay open. Icon and chip need `DataFilters.ManageGroups` or `DataFilters.ManageRoles`.
+
 ## Moving to a version with data filters
 
 The tables `cw.DataFilters` and `cw.DataFilterLinks` must exist before the app starts: every entity-set read looks them up on a cold cache. Add and apply an app migration (`coworkee migrations add AddDataFilters`) first; the library ships no migration of its own. The query model moved to `Coworkee.Contracts.Query`; see the [changelog](../reference/changelog.md).

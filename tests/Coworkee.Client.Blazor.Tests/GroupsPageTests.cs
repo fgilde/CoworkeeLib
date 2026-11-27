@@ -3,6 +3,7 @@ using Coworkee.Client.Blazor.Components.Groups;
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Data.Admin;
 using Coworkee.Client.Blazor.Pages.Admin;
+using Coworkee.Contracts.DataFilters;
 using Coworkee.Contracts.Identity;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
@@ -524,6 +525,104 @@ public sealed class GroupsPageTests : ClientTestBase
         page.WaitForAssertion(() => page.Find("[data-testid='group-title']").TextContent.ShouldContain("Hamburg"));
         page.WaitForAssertion(() => page.Find($"[data-group-row='{Hamburg.Id}']").GetAttribute("aria-selected").ShouldBe("true"));
         page.Find($"[data-group-row='{Customer.Id}']").GetAttribute("aria-selected").ShouldBe("false");
+    }
+
+    private static DataFilterDto GroupFilter(Guid group, string set) => new(Guid.CreateVersion7(), set, DataFilterLayer.Group, group, "{}", true, true, null);
+
+    private void Filtered(params DataFilterDto[] filters) =>
+        Api.GetDataFiltersAsync(Arg.Any<string?>(), DataFilterLayer.Group, Arg.Any<Guid?>(), Arg.Any<CancellationToken>()).Returns(filters);
+
+    [Fact]
+    public void A_group_with_data_filters_shows_a_coloured_filter_icon_with_its_count()
+    {
+        Grant(IdentityPermissions.Groups.View, DataFilterPermissions.ManageGroups);
+        Filtered(GroupFilter(Supplier.Id, "Gadgets"), GroupFilter(Supplier.Id, "Widgets"));
+        var page = RenderPage();
+        page.WaitForElement($"[data-group-node='{Supplier.Id}']");
+
+        page.WaitForAssertion(() => page.Find($"[data-testid='group-filters-{Supplier.Id}']"));
+        page.Find($"[data-testid='group-filters-{Supplier.Id}']").ClassList.ShouldContain("mud-primary-text");
+        page.Find($"[data-testid='group-filters-{Supplier.Id}']").ParentElement!.ParentElement!.TextContent.ShouldContain("2");
+        page.FindAll($"[data-testid='group-filters-{Customer.Id}']").ShouldBeEmpty();
+        // one load for the whole page, no request per node
+        Api.Received(1).GetDataFiltersAsync(Arg.Any<string?>(), Arg.Any<DataFilterLayer?>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task The_filter_icon_opens_the_groups_data_filter_tab()
+    {
+        Grant(IdentityPermissions.Groups.View, DataFilterPermissions.ManageGroups);
+        Filtered(GroupFilter(Supplier.Id, "Gadgets"));
+        _odata.With("Groups", Row(Supplier));
+        var page = RenderPage();
+        page.WaitForElement($"[data-testid='group-filters-{Supplier.Id}']");
+
+        await page.Find($"[data-testid='group-filters-{Supplier.Id}']").ClickAsync(new());
+
+        page.WaitForAssertion(() => page.Find(".mud-tab.mud-tab-active").TextContent.Trim().ShouldBe("Data filters"));
+        Services.GetRequiredService<NavigationManager>().Uri.ShouldContain($"group={Supplier.Id}&tab=data-filters");
+    }
+
+    [Fact]
+    public void A_link_with_tab_data_filters_opens_that_tab()
+    {
+        Grant(IdentityPermissions.Groups.View, DataFilterPermissions.ManageGroups);
+        Filtered();
+        _odata.With("Groups", Row(Supplier));
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}&tab=data-filters");
+
+        var page = RenderPage();
+
+        page.WaitForAssertion(() => page.Find(".mud-tab.mud-tab-active").TextContent.Trim().ShouldBe("Data filters"));
+    }
+
+    [Fact]
+    public async Task With_data_filters_only_lists_the_filtered_groups_flat_with_their_path()
+    {
+        Grant(IdentityPermissions.Groups.View, DataFilterPermissions.ManageGroups);
+        Filtered(GroupFilter(Hamburg.Id, "Gadgets"));
+        _odata.With("Groups", Row(Hamburg), Row(Customer));
+        var page = RenderPage();
+        page.WaitForElement("[data-testid='chip-filtered']");
+
+        await page.Find("[data-testid='chip-filtered']").ClickAsync(new());
+
+        page.WaitForAssertion(() => page.FindAll("[data-group-node]").Select(n => n.TextContent).ShouldBe(["Customer A / Hamburg"]));
+        page.FindAll("[data-group-expand]").ShouldBeEmpty();
+        await page.Find("[data-testid='chip-filtered']").ClickAsync(new());
+        page.WaitForAssertion(() => page.FindAll("[data-group-node]").Select(n => n.TextContent).ShouldBe(["Customer A", "Supplier"]));
+    }
+
+    [Fact]
+    public void Without_ManageGroups_no_icon_and_no_chip()
+    {
+        Grant(IdentityPermissions.Groups.View);
+        Filtered(GroupFilter(Supplier.Id, "Gadgets"));
+        var page = RenderPage();
+
+        page.WaitForElement($"[data-group-node='{Supplier.Id}']");
+
+        page.FindAll("[data-testid^='group-filters-']").ShouldBeEmpty();
+        page.FindAll("[data-testid='chip-filtered']").ShouldBeEmpty();
+        Api.DidNotReceive().GetDataFiltersAsync(Arg.Any<string?>(), Arg.Any<DataFilterLayer?>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Icons_update_on_the_data_filter_signal_and_keep_open_nodes_open()
+    {
+        Grant(IdentityPermissions.Groups.View, DataFilterPermissions.ManageGroups);
+        Filtered();
+        var page = RenderPage();
+        page.WaitForElement($"[data-group-node='{Customer.Id}']");
+        await Expander(page, Customer).ClickAsync(new());
+        page.WaitForElement($"[data-group-node='{Hamburg.Id}']");
+        page.FindAll("[data-testid^='group-filters-']").ShouldBeEmpty();
+        Filtered(GroupFilter(Hamburg.Id, "Gadgets"));
+
+        Services.GetRequiredService<FakeRealtimeConnection>().Push(DataFilterTopics.TenantChanged);
+
+        page.WaitForElement($"[data-testid='group-filters-{Hamburg.Id}']");
+        page.FindAll("[data-group-node]").Select(n => n.TextContent).ShouldBe(["Customer A", "Bremen", "Hamburg", "Supplier"], ignoreOrder: false);
     }
 
     // app tabs are services: everything renders after the test registered them

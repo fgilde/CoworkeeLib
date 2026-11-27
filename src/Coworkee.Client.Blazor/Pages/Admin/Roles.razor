@@ -1,3 +1,4 @@
+@using Coworkee.Contracts.DataFilters
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + IdentityPermissions.Roles.View)]
 
 <PageHeader Title="Roles" Description="Roles bundle permissions; users and groups get roles.">
@@ -9,9 +10,20 @@
         }
     </AuthorizeView>
 </PageHeader>
-<CoworkeeDataTable @ref="_table" T="RoleDto" EntitySet="Roles" SearchFields="SearchFields" ExportFileName="roles" DescribeItem="r => r.Name"
+@if (_canManageDataFilters)
+{
+    <RealtimeSubscription Topic="@DataFilterTopics.TenantChanged" OnEvent="_ => FiltersChangedAsync()" />
+}
+<CoworkeeDataTable @ref="_table" T="RoleDto" EntitySet="Roles" Filter="@Filter" SearchFields="SearchFields" ExportFileName="roles" DescribeItem="r => r.Name"
                    CreateText="New role" CreatePermission="@IdentityPermissions.Roles.Manage" DeletePermission="@IdentityPermissions.Roles.Manage"
                    EditPermission="@IdentityPermissions.Roles.Manage" OnCreate="CreateAsync" OnEdit="EditAsync" OnDelete="DeleteAsync">
+    <ToolBarContent>
+        @if (_canManageDataFilters)
+        {
+            <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Outlined.FilterAlt" Variant="@(_onlyFiltered ? Variant.Filled : Variant.Outlined)" Color="@(_onlyFiltered ? Color.Primary : Color.Default)"
+                     OnClick="() => _onlyFiltered = !_onlyFiltered" data-testid="chip-filtered">@L["With data filters only"]</MudChip>
+        }
+    </ToolBarContent>
     <Columns>
         <PropertyColumn Property="r => r.Name" Title="@L["Name"]">
             <CellTemplate>
@@ -32,6 +44,15 @@
         </PropertyColumn>
         <TemplateColumn T="RoleDto" Sortable="false" CellStyle="text-align:right;white-space:nowrap">
             <CellTemplate>
+                @if (_canManageDataFilters && _counts.GetValueOrDefault(context.Item.Id) is > 0 and var count)
+                {
+                    <MudTooltip Text="@L["Data filters"]">
+                        <MudBadge Content="count" Color="Color.Primary" Overlap="true" Origin="Origin.TopRight">
+                            <MudIconButton Icon="@Icons.Material.Outlined.FilterAlt" Size="Size.Small" Color="Color.Primary" aria-label="@L["Data filters"]"
+                                           Href="@Links.Href($"/admin/roles/{context.Item.Id}?tab=data-filters")" data-testid="@($"role-filters-{context.Item.Name}")" />
+                        </MudBadge>
+                    </MudTooltip>
+                }
                 <PermissionView Permission="@IdentityPermissions.Users.Manage">
                     <MudTooltip Text="@L["Move or copy users…"]">
                         <MudIconButton Icon="@Icons.Material.Outlined.GroupAdd" Size="Size.Small" aria-label="@L["Move or copy users…"]" OnClick="() => TransferAsync(context.Item)"

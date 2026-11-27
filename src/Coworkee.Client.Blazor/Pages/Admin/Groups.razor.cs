@@ -28,6 +28,12 @@ public partial class Groups
     private bool _canManageDataFilters;
     private bool _ready;
     private bool _loadingGroup;
+    private Dictionary<Guid, int> _counts = [];
+    private bool _onlyFiltered;
+    private IReadOnlyList<GroupNodeDto>? _filtered;
+    private int _tabIndex;
+    private const string DataFiltersTab = "data-filters";
+    private const int DataFiltersIndex = 3;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
@@ -49,6 +55,9 @@ public partial class Groups
 
     [SupplyParameterFromQuery(Name = "group")] public Guid? GroupId { get; set; }
 
+    /// <summary><c>data-filters</c> opens the group's Data filters tab.</summary>
+    [SupplyParameterFromQuery(Name = "tab")] public string? Tab { get; set; }
+
     private string? ParentPath => _ancestors.Count == 0 ? null : string.Join(" / ", _ancestors.Select(a => a.Name));
 
     protected override async Task OnInitializedAsync()
@@ -64,9 +73,15 @@ public partial class Groups
             }
         }
 
+        if (_canManageDataFilters)
+        {
+            await LoadCountsAsync();
+        }
+
         if (GroupId is { } id)
         {
             await LoadAsync(id);
+            _tabIndex = TabIndex(Tab);
         }
 
         _ready = true;
@@ -78,6 +93,7 @@ public partial class Groups
         if (_ready && GroupId is { } id && id != _requested)
         {
             await LoadAsync(id);
+            _tabIndex = TabIndex(Tab);
             if (_group?.Code is { } code && _tree is not null)
             {
                 await _tree.RevealAsync(code);
@@ -117,11 +133,54 @@ public partial class Groups
 
     private Task SelectAsync(GroupNodeDto node) => ShowAsync(node.Id);
 
-    private async Task ShowAsync(Guid id)
+    private int TabIndex(string? tab) => tab == DataFiltersTab && _canManageDataFilters ? DataFiltersIndex : 0;
+
+    private async Task ShowAsync(Guid id, string? tab = null)
     {
         await LoadAsync(id);
-        Navigation.NavigateTo(Navigation.GetUriWithQueryParameter("group", id), replace: true);
+        _tabIndex = TabIndex(tab);
+        Navigation.NavigateTo(Navigation.GetUriWithQueryParameters(new Dictionary<string, object?> { ["group"] = id, ["tab"] = tab }), replace: true);
     }
+
+    // one load of every group filter of the tenant, counted per group: no request per node
+    private async Task LoadCountsAsync()
+    {
+        await Snackbar.RunAsync(async () =>
+        {
+            var filters = await Api.GetDataFiltersAsync(layer: DataFilterLayer.Group);
+            _counts = filters.Where(f => f.LayerKey is not null).GroupBy(f => f.LayerKey!.Value).ToDictionary(g => g.Key, g => g.Count());
+            await LoadFilteredAsync();
+        });
+    }
+
+    // the filtered groups as a flat list named by their paths
+    private async Task LoadFilteredAsync()
+    {
+        if (!_onlyFiltered)
+        {
+            return;
+        }
+
+        var groups = (await GroupPaths.OfAsync(OData, [.. _counts.Keys])).ToList();
+        _filtered = [.. groups.Select(g => new GroupNodeDto(g.Key, null, g.Key.ToString(), g.Value, null, 0, 0))];
+    }
+
+    private async Task ToggleOnlyFilteredAsync()
+    {
+        _onlyFiltered = !_onlyFiltered;
+        _filtered = null;
+        await Snackbar.RunAsync(LoadFilteredAsync);
+        if (_onlyFiltered && _filtered is null)
+        {
+            _onlyFiltered = false;
+        }
+    }
+
+    private Task FiltersChangedAsync() => InvokeAsync(async () =>
+    {
+        await LoadCountsAsync();
+        StateHasChanged();
+    });
 
     private async Task CreateRootAsync()
     {

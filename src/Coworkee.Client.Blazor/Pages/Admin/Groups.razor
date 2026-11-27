@@ -3,6 +3,10 @@
 
 <PageHeader Title="Groups" Description="Groups give their members roles together." />
 <RealtimeSubscription Topic="@Coworkee.Contracts.Realtime.RealtimeTopics.Type("UserGroup")" OnEvent="_ => RefreshAsync()" />
+@if (_canManageDataFilters)
+{
+    <RealtimeSubscription Topic="@DataFilterTopics.TenantChanged" OnEvent="_ => FiltersChangedAsync()" />
+}
 <MudGrid Spacing="3">
     <MudItem xs="12" md="4">
         <MudPaper Outlined="true" Class="pa-3">
@@ -18,10 +22,25 @@
                     <MudIconButton Icon="@Icons.Material.Outlined.FileDownload" Size="Size.Small" aria-label="@L["Export"]" OnClick="ExportAsync" data-testid="groups-export" />
                 </MudTooltip>
             </div>
+            @if (_canManageDataFilters)
+            {
+                <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Outlined.FilterAlt" Variant="@(_onlyFiltered ? Variant.Filled : Variant.Outlined)" Color="@(_onlyFiltered ? Color.Primary : Color.Default)"
+                         OnClick="ToggleOnlyFilteredAsync" Class="mb-2" data-testid="chip-filtered">@L["With data filters only"]</MudChip>
+            }
             @if (_ready)
             {
-                <GroupTree @ref="_tree" SelectedId="_group?.Id" SelectedChanged="SelectAsync" RevealCode="@_group?.Code" ListStyle="max-height:calc(100vh - 300px);overflow:auto">
+                @* a flat list (names are the paths) while the chip is on, the tree otherwise: another tree instance each *@
+                <GroupTree @key="_onlyFiltered" @ref="_tree" Nodes="_filtered" SelectedId="_group?.Id" SelectedChanged="SelectAsync" RevealCode="@_group?.Code" ListStyle="max-height:calc(100vh - 300px);overflow:auto">
                     <NodeActions Context="node">
+                        @if (_canManageDataFilters && _counts.GetValueOrDefault(node.Id) is > 0 and var count)
+                        {
+                            <MudTooltip Text="@L["Data filters"]">
+                                <MudBadge Content="count" Color="Color.Primary" Overlap="true" Origin="Origin.TopRight">
+                                    <MudIconButton Icon="@Icons.Material.Outlined.FilterAlt" Size="Size.Small" Color="Color.Primary" aria-label="@L["Data filters"]"
+                                                   OnClick="() => ShowAsync(node.Id, DataFiltersTab)" data-testid="@($"group-filters-{node.Id}")" />
+                                </MudBadge>
+                            </MudTooltip>
+                        }
                         @if (_canManage)
                         {
                             <GroupNodeMenu Node="node" Changed="NodeChangedAsync" Deleted="DeletedAsync" />
@@ -44,7 +63,7 @@
                     }
                 </div>
                 <MudText Typo="Typo.caption" Class="mud-text-secondary">@GroupPaths.Path(group.Code, group.Name, _ancestors)</MudText>
-                <MudTabs @key="group.Id" Elevation="0" TabPanelsClass="pt-2" data-testid="group-tabs">
+                <MudTabs @key="group.Id" @bind-ActivePanelIndex="_tabIndex" Elevation="0" TabPanelsClass="pt-2" data-testid="group-tabs">
                     <MudTabPanel Text="@L["General"]">
                         <GroupGeneralTab Group="group" Parent="ParentPath" CanManage="_canManage" Changed="ChangedAsync" />
                     </MudTabPanel>

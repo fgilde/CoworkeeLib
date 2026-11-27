@@ -3,6 +3,7 @@ using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Pages.Admin;
 using Coworkee.Contracts;
+using Coworkee.Contracts.DataFilters;
 using Coworkee.Contracts.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
@@ -18,10 +19,11 @@ public sealed class RolesPageTests : ClientTestBase
     private static readonly RoleDto Admin = new(Guid.CreateVersion7(), "admin", "Full access", true);
     private static readonly UserDto Bob = new(Guid.CreateVersion7(), "bob@acme.test", "bob@acme.test", "Bob", "Clerk", true, []);
     private readonly IRenderedComponent<MudDialogProvider> _dialogs;
+    private readonly FakeODataClient _odata = new();
 
     public RolesPageTests()
     {
-        Services.AddSingleton<IODataClient>(new FakeODataClient().With("Roles", Clerks, Office, Admin));
+        Services.AddSingleton<IODataClient>(_odata.With("Roles", Clerks, Office, Admin));
         Api.GetRolesAsync(Arg.Any<CancellationToken>()).Returns([Clerks, Office, Admin]);
         AddAuthorization().SetAuthorized("Ada").SetPolicies(Security.PermissionPolicy.For(IdentityPermissions.Roles.View),
             Security.PermissionPolicy.For(IdentityPermissions.Roles.Manage), Security.PermissionPolicy.For(IdentityPermissions.Users.Manage));
@@ -52,6 +54,56 @@ public sealed class RolesPageTests : ClientTestBase
         await Api.Received(1).TransferRoleUsersAsync(Clerks.Id,
             Arg.Is<TransferRoleUsersRequest>(r => r.Move && r.TargetRoleIds.SequenceEqual(new[] { Office.Id }) && r.UserIds!.SequenceEqual(new[] { Bob.Id })), Arg.Any<CancellationToken>());
         await Api.Received().GetRoleUsersAsync(Clerks.Id, Arg.Is<PageRequest>(p => p.Search == "bo"), Arg.Any<CancellationToken>());
+    }
+
+    private void Filtered(params Guid[] roles) =>
+        Api.GetDataFiltersAsync(Arg.Any<string?>(), DataFilterLayer.Role, Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
+            .Returns([.. roles.Select(r => new DataFilterDto(Guid.CreateVersion7(), "Gadgets", DataFilterLayer.Role, r, "{}", true, true, null))]);
+
+    [Fact]
+    public void A_role_with_data_filters_shows_the_icon_and_the_chip_narrows_the_table()
+    {
+        Api.GetMyPermissionsAsync(Arg.Any<CancellationToken>()).Returns([DataFilterPermissions.ManageRoles]);
+        Filtered(Clerks.Id, Clerks.Id);
+        var queries = new List<string?>();
+        _odata.Queried += (_, q) => queries.Add(q.Filter);
+        var page = Render<Roles>();
+
+        page.WaitForElement("[data-testid='role-filters-Clerks']");
+        page.Find("[data-testid='role-filters-Clerks']").GetAttribute("href")!.ShouldEndWith($"/admin/roles/{Clerks.Id}?tab=data-filters");
+        page.Find("[data-testid='role-filters-Clerks']").ParentElement!.ParentElement!.TextContent.ShouldContain("2");
+        page.FindAll("[data-testid='role-filters-Office']").ShouldBeEmpty();
+
+        page.Find("[data-testid='chip-filtered']").Click();
+
+        page.WaitForAssertion(() => queries.ShouldContain(f => f != null && f.Contains($"Id in ({Clerks.Id})")));
+    }
+
+    [Fact]
+    public void Without_ManageRoles_no_icon_and_no_chip()
+    {
+        Filtered(Clerks.Id);
+        var page = Render<Roles>();
+
+        page.WaitForElement("[data-testid='role-users-Clerks']");
+
+        page.FindAll("[data-testid^='role-filters-']").ShouldBeEmpty();
+        page.FindAll("[data-testid='chip-filtered']").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Role_icons_update_on_the_data_filter_signal()
+    {
+        Api.GetMyPermissionsAsync(Arg.Any<CancellationToken>()).Returns([DataFilterPermissions.ManageRoles]);
+        Filtered();
+        var page = Render<Roles>();
+        page.WaitForElement("[data-testid='role-users-Clerks']");
+        page.FindAll("[data-testid^='role-filters-']").ShouldBeEmpty();
+        Filtered(Office.Id);
+
+        Services.GetRequiredService<FakeRealtimeConnection>().Push(DataFilterTopics.TenantChanged);
+
+        page.WaitForElement("[data-testid='role-filters-Office']");
     }
 
     [Fact]

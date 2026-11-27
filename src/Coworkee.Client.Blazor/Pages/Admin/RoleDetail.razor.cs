@@ -21,9 +21,18 @@ public partial class RoleDetail
     private RoleDto? _role;
     private bool _canManageDataFilters;
 
+    private int _tab;
+
+    /// <summary><c>data-filters</c> opens the Data filters tab.</summary>
+    [SupplyParameterFromQuery(Name = "tab")] public string? Tab { get; set; }
+
     [Parameter] public Guid Id { get; set; }
 
-    protected override async Task OnInitializedAsync() => _canManageDataFilters = await Permissions.HasAsync(Contracts.DataFilters.DataFilterPermissions.ManageRoles);
+    protected override async Task OnInitializedAsync()
+    {
+        _canManageDataFilters = await Permissions.HasAsync(Contracts.DataFilters.DataFilterPermissions.ManageRoles);
+        _tab = Tab == "data-filters" && _canManageDataFilters ? 1 : 0;
+    }
 
     protected override async Task OnParametersSetAsync() => _role = (await Api.GetRolesAsync()).FirstOrDefault(r => r.Id == Id);
 

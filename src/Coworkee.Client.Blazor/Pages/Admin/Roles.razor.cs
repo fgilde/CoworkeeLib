@@ -1,6 +1,7 @@
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Localization;
+using Coworkee.Contracts.DataFilters;
 using Coworkee.Contracts.Identity;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -11,6 +12,15 @@ public partial class Roles
 {
     private static readonly string[] SearchFields = [nameof(RoleDto.Name), nameof(RoleDto.Description)];
     private CoworkeeDataTable<RoleDto> _table = null!;
+
+    private Dictionary<Guid, int> _counts = [];
+    private bool _canManageDataFilters;
+    private bool _onlyFiltered;
+
+    // the table filter of the chip: only the roles that have data filters
+    private string? Filter => _onlyFiltered ? $"Id in ({string.Join(",", _counts.Keys.DefaultIfEmpty(Guid.Empty))})" : null;
+
+    [Inject] private Security.PermissionStore Permissions { get; set; } = null!;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
@@ -23,6 +33,24 @@ public partial class Roles
     [Inject] private Navigation.CoworkeePages Links { get; set; } = null!;
 
     [Inject] private NavigationManager Nav { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_canManageDataFilters = await Permissions.HasAsync(DataFilterPermissions.ManageRoles))
+        {
+            await LoadCountsAsync();
+        }
+    }
+
+    // one load of every role filter of the tenant, counted per role
+    private async Task LoadCountsAsync() => await Snackbar.RunAsync(async () =>
+        _counts = (await Api.GetDataFiltersAsync(layer: DataFilterLayer.Role)).Where(f => f.LayerKey is not null).GroupBy(f => f.LayerKey!.Value).ToDictionary(g => g.Key, g => g.Count()));
+
+    private Task FiltersChangedAsync() => InvokeAsync(async () =>
+    {
+        await LoadCountsAsync();
+        StateHasChanged();
+    });
 
     private async Task CreateAsync()
     {

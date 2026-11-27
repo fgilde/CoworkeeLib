@@ -8,6 +8,7 @@
 
 - Datenfilter: `POST /api/v1/data-filters/preview` zählt, wie viele Zeilen ein Filterentwurf durchlässt (`PreviewDataFilterRequest`, `DataFilterPreviewDto`, `ICoworkeeApi.PreviewDataFilterAsync`, Zeitlimit `CoworkeeODataOptions.DataFilterPreviewTimeout`), `GET /api/v1/data-filters/overview` listet pro Entity-Set die Filter der Ebene des Administrators und seine Verknüpfungen (`DataFilterOverviewDto`, `ICoworkeeApi.GetDataFilterOverviewAsync`), und `DataFilterScope.Off()` schaltet die Datenfilter für den aktuellen Ablauf aus.
 - Datenfilter: Der Filtereditor nennt, wen ein Filter nicht bindet (Inhaber von „Alle Zeilen sehen“), und zeigt eine Live-Vorschau „{passing} von {total} Zeilen, die Sie sehen, passieren diesen Filter“.
+- Gruppen und Rollen: Gruppenbaum und Rollentabelle zeigen bei jeder Gruppe oder Rolle mit Datenfiltern ein Filter-Symbol mit der Anzahl der Filter, ein Chip „Nur mit Datenfiltern“ grenzt auf diese ein (Gruppen als flache Liste mit Pfad), und `?tab=data-filters` öffnet den Reiter Datenfilter einer Gruppe oder Rolle.
 
 ### Behoben
 
