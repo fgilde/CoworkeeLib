@@ -31,7 +31,7 @@
 <MudDataGrid @ref="_grid" T="ClientEntityAdminSetDto" Items="_visible" Loading="_busy" Dense="true" Hover="true" Striped="true" Elevation="0" Outlined="true" data-testid="local-copies">
     <Columns>
         @* hidden: the grid opens and closes child rows only with a hierarchy column; the filter button in the actions column toggles them *@
-        <HierarchyColumn T="ClientEntityAdminSetDto" Hidden="true" />
+        <HierarchyColumn T="ClientEntityAdminSetDto" Hidden="true" InitiallyExpandedFunc="s => _open.Contains(s.EntitySet)" />
         <PropertyColumn Property="s => s.EntitySet" Title="@L["Entity set"]">
             <CellTemplate>
                 <MudText Typo="Typo.body2">@context.Item.EntitySet</MudText>
@@ -93,7 +93,7 @@
                 <MudTooltip Text="@L["Data filters"]">
                     <MudBadge Content="count" Visible="count > 0" Color="Color.Primary" Overlap="true" Origin="Origin.TopRight">
                         <MudIconButton Icon="@Icons.Material.Outlined.FilterAlt" Size="Size.Small" Color="@(count > 0 ? Color.Primary : Color.Default)" aria-label="@L["Data filters"]"
-                                       OnClick="() => _grid!.ToggleHierarchyVisibilityAsync(context.Item)" data-testid="@($"filter-{context.Item.EntitySet}")" />
+                                       OnClick="() => ToggleAsync(context.Item)" data-testid="@($"filter-{context.Item.EntitySet}")" />
                     </MudBadge>
                 </MudTooltip>
               }
@@ -111,7 +111,7 @@
         </MudStack>
     </ChildRowContent>
     <NoRecordsContent>
-        <MudText Class="mud-text-secondary pa-4">@L["No entity set can have a local copy: only OData sets with a Guid Id can."]</MudText>
+        <MudText Class="mud-text-secondary pa-4" data-testid="no-match">@(_sets.Count == 0 ? L["No entity set can have a local copy: only OData sets with a Guid Id can."] : L["No data type matches the search or filters."])</MudText>
     </NoRecordsContent>
 </MudDataGrid>
 
@@ -125,11 +125,31 @@
     // filters of the layer plus the link: what the badge counts
     private int Count(string set) => _states.TryGetValue(set, out var state) ? state.LayerFilters + (state.Linked ? 1 : 0) : 0;
 
-    // a list kept between renders: the grid drops its open child rows when Items is a new instance
-    private void Refresh() => _visible = [.. _sets.Where(s =>
-        (string.IsNullOrWhiteSpace(_search) || s.EntitySet.Contains(_search.Trim(), StringComparison.OrdinalIgnoreCase) || s.EntityType.Contains(_search.Trim(), StringComparison.OrdinalIgnoreCase))
-        && (!_onlyCopies || (s.Copy != ClientEntityCopy.Off && !_noCopy.Contains(s.EntitySet)))
-        && (!_onlyFiltered || Count(s.EntitySet) > 0))];
+    // a new Items instance makes the grid drop its open child rows: keep the instance while the rows are the same, and open again what the admin had open
+    private void Refresh()
+    {
+        var next = _sets.Where(s =>
+            (string.IsNullOrWhiteSpace(_search) || s.EntitySet.Contains(_search.Trim(), StringComparison.OrdinalIgnoreCase) || s.EntityType.Contains(_search.Trim(), StringComparison.OrdinalIgnoreCase))
+            && (!_onlyCopies || HasCopy(s))
+            && (!_onlyFiltered || Count(s.EntitySet) > 0)).ToList();
+        if (!_visible.SequenceEqual(next))
+        {
+            _visible = next;
+        }
+    }
+
+    // Copy null: the code marks the set and the clients choose memory or SQLite; Off: not mirrored (also every set the code does not mark)
+    private bool HasCopy(ClientEntityAdminSetDto set) => set.Copy != ClientEntityCopy.Off && !_noCopy.Contains(set.EntitySet);
+
+    private async Task ToggleAsync(ClientEntityAdminSetDto set)
+    {
+        if (!_open.Remove(set.EntitySet))
+        {
+            _open.Add(set.EntitySet);
+        }
+
+        await _grid!.ToggleHierarchyVisibilityAsync(set);
+    }
 
     private void Search(string? text)
     {

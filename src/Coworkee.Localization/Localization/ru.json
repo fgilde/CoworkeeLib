@@ -2393,5 +2393,6 @@
   "With data filters only": "Только с фильтрами данных",
   "Filter for all tenants": "Фильтр для всех арендаторов",
   "Filter for tenant {0}": "Фильтр для арендатора {0}",
-  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "По каждому набору сущностей: копию каких данных хранят браузеры и как они её синхронизируют, и какие строки видят арендаторы (фильтры данных). Изменения сразу доходят до каждого открытого клиента, без развёртывания."
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "По каждому набору сущностей: копию каких данных хранят браузеры и как они её синхронизируют, и какие строки видят арендаторы (фильтры данных). Изменения сразу доходят до каждого открытого клиента, без развёртывания.",
+  "No data type matches the search or filters.": "Ни один тип данных не соответствует поиску или фильтрам."
 }

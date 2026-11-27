@@ -2393,5 +2393,6 @@
   "With data filters only": "Hanya dengan filter data",
   "Filter for all tenants": "Filter untuk semua tenant",
   "Filter for tenant {0}": "Filter untuk tenant {0}",
-  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Per set entitas: data apa yang disalin browser dan bagaimana menyinkronkannya, serta baris mana yang dilihat tenant (filter data). Perubahan langsung sampai ke setiap klien yang terbuka, tanpa deployment."
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Per set entitas: data apa yang disalin browser dan bagaimana menyinkronkannya, serta baris mana yang dilihat tenant (filter data). Perubahan langsung sampai ke setiap klien yang terbuka, tanpa deployment.",
+  "No data type matches the search or filters.": "Tidak ada tipe data yang cocok dengan pencarian atau filter."
 }

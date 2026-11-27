@@ -2393,5 +2393,6 @@
   "With data filters only": "Само с филтри за данни",
   "Filter for all tenants": "Филтър за всички наематели",
   "Filter for tenant {0}": "Филтър за наемател {0}",
-  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "За всеки набор от обекти: от кои данни браузърите пазят копие и как я синхронизират, и кои редове виждат наемателите (филтри за данни). Промените стигат веднага до всеки отворен клиент, без внедряване."
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "За всеки набор от обекти: от кои данни браузърите пазят копие и как я синхронизират, и кои редове виждат наемателите (филтри за данни). Промените стигат веднага до всеки отворен клиент, без внедряване.",
+  "No data type matches the search or filters.": "Няма тип данни, който отговаря на търсенето или филтрите."
 }

@@ -2393,5 +2393,6 @@
   "With data filters only": "Solo con filtri dati",
   "Filter for all tenants": "Filtro per tutti i tenant",
   "Filter for tenant {0}": "Filtro per il tenant {0}",
-  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Per set di entità: di quali dati i browser conservano una copia e come la mantengono sincronizzata, e quali righe vedono i tenant (filtri dati). Le modifiche raggiungono subito tutti i client aperti, senza distribuzione."
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Per set di entità: di quali dati i browser conservano una copia e come la mantengono sincronizzata, e quali righe vedono i tenant (filtri dati). Le modifiche raggiungono subito tutti i client aperti, senza distribuzione.",
+  "No data type matches the search or filters.": "Nessun tipo di dati corrisponde alla ricerca o ai filtri."
 }

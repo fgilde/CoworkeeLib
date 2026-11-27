@@ -32,6 +32,7 @@ public partial class LocalCopies : IAsyncDisposable
     private IAsyncDisposable? _subscription;
     private bool _realtime;
     private IReadOnlyList<ClientEntityAdminSetDto> _visible = [];
+    private readonly HashSet<string> _open = new(StringComparer.OrdinalIgnoreCase);
     private string? _search;
     private bool _onlyCopies;
     private bool _onlyFiltered;

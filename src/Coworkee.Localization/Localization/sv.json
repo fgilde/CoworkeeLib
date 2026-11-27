@@ -2393,5 +2393,6 @@
   "With data filters only": "Endast med datafilter",
   "Filter for all tenants": "Filter för alla hyresgäster",
   "Filter for tenant {0}": "Filter för hyresgästen {0}",
-  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Per entitetsuppsättning: vilka data webbläsarna håller en kopia av och hur de synkroniserar den, och vilka rader hyresgäster ser (datafilter). Ändringar når alla öppna klienter direkt, utan driftsättning."
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Per entitetsuppsättning: vilka data webbläsarna håller en kopia av och hur de synkroniserar den, och vilka rader hyresgäster ser (datafilter). Ändringar når alla öppna klienter direkt, utan driftsättning.",
+  "No data type matches the search or filters.": "Ingen datatyp matchar sökningen eller filtren."
 }

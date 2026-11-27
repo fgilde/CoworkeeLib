@@ -274,6 +274,66 @@ public sealed class LocalCopiesTests : BunitContext
         page.WaitForAssertion(() => page.Find("[data-testid='filter-Orders']").Closest("td")!.QuerySelector(".mud-badge")!.TextContent.Trim().ShouldBe("3"));
     }
 
+    [Fact]
+    public async Task An_open_panel_stays_open_when_the_overview_reloads()
+    {
+        Overview(DataFilterLayer.Tenant, "Acme");
+        var page = Render<LocalCopies>();
+        await page.WaitForElement("[data-testid='filter-Orders']").ClickAsync(new());
+        page.WaitForElement("[data-testid='filters-Orders']");
+        _api.GetDataFilterOverviewAsync(default).ReturnsForAnyArgs(new DataFilterOverviewDto(DataFilterLayer.Tenant, "Acme", [new DataFilterSetStateDto("Orders", 3, false)]));
+
+        _connection.Raise(DataFilterTopics.TenantChanged);
+
+        page.WaitForAssertion(() => page.Find("[data-testid='filter-Orders']").Closest("td")!.QuerySelector(".mud-badge")!.TextContent.Trim().ShouldBe("3"));
+        page.FindAll("[data-testid='filters-Orders']").Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task An_open_panel_stays_open_while_the_search_still_matches_and_after_a_reload_of_the_sets()
+    {
+        Overview(DataFilterLayer.Tenant, "Acme");
+        var page = Render<LocalCopies>();
+        await page.WaitForElement("[data-testid='filter-Orders']").ClickAsync(new());
+        page.WaitForElement("[data-testid='filters-Orders']");
+
+        page.Find("[data-testid='sets-search']").Input("o");
+        page.WaitForAssertion(() => Names(page).ShouldBe(["copy-Orders", "no-copy-Tools"]));
+        page.Find("[data-testid='sets-search']").Input("ord");
+        page.WaitForAssertion(() => Names(page).ShouldBe(["copy-Orders"]));
+        page.FindAll("[data-testid='filters-Orders']").Count.ShouldBe(1);
+
+        _connection.Raise(ClientEntityTopics.Changed);
+        await Task.Delay(ClientEntities.SettingsDelay + TimeSpan.FromMilliseconds(300), Xunit.TestContext.Current.CancellationToken);
+        page.FindAll("[data-testid='filters-Orders']").Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Local_copies_only_keeps_sets_with_an_automatic_copy_and_drops_server_only_ones()
+    {
+        // Copy null: the code marks the set and the clients choose memory or SQLite themselves; Off: not mirrored
+        Overview(DataFilterLayer.Tenant, "Acme");
+        var page = Render<LocalCopies>();
+        page.WaitForAssertion(() => Names(page).Count().ShouldBe(3));
+
+        await page.Find("[data-testid='chip-copies']").ClickAsync(new());
+
+        page.WaitForAssertion(() => Names(page).ShouldBe(["copy-Gadgets", "copy-Orders"]));
+    }
+
+    [Fact]
+    public async Task Nothing_matching_says_so_instead_of_claiming_no_set_can_have_a_copy()
+    {
+        Overview(DataFilterLayer.Tenant, "Acme");
+        var page = Render<LocalCopies>();
+        page.WaitForAssertion(() => Names(page).Count().ShouldBe(3));
+
+        page.Find("[data-testid='sets-search']").Input("zzz");
+
+        page.WaitForAssertion(() => page.Find("[data-testid='local-copies']").TextContent.ShouldContain("No data type matches the search or filters."));
+        page.Find("[data-testid='local-copies']").TextContent.ShouldNotContain("No entity set can have a local copy");
+    }
+
     /// <summary>A hub connection the test can send signals through.</summary>
     private sealed class Connection : IRealtimeConnection
     {

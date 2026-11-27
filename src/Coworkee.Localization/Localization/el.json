@@ -2393,5 +2393,6 @@
   "With data filters only": "Μόνο με φίλτρα δεδομένων",
   "Filter for all tenants": "Φίλτρο για όλους τους ενοικιαστές",
   "Filter for tenant {0}": "Φίλτρο για τον ενοικιαστή {0}",
-  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Ανά σύνολο οντοτήτων: από ποια δεδομένα κρατούν αντίγραφο τα προγράμματα περιήγησης και πώς το συγχρονίζουν, και ποιες γραμμές βλέπουν οι ενοικιαστές (φίλτρα δεδομένων). Οι αλλαγές φτάνουν αμέσως σε κάθε ανοιχτό πελάτη, χωρίς ανάπτυξη."
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Ανά σύνολο οντοτήτων: από ποια δεδομένα κρατούν αντίγραφο τα προγράμματα περιήγησης και πώς το συγχρονίζουν, και ποιες γραμμές βλέπουν οι ενοικιαστές (φίλτρα δεδομένων). Οι αλλαγές φτάνουν αμέσως σε κάθε ανοιχτό πελάτη, χωρίς ανάπτυξη.",
+  "No data type matches the search or filters.": "Κανένας τύπος δεδομένων δεν ταιριάζει με την αναζήτηση ή τα φίλτρα."
 }

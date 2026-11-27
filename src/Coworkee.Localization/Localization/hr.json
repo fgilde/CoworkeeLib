@@ -2393,5 +2393,6 @@
   "With data filters only": "Samo s filtrima podataka",
   "Filter for all tenants": "Filtar za sve zakupce",
   "Filter for tenant {0}": "Filtar za zakupca {0}",
-  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Po skupu entiteta: čiju kopiju podataka preglednici čuvaju i kako je sinkroniziraju te koje retke zakupci vide (filtri podataka). Promjene odmah stižu do svakog otvorenog klijenta, bez postavljanja."
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Po skupu entiteta: čiju kopiju podataka preglednici čuvaju i kako je sinkroniziraju te koje retke zakupci vide (filtri podataka). Promjene odmah stižu do svakog otvorenog klijenta, bez postavljanja.",
+  "No data type matches the search or filters.": "Nijedna vrsta podataka ne odgovara pretrazi ili filtrima."
 }

@@ -2393,5 +2393,6 @@
   "With data filters only": "តែមានតម្រងទិន្នន័យប៉ុណ្ណោះ",
   "Filter for all tenants": "តម្រងសម្រាប់អ្នកជួលទាំងអស់",
   "Filter for tenant {0}": "តម្រងសម្រាប់អ្នកជួល {0}",
-  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "ក្នុងមួយសំណុំអង្គភាព៖ កម្មវិធីរុករកទុកច្បាប់ចម្លងនៃទិន្នន័យអ្វី និងធ្វើសមកាលកម្មយ៉ាងដូចម្តេច ហើយអ្នកជួលឃើញជួរដេកអ្វី (តម្រងទិន្នន័យ)។ ការផ្លាស់ប្តូរទៅដល់ម៉ាស៊ីនភ្ញៀវដែលបើកទាំងអស់ភ្លាមៗ ដោយមិនចាំបាច់ដាក់ពង្រាយ។"
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "ក្នុងមួយសំណុំអង្គភាព៖ កម្មវិធីរុករកទុកច្បាប់ចម្លងនៃទិន្នន័យអ្វី និងធ្វើសមកាលកម្មយ៉ាងដូចម្តេច ហើយអ្នកជួលឃើញជួរដេកអ្វី (តម្រងទិន្នន័យ)។ ការផ្លាស់ប្តូរទៅដល់ម៉ាស៊ីនភ្ញៀវដែលបើកទាំងអស់ភ្លាមៗ ដោយមិនចាំបាច់ដាក់ពង្រាយ។",
+  "No data type matches the search or filters.": "គ្មានប្រភេទទិន្នន័យណាត្រូវនឹងការស្វែងរក ឬតម្រងទេ។"
 }
