@@ -2387,5 +2387,11 @@
   "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Не діє для власників права «Бачити всі рядки» в системному тенанті (його адміністраторів)",
   "Not applied to holders of 'See all rows' (the tenant's admins)": "Не діє для власників права «Бачити всі рядки» (адміністраторів тенанта)",
   "Preview not available: counting took too long.": "Попередній перегляд недоступний: підрахунок тривав надто довго.",
-  "{0} of {1} rows you can see pass this filter": "{0} із {1} видимих вам рядків проходять цей фільтр"
+  "{0} of {1} rows you can see pass this filter": "{0} із {1} видимих вам рядків проходять цей фільтр",
+  "Search entity sets": "Пошук наборів сутностей",
+  "Local copies only": "Лише локальні копії",
+  "With data filters only": "Лише з фільтрами даних",
+  "Filter for all tenants": "Фільтр для всіх орендарів",
+  "Filter for tenant {0}": "Фільтр для орендаря {0}",
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Для кожного набору сутностей: копію яких даних зберігають браузери та як вони її синхронізують, і які рядки бачать орендарі (фільтри даних). Зміни одразу доходять до кожного відкритого клієнта, без розгортання."
 }

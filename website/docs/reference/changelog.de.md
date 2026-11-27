@@ -17,6 +17,7 @@
 ### Geändert
 
 - Nextended 10.1.71, MudBlazor.Extensions 9.14.0 und MudBlazor 9.14.0.
+- Die Seite Datentypen: ein Suchfeld und zwei Schnellfilter („Nur lokale Kopien“, „Nur mit Datenfiltern“), ein Aktionsmuster pro Zeile (Stift, Zurücksetzen, dann ein Filter-Symbol, das die Filter der Zeile öffnet und mit einer Marke zeigt, wie viele Filter und Verknüpfungen das Set hat) und eine Filterebene pro Administrator: der Systemmandant bearbeitet die Systemebene und die Verknüpfungen („Filter für alle Mandanten“), jeder andere Mandant seine eigene („Filter für Mandant {Name}“). Gruppenfilter bleiben auf der Gruppenseite.
 - Das Ablegen einer Spaltenüberschrift auf der Gruppierungszeile der Datentabelle funktioniert mit MudBlazor 9.14 wieder; MudBlazor meldet Ablagen außerhalb der eigenen Spalten nicht mehr an das Grid, die Zeile hört deshalb direkt auf den Drop-Container.
 
 ## 0.1.7 (2026-11-26)

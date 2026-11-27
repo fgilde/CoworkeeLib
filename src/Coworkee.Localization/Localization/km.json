@@ -2387,5 +2387,11 @@
   "Not applied to holders of 'See all rows' in the system tenant (its admins)": "មិនអនុវត្តចំពោះអ្នកកាន់ «មើលជួរទាំងអស់» ក្នុងអ្នកជួលប្រព័ន្ធ (អ្នកគ្រប់គ្រងរបស់វា)",
   "Not applied to holders of 'See all rows' (the tenant's admins)": "មិនអនុវត្តចំពោះអ្នកកាន់ «មើលជួរទាំងអស់» (អ្នកគ្រប់គ្រងរបស់អ្នកជួល)",
   "Preview not available: counting took too long.": "មិនអាចមើលជាមុនបានទេ៖ ការរាប់ចំណាយពេលយូរពេក។",
-  "{0} of {1} rows you can see pass this filter": "{0} ក្នុងចំណោម {1} ជួរដែលអ្នកអាចមើលឃើញ ឆ្លងកាត់តម្រងនេះ"
+  "{0} of {1} rows you can see pass this filter": "{0} ក្នុងចំណោម {1} ជួរដែលអ្នកអាចមើលឃើញ ឆ្លងកាត់តម្រងនេះ",
+  "Search entity sets": "ស្វែងរកសំណុំអង្គភាព",
+  "Local copies only": "តែច្បាប់ចម្លងក្នុងម៉ាស៊ីនប៉ុណ្ណោះ",
+  "With data filters only": "តែមានតម្រងទិន្នន័យប៉ុណ្ណោះ",
+  "Filter for all tenants": "តម្រងសម្រាប់អ្នកជួលទាំងអស់",
+  "Filter for tenant {0}": "តម្រងសម្រាប់អ្នកជួល {0}",
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "ក្នុងមួយសំណុំអង្គភាព៖ កម្មវិធីរុករកទុកច្បាប់ចម្លងនៃទិន្នន័យអ្វី និងធ្វើសមកាលកម្មយ៉ាងដូចម្តេច ហើយអ្នកជួលឃើញជួរដេកអ្វី (តម្រងទិន្នន័យ)។ ការផ្លាស់ប្តូរទៅដល់ម៉ាស៊ីនភ្ញៀវដែលបើកទាំងអស់ភ្លាមៗ ដោយមិនចាំបាច់ដាក់ពង្រាយ។"
 }

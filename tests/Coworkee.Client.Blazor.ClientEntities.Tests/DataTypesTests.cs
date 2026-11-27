@@ -14,7 +14,7 @@ using NSubstitute;
 
 namespace Coworkee.Client.Blazor.ClientEntities.Tests;
 
-// the Data types page (the former Local copies page): per set the copy settings and, behind the row, the System and Tenant filters and the link to another set
+// the Data types page (the former Local copies page): per set the copy settings and, behind the row, the filters of the administrator's layer and the link to another set
 public sealed class DataTypesTests : BunitContext
 {
     private readonly FakeServer _server = new();
@@ -49,46 +49,48 @@ public sealed class DataTypesTests : BunitContext
         _api.GetDataFiltersAsync("Gadgets", DataFilterLayer.System, null, default).ReturnsForAnyArgs([system]);
         _api.GetDataFiltersAsync("Gadgets", DataFilterLayer.Tenant, null, default).Returns([]);
         _api.GetDataFilterLinksAsync(default).ReturnsForAnyArgs([new DataFilterLinkDto(Guid.NewGuid(), "Gadgets", "WidgetId", "Widgets")]);
+        _api.GetDataFilterOverviewAsync(default).ReturnsForAnyArgs(new DataFilterOverviewDto(DataFilterLayer.System, null, [new DataFilterSetStateDto("Gadgets", 1, true)]));
         Render<MudPopoverProvider>();
     }
 
     [Fact]
-    public async Task The_data_types_page_shows_copy_settings_and_system_and_tenant_filters()
+    public async Task The_system_tenant_sees_copy_settings_and_the_system_filters_and_link()
     {
         var page = Render<LocalCopies>();
         page.WaitForElement("[data-testid='copy-Gadgets']").GetAttribute("data-copy").ShouldBe("Memory");
         page.Markup.ShouldContain("Data types");
 
-        await page.FindAll("tbody tr")[0].QuerySelector("button")!.ClickAsync(new());
+        await page.Find("[data-testid='filter-Gadgets']").ClickAsync(new());
 
         var filters = page.WaitForElement("[data-testid='filters-Gadgets']");
-        page.WaitForAssertion(() => filters.QuerySelectorAll("[data-testid='data-filter-editor']").Select(e => e.GetAttribute("data-layer")).ShouldBe(["System", "Tenant"]));
+        page.WaitForAssertion(() => filters.QuerySelectorAll("[data-testid='data-filter-editor']").Select(e => e.GetAttribute("data-layer")).ShouldBe(["System"]));
         filters.QuerySelector("[data-testid='data-filter-link'] [data-testid='link-text']")!.TextContent.ShouldBe("Same data as Widgets via WidgetId");
     }
 
     [Fact]
-    public async Task A_set_without_a_local_copy_still_has_its_system_and_tenant_filters()
+    public async Task A_set_without_a_local_copy_still_has_its_system_filters()
     {
         var page = Render<LocalCopies>();
         page.WaitForElement("[data-testid='no-copy-Widgets']").TextContent.ShouldContain("Not available for local copies");
 
-        await page.FindAll("tbody tr")[1].QuerySelector("button")!.ClickAsync(new());
+        await page.Find("[data-testid='filter-Widgets']").ClickAsync(new());
 
         var filters = page.WaitForElement("[data-testid='filters-Widgets']");
-        page.WaitForAssertion(() => filters.QuerySelectorAll("[data-testid='data-filter-editor']").Select(e => e.GetAttribute("data-set") + ":" + e.GetAttribute("data-layer")).ShouldBe(["Widgets:System", "Widgets:Tenant"]));
+        page.WaitForAssertion(() => filters.QuerySelectorAll("[data-testid='data-filter-editor']").Select(e => e.GetAttribute("data-set") + ":" + e.GetAttribute("data-layer")).ShouldBe(["Widgets:System"]));
         page.FindAll("[data-testid='edit-Widgets']").ShouldBeEmpty();
     }
 
     [Fact]
-    public async Task With_only_the_tenant_permission_the_page_shows_only_the_tenant_editors()
+    public async Task With_only_the_tenant_permission_the_page_shows_only_the_tenant_layer()
     {
         _api.GetMyPermissionsAsync(default).ReturnsForAnyArgs([DataFilterPermissions.ManageTenant]);
+        _api.GetDataFilterOverviewAsync(default).ReturnsForAnyArgs(new DataFilterOverviewDto(DataFilterLayer.Tenant, "Acme", []));
         var page = Render<LocalCopies>();
         page.WaitForAssertion(() => page.FindAll("tbody tr").Count.ShouldBe(2));
 
         // no copy settings without Settings.Manage
         page.FindAll("[data-testid^='copy-'], [data-testid^='no-copy-'], [data-testid^='edit-']").ShouldBeEmpty();
-        await page.FindAll("tbody tr")[0].QuerySelector("button")!.ClickAsync(new());
+        await page.Find("[data-testid='filter-Gadgets']").ClickAsync(new());
 
         var filters = page.WaitForElement("[data-testid='filters-Gadgets']");
         page.WaitForAssertion(() => filters.QuerySelectorAll("[data-testid='data-filter-editor']").Select(e => e.GetAttribute("data-layer")).ShouldBe(["Tenant"]));

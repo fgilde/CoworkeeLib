@@ -2387,5 +2387,11 @@
   "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Не се прилага за притежателите на „Вижда всички редове“ в системния тенант (неговите администратори)",
   "Not applied to holders of 'See all rows' (the tenant's admins)": "Не се прилага за притежателите на „Вижда всички редове“ (администраторите на тенанта)",
   "Preview not available: counting took too long.": "Прегледът не е наличен: преброяването отне твърде дълго.",
-  "{0} of {1} rows you can see pass this filter": "{0} от {1} реда, които виждате, преминават през този филтър"
+  "{0} of {1} rows you can see pass this filter": "{0} от {1} реда, които виждате, преминават през този филтър",
+  "Search entity sets": "Търсене на набори от обекти",
+  "Local copies only": "Само локални копия",
+  "With data filters only": "Само с филтри за данни",
+  "Filter for all tenants": "Филтър за всички наематели",
+  "Filter for tenant {0}": "Филтър за наемател {0}",
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "За всеки набор от обекти: от кои данни браузърите пазят копие и как я синхронизират, и кои редове виждат наемателите (филтри за данни). Промените стигат веднага до всеки отворен клиент, без внедряване."
 }

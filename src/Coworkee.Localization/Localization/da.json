@@ -2387,5 +2387,11 @@
   "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Gælder ikke for indehavere af 'Se alle rækker' i systemtenanten (dens administratorer)",
   "Not applied to holders of 'See all rows' (the tenant's admins)": "Gælder ikke for indehavere af 'Se alle rækker' (tenantens administratorer)",
   "Preview not available: counting took too long.": "Forhåndsvisning ikke tilgængelig: Optællingen tog for lang tid.",
-  "{0} of {1} rows you can see pass this filter": "{0} af {1} rækker, du kan se, består dette filter"
+  "{0} of {1} rows you can see pass this filter": "{0} af {1} rækker, du kan se, består dette filter",
+  "Search entity sets": "Søg i entitetssæt",
+  "Local copies only": "Kun lokale kopier",
+  "With data filters only": "Kun med datafiltre",
+  "Filter for all tenants": "Filter for alle lejere",
+  "Filter for tenant {0}": "Filter for lejer {0}",
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Pr. entitetssæt: hvilke data browserne beholder en kopi af, og hvordan de holder den synkroniseret, og hvilke rækker lejere ser (datafiltre). Ændringer når alle åbne klienter med det samme, uden udrulning."
 }

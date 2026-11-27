@@ -2387,5 +2387,11 @@
   "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Nie dotyczy posiadaczy uprawnienia „Zobacz wszystkie wiersze” w tenancie systemowym (jego administratorów)",
   "Not applied to holders of 'See all rows' (the tenant's admins)": "Nie dotyczy posiadaczy uprawnienia „Zobacz wszystkie wiersze” (administratorów tenanta)",
   "Preview not available: counting took too long.": "Podgląd niedostępny: liczenie trwało zbyt długo.",
-  "{0} of {1} rows you can see pass this filter": "{0} z {1} wierszy, które widzisz, spełnia ten filtr"
+  "{0} of {1} rows you can see pass this filter": "{0} z {1} wierszy, które widzisz, spełnia ten filtr",
+  "Search entity sets": "Szukaj zestawów encji",
+  "Local copies only": "Tylko kopie lokalne",
+  "With data filters only": "Tylko z filtrami danych",
+  "Filter for all tenants": "Filtr dla wszystkich dzierżawców",
+  "Filter for tenant {0}": "Filtr dla dzierżawcy {0}",
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Dla każdego zestawu encji: z jakich danych przeglądarki trzymają kopię i jak ją synchronizują oraz jakie wiersze widzą dzierżawcy (filtry danych). Zmiany trafiają do każdego otwartego klienta od razu, bez wdrożenia."
 }

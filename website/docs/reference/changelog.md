@@ -17,6 +17,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 ### Changed
 
 - Nextended 10.1.71, MudBlazor.Extensions 9.14.0 and MudBlazor 9.14.0.
+- The Data types page: a search field and two quick filters ("Local copies only", "With data filters only"), one action pattern per row (pencil, reset, then a filter icon that opens the filters of the row and shows with a badge how many filters and links the set has), and one filter layer per administrator: the system tenant edits the System layer and the links ("Filter for all tenants"), every other tenant its own ("Filter for tenant {name}"). Group filters stay on the group page.
 - Dropping a column header on the grouping row of the data table works again with MudBlazor 9.14, which no longer reports drops outside its own columns to the grid; the row listens to the drop container itself.
 
 ## 0.1.7 (2026-11-26)

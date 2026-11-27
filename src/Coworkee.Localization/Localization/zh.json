@@ -2387,5 +2387,11 @@
   "Not applied to holders of 'See all rows' in the system tenant (its admins)": "不适用于系统租户中拥有“查看所有行”权限的人(其管理员)",
   "Not applied to holders of 'See all rows' (the tenant's admins)": "不适用于拥有“查看所有行”权限的人(租户的管理员)",
   "Preview not available: counting took too long.": "预览不可用:计数耗时过长。",
-  "{0} of {1} rows you can see pass this filter": "您可见的 {1} 行中有 {0} 行通过此筛选"
+  "{0} of {1} rows you can see pass this filter": "您可见的 {1} 行中有 {0} 行通过此筛选",
+  "Search entity sets": "搜索实体集",
+  "Local copies only": "仅本地副本",
+  "With data filters only": "仅含数据筛选器",
+  "Filter for all tenants": "适用于所有租户的筛选器",
+  "Filter for tenant {0}": "租户 {0} 的筛选器",
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "按实体集设置:浏览器保留哪些数据的副本以及如何同步,以及租户能看到哪些行(数据筛选器)。更改无需部署,立即到达所有已打开的客户端。"
 }

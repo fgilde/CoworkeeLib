@@ -2387,5 +2387,11 @@
   "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Ne primjenjuje se na nositelje ovlasti „Vidi sve retke“ u sistemskom tenantu (njegove administratore)",
   "Not applied to holders of 'See all rows' (the tenant's admins)": "Ne primjenjuje se na nositelje ovlasti „Vidi sve retke“ (administratore tenanta)",
   "Preview not available: counting took too long.": "Pregled nije dostupan: brojanje je predugo trajalo.",
-  "{0} of {1} rows you can see pass this filter": "{0} od {1} redaka koje vidite zadovoljava ovaj filtar"
+  "{0} of {1} rows you can see pass this filter": "{0} od {1} redaka koje vidite zadovoljava ovaj filtar",
+  "Search entity sets": "Traži skupove entiteta",
+  "Local copies only": "Samo lokalne kopije",
+  "With data filters only": "Samo s filtrima podataka",
+  "Filter for all tenants": "Filtar za sve zakupce",
+  "Filter for tenant {0}": "Filtar za zakupca {0}",
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Po skupu entiteta: čiju kopiju podataka preglednici čuvaju i kako je sinkroniziraju te koje retke zakupci vide (filtri podataka). Promjene odmah stižu do svakog otvorenog klijenta, bez postavljanja."
 }

@@ -2387,5 +2387,11 @@
   "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Tidak berlaku bagi pemegang 'Lihat semua baris' di tenant sistem (administratornya)",
   "Not applied to holders of 'See all rows' (the tenant's admins)": "Tidak berlaku bagi pemegang 'Lihat semua baris' (administrator tenant)",
   "Preview not available: counting took too long.": "Pratinjau tidak tersedia: penghitungan memakan waktu terlalu lama.",
-  "{0} of {1} rows you can see pass this filter": "{0} dari {1} baris yang dapat Anda lihat lolos filter ini"
+  "{0} of {1} rows you can see pass this filter": "{0} dari {1} baris yang dapat Anda lihat lolos filter ini",
+  "Search entity sets": "Cari set entitas",
+  "Local copies only": "Hanya salinan lokal",
+  "With data filters only": "Hanya dengan filter data",
+  "Filter for all tenants": "Filter untuk semua tenant",
+  "Filter for tenant {0}": "Filter untuk tenant {0}",
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Per set entitas: data apa yang disalin browser dan bagaimana menyinkronkannya, serta baris mana yang dilihat tenant (filter data). Perubahan langsung sampai ke setiap klien yang terbuka, tanpa deployment."
 }

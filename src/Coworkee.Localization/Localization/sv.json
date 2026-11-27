@@ -2387,5 +2387,11 @@
   "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Gäller inte innehavare av 'Se alla rader' i systemtenanten (dess administratörer)",
   "Not applied to holders of 'See all rows' (the tenant's admins)": "Gäller inte innehavare av 'Se alla rader' (tenantens administratörer)",
   "Preview not available: counting took too long.": "Förhandsgranskning inte tillgänglig: räkningen tog för lång tid.",
-  "{0} of {1} rows you can see pass this filter": "{0} av {1} rader som du kan se klarar detta filter"
+  "{0} of {1} rows you can see pass this filter": "{0} av {1} rader som du kan se klarar detta filter",
+  "Search entity sets": "Sök entitetsuppsättningar",
+  "Local copies only": "Endast lokala kopior",
+  "With data filters only": "Endast med datafilter",
+  "Filter for all tenants": "Filter för alla hyresgäster",
+  "Filter for tenant {0}": "Filter för hyresgästen {0}",
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Per entitetsuppsättning: vilka data webbläsarna håller en kopia av och hur de synkroniserar den, och vilka rader hyresgäster ser (datafilter). Ändringar når alla öppna klienter direkt, utan driftsättning."
 }

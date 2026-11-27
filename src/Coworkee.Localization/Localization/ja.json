@@ -2387,5 +2387,11 @@
   "Not applied to holders of 'See all rows' in the system tenant (its admins)": "システムテナントの「すべての行を表示」の保持者(その管理者)には適用されません",
   "Not applied to holders of 'See all rows' (the tenant's admins)": "「すべての行を表示」の保持者(テナントの管理者)には適用されません",
   "Preview not available: counting took too long.": "プレビューを利用できません: 集計に時間がかかりすぎました。",
-  "{0} of {1} rows you can see pass this filter": "表示可能な {1} 行のうち {0} 行がこのフィルターを通過します"
+  "{0} of {1} rows you can see pass this filter": "表示可能な {1} 行のうち {0} 行がこのフィルターを通過します",
+  "Search entity sets": "エンティティセットを検索",
+  "Local copies only": "ローカルコピーのみ",
+  "With data filters only": "データフィルターありのみ",
+  "Filter for all tenants": "全テナント向けフィルター",
+  "Filter for tenant {0}": "テナント {0} 向けフィルター",
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "エンティティセットごとに、ブラウザーがどのデータのコピーを保持し、どのように同期するか、またテナントにどの行が見えるか(データフィルター)を設定します。変更はデプロイなしで、開いているすべてのクライアントにすぐ反映されます。"
 }

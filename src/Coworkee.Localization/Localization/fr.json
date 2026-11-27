@@ -2387,5 +2387,11 @@
   "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Ne s'applique pas aux titulaires de « Voir toutes les lignes » dans le tenant système (ses administrateurs)",
   "Not applied to holders of 'See all rows' (the tenant's admins)": "Ne s'applique pas aux titulaires de « Voir toutes les lignes » (les administrateurs du tenant)",
   "Preview not available: counting took too long.": "Aperçu indisponible : le comptage a pris trop de temps.",
-  "{0} of {1} rows you can see pass this filter": "{0} lignes sur {1} que vous pouvez voir passent ce filtre"
+  "{0} of {1} rows you can see pass this filter": "{0} lignes sur {1} que vous pouvez voir passent ce filtre",
+  "Search entity sets": "Rechercher des ensembles d'entités",
+  "Local copies only": "Copies locales uniquement",
+  "With data filters only": "Avec filtres de données uniquement",
+  "Filter for all tenants": "Filtre pour tous les locataires",
+  "Filter for tenant {0}": "Filtre pour le locataire {0}",
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Par ensemble d'entités : de quelles données les navigateurs gardent une copie et comment ils la synchronisent, et quelles lignes les locataires voient (filtres de données). Les modifications atteignent immédiatement tous les clients ouverts, sans déploiement."
 }

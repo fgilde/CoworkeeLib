@@ -30,6 +30,13 @@ public partial class LocalCopies : IAsyncDisposable
     private HashSet<string> _noCopy = [];
     private bool _sqlite;
     private IAsyncDisposable? _subscription;
+    private bool _realtime;
+    private IReadOnlyList<ClientEntityAdminSetDto> _visible = [];
+    private string? _search;
+    private bool _onlyCopies;
+    private bool _onlyFiltered;
+    private DataFilterOverviewDto? _overview;
+    private Dictionary<string, DataFilterSetStateDto> _states = new(StringComparer.OrdinalIgnoreCase);
 
     [Inject] private ClientEntityApi Sets { get; set; } = null!;
 
@@ -56,6 +63,7 @@ public partial class LocalCopies : IAsyncDisposable
         // a change of another administrator shows at once
         if (Services.GetService<RealtimeClient>() is { } realtime)
         {
+            _realtime = true;
             _subscription = await realtime.SubscribeAsync(ClientEntityTopics.Changed, _ => InvokeAsync(async () =>
             {
                 await Task.Delay(ClientEntities.SettingsDelay);
@@ -84,14 +92,32 @@ public partial class LocalCopies : IAsyncDisposable
                 IReadOnlyList<ClientEntityAdminSetDto> copies = _canCopy ? await Sets.AdminAsync(CancellationToken.None) : [];
                 var names = _canFilter ? await Api.GetDataFilterSetsAsync() : [];
                 _noCopy = [.. names.Except(copies.Select(s => s.EntitySet), StringComparer.OrdinalIgnoreCase)];
+                await LoadOverviewAsync();
                 _sets = [.. copies.Concat(_noCopy.Select(NoCopy)).OrderBy(s => s.EntitySet, StringComparer.OrdinalIgnoreCase)];
             });
         }
         finally
         {
             _busy = false;
+            Refresh();
         }
     }
+
+    private async Task LoadOverviewAsync()
+    {
+        if (_canFilter)
+        {
+            _overview = await Api.GetDataFilterOverviewAsync();
+            _states = new(_overview?.Sets.ToDictionary(s => s.EntitySet, StringComparer.OrdinalIgnoreCase) ?? [], StringComparer.OrdinalIgnoreCase);
+        }
+    }
+
+    private Task ReloadOverviewAsync() => InvokeAsync(async () =>
+    {
+        await Snackbar.RunAsync(LoadOverviewAsync);
+        Refresh();
+        StateHasChanged();
+    });
 
     private static ClientEntityAdminSetDto NoCopy(string entitySet) =>
         new(entitySet, string.Empty, null, 0, 0, 0, TimeSpan.Zero, ClientEntityDefaultMode.Client, new Dictionary<string, ClientEntitySettingSource>(), null);

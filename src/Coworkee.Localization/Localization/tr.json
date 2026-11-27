@@ -2387,5 +2387,11 @@
   "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Sistem kiracısındaki 'Tüm satırları gör' sahiplerine (yöneticilerine) uygulanmaz",
   "Not applied to holders of 'See all rows' (the tenant's admins)": "'Tüm satırları gör' sahiplerine (kiracının yöneticilerine) uygulanmaz",
   "Preview not available: counting took too long.": "Önizleme kullanılamıyor: sayım çok uzun sürdü.",
-  "{0} of {1} rows you can see pass this filter": "Görebildiğiniz {1} satırdan {0} tanesi bu filtreden geçiyor"
+  "{0} of {1} rows you can see pass this filter": "Görebildiğiniz {1} satırdan {0} tanesi bu filtreden geçiyor",
+  "Search entity sets": "Varlık kümelerinde ara",
+  "Local copies only": "Yalnızca yerel kopyalar",
+  "With data filters only": "Yalnızca veri filtresi olanlar",
+  "Filter for all tenants": "Tüm kiracılar için filtre",
+  "Filter for tenant {0}": "{0} kiracısı için filtre",
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Varlık kümesi başına: tarayıcıların hangi verilerin kopyasını tuttuğu ve bunu nasıl senkron tuttuğu ve kiracıların hangi satırları gördüğü (veri filtreleri). Değişiklikler dağıtım olmadan her açık istemciye anında ulaşır."
 }

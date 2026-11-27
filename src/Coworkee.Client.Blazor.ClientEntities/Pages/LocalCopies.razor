@@ -4,14 +4,34 @@
 @using Coworkee.Contracts.DataFilters
 @using Coworkee.Client.Blazor.Components.DataFilters
 
-<PageHeader Title="Data types" Description="Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows each organisation and user sees at all (data filters). Changes reach every open client at once, without a deployment." />
+<PageHeader Title="Data types" Description="Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment." />
+@if (_canFilter && _realtime)
+{
+    <RealtimeSubscription Topic="@DataFilterTopics.TenantChanged" OnEvent="_ => ReloadOverviewAsync()" />
+    <RealtimeSubscription Topic="@DataFilterTopics.Changed" OnEvent="_ => ReloadOverviewAsync()" />
+}
 @if (!_sqlite && _sets.Any(s => s.Copy == ClientEntityCopy.Sqlite))
 {
     <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-2" data-testid="sqlite-missing">@L["SQLite is not available in this app: sets set to SQLite stay in memory."]</MudAlert>
 }
-<MudDataGrid T="ClientEntityAdminSetDto" Items="_sets" Loading="_busy" Dense="true" Hover="true" Striped="true" Elevation="0" Outlined="true" data-testid="local-copies">
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-2" Wrap="Wrap.Wrap" data-testid="local-copies-toolbar">
+    <MudTextField T="string" Value="_search" ValueChanged="Search" Immediate="true" Placeholder="@L["Search entity sets"]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
+                  Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Style="max-width:320px" data-testid="sets-search" />
+    @if (_canCopy)
+    {
+        <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Outlined.Memory" Variant="@(_onlyCopies ? Variant.Filled : Variant.Outlined)" Color="@(_onlyCopies ? Color.Primary : Color.Default)"
+                 OnClick="() => { _onlyCopies = !_onlyCopies; Refresh(); }" data-testid="chip-copies">@L["Local copies only"]</MudChip>
+    }
+    @if (_canFilter)
+    {
+        <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Outlined.FilterAlt" Variant="@(_onlyFiltered ? Variant.Filled : Variant.Outlined)" Color="@(_onlyFiltered ? Color.Primary : Color.Default)"
+                 OnClick="() => { _onlyFiltered = !_onlyFiltered; Refresh(); }" data-testid="chip-filtered">@L["With data filters only"]</MudChip>
+    }
+</MudStack>
+<MudDataGrid @ref="_grid" T="ClientEntityAdminSetDto" Items="_visible" Loading="_busy" Dense="true" Hover="true" Striped="true" Elevation="0" Outlined="true" data-testid="local-copies">
     <Columns>
-        <HierarchyColumn T="ClientEntityAdminSetDto" Hidden="!_canFilter" ButtonDisabledFunc="_ => false" />
+        @* hidden: the grid opens and closes child rows only with a hierarchy column; the filter button in the actions column toggles them *@
+        <HierarchyColumn T="ClientEntityAdminSetDto" Hidden="true" />
         <PropertyColumn Property="s => s.EntitySet" Title="@L["Entity set"]">
             <CellTemplate>
                 <MudText Typo="Typo.body2">@context.Item.EntitySet</MudText>
@@ -54,15 +74,27 @@
         <TemplateColumn T="ClientEntityAdminSetDto" Title="@L["Default mode"]" Sortable="false" Hidden="!_canCopy">
             <CellTemplate>@Value(context.Item, nameof(ClientEntityAdminSetDto.DefaultMode), ModeText(context.Item.DefaultMode))</CellTemplate>
         </TemplateColumn>
-        <TemplateColumn T="ClientEntityAdminSetDto" Sortable="false" Hidden="!_canCopy" CellStyle="text-align:right;white-space:nowrap">
+        <TemplateColumn T="ClientEntityAdminSetDto" Sortable="false" Hidden="@(!_canCopy && !_canFilter)" CellStyle="text-align:right;white-space:nowrap">
             <CellTemplate>
-              @if (!_noCopy.Contains(context.Item.EntitySet))
+              @if (_canCopy && !_noCopy.Contains(context.Item.EntitySet))
               {
-                <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" aria-label="@L["Edit"]" Disabled="_busy" OnClick="() => EditAsync(context.Item)"
-                               data-testid="@($"edit-{context.Item.EntitySet}")" />
+                <MudTooltip Text="@L["Edit"]">
+                    <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" aria-label="@L["Edit"]" Disabled="_busy" OnClick="() => EditAsync(context.Item)"
+                                   data-testid="@($"edit-{context.Item.EntitySet}")" />
+                </MudTooltip>
                 <MudTooltip Text="@L["Back to what the code says"]">
                     <MudIconButton Icon="@Icons.Material.Outlined.SettingsBackupRestore" Size="Size.Small" aria-label="@L["Reset"]" Disabled="@(_busy || context.Item.Override is null)"
                                    OnClick="() => ResetAsync(context.Item)" data-testid="@($"reset-{context.Item.EntitySet}")" />
+                </MudTooltip>
+              }
+              @if (_canFilter)
+              {
+                var count = Count(context.Item.EntitySet);
+                <MudTooltip Text="@L["Data filters"]">
+                    <MudBadge Content="count" Visible="count > 0" Color="Color.Primary" Overlap="true" Origin="Origin.TopRight">
+                        <MudIconButton Icon="@Icons.Material.Outlined.FilterAlt" Size="Size.Small" Color="@(count > 0 ? Color.Primary : Color.Default)" aria-label="@L["Data filters"]"
+                                       OnClick="() => _grid!.ToggleHierarchyVisibilityAsync(context.Item)" data-testid="@($"filter-{context.Item.EntitySet}")" />
+                    </MudBadge>
                 </MudTooltip>
               }
             </CellTemplate>
@@ -70,9 +102,12 @@
     </Columns>
     <ChildRowContent>
         <MudStack Class="pa-4" Spacing="3" data-testid="@($"filters-{context.Item.EntitySet}")">
-            <DataFilterList Layer="DataFilterLayer.System" EntitySet="@context.Item.EntitySet" Title="Filter for every organisation (system)" />
-            <DataFilterList Layer="DataFilterLayer.Tenant" EntitySet="@context.Item.EntitySet" Title="Filter for this organisation" />
-            <DataFilterLinkEditor EntitySet="@context.Item.EntitySet" />
+            <MudText Typo="Typo.subtitle1">@PanelTitle</MudText>
+            <DataFilterList Layer="Layer" EntitySet="@context.Item.EntitySet" />
+            @if (Layer == DataFilterLayer.System)
+            {
+                <DataFilterLinkEditor EntitySet="@context.Item.EntitySet" />
+            }
         </MudStack>
     </ChildRowContent>
     <NoRecordsContent>
@@ -81,6 +116,27 @@
 </MudDataGrid>
 
 @code {
+    private MudDataGrid<ClientEntityAdminSetDto>? _grid;
+
+    private DataFilterLayer Layer => _overview?.Layer ?? DataFilterLayer.Tenant;
+
+    private string PanelTitle => Layer == DataFilterLayer.System ? L["Filter for all tenants"] : L["Filter for tenant {0}", _overview?.TenantName ?? string.Empty];
+
+    // filters of the layer plus the link: what the badge counts
+    private int Count(string set) => _states.TryGetValue(set, out var state) ? state.LayerFilters + (state.Linked ? 1 : 0) : 0;
+
+    // a list kept between renders: the grid drops its open child rows when Items is a new instance
+    private void Refresh() => _visible = [.. _sets.Where(s =>
+        (string.IsNullOrWhiteSpace(_search) || s.EntitySet.Contains(_search.Trim(), StringComparison.OrdinalIgnoreCase) || s.EntityType.Contains(_search.Trim(), StringComparison.OrdinalIgnoreCase))
+        && (!_onlyCopies || (s.Copy != ClientEntityCopy.Off && !_noCopy.Contains(s.EntitySet)))
+        && (!_onlyFiltered || Count(s.EntitySet) > 0))];
+
+    private void Search(string? text)
+    {
+        _search = text;
+        Refresh();
+    }
+
     private RenderFragment Value(ClientEntityAdminSetDto set, string property, string text) => _noCopy.Contains(set.EntitySet) ? _ => { } : @<span>@text @Source(set, property)</span>;
 
     // what decided a value; values of the defaults show none, except the copy, where Default tells that the code does not mark the set

@@ -2387,5 +2387,11 @@
   "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Neplatí pro držitele oprávnění „Vidět všechny řádky“ v systémovém tenantovi (jeho správce)",
   "Not applied to holders of 'See all rows' (the tenant's admins)": "Neplatí pro držitele oprávnění „Vidět všechny řádky“ (správce tenantu)",
   "Preview not available: counting took too long.": "Náhled není k dispozici: počítání trvalo příliš dlouho.",
-  "{0} of {1} rows you can see pass this filter": "{0} z {1} řádků, které vidíte, tento filtr splňuje"
+  "{0} of {1} rows you can see pass this filter": "{0} z {1} řádků, které vidíte, tento filtr splňuje",
+  "Search entity sets": "Hledat sady entit",
+  "Local copies only": "Pouze místní kopie",
+  "With data filters only": "Pouze s filtry dat",
+  "Filter for all tenants": "Filtr pro všechny nájemce",
+  "Filter for tenant {0}": "Filtr pro nájemce {0}",
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Pro každou sadu entit: jaká data si prohlížeče uchovávají v kopii a jak ji synchronizují, a které řádky nájemci vidí (filtry dat). Změny okamžitě dorazí ke všem otevřeným klientům, bez nasazení."
 }

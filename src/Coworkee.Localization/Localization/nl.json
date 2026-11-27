@@ -2387,5 +2387,11 @@
   "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Geldt niet voor houders van 'Alle rijen zien' in de systeemtenant (de beheerders ervan)",
   "Not applied to holders of 'See all rows' (the tenant's admins)": "Geldt niet voor houders van 'Alle rijen zien' (de beheerders van de tenant)",
   "Preview not available: counting took too long.": "Voorbeeld niet beschikbaar: het tellen duurde te lang.",
-  "{0} of {1} rows you can see pass this filter": "{0} van {1} rijen die u kunt zien, passeren dit filter"
+  "{0} of {1} rows you can see pass this filter": "{0} van {1} rijen die u kunt zien, passeren dit filter",
+  "Search entity sets": "Entiteitensets zoeken",
+  "Local copies only": "Alleen lokale kopieën",
+  "With data filters only": "Alleen met gegevensfilters",
+  "Filter for all tenants": "Filter voor alle tenants",
+  "Filter for tenant {0}": "Filter voor tenant {0}",
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "Per entiteitenset: van welke gegevens de browsers een kopie bewaren en hoe ze die synchroon houden, en welke rijen tenants zien (gegevensfilters). Wijzigingen bereiken elke open client direct, zonder deployment."
 }

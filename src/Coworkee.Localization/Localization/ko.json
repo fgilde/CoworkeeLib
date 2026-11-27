@@ -2387,5 +2387,11 @@
   "Not applied to holders of 'See all rows' in the system tenant (its admins)": "시스템 테넌트의 '모든 행 보기' 보유자(해당 관리자)에게는 적용되지 않습니다",
   "Not applied to holders of 'See all rows' (the tenant's admins)": "'모든 행 보기' 보유자(테넌트의 관리자)에게는 적용되지 않습니다",
   "Preview not available: counting took too long.": "미리보기를 사용할 수 없음: 집계 시간이 너무 오래 걸렸습니다.",
-  "{0} of {1} rows you can see pass this filter": "볼 수 있는 {1}개 행 중 {0}개가 이 필터를 통과합니다"
+  "{0} of {1} rows you can see pass this filter": "볼 수 있는 {1}개 행 중 {0}개가 이 필터를 통과합니다",
+  "Search entity sets": "엔터티 집합 검색",
+  "Local copies only": "로컬 복사본만",
+  "With data filters only": "데이터 필터가 있는 것만",
+  "Filter for all tenants": "모든 테넌트용 필터",
+  "Filter for tenant {0}": "테넌트 {0}용 필터",
+  "Per entity set: which data the browsers keep a copy of and how they keep it in sync, and which rows tenants see at all (data filters). Changes reach every open client at once, without a deployment.": "엔터티 집합별로 브라우저가 어떤 데이터의 사본을 보관하고 어떻게 동기화하는지, 그리고 테넌트가 어떤 행을 볼 수 있는지(데이터 필터)를 설정합니다. 변경 사항은 배포 없이 열려 있는 모든 클라이언트에 즉시 반영됩니다."
 }

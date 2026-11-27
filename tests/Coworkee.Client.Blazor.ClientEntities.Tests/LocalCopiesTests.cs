@@ -3,7 +3,10 @@ using Bunit;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.ClientEntities.Pages;
 using Coworkee.Client.Blazor.Localization;
+using Coworkee.Client.Blazor.Realtime;
 using Coworkee.Contracts.Data;
+using Coworkee.Contracts.DataFilters;
+using Coworkee.Contracts.Realtime;
 using Coworkee.Contracts.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
@@ -24,6 +27,7 @@ public sealed class LocalCopiesTests : BunitContext
     private readonly ICoworkeeApi _api = Substitute.For<ICoworkeeApi>();
     private readonly IRenderedComponent<MudDialogProvider> _dialogs;
     private readonly Engine _engine = new();
+    private readonly Connection _connection = new();
 
     public LocalCopiesTests()
     {
@@ -37,7 +41,9 @@ public sealed class LocalCopiesTests : BunitContext
         Services.AddSingleton(_api);
         Services.AddSingleton<IClientEntityEngine>(_engine);
         _api.GetMyPermissionsAsync(default).ReturnsForAnyArgs([SettingsPermissions.Manage]);
-        Services.AddSingleton(new Security.PermissionStore(_api, new Realtime.RealtimeClient(Substitute.For<Realtime.IRealtimeConnection>())));
+        var realtime = new RealtimeClient(_connection);
+        Services.AddSingleton(realtime);
+        Services.AddSingleton(new Security.PermissionStore(_api, realtime));
         Services.AddSingleton(new CoworkeeClientOptions());
         Services.AddScoped<Dialogs.CoworkeeDialogOptions>();
         Services.AddSingleton<Dialogs.DialogOptionsContributor>();
@@ -53,6 +59,7 @@ public sealed class LocalCopiesTests : BunitContext
         _api.GetAppConfigurationAsync(ClientEntitySetOverride.Section, default).ReturnsForAnyArgs(new AppConfigurationValuesDto(ClientEntitySetOverride.Section,
             JsonSerializer.SerializeToElement(new { Orders = new { Copy = "Sqlite", MaxRows = 123, DefaultMode = "Server" }, Tools = new { Copy = "Off" } }), default, []));
         _api.SaveAppConfigurationAsync(default!, default, default).ReturnsForAnyArgs(call => new AppConfigurationValuesDto(ClientEntitySetOverride.Section, call.ArgAt<JsonElement>(1), default, []));
+        _api.GetDataFilterSetsAsync(default).ReturnsForAnyArgs(["Gadgets", "Orders", "Tools"]);
         Render<MudPopoverProvider>();
         _dialogs = Render<MudDialogProvider>();
     }
@@ -144,6 +151,147 @@ public sealed class LocalCopiesTests : BunitContext
         (form.Copy, form.RefreshSeconds, form.DefaultMode).ShouldBe(("Memory", 90, string.Empty));
         form.ToOverride().ShouldSatisfyAllConditions(o => o.Copy.ShouldBe(ClientEntityCopy.Memory), o => o.RefreshInterval.ShouldBe(TimeSpan.FromSeconds(90)), o => o.DefaultMode.ShouldBeNull());
         new LocalCopies.LocalCopyForm { MaxRows = 0 }.ToOverride().IsEmpty.ShouldBeTrue();
+    }
+
+    private void Overview(DataFilterLayer layer, string? tenant, params DataFilterSetStateDto[] sets)
+    {
+        _api.GetMyPermissionsAsync(default).ReturnsForAnyArgs([SettingsPermissions.Manage, layer == DataFilterLayer.System ? DataFilterPermissions.ManageSystem : DataFilterPermissions.ManageTenant]);
+        _api.GetDataFilterOverviewAsync(default).ReturnsForAnyArgs(new DataFilterOverviewDto(layer, tenant, sets));
+        _api.GetDataFiltersAsync(default, default, default, default).ReturnsForAnyArgs([]);
+    }
+
+    private static IEnumerable<string> Names(IRenderedComponent<LocalCopies> page) => page.FindAll("td [data-testid^='copy-'],td [data-testid^='no-copy-']").Select(e => e.GetAttribute("data-testid")!);
+
+    [Fact]
+    public void Search_narrows_the_sets_by_name_and_type()
+    {
+        Overview(DataFilterLayer.Tenant, "Acme");
+        var page = Render<LocalCopies>();
+        page.WaitForAssertion(() => Names(page).Count().ShouldBe(3));
+
+        page.Find("[data-testid='sets-search']").Input("ORD");
+
+        page.WaitForAssertion(() => Names(page).ShouldBe(["copy-Orders"]));
+        // "Gadget" is the type of Gadgets
+        page.Find("[data-testid='sets-search']").Input("gadget");
+        page.WaitForAssertion(() => Names(page).ShouldBe(["copy-Gadgets"]));
+    }
+
+    [Fact]
+    public async Task Chips_show_local_copies_only_and_filtered_only()
+    {
+        Overview(DataFilterLayer.Tenant, "Acme", new DataFilterSetStateDto("Tools", 2, false));
+        _server.AdminSets[0] = _server.AdminSets[0] with { Copy = ClientEntityCopy.Off };
+        var page = Render<LocalCopies>();
+        page.WaitForAssertion(() => Names(page).Count().ShouldBe(3));
+
+        await page.Find("[data-testid='chip-copies']").ClickAsync(new());
+        page.WaitForAssertion(() => Names(page).ShouldBe(["copy-Orders"]));
+        await page.Find("[data-testid='chip-copies']").ClickAsync(new());
+        await page.Find("[data-testid='chip-filtered']").ClickAsync(new());
+        page.WaitForAssertion(() => Names(page).ShouldBe(["no-copy-Tools"]));
+    }
+
+    [Fact]
+    public async Task The_filter_icon_is_coloured_with_a_badge_and_toggles_the_panel()
+    {
+        Overview(DataFilterLayer.System, null, new DataFilterSetStateDto("Orders", 1, true));
+        var page = Render<LocalCopies>();
+        page.WaitForElement("[data-testid='filter-Orders']");
+
+        page.Find("[data-testid='filter-Orders']").ClassList.ShouldContain("mud-primary-text");
+        page.Find("[data-testid='filter-Orders']").Closest("td")!.QuerySelector(".mud-badge")!.TextContent.Trim().ShouldBe("2");
+        page.Find("[data-testid='filter-Gadgets']").ClassList.ShouldNotContain("mud-primary-text");
+        page.Find("[data-testid='filter-Gadgets']").Closest("td")!.QuerySelector(".mud-badge")?.TextContent.Trim().ShouldBeNullOrEmpty();
+
+        await page.Find("[data-testid='filter-Orders']").ClickAsync(new());
+        page.WaitForElement("[data-testid='filters-Orders']");
+        await page.Find("[data-testid='filter-Orders']").ClickAsync(new());
+        page.WaitForAssertion(() => page.FindAll("[data-testid='filters-Orders']").ShouldBeEmpty());
+    }
+
+    [Fact]
+    public async Task The_system_tenant_panel_shows_the_system_layer_and_the_link_editor()
+    {
+        Overview(DataFilterLayer.System, null);
+        var page = Render<LocalCopies>();
+
+        await page.WaitForElement("[data-testid='filter-Orders']").ClickAsync(new());
+
+        var panel = page.WaitForElement("[data-testid='filters-Orders']");
+        panel.TextContent.ShouldContain("Filter for all tenants");
+        page.WaitForAssertion(() => panel.QuerySelector("[data-testid='data-filter-list']")!.GetAttribute("data-layer").ShouldBe("System"));
+        page.WaitForAssertion(() => panel.QuerySelector("[data-testid='data-filter-link']").ShouldNotBeNull());
+    }
+
+    [Fact]
+    public async Task A_tenant_panel_shows_its_tenant_layer_titled_with_its_name()
+    {
+        Overview(DataFilterLayer.Tenant, "Acme");
+        var page = Render<LocalCopies>();
+
+        await page.WaitForElement("[data-testid='filter-Orders']").ClickAsync(new());
+
+        var panel = page.WaitForElement("[data-testid='filters-Orders']");
+        panel.TextContent.ShouldContain("Filter for tenant Acme");
+        page.WaitForAssertion(() => panel.QuerySelectorAll("[data-testid='data-filter-list']").Select(l => l.GetAttribute("data-layer")).ShouldBe(["Tenant"]));
+        panel.QuerySelector("[data-testid='data-filter-link']").ShouldBeNull();
+    }
+
+    [Fact]
+    public void Without_filter_rights_no_filter_icon()
+    {
+        var page = Render<LocalCopies>();
+
+        page.WaitForElement("[data-testid='edit-Orders']");
+        page.FindAll("[data-testid^='filter-']").ShouldBeEmpty();
+        page.FindAll("[data-testid='chip-filtered']").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Without_copy_rights_only_the_filter_icon()
+    {
+        _api.GetMyPermissionsAsync(default).ReturnsForAnyArgs([DataFilterPermissions.ManageTenant]);
+        _api.GetDataFilterOverviewAsync(default).ReturnsForAnyArgs(new DataFilterOverviewDto(DataFilterLayer.Tenant, "Acme", []));
+
+        var page = Render<LocalCopies>();
+
+        page.WaitForElement("[data-testid='filter-Orders']");
+        page.FindAll("[data-testid^='edit-'],[data-testid^='reset-']").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Counts_reload_on_the_data_filter_signals()
+    {
+        Overview(DataFilterLayer.Tenant, "Acme");
+        var page = Render<LocalCopies>();
+        page.WaitForElement("[data-testid='filter-Orders']");
+        await _api.Received(1).GetDataFilterOverviewAsync(Arg.Any<CancellationToken>());
+        _api.GetDataFilterOverviewAsync(default).ReturnsForAnyArgs(new DataFilterOverviewDto(DataFilterLayer.Tenant, "Acme", [new DataFilterSetStateDto("Orders", 3, false)]));
+
+        _connection.Raise(DataFilterTopics.TenantChanged);
+
+        page.WaitForAssertion(() => page.Find("[data-testid='filter-Orders']").Closest("td")!.QuerySelector(".mud-badge")!.TextContent.Trim().ShouldBe("3"));
+    }
+
+    /// <summary>A hub connection the test can send signals through.</summary>
+    private sealed class Connection : IRealtimeConnection
+    {
+        private Action<RealtimeEnvelope>? _handler;
+
+#pragma warning disable CS0067
+        public event Func<Task>? Reconnected;
+#pragma warning restore CS0067
+
+        public Task StartAsync() => Task.CompletedTask;
+
+        public Task InvokeAsync(string method, string topic) => Task.CompletedTask;
+
+        public void OnEvent(Action<RealtimeEnvelope> handler) => _handler = handler;
+
+        public void Raise(string topic) => _handler!(new RealtimeEnvelope(topic, "Signal", default));
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
     /// <summary>The SQLite engine of an app, working or not (a client built without native SQLite).</summary>
