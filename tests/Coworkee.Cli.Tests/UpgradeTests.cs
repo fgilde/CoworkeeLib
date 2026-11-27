@@ -185,5 +185,18 @@ public sealed class UpgradeTests
         UpgradeRules.Apply(folder.Path, rules, dryRun: false).ShouldBeEmpty();
     }
 
+    [Fact]
+    public void Update_to_0_1_8_points_at_types_registered_only_by_name_for_notifications()
+    {
+        using var folder = new TempFolder();
+        File.WriteAllText(folder.File("src/Shop/ShopNotifications.cs"), "n => n.Add(\"Eta\", \"Shipment\", \"ETA changed\").Followable(\"Boxes\")");
+        File.WriteAllText(folder.File("src/Shop/OrderNotifications.cs"), "n => n.Followable<Order>(\"Orders\", id => $\"/orders/{id}\")");
+
+        var manual = UpgradeRules.Between("0.1.7", "0.1.8").Single().Manual!.ShouldHaveSingleItem();
+
+        manual.Text.ShouldContain("Followable<TEntity>");
+        UpgradeRules.Manual(folder.Path, manual).Select(h => h.File).ShouldBe(["src/Shop/ShopNotifications.cs"]);
+    }
+
     private static string Read(string root, string path) => File.ReadAllText(Path.Combine(root, path));
 }
