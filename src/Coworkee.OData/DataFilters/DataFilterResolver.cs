@@ -23,7 +23,7 @@ public sealed class DataFilterResolver(IServiceProvider services, ICurrentUser u
     private readonly DataFilterCache _cache = services.GetRequiredService<DataFilterCache>();
 
     // once per user, set and group scope switch in a request: a request reads a set several times (list, count, facets)
-    private readonly Dictionary<(Guid?, Guid?, string, Type, bool, bool, IReadOnlyList<Guid>?), LambdaExpression?> _resolved = [];
+    private readonly Dictionary<(Guid?, Guid?, string, Type, bool, bool, IReadOnlyList<Guid>?, Guid?), LambdaExpression?> _resolved = [];
 
     // once per organisation in a scope: inside a transaction the cache does not keep them, and every set would read them again
     private readonly Dictionary<Guid, DataFilterRows> _rows = [];
@@ -37,7 +37,7 @@ public sealed class DataFilterResolver(IServiceProvider services, ICurrentUser u
     /// </summary>
     public async Task<Expression<Func<TEntity, bool>>?> PredicateAsync<TEntity>(string entitySet, bool byKey, CancellationToken ct)
     {
-        var key = (user.UserId, user.TenantId, entitySet, typeof(TEntity), byKey, GroupScope.IsUnnarrowed, GroupScope.SelectionOverride);
+        var key = (user.UserId, user.TenantId, entitySet, typeof(TEntity), byKey, GroupScope.IsUnnarrowed, GroupScope.SelectionOverride, DataFilterScope.Excepted);
         if (!_resolved.TryGetValue(key, out var predicate))
         {
             _resolved[key] = predicate = await ResolveAsync<TEntity>(entitySet, byKey, ct);
@@ -54,7 +54,7 @@ public sealed class DataFilterResolver(IServiceProvider services, ICurrentUser u
         }
 
         var filters = stored.Filters
-            .Where(f => string.Equals(f.EntitySet, entitySet, StringComparison.OrdinalIgnoreCase) && (!byKey || f.AppliesToDetails))
+            .Where(f => string.Equals(f.EntitySet, entitySet, StringComparison.OrdinalIgnoreCase) && (!byKey || f.AppliesToDetails) && f.Id != DataFilterScope.Excepted)
             .ToList();
         var link = LinkOf(stored.Links, entitySet);
         if (filters.Count == 0 && link is null)

@@ -72,7 +72,10 @@ public partial class DataFilterEditor : IDisposable
             _query = Filter is null ? new QueryGroup() : QueryJson.Deserialize(Filter.Query) ?? new QueryGroup();
             _appliesToDetails = Filter?.AppliesToDetails ?? true;
             _problem = null;
-            _ = PreviewAsync(TimeSpan.Zero);
+
+            // counted only while someone edits: a list of filters that loads or reloads (any filter change of the tenant) sends no counts
+            _previewCancel?.Cancel();
+            _preview = null;
         }
     }
 

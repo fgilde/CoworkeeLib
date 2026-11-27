@@ -202,6 +202,33 @@ public sealed class DataFiltersUiTests : ClientTestBase
     }
 
     [Fact]
+    public async Task Listed_filters_count_only_while_being_edited_not_on_load_or_reload()
+    {
+        var clock = new Microsoft.Extensions.Time.Testing.FakeTimeProvider();
+        Services.AddSingleton<TimeProvider>(clock);
+        Grant(DataFilterPermissions.ManageTenant);
+        Api.PreviewDataFilterAsync(Arg.Any<PreviewDataFilterRequest>(), Arg.Any<CancellationToken>()).Returns(new DataFilterPreviewDto(4, 1200, false));
+        Api.GetDataFiltersAsync("Gadgets", DataFilterLayer.Tenant, null, Arg.Any<CancellationToken>())
+            .Returns(_ => [Stored(DataFilterLayer.Tenant, null)], _ => [Stored(DataFilterLayer.Tenant, null, query: RuleOn("Price"))]);
+        var page = Render<DataFilterList>(p => p.Add(l => l.Layer, DataFilterLayer.Tenant).Add(l => l.EntitySet, "Gadgets"));
+        page.WaitForElement("[data-testid='data-filter-editor']");
+        var calls = Api.ReceivedCalls().Count(c => c.GetMethodInfo().Name == nameof(ICoworkeeApi.GetDataFiltersAsync));
+
+        // another administrator changes a filter of the tenant: the list reloads, nobody is editing, nothing is counted
+        Services.GetRequiredService<FakeRealtimeConnection>().Push(DataFilterTopics.TenantChanged);
+        page.WaitForAssertion(() => Api.ReceivedCalls().Count(c => c.GetMethodInfo().Name == nameof(ICoworkeeApi.GetDataFiltersAsync)).ShouldBe(calls + 1));
+        clock.Advance(TimeSpan.FromMilliseconds(500));
+        await Task.Delay(100);
+        await Api.DidNotReceive().PreviewDataFilterAsync(Arg.Any<PreviewDataFilterRequest>(), Arg.Any<CancellationToken>());
+
+        var editor = page.FindComponent<DataFilterEditor>();
+        await Edit(editor);
+        clock.Advance(TimeSpan.FromMilliseconds(400));
+        editor.WaitForAssertion(() => editor.Find("[data-testid='filter-preview']"));
+        await Api.Received(1).PreviewDataFilterAsync(Arg.Any<PreviewDataFilterRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task A_timed_out_preview_says_it_is_not_available()
     {
         var clock = new Microsoft.Extensions.Time.Testing.FakeTimeProvider();

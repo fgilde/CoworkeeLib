@@ -141,12 +141,18 @@ internal sealed class DataFilterHandlers(
             return Forbidden;
         }
 
+        // the rows the editor sees under every filter that binds him but the edited one (its stored version; a new draft has none), in all his groups:
+        // the other layers keep hiding what they hide, so the counts never reveal rows he may not see
+        var tenantId = request.Layer == DataFilterLayer.System ? null : currentUser.TenantId;
+        var edited = await db.Set<DataFilter>().AsNoTracking()
+            .Where(f => f.TenantId == tenantId && f.EntitySet == entity.EntitySet && f.Layer == request.Layer && f.LayerKey == request.LayerKey)
+            .Select(f => (Guid?)f.Id).FirstOrDefaultAsync(cancellationToken);
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(options.Value.DataFilterPreviewTimeout);
         try
         {
             using var unnarrowed = GroupScope.Unnarrowed();
-            using var off = DataFilterScope.Off();
+            using var except = DataFilterScope.Except(edited);
             return await (Task<DataFilterPreviewDto>)CountMethod.MakeGenericMethod(entity.EntityType).Invoke(this, [filter, timeout.Token])!;
         }
         catch (OperationCanceledException) when (timeout.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
@@ -157,7 +163,7 @@ internal sealed class DataFilterHandlers(
 
     private static readonly System.Reflection.MethodInfo CountMethod = typeof(DataFilterHandlers).GetMethod(nameof(CountAsync), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
 
-    // the set as the app's own row filters show it, then what passes the draft
+    // the set as the editor sees it (the app's own row filters and the other data filters), then what passes the draft
     private async Task<DataFilterPreviewDto> CountAsync<TEntity>(FilterQueryOption? filter, CancellationToken cancellationToken)
         where TEntity : class
     {

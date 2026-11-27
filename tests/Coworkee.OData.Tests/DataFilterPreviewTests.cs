@@ -73,6 +73,47 @@ public sealed class DataFilterPreviewTests(ODataApp app) : IAsyncLifetime
         (await response.Content.ReadFromJsonAsync<DataFilterPreviewDto>(CoworkeeJson.Web, Ct)).ShouldBe(new DataFilterPreviewDto(4, 10, false));
     }
 
+    private Task SaveAsync(HttpClient client, DataFilterLayer layer, string query) =>
+        client.PutAsJsonAsync("/api/v1/data-filters", new SaveDataFilterRequest("Gadgets", layer, null, query), CoworkeeJson.Web, Ct).ContinueWith(t => t.Result.EnsureSuccessStatusCode(), Ct);
+
+    private static async Task<DataFilterPreviewDto> PreviewAsync(HttpClient client, DataFilterLayer layer, string query)
+    {
+        var response = await client.PostAsJsonAsync(Root, Request(layer, query), CoworkeeJson.Web, Ct);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, await response.Content.ReadAsStringAsync(Ct));
+        return (await response.Content.ReadFromJsonAsync<DataFilterPreviewDto>(CoworkeeJson.Web, Ct))!;
+    }
+
+    [Fact]
+    public async Task Preview_counts_within_the_other_filters_that_bind_the_editor_but_not_the_stored_version_of_the_edited_filter()
+    {
+        var admin = app.As(_setup.AdminUserId, _setup.TenantId);
+        var editor = await UserWithAsync(DataFilterPermissions.ManageTenant, ODataApp.ViewGadgets);
+        // the System filter hides the three cheap rows from the editor; the stored Tenant filter is the one being edited
+        await SaveAsync(admin, DataFilterLayer.System, Rule("Price", QueryOperator.GreaterThan, "1"));
+        await SaveAsync(editor, DataFilterLayer.Tenant, Rule("Name", QueryOperator.Equal, "Closed"));
+
+        // seven rows the editor sees, one of them open
+        (await PreviewAsync(editor, DataFilterLayer.Tenant, Rule("Name", QueryOperator.Equal, "Open"))).ShouldBe(new DataFilterPreviewDto(1, 7, false));
+    }
+
+    [Fact]
+    public async Task Preview_of_a_tenant_admin_outside_the_system_tenant_counts_within_the_System_filters()
+    {
+        var admin = app.As(_setup.AdminUserId, _setup.TenantId);
+        await SaveAsync(admin, DataFilterLayer.System, Rule("Price", QueryOperator.GreaterThan, "1"));
+        await using (var scope = app.App.Services.CreateAsyncScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<Coworkee.Infrastructure.Persistence.CoworkeeDbContext>().Set<Tenant>().IgnoreQueryFilters()
+                .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsDefault, false), Ct);
+        }
+
+        await using var other = await app.StartAnotherAsync(new Dictionary<string, string>());
+        var tenantAdmin = other.GetTestClient().AsUser(_setup.AdminUserId, _setup.TenantId);
+
+        // Bypass skips the tenant's own layers, not System: the count oracle stays closed
+        (await PreviewAsync(tenantAdmin, DataFilterLayer.Tenant, Rule("Name", QueryOperator.Equal, "Open"))).ShouldBe(new DataFilterPreviewDto(1, 7, false));
+    }
+
     [Fact]
     public async Task Preview_predicts_what_the_saved_filter_does()
     {
