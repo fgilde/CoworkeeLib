@@ -5,7 +5,7 @@ namespace Coworkee.Client.Blazor.Components.Data;
 
 /// <summary>The row above the column headers that shows the grouping; column headers dropped on it group the rows.</summary>
 /// <remarks>Rendered inside the grid's header drop container, so header drags reach it and it renders with every grid render.</remarks>
-public partial class DataTableGroupZone<T>
+public partial class DataTableGroupZone<T> : IDisposable
 {
     internal const string ZoneId = "__cw_group__";
 
@@ -22,16 +22,32 @@ public partial class DataTableGroupZone<T>
 
     private bool CanGroup(Column<T> column) => DataGridLayout<T>.IsProperty(column) && !Grouped.Contains(column);
 
-    // the grid handles header drops itself and only marks the dropped column with the zone's identifier
-    protected override Task OnParametersSetAsync() =>
-        Grid.RenderedColumns.FirstOrDefault(c => c.Identifier == ZoneId) is { } dropped ? GroupDroppedAsync(dropped) : Task.CompletedTask;
+    /// <summary>The grid's header drop container; the grid only handles drops on its own columns, so the zone listens for drops on itself.</summary>
+    [CascadingParameter] private MudDropContainer<Column<T>>? Container { get; set; }
 
-    private Task GroupDroppedAsync(Column<T> column)
+    private MudDropContainer<Column<T>>? _subscribed;
+
+    protected override void OnParametersSet()
     {
-#pragma warning disable BL0005 // reset the mark the grid set on drop
-        column.Identifier = null;
-#pragma warning restore BL0005
-        return CanGroup(column) ? GroupAsync([.. Keys, DataGridLayout<T>.Key(column)!]) : Task.CompletedTask;
+        if (ReferenceEquals(_subscribed, Container))
+            return;
+        if (_subscribed is not null)
+            _subscribed.TransactionEnded -= OnTransactionEnded;
+        _subscribed = Container;
+        if (_subscribed is not null)
+            _subscribed.TransactionEnded += OnTransactionEnded;
+    }
+
+    private void OnTransactionEnded(object? sender, MudDragAndDropTransactionFinishedEventArgs<Column<T>> e)
+    {
+        if (e.Success && e.DestinationDropzoneIdentifier == ZoneId && e.Item is { } column && CanGroup(column))
+            _ = InvokeAsync(() => GroupAsync([.. Keys, DataGridLayout<T>.Key(column)!]));
+    }
+
+    public void Dispose()
+    {
+        if (_subscribed is not null)
+            _subscribed.TransactionEnded -= OnTransactionEnded;
     }
 
     private Task UngroupAsync(Column<T> column) => GroupAsync(Keys.Where(k => k != DataGridLayout<T>.Key(column)).ToList());

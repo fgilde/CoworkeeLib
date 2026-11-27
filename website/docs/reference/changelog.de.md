@@ -14,6 +14,11 @@
 - Die Partition der Client-Kopien eines Benutzers mit Datenfiltern folgt `DataFilters.Bypass` und dem Systemmandanten-Kennzeichen, die Kopien beginnen also neu, wenn ein Benutzer eines davon bekommt oder verliert.
 - Eine Datenfilter-Verknüpfung auf eine Eigenschaft, die eine abgeleitete Entität mit `new` verbirgt, scheitert nicht mehr mit einer `AmbiguousMatchException`; die abgeleitete Eigenschaft gilt.
 
+### Geändert
+
+- Nextended 10.1.71, MudBlazor.Extensions 9.14.0 und MudBlazor 9.14.0.
+- Das Ablegen einer Spaltenüberschrift auf der Gruppierungszeile der Datentabelle funktioniert mit MudBlazor 9.14 wieder; MudBlazor meldet Ablagen außerhalb der eigenen Spalten nicht mehr an das Grid, die Zeile hört deshalb direkt auf den Drop-Container.
+
 ## 0.1.7 (2026-11-26)
 
 ### Geändert

@@ -76,7 +76,11 @@ public sealed class DataTableLayoutTests : ClientTestBase
         var headers = table.FindComponents<MudDropContainer<Column<Gadget>>>().First(c => c.Instance.Items.Count() == 3);
         var category = Grid(table).RenderedColumns.Single(c => c.PropertyName == "Category");
 
-        await table.InvokeAsync(() => headers.Instance.ItemDropped.InvokeAsync(new MudItemDropInfo<Column<Gadget>>(category, DataTableGroupZone<Gadget>.ZoneId, 0)));
+        await table.InvokeAsync(async () =>
+        {
+            headers.Instance.StartTransaction(category, category.PropertyName, 0, () => Task.CompletedTask, () => Task.CompletedTask);
+            await headers.Instance.CommitTransaction(DataTableGroupZone<Gadget>.ZoneId, false);
+        });
         headers.Render();
 
         table.WaitForAssertion(() => table.Instance.CurrentState.GroupBy.ShouldBe(["Category"]));

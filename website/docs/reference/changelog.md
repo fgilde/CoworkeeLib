@@ -14,6 +14,11 @@ Changes that need action in apps built on Coworkee. Newest first.
 - The client copy partition of a user with data filters follows `DataFilters.Bypass` and the system tenant flag, so copies start over when a user gains or loses either.
 - A data filter link on a property that a derived entity hides with `new` no longer fails with an `AmbiguousMatchException`; the derived property counts.
 
+### Changed
+
+- Nextended 10.1.71, MudBlazor.Extensions 9.14.0 and MudBlazor 9.14.0.
+- Dropping a column header on the grouping row of the data table works again with MudBlazor 9.14, which no longer reports drops outside its own columns to the grid; the row listens to the drop container itself.
+
 ## 0.1.7 (2026-11-26)
 
 ### Changed
