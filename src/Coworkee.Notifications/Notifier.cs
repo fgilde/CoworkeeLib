@@ -145,7 +145,7 @@ internal sealed partial class Notifier(
     [LoggerMessage(Level = LogLevel.Warning, Message = "The mail delay of the notification type {Type} could not be resolved; its default applies.")]
     private partial void LogDelayFailed(Exception exception, string type);
 
-    /// <summary>Who may get it (the channels follow from the delivery): addressed users unless their scope is Off, followers with All or Followed, the audience with All; never the actor unless addressed.</summary>
+    /// <summary>Who may get it (the channels follow from the delivery): addressed users unless their scope is Off, followers with All or Followed, the audience with All, the last two only while they still see the record; never the actor unless addressed.</summary>
     private async Task<List<(Guid UserId, NotificationPreference Preference)>> RecipientsAsync(NotificationMessage message, NotificationType? type, CancellationToken cancellationToken)
     {
         var direct = message.Recipients?.ToHashSet() ?? [];
@@ -157,9 +157,13 @@ internal sealed partial class Notifier(
         {
             followers.IntersectWith(audience);
         }
-        else if (followers.Count > 0)
+
+        // followers and audience members must still see the record (each user checked once, as himself); addressed users are not checked
+        if (message is { EntityType: { } checkedType, EntityId: { } checkedId } && (followers.Count > 0 || audience is { Count: > 0 }))
         {
-            followers = await StillSeeingAsync(followers, message.EntityType!, message.EntityId!.Value, cancellationToken);
+            var seeing = await services.GetRequiredService<NotificationAudience>().SeeingAsync([.. followers.Concat(audience ?? [])], checkedType, checkedId, cancellationToken);
+            followers.IntersectWith(seeing);
+            audience?.IntersectWith(seeing);
         }
 
         var candidates = direct.Concat(followers).Concat(audience ?? []).Where(id => id != Guid.Empty).Distinct().ToList();
@@ -191,33 +195,6 @@ internal sealed partial class Notifier(
         }
 
         return result;
-    }
-
-    /// <summary>
-    /// The followers who still see the entity, each checked as himself against the set of a <c>Followable&lt;TEntity&gt;</c> registration (permission,
-    /// row filters, groups). Followers of entity types without that check get nothing without an audience.
-    /// </summary>
-    private async Task<HashSet<Guid>> StillSeeingAsync(HashSet<Guid> followers, string entityType, Guid entityId, CancellationToken cancellationToken)
-    {
-        if (services.GetService<NotificationTypeOptions>()?.FollowTargets.GetValueOrDefault(entityType)?.VisibleIdsAsync is not { } visibleIds)
-        {
-            return [];
-        }
-
-        // ponytail: one query per follower; batch by permission set when entities gather hundreds of followers
-        var scopes = services.GetRequiredService<IServiceScopeFactory>();
-        var seeing = new HashSet<Guid>();
-        foreach (var follower in followers)
-        {
-            using var actor = CurrentUserScope.Begin(new ImpersonatedUser(follower, currentUser.TenantId));
-            await using var scope = scopes.CreateAsyncScope();
-            if (await visibleIds(scope.ServiceProvider, cancellationToken) is { } ids && await ids.AnyAsync(id => id == entityId, cancellationToken))
-            {
-                seeing.Add(follower);
-            }
-        }
-
-        return seeing;
     }
 
     /// <summary>

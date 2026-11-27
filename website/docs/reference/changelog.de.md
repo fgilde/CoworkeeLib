@@ -17,6 +17,7 @@
 
 ### Geändert
 
+- Breaking: Benachrichtigungen prüfen jeden Follower und jedes Mitglied der Zielgruppe gegen die `Followable<TEntity>`-Registrierung der Entität der Nachricht (`EntityType`/`EntityId`), als dieser Benutzer: Eine `Audience` ersetzt die Sichtbarkeitsprüfung nicht mehr, wer die Zeile verloren hat (Datenfilter, Gruppen, Berechtigung), bekommt keine Benachrichtigungen und Mails mehr. Über `Recipients` angesprochene Benutzer bleiben ungeprüft; Apps prüfen eigene Empfänger mit dem neuen `NotificationAudience.SeeingAsync`. Eine Zielgruppe mit einem Entitätstyp ohne `Followable<TEntity>`-Registrierung (nur `Followable("Type")`) erreicht jetzt niemanden; solche Nachrichten ohne `EntityType`/`EntityId` senden oder den Typ registrieren.
 - UI-Texte sagen Mandant (englisch tenant) und Gruppe, nie Organisation; Bezeichner (`ReportVisibility.Organisation`, `SetOrganisationDashboardReportCommand`, `DashboardReportDto.Organisation`, die Route `dashboard/organisation`) bleiben. Die Übersetzungsschlüssel sind die englischen Texte; ein geänderter englischer Text ist deshalb in allen 22 Sprachdateien ein neuer Schlüssel, und Apps, die einen Bibliothekstext über den englischen Schlüssel überschreiben, ändern den Schlüssel der Überschreibung (alt -> neu):
   - "Accounts of this organisation, their roles and whether they may sign in." -> "Accounts of this tenant, their roles and whether they may sign in."
   - "Direct messages with the people of your organisation." -> "Direct messages with the people of your tenant."

@@ -128,6 +128,79 @@ public sealed class PreferenceTests(NotificationApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Audience_members_who_do_not_see_the_entity_get_nothing()
+    {
+        await PublishHiddenFromCarlAsync(Message(TestNotificationModule.Milestone) with { Audience = [_bob.Id, _carl.Id] });
+
+        (await InboxAsync(Bob)).ShouldHaveSingleItem();
+        (await InboxAsync(app.As(_carl.Id, _setup.TenantId))).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Followers_inside_the_audience_are_still_checked()
+    {
+        await FollowAsync(_bob, _carl);
+
+        await PublishHiddenFromCarlAsync(Message(TestNotificationModule.Eta) with { Audience = [_bob.Id, _carl.Id] });
+
+        (await InboxAsync(Bob)).ShouldHaveSingleItem();
+        (await InboxAsync(app.As(_carl.Id, _setup.TenantId))).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Direct_recipients_are_not_checked()
+    {
+        await PublishHiddenFromCarlAsync(Message(TestNotificationModule.Eta) with { Recipients = [_carl.Id] });
+
+        (await InboxAsync(app.As(_carl.Id, _setup.TenantId))).ShouldHaveSingleItem();
+    }
+
+    [Fact]
+    public async Task A_user_who_is_follower_and_audience_member_is_checked_once()
+    {
+        await FollowAsync(_bob);
+        HiddenShipments.Calls.TryRemove(_bob.Id, out _);
+
+        await app.PublishAsync(_setup.AdminUserId, _setup.TenantId,
+            Message(TestNotificationModule.Eta) with { EntityType = "Shipments", EntityId = _shipment, Audience = [_bob.Id] });
+
+        HiddenShipments.Calls[_bob.Id].ShouldBe(1);
+        (await InboxAsync(Bob)).ShouldHaveSingleItem();
+    }
+
+    [Fact]
+    public async Task Without_audience_followers_are_checked_as_before()
+    {
+        await FollowAsync(_bob, _carl);
+
+        await PublishHiddenFromCarlAsync(Message(TestNotificationModule.Eta));
+
+        (await InboxAsync(Bob)).ShouldHaveSingleItem();
+        (await InboxAsync(app.As(_carl.Id, _setup.TenantId))).ShouldBeEmpty();
+    }
+
+    private async Task FollowAsync(params UserDto[] users)
+    {
+        foreach (var user in users)
+        {
+            (await app.As(user.Id, _setup.TenantId).PutAsJsonAsync(Follow(_shipment), new FollowRequest(), Ct)).EnsureSuccessStatusCode();
+        }
+    }
+
+    private async Task PublishHiddenFromCarlAsync(NotificationMessage message)
+    {
+        HiddenShipments.OutOfScope[_carl.Id] = true;
+        try
+        {
+            await app.PublishAsync(_setup.AdminUserId, _setup.TenantId, message with { EntityType = "Shipments", EntityId = _shipment });
+        }
+        finally
+        {
+            HiddenShipments.OutOfScope.TryRemove(_carl.Id, out _);
+        }
+    }
+
+    [Fact]
     public async Task Done_takes_a_notification_out_of_the_open_inbox_and_counts_follow_the_categories()
     {
         await app.PublishAsync(_setup.AdminUserId, _setup.TenantId, Message(TestNotificationModule.Eta) with { Recipients = [_bob.Id] });

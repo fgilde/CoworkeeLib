@@ -17,6 +17,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Changed
 
+- Breaking: notifications check every follower and audience member against the `Followable<TEntity>` registration of the message's entity (`EntityType`/`EntityId`), as that user: an `Audience` no longer replaces the visibility check, so users who lost the row (data filters, groups, permission) no longer get notifications or mails. Users addressed with `Recipients` stay unchecked; apps check their own recipients with the new `NotificationAudience.SeeingAsync`. An audience with an entity type that has no `Followable<TEntity>` registration (only `Followable("Type")`) now reaches nobody; send those messages without `EntityType`/`EntityId` or register the type.
 - UI texts say tenant (German Mandant) and group, never organisation; identifiers (`ReportVisibility.Organisation`, `SetOrganisationDashboardReportCommand`, `DashboardReportDto.Organisation`, the route `dashboard/organisation`) stay. Localization keys are the English texts, so an English text that changed is a new key in all 22 language files; apps that override a library text by its English key re-key the override (old -> new):
   - "Accounts of this organisation, their roles and whether they may sign in." -> "Accounts of this tenant, their roles and whether they may sign in."
   - "Direct messages with the people of your organisation." -> "Direct messages with the people of your tenant."

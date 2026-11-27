@@ -201,8 +201,18 @@ internal sealed class HiddenShipments(ICurrentUser currentUser) : Coworkee.OData
 {
     public static readonly ConcurrentDictionary<Guid, bool> OutOfScope = new();
 
-    public Task<IQueryable<Shipment>> ApplyAsync(IQueryable<Shipment> query, CancellationToken cancellationToken) =>
-        Task.FromResult(currentUser.UserId is { } me && OutOfScope.ContainsKey(me) ? query.Where(_ => false) : query.Where(s => s.Number != Shipment.Hidden));
+    /// <summary>How often each user's row filter ran.</summary>
+    public static readonly ConcurrentDictionary<Guid, int> Calls = new();
+
+    public Task<IQueryable<Shipment>> ApplyAsync(IQueryable<Shipment> query, CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is { } caller)
+        {
+            Calls.AddOrUpdate(caller, 1, (_, n) => n + 1);
+        }
+
+        return Task.FromResult(currentUser.UserId is { } me && OutOfScope.ContainsKey(me) ? query.Where(_ => false) : query.Where(s => s.Number != Shipment.Hidden));
+    }
 }
 
 /// <summary>The mail of <see cref="TestNotificationModule.Milestone"/>: the model's values next to <c>user</c> and <c>notification</c>.</summary>

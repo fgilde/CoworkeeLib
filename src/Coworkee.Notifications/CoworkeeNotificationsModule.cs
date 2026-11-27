@@ -24,6 +24,7 @@ public sealed class CoworkeeNotificationsModule : CoworkeeModule, IWebModule
         context.Services.AddMessagingFromAssembly(typeof(CoworkeeNotificationsModule).Assembly);
         context.Services.AddSingleton<IModelContributor, NotificationModelContributor>();
         context.Services.AddScoped<INotifier, Notifier>();
+        context.Services.AddScoped<NotificationAudience>();
         context.Services.AddSingleton<Application.Authorization.IPermissionDefinitionContributor, NotificationPermissionDefinitions>();
         context.Services.AddNotificationTypes(_ => { });
         context.Services.AddScoped<NotificationMails>();
