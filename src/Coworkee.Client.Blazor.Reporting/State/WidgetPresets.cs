@@ -24,6 +24,7 @@ public static class WidgetPresets
         new("Table", Icons.Material.Outlined.TableRows, WidgetType.Table, ChartKind.Bar, 12, 6),
         new("Data table", Icons.Material.Outlined.TableChart, WidgetType.DataTable, ChartKind.Bar, 12, 7),
         new("Pivot", Icons.Material.Outlined.PivotTableChart, WidgetType.Pivot, ChartKind.Bar, 6, 5),
+        new("Grouped table", Icons.Material.Outlined.TableView, WidgetType.GroupedTable, ChartKind.Bar, 12, 6),
         new("Text", Icons.Material.Outlined.Notes, WidgetType.Markdown, ChartKind.Bar, 4, 3),
         new("Image", Icons.Material.Outlined.Image, WidgetType.Image, ChartKind.Bar, 4, 4),
         new("Web page", Icons.Material.Outlined.Language, WidgetType.Embed, ChartKind.Bar, 6, 5),
@@ -32,7 +33,7 @@ public static class WidgetPresets
     /// <summary>The data table pages through OData, which computed sources do not have.</summary>
     public static bool Fits(WidgetType type, ReportSourceDto source) => type != WidgetType.DataTable || !source.Computed;
 
-    public static bool HasData(WidgetType type) => type is WidgetType.Kpi or WidgetType.Chart or WidgetType.Table or WidgetType.DataTable or WidgetType.Pivot;
+    public static bool HasData(WidgetType type) => type is WidgetType.Kpi or WidgetType.Chart or WidgetType.Table or WidgetType.DataTable or WidgetType.Pivot or WidgetType.GroupedTable;
 
     public static string IconFor(ReportWidget widget) =>
         All.FirstOrDefault(p => p.Type == widget.Type && (p.Type != WidgetType.Chart || p.Chart == widget.Options.Chart))?.Icon ?? Icons.Material.Outlined.Widgets;
@@ -63,13 +64,14 @@ public static class WidgetPresets
         {
             EntitySet = source.EntitySet,
             DateField = date?.Path,
-            GroupBy = preset.Type is WidgetType.Kpi or WidgetType.Table or WidgetType.DataTable ? null
+            GroupBy = preset.Type is WidgetType.Kpi or WidgetType.Table or WidgetType.DataTable or WidgetType.GroupedTable ? null
                 : timeline ? new ReportGroupBy(date!.Path, DateBucket.Month)
                 : category is null ? null : new ReportGroupBy(category.Path),
             SplitBy = preset.Chart is ChartKind.StackedBar or ChartKind.Heatmap || preset.Type == WidgetType.Pivot ? DefaultSplit(source, category, date) : null,
             Aggregates = preset.Chart == ChartKind.Scatter && number is not null
                 ? [new ReportAggregate(), new ReportAggregate(AggregateFunction.Sum, number.Path)]
                 : [new ReportAggregate()],
+            GroupFields = preset.Type == WidgetType.GroupedTable && category is not null ? [category.Path] : [],
         };
         return widget;
     }

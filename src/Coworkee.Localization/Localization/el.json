@@ -2420,5 +2420,13 @@
   "Flag": "Σημαία",
   "Person": "Άτομο",
   "Add chip": "Προσθήκη chip",
-  "Add the values that get a chip, each with an icon.": "Προσθέστε τις τιμές που παίρνουν chip, κάθε μία με εικονίδιο."
+  "Add the values that get a chip, each with an icon.": "Προσθέστε τις τιμές που παίρνουν chip, κάθε μία με εικονίδιο.",
+  "Grouped table": "Ομαδοποιημένος πίνακας",
+  "Choose the fields to group by.": "Επιλέξτε τα πεδία ομαδοποίησης.",
+  "Add group field": "Προσθήκη πεδίου ομαδοποίησης",
+  "Values of other data sets": "Τιμές άλλων συνόλων δεδομένων",
+  "They come from the report file (JSON); remove them here.": "Προέρχονται από το αρχείο αναφοράς (JSON)· αφαιρέστε τα εδώ.",
+  "Hidden columns": "Κρυφές στήλες",
+  "Still grouped by, just not shown": "Συνεχίζουν να ομαδοποιούν, απλώς δεν εμφανίζονται",
+  "Add sort column": "Προσθήκη στήλης ταξινόμησης"
 }

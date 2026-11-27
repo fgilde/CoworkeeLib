@@ -54,7 +54,28 @@
                 }
             }
 
-            @if (Widget.Type is WidgetType.Kpi or WidgetType.Chart or WidgetType.Pivot)
+            @if (Widget.Type == WidgetType.GroupedTable)
+            {
+                <div class="cw-settings-label">@L["Group by"]</div>
+                @foreach (var (path, index) in query.GroupFields.Select((p, i) => (p, i)).ToList())
+                {
+                    <div class="cw-settings-row cw-list-row" data-testid="group-field">
+                        <MudSelect T="string" Value="path" ValueChanged="v => Change(() => query.GroupFields[index] = v)" Variant="Variant.Outlined" Margin="Margin.Dense" Class="cw-grow" data-testid="group-field-path">
+                            @foreach (var field in GroupFieldChoices(path))
+                            {
+                                <MudSelectItem Value="field.Path">@field.Label</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <Reorder Index="index" Count="query.GroupFields.Count" Move="i => Change(() => Move(query.GroupFields, index, i))" Remove="() => Change(() => query.GroupFields.RemoveAt(index))" />
+                    </div>
+                }
+                <div>
+                    <MudButton StartIcon="@Icons.Material.Filled.Add" Size="Size.Small" Variant="Variant.Text" Disabled="@(query.GroupFields.Count >= ReportTableColumns.MaxGroupFields || NextGroupField is null)"
+                               OnClick="() => Change(() => query.GroupFields.Add(NextGroupField!.Path))" data-testid="add-group-field">@L["Add group field"]</MudButton>
+                </div>
+            }
+
+            @if (Widget.Type is WidgetType.Kpi or WidgetType.Chart or WidgetType.Pivot or WidgetType.GroupedTable)
             {
                 <div class="cw-settings-label">@L[Widget.Type == WidgetType.Chart && Widget.Options.Chart == ChartKind.Scatter ? "Values (x, y)" : "Values"]</div>
                 @foreach (var (aggregate, index) in query.Aggregates.Select((a, i) => (a, i)).ToList())
@@ -88,10 +109,58 @@
                         }
                     </div>
                 }
-                @if (Widget.Type == WidgetType.Chart && query.Aggregates.Count < 8 && query.SplitBy is null)
+                @if ((Widget.Type == WidgetType.Chart && query.SplitBy is null || Widget.Type == WidgetType.GroupedTable) && query.Aggregates.Count < 8)
                 {
                     <MudButton StartIcon="@Icons.Material.Filled.Add" Size="Size.Small" Variant="Variant.Text" OnClick="() => Change(() => query.Aggregates.Add(new ReportAggregate()))" data-testid="add-aggregate">@L["Add value"]</MudButton>
                 }
+            }
+
+            @if (Widget.Type == WidgetType.GroupedTable)
+            {
+                @if (query.Joins.Count > 0)
+                {
+                    <div class="cw-settings-label">@L["Values of other data sets"]</div>
+                    <div class="cw-chips">
+                        @foreach (var (join, index) in query.Joins.Select((j, i) => (j, i)).ToList())
+                        {
+                            <MudChip T="string" Value="join.EntitySet" Size="Size.Small" Variant="Variant.Outlined" Icon="@Icons.Material.Outlined.Link" OnClose="() => Change(() => query.Joins.RemoveAt(index))" data-testid="join">
+                                @JoinText(join)
+                            </MudChip>
+                        }
+                    </div>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["They come from the report file (JSON); remove them here."]</MudText>
+                }
+
+                <MudSelect T="string" SelectedValues="Widget.Options.HiddenColumns" SelectedValuesChanged="v => Change(() => Widget.Options.HiddenColumns = [.. v])" MultiSelection="true"
+                           Label="@L["Hidden columns"]" HelperText="@L["Still grouped by, just not shown"]" Variant="Variant.Outlined" Margin="Margin.Dense"
+                           MultiSelectionTextFunc="@(values => string.Join(", ", values.Select(ColumnLabel)))" data-testid="hidden-columns">
+                    @foreach (var column in TableColumns)
+                    {
+                        <MudSelectItem Value="column.Name">@ColumnLabel(column.Name)</MudSelectItem>
+                    }
+                </MudSelect>
+
+                <div class="cw-settings-label">@L["Sort by"]</div>
+                @foreach (var (entry, index) in SortEntries.Select((e, i) => (e, i)).ToList())
+                {
+                    <div class="cw-settings-row cw-list-row" data-testid="sort">
+                        <MudSelect T="string" Value="entry.Name" ValueChanged="v => SetSort(index, (v, entry.Descending))" Variant="Variant.Outlined" Margin="Margin.Dense" Class="cw-grow" data-testid="sort-column">
+                            @foreach (var name in SortChoices(entry.Name))
+                            {
+                                <MudSelectItem Value="name">@ColumnLabel(name)</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <MudTooltip Text="@L[entry.Descending ? "Descending" : "Ascending"]">
+                            <MudIconButton Icon="@(entry.Descending ? Icons.Material.Outlined.ArrowDownward : Icons.Material.Outlined.ArrowUpward)" Size="Size.Small"
+                                           aria-label="@L[entry.Descending ? "Descending" : "Ascending"]" OnClick="() => SetSort(index, (entry.Name, !entry.Descending))" data-testid="sort-direction" />
+                        </MudTooltip>
+                        <Reorder Index="index" Count="SortEntries.Count" Move="i => SetSorts(Moved(SortEntries, index, i))" Remove="() => SetSorts(SortEntries.Where((_, i) => i != index))" />
+                    </div>
+                }
+                <div>
+                    <MudButton StartIcon="@Icons.Material.Filled.Add" Size="Size.Small" Variant="Variant.Text" Disabled="@(SortChoices(null).Count == 0)"
+                               OnClick="() => SetSorts([.. SortEntries, (SortChoices(null)[0], false)])" data-testid="add-sort">@L["Add sort column"]</MudButton>
+                </div>
             }
 
             @if (Widget.Type is WidgetType.Table or WidgetType.DataTable)
@@ -147,7 +216,7 @@
             }
         }
 
-        @if (Widget.Type is WidgetType.Kpi or WidgetType.Chart or WidgetType.Pivot)
+        @if (Widget.Type is WidgetType.Kpi or WidgetType.Chart or WidgetType.Pivot or WidgetType.GroupedTable)
         {
             <MudText Typo="Typo.overline" Class="cw-settings-section">@L["Display"]</MudText>
             <div class="cw-settings-row">
@@ -162,7 +231,10 @@
                     <MudTextField T="string" Value="Widget.Options.Currency" ValueChanged="v => Change(() => Widget.Options.Currency = v)" Label="@L["Currency"]" MaxLength="3" Variant="Variant.Outlined" Margin="Margin.Dense" />
                 }
             </div>
-            <MudNumericField T="double?" Value="Widget.Options.Target" ValueChanged="v => Change(() => Widget.Options.Target = v)" Label="@L["Target"]" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" />
+            @if (Widget.Type != WidgetType.GroupedTable)
+            {
+                <MudNumericField T="double?" Value="Widget.Options.Target" ValueChanged="v => Change(() => Widget.Options.Target = v)" Label="@L["Target"]" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" />
+            }
         }
 
         @if (Widget.Type == WidgetType.Kpi)

@@ -2420,5 +2420,13 @@
   "Flag": "Bayrak",
   "Person": "Kişi",
   "Add chip": "Çip ekle",
-  "Add the values that get a chip, each with an icon.": "Çip alacak değerleri her biri bir simgeyle ekleyin."
+  "Add the values that get a chip, each with an icon.": "Çip alacak değerleri her biri bir simgeyle ekleyin.",
+  "Grouped table": "Gruplanmış tablo",
+  "Choose the fields to group by.": "Gruplandırılacak alanları seçin.",
+  "Add group field": "Gruplandırma alanı ekle",
+  "Values of other data sets": "Diğer veri kümelerinin değerleri",
+  "They come from the report file (JSON); remove them here.": "Rapor dosyasından (JSON) gelirler; buradan kaldırabilirsiniz.",
+  "Hidden columns": "Gizli sütunlar",
+  "Still grouped by, just not shown": "Gruplandırmada kullanılmaya devam eder, yalnızca gösterilmez",
+  "Add sort column": "Sıralama sütunu ekle"
 }

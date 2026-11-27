@@ -44,8 +44,15 @@ internal sealed class SaveReportValidator : AbstractValidator<SaveReportRequest>
                 stop.RuleFor(t => t.Color).Must(ReportThresholds.IsValidColor).WithMessage("Use success, warning, error, info or a colour like #2e7d32.");
                 stop.RuleFor(t => t.Label).MaximumLength(ReportViews.LabelLength);
             });
-            widget.RuleFor(w => w.Query).NotNull().When(w => w.Type is WidgetType.Kpi or WidgetType.Chart or WidgetType.Table or WidgetType.DataTable or WidgetType.Pivot)
+            widget.RuleFor(w => w.Query).NotNull().When(w => w.Type is WidgetType.Kpi or WidgetType.Chart or WidgetType.Table or WidgetType.DataTable or WidgetType.Pivot or WidgetType.GroupedTable)
                 .WithMessage("Choose a data source.");
+            widget.When(w => w.Type == WidgetType.GroupedTable && w.Query is not null, () =>
+            {
+                widget.RuleFor(w => w.Query!.GroupFields).Must(f => f.Count is >= 1 and <= Querying.ReportTables.MaxGroupFields)
+                    .WithMessage($"Group by 1 to {Querying.ReportTables.MaxGroupFields} fields.");
+                widget.RuleFor(w => w.Query!.Joins).Must(j => j.Count <= Querying.ReportTables.MaxJoins).WithMessage($"At most {Querying.ReportTables.MaxJoins} joined data sets.");
+                widget.RuleFor(w => w.Options.HiddenColumns).Must(h => h.Count <= ReportLimits.HiddenColumns).WithMessage($"At most {ReportLimits.HiddenColumns} hidden columns.");
+            });
         });
     }
 

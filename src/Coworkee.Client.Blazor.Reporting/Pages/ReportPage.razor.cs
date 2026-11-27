@@ -75,7 +75,10 @@ public partial class ReportPage : IAsyncDisposable
     // reports/new: a draft that exists only here until it is saved
     private bool IsNew => Id == Guid.Empty;
 
-    private IEnumerable<string> DataTopics => _state is null ? [] : _state.EntitySets.Select(s => _state.Source(s)?.Topic).OfType<string>().Distinct();
+    // the sets of the widgets and of grouped tables' joins: a change to any of them reloads the report
+    private IEnumerable<string> DataTopics => _state is null ? []
+        : _state.EntitySets.Concat(_state.Definition.Widgets.SelectMany(w => w.Query?.Joins.Select(j => j.EntitySet) ?? []))
+            .Select(s => _state.Source(s)?.Topic).OfType<string>().Distinct();
 
     protected override async Task OnParametersSetAsync()
     {

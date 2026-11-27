@@ -219,6 +219,9 @@ POST /api/v1/reports/table
 - `orderBy`-Spalten zählen zuerst die Gruppierungsfelder (0 bis Felder - 1), dann die Werte der Hauptmenge, dann die Werte jedes Joins der Reihe nach. Gleichstände entscheiden alle Gruppierungsfelder aufsteigend. Texte sortieren ohne Rücksicht auf Groß- und Kleinschreibung, null zuerst (absteigend zuletzt), wie auf SQL Server.
 - `more` sagt, ob nach der Seite weitere Zeilen folgen.
 - Jede verbundene Menge braucht ihr Leserecht (sonst 403) und jedes Gruppierungsfeld (sonst 400). Grenzen: 1 bis 8 Gruppierungsfelder, 8 Werte je Menge, 3 Joins, `top` 1 bis 50.000, höchstens 50.000 Gruppen je Menge.
+- Schlüssel, die sich nur in Groß- und Kleinschreibung unterscheiden und getrennt gespeichert sind (Postgres gruppiert „North“ und „north“ getrennt), ordnet zuletzt ihr genauer Text, damit sich Seiten nie überschneiden.
+
+Das [Widget gruppierte Tabelle](#widget-gruppierte-tabelle) zeigt eine solche Tabelle in einem Bericht.
 
 ## Widgets
 
@@ -229,6 +232,7 @@ POST /api/v1/reports/table
 | Tabelle | Zeilen der Menge mit endlosem Scrollen (jedes Scrollen lädt die nächste Seite), sortierbar, als Tabelle, Karten oder Liste |
 | Datentabelle | die [`CoworkeeDataTable`](../ui/data-table.md) der Bibliothek: Seiten, Gruppierung, Spaltenauswahl, Facetten, Suche |
 | Pivot | Kategorien als Zeilen, Reihen als Spalten, nach Größe eingefärbt, mit Summen |
+| Gruppierte Tabelle | Gruppen aus bis zu 8 Feldern mit Werten der Menge und verbundener Mengen, auf dem Server sortiert und seitenweise geladen ([unten](#widget-gruppierte-tabelle)) |
 | Text, Bild, Webseite | Markdown (HTML wird nicht dargestellt), ein Bild oder eine abgeschottete Seite von einer http(s)-Adresse |
 
 Diagramme nutzen [Blazor-ApexCharts](https://github.com/apexcharts/Blazor-ApexCharts): gepflegt, animiert und ohne Nacharbeit ansehnlich, mit Klick-Ereignissen für Kreuzfilter. Farben, Schrift und Dunkelmodus kommen aus den CSS-Variablen des MudBlazor-Themes, eigene Themes brauchen keine weitere Einrichtung.
@@ -251,6 +255,34 @@ new ReportWidget
 ```
 
 ![Dasselbe Dashboard im Dunkelmodus](../assets/screenshots/reporting-dark.png){ .shot }
+
+### Widget gruppierte Tabelle
+
+`WidgetType.GroupedTable` zeigt eine [gruppierte Tabelle](#gruppierte-tabellen): eine Zeile je Kombination der `WidgetQuery.GroupFields` (1 bis 8), daneben die `Aggregates` des Widgets und danach die Werte jedes `WidgetJoin` (eine andere Datenmenge, nach denselben Feldern gruppiert, z. B. Kosten neben der Zahl der Sendungen).
+
+```csharp
+new ReportWidget
+{
+    Type = WidgetType.GroupedTable, Title = "Trade lanes", W = 12, H = 7,
+    Query = new WidgetQuery
+    {
+        EntitySet = "Shipments", DateField = "Etd",
+        GroupFields = ["OriginCountry", "DestinationCountry", "Mode", "Supplier"],
+        Aggregates = [new(Label: "Shipments"), new(AggregateFunction.Average, "TransitDays", "Avg transit (days)", EmptyAsZero: true)],
+        Joins = [new WidgetJoin { EntitySet = "ShipmentCosts", Aggregates = [new(AggregateFunction.Sum, "Amount", "Total cost")] }],
+        OrderBy = "Total cost desc, Shipments desc",
+    },
+    Options = new WidgetOptions { HiddenColumns = ["Supplier"] },
+}
+```
+
+- **Spalten** heißen nach dem Pfad des Gruppierungsfelds oder der Bezeichnung des Werts (ohne Bezeichnung z. B. `Count` oder `Sum Amount`; `ReportTableColumns.Of(query)`). `WidgetOptions.HiddenColumns` nennt Spalten, die weiter gruppieren (oder weiter berechnet werden), aber nicht angezeigt werden, z. B. die Lieferantenspalten einer Brokerage-Variante, die nach allen Lane-Feldern gruppiert.
+- **Reihenfolge**: `WidgetQuery.OrderBy` ist eine Liste wie `"Total cost desc, Shipments desc"`; Einträge, die keine Spalte nennen, werden übersprungen, für einen Leser ohne Recht auf die verbundenen Kosten beginnt die Tabelle also nach Sendungen sortiert. Ein Klick auf eine Überschrift sortiert auf dem Server nach dieser Spalte (aufsteigend, absteigend, zurück zur Reihenfolge des Widgets); Gleichstände entscheiden die Gruppierungsfelder.
+- **Filter**: Filter, Facetten und Datumsfeld des Widgets sowie Facetten und Kreuzfilter des Berichts grenzen die Hauptmenge und jede verbundene Menge ein, jede über ihre eigenen Felder (die verbundene Menge braucht auch die Felder des Widget-Filters).
+- **Leser**: Eine verbundene Menge, die der Leser nicht lesen darf, fällt mit ihren Spalten ohne Fehler weg (`ReportViews.ForReader`); ohne die Berechtigung der Hauptmenge fällt das Widget weg.
+- **Anzeige**: Seiten zu 20 Zeilen (`ReportTableColumns.PageSize`), Scrollen ans Ende lädt die nächste; eine feste Kopfzeile, Platzhalterzeilen beim Laden, „Keine Daten für diese Filter.“, wenn nichts da ist. Zahlen stehen rechtsbündig: Anzahlen als ganze Zahlen, andere Werte im Zahlenformat des Widgets (mit der Währung der Quelle, siehe `{currency}`), „–“, wo ein Join keinen Wert hat.
+- **Designer**: Der Widget-Bereich bearbeitet die Gruppierungsfelder (hinzufügen, ändern, verschieben, entfernen), die Werte, die ausgeblendeten Spalten und die Reihenfolge (Spalten, Richtung, Abfolge). Joins kommen aus der Berichtsdatei oder einer App; der Bereich zeigt sie als entfernbare Chips, fügt aber keine hinzu, weil eine verbundene Menge jedes Gruppierungsfeld braucht.
+- **Mails** zeigen die ersten 20 Zeilen mit den angezeigten Spalten; die Arbeitsmappe enthält bis zu 1.000.
 
 ### App-Daten eines Widgets
 
@@ -340,7 +372,7 @@ Ein Bericht ist *privat*, mit *Rollen* geteilt (Inhaber einer davon, direkt oder
 
 *Per Mail abonnieren* (Briefumschlag-Symbol) an einem Bericht schickt ihn nach Plan: jeden Tag, jede Woche an einem Wochentag oder jeden Monat an einem Tag (kürzere Monate nehmen ihren letzten Tag) oder an einem Wochentag einer Woche (`ReportSchedule.Week`, z. B. am letzten Freitag), jeden n-ten Tag, jede n-te Woche oder jeden n-ten Monat (`Every`), zu einer Uhrzeit einer Zeitzone (IANA-Ids wie `Europe/Berlin` oder Windows-Ids; die Zeit folgt der Sommerzeit, eine übersprungene Uhrzeit läuft direkt nach der Lücke, eine doppelte beim ersten Mal). Der Dialog kann den Zeitraum des Berichts ersetzen (z. B. *Letzter Monat* für eine monatliche Mail) und die gerade gewählten Facetten übernehmen; der Excel-Anhang lässt sich abschalten. Ein Benutzer hat höchstens 50 Abos; anlegen oder ändern lässt sich keins, während man als ein anderer Benutzer angemeldet ist.
 
-Die Mail (Vorlage `Reports.Subscription`, in jeder mitgelieferten Sprache, bearbeitbar unter *Mail-Vorlagen*) zeigt jede Kennzahl mit Wert, Schwellenwert-Farbe, Zeichen und Bezeichnung und die ersten zehn Zeilen jedes Diagramms, Pivots und jeder Tabelle (ein Diagramm über einen Datumsbereich zeigt seine neuesten zehn, die älteste zuerst), mit einem Link zum Bericht. Sie ist in der Sprache des Abonnenten geschrieben, sonst in der Standardsprache des Mandanten (Seite Sprachen), wie die Abmeldeseite. Die angehängte Arbeitsmappe hat ein Blatt je Widget mit allen Zeilen (Tabellen bis 1.000), geschrieben wie *Excel exportieren*. Bilder der Widgets oder ein PDF werden auf dem Server nicht erzeugt.
+Die Mail (Vorlage `Reports.Subscription`, in jeder mitgelieferten Sprache, bearbeitbar unter *Mail-Vorlagen*) zeigt jede Kennzahl mit Wert, Schwellenwert-Farbe, Zeichen und Bezeichnung und die ersten zehn Zeilen jedes Diagramms, Pivots und jeder Tabelle (ein Diagramm über einen Datumsbereich zeigt seine neuesten zehn, die älteste zuerst; eine gruppierte Tabelle ihre ersten 20), mit einem Link zum Bericht. Sie ist in der Sprache des Abonnenten geschrieben, sonst in der Standardsprache des Mandanten (Seite Sprachen), wie die Abmeldeseite. Die angehängte Arbeitsmappe hat ein Blatt je Widget mit allen Zeilen (Tabellen bis 1.000), geschrieben wie *Excel exportieren*. Bilder der Widgets oder ein PDF werden auf dem Server nicht erzeugt.
 
 Der wiederkehrende Job `coworkee-report-subscriptions` (alle fünf Minuten, `Coworkee:Reporting:SubscriptionCron`) führt die fälligen Abos Mandant für Mandant aus, jedes **als der Abonnent**: der Bericht muss ihm noch freigegeben sein, und seine Berechtigungen, geschützten Felder und Zeilenfilter bestimmen, was die Mail zeigt. Steht etwas im Weg (Bericht nicht mehr freigegeben, keine aktive Mail-Adresse, `Reports.View` entzogen), wird nichts gesendet und das Abo zeigt den Grund; der nächste Lauf versucht es erneut. Für ihre Links brauchen die Mails `Coworkee:Notifications:PublicAppUrl`.
 
@@ -389,7 +421,7 @@ Die Dashboard-Seite des Templates (*Persönlich > Dashboard*, über *Berichte*) 
 | Schwellenwerte | 10 je Widget |
 | Aggregation | 5.000 Gruppen, Top 1 bis 1.000; gruppierte Tabellen 1 bis 8 Felder, 3 Joins, 50.000 Gruppen je Menge |
 | KI-Prompt | 4.000 Zeichen, drei Versuche |
-| Abos | 50 je Benutzer; Mails zeigen 10 Zeilen je Widget, die Arbeitsmappe bis 1.000 Zeilen je Tabelle |
+| Abos | 50 je Benutzer; Mails zeigen 10 Zeilen je Widget (gruppierte Tabellen 20), die Arbeitsmappe bis 1.000 Zeilen je Tabelle |
 
 ## Endpunkte
 

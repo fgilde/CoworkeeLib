@@ -219,6 +219,9 @@ POST /api/v1/reports/table
 - `orderBy` columns count the group fields first (0 to fields - 1), then the main values, then each join's values in order. Ties are broken by every group field ascending. Texts sort ignoring case, nulls first (last when descending), as on SQL Server.
 - `more` says whether rows follow the page.
 - Every joined set needs its read permission (403 otherwise) and every group field (400 otherwise). Limits: 1 to 8 group fields, 8 values per set, 3 joins, `top` 1 to 50,000, at most 50,000 groups per set.
+- Keys that are equal ignoring case but stored apart (Postgres groups "North" and "north" separately) are ordered last by their exact text, so pages never overlap.
+
+The [grouped table widget](#grouped-table-widget) shows such a table on a report.
 
 ## Widgets
 
@@ -229,6 +232,7 @@ POST /api/v1/reports/table
 | Table | rows of the set with endless scrolling (each scroll loads the next page), sortable, as table, cards or list |
 | Data table | the library's [`CoworkeeDataTable`](../ui/data-table.md): paging, grouping, column chooser, facets, search |
 | Pivot | categories as rows, series as columns, shaded by size, with totals |
+| Grouped table | groups of up to 8 fields with values of the set and of joined sets, sorted and paged on the server ([below](#grouped-table-widget)) |
 | Text, image, web page | Markdown (HTML is not rendered), an image or a sandboxed page from an http(s) address |
 
 Charts use [Blazor-ApexCharts](https://github.com/apexcharts/Blazor-ApexCharts): maintained, animated and good looking out of the box, with click events for cross filters. Colours, font and dark mode come from the MudBlazor theme's CSS variables, so custom themes need no extra setup.
@@ -251,6 +255,34 @@ new ReportWidget
 ```
 
 ![The same dashboard in dark mode](../assets/screenshots/reporting-dark.png){ .shot }
+
+### Grouped table widget
+
+`WidgetType.GroupedTable` shows a [grouped table](#grouped-tables): one row per combination of `WidgetQuery.GroupFields` (1 to 8), the widget's `Aggregates` next to them and, after those, the values of each `WidgetJoin` (another data set grouped by the same fields, e.g. costs next to shipment counts).
+
+```csharp
+new ReportWidget
+{
+    Type = WidgetType.GroupedTable, Title = "Trade lanes", W = 12, H = 7,
+    Query = new WidgetQuery
+    {
+        EntitySet = "Shipments", DateField = "Etd",
+        GroupFields = ["OriginCountry", "DestinationCountry", "Mode", "Supplier"],
+        Aggregates = [new(Label: "Shipments"), new(AggregateFunction.Average, "TransitDays", "Avg transit (days)", EmptyAsZero: true)],
+        Joins = [new WidgetJoin { EntitySet = "ShipmentCosts", Aggregates = [new(AggregateFunction.Sum, "Amount", "Total cost")] }],
+        OrderBy = "Total cost desc, Shipments desc",
+    },
+    Options = new WidgetOptions { HiddenColumns = ["Supplier"] },
+}
+```
+
+- **Columns** are named by the group field's path or the value's label (without a label e.g. `Count` or `Sum Amount`; `ReportTableColumns.Of(query)`). `WidgetOptions.HiddenColumns` lists columns that still group (or are still computed) but are not shown, e.g. the supplier columns of a brokerage variant that groups by all lane fields.
+- **Order**: `WidgetQuery.OrderBy` is a list like `"Total cost desc, Shipments desc"`; entries naming no column are skipped, so for a reader who may not read the joined costs the table starts sorted by shipments. Clicking a header sorts by that column on the server (ascending, descending, back to the widget's order); ties are broken by the group fields.
+- **Filters**: the widget's filter, facets, date field and the report's facets and cross filters narrow the main set and every joined set, each through its own fields (the joined set needs the fields of the widget's filter too).
+- **Readers**: a joined set the reader may not read is left out with its columns, without an error (`ReportViews.ForReader`); without the main set's permission the widget is left out.
+- **Display**: pages of 20 rows (`ReportTableColumns.PageSize`), scrolling to the end loads the next one; a sticky header, skeleton rows while loading, "No data for these filters." when empty. Numbers are right-aligned: counts as whole numbers, other values in the widget's number format (its currency from the source, see `{currency}`), "–" where a join has no value.
+- **Designer**: the widget panel edits the group fields (add, change, move, remove), the values, the hidden columns and the order (columns, direction, sequence). Joins come from the report file or an app; the panel shows them as chips that can be removed, it does not add them, because a joined set needs every group field.
+- **Mails** show the first 20 rows with the shown columns; the workbook holds up to 1,000.
 
 ### App data of a widget
 
@@ -340,7 +372,7 @@ A report is *private*, shared with *roles* (holders of one of them, directly or 
 
 *Subscribe by mail* (envelope icon) on a report mails it on a schedule: every day, every week on a weekday or every month on a day (shorter months take their last day) or on a weekday of a week (`ReportSchedule.Week`, e.g. the last Friday), every n-th day, week or month (`Every`), at a time of a time zone (IANA ids like `Europe/Berlin` or Windows ids; the time follows summer time, a time the clock skips runs right after the gap, a time that happens twice runs the first time). The dialog can replace the report's date range (e.g. *Last month* for a monthly mail) and use the facets chosen at the moment; the Excel attachment can be switched off. A user has at most 50 subscriptions; creating or changing one is refused while signed in as another user.
 
-The mail (template `Reports.Subscription`, in every shipped language, editable under *Mail templates*) shows each KPI with its value, threshold colour, sign and label, and the first ten rows of every chart, pivot and table (a chart over a date bucket shows its latest ten, oldest first), with a link to the report. It is written in the subscriber's language, else in the default language of the tenant (Languages page), like the unsubscribe page. The attached workbook has one sheet per widget with all its rows (tables up to 1,000), written like *Export Excel*. Images of the widgets or a PDF are not rendered on the server.
+The mail (template `Reports.Subscription`, in every shipped language, editable under *Mail templates*) shows each KPI with its value, threshold colour, sign and label, and the first ten rows of every chart, pivot and table (a chart over a date bucket shows its latest ten, oldest first; a grouped table its first 20), with a link to the report. It is written in the subscriber's language, else in the default language of the tenant (Languages page), like the unsubscribe page. The attached workbook has one sheet per widget with all its rows (tables up to 1,000), written like *Export Excel*. Images of the widgets or a PDF are not rendered on the server.
 
 The recurring job `coworkee-report-subscriptions` (every five minutes, `Coworkee:Reporting:SubscriptionCron`) runs the due subscriptions tenant by tenant, each **as the subscriber**: the report must still be shared with them, and their permissions, protected fields and row filters decide what the mail shows. When something is in the way (report no longer shared, no active mail address, `Reports.View` gone) nothing is sent and the subscription shows the reason; the next run tries again. Mails need `Coworkee:Notifications:PublicAppUrl` for their links.
 
@@ -389,7 +421,7 @@ The template's dashboard page (*Personal > Dashboard*, above *Reports*) does thi
 | Thresholds | 10 per widget |
 | Aggregation | 5,000 groups, top 1 to 1,000; grouped tables 1 to 8 fields, 3 joins, 50,000 groups per set |
 | AI prompt | 4,000 characters, three tries |
-| Subscriptions | 50 per user; mails show 10 rows per widget, the workbook up to 1,000 rows per table |
+| Subscriptions | 50 per user; mails show 10 rows per widget (grouped tables 20), the workbook up to 1,000 rows per table |
 
 ## Endpoints
 

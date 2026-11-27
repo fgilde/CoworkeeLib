@@ -2420,5 +2420,13 @@
   "Flag": "Bandiera",
   "Person": "Persona",
   "Add chip": "Aggiungi chip",
-  "Add the values that get a chip, each with an icon.": "Aggiungi i valori che ricevono un chip, ciascuno con un'icona."
+  "Add the values that get a chip, each with an icon.": "Aggiungi i valori che ricevono un chip, ciascuno con un'icona.",
+  "Grouped table": "Tabella raggruppata",
+  "Choose the fields to group by.": "Scegli i campi per cui raggruppare.",
+  "Add group field": "Aggiungi campo di raggruppamento",
+  "Values of other data sets": "Valori di altre origini dati",
+  "They come from the report file (JSON); remove them here.": "Provengono dal file del report (JSON); rimuovili qui.",
+  "Hidden columns": "Colonne nascoste",
+  "Still grouped by, just not shown": "Raggruppano ancora, solo non vengono mostrate",
+  "Add sort column": "Aggiungi colonna di ordinamento"
 }

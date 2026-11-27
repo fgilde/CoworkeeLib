@@ -2420,5 +2420,13 @@
   "Flag": "Флаг",
   "Person": "Човек",
   "Add chip": "Добавяне на чип",
-  "Add the values that get a chip, each with an icon.": "Добавете стойностите, които получават чип, всяка с икона."
+  "Add the values that get a chip, each with an icon.": "Добавете стойностите, които получават чип, всяка с икона.",
+  "Grouped table": "Групирана таблица",
+  "Choose the fields to group by.": "Изберете полетата, по които се групира.",
+  "Add group field": "Добавяне на поле за групиране",
+  "Values of other data sets": "Стойности от други набори от данни",
+  "They come from the report file (JSON); remove them here.": "Идват от файла на отчета (JSON); премахнете ги тук.",
+  "Hidden columns": "Скрити колони",
+  "Still grouped by, just not shown": "Групира се по тях, но не се показват",
+  "Add sort column": "Добавяне на колона за сортиране"
 }

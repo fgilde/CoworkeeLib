@@ -13,4 +13,5 @@ public enum WidgetType
     Markdown,
     Image,
     Embed,
+    GroupedTable,
 }

@@ -7,6 +7,7 @@ internal static class ReportLimits
     public const int IconLength = 4000;
     public const int Widgets = 60;
     public const int Aggregates = 8;
+    public const int HiddenColumns = 40;
     public const int TextLength = 20_000;
     public const int Groups = 100;
     public const int AppDataLength = 20_000;

@@ -2420,5 +2420,13 @@
   "Flag": "Прапор",
   "Person": "Людина",
   "Add chip": "Додати чип",
-  "Add the values that get a chip, each with an icon.": "Додайте значення, для яких потрібні чипи, кожне з іконкою."
+  "Add the values that get a chip, each with an icon.": "Додайте значення, для яких потрібні чипи, кожне з іконкою.",
+  "Grouped table": "Згрупована таблиця",
+  "Choose the fields to group by.": "Виберіть поля для групування.",
+  "Add group field": "Додати поле групування",
+  "Values of other data sets": "Значення інших наборів даних",
+  "They come from the report file (JSON); remove them here.": "Вони походять із файлу звіту (JSON); видаліть їх тут.",
+  "Hidden columns": "Приховані стовпці",
+  "Still grouped by, just not shown": "Групування за ними зберігається, вони просто не показуються",
+  "Add sort column": "Додати стовпець сортування"
 }

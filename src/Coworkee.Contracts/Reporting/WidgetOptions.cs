@@ -56,4 +56,7 @@ public sealed class WidgetOptions
 
     /// <summary>Chips charts: the category values that get a chip, in order, each with its MudBlazor icon (SVG); empty means no chips. Other values still count towards the 100 %.</summary>
     public List<ValueIcon> ValueIcons { get; set; } = [];
+
+    /// <summary>Grouped tables: columns that still group or count but are not shown, by group field path or value label (<see cref="ReportTableColumns"/>).</summary>
+    public List<string> HiddenColumns { get; set; } = [];
 }

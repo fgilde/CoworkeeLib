@@ -2420,5 +2420,13 @@
   "Flag": "ទង់",
   "Person": "មនុស្ស",
   "Add chip": "បន្ថែមឈីប",
-  "Add the values that get a chip, each with an icon.": "បន្ថែមតម្លៃដែលទទួលបានឈីប ដោយមានរូបតំណាងនីមួយៗ។"
+  "Add the values that get a chip, each with an icon.": "បន្ថែមតម្លៃដែលទទួលបានឈីប ដោយមានរូបតំណាងនីមួយៗ។",
+  "Grouped table": "តារាងដាក់ជាក្រុម",
+  "Choose the fields to group by.": "ជ្រើសរើសវាលដែលត្រូវដាក់ជាក្រុមតាម។",
+  "Add group field": "បន្ថែមវាលដាក់ជាក្រុម",
+  "Values of other data sets": "តម្លៃនៃសំណុំទិន្នន័យផ្សេងទៀត",
+  "They come from the report file (JSON); remove them here.": "ពួកវាមកពីឯកសាររបាយការណ៍ (JSON); លុបពួកវាចេញនៅទីនេះ។",
+  "Hidden columns": "ជួរឈរដែលលាក់",
+  "Still grouped by, just not shown": "នៅតែដាក់ជាក្រុមតាម ប៉ុន្តែមិនបង្ហាញ",
+  "Add sort column": "បន្ថែមជួរឈរតម្រៀប"
 }

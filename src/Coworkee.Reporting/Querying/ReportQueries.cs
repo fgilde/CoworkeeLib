@@ -79,22 +79,47 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
             return plan.Error;
         }
 
+        return await CheckFilterAsync(source!, request.Filter, nameof(ReportQueryRequest.Filter), cancellationToken);
+    }
+
+    /// <summary>Checks a grouped table without running it: every source, its group fields, values and filter, and the sort columns.</summary>
+    public async Task<Error?> CheckTableAsync(ReportTableRequest request, CancellationToken cancellationToken)
+    {
+        var plans = await PlanTableAsync(request, cancellationToken);
+        if (!plans.IsSuccess)
+        {
+            return plans.Error;
+        }
+
+        foreach (var plan in plans.Value)
+        {
+            if (await CheckFilterAsync(plan.Source, plan.Filter, $"{plan.Prefix}{nameof(ReportTableRequest.Filter)}", cancellationToken) is { } error)
+            {
+                return error;
+            }
+        }
+
+        return null;
+    }
+
+    private async Task<Error?> CheckFilterAsync(ReportSource source, string? filter, string key, CancellationToken cancellationToken)
+    {
         try
         {
-            if (source!.Computed is { } computed)
+            if (source.Computed is { } computed)
             {
-                computed.Parse(request.Filter, services);
+                computed.Parse(filter, services);
             }
             else
             {
-                await (Task)CheckMethod.MakeGenericMethod(source.RowType).Invoke(null, [services, request.Filter, cancellationToken])!;
+                await (Task)CheckMethod.MakeGenericMethod(source.RowType).Invoke(null, [services, filter, cancellationToken])!;
             }
 
             return null;
         }
         catch (ODataException exception)
         {
-            return Error.Validation(nameof(ReportQueryRequest.Filter), exception.Message);
+            return Error.Validation(key, exception.Message);
         }
     }
 
@@ -124,6 +149,43 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
 
     /// <summary>A grouped table: every source readable (Forbidden otherwise) and grouped by all group fields, the joins merged onto the main groups.</summary>
     public async Task<Result<ReportTableResult>> TableAsync(ReportTableRequest request, CancellationToken cancellationToken)
+    {
+        var planned = await PlanTableAsync(request, cancellationToken);
+        if (!planned.IsSuccess)
+        {
+            return planned.Error;
+        }
+
+        var plans = planned.Value;
+        var watch = Stopwatch.StartNew();
+        var grouped = new List<List<(object?[] Keys, double?[] Values)>>();
+        foreach (var plan in plans)
+        {
+            try
+            {
+                var rows = await (Task<List<(object?[] Keys, double?[] Values)>?>)TableMethod.MakeGenericMethod(plan.Source.RowType)
+                    .Invoke(null, [services, plan.Source, plan.Filter, plan.Groups, plan.Values, plan.Prefix.Length > 0, cancellationToken])!;
+                if (rows is null)
+                {
+                    return Error.Validation($"{plan.Prefix}{nameof(request.GroupFields)}", $"More than {ReportTables.MaxRows} groups in {plan.Source.EntitySet}; filter the rows or group by fewer fields.");
+                }
+
+                grouped.Add(rows);
+            }
+            catch (ODataException exception)
+            {
+                return Error.Validation($"{plan.Prefix}{nameof(request.Filter)}", exception.Message);
+            }
+        }
+
+        var (page, more) = ReportTables.Merge(plans[0].Groups, grouped[0], [.. plans.Skip(1).Select((p, i) => (p.Groups, grouped[i + 1], p.Values.Count))], request.OrderBy ?? [], request.Skip, request.Top);
+        return new ReportTableResult(page, more, watch.ElapsedMilliseconds);
+    }
+
+    private sealed record TablePlan(ReportSource Source, string? Filter, string Prefix, IReadOnlyList<ReportGroup> Groups, IReadOnlyList<ReportValue> Values);
+
+    // every source readable (Forbidden otherwise) with all group fields and its values; the sort columns exist
+    private async Task<Result<List<TablePlan>>> PlanTableAsync(ReportTableRequest request, CancellationToken cancellationToken)
     {
         var fields = request.GroupFields ?? [];
         var joins = request.Joins ?? [];
@@ -177,7 +239,7 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
             }
 
             var values = s.Aggregates.Select((a, i) => ReportPlan.Value(s.Source, a, $"{s.Prefix}{nameof(request.Aggregates)}[{i}]", granted, errors)).ToList();
-            return (s.Source, s.Filter, s.Prefix, Groups: (IReadOnlyList<ReportGroup>)groups!, Values: (IReadOnlyList<ReportValue>)values!);
+            return new TablePlan(s.Source, s.Filter, s.Prefix, (IReadOnlyList<ReportGroup>)groups!, (IReadOnlyList<ReportValue>)values!);
         }).ToList();
 
         var columns = fields.Count + plans.Sum(p => p.Values.Count);
@@ -186,34 +248,7 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
             errors[$"{nameof(request.OrderBy)}[{i}]"] = [$"Column {sort.Column} is not between 0 and {columns - 1}."];
         }
 
-        if (errors.Count > 0)
-        {
-            return Error.Validation(errors);
-        }
-
-        var watch = Stopwatch.StartNew();
-        var grouped = new List<List<(object?[] Keys, double?[] Values)>>();
-        foreach (var plan in plans)
-        {
-            try
-            {
-                var rows = await (Task<List<(object?[] Keys, double?[] Values)>?>)TableMethod.MakeGenericMethod(plan.Source.RowType)
-                    .Invoke(null, [services, plan.Source, plan.Filter, plan.Groups, plan.Values, plan.Prefix.Length > 0, cancellationToken])!;
-                if (rows is null)
-                {
-                    return Error.Validation($"{plan.Prefix}{nameof(request.GroupFields)}", $"More than {ReportTables.MaxRows} groups in {plan.Source.EntitySet}; filter the rows or group by fewer fields.");
-                }
-
-                grouped.Add(rows);
-            }
-            catch (ODataException exception)
-            {
-                return Error.Validation($"{plan.Prefix}{nameof(request.Filter)}", exception.Message);
-            }
-        }
-
-        var (page, more) = ReportTables.Merge(plans[0].Groups, grouped[0], [.. plans.Skip(1).Select((p, i) => (p.Groups, grouped[i + 1], p.Values.Count))], orderBy, request.Skip, request.Top);
-        return new ReportTableResult(page, more, watch.ElapsedMilliseconds);
+        return errors.Count > 0 ? Error.Validation(errors) : plans;
     }
 
     internal async Task<Result<ReportSource>> ReadableAsync(string name, CancellationToken cancellationToken)

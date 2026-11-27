@@ -68,6 +68,40 @@ public sealed class TableQueryTests(ReportingApp app) : ReportingTestBase(app)
     }
 
     [Fact]
+    public async Task Averages_with_empty_as_zero_and_distinct_counts_of_a_join_count_every_spelling_of_a_lane_once()
+    {
+        var result = await TableAsync(new ReportTableRequest("Sales", null, ByLane, [new()],
+            [new ReportTableJoin("Returns", null, [new(AggregateFunction.Average, "Days", EmptyAsZero: true), new(AggregateFunction.DistinctCount, "Quantity")])], Top: 100));
+
+        var expected = Lanes(Visible).ToList();
+        result.Rows.Count.ShouldBe(expected.Count);
+        // a lane's returns spell the region in upper (even quantity) and lower case (odd) and its empty channel as "" (even) and null (odd)
+        expected.ShouldContain(g => g.Key.Channel == null && g.Where(s => s.Quantity > 10).Select(s => s.Quantity % 2).Distinct().Count() == 2);
+        foreach (var (row, group) in result.Rows.Zip(expected))
+        {
+            var returned = group.Where(s => s.Quantity > 10).ToList();
+            returned.ShouldNotBeEmpty();
+            row.Values[1]!.Value.ShouldBe(returned.Sum(s => s.Days ?? 0) / (double)returned.Count, 0.001, $"{group.Key}");
+            row.Values[2].ShouldBe(returned.Select(s => s.Quantity).Distinct().Count(), $"{group.Key}");
+        }
+    }
+
+    [Fact]
+    public void Keys_equal_ignoring_case_keep_one_order_whatever_order_the_database_returns()
+    {
+        // Postgres groups "North" and "north" apart; sorted alike ignoring case, they need a final order for stable pages
+        var region = new ReportGroup(new ReportField("Region", "Region", ReportFieldKind.Text, [typeof(ReturnRow).GetProperty(nameof(ReturnRow.Region))!], null, null), DateBucket.None);
+        List<(object?[] Keys, double?[] Values)> rows = [(["north"], [1]), (["North"], [1]), (["NORTH"], [1])];
+
+        var forward = ReportTables.Merge([region], rows, [], [new(1)], 0, 10).Rows.Select(r => r.Keys[0]!.Value).ToList();
+        rows.Reverse();
+        var backward = ReportTables.Merge([region], rows, [], [new(1)], 0, 10).Rows.Select(r => r.Keys[0]!.Value).ToList();
+
+        forward.ShouldBe(["NORTH", "North", "north"]);
+        backward.ShouldBe(forward);
+    }
+
+    [Fact]
     public async Task The_table_sorts_by_any_column_then_by_every_group_field_and_pages()
     {
         // by the count, largest first, ties by region and channel

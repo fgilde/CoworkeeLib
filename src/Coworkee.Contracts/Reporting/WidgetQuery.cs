@@ -36,6 +36,15 @@ public sealed class WidgetQuery
     /// <summary>Columns of tables, OData paths like "Customer/Name".</summary>
     public List<string> Columns { get; set; } = [];
 
-    /// <summary>The column tables sort by first, <see cref="Descending"/> or not.</summary>
+    /// <summary>
+    /// The column tables sort by first, <see cref="Descending"/> or not. Grouped tables: a list like <c>"Total cost desc, Containers desc"</c> of group field paths
+    /// and value labels (<see cref="ReportTableColumns"/>); entries naming no column are skipped.
+    /// </summary>
     public string? OrderBy { get; set; }
+
+    /// <summary>Grouped tables: the fields the rows are grouped by (1 to 8), each a column.</summary>
+    public List<string> GroupFields { get; set; } = [];
+
+    /// <summary>Grouped tables: values of other data sets grouped by the same <see cref="GroupFields"/>, as columns after the widget's own values.</summary>
+    public List<WidgetJoin> Joins { get; set; } = [];
 }

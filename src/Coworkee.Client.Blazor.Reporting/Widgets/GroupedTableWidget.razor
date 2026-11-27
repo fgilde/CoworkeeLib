@@ -1,0 +1,52 @@
+@inherits WidgetBase
+
+<WidgetStatus Loading="Loading" Error="@Error" Empty="@(_rows.Count == 0 && !Loading)" Hint="@(Query is { GroupFields.Count: 0 } ? L["Choose the fields to group by."] : null)">
+    <div class="cw-grouped" data-testid="grouped-table">
+        <table>
+            <thead>
+                <tr>
+                    @foreach (var column in Shown)
+                    {
+                        <th class="@(column.Aggregate is null ? null : "number")" aria-sort="@AriaSort(column)">
+                            <button type="button" @onclick="() => SortAsync(column)" data-column="@column.Index">
+                                @Header(column)
+                                @if (Direction(column) is { } descending)
+                                {
+                                    <MudIcon Icon="@(descending ? Icons.Material.Filled.ArrowDownward : Icons.Material.Filled.ArrowUpward)" Size="Size.Small" />
+                                }
+                            </button>
+                        </th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in _rows)
+                {
+                    <tr data-testid="grouped-row">
+                        @foreach (var column in Shown)
+                        {
+                            @if (column.Aggregate is { } aggregate)
+                            {
+                                <td class="number">@ReportTableColumns.Format(row.Values.ElementAtOrDefault(column.Index - Keys), aggregate, Widget.Options)</td>
+                            }
+                            else
+                            {
+                                <td>@KeyText(row, column)</td>
+                            }
+                        }
+                    </tr>
+                }
+                @for (var i = 0; i < Skeletons; i++)
+                {
+                    <tr class="cw-grouped-skeleton">
+                        @foreach (var column in Shown)
+                        {
+                            <td><MudSkeleton /></td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div @ref="_end" class="cw-grouped-end"></div>
+    </div>
+</WidgetStatus>

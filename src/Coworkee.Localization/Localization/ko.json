@@ -2420,5 +2420,13 @@
   "Flag": "깃발",
   "Person": "사람",
   "Add chip": "칩 추가",
-  "Add the values that get a chip, each with an icon.": "칩으로 표시할 값을 아이콘과 함께 추가하세요."
+  "Add the values that get a chip, each with an icon.": "칩으로 표시할 값을 아이콘과 함께 추가하세요.",
+  "Grouped table": "그룹화된 표",
+  "Choose the fields to group by.": "그룹화할 필드를 선택하세요.",
+  "Add group field": "그룹 필드 추가",
+  "Values of other data sets": "다른 데이터 세트의 값",
+  "They come from the report file (JSON); remove them here.": "보고서 파일(JSON)에서 추가된 항목입니다. 여기에서 제거할 수 있습니다.",
+  "Hidden columns": "숨긴 열",
+  "Still grouped by, just not shown": "그룹화에는 계속 쓰이지만 표시되지 않음",
+  "Add sort column": "정렬 열 추가"
 }

@@ -51,7 +51,11 @@ internal sealed class ReportDefinitionCheck(ReportQueries queries)
     private async Task<Error?> WidgetAsync(ReportWidget widget, string key, IReadOnlyList<ReportSource> sources, CancellationToken cancellationToken)
     {
         var query = widget.Query!;
-        if (await queries.CheckAsync(ReportQueryRequest.From(query, query.Filter), cancellationToken) is { } error)
+        var grouped = widget.Type == WidgetType.GroupedTable;
+        var check = grouped
+            ? queries.CheckTableAsync(ReportTableColumns.Request(query, q => q.Filter, null, 0, 1), cancellationToken)
+            : queries.CheckAsync(ReportQueryRequest.From(query, query.Filter), cancellationToken);
+        if (await check is { } error)
         {
             return error.Kind == ErrorKind.Validation && error.Details is { } details
                 ? Error.Validation(details.ToDictionary(d => $"{key}.{d.Key}", d => d.Value, StringComparer.Ordinal))
@@ -59,7 +63,8 @@ internal sealed class ReportDefinitionCheck(ReportQueries queries)
         }
 
         var source = sources.FirstOrDefault(s => string.Equals(s.EntitySet, query.EntitySet, StringComparison.OrdinalIgnoreCase));
-        return query.Columns.Concat(new[] { query.DateField, query.OrderBy, widget.Options.ThresholdColumn }.OfType<string>()).FirstOrDefault(c => source?.Find(c) is null) is { } column
+        // a grouped table's order names columns (missing ones are skipped), not fields
+        return query.Columns.Concat(new[] { query.DateField, grouped ? null : query.OrderBy, widget.Options.ThresholdColumn }.OfType<string>()).FirstOrDefault(c => source?.Find(c) is null) is { } column
             ? Error.Validation($"{key}.Columns", $"{query.EntitySet} has no field '{column}'.")
             : null;
     }

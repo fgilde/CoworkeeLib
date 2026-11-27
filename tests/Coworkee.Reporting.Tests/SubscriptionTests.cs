@@ -294,6 +294,33 @@ public sealed partial class SubscriptionTests(ReportingApp app) : ReportingTestB
     }
 
     [Fact]
+    public async Task A_mail_shows_the_first_twenty_rows()
+    {
+        var report = await CreateReportAsync(Report() with { Definition = new ReportDefinition { Widgets =
+        [
+            new ReportWidget { Id = "lanes", Type = WidgetType.GroupedTable, Title = "Lanes", Query = new WidgetQuery
+            {
+                EntitySet = "Sales", GroupFields = ["Region", "Channel", "Status"], Aggregates = [new(), new(AggregateFunction.Sum, "Amount", "Revenue")],
+                Joins = [new WidgetJoin { EntitySet = "Sales", Aggregates = [new(AggregateFunction.Sum, "Quantity", "Pieces")] }], OrderBy = "Revenue desc",
+            }, Options = new WidgetOptions { HiddenColumns = ["Status"] } },
+        ] } });
+        var subscription = await SubscribeAsync(Admin, report.Id);
+        var lanes = Visible.GroupBy(s => (s.Region, s.Channel, s.Status)).Select(g => (g.Key, Revenue: g.Sum(s => s.Amount))).OrderByDescending(g => g.Revenue).ToList();
+
+        await RunDueAsync(subscription.Id);
+
+        var html = (await MailsAsync()).Single().Mail.HtmlBody;
+        lanes.Count.ShouldBeGreaterThan(ReportTableColumns.PageSize);
+        var table = html[html.IndexOf(">Lanes<", StringComparison.Ordinal)..];
+        Regex.Count(table[..table.IndexOf("</table>", StringComparison.Ordinal)], "<tr>").ShouldBe(ReportTableColumns.PageSize + 1);
+        html.ShouldContain(">Region<");
+        html.ShouldContain(">Pieces<");
+        html.ShouldNotContain(">Status<");
+        html.ShouldContain($">{((double)lanes[0].Revenue).ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("en"))}<");
+        html.ShouldContain("Only the first rows are shown");
+    }
+
+    [Fact]
     public async Task A_time_series_shows_its_latest_buckets_in_chronological_order()
     {
         var report = await CreateReportAsync(new SaveReportRequest("Shipped by month", null, null, ReportVisibility.Organisation, [], new ReportDefinition

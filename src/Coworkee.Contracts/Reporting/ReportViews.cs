@@ -74,13 +74,26 @@ public static class ReportViews
 
     /// <summary>
     /// The widget as the reader may see it: itself when its data set is readable, else a copy showing its first value on a readable set; null when it has none
-    /// (the widget is left out). A reader who lacks a permission of a source never gets an error for it.
+    /// (the widget is left out). Joins of a grouped table on sets the reader may not read are left out. A reader who lacks a permission of a source never gets an error for it.
     /// </summary>
     public static ReportWidget? ForReader(ReportWidget widget, Func<string, bool> readable)
     {
-        if (widget.Query is not { } query || readable(query.EntitySet))
+        if (widget.Query is not { } query)
         {
             return widget;
+        }
+
+        if (readable(query.EntitySet))
+        {
+            // the columns of a joined set the reader may not read are left out; an order naming them falls back to its next entries
+            if (query.Joins.TrueForAll(j => readable(j.EntitySet)))
+            {
+                return widget;
+            }
+
+            var copy = JsonSerializer.Deserialize<ReportWidget>(JsonSerializer.Serialize(widget, Json), Json)!;
+            copy.Query!.Joins.RemoveAll(j => !readable(j.EntitySet));
+            return copy;
         }
 
         for (var i = 0; i < widget.Options.Metrics.Count && HasMetrics(widget.Type); i++)

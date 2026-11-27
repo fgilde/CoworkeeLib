@@ -37,6 +37,10 @@ public sealed class ReturnRow
     public string? Channel { get; init; }
 
     public decimal Amount { get; init; }
+
+    public int Quantity { get; init; }
+
+    public int? Days { get; init; }
 }
 
 /// <summary>Two teams over 2025; remembers the last context, so tests see the date range a widget passed.</summary>
@@ -75,6 +79,8 @@ public static class MonthlyNumbers
                 Region = s.Quantity % 2 == 0 ? s.Region.ToUpper() : s.Region.ToLower(),
                 Channel = s.Channel ?? (s.Quantity % 2 == 0 ? "" : null),
                 Amount = s.Amount,
+                Quantity = s.Quantity,
+                Days = s.Days,
             });
 }
 

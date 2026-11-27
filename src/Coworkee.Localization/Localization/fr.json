@@ -2420,5 +2420,13 @@
   "Flag": "Drapeau",
   "Person": "Personne",
   "Add chip": "Ajouter une puce",
-  "Add the values that get a chip, each with an icon.": "Ajoutez les valeurs qui obtiennent une puce, chacune avec une icône."
+  "Add the values that get a chip, each with an icon.": "Ajoutez les valeurs qui obtiennent une puce, chacune avec une icône.",
+  "Grouped table": "Tableau groupé",
+  "Choose the fields to group by.": "Choisissez les champs de regroupement.",
+  "Add group field": "Ajouter un champ de regroupement",
+  "Values of other data sets": "Valeurs d'autres sources de données",
+  "They come from the report file (JSON); remove them here.": "Elles proviennent du fichier de rapport (JSON) ; retirez-les ici.",
+  "Hidden columns": "Colonnes masquées",
+  "Still grouped by, just not shown": "Toujours utilisées pour regrouper, simplement non affichées",
+  "Add sort column": "Ajouter une colonne de tri"
 }

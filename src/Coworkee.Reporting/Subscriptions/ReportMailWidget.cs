@@ -4,7 +4,7 @@ using Coworkee.Reporting.Querying;
 
 namespace Coworkee.Reporting.Subscriptions;
 
-/// <summary>One widget of a subscription mail: a KPI value with its band, or the first rows of a chart, pivot or table; all rows for the workbook.</summary>
+/// <summary>One widget of a subscription mail: a KPI value with its band, or the first rows of a chart, pivot or table (a grouped table its first page); all rows for the workbook.</summary>
 internal sealed class ReportMailWidget(
     IServiceProvider services, ReportQueries queries, IReadOnlyList<ReportSource> sources, ReportDefinition definition, ReportWidget widget, DateOnly today, CultureInfo culture,
     Func<string, CultureInfo, string> text)
@@ -29,6 +29,7 @@ internal sealed class ReportMailWidget(
             {
                 WidgetType.Kpi => await KpiAsync(query, filter, source, cancellationToken),
                 WidgetType.Table or WidgetType.DataTable => await TableAsync(query, filter, source, cancellationToken),
+                WidgetType.GroupedTable => await GroupedTableAsync(source, cancellationToken),
                 _ => await GroupsAsync(query, filter, source, cancellationToken),
             };
         }
@@ -126,7 +127,29 @@ internal sealed class ReportMailWidget(
         return (Table(headers, cells, Format), Sheet(headers, cells));
     }
 
-    private object Table(IReadOnlyList<string> headers, IReadOnlyList<IReadOnlyList<object?>> rows, Func<object?, string> format, bool latest = false) => new
+    // the first page as the widget shows it, its rows up to the workbook's limit; joins on sets the subscriber may not read are left out
+    private async Task<(object, ReportSheetRequest?)> GroupedTableAsync(ReportSource source, CancellationToken cancellationToken)
+    {
+        var query = ReportViews.ForReader(widget, set => Source(set) is not null)!.Query!;
+        var columns = ReportTableColumns.Of(query);
+        var request = ReportTableColumns.Request(query, q => FilterOf(q, definition, sources, today), ReportTableColumns.Sorts(query.OrderBy, columns), 0, ReportSubscriptionMail.SheetRows);
+        var result = await queries.TableAsync(request, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return (Failed(result.Error.Message), null);
+        }
+
+        var shown = columns.Where(c => !ReportTableColumns.Hidden(c, widget.Options)).ToList();
+        var keys = query.GroupFields.Count;
+        List<string> headers = [.. shown.Select(c => c.Aggregate is { } aggregate ? Label(aggregate, Source(c.EntitySet) ?? source) : FieldLabel(source, c.Field))];
+        var rows = result.Value.Rows.Select(r => (IReadOnlyList<object?>)[.. shown.Select(c => c.Index < keys ? Key(r.Keys[c.Index]) : (object?)r.Values[c.Index - keys])]).ToList();
+        var cells = rows.Select(r => (IReadOnlyList<object?>)[.. r.Select((cell, i) => shown[i].Aggregate is { } aggregate ? ReportTableColumns.Format((double?)cell, aggregate, widget.Options, culture) : cell)]).ToList();
+        return (Table(headers, cells, cell => cell?.ToString() ?? string.Empty, shown: ReportTableColumns.PageSize, more: result.Value.More), Sheet(headers, rows));
+    }
+
+    private ReportSource? Source(string set) => sources.FirstOrDefault(s => string.Equals(s.EntitySet, set, StringComparison.OrdinalIgnoreCase));
+
+    private object Table(IReadOnlyList<string> headers, IReadOnlyList<IReadOnlyList<object?>> rows, Func<object?, string> format, bool latest = false, int shown = ReportSubscriptionMail.MailRows, bool more = false) => new
     {
         title = Title,
         kpi = false,
@@ -135,8 +158,8 @@ internal sealed class ReportMailWidget(
         symbol = string.Empty,
         band = string.Empty,
         headers,
-        rows = (latest ? rows.TakeLast(ReportSubscriptionMail.MailRows) : rows.Take(ReportSubscriptionMail.MailRows)).Select(r => r.Select(format).ToArray()).ToArray(),
-        more = rows.Count > ReportSubscriptionMail.MailRows,
+        rows = (latest ? rows.TakeLast(shown) : rows.Take(shown)).Select(r => r.Select(format).ToArray()).ToArray(),
+        more = more || rows.Count > shown,
         latest,
         error = string.Empty,
     };

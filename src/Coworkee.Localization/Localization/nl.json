@@ -2420,5 +2420,13 @@
   "Flag": "Vlag",
   "Person": "Persoon",
   "Add chip": "Chip toevoegen",
-  "Add the values that get a chip, each with an icon.": "Voeg de waarden toe die een chip krijgen, elk met een pictogram."
+  "Add the values that get a chip, each with an icon.": "Voeg de waarden toe die een chip krijgen, elk met een pictogram.",
+  "Grouped table": "Gegroepeerde tabel",
+  "Choose the fields to group by.": "Kies de velden waarop wordt gegroepeerd.",
+  "Add group field": "Groeperingsveld toevoegen",
+  "Values of other data sets": "Waarden van andere gegevenssets",
+  "They come from the report file (JSON); remove them here.": "Ze komen uit het rapportbestand (JSON); verwijder ze hier.",
+  "Hidden columns": "Verborgen kolommen",
+  "Still grouped by, just not shown": "Er wordt nog steeds op gegroepeerd, ze worden alleen niet getoond",
+  "Add sort column": "Sorteerkolom toevoegen"
 }

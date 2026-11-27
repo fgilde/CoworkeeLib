@@ -79,7 +79,8 @@ public abstract class WidgetBase : Coworkee.Client.Blazor.Components.CoworkeeCom
         StateHasChanged();
     });
 
-    private async Task LoadIfChangedAsync()
+    /// <summary>Loads again when <see cref="LoadKey"/> changed, e.g. after a widget's own sort.</summary>
+    protected async Task LoadIfChangedAsync()
     {
         var key = LoadKey;
         if (key == _loaded)

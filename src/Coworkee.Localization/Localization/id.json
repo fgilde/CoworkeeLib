@@ -2420,5 +2420,13 @@
   "Flag": "Bendera",
   "Person": "Orang",
   "Add chip": "Tambah chip",
-  "Add the values that get a chip, each with an icon.": "Tambahkan nilai yang mendapat chip, masing-masing dengan ikon."
+  "Add the values that get a chip, each with an icon.": "Tambahkan nilai yang mendapat chip, masing-masing dengan ikon.",
+  "Grouped table": "Tabel terkelompok",
+  "Choose the fields to group by.": "Pilih bidang untuk mengelompokkan.",
+  "Add group field": "Tambah bidang pengelompokan",
+  "Values of other data sets": "Nilai dari kumpulan data lain",
+  "They come from the report file (JSON); remove them here.": "Berasal dari file laporan (JSON); hapus di sini.",
+  "Hidden columns": "Kolom tersembunyi",
+  "Still grouped by, just not shown": "Tetap dikelompokkan, hanya tidak ditampilkan",
+  "Add sort column": "Tambah kolom pengurutan"
 }

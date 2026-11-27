@@ -2420,5 +2420,13 @@
   "Flag": "Vlajka",
   "Person": "Osoba",
   "Add chip": "Přidat štítek",
-  "Add the values that get a chip, each with an icon.": "Přidejte hodnoty, které dostanou štítek, každou s ikonou."
+  "Add the values that get a chip, each with an icon.": "Přidejte hodnoty, které dostanou štítek, každou s ikonou.",
+  "Grouped table": "Seskupená tabulka",
+  "Choose the fields to group by.": "Vyberte pole, podle kterých se seskupuje.",
+  "Add group field": "Přidat pole seskupení",
+  "Values of other data sets": "Hodnoty jiných datových sad",
+  "They come from the report file (JSON); remove them here.": "Pocházejí ze souboru sestavy (JSON); zde je můžete odebrat.",
+  "Hidden columns": "Skryté sloupce",
+  "Still grouped by, just not shown": "Stále se podle nich seskupuje, jen se nezobrazují",
+  "Add sort column": "Přidat sloupec řazení"
 }

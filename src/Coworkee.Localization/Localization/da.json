@@ -2420,5 +2420,13 @@
   "Flag": "Flag",
   "Person": "Person",
   "Add chip": "Tilføj chip",
-  "Add the values that get a chip, each with an icon.": "Tilføj de værdier, der får en chip, hver med et ikon."
+  "Add the values that get a chip, each with an icon.": "Tilføj de værdier, der får en chip, hver med et ikon.",
+  "Grouped table": "Grupperet tabel",
+  "Choose the fields to group by.": "Vælg de felter, der grupperes efter.",
+  "Add group field": "Tilføj grupperingsfelt",
+  "Values of other data sets": "Værdier fra andre datasæt",
+  "They come from the report file (JSON); remove them here.": "De kommer fra rapportfilen (JSON); fjern dem her.",
+  "Hidden columns": "Skjulte kolonner",
+  "Still grouped by, just not shown": "Der grupperes stadig efter dem, de vises bare ikke",
+  "Add sort column": "Tilføj sorteringskolonne"
 }

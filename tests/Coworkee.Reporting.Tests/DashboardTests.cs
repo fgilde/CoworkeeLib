@@ -76,4 +76,29 @@ public sealed class DashboardTests(ReportingApp app) : ReportingTestBase(app)
         events.Select(e => EntityChangedPayload.From(e)!.Action).ShouldBe([EntityChangedPayload.Created, EntityChangedPayload.Deleted]);
         (await DashboardAsync(App.As(bob.Id, Setup.TenantId))).ShouldBe(new DashboardReportDto(null, null, null));
     }
+
+    [Fact]
+    public async Task A_grouped_table_needs_one_to_eight_group_fields()
+    {
+        Task<HttpResponseMessage> SaveAsync(List<string> fields, params WidgetJoin[] joins) => Admin.PostAsJsonAsync("/api/v1/reports", new SaveReportRequest("Lanes", null, null, ReportVisibility.Private, [],
+            new ReportDefinition { Widgets = [new ReportWidget { Id = "lanes", Type = WidgetType.GroupedTable, Query = new WidgetQuery
+            {
+                EntitySet = "Sales", GroupFields = fields, Aggregates = [new(AggregateFunction.Sum, "Amount", "Revenue")], Joins = [.. joins], OrderBy = "Revenue desc, Returned desc, Region",
+            } }] }), Ct);
+
+        var none = await SaveAsync([]);
+        var nine = await SaveAsync([.. Enumerable.Repeat("Region", 9)]);
+        var missing = await SaveAsync(["Region", "Status"], new WidgetJoin { EntitySet = "Returns", Aggregates = [new(AggregateFunction.Sum, "Amount", "Returned")] });
+        var fine = await SaveAsync(["Region", "Channel"], new WidgetJoin { EntitySet = "Returns", Aggregates = [new(AggregateFunction.Sum, "Amount", "Returned")] });
+
+        none.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await none.Content.ReadAsStringAsync(Ct)).ShouldContain("Group by 1 to 8 fields.");
+        nine.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        missing.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await missing.Content.ReadAsStringAsync(Ct)).ShouldContain("Widgets[lanes].Joins[0].GroupFields[1]");
+        fine.StatusCode.ShouldBe(HttpStatusCode.OK, await fine.Content.ReadAsStringAsync(Ct));
+        var saved = (await fine.Content.ReadFromJsonAsync<ReportDto>(Ct))!.Definition.Widgets.Single().Query!;
+        saved.GroupFields.ShouldBe(["Region", "Channel"]);
+        saved.Joins.ShouldHaveSingleItem().EntitySet.ShouldBe("Returns");
+    }
 }

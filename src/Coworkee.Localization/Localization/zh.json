@@ -2420,5 +2420,13 @@
   "Flag": "旗帜",
   "Person": "人员",
   "Add chip": "添加标签",
-  "Add the values that get a chip, each with an icon.": "添加需要显示为标签的值，并为每个值选择图标。"
+  "Add the values that get a chip, each with an icon.": "添加需要显示为标签的值，并为每个值选择图标。",
+  "Grouped table": "分组表格",
+  "Choose the fields to group by.": "请选择用于分组的字段。",
+  "Add group field": "添加分组字段",
+  "Values of other data sets": "其他数据集的值",
+  "They come from the report file (JSON); remove them here.": "它们来自报表文件 (JSON)；可在此处移除。",
+  "Hidden columns": "隐藏的列",
+  "Still grouped by, just not shown": "仍用于分组，只是不显示",
+  "Add sort column": "添加排序列"
 }

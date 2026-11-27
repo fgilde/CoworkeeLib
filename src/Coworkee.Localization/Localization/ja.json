@@ -2420,5 +2420,13 @@
   "Flag": "旗",
   "Person": "人",
   "Add chip": "チップを追加",
-  "Add the values that get a chip, each with an icon.": "チップにする値を、アイコンとともに追加してください。"
+  "Add the values that get a chip, each with an icon.": "チップにする値を、アイコンとともに追加してください。",
+  "Grouped table": "グループ化テーブル",
+  "Choose the fields to group by.": "グループ化するフィールドを選択してください。",
+  "Add group field": "グループ化フィールドを追加",
+  "Values of other data sets": "他のデータセットの値",
+  "They come from the report file (JSON); remove them here.": "レポートファイル（JSON）から追加されたものです。ここで削除できます。",
+  "Hidden columns": "非表示の列",
+  "Still grouped by, just not shown": "グループ化には使われますが、表示されません",
+  "Add sort column": "並べ替え列を追加"
 }

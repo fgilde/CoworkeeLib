@@ -100,6 +100,15 @@
     .cw-pivot-cell { cursor: pointer; border-radius: 6px; }
     .cw-pivot-cell:hover { outline: 2px solid var(--mud-palette-primary); outline-offset: -2px; }
     .cw-pivot-total, .cw-pivot tfoot td, .cw-pivot tfoot th { font-weight: 700; }
+    .cw-grouped { flex: 1; min-height: 0; overflow: auto; }
+    .cw-grouped table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: .85rem; }
+    .cw-grouped th, .cw-grouped td { padding: 6px 10px; border-bottom: 1px solid var(--mud-palette-lines-default); white-space: nowrap; text-align: left; }
+    .cw-grouped thead th { position: sticky; top: 0; z-index: 1; background: var(--mud-palette-surface); color: var(--mud-palette-text-secondary); font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+    .cw-grouped thead button { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+    .cw-grouped thead button:focus-visible { outline: 2px solid var(--mud-palette-primary); outline-offset: 2px; border-radius: 2px; }
+    .cw-grouped .number { text-align: right; font-variant-numeric: tabular-nums; }
+    .cw-grouped tbody tr:hover td { background: var(--mud-palette-table-hover, var(--mud-palette-action-default-hover)); }
+    .cw-grouped-end { height: 1px; }
 
     .cw-markdown { flex: 1; overflow: auto; }
     .cw-markdown ul, .cw-markdown ol { padding-left: 1.4em; margin: 4px 0; }
@@ -116,6 +125,9 @@
     .cw-settings-label { font-size: .8rem; color: var(--mud-palette-text-secondary); margin-top: 4px; }
     .cw-settings-row { display: flex; gap: 8px; }
     .cw-settings-row > * { flex: 1; }
+    .cw-settings-row.cw-list-row { align-items: center; }
+    .cw-settings-row.cw-list-row > * { flex: 0 0 auto; }
+    .cw-settings-row.cw-list-row > .cw-grow { flex: 1; min-width: 0; }
     .cw-chart-kinds { display: flex; flex-wrap: wrap; gap: 4px; }
     .cw-aggregate { display: flex; gap: 6px; align-items: center; }
     .cw-alternative { border: 1px solid var(--mud-palette-lines-default); border-radius: 8px; padding: 6px 8px; margin: 4px 0; display: flex; flex-direction: column; gap: 4px; }

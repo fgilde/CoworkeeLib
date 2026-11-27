@@ -11,7 +11,7 @@ namespace Coworkee.Reporting.Querying;
 // ponytail: sources merge in memory, ceiling MaxRows groups per source; a SQL join of sources of the same context if tables outgrow it
 internal static class ReportTables
 {
-    public const int MaxGroupFields = 8;
+    public const int MaxGroupFields = ReportTableColumns.MaxGroupFields;
 
     public const int MaxJoins = 3;
 
@@ -32,13 +32,21 @@ internal static class ReportTables
             types.Select((_, i) => Expression.Bind(keyType.GetProperty(((char)('A' + i)).ToString())!, i < members.Count ? members[i] : Expression.Constant(0))));
 
         var (query, rowType) = ReportAggregator.Grouped(rows, entity, key, values);
+
+        // the merge sorts; an order before the limit only keeps the cut defined (and EF from warning about it)
+        var row = Expression.Parameter(rowType, "r");
+        var first = Expression.Lambda(Expression.Property(Expression.Property(row, nameof(AggregateRow<int>.Key)), "A"), row);
+        query = Expression.Call(typeof(Queryable), nameof(Queryable.OrderBy), [rowType, first.ReturnType], query, Expression.Quote(first));
         var built = rows.Provider.CreateQuery(Expression.Call(typeof(Queryable), nameof(Queryable.Take), [rowType], query, Expression.Constant(MaxRows + 1)));
         var fetched = await (Task<List<IAggregateRow>>)ReportAggregator.FetchMethod.MakeGenericMethod(rowType)
             .Invoke(null, [scope is null ? built : await scope.ApplyAsync(built, cancellationToken), cancellationToken])!;
         return fetched.Count > MaxRows ? null : [.. fetched.Select(r => (((GroupKey8)r.Key!).Members[..groups.Count], r.Values[..values.Count]))];
     }
 
-    /// <summary>The main groups with the joins' values appended (null where a join has no group), sorted by <paramref name="orderBy"/>, then by every key ascending.</summary>
+    /// <summary>
+    /// The main groups with the joins' values appended (null where a join has no group), sorted by <paramref name="orderBy"/>, then by every key ascending,
+    /// last by the keys' exact text.
+    /// </summary>
     public static (List<ReportTableRow> Rows, bool More) Merge(
         IReadOnlyList<ReportGroup> groups, List<(object?[] Keys, double?[] Values)> main,
         IReadOnlyList<(IReadOnlyList<ReportGroup> Groups, List<(object?[] Keys, double?[] Values)> Rows, int Width)> joins,
@@ -71,6 +79,16 @@ internal static class ReportTables
                 if (result != 0)
                 {
                     return sort.Descending ? -result : result;
+                }
+            }
+
+            // keys alike ignoring case (Postgres groups "North" and "north" apart) still get one order, so pages do not overlap
+            for (var i = 0; i < groups.Count; i++)
+            {
+                var result = string.CompareOrdinal(x.Keys[i] as string, y.Keys[i] as string);
+                if (result != 0)
+                {
+                    return result;
                 }
             }
 

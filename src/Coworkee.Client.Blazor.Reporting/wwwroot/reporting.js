@@ -129,3 +129,33 @@ export function palette() {
         font: css.getPropertyValue('--mud-typography-default-family').trim() || getComputedStyle(document.body).fontFamily,
     };
 }
+
+/**
+ * Endless scrolling: while the element at the end of a scroll area is in view, asks .NET for the next page (LoadMoreAsync, true while more follow).
+ * Called again after each load, so a page too short to fill the area loads the next one at once.
+ */
+export function watchEnd(end, dotnet) {
+    const area = end?.parentElement;
+    if (!area) {
+        return;
+    }
+    const near = () => end.getBoundingClientRect().top <= area.getBoundingClientRect().bottom + 48;
+    const more = async () => {
+        if (end._cwLoading) {
+            return;
+        }
+        end._cwLoading = true;
+        try {
+            while (end.isConnected && near() && await dotnet.invokeMethodAsync('LoadMoreAsync')) { /* next page */ }
+        } catch {
+            end._cwObserver?.disconnect();
+        } finally {
+            end._cwLoading = false;
+        }
+    };
+    if (!end._cwObserver) {
+        end._cwObserver = new IntersectionObserver(entries => entries.some(e => e.isIntersecting) && more(), { root: area, rootMargin: '0px 0px 48px 0px' });
+        end._cwObserver.observe(end);
+    }
+    more();
+}

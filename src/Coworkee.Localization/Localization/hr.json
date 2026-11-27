@@ -2420,5 +2420,13 @@
   "Flag": "Zastava",
   "Person": "Osoba",
   "Add chip": "Dodaj čip",
-  "Add the values that get a chip, each with an icon.": "Dodajte vrijednosti koje dobivaju čip, svaku s ikonom."
+  "Add the values that get a chip, each with an icon.": "Dodajte vrijednosti koje dobivaju čip, svaku s ikonom.",
+  "Grouped table": "Grupirana tablica",
+  "Choose the fields to group by.": "Odaberite polja po kojima se grupira.",
+  "Add group field": "Dodaj polje grupiranja",
+  "Values of other data sets": "Vrijednosti drugih skupova podataka",
+  "They come from the report file (JSON); remove them here.": "Dolaze iz datoteke izvješća (JSON); ovdje ih uklonite.",
+  "Hidden columns": "Skriveni stupci",
+  "Still grouped by, just not shown": "I dalje se po njima grupira, samo se ne prikazuju",
+  "Add sort column": "Dodaj stupac sortiranja"
 }

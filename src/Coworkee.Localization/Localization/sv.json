@@ -2420,5 +2420,13 @@
   "Flag": "Flagga",
   "Person": "Person",
   "Add chip": "Lägg till chip",
-  "Add the values that get a chip, each with an icon.": "Lägg till de värden som får en chip, var och en med en ikon."
+  "Add the values that get a chip, each with an icon.": "Lägg till de värden som får en chip, var och en med en ikon.",
+  "Grouped table": "Grupperad tabell",
+  "Choose the fields to group by.": "Välj fälten att gruppera efter.",
+  "Add group field": "Lägg till grupperingsfält",
+  "Values of other data sets": "Värden från andra datamängder",
+  "They come from the report file (JSON); remove them here.": "De kommer från rapportfilen (JSON); ta bort dem här.",
+  "Hidden columns": "Dolda kolumner",
+  "Still grouped by, just not shown": "Grupperas fortfarande efter, visas bara inte",
+  "Add sort column": "Lägg till sorteringskolumn"
 }
