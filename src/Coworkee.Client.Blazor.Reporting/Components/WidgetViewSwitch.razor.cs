@@ -23,7 +23,7 @@ public partial class WidgetViewSwitch
     // the widget's own entry first (index -1), the alternatives after it; empty without alternatives
     // choices on a source the user may not read are not offered (indices stay the author's)
     private IReadOnlyList<(string Label, int Index)> Metrics => Widget.Query is { } query && ReportViews.HasMetrics(Widget.Type) && Widget.Options.Metrics.Count > 0
-        ? [.. Own(query), .. Widget.Options.Metrics.Select((m, i) => (Metric: m, Index: i)).Where(x => State.CanRead(x.Metric.EntitySet)).Select(x => (L.Stored(x.Metric.Label) ?? x.Metric.Label, x.Index))]
+        ? [.. Own(query), .. Widget.Options.Metrics.Select((m, i) => (Metric: m, Index: i)).Where(x => State.CanRead(x.Metric.EntitySet ?? query.EntitySet)).Select(x => (L.Stored(x.Metric.Label) ?? x.Metric.Label, x.Index))]
         : [];
 
     private IEnumerable<(string Label, int Index)> Own(WidgetQuery query)

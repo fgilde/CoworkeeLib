@@ -168,6 +168,25 @@ public sealed class ViewSwitchTests : ReportingTestBase
     }
 
     [Fact]
+    public void A_metric_staying_on_an_unreadable_widget_set_is_hidden_and_a_stored_choice_of_it_falls_back()
+    {
+        var popovers = Render<MudBlazor.MudPopoverProvider>();
+        var widget = WithCostMetric();
+        widget.Query!.EntitySet = "InsightCosts";
+        widget.Options.Metrics = [new MetricView("Avg days", [new(AggregateFunction.Average, "Days")]), new MetricView("Orders", [new()], EntitySet: "SalesOrders")];
+        Settings.GetSettingsAsync(SettingScope.User, default).ReturnsForAnyArgs([new SettingValueDto(TableSettings.ReportViews, "{\"" + ReportId.ToString("N") + ":c\":{\"metric\":0}}", true)]);
+        Reports.QueryAsync(default!, default).ReturnsForAnyArgs(Rows(("North", null, 3)));
+
+        var frame = Render<WidgetFrame>(p => p.Add(x => x.Widget, widget).Add(x => x.State, State(widget)).Add(x => x.ReportId, ReportId));
+
+        frame.WaitForAssertion(() => Reports.Received().QueryAsync(Arg.Is<ReportQueryRequest>(r => r.EntitySet == "SalesOrders"), Arg.Any<CancellationToken>()));
+        Reports.DidNotReceive().QueryAsync(Arg.Is<ReportQueryRequest>(r => r.Aggregates![0].Field == "Days"), Arg.Any<CancellationToken>());
+        frame.Find("[data-testid='metric-switch'] button").Click();
+        popovers.WaitForElement("[data-metric='1']");
+        popovers.FindAll("[data-metric='0']").ShouldBeEmpty();
+    }
+
+    [Fact]
     public void A_report_leaves_out_widgets_without_a_readable_metric()
     {
         var id = Guid.NewGuid();
