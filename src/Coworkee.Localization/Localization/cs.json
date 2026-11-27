@@ -2384,8 +2384,8 @@
   "{0} (only some users see it)": "{0} (vidí ji jen někteří uživatelé)",
   "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Pro každou sadu entit: místní kopie v prohlížečích (vypnuto, paměť nebo SQLite) s limity řádků a synchronizací a datové filtry, které rozhodují, kdo vidí které řádky.",
   "Not available for local copies": "Pro místní kopie není k dispozici",
-  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Not applied to holders of 'See all rows' in the system tenant (its admins)",
-  "Not applied to holders of 'See all rows' (the tenant's admins)": "Not applied to holders of 'See all rows' (the tenant's admins)",
-  "Preview not available: counting took too long.": "Preview not available: counting took too long.",
-  "{0} of {1} rows you can see pass this filter": "{0} of {1} rows you can see pass this filter"
+  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Neplatí pro držitele oprávnění „Vidět všechny řádky“ v systémovém tenantovi (jeho správce)",
+  "Not applied to holders of 'See all rows' (the tenant's admins)": "Neplatí pro držitele oprávnění „Vidět všechny řádky“ (správce tenantu)",
+  "Preview not available: counting took too long.": "Náhled není k dispozici: počítání trvalo příliš dlouho.",
+  "{0} of {1} rows you can see pass this filter": "{0} z {1} řádků, které vidíte, tento filtr splňuje"
 }

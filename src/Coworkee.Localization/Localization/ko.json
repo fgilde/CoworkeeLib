@@ -2384,8 +2384,8 @@
   "{0} (only some users see it)": "{0}(일부 사용자만 볼 수 있음)",
   "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "엔터티 집합별로: 브라우저의 로컬 사본(끔, 메모리 또는 SQLite)과 행 제한·동기화, 그리고 누가 어떤 행을 보는지 결정하는 데이터 필터.",
   "Not available for local copies": "로컬 사본에는 사용할 수 없음",
-  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Not applied to holders of 'See all rows' in the system tenant (its admins)",
-  "Not applied to holders of 'See all rows' (the tenant's admins)": "Not applied to holders of 'See all rows' (the tenant's admins)",
-  "Preview not available: counting took too long.": "Preview not available: counting took too long.",
-  "{0} of {1} rows you can see pass this filter": "{0} of {1} rows you can see pass this filter"
+  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "시스템 테넌트의 '모든 행 보기' 보유자(해당 관리자)에게는 적용되지 않습니다",
+  "Not applied to holders of 'See all rows' (the tenant's admins)": "'모든 행 보기' 보유자(테넌트의 관리자)에게는 적용되지 않습니다",
+  "Preview not available: counting took too long.": "미리보기를 사용할 수 없음: 집계 시간이 너무 오래 걸렸습니다.",
+  "{0} of {1} rows you can see pass this filter": "볼 수 있는 {1}개 행 중 {0}개가 이 필터를 통과합니다"
 }

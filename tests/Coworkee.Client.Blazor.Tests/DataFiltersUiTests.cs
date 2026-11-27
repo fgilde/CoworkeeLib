@@ -235,4 +235,19 @@ public sealed class DataFiltersUiTests : ClientTestBase
         editor.FindAll("[data-testid='filter-preview']").ShouldBeEmpty();
         editor.FindAll("[data-testid='filter-problem']").ShouldBeEmpty();
     }
+
+    [Fact]
+    public async Task Disposing_the_editor_during_the_debounce_sends_no_request()
+    {
+        var clock = new Microsoft.Extensions.Time.Testing.FakeTimeProvider();
+        Services.AddSingleton<TimeProvider>(clock);
+        var editor = Editor(DataFilterLayer.Tenant);
+
+        await Edit(editor);
+        await editor.InvokeAsync(editor.Instance.Dispose);
+        clock.Advance(TimeSpan.FromMilliseconds(500));
+
+        await Task.Delay(100);
+        await Api.DidNotReceive().PreviewDataFilterAsync(Arg.Any<PreviewDataFilterRequest>(), Arg.Any<CancellationToken>());
+    }
 }

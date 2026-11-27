@@ -2384,8 +2384,8 @@
   "{0} (only some users see it)": "{0} (slechts enkele gebruikers zien het)",
   "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Per entiteitenset: lokale kopie in de browsers (uit, geheugen of SQLite) met rijlimieten en synchronisatie, en de gegevensfilters die bepalen wie welke rijen ziet.",
   "Not available for local copies": "Niet beschikbaar voor lokale kopieën",
-  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Not applied to holders of 'See all rows' in the system tenant (its admins)",
-  "Not applied to holders of 'See all rows' (the tenant's admins)": "Not applied to holders of 'See all rows' (the tenant's admins)",
-  "Preview not available: counting took too long.": "Preview not available: counting took too long.",
-  "{0} of {1} rows you can see pass this filter": "{0} of {1} rows you can see pass this filter"
+  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Geldt niet voor houders van 'Alle rijen zien' in de systeemtenant (de beheerders ervan)",
+  "Not applied to holders of 'See all rows' (the tenant's admins)": "Geldt niet voor houders van 'Alle rijen zien' (de beheerders van de tenant)",
+  "Preview not available: counting took too long.": "Voorbeeld niet beschikbaar: het tellen duurde te lang.",
+  "{0} of {1} rows you can see pass this filter": "{0} van {1} rijen die u kunt zien, passeren dit filter"
 }

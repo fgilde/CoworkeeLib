@@ -2384,8 +2384,8 @@
   "{0} (only some users see it)": "{0}（一部のユーザーのみ表示）",
   "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "エンティティセットごと：ブラウザーのローカルコピー（オフ、メモリ、SQLite）と行数の上限・同期、そして誰がどの行を見るかを決めるデータフィルター。",
   "Not available for local copies": "ローカルコピーには利用できません",
-  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Not applied to holders of 'See all rows' in the system tenant (its admins)",
-  "Not applied to holders of 'See all rows' (the tenant's admins)": "Not applied to holders of 'See all rows' (the tenant's admins)",
-  "Preview not available: counting took too long.": "Preview not available: counting took too long.",
-  "{0} of {1} rows you can see pass this filter": "{0} of {1} rows you can see pass this filter"
+  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "システムテナントの「すべての行を表示」の保持者(その管理者)には適用されません",
+  "Not applied to holders of 'See all rows' (the tenant's admins)": "「すべての行を表示」の保持者(テナントの管理者)には適用されません",
+  "Preview not available: counting took too long.": "プレビューを利用できません: 集計に時間がかかりすぎました。",
+  "{0} of {1} rows you can see pass this filter": "表示可能な {1} 行のうち {0} 行がこのフィルターを通過します"
 }

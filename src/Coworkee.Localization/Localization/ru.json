@@ -2384,8 +2384,8 @@
   "{0} (only some users see it)": "{0} (видят только некоторые пользователи)",
   "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Для каждого набора сущностей: локальная копия в браузерах (выкл., память или SQLite) с ограничениями строк и синхронизацией, а также фильтры данных, которые решают, кто какие строки видит.",
   "Not available for local copies": "Недоступно для локальных копий",
-  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Not applied to holders of 'See all rows' in the system tenant (its admins)",
-  "Not applied to holders of 'See all rows' (the tenant's admins)": "Not applied to holders of 'See all rows' (the tenant's admins)",
-  "Preview not available: counting took too long.": "Preview not available: counting took too long.",
-  "{0} of {1} rows you can see pass this filter": "{0} of {1} rows you can see pass this filter"
+  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Не действует для обладателей права «Видеть все строки» в системном тенанте (его администраторов)",
+  "Not applied to holders of 'See all rows' (the tenant's admins)": "Не действует для обладателей права «Видеть все строки» (администраторов тенанта)",
+  "Preview not available: counting took too long.": "Предпросмотр недоступен: подсчёт занял слишком много времени.",
+  "{0} of {1} rows you can see pass this filter": "{0} из {1} видимых вам строк проходят этот фильтр"
 }

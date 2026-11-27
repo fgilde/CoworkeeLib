@@ -2384,8 +2384,8 @@
   "{0} (only some users see it)": "{0} (só alguns utilizadores a veem)",
   "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Por conjunto de entidades: cópia local nos navegadores (desligada, memória ou SQLite) com limites de linhas e sincronização, e os filtros de dados que decidem quem vê que linhas.",
   "Not available for local copies": "Não disponível para cópias locais",
-  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Not applied to holders of 'See all rows' in the system tenant (its admins)",
-  "Not applied to holders of 'See all rows' (the tenant's admins)": "Not applied to holders of 'See all rows' (the tenant's admins)",
-  "Preview not available: counting took too long.": "Preview not available: counting took too long.",
-  "{0} of {1} rows you can see pass this filter": "{0} of {1} rows you can see pass this filter"
+  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Não se aplica a quem tem «Ver todas as linhas» no tenant do sistema (seus administradores)",
+  "Not applied to holders of 'See all rows' (the tenant's admins)": "Não se aplica a quem tem «Ver todas as linhas» (os administradores do tenant)",
+  "Preview not available: counting took too long.": "Pré-visualização indisponível: a contagem demorou demais.",
+  "{0} of {1} rows you can see pass this filter": "{0} de {1} linhas que você pode ver passam neste filtro"
 }

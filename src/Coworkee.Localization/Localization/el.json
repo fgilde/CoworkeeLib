@@ -2384,8 +2384,8 @@
   "{0} (only some users see it)": "{0} (τη βλέπουν μόνο ορισμένοι χρήστες)",
   "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Ανά σύνολο οντοτήτων: τοπικό αντίγραφο στους περιηγητές (ανενεργό, μνήμη ή SQLite) με όρια γραμμών και συγχρονισμό, και τα φίλτρα δεδομένων που αποφασίζουν ποιος βλέπει ποιες γραμμές.",
   "Not available for local copies": "Μη διαθέσιμο για τοπικά αντίγραφα",
-  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Not applied to holders of 'See all rows' in the system tenant (its admins)",
-  "Not applied to holders of 'See all rows' (the tenant's admins)": "Not applied to holders of 'See all rows' (the tenant's admins)",
-  "Preview not available: counting took too long.": "Preview not available: counting took too long.",
-  "{0} of {1} rows you can see pass this filter": "{0} of {1} rows you can see pass this filter"
+  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Δεν εφαρμόζεται σε κατόχους του «Προβολή όλων των γραμμών» στον μισθωτή συστήματος (τους διαχειριστές του)",
+  "Not applied to holders of 'See all rows' (the tenant's admins)": "Δεν εφαρμόζεται σε κατόχους του «Προβολή όλων των γραμμών» (τους διαχειριστές του μισθωτή)",
+  "Preview not available: counting took too long.": "Η προεπισκόπηση δεν είναι διαθέσιμη: η καταμέτρηση διήρκεσε πολύ.",
+  "{0} of {1} rows you can see pass this filter": "{0} από {1} γραμμές που βλέπετε περνούν αυτό το φίλτρο"
 }

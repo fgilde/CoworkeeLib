@@ -2384,8 +2384,8 @@
   "{0} (only some users see it)": "{0} (yalnızca bazı kullanıcılar görür)",
   "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Varlık kümesi başına: tarayıcılarda yerel kopya (kapalı, bellek veya SQLite), satır sınırları ve senkronizasyon ile kimin hangi satırları göreceğini belirleyen veri filtreleri.",
   "Not available for local copies": "Yerel kopyalar için kullanılamaz",
-  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Not applied to holders of 'See all rows' in the system tenant (its admins)",
-  "Not applied to holders of 'See all rows' (the tenant's admins)": "Not applied to holders of 'See all rows' (the tenant's admins)",
-  "Preview not available: counting took too long.": "Preview not available: counting took too long.",
-  "{0} of {1} rows you can see pass this filter": "{0} of {1} rows you can see pass this filter"
+  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Sistem kiracısındaki 'Tüm satırları gör' sahiplerine (yöneticilerine) uygulanmaz",
+  "Not applied to holders of 'See all rows' (the tenant's admins)": "'Tüm satırları gör' sahiplerine (kiracının yöneticilerine) uygulanmaz",
+  "Preview not available: counting took too long.": "Önizleme kullanılamıyor: sayım çok uzun sürdü.",
+  "{0} of {1} rows you can see pass this filter": "Görebildiğiniz {1} satırdan {0} tanesi bu filtreden geçiyor"
 }

@@ -2384,8 +2384,8 @@
   "{0} (only some users see it)": "{0} (kun nogle brugere ser den)",
   "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Pr. entitetsmængde: lokal kopi i browserne (fra, hukommelse eller SQLite) med rækkegrænser og synkronisering, og de datafiltre, der afgør, hvem der ser hvilke rækker.",
   "Not available for local copies": "Ikke tilgængelig for lokale kopier",
-  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Not applied to holders of 'See all rows' in the system tenant (its admins)",
-  "Not applied to holders of 'See all rows' (the tenant's admins)": "Not applied to holders of 'See all rows' (the tenant's admins)",
-  "Preview not available: counting took too long.": "Preview not available: counting took too long.",
-  "{0} of {1} rows you can see pass this filter": "{0} of {1} rows you can see pass this filter"
+  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Gælder ikke for indehavere af 'Se alle rækker' i systemtenanten (dens administratorer)",
+  "Not applied to holders of 'See all rows' (the tenant's admins)": "Gælder ikke for indehavere af 'Se alle rækker' (tenantens administratorer)",
+  "Preview not available: counting took too long.": "Forhåndsvisning ikke tilgængelig: Optællingen tog for lang tid.",
+  "{0} of {1} rows you can see pass this filter": "{0} af {1} rækker, du kan se, består dette filter"
 }

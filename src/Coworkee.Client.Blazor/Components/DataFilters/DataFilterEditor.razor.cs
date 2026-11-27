@@ -3,6 +3,7 @@ using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.DataFilters;
 using Coworkee.Contracts.Query;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
 using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Components.DataFilters;
@@ -11,7 +12,7 @@ namespace Coworkee.Client.Blazor.Components.DataFilters;
 /// One data filter of a set and layer: the query builder over the set's properties and the switch for single-row reads. The server validates on save;
 /// its problem shows here, as does the problem of a stored filter that no longer parses. Saves the query as the builder's JSON, so it can be edited again.
 /// </summary>
-public partial class DataFilterEditor
+public partial class DataFilterEditor : IDisposable
 {
     private IReadOnlyList<QueryField> _fields = [];
     private HashSet<string> _protected = [];
@@ -27,6 +28,8 @@ public partial class DataFilterEditor
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
+
+    [Inject] private ILogger<DataFilterEditor> Logger { get; set; } = null!;
 
     [Inject] private IServiceProvider Services { get; set; } = null!;
 
@@ -82,9 +85,10 @@ public partial class DataFilterEditor
     /// <summary>Counts the rows the draft lets through, after the last edit; an invalid draft (400) shows no line.</summary>
     private async Task PreviewAsync(TimeSpan delay)
     {
+        // cancelled, not disposed: an older run may still read its token
         _previewCancel?.Cancel();
-        _previewCancel?.Dispose();
         var cancel = _previewCancel = new CancellationTokenSource();
+        var token = cancel.Token;
         _preview = null;
         if (!_query.Rules().Any())
         {
@@ -95,21 +99,24 @@ public partial class DataFilterEditor
         {
             if (delay > TimeSpan.Zero)
             {
-                await Task.Delay(delay, Services.GetService(typeof(TimeProvider)) as TimeProvider ?? TimeProvider.System, cancel.Token);
+                await Task.Delay(delay, Services.GetService(typeof(TimeProvider)) as TimeProvider ?? TimeProvider.System, token);
             }
 
-            var preview = await Api.PreviewDataFilterAsync(new PreviewDataFilterRequest(EntitySet, Layer, LayerKey, QueryJson.Serialize(_query)), cancel.Token);
-            if (!cancel.IsCancellationRequested)
+            var preview = await Api.PreviewDataFilterAsync(new PreviewDataFilterRequest(EntitySet, Layer, LayerKey, QueryJson.Serialize(_query)), token);
+            if (!token.IsCancellationRequested)
             {
                 _preview = preview;
                 await InvokeAsync(StateHasChanged);
             }
         }
-        catch (Exception exception) when (exception is OperationCanceledException or ApiException)
+        catch (Exception exception)
         {
-            // superseded, or the draft does not (yet) validate: no line
+            // superseded, closed, invalid (400) or unreachable: the preview is only a hint, no line
+            Logger.LogDebug(exception, "Data filter preview skipped");
         }
     }
+
+    public void Dispose() => _previewCancel?.Cancel();
 
     private async Task SaveAsync()
     {

@@ -2384,8 +2384,8 @@
   "{0} (only some users see it)": "{0} (bara vissa användare ser den)",
   "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Per entitetsmängd: lokal kopia i webbläsarna (av, minne eller SQLite) med radgränser och synkronisering, och datafiltren som avgör vem som ser vilka rader.",
   "Not available for local copies": "Inte tillgänglig för lokala kopior",
-  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Not applied to holders of 'See all rows' in the system tenant (its admins)",
-  "Not applied to holders of 'See all rows' (the tenant's admins)": "Not applied to holders of 'See all rows' (the tenant's admins)",
-  "Preview not available: counting took too long.": "Preview not available: counting took too long.",
-  "{0} of {1} rows you can see pass this filter": "{0} of {1} rows you can see pass this filter"
+  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Gäller inte innehavare av 'Se alla rader' i systemtenanten (dess administratörer)",
+  "Not applied to holders of 'See all rows' (the tenant's admins)": "Gäller inte innehavare av 'Se alla rader' (tenantens administratörer)",
+  "Preview not available: counting took too long.": "Förhandsgranskning inte tillgänglig: räkningen tog för lång tid.",
+  "{0} of {1} rows you can see pass this filter": "{0} av {1} rader som du kan se klarar detta filter"
 }

@@ -2384,8 +2384,8 @@
   "{0} (only some users see it)": "{0} (يراها بعض المستخدمين فقط)",
   "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "لكل مجموعة كيانات: نسخة محلية في المتصفحات (متوقفة أو ذاكرة أو SQLite) مع حدود للصفوف والمزامنة، ومرشحات البيانات التي تحدد من يرى أي صفوف.",
   "Not available for local copies": "غير متاح للنسخ المحلية",
-  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Not applied to holders of 'See all rows' in the system tenant (its admins)",
-  "Not applied to holders of 'See all rows' (the tenant's admins)": "Not applied to holders of 'See all rows' (the tenant's admins)",
-  "Preview not available: counting took too long.": "Preview not available: counting took too long.",
-  "{0} of {1} rows you can see pass this filter": "{0} of {1} rows you can see pass this filter"
+  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "لا يُطبَّق على أصحاب «عرض كل الصفوف» في مستأجر النظام (مسؤوليه)",
+  "Not applied to holders of 'See all rows' (the tenant's admins)": "لا يُطبَّق على أصحاب «عرض كل الصفوف» (مسؤولي المستأجر)",
+  "Preview not available: counting took too long.": "المعاينة غير متاحة: استغرق العد وقتًا طويلًا.",
+  "{0} of {1} rows you can see pass this filter": "{0} من {1} صفًا تراها تجتاز هذا الفلتر"
 }

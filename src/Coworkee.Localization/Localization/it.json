@@ -2384,8 +2384,8 @@
   "{0} (only some users see it)": "{0} (la vedono solo alcuni utenti)",
   "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Per insieme di entità: copia locale nei browser (disattivata, memoria o SQLite) con limiti di righe e sincronizzazione, e i filtri dati che decidono chi vede quali righe.",
   "Not available for local copies": "Non disponibile per le copie locali",
-  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Not applied to holders of 'See all rows' in the system tenant (its admins)",
-  "Not applied to holders of 'See all rows' (the tenant's admins)": "Not applied to holders of 'See all rows' (the tenant's admins)",
-  "Preview not available: counting took too long.": "Preview not available: counting took too long.",
-  "{0} of {1} rows you can see pass this filter": "{0} of {1} rows you can see pass this filter"
+  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Non si applica ai titolari di «Vedi tutte le righe» nel tenant di sistema (i suoi amministratori)",
+  "Not applied to holders of 'See all rows' (the tenant's admins)": "Non si applica ai titolari di «Vedi tutte le righe» (gli amministratori del tenant)",
+  "Preview not available: counting took too long.": "Anteprima non disponibile: il conteggio ha richiesto troppo tempo.",
+  "{0} of {1} rows you can see pass this filter": "{0} di {1} righe che puoi vedere superano questo filtro"
 }
