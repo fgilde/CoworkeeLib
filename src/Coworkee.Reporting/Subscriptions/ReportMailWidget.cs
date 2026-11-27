@@ -103,12 +103,14 @@ internal sealed class ReportMailWidget(
     // chips as a list of shares of everything the query returned, for the values with an icon in their order
     private (object, ReportSheetRequest?) Chips(WidgetQuery query, ReportSource source, ReportQueryResult result)
     {
-        var total = result.Rows.Sum(r => r.Values.FirstOrDefault() ?? 0);
+        // a stored definition may still split into series: every value adds up over all of them
+        var sums = result.Rows.GroupBy(r => r.Key?.Value ?? string.Empty).ToDictionary(g => g.Key, g => (Key: g.First().Key, Sum: g.Sum(r => r.Values.FirstOrDefault() ?? 0)));
+        var total = sums.Values.Sum(v => v.Sum);
         List<string> headers = [FieldLabel(source, query.GroupBy!.Field), text("Share", culture)];
         var rows = widget.Options.ValueIcons
-            .Select(icon => result.Rows.FirstOrDefault(r => (r.Key?.Value ?? string.Empty) == icon.Value))
-            .OfType<ReportQueryRow>()
-            .Select(r => (IReadOnlyList<object?>)[Key(r.Key), total == 0 ? 0 : Math.Round((r.Values.FirstOrDefault() ?? 0) / total * 100, MidpointRounding.AwayFromZero)])
+            .Where(icon => sums.ContainsKey(icon.Value))
+            .Select(icon => sums[icon.Value])
+            .Select(s => (IReadOnlyList<object?>)[Key(s.Key), total == 0 ? 0 : Math.Round(s.Sum / total * 100, MidpointRounding.AwayFromZero)])
             .ToList();
         return (Table(headers, rows, cell => cell is double share ? $"{share:0} %" : cell?.ToString() ?? string.Empty), Sheet(headers, rows));
     }

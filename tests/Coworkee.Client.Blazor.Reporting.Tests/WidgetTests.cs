@@ -231,6 +231,24 @@ public sealed class WidgetTests : ReportingTestBase
     }
 
     [Fact]
+    public void Chips_of_a_split_chart_sum_each_value_over_all_series()
+    {
+        Reports.QueryAsync(default!, default).ReturnsForAnyArgs(Rows(("Air", "Open", 10), ("Sea", "Shipped", 30), ("Air", "Shipped", 10)));
+        var widget = Chips(new ValueIcon("Air", MudBlazor.Icons.Material.Outlined.Flight), new ValueIcon("Sea", MudBlazor.Icons.Material.Outlined.DirectionsBoat));
+        widget.Query!.SplitBy = new ReportGroupBy("Status");
+        var state = State(widget);
+        var chips = Render<WidgetHost>(p => p.Add(x => x.Widget, widget).Add(x => x.State, state));
+        chips.WaitForAssertion(() => chips.FindAll("[data-testid='chip']").Select(c => c.TextContent.Trim()).ShouldBe(["40 % Air", "60 % Sea"]));
+        chips.FindAll("[data-testid='chip']")[1].Click();
+
+        Reports.QueryAsync(default!, default).ReturnsForAnyArgs(Rows(("Air", "Open", 10), ("Sea", "Shipped", 10)));
+        state.Refresh();
+
+        chips.WaitForAssertion(() => chips.FindAll("[data-testid='chip']").Select(c => c.TextContent.Trim()).ShouldBe(["50 % Air", "50 % Sea"]));
+        state.CrossFilters.ShouldHaveSingleItem().Filter.ShouldBe("Region eq 'Sea'");
+    }
+
+    [Fact]
     public void A_table_pages_rows_from_the_entity_set_with_its_columns()
     {
         var rows = JsonSerializer.Deserialize<JsonElement[]>("""[{"Region":"North","Total":12.5,"Customer":{"Name":"Acme"}},{"Region":"South","Total":3,"Customer":{"Name":"Beta"}}]""")!;

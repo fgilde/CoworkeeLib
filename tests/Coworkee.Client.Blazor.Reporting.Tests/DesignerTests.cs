@@ -212,4 +212,17 @@ public sealed class DesignerTests : ReportingTestBase
 
         widget.Options.ValueIcons.Select(v => v.Value).ShouldBe(["Open", "Shipped"]);
     }
+
+    [Fact]
+    public void Chips_are_one_dimension_so_the_designer_offers_no_series_and_clears_it()
+    {
+        var widget = new ReportWidget { Type = WidgetType.Chart, Query = new WidgetQuery { EntitySet = "SalesOrders", GroupBy = new ReportGroupBy("Region"), SplitBy = new ReportGroupBy("Status") }, Options = new() { Chart = ChartKind.Bar } };
+        var settings = Render<WidgetSettings>(p => p.Add(x => x.Widget, widget).Add(x => x.State, State(widget)));
+        settings.Markup.ShouldContain(">Series<");
+
+        settings.Find("[data-chart='Chips']").Click();
+
+        widget.Query!.SplitBy.ShouldBeNull();
+        settings.Markup.ShouldNotContain(">Series<");
+    }
 }

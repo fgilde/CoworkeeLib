@@ -44,13 +44,14 @@ public partial class ChartWidget
     {
         get
         {
-            var points = _series.FirstOrDefault()?.Points ?? [];
-            var total = points.Sum(p => p.Value ?? 0);
+            // a stored definition may still split into series: every value adds up over all of them
+            var values = _series.SelectMany(s => s.Points).Where(p => p.Key is not null).GroupBy(p => p.Key!.Value ?? string.Empty).ToDictionary(g => g.Key, g => (Point: g.First(), Sum: g.Sum(p => p.Value ?? 0)));
+            var total = values.Values.Sum(v => v.Sum);
             return
             [
-                .. Widget.Options.ValueIcons.Select(icon => (icon, point: points.FirstOrDefault(p => p.Key is not null && (p.Key.Value ?? string.Empty) == icon.Value)))
-                    .Where(c => c.point?.Key is not null)
-                    .Select(c => new Chip(c.icon.Value, c.point!.Label, c.icon.Icon, total == 0 ? 0 : (int)Math.Round((c.point.Value ?? 0) / total * 100, MidpointRounding.AwayFromZero), c.point.Key!)),
+                .. Widget.Options.ValueIcons.Where(icon => values.ContainsKey(icon.Value))
+                    .Select(icon => (icon, found: values[icon.Value]))
+                    .Select(c => new Chip(c.icon.Value, c.found.Point.Label, c.icon.Icon, total == 0 ? 0 : (int)Math.Round(c.found.Sum / total * 100, MidpointRounding.AwayFromZero), c.found.Point.Key!)),
             ];
         }
     }

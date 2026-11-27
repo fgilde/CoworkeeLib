@@ -17,7 +17,7 @@
                 {
                     <MudTooltip Text="@L[preset.Name]">
                         <MudIconButton Icon="@preset.Icon" Variant="@(Widget.Options.Chart == preset.Chart ? Variant.Filled : Variant.Text)" Color="@(Widget.Options.Chart == preset.Chart ? Color.Primary : Color.Default)"
-                                       Size="Size.Small" aria-label="@L[preset.Name]" OnClick="() => Change(() => Widget.Options.Chart = preset.Chart)" data-chart="@preset.Chart" />
+                                       Size="Size.Small" aria-label="@L[preset.Name]" OnClick="() => Change(() => { Widget.Options.Chart = preset.Chart; if (preset.Chart == ChartKind.Chips && Widget.Query is { } q) { q.SplitBy = null; } })" data-chart="@preset.Chart" />
                     </MudTooltip>
                 }
             </div>
@@ -48,7 +48,10 @@
             @if (Widget.Type is WidgetType.Chart or WidgetType.Pivot)
             {
                 <GroupByEditor Label="@L[Widget.Type == WidgetType.Pivot ? "Rows" : "Group by"]" Fields="Fields" Value="query.GroupBy" ValueChanged="v => Change(() => query.GroupBy = v)" />
-                <GroupByEditor Label="@L[Widget.Type == WidgetType.Pivot ? "Columns" : "Series"]" Fields="Fields" Value="query.SplitBy" ValueChanged="v => Change(() => query.SplitBy = v)" Optional="true" />
+                @if (Widget.Options.Chart != ChartKind.Chips || Widget.Type != WidgetType.Chart)
+                {
+                    <GroupByEditor Label="@L[Widget.Type == WidgetType.Pivot ? "Columns" : "Series"]" Fields="Fields" Value="query.SplitBy" ValueChanged="v => Change(() => query.SplitBy = v)" Optional="true" />
+                }
             }
 
             @if (Widget.Type is WidgetType.Kpi or WidgetType.Chart or WidgetType.Pivot)
