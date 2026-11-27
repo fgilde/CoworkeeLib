@@ -2383,5 +2383,9 @@
   "This filter uses a property only some users may see. It still hides rows from everyone it applies to.": "このフィルターは一部のユーザーしか見られないプロパティを使っています。適用対象のすべての人に対して行を隠します。",
   "{0} (only some users see it)": "{0}（一部のユーザーのみ表示）",
   "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "エンティティセットごと：ブラウザーのローカルコピー（オフ、メモリ、SQLite）と行数の上限・同期、そして誰がどの行を見るかを決めるデータフィルター。",
-  "Not available for local copies": "ローカルコピーには利用できません"
+  "Not available for local copies": "ローカルコピーには利用できません",
+  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Not applied to holders of 'See all rows' in the system tenant (its admins)",
+  "Not applied to holders of 'See all rows' (the tenant's admins)": "Not applied to holders of 'See all rows' (the tenant's admins)",
+  "Preview not available: counting took too long.": "Preview not available: counting took too long.",
+  "{0} of {1} rows you can see pass this filter": "{0} of {1} rows you can see pass this filter"
 }

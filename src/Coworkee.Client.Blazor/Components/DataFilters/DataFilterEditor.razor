@@ -1,4 +1,5 @@
 <div class="d-flex flex-column gap-2" data-testid="data-filter-editor" data-set="@EntitySet" data-layer="@Layer">
+    <MudText Typo="Typo.caption" Color="Color.Secondary" data-testid="filter-unbound">@(Layer == DataFilterLayer.System ? L["Not applied to holders of 'See all rows' in the system tenant (its admins)"] : L["Not applied to holders of 'See all rows' (the tenant's admins)"])</MudText>
     @if (Filter is { Valid: false })
     {
         <MudAlert Severity="Severity.Warning" Dense="true" data-testid="filter-invalid">@L["This filter no longer fits the data and lets no rows through: {0}", L.Server(Filter.Problem, null)]</MudAlert>
@@ -12,6 +13,14 @@
         <MudAlert Severity="Severity.Info" Dense="true" data-testid="filter-protected">@L["This filter uses a property only some users may see. It still hides rows from everyone it applies to."]</MudAlert>
     }
     <QueryBuilder Fields="_fields" Value="_query" ValueChanged="QueryChanged" Localize="s => L[s]" ShowImportExport="false" MaxDepth="3" />
+    @if (_preview is { TimedOut: true })
+    {
+        <MudText Typo="Typo.caption" Color="Color.Secondary" data-testid="filter-preview">@L["Preview not available: counting took too long."]</MudText>
+    }
+    else if (_preview is { Passing: { } passing, Total: { } total })
+    {
+        <MudText Typo="Typo.caption" Color="Color.Secondary" data-testid="filter-preview">@L["{0} of {1} rows you can see pass this filter", passing.ToString("N0"), total.ToString("N0")]</MudText>
+    }
     <MudSwitch T="bool" @bind-Value="_appliesToDetails" Color="Color.Primary" Label="@L["Applies to single rows too"]" data-testid="filter-details" />
     <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="1">
         @if (Filter is not null)

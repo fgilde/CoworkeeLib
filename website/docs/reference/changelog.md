@@ -7,6 +7,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 ### Added
 
 - Data filters: `POST /api/v1/data-filters/preview` counts how many rows a draft filter lets through (`PreviewDataFilterRequest`, `DataFilterPreviewDto`, `ICoworkeeApi.PreviewDataFilterAsync`, timeout `CoworkeeODataOptions.DataFilterPreviewTimeout`), `GET /api/v1/data-filters/overview` lists per entity set the filters of the administrator's layer and its links (`DataFilterOverviewDto`, `ICoworkeeApi.GetDataFilterOverviewAsync`), and `DataFilterScope.Off()` switches the data filters off for the current flow.
+- Data filters: the filter editor says whom a filter does not bind (holders of "See all rows") and shows a live preview, "{passing} of {total} rows you can see pass this filter".
 
 ### Fixed
 

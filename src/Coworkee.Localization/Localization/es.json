@@ -2383,5 +2383,9 @@
   "This filter uses a property only some users may see. It still hides rows from everyone it applies to.": "Este filtro usa una propiedad que solo algunos usuarios pueden ver. Aun así oculta filas a todos a quienes se aplica.",
   "{0} (only some users see it)": "{0} (solo algunos usuarios la ven)",
   "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "Por conjunto de entidades: copia local en los navegadores (desactivada, memoria o SQLite) con límites de filas y sincronización, y los filtros de datos que deciden quién ve qué filas.",
-  "Not available for local copies": "No disponible para copias locales"
+  "Not available for local copies": "No disponible para copias locales",
+  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Not applied to holders of 'See all rows' in the system tenant (its admins)",
+  "Not applied to holders of 'See all rows' (the tenant's admins)": "Not applied to holders of 'See all rows' (the tenant's admins)",
+  "Preview not available: counting took too long.": "Preview not available: counting took too long.",
+  "{0} of {1} rows you can see pass this filter": "{0} of {1} rows you can see pass this filter"
 }

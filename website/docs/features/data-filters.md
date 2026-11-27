@@ -115,6 +115,7 @@ Every change reloads open tables and resynchronises local copies; the partition 
 - **Data types** lists every entity set with its client entity settings and the System and Tenant filters, and the link to another set. The System editors and the link editor show only in the system organisation.
 - The **Data filters** tab on the group page and the role page edits the filters of that group or role.
 - The filter editor is the `QueryBuilder`: drag rules and groups into other groups or positions (or use the node menu: up, down, into a group, out of a group), switch a group between AND and OR, wrap ticked conditions into a new group, unwrap a group. Unwrap is offered only when the meaning stays the same: the group's logic equals its parent's, or it has at most one child, and it is not negated.
+- Under the editor's title a line names whom the filter does not bind: holders of **See all rows** (the tenant's admins; for System filters, those of the system tenant). Under the builder a live preview line reads, for example, "4 of 1,200 rows you can see pass this filter". It is recomputed 400 ms after the last edit (and once when a stored filter opens) through the preview endpoint, shows "Preview not available: counting took too long." when the count timed out and no line while the draft is invalid.
 
 Reading and writing needs the permission of the layer; the page and the navigation entry show for anyone with one of the `DataFilters.Manage*` permissions.
 

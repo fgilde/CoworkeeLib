@@ -2383,5 +2383,9 @@
   "This filter uses a property only some users may see. It still hides rows from everyone it applies to.": "此筛选器使用了只有部分用户可见的属性。它仍会对其适用的所有人隐藏行。",
   "{0} (only some users see it)": "{0}（仅部分用户可见）",
   "Per entity set: local copy in the browsers (off, memory or SQLite) with row limits and sync, and the data filters that decide which rows who sees.": "按实体集：浏览器中的本地副本（关闭、内存或 SQLite）及行数限制和同步，以及决定谁看到哪些行的数据筛选器。",
-  "Not available for local copies": "不适用于本地副本"
+  "Not available for local copies": "不适用于本地副本",
+  "Not applied to holders of 'See all rows' in the system tenant (its admins)": "Not applied to holders of 'See all rows' in the system tenant (its admins)",
+  "Not applied to holders of 'See all rows' (the tenant's admins)": "Not applied to holders of 'See all rows' (the tenant's admins)",
+  "Preview not available: counting took too long.": "Preview not available: counting took too long.",
+  "{0} of {1} rows you can see pass this filter": "{0} of {1} rows you can see pass this filter"
 }

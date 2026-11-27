@@ -168,4 +168,71 @@ public sealed class DataFiltersUiTests : ClientTestBase
         Services.GetRequiredService<FakeRealtimeConnection>().Push(DataFilterTopics.Changed);
         page.WaitForAssertion(() => Api.ReceivedCalls().Count(c => c.GetMethodInfo().Name == nameof(ICoworkeeApi.GetDataFiltersAsync)).ShouldBe(calls + 2));
     }
+
+    private IRenderedComponent<DataFilterEditor> Editor(DataFilterLayer layer, DataFilterDto? filter = null) =>
+        Render<DataFilterEditor>(p => p.Add(e => e.EntitySet, "Gadgets").Add(e => e.Layer, layer).Add(e => e.Filter, filter));
+
+    private static Task Edit(IRenderedComponent<DataFilterEditor> editor) =>
+        editor.InvokeAsync(() => editor.FindComponent<Coworkee.Client.Blazor.Components.Query.QueryBuilder>().Instance.ValueChanged.InvokeAsync(QueryJson.Deserialize(RuleOn("Name"))!));
+
+    [Theory]
+    [InlineData(DataFilterLayer.System, "Not applied to holders of 'See all rows' in the system tenant (its admins)")]
+    [InlineData(DataFilterLayer.Tenant, "Not applied to holders of 'See all rows' (the tenant's admins)")]
+    [InlineData(DataFilterLayer.Group, "Not applied to holders of 'See all rows' (the tenant's admins)")]
+    [InlineData(DataFilterLayer.Role, "Not applied to holders of 'See all rows' (the tenant's admins)")]
+    public void The_editor_names_who_the_filter_does_not_bind(DataFilterLayer layer, string text) =>
+        System.Net.WebUtility.HtmlDecode(Editor(layer).WaitForElement("[data-testid='filter-unbound']").TextContent.Trim()).ShouldBe(text);
+
+    [Fact]
+    public async Task The_preview_line_shows_passing_of_total_after_an_edit()
+    {
+        var clock = new Microsoft.Extensions.Time.Testing.FakeTimeProvider();
+        Services.AddSingleton<TimeProvider>(clock);
+        Api.PreviewDataFilterAsync(Arg.Any<PreviewDataFilterRequest>(), Arg.Any<CancellationToken>()).Returns(new DataFilterPreviewDto(4, 1200, false));
+        var editor = Editor(DataFilterLayer.Tenant);
+        editor.FindAll("[data-testid='filter-preview']").ShouldBeEmpty();
+
+        await Edit(editor);
+        clock.Advance(TimeSpan.FromMilliseconds(400));
+        editor.WaitForAssertion(() =>
+        {
+            editor.Find("[data-testid='filter-preview']").TextContent.Trim()
+                .ShouldBe($"{4:N0} of {1200:N0} rows you can see pass this filter");
+        });
+    }
+
+    [Fact]
+    public async Task A_timed_out_preview_says_it_is_not_available()
+    {
+        var clock = new Microsoft.Extensions.Time.Testing.FakeTimeProvider();
+        Services.AddSingleton<TimeProvider>(clock);
+        Api.PreviewDataFilterAsync(Arg.Any<PreviewDataFilterRequest>(), Arg.Any<CancellationToken>()).Returns(new DataFilterPreviewDto(null, null, true));
+        var editor = Editor(DataFilterLayer.Tenant);
+
+        await Edit(editor);
+        clock.Advance(TimeSpan.FromMilliseconds(400));
+        editor.WaitForAssertion(() =>
+        {
+            editor.Find("[data-testid='filter-preview']").TextContent.Trim().ShouldBe("Preview not available: counting took too long.");
+        });
+    }
+
+    [Fact]
+    public async Task An_invalid_draft_shows_no_preview_line()
+    {
+        var clock = new Microsoft.Extensions.Time.Testing.FakeTimeProvider();
+        Services.AddSingleton<TimeProvider>(clock);
+        Api.PreviewDataFilterAsync(Arg.Any<PreviewDataFilterRequest>(), Arg.Any<CancellationToken>())
+            .Returns<DataFilterPreviewDto>(_ => throw new ApiException(400, "validation", new Dictionary<string, string[]> { ["query"] = ["bad"] }));
+        var editor = Editor(DataFilterLayer.Tenant, Stored(DataFilterLayer.Tenant, null));
+
+        await Edit(editor);
+        clock.Advance(TimeSpan.FromMilliseconds(400));
+        editor.WaitForAssertion(() =>
+        {
+            Api.Received().PreviewDataFilterAsync(Arg.Any<PreviewDataFilterRequest>(), Arg.Any<CancellationToken>());
+        });
+        editor.FindAll("[data-testid='filter-preview']").ShouldBeEmpty();
+        editor.FindAll("[data-testid='filter-problem']").ShouldBeEmpty();
+    }
 }

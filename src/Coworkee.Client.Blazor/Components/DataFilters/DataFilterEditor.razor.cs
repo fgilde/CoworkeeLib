@@ -21,10 +21,14 @@ public partial class DataFilterEditor
     private string? _loadedSet;
     private DataFilterDto? _loaded;
     private bool _busy;
+    private DataFilterPreviewDto? _preview;
+    private CancellationTokenSource? _previewCancel;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
+
+    [Inject] private IServiceProvider Services { get; set; } = null!;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
@@ -65,10 +69,47 @@ public partial class DataFilterEditor
             _query = Filter is null ? new QueryGroup() : QueryJson.Deserialize(Filter.Query) ?? new QueryGroup();
             _appliesToDetails = Filter?.AppliesToDetails ?? true;
             _problem = null;
+            _ = PreviewAsync(TimeSpan.Zero);
         }
     }
 
-    private void QueryChanged(QueryGroup query) => _query = query;
+    private void QueryChanged(QueryGroup query)
+    {
+        _query = query;
+        _ = PreviewAsync(TimeSpan.FromMilliseconds(400));
+    }
+
+    /// <summary>Counts the rows the draft lets through, after the last edit; an invalid draft (400) shows no line.</summary>
+    private async Task PreviewAsync(TimeSpan delay)
+    {
+        _previewCancel?.Cancel();
+        _previewCancel?.Dispose();
+        var cancel = _previewCancel = new CancellationTokenSource();
+        _preview = null;
+        if (!_query.Rules().Any())
+        {
+            return;
+        }
+
+        try
+        {
+            if (delay > TimeSpan.Zero)
+            {
+                await Task.Delay(delay, Services.GetService(typeof(TimeProvider)) as TimeProvider ?? TimeProvider.System, cancel.Token);
+            }
+
+            var preview = await Api.PreviewDataFilterAsync(new PreviewDataFilterRequest(EntitySet, Layer, LayerKey, QueryJson.Serialize(_query)), cancel.Token);
+            if (!cancel.IsCancellationRequested)
+            {
+                _preview = preview;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (Exception exception) when (exception is OperationCanceledException or ApiException)
+        {
+            // superseded, or the draft does not (yet) validate: no line
+        }
+    }
 
     private async Task SaveAsync()
     {
