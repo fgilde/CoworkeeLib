@@ -1,17 +1,21 @@
 using Coworkee.Application.Authorization;
+using Coworkee.Application.Groups;
 using Coworkee.Application.Messaging;
 using Coworkee.Contracts.DataFilters;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
 using Coworkee.Infrastructure.Persistence;
+using Microsoft.AspNetCore.OData.Query;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.OData.Edm;
 
 namespace Coworkee.OData.DataFilters;
 
 internal sealed class DataFilterHandlers(
-    CoworkeeDbContext db, ICurrentUser currentUser, IPermissionChecker permissions, ODataEntityRegistry registry, IServiceProvider services)
+    CoworkeeDbContext db, ICurrentUser currentUser, IPermissionChecker permissions, ODataEntityRegistry registry, IServiceProvider services,
+    IOptions<CoworkeeODataOptions> options)
     : IHandler<SaveDataFilterCommand, Result<DataFilterDto>>,
       IHandler<DeleteDataFilterCommand, Result>,
       IHandler<GetDataFiltersQuery, Result<IReadOnlyList<DataFilterDto>>>,
@@ -19,7 +23,9 @@ internal sealed class DataFilterHandlers(
       IHandler<DeleteDataFilterLinkCommand, Result>,
       IHandler<GetDataFilterLinksQuery, Result<IReadOnlyList<DataFilterLinkDto>>>,
       IHandler<GetDataFilterFieldsQuery, Result<IReadOnlyList<DataFilterFieldDto>>>,
-      IHandler<GetDataFilterSetsQuery, Result<IReadOnlyList<string>>>
+      IHandler<GetDataFilterSetsQuery, Result<IReadOnlyList<string>>>,
+      IHandler<PreviewDataFilterQuery, Result<DataFilterPreviewDto>>,
+      IHandler<GetDataFilterOverviewQuery, Result<DataFilterOverviewDto>>
 {
     private static readonly Error Forbidden = Error.Forbidden("data_filters.forbidden", "You may not manage data filters of this layer.");
 
@@ -65,22 +71,10 @@ internal sealed class DataFilterHandlers(
             return Forbidden;
         }
 
-        if (registry.Find(request.EntitySet) is not { } entity)
+        var (entity, filterOption, error) = await ParseDraftAsync(request.EntitySet, request.Query, cancellationToken);
+        if (entity is null)
         {
-            return Error.Validation("entitySet", $"There is no entity set '{request.EntitySet}'.");
-        }
-
-        var (filterOption, problem) = DataFilterQueries.Parse(services, entity, request.Query);
-        if (problem is not null)
-        {
-            return Error.Validation("query", problem);
-        }
-
-        // a filter is no way to probe properties the editing administrator may not read
-        if (filterOption is not null
-            && ODataQueryGuard.Denies(services, entity.EntityType, filterOption.RawValue, await ODataEntityAccess.DeniedByTypeAsync(services, cancellationToken)))
-        {
-            return Error.Validation("query", "The filter uses a property you may not read.");
+            return error!;
         }
 
         // without an organisation a non-System filter would belong to nobody
@@ -101,6 +95,97 @@ internal sealed class DataFilterHandlers(
         (filter.Query, filter.AppliesToDetails) = (request.Query, request.AppliesToDetails);
         filter.Version++;
         return ToDto(filter, null);
+    }
+
+    // what a draft filter must satisfy before it is saved or tried
+    private async Task<(ODataEntityRegistration? Entity, FilterQueryOption? Filter, Error? Error)> ParseDraftAsync(string entitySet, string query, CancellationToken cancellationToken)
+    {
+        if (registry.Find(entitySet) is not { } entity)
+        {
+            return (null, null, Error.Validation("entitySet", $"There is no entity set '{entitySet}'."));
+        }
+
+        var (filterOption, problem) = DataFilterQueries.Parse(services, entity, query);
+        if (problem is not null)
+        {
+            return (null, null, Error.Validation("query", problem));
+        }
+
+        // a filter is no way to probe properties the editing administrator may not read
+        if (filterOption is not null
+            && ODataQueryGuard.Denies(services, entity.EntityType, filterOption.RawValue, await ODataEntityAccess.DeniedByTypeAsync(services, cancellationToken)))
+        {
+            return (null, null, Error.Validation("query", "The filter uses a property you may not read."));
+        }
+
+        return (entity, filterOption, null);
+    }
+
+    public async Task<Result<DataFilterPreviewDto>> HandleAsync(PreviewDataFilterQuery query, CancellationToken cancellationToken)
+    {
+        var request = query.Request;
+        if (!await MayManageAsync(request.Layer, cancellationToken))
+        {
+            return Forbidden;
+        }
+
+        var (entity, filter, error) = await ParseDraftAsync(request.EntitySet, request.Query, cancellationToken);
+        if (entity is null)
+        {
+            return error!;
+        }
+
+        // the counts reveal rows: only for those who may read the set
+        if (!await ODataEntityAccess.IsGrantedAsync(services, entity.EntityType, cancellationToken))
+        {
+            return Forbidden;
+        }
+
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(options.Value.DataFilterPreviewTimeout);
+        try
+        {
+            using var unnarrowed = GroupScope.Unnarrowed();
+            using var off = DataFilterScope.Off();
+            return await (Task<DataFilterPreviewDto>)CountMethod.MakeGenericMethod(entity.EntityType).Invoke(this, [filter, timeout.Token])!;
+        }
+        catch (OperationCanceledException) when (timeout.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+        {
+            return new DataFilterPreviewDto(null, null, true);
+        }
+    }
+
+    private static readonly System.Reflection.MethodInfo CountMethod = typeof(DataFilterHandlers).GetMethod(nameof(CountAsync), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+
+    // the set as the app's own row filters show it, then what passes the draft
+    private async Task<DataFilterPreviewDto> CountAsync<TEntity>(FilterQueryOption? filter, CancellationToken cancellationToken)
+        where TEntity : class
+    {
+        var visible = await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken);
+        var total = await visible.LongCountAsync(cancellationToken);
+        var passing = filter is null ? total : await ((IQueryable<TEntity>)filter.ApplyTo(visible, new ODataQuerySettings())).LongCountAsync(cancellationToken);
+        return new DataFilterPreviewDto(passing, total, false);
+    }
+
+    public async Task<Result<DataFilterOverviewDto>> HandleAsync(GetDataFilterOverviewQuery query, CancellationToken cancellationToken)
+    {
+        var layer = await IsSystemTenantAsync(cancellationToken) ? DataFilterLayer.System : DataFilterLayer.Tenant;
+        if (!await MayManageAsync(layer, cancellationToken))
+        {
+            return Forbidden;
+        }
+
+        var tenantId = layer == DataFilterLayer.System ? null : currentUser.TenantId;
+        var counts = await db.Set<DataFilter>().AsNoTracking().Where(f => f.Layer == layer && f.TenantId == tenantId)
+            .GroupBy(f => f.EntitySet).Select(g => new { EntitySet = g.Key, Count = g.Count() }).ToListAsync(cancellationToken);
+        var linked = layer == DataFilterLayer.System
+            ? (await db.Set<DataFilterLink>().AsNoTracking().Select(l => l.EntitySet).ToListAsync(cancellationToken)).ToHashSet(StringComparer.OrdinalIgnoreCase)
+            : [];
+        var sets = registry.Entities.Select(e => e.EntitySet).Order(StringComparer.OrdinalIgnoreCase)
+            .Select(set => new DataFilterSetStateDto(set, counts.Where(c => string.Equals(c.EntitySet, set, StringComparison.OrdinalIgnoreCase)).Sum(c => c.Count), linked.Contains(set)))
+            .ToList();
+        var name = currentUser.TenantId is { } own && services.GetService<ITenantDirectory>() is { } tenants ? await tenants.GetNameAsync(own, cancellationToken) : null;
+        return new DataFilterOverviewDto(layer, name, sets);
     }
 
     public async Task<Result> HandleAsync(DeleteDataFilterCommand command, CancellationToken cancellationToken)
@@ -182,7 +267,7 @@ internal sealed class DataFilterHandlers(
 
         // the link joins on the target's key: the property must hold one
         var key = services.DbContextFor(target.EntityType).Model.FindEntityType(target.EntityType)?.FindPrimaryKey()?.Properties is [{ } single] ? single.ClrType : null;
-        var own = entity.EntityType.GetProperty(property.Name)?.PropertyType;
+        var own = DataFilterProperties.Find(entity.EntityType, property.Name)?.PropertyType;
         if (key is null || own is null || (Nullable.GetUnderlyingType(own) ?? own) != (Nullable.GetUnderlyingType(key) ?? key))
         {
             return Error.Validation("property", $"{entity.EntitySet}.{property.Name} cannot hold the key of {target.EntitySet}.");

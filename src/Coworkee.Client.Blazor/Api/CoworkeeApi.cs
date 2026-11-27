@@ -498,6 +498,12 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public async Task<IReadOnlyList<DataFilterFieldDto>> GetDataFilterFieldsAsync(string entitySet, CancellationToken cancellationToken = default) =>
         await GetAsync<DataFilterFieldDto[]>($"{DataFilters}/fields/{Uri.EscapeDataString(entitySet)}", cancellationToken);
 
+    public Task<DataFilterPreviewDto> PreviewDataFilterAsync(PreviewDataFilterRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync<DataFilterPreviewDto>(HttpMethod.Post, $"{DataFilters}/preview", request, cancellationToken);
+
+    public Task<DataFilterOverviewDto> GetDataFilterOverviewAsync(CancellationToken cancellationToken = default) =>
+        GetAsync<DataFilterOverviewDto>($"{DataFilters}/overview", cancellationToken);
+
     public async Task<IReadOnlyList<DataFilterLinkDto>> GetDataFilterLinksAsync(CancellationToken cancellationToken = default) =>
         await GetAsync<DataFilterLinkDto[]>($"{DataFilters}/links", cancellationToken);
 

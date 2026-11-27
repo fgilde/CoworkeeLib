@@ -6,6 +6,9 @@ using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Query;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.OData.DataFilters;
+using Coworkee.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.OData.Tests;
@@ -126,6 +129,66 @@ public sealed class DataFilterLiveTests(ODataApp app) : IAsyncLifetime
         (await PartitionAsync(user)).ShouldBe(withLink);
         (await Admin.DeleteAsync($"{Root}/{first.Id}", Ct)).EnsureSuccessStatusCode();
         (await PartitionAsync(user)).ShouldNotBe(withLink);
+    }
+
+    private async Task<string?> PartOfAsync(Guid userId)
+    {
+        using var actor = Coworkee.Core.Security.CurrentUserScope.Begin(new Coworkee.Core.Security.ImpersonatedUser(userId, _setup.TenantId));
+        await using var scope = app.App.Services.CreateAsyncScope();
+        return await scope.ServiceProvider.GetServices<Coworkee.OData.ClientEntities.IClientEntityPartitionPart>().Single(p => p.GetType().Name == "DataFilterPartitionPart").GetAsync(Ct);
+    }
+
+    [Fact]
+    public async Task Losing_bypass_changes_the_partition()
+    {
+        await SaveAsync(DataFilterLayer.Tenant, Price(QueryOperator.GreaterThan, "10"));
+        var users = new List<Guid>();
+        foreach (var _ in new[] { 0, 1 })
+        {
+            var email = $"bp-{Guid.NewGuid():N}@acme.test";
+            var user = await (await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest(email, "Passw0rd!x", null, null), Ct)).Content.ReadFromJsonAsync<UserDto>(Ct);
+            users.Add(user!.Id);
+        }
+
+        var before = await PartOfAsync(users[0]);
+        await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            db.Add(new Coworkee.Identity.Domain.PermissionGrant { TenantId = null, Name = DataFilterPermissions.Bypass, ProviderType = PermissionProviderType.User, ProviderKey = users[0] });
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        // the holder and the user without the grant read different rows: different partitions, whatever else is equal
+        var holder = await PartOfAsync(users[0]);
+        holder.ShouldNotBe(before);
+        holder.ShouldNotBe(await PartOfAsync(users[1]));
+        (await PartOfAsync(users[1])).ShouldBe(before);
+    }
+
+    [Fact]
+    public async Task Moving_to_the_system_tenant_flag_changes_the_partition()
+    {
+        await SaveAsync(DataFilterLayer.Tenant, Price(QueryOperator.GreaterThan, "10"));
+        var system = await PartitionAsync(Admin);
+
+        await using (var scope = app.App.Services.CreateAsyncScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<CoworkeeDbContext>().Set<Coworkee.Identity.Domain.Tenant>().IgnoreQueryFilters()
+                .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsDefault, false), Ct);
+        }
+
+        await using var other = await app.StartAnotherAsync(new Dictionary<string, string>());
+        var moved = await PartitionAsync(other.GetTestClient().AsUser(_setup.AdminUserId, _setup.TenantId));
+        moved.ShouldNotBe(system);
+    }
+
+    [Fact]
+    public async Task Without_filters_the_part_stays_null()
+    {
+        await using var scope = app.App.Services.CreateAsyncScope();
+        using var actor = Coworkee.Core.Security.CurrentUserScope.Begin(new Coworkee.Core.Security.ImpersonatedUser(_setup.AdminUserId, _setup.TenantId));
+        var part = scope.ServiceProvider.GetServices<Coworkee.OData.ClientEntities.IClientEntityPartitionPart>().Single(p => p.GetType().Name == "DataFilterPartitionPart");
+
+        (await part.GetAsync(Ct)).ShouldBeNull();
     }
 
     [Fact]

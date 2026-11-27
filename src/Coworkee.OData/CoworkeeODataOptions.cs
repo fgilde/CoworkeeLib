@@ -66,4 +66,7 @@ public sealed class CoworkeeODataOptions
 
     /// <summary>A streamed export is cancelled after this; running or queued exports older than this count as stale and fail.</summary>
     public TimeSpan ExportTimeout { get; set; } = TimeSpan.FromMinutes(30);
+
+    /// <summary>The preview of a draft data filter stops counting after this and reports a timeout.</summary>
+    public TimeSpan DataFilterPreviewTimeout { get; set; } = TimeSpan.FromSeconds(5);
 }

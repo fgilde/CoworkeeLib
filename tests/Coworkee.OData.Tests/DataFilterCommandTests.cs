@@ -97,6 +97,26 @@ public sealed class DataFilterCommandTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_link_on_a_property_hidden_with_new_resolves_to_the_derived_one()
+    {
+        await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            Widget[] widgets = [new() { Name = "r", Color = "red", TenantId = _setup.TenantId }, new() { Name = "b", Color = "blue", TenantId = _setup.TenantId }];
+            db.AddRange(widgets);
+            await db.SaveChangesAsync(Ct);
+            db.AddRange(widgets.Select(w => new HidingRow { TargetId = w.Id, TenantId = _setup.TenantId }));
+            return await db.SaveChangesAsync(Ct);
+        });
+        var colorIsRed = QueryJson.Serialize(new QueryGroup { Children = [new QueryRule { Field = "Color", Operator = QueryOperator.Equal, Value = "red" }] });
+        (await Admin().PutAsJsonAsync(Root, new SaveDataFilterRequest("Widgets", DataFilterLayer.Tenant, null, colorIsRed), CoworkeeJson.Web, Ct)).EnsureSuccessStatusCode();
+
+        (await Admin().PutAsJsonAsync(Root + "/links", new SaveDataFilterLinkRequest("HidingRows", "TargetId", "Widgets"), CoworkeeJson.Web, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var (user, _) = await UserWithAsync(_setup.TenantId, ODataApp.ViewGadgets);
+        int.Parse(await user.GetStringAsync("/odata/HidingRows/$count", Ct), System.Globalization.CultureInfo.InvariantCulture).ShouldBe(1);
+    }
+
+    [Fact]
     public async Task A_link_inside_one_context_is_saved_once_per_set()
     {
         // both sets are in GadgetDbContext

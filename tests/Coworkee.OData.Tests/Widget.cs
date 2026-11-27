@@ -55,3 +55,16 @@ public enum WidgetFeatures
     [FacetColor("#00838f")]
     Insured = 4,
 }
+
+public abstract class HiddenBase : AuditedEntity, IMultiTenant
+{
+    public Guid? TargetId { get; set; }
+
+    public Guid TenantId { get; set; }
+}
+
+/// <summary>Hides the base class's <c>TargetId</c> with <c>new</c>: a reflection lookup by name finds two properties.</summary>
+public sealed class HidingRow : HiddenBase
+{
+    public new Guid? TargetId { get; set; }
+}

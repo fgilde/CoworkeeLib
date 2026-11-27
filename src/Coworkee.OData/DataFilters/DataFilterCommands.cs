@@ -30,6 +30,13 @@ public sealed record GetDataFilterFieldsQuery(string EntitySet) : IQuery<Result<
 [AiTool(Exclude = true)]
 public sealed record GetDataFilterSetsQuery : IQuery<Result<IReadOnlyList<string>>>;
 
+// the permission depends on the layer: checked in the handler
+[AiTool(Exclude = true)]
+public sealed record PreviewDataFilterQuery(PreviewDataFilterRequest Request) : IQuery<Result<DataFilterPreviewDto>>;
+
+[AiTool(Exclude = true)]
+public sealed record GetDataFilterOverviewQuery : IQuery<Result<DataFilterOverviewDto>>;
+
 internal sealed class SaveDataFilterValidator : AbstractValidator<SaveDataFilterCommand>
 {
     public SaveDataFilterValidator()
@@ -41,6 +48,16 @@ internal sealed class SaveDataFilterValidator : AbstractValidator<SaveDataFilter
             .When(c => c.Request.Layer is DataFilterLayer.Group or DataFilterLayer.Role);
         RuleFor(c => c.Request.LayerKey).Null().WithMessage("System and tenant filters have no group or role.")
             .When(c => c.Request.Layer is DataFilterLayer.System or DataFilterLayer.Tenant);
+    }
+}
+
+internal sealed class PreviewDataFilterValidator : AbstractValidator<PreviewDataFilterQuery>
+{
+    public PreviewDataFilterValidator()
+    {
+        RuleFor(c => c.Request.EntitySet).NotEmpty().MaximumLength(200);
+        RuleFor(c => c.Request.Layer).IsInEnum();
+        RuleFor(c => c.Request.Query).NotEmpty();
     }
 }
 

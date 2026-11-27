@@ -15,6 +15,8 @@ internal static class DataFilterEndpoints
         api.MapGet("/", (string? entitySet, DataFilterLayer? layer, Guid? layerKey, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new GetDataFiltersQuery(entitySet, layer, layerKey), ct).ToHttpResult());
         api.MapPut("/", (SaveDataFilterRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SaveDataFilterCommand(body), ct).ToHttpResult());
+        api.MapPost("/preview", (PreviewDataFilterRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new PreviewDataFilterQuery(body), ct).ToHttpResult());
+        api.MapGet("/overview", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetDataFilterOverviewQuery(), ct).ToHttpResult());
         api.MapDelete("/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteDataFilterCommand(id), ct).ToHttpResult());
         api.MapGet("/sets", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetDataFilterSetsQuery(), ct).ToHttpResult());
         api.MapGet("/fields/{entitySet}", (string entitySet, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetDataFilterFieldsQuery(entitySet), ct).ToHttpResult());

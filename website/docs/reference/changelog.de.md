@@ -2,6 +2,17 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- Datenfilter: `POST /api/v1/data-filters/preview` zählt, wie viele Zeilen ein Filterentwurf durchlässt (`PreviewDataFilterRequest`, `DataFilterPreviewDto`, `ICoworkeeApi.PreviewDataFilterAsync`, Zeitlimit `CoworkeeODataOptions.DataFilterPreviewTimeout`), `GET /api/v1/data-filters/overview` listet pro Entity-Set die Filter der Ebene des Administrators und seine Verknüpfungen (`DataFilterOverviewDto`, `ICoworkeeApi.GetDataFilterOverviewAsync`), und `DataFilterScope.Off()` schaltet die Datenfilter für den aktuellen Ablauf aus.
+
+### Behoben
+
+- Die Partition der Client-Kopien eines Benutzers mit Datenfiltern folgt `DataFilters.Bypass` und dem Systemmandanten-Kennzeichen, die Kopien beginnen also neu, wenn ein Benutzer eines davon bekommt oder verliert.
+- Eine Datenfilter-Verknüpfung auf eine Eigenschaft, die eine abgeleitete Entität mit `new` verbirgt, scheitert nicht mehr mit einer `AmbiguousMatchException`; die abgeleitete Eigenschaft gilt.
+
 ## 0.1.7 (2026-11-26)
 
 ### Geändert

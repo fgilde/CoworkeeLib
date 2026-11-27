@@ -8,7 +8,7 @@ internal sealed class DataFilterEntityFilter<TEntity>(ODataEntityRegistry regist
     where TEntity : class
 {
     public async Task<IQueryable<TEntity>> ApplyAsync(IQueryable<TEntity> query, CancellationToken cancellationToken) =>
-        registry.Find(typeof(TEntity)) is { } set && await resolver.PredicateAsync<TEntity>(set.EntitySet, DataFilterScope.IsByKey, cancellationToken) is { } predicate
+        !DataFilterScope.IsOff && registry.Find(typeof(TEntity)) is { } set && await resolver.PredicateAsync<TEntity>(set.EntitySet, DataFilterScope.IsByKey, cancellationToken) is { } predicate
             ? query.Where(predicate)
             : query;
 }

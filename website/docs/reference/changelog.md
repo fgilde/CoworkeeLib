@@ -2,6 +2,17 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- Data filters: `POST /api/v1/data-filters/preview` counts how many rows a draft filter lets through (`PreviewDataFilterRequest`, `DataFilterPreviewDto`, `ICoworkeeApi.PreviewDataFilterAsync`, timeout `CoworkeeODataOptions.DataFilterPreviewTimeout`), `GET /api/v1/data-filters/overview` lists per entity set the filters of the administrator's layer and its links (`DataFilterOverviewDto`, `ICoworkeeApi.GetDataFilterOverviewAsync`), and `DataFilterScope.Off()` switches the data filters off for the current flow.
+
+### Fixed
+
+- The client copy partition of a user with data filters follows `DataFilters.Bypass` and the system tenant flag, so copies start over when a user gains or loses either.
+- A data filter link on a property that a derived entity hides with `new` no longer fails with an `AmbiguousMatchException`; the derived property counts.
+
 ## 0.1.7 (2026-11-26)
 
 ### Changed

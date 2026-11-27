@@ -197,6 +197,7 @@ internal sealed class GadgetModelContributor : IModelContributor
     {
         modelBuilder.Entity<Gadget>(gadget => gadget.ToTable("Gadgets"));
         modelBuilder.Entity<Widget>(widget => widget.ToTable("Widgets"));
+        modelBuilder.Entity<HidingRow>(row => row.ToTable("HidingRows"));
         modelBuilder.Entity<Pump>(pump => pump.ToTable("Pumps"));
         modelBuilder.Entity<Part>(part => part.ToTable("Parts"));
         modelBuilder.Entity<Crate>(crate => crate.ToTable("Crates"));
@@ -295,6 +296,7 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddODataChildFilter<Part, Widget>(p => p.Widget);
         context.Services.AddODataImport("Widgets", (Guid? id, WidgetRow row) => new SaveWidgetCommand(id, row), id => new DeleteWidgetCommand(id));
         context.Services.AddODataImport<AddPartCommand>("Parts");
+        context.Services.AddODataEntity<HidingRow>("HidingRows", ODataApp.ViewGadgets);
         context.Services.AddODataEntity<Crate>("Crates", ODataApp.ViewGadgets);
         context.Services.AddScoped<IODataEntityFilter<Crate>, CratesOfActiveUnits>();
         context.Services.AddScoped<DataFilters.IGroupRowSource<Crate>, CrateUnits>();

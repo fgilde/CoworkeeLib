@@ -81,6 +81,31 @@ internal sealed class ShipmentRowsOfGroups(IOrgCodes codes, IPermissionChecker p
 
 Role filters apply to the user's active roles, read through `IPermissionChecker.GetRoleIdsAsync`. A custom permission checker that does not implement it returns no roles, so **role filters do not apply** for its users. Implement it when you replace the checker.
 
+## Preview
+
+The editor shows how many rows a draft filter lets through before it is saved. `POST /api/v1/data-filters/preview` takes the fields of a save and stores nothing:
+
+```http
+POST /api/v1/data-filters/preview
+{ "entitySet": "Orders", "layer": "Tenant", "layerKey": null, "query": "{...}" }
+
+200 { "passing": 4, "total": 10, "timedOut": false }
+```
+
+`total` counts the rows the editor sees through the app's own row filters with no data filter at all (for a system administrator every row); `passing` counts those that also pass the draft. Stored filters never count, so the number says what the draft alone would do. The request needs the permission of its layer, the read permission of the set and the same property checks as a save (400 for unknown or protected properties). Counting stops after `CoworkeeODataOptions.DataFilterPreviewTimeout` (default 5 seconds) and answers `{ "passing": null, "total": null, "timedOut": true }`. In code, `DataFilterScope.Off()` switches the data filters off for the current flow; the app's own row filters still apply.
+
+## Overview
+
+`GET /api/v1/data-filters/overview` tells per entity set how many filters the administrator's layer holds and whether the set is linked:
+
+```http
+GET /api/v1/data-filters/overview
+
+200 { "layer": "Tenant", "tenantName": "Acme", "sets": [ { "entitySet": "Orders", "layerFilters": 1, "linked": false } ] }
+```
+
+The layer is `System` in the system tenant (needs `DataFilters.ManageSystem`) and `Tenant` elsewhere (needs `DataFilters.ManageTenant`). Links are reported in the system tenant only.
+
 ## Realtime
 
 Every change reloads open tables and resynchronises local copies; the partition of a client copy includes a fingerprint of all filters of the user's organisation and the System ones (ids and versions, links included), of his active roles that carry a role filter and, when there are group filters, of his active groups, so a changed filter, a role switch or another group drops the copy and fetches the visible rows again. Without filters the partition gets nothing extra. Changes publish payload-free, actor-free signals: entities implement `IHasRealtimeSignals` to name the topics, and the event type is `RealtimeEventTypes.Signal`. A signal carries an empty payload (no entity name, id or filter content) and no actor. Tenant, group and role filters signal on `tenant:data-filters` (their own organisation only), System filters and links on `global:data-filters`. "Signal" is a reserved event name: an app must not use it for events of its own.

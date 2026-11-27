@@ -367,6 +367,12 @@ public interface ICoworkeeApi
 
     Task<IReadOnlyList<DataFilterFieldDto>> GetDataFilterFieldsAsync(string entitySet, CancellationToken cancellationToken = default);
 
+    /// <summary>How many rows of the set the editor sees and how many of them pass the draft filter (nothing is stored).</summary>
+    Task<DataFilterPreviewDto> PreviewDataFilterAsync(PreviewDataFilterRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>Per entity set: filters of the administrator's layer and whether it is linked.</summary>
+    Task<DataFilterOverviewDto> GetDataFilterOverviewAsync(CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<DataFilterLinkDto>> GetDataFilterLinksAsync(CancellationToken cancellationToken = default);
 
     Task<DataFilterLinkDto> SaveDataFilterLinkAsync(SaveDataFilterLinkRequest request, CancellationToken cancellationToken = default);

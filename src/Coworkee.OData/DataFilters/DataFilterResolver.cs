@@ -154,7 +154,7 @@ public sealed class DataFilterResolver(IServiceProvider services, ICurrentUser u
 
         var db = services.DbContextFor(typeof(TEntity));
         var key = db.Model.FindEntityType(typeof(TTarget))?.FindPrimaryKey()?.Properties is [{ PropertyInfo: { } single }] ? single : null;
-        var property = typeof(TEntity).GetProperty(link.Property);
+        var property = DataFilterProperties.Find(typeof(TEntity), link.Property);
         if (db != services.DbContextFor(typeof(TTarget)) || key is null || property is null
             || (Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType) != (Nullable.GetUnderlyingType(key.PropertyType) ?? key.PropertyType))
         {

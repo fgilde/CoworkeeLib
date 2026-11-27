@@ -26,6 +26,9 @@ internal sealed class DataFilterPartitionPart(DataFilterCache cache, ICurrentUse
         var parts = rows.Filters.OrderBy(f => f.Id).Select(f => $"{f.Id}:{f.Version}")
             .Concat(rows.Links.OrderBy(l => l.EntitySet, StringComparer.Ordinal).Select(l => $"{l.EntitySet}.{l.Property}>{l.TargetSet}"))
             .ToList();
+        // who bypasses the filters and whether System filters apply to him decide what he reads: both are part of the fingerprint
+        parts.Add($"bypass:{await permissions.IsGrantedAsync(DataFilterPermissions.Bypass, ct)}");
+        parts.Add($"system:{user.TenantId is { } tenantId && services.GetService<ITenantDirectory>() is { } tenants && await tenants.IsSystemTenantAsync(tenantId, ct)}");
         var roleFilters = rows.Filters.Where(f => f.Layer == DataFilterLayer.Role).Select(f => f.LayerKey).ToHashSet();
         if (roleFilters.Count > 0)
         {

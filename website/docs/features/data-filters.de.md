@@ -81,6 +81,31 @@ internal sealed class ShipmentRowsOfGroups(IOrgCodes codes, IPermissionChecker p
 
 Rollenfilter gelten für die aktiven Rollen des Benutzers, gelesen über `IPermissionChecker.GetRoleIdsAsync`. Ein eigener Berechtigungsprüfer, der sie nicht implementiert, liefert keine Rollen, **Rollenfilter greifen** für seine Benutzer also **nicht**. Wer den Prüfer ersetzt, implementiert sie mit.
 
+## Vorschau
+
+Der Editor zeigt, wie viele Zeilen ein Filterentwurf durchlässt, bevor er gespeichert wird. `POST /api/v1/data-filters/preview` nimmt die Felder eines Speicherns und speichert nichts:
+
+```http
+POST /api/v1/data-filters/preview
+{ "entitySet": "Orders", "layer": "Tenant", "layerKey": null, "query": "{...}" }
+
+200 { "passing": 4, "total": 10, "timedOut": false }
+```
+
+`total` zählt die Zeilen, die der Bearbeiter durch die eigenen Zeilenfilter der App ganz ohne Datenfilter sieht (für einen Systemadministrator jede Zeile); `passing` zählt davon die, die auch den Entwurf passieren. Gespeicherte Filter zählen nie mit, die Zahl zeigt also, was der Entwurf allein bewirkt. Die Anfrage braucht die Berechtigung ihrer Ebene, die Leseberechtigung auf das Set und dieselben Eigenschaftsprüfungen wie das Speichern (400 bei unbekannten oder geschützten Eigenschaften). Nach `CoworkeeODataOptions.DataFilterPreviewTimeout` (Standard 5 Sekunden) bricht das Zählen ab und antwortet `{ "passing": null, "total": null, "timedOut": true }`. Im Code schaltet `DataFilterScope.Off()` die Datenfilter für den aktuellen Ablauf aus; die eigenen Zeilenfilter der App gelten weiter.
+
+## Übersicht
+
+`GET /api/v1/data-filters/overview` sagt pro Entity-Set, wie viele Filter die Ebene des Administrators hält und ob das Set verknüpft ist:
+
+```http
+GET /api/v1/data-filters/overview
+
+200 { "layer": "Tenant", "tenantName": "Acme", "sets": [ { "entitySet": "Orders", "layerFilters": 1, "linked": false } ] }
+```
+
+Die Ebene ist `System` im Systemmandanten (braucht `DataFilters.ManageSystem`), sonst `Tenant` (braucht `DataFilters.ManageTenant`). Verknüpfungen meldet nur der Systemmandant.
+
 ## Echtzeit
 
 Jede Änderung lädt offene Tabellen neu und gleicht lokale Kopien ab; die Partition einer Client-Kopie enthält einen Fingerabdruck aller Filter der Organisation des Benutzers und der Systemfilter (Ids und Versionen, Verknüpfungen eingeschlossen), seiner aktiven Rollen, die einen Rollenfilter tragen, und, wenn es Gruppenfilter gibt, seiner aktiven Gruppen; ein geänderter Filter, ein Rollenwechsel oder eine andere Gruppe verwirft also die Kopie und holt die sichtbaren Zeilen neu. Ohne Filter bekommt die Partition nichts dazu. Änderungen senden Signale ohne Nutzdaten und ohne Akteur: Entities implementieren `IHasRealtimeSignals`, um die Topics zu nennen, der Ereignistyp ist `RealtimeEventTypes.Signal`. Ein Signal trägt eine leere Nutzlast (weder Entity-Name noch Id noch Filterinhalt) und keinen Akteur. Mandanten-, Gruppen- und Rollenfilter signalisieren auf `tenant:data-filters` (nur die eigene Organisation), Systemfilter und Verknüpfungen auf `global:data-filters`. „Signal“ ist ein reservierter Ereignisname: Eine App darf ihn nicht für eigene Ereignisse verwenden.
