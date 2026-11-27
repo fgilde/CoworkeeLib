@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixed
+
+- Data tables no longer overwrite a page's own query parameters with a stale address: the table writes its state to the URL only when its own value there differs.
+
 ## 0.1.8 (2026-11-27)
 
 ### Added
@@ -20,7 +26,6 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixed
 
-- Data tables no longer overwrite a page's own query parameters with a stale address: the table writes its state to the URL only when its own value there differs.
 - The client copy partition of a user with data filters follows `DataFilters.Bypass` and the system tenant flag, so copies start over when a user gains or loses either.
 - A data filter link on a property that a derived entity hides with `new` no longer fails with an `AmbiguousMatchException`; the derived property counts.
 

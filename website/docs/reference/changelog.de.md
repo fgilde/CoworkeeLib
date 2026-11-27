@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Behoben
+
+- Datentabellen überschreiben die eigenen Query-Parameter einer Seite nicht mehr mit einer veralteten Adresse: die Tabelle schreibt ihren Zustand nur dann in die URL, wenn sich ihr eigener Wert dort unterscheidet.
+
 ## 0.1.8 (2026-11-27)
 
 ### Hinzugefügt
@@ -20,7 +26,6 @@
 
 ### Behoben
 
-- Datentabellen überschreiben die eigenen Query-Parameter einer Seite nicht mehr mit einer veralteten Adresse: die Tabelle schreibt ihren Zustand nur dann in die URL, wenn sich ihr eigener Wert dort unterscheidet.
 - Die Partition der Client-Kopien eines Benutzers mit Datenfiltern folgt `DataFilters.Bypass` und dem Systemmandanten-Kennzeichen, die Kopien beginnen also neu, wenn ein Benutzer eines davon bekommt oder verliert.
 - Eine Datenfilter-Verknüpfung auf eine Eigenschaft, die eine abgeleitete Entität mit `new` verbirgt, scheitert nicht mehr mit einer `AmbiguousMatchException`; die abgeleitete Eigenschaft gilt.
 
