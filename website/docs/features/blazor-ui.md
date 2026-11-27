@@ -83,7 +83,7 @@ The same apps can also run in a web desktop: `coworkee new Shop --airworks` adds
 
 ## System status
 
-*Administration → Monitoring → System status* (`/cw/admin/system-status`, permission `Settings.Manage`, system organisation only) shows the installation at a glance: versions of the library, the app and .NET, the database with pending migrations and the outbox backlog, background jobs with the last failures and a link to the job dashboard, mail waiting or failed in the last seven days, realtime connections, Redis, file storage, machine translation and the AI assistant. Each module adds its own card through `ISystemStatusContributor` (`services.AddSystemStatus<T>()`), and so can your app.
+*Administration → Monitoring → System status* (`/cw/admin/system-status`, permission `Settings.Manage`, system tenant only) shows the installation at a glance: versions of the library, the app and .NET, the database with pending migrations and the outbox backlog, background jobs with the last failures and a link to the job dashboard, mail waiting or failed in the last seven days, realtime connections, Redis, file storage, machine translation and the AI assistant. Each module adds its own card through `ISystemStatusContributor` (`services.AddSystemStatus<T>()`), and so can your app.
 
 **Status:** the library's admin pages live under `/cw/admin/...` (see [Pages of the library](../ui/customizing.md#pages-of-the-library)). Grouped rows cannot be virtualized, so a grouped table falls back to the pager.
 

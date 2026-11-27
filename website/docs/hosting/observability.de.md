@@ -7,7 +7,7 @@ Zwei Entwicklungswerkzeuge laufen im Aspire-AppHost neben der App, in einer neue
 - **Grafana** mit Prometheus, Loki, Tempo und einem OpenTelemetry-Collector: Metriken, Logs und Traces jedes Dienstes, die App-Datenbank und fertige Dashboards.
 - **WebDataStudio**: die App-Datenbank im Browser, mit Tabellen, SQL, Diagrammen und Exporten.
 
-Beide melden sich mit dem Administrator der App an (dieselbe E-Mail und dasselbe Passwort wie in der App, siehe `LOGIN.md`) und die Administratoren der Systemorganisation zusätzlich am Auth-Server der App (über [Keycloak](../security/authentication.md), wenn es aktiv ist). Sie kommen aus den Paketen `Nextended.Aspire.Hosting.Grafana` und `Nextended.Aspire.Hosting.WebDataStudio`, die `Coworkee.Aspire` mitbringt.
+Beide melden sich mit dem Administrator der App an (dieselbe E-Mail und dasselbe Passwort wie in der App, siehe `LOGIN.md`) und die Administratoren des System-Mandanten zusätzlich am Auth-Server der App (über [Keycloak](../security/authentication.md), wenn es aktiv ist). Sie kommen aus den Paketen `Nextended.Aspire.Hosting.Grafana` und `Nextended.Aspire.Hosting.WebDataStudio`, die `Coworkee.Aspire` mitbringt.
 
 ![Grafana-Übersichtsdashboard](../assets/screenshots/grafana-overview-dark.webp)
 
@@ -54,8 +54,8 @@ Jedes Dashboard filtert nach Dienst und verweist auf die anderen. Sie werden bei
 
 | | Lokale Anmeldung | Auth-Server der App |
 |---|---|---|
-| Grafana | E-Mail und Passwort des Administrators, als Grafana-Server-Admin | *Sign in with MyApp*: Administratoren der Systemorganisation, als Grafana-Admins |
-| WebDataStudio | E-Mail und Passwort des Administrators, als Studio-Admin | der Knopf der App: Administratoren der Systemorganisation, als Studio-Admins |
+| Grafana | E-Mail und Passwort des Administrators, als Grafana-Server-Admin | *Sign in with MyApp*: Administratoren des System-Mandanten, als Grafana-Admins |
+| WebDataStudio | E-Mail und Passwort des Administrators, als Studio-Admin | der Knopf der App: Administratoren des System-Mandanten, als Studio-Admins |
 
 Der generierte AppHost nimmt den Administrator aus `src/MyApp.Migrations/DemoUsers.cs`, der Datei, die auch der Seed und der Keycloak-Realm lesen:
 
@@ -66,7 +66,7 @@ options.Administrator = new(administrator.Email, administrator.Password);
 
 Ohne `options.Administrator` bekommen beide Werkzeuge den Benutzer `admin` mit einem generierten Passwort: dem Parameter `myapp-admin-password` im Aspire-Dashboard.
 
-Mit einem Auth-Server im AppHost bekommt jedes Werkzeug einen vertraulichen Client bei ihm (`myapp-grafana`, `myapp-webdatastudio`) mit seiner Weiterleitungsadresse, nicht im Launcher sichtbar. Der Auth-Server lässt nur Administratoren der Systemorganisation durch (`SystemAdministratorsOnly`), alle anderen bekommen `access_denied`; wer auf diesem Weg kommt, ist also Admin des Werkzeugs, und ein Benutzer des Auth-Servers mit der E-Mail des Administrators ist derselbe Grafana-Benutzer. Mit Keycloak leitet der Auth-Server wie bei der App zu Keycloak weiter; die Werkzeuge haben keine Clients im Realm. Die Container erreichen den Auth-Server über das Container-Netz, der Browser über seine eigene Adresse, siehe [Tools melden sich am Auth-Server an](aspire.md#tools-melden-sich-am-auth-server-an).
+Mit einem Auth-Server im AppHost bekommt jedes Werkzeug einen vertraulichen Client bei ihm (`myapp-grafana`, `myapp-webdatastudio`) mit seiner Weiterleitungsadresse, nicht im Launcher sichtbar. Der Auth-Server lässt nur Administratoren des System-Mandanten durch (`SystemAdministratorsOnly`), alle anderen bekommen `access_denied`; wer auf diesem Weg kommt, ist also Admin des Werkzeugs, und ein Benutzer des Auth-Servers mit der E-Mail des Administrators ist derselbe Grafana-Benutzer. Mit Keycloak leitet der Auth-Server wie bei der App zu Keycloak weiter; die Werkzeuge haben keine Clients im Realm. Die Container erreichen den Auth-Server über das Container-Netz, der Browser über seine eigene Adresse, siehe [Tools melden sich am Auth-Server an](aspire.md#tools-melden-sich-am-auth-server-an).
 
 ## Ein- und ausschalten
 
@@ -164,7 +164,7 @@ Die Dienste senden weiter an das Aspire-Dashboard und an Grafana. Die Service-De
 
 Dashboards und Regeln werden angelegt, wenn sie fehlen. Ein gelöschtes kommt beim nächsten Start zurück.
 
-**Anmeldung.** Das eigene Single Sign-on von SigNoz (OIDC, SAML) gehört zur Enterprise-Edition. Deshalb stellt der App-Host wie bei Kibana einen oauth2-proxy davor. Der Browser meldet sich am Auth-Server der App an (über Keycloak, wenn es an ist), nur Administratoren der System-Organisation kommen durch, und SigNoz handelt für jeden von ihnen als sein Admin. SigNoz selbst hat dann keine öffentliche Adresse.
+**Anmeldung.** Das eigene Single Sign-on von SigNoz (OIDC, SAML) gehört zur Enterprise-Edition. Deshalb stellt der App-Host wie bei Kibana einen oauth2-proxy davor. Der Browser meldet sich am Auth-Server der App an (über Keycloak, wenn es an ist), nur Administratoren des System-Mandanten kommen durch, und SigNoz handelt für jeden von ihnen als sein Admin. SigNoz selbst hat dann keine öffentliche Adresse.
 
 Der Admin von SigNoz ist der Administrator der App, wenn dessen Passwort der Regel von SigNoz genügt: 12 Zeichen mit Groß- und Kleinbuchstaben, einer Ziffer und einem Sonderzeichen. Das Passwort des Templates und das eines Deployments genügen ihr. Sonst ist der Admin `admin@signoz.local` mit dem erzeugten Parameter `signoz-password`.
 

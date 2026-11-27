@@ -118,7 +118,7 @@ Each set starts from the defaults, then the attribute, then the options, then it
 
 ## Change it at runtime: the page Local copies
 
-Everything above is decided in code. An administrator can change it afterwards without a deployment under *Administration → System → Local copies* (`/admin/local-copies`, `Settings.Manage`, system organisation only; it comes with `AddCoworkeeClientEntities`). The page lists **every** set that could have a copy (every OData set with a `Guid` `Id`), marked in code or not, with:
+Everything above is decided in code. An administrator can change it afterwards without a deployment under *Administration → System → Local copies* (`/admin/local-copies`, `Settings.Manage`, system tenant only; it comes with `AddCoworkeeClientEntities`). The page lists **every** set that could have a copy (every OData set with a `Guid` `Id`), marked in code or not, with:
 
 | Column | |
 |---|---|

@@ -21,7 +21,7 @@ Der eigene Code der Demo: ein paar Entity-Klassen, die Requests zum Anlegen und 
 
 ## Mandantenfähige B2B-SaaS
 
-Eine App, viele Kundenfirmen. Jede Organisation sieht nur ihre eigenen Zeilen (EF Core hängt den Mandantenfilter an jede Abfrage), hat eigene Admins und bekommt die Module, die ihr Tarif enthält. Tarife sind [Editionen](../modules/features.md), und ein Feature kann neben An/Aus auch eine Grenze tragen:
+Eine App, viele Kundenfirmen. Jeder Mandant sieht nur seine eigenen Zeilen (EF Core hängt den Mandantenfilter an jede Abfrage), hat eigene Admins und bekommt die Module, die ihr Tarif enthält. Tarife sind [Editionen](../modules/features.md), und ein Feature kann neben An/Aus auch eine Grenze tragen:
 
 ```csharp
 public void Define(FeatureDefinitionContext context) =>

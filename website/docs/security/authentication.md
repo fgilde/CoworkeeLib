@@ -52,7 +52,7 @@ Further keys of a client:
 |---|---|
 | `ClientSecret` | makes it a confidential client |
 | `ClientUri`, `LogoUrl`, `Description`, `ShowInLauncher` (default `true`) | its tile in the [app launcher](clients.md#app-launcher) |
-| `SystemAdministratorsOnly` | only administrators of the system organisation sign in there, for tools that see every organisation's data |
+| `SystemAdministratorsOnly` | only administrators of the system tenant sign in there, for tools that see every tenant's data |
 | `AllowImpersonation` | serves a user someone signed in as ([Log in as](../features/identity.md#log-in-as-another-user)); other clients answer `access_denied`. `AddWeb` sets it for the web client |
 
 Outside development, configure `SigningCertificate` and `EncryptionCertificate`: a PKCS#12 file (`Path`) or its content as Base64 (`Base64`, e.g. from a secret), each with `Password`. All instances share them.
@@ -116,7 +116,7 @@ Locally, `options.UseKeycloak()` in the app host starts Keycloak with a realm fo
 
 A new installation needs a tenant and a first administrator. Two ways:
 
-**Wizard.** The API answers `503 setup_required` until setup is done. The Blazor client shows the setup page: checks, organization, administrator, theme.
+**Wizard.** The API answers `503 setup_required` until setup is done. The Blazor client shows the setup page: checks, tenant, administrator, theme.
 
 When does the setup page show up? Whenever the database has no set up system: an empty database without a seed (no `AddCoworkeeIdentitySeed`, or a template app whose demo users are switched off), and a deployment without a first administrator (`<APP>_ADMIN_EMAIL` and `_ADMIN_PASSWORD` left empty). Apps generated with demo users are set up by their migrations and never show it.
 

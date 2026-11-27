@@ -39,7 +39,7 @@ On *Administration → Identity → Roles* the pencil of a row (and the one next
 
 Two kinds of roles keep their name:
 
-- **System roles** (`admin`, `user`) belong to every organisation and are found by name: `409 identity.role_system`.
+- **System roles** (`admin`, `user`) belong to every tenant and are found by name: `409 identity.role_system`.
 - **Roles whose name code looks up** are neither renamed nor deleted: `409 identity.role_name_fixed`, with the code that relies on the role in the message ("Code finds this role by its name (Workflows: Invoices); it cannot be deleted."), which the roles page shows in the user's language ([server messages](../modules/localization.md#in-the-client)). The description stays editable. The Files module adds its role *Registration documents*, Coworkee.Workflows every role its declared workflows name (`Role`, `EscalateTo`, `RequiresRole`, `NotifyRole`). Add the names your own code uses, each with what relies on it:
 
 ```json
@@ -59,8 +59,8 @@ or `services.Configure<IdentityAdministrationOptions>(o => o.FixedRoleNames["Dis
 Administrators create permissions of their own at runtime, e.g. to show a header button or an app feature only to some people: *Administration → Identity → Custom permissions* (`/admin/permissions`, page key `custom-permissions`, also linked from the roles page). A custom permission has a name, a display name, an optional description and a group (default *Custom*); it shows in the role editor's permission matrix and in `GET /api/v1/identity/permissions/definitions` at once, on every instance, and roles, groups and users get it like any other permission. Check it like one, too: `<PermissionGate Permission="Custom.Reports.Export">`, `IsGrantedAsync("Custom.Reports.Export", ct)`.
 
 - **Names** start with `Custom.`, followed by letters, digits, `-` or `_`, parts separated by dots (`Custom.Reports.Export`). The prefix keeps them apart from the library's and the app's permissions; a name taken by a permission in code or another custom permission answers `409 identity.permission_taken`. The name cannot change later, as grants and code refer to it; display name, description and group can.
-- **Scope:** the definitions belong to the whole installation like the ones in code, the grants stay per organisation. So only permission managers (`Identity.Permissions.Manage`) of the system organisation handle them (`403 identity.permission_host_only` elsewhere).
-- **Deleting** shows first who loses the permission: the roles (of other organisations with their name), groups and users it is granted to. Confirming deletes the definition and every grant of it in every organisation; open clients reload their permissions. Permissions in code can be neither edited nor deleted (`409 identity.permission_code_defined`).
+- **Scope:** the definitions belong to the whole installation like the ones in code, the grants stay per tenant. So only permission managers (`Identity.Permissions.Manage`) of the system tenant handle them (`403 identity.permission_host_only` elsewhere).
+- **Deleting** shows first who loses the permission: the roles (of other tenants with their name), groups and users it is granted to. Confirming deletes the definition and every grant of it in every tenant; open clients reload their permissions. Permissions in code can be neither edited nor deleted (`409 identity.permission_code_defined`).
 - **Storage:** table `cw.CustomPermissions`; apps add a migration. Until they do, the permissions in code keep working and a warning is logged.
 
 ```http
@@ -89,7 +89,7 @@ A user's effective permissions are those of his roles, his groups' roles, grants
 
 ### Who holds a permission
 
-`IPermissionChecker.UsersGrantedAsync(permission, groupId, page, ct)` lists the active users of the caller's organisation who hold a permission, for recipient lists or pickers: through a role (their own or one of their groups), a grant of their own or a grant of one of their groups, also through a permission that implies it; administrators always. The result is a page of user ids ordered by email, `PageRequest.Search` looks in email and names. `groupId` narrows to members of that group and its sub-groups. As in every check, a group grants only to its own members, not to those of its sub-groups. All roles count, whatever role a user picked as active; computed permissions and grants on single resources do not. Over HTTP with `Identity.Users.View` and `Identity.Roles.View` (the list tells as much as the roles page):
+`IPermissionChecker.UsersGrantedAsync(permission, groupId, page, ct)` lists the active users of the caller's tenant who hold a permission, for recipient lists or pickers: through a role (their own or one of their groups), a grant of their own or a grant of one of their groups, also through a permission that implies it; administrators always. The result is a page of user ids ordered by email, `PageRequest.Search` looks in email and names. `groupId` narrows to members of that group and its sub-groups. As in every check, a group grants only to its own members, not to those of its sub-groups. All roles count, whatever role a user picked as active; computed permissions and grants on single resources do not. Over HTTP with `Identity.Users.View` and `Identity.Roles.View` (the list tells as much as the roles page):
 
 ```http
 GET /api/v1/identity/users/granted?permission=Orders.Approve&groupId={id}&page=1&pageSize=25&search=ann
@@ -150,7 +150,7 @@ Groups play two parts. As holders of permissions they act like roles: a role of 
 | `Identity.Groups.View` | read the group tree |
 | `Identity.Groups.ManageMembers` | add, remove, move members and mark owners |
 | `Identity.Groups.Manage` | create, move, delete groups; implies `ManageMembers` |
-| `Identity.Groups.ScopeAll` | every group of the organisation is accessible, for operators who belong to no unit; with [group-scoped administration](#group-scoped-administration) every user and group can be administered |
+| `Identity.Groups.ScopeAll` | every group of the tenant is accessible, for operators who belong to no unit; with [group-scoped administration](#group-scoped-administration) every user and group can be administered |
 
 Rows the user may see are the business of the app's row filters (`IODataEntityFilter<T>` against `IGroupScope.ActiveAsync`); see [which groups a user sees](../features/identity.md#which-groups-a-user-sees).
 
@@ -158,7 +158,7 @@ Rows the user may see are the business of the app's row filters (`IODataEntityFi
 
 Holding `Identity.Users.Manage` (or `Groups.ManageMembers`, `Permissions.Manage`, `Roles.Manage`) does not let anyone take over a stronger account or hand out more than he holds. One rule, `AccountGuard` (`Coworkee.Identity.Users`), runs in every request that changes or controls another user's account and in every request that gives or takes permissions:
 
-- **Acting on another account** (password, e-mail address, two-step verification, passkeys, external logins, avatar, profile and user name, activation, lock and unlock, sign-out, ending his sessions and setting his session limit, deletion, roles, groups, own grants, language, invitation and password reset mails, revoking his API keys) is refused with `403 identity.user_more_permissions` while the user holds a permission the caller lacks. All of the user's roles count, whichever he picked as active, also while he is deactivated (what he would get back); a permission he holds on a single resource counts unless the caller holds it globally or on that resource. It is the rule of [Log in as another user](#log-in-as-another-user). Only administrators act on administrators (`403 identity.admin_role_restricted`), also when someone else holds every permission. Administrators hold every permission, so they act on everyone of their organisation; the last-administrator rules stay.
+- **Acting on another account** (password, e-mail address, two-step verification, passkeys, external logins, avatar, profile and user name, activation, lock and unlock, sign-out, ending his sessions and setting his session limit, deletion, roles, groups, own grants, language, invitation and password reset mails, revoking his API keys) is refused with `403 identity.user_more_permissions` while the user holds a permission the caller lacks. All of the user's roles count, whichever he picked as active, also while he is deactivated (what he would get back); a permission he holds on a single resource counts unless the caller holds it globally or on that resource. It is the rule of [Log in as another user](#log-in-as-another-user). Only administrators act on administrators (`403 identity.admin_role_restricted`), also when someone else holds every permission. Administrators hold every permission, so they act on everyone of their tenant; the last-administrator rules stay.
 - **Granting or revoking** a permission (grants of roles, users and groups), giving or taking a role (`SetUserRoles`, `CreateUser` with roles, `SetGroupRoles`, deleting a role), joining or leaving a group (`SetUserGroups`, the member requests, deleting a group: the members get or lose its roles, grants and resource grants) and granting or revoking a role on a resource needs every permission involved, implied ones included, otherwise `403 identity.grant_restricted`. On a resource the caller may hold them there instead of globally. The administrator role needs an administrator (`identity.admin_role_restricted`). Default roles and the default group pass: every account a user manager creates gets them anyway, and only who held their permissions could make them default ([default role](../features/identity.md#owners-default-group-and-default-role)).
 - **Service clients** follow the same rule: creating, changing, rotating the secret of and deleting a client needs every permission of its roles and its list (`403 auth.client_rights_restricted`).
 
@@ -173,20 +173,20 @@ With [group-scoped administration](#group-scoped-administration) the guard also 
 
 ### Group-scoped administration
 
-Apps that keep several customers in one organisation, separated by groups, limit their administrators to their own groups with one setting:
+Apps that keep several customers in one tenant, separated by groups, limit their administrators to their own groups with one setting:
 
 ```json
 { "Coworkee": { "Identity": { "GroupScopedAdministration": true } } }
 ```
 
-It is off by default. An app whose groups are departments of one company lets its user managers manage everybody today; turned on, the manager of a department would no longer see colleagues of other departments or users without a group. Only where it changes nothing would it be harmless as a default (an organisation without groups, a manager of every group), so the app decides.
+It is off by default. An app whose groups are departments of one company lets its user managers manage everybody today; turned on, the manager of a department would no longer see colleagues of other departments or users without a group. Only where it changes nothing would it be harmless as a default (a tenant without groups, a manager of every group), so the app decides.
 
-With it on, an administrator reaches the groups he is a member of and their sub-groups (`IGroupScope.AccessibleAsync`, never narrowed by the group selection) and the users who are a member of one of them; himself always. The whole organisation, as before, is reached by holders of `Identity.Groups.ScopeAll`, administrators, the system (`ISystemDispatcher`, `CurrentUserScope.BeginSystem`) and whoever reaches every group. The [default group](../features/identity.md#owners-default-group-and-default-role) counts for nobody: everyone is in it, so it reaches no users, does not stand against changing a user and is changed only with the whole organisation.
+With it on, an administrator reaches the groups he is a member of and their sub-groups (`IGroupScope.AccessibleAsync`, never narrowed by the group selection) and the users who are a member of one of them; himself always. The whole tenant, as before, is reached by holders of `Identity.Groups.ScopeAll`, administrators, the system (`ISystemDispatcher`, `CurrentUserScope.BeginSystem`) and whoever reaches every group. The [default group](../features/identity.md#owners-default-group-and-default-role) counts for nobody: everyone is in it, so it reaches no users, does not stand against changing a user and is changed only with the whole tenant.
 
 - **Reading:** users, groups and their grants out of reach answer 404 (`identity.user_not_found`, `identity.group_not_found`, `identity.grant_target_not_found`) and are absent from lists, counts and lookups: `GetUsers`, `GetGroups`, `/users/roles`, `/users/granted`, effective permissions, the language of a user, the group tree (`/groups/children` starts at the top groups of the reach, `/groups/tree` finds only groups in reach), and the OData sets `Users`, `Groups` and `ApiKeys`, so also exports, the global search, client entities, reports, mail recipients and the AI tools. A user's detail lists only his groups in reach, resource grants only principals in reach.
 - **Changing a user** (everything `AccountGuard.CheckUserAsync` guards, see above) needs all his groups in reach; a user who also belongs to a group outside answers `403 identity.user_other_groups`. Joining or leaving one of the caller's groups is such a change.
 - **Adding members and owners:** only users in reach or users of no group outside the reach (a new registration in the default group), so adding never takes in another customer's user; others are unknown (`400 Unknown user.`).
-- **Groups:** creating, renaming, moving and deleting groups, their members, roles and grants work inside the reach; a parent or group outside answers 404. A group at the top level (created, moved or imported there), the default group and roles (create, change, delete, their grants: they reach users everywhere) need the whole organisation, `403 identity.all_groups_required`. Group roles and grants and deleting a group are refused while a member also belongs to a group outside the reach (`identity.user_other_groups`): they change what he may do there.
+- **Groups:** creating, renaming, moving and deleting groups, their members, roles and grants work inside the reach; a parent or group outside answers 404. A group at the top level (created, moved or imported there), the default group and roles (create, change, delete, their grants: they reach users everywhere) need the whole tenant, `403 identity.all_groups_required`. Group roles and grants and deleting a group are refused while a member also belongs to a group outside the reach (`identity.user_other_groups`): they change what he may do there.
 - **New users:** a scoped administrator names at least one of his groups (`CreateUserRequest.GroupIds`, needs `Identity.Groups.ManageMembers`; the *New user* dialog offers the groups), otherwise the user would be out of his reach at once.
 - **Resource grants** name users and groups in reach; grants to others are not listed and cannot be revoked by him.
 - **Log in as** a user out of reach answers 404; the [impersonation rule](#log-in-as-another-user) (each of the target's groups lies in the caller's) holds with or without the setting.
@@ -199,12 +199,12 @@ Own requests apply the same rules through `AdminReach` (`Coworkee.Identity.Users
 var users = await reach.FilterUsersAsync(db.Set<User>(), ct);              // the users in reach (all when the setting is off)
 if (!await reach.ReachesGroupAsync(groupId, ct)) return GroupNotFound;     // a group out of reach is unknown
 if (await guard.CheckUserAsync(userId, ct) is { } refused) return refused; // reach, superset and admin rule
-if (await reach.CheckAllAsync(ct) is { } restricted) return restricted;    // organisation-wide changes
+if (await reach.CheckAllAsync(ct) is { } restricted) return restricted;    // tenant-wide changes
 ```
 
 ## Log in as another user
 
-With `Identity.Users.Impersonate` (implies `Identity.Users.View`, not part of `Identity.Users.Manage`) support staff sign in as another active user of their organisation. The target must hold no permission the caller lacks, and each of its groups must lie in the caller's groups or below them (`Identity.Groups.ScopeAll` waives that); the rules are checked when the ticket is issued and on every authorization and token refresh, so a later grant to the target ends the impersonation. Details, tokens and the end of an impersonation: [Log in as another user](../features/identity.md#log-in-as-another-user).
+With `Identity.Users.Impersonate` (implies `Identity.Users.View`, not part of `Identity.Users.Manage`) support staff sign in as another active user of their tenant. The target must hold no permission the caller lacks, and each of its groups must lie in the caller's groups or below them (`Identity.Groups.ScopeAll` waives that); the rules are checked when the ticket is issued and on every authorization and token refresh, so a later grant to the target ends the impersonation. Details, tokens and the end of an impersonation: [Log in as another user](../features/identity.md#log-in-as-another-user).
 
 For permission checks the session **is** the target: `IPermissionChecker` answers with the target's permissions. What differs:
 
@@ -220,10 +220,10 @@ Sometimes a module has to run a library command whatever the caller may do: the 
 await system.SendAsync(new SetGroupMembers(groupId, memberIds), [IdentityPermissions.Groups.ManageMembers], ct);
 ```
 
-The command runs in the caller's organisation, signed in without a user and with exactly the permissions you name (no roles, nothing more), and in a DI scope of its own, so the caller's pending changes are not saved with it. Its audit entries show *system*. `CurrentUserScope.BeginSystem(tenantId, permissions)` does the same without the own scope, e.g. in a background job for another organisation.
+The command runs in the caller's tenant, signed in without a user and with exactly the permissions you name (no roles, nothing more), and in a DI scope of its own, so the caller's pending changes are not saved with it. Its audit entries show *system*. `CurrentUserScope.BeginSystem(tenantId, permissions)` does the same without the own scope, e.g. in a background job for another tenant.
 
 Use it only after your own code has decided that the caller may cause the change (`[RequiresPermission]` on your own command, a check on the record). Never pass on a request the caller built: it would let them do anything the named permissions allow. For work on behalf of a user, act as that user instead: `CurrentUserScope.Begin(new ImpersonatedUser(userId, tenantId, impersonatorId))`, passing on the impersonator of a [Log in as](#log-in-as-another-user) session so the audit still names him. Work dispatched with `ISystemDispatcher` runs as the system and names no impersonator.
 
 ## Host-only permissions
 
-Some permissions serve the whole installation: `Features.Tenants`, `Features.Editions`, `Identity.Clients.Manage` ([clients and scopes](clients.md)), `Backups.Manage` ([backups](../modules/backups.md)) and `Retention.Manage` ([retention](../modules/retention.md)). Every administrator holds them, but they work only in the system organisation; elsewhere the requests answer `403`. Settings of scope `Global` follow the same rule: `Settings.Manage` changes them only from the system organisation.
+Some permissions serve the whole installation: `Features.Tenants`, `Features.Editions`, `Identity.Clients.Manage` ([clients and scopes](clients.md)), `Backups.Manage` ([backups](../modules/backups.md)) and `Retention.Manage` ([retention](../modules/retention.md)). Every administrator holds them, but they work only in the system tenant; elsewhere the requests answer `403`. Settings of scope `Global` follow the same rule: `Settings.Manage` changes them only from the system tenant.

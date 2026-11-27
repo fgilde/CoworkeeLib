@@ -170,7 +170,7 @@ Host-Administratoren mit `Settings.Manage` richten ihn unter **Administration > 
 
 ### Einstellungen
 
-Die Seite schreibt die KI-Einstellungen. Es gibt sie nur global, damit keine Organisation den Assistenten einschaltet oder Grenzen auf dem Schlüssel des Hosts anhebt; sie haben auch Standardwerte in der Konfiguration, etwa aus dem App-Host oder aus Umgebungsvariablen:
+Die Seite schreibt die KI-Einstellungen. Es gibt sie nur global, damit kein Mandant den Assistenten einschaltet oder Grenzen auf dem Schlüssel des Hosts anhebt; sie haben auch Standardwerte in der Konfiguration, etwa aus dem App-Host oder aus Umgebungsvariablen:
 
 | Einstellung | |
 |---|---|

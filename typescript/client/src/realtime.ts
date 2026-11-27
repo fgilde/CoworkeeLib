@@ -15,7 +15,7 @@ export type RealtimeEnvelope<T = unknown> = {
 /** Who caused an event; `impersonatorId` is set while someone is signed in as the user ("Log in as"). */
 export type ActorInfo = { userId?: string | null; name?: string | null; impersonatorId?: string | null };
 
-/** A transient notification (`INotifier.ToastAsync`), on the user, session, organisation or global topic. */
+/** A transient notification (`INotifier.ToastAsync`), on the user, session, tenant or global topic. */
 export type Toast = {
   title: string;
   body?: string | null;
@@ -44,7 +44,7 @@ export const realtimeTopics = {
   presence: 'tenant:presence',
   tenantPermissions: 'tenant:permissions',
   globalPermissions: 'global:permissions',
-  /** Events for the whole organisation (EventTarget.All) and for every organisation (EventTarget.Global). */
+  /** Events for the whole tenant (EventTarget.All) and for every tenant (EventTarget.Global). */
   tenantEvents: 'tenant:events',
   globalEvents: 'global:events',
   session: (sessionId: string) => `session:${sessionId}`,
@@ -52,7 +52,7 @@ export const realtimeTopics = {
 
 export const realtimeEvents = { entityChanged: 'EntityChanged', sessionRevoked: 'SessionRevoked', presenceChanged: 'presence.changed', chatMessage: 'chat.message', chatRead: 'chat.read', toast: 'notification.toast' } as const;
 
-/** The topics an event target of the server (EventTarget) reaches a signed-in user on: his own, the organisation's, the global one and his session's. */
+/** The topics an event target of the server (EventTarget) reaches a signed-in user on: his own, the tenant's, the global one and his session's. */
 export const targetedTopics = (userId: string, sessionId?: string) =>
   [realtimeTopics.user(userId), realtimeTopics.tenantEvents, realtimeTopics.globalEvents, ...(sessionId ? [realtimeTopics.session(sessionId)] : [])];
 

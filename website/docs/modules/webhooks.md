@@ -1,6 +1,6 @@
 # Webhooks
 
-`Coworkee.Webhooks` lets other systems hear about what happens in your app without polling. Admins of an organisation register endpoints; each endpoint gets a signed `POST` for the events it chose. Events are changes of the entity sets you opt in, workflow transitions, and events your own code publishes.
+`Coworkee.Webhooks` lets other systems hear about what happens in your app without polling. Admins of a tenant register endpoints; each endpoint gets a signed `POST` for the events it chose. Events are changes of the entity sets you opt in, workflow transitions, and events your own code publishes.
 
 With the CLI: `coworkee new Shop --webhooks true` (off by default; with the samples, products send events). By hand:
 
@@ -62,7 +62,7 @@ webhook-signature: v1,K5oZfzN95Z9UVu1EsfQmfVNQhnkZ2pj9o9NDN/H/pI4=
 {"id":"0199f0c4-6c55-7a1e-9c1a-5a8b3f0e2d11","type":"products.updated","time":"2026-10-16T13:20:00+00:00","tenant":"0199…","data":{"id":"0199…","name":"Lamp","price":19.9}}
 ```
 
-`id` is the event; it stays the same for every retry and for a redelivery, so receivers can drop duplicates. `tenant` is the organisation.
+`id` is the event; it stays the same for every retry and for a redelivery, so receivers can drop duplicates. `tenant` is the tenant.
 
 **The data is what the owner of the endpoint may read.** The owner is whoever saved the endpoint last. An entity event is read through the entity set as that person: without the set's permission, or when a row filter (`IODataEntityFilter<T>`) hides the row, the endpoint gets nothing for it; hidden properties of the set and response filters (`ResponseFilter<T>`) apply as in the API, and navigation properties are left out. A hard deleted entity is sent as its id only. Data of `PublishAsync` is sent as it is, so leave out what not every admin may read.
 
@@ -83,7 +83,7 @@ The [personal data export](../security/privacy.md) has a section `webhooks` with
 
 Deliveries leave through the outbox and the background jobs, so a crash between saving and sending loses nothing. Each attempt waits at most `Timeout` for an answer; any 2xx counts as delivered. Redirects are not followed.
 
-A failed attempt is retried with exponential backoff: 30 s, 1 min, 2 min, 4 min, 8 min (doubling from `FirstRetryDelay`, capped at `MaxRetryDelay`), `MaxAttempts` (six) attempts in all. When a delivery has failed for good, the endpoint counts it; after `DisableAfterFailures` failed deliveries in a row the endpoint is switched off, and its owner and the holders of the organisation's administrator role get the notification `webhooks.disabled` (with `Coworkee.Notifications` in the app; without it the switch-off is only logged). A successful delivery resets the count; switching the endpoint on again does too.
+A failed attempt is retried with exponential backoff: 30 s, 1 min, 2 min, 4 min, 8 min (doubling from `FirstRetryDelay`, capped at `MaxRetryDelay`), `MaxAttempts` (six) attempts in all. When a delivery has failed for good, the endpoint counts it; after `DisableAfterFailures` failed deliveries in a row the endpoint is switched off, and its owner and the holders of the tenant's administrator role get the notification `webhooks.disabled` (with `Coworkee.Notifications` in the app; without it the switch-off is only logged). A successful delivery resets the count; switching the endpoint on again does too.
 
 The log keeps the request with its headers (the signature masked as `v1,***`) and the answer, both cut after `LogBodyLimit` characters, for `LogRetentionDays` days: the job `coworkee-webhooks-log-cleanup` (daily at 03:17) deletes older deliveries, `0` keeps them. With the [Retention](retention.md) module that job does nothing and the setting `Retention.webhook-deliveries.Days` decides (default `LogRetentionDays`); the admin page *Retention* changes it or deletes at once.
 
@@ -226,7 +226,7 @@ An *IF* node on `{{$json.type}}` then sends `products.created` one way and `orde
 
 | Endpoint | |
 |---|---|
-| `GET /api/v1/webhooks` | endpoints of the organisation |
+| `GET /api/v1/webhooks` | endpoints of the tenant |
 | `POST /api/v1/webhooks` | add with `{ "url", "events", "description", "isActive", "secret"? }`, answers with the secret |
 | `PUT/DELETE /api/v1/webhooks/{id}` | change (a `secret` replaces it at once, without grace period) / delete with its deliveries |
 | `GET /api/v1/webhooks/{id}/secret` | the signing secret |

@@ -9,7 +9,7 @@ public sealed class MyAppDatabaseModule : CoworkeeModule;
 
 ## Live bei allen
 
-Was ein Benutzer speichert, erreicht jeden anderen offenen Browser der Organisation sofort, ohne Code in deinen Seiten. Links der Administrator, rechts John in einem zweiten Browser, auf Deutsch: Ein neues Produkt erscheint in seiner Liste, eine Rolle bringt das Menü *Vertrieb*, ein anderes Standard-Theme färbt seine App um, die App-Leiste wandert nach unten, und wird Deutsch abgeschaltet, zeigt seine App Englisch.
+Was ein Benutzer speichert, erreicht jeden anderen offenen Browser des Mandanten sofort, ohne Code in deinen Seiten. Links der Administrator, rechts John in einem zweiten Browser, auf Deutsch: Ein neues Produkt erscheint in seiner Liste, eine Rolle bringt das Menü *Vertrieb*, ein anderes Standard-Theme färbt seine App um, die App-Leiste wandert nach unten, und wird Deutsch abgeschaltet, zeigt seine App Englisch.
 
 <video class="cw-doc-video" autoplay muted loop playsinline controls preload="metadata" width="1600" height="618" poster="../../../assets/videos/realtime-live-poster.webp" aria-label="Zwei Browser nebeneinander: Was der Administrator links ändert, erscheint rechts bei John sofort">
   <source src="../../../assets/videos/realtime-live.webm" type="video/webm">
@@ -32,8 +32,8 @@ Jeder offene Tab folgt diesen Änderungen ohne Neuladen:
 | Jemand ändert Namen oder Bild | jeder Avatar und jede Benutzerkarte dieses Benutzers aktualisiert sich |
 | Eine Benachrichtigung kommt oder ändert sich | Glocke, Zähler und Benachrichtigungsseite folgen |
 | Features, Sprachen, Theme-Listen | Feature-Schalter, Sprachmenü und Theme-Listen folgen |
-| Das Standard-Theme der Organisation wechselt, oder ein benutztes Theme wird bearbeitet | jeder Client färbt sich um |
-| Eine globale Einstellung oder eine der Organisation wird gespeichert (auch App-Leisten und Header-Elemente) | jeder Client lädt seine Einstellungen neu; Theme, Layout und Assistent folgen |
+| Das Standard-Theme des Mandanten wechselt, oder ein benutztes Theme wird bearbeitet | jeder Client färbt sich um |
+| Eine globale Einstellung oder eine des Mandanten wird gespeichert (auch App-Leisten und Header-Elemente) | jeder Client lädt seine Einstellungen neu; Theme, Layout und Assistent folgen |
 | Eine Sprache wird abgeschaltet | ihre Benutzer wechseln zur Standardsprache und erfahren es |
 | Eine Übersetzung wird geändert, die Standardsprache wechselt | die Texte ändern sich sofort; Benutzer ohne eigene Sprache wechseln zur neuen Standardsprache |
 
@@ -104,7 +104,7 @@ Clients verbinden sich mit dem Hub unter `/hubs/realtime` (angemeldet; läuft ih
 | `type:{Entity}`, `entity:{Entity}:{id}` | wer die Berechtigung des `[Realtime]`-Attributs der Entity hat; bei `entity:` auch, wer sie auf dieser Ressource hat (`[Realtime(permission, ResourceType = ...)]`) | `EntityChanged` |
 | `user:{id}` | dieser Benutzer | seine Benachrichtigungen, Chat, `SessionRevoked` |
 | `session:{sid}` (`RealtimeTopics.Session`) | Verbindungen, deren Token diese `sid` trägt | `ImpersonationEnded` (`ImpersonationEndedPayload`), wenn ein *Anmelden als* endet, siehe [Identity](../features/identity.md#als-anderer-benutzer-anmelden) |
-| `tenant:...` | jeder angemeldete Benutzer der Organisation | z. B. `tenant:permissions`, `tenant:presence`; `tenant:events` für `EventTarget.All` |
+| `tenant:...` | jeder angemeldete Benutzer des Mandanten | z. B. `tenant:permissions`, `tenant:presence`; `tenant:events` für `EventTarget.All` |
 | `global:...` | jeder angemeldete Benutzer | z. B. `global:permissions`; `global:events` für `EventTarget.Global` |
 
 Andere Präfixe werden abgelehnt, außer eine App registriert einen eigenen `IRealtimeTopicAuthorizer` (`Handles(topic)`, `AuthorizeAsync(topic, ct)`), wie es die Module Social, Workflows und Datensatz-Anhänge für ihre Themen tun. `IRealtimePublisher.PublishAsync(tenantId, topic, type, payload)` sendet an ein Thema, `RealtimeEvents.PublishAsync(target, type, payload)` an ein [Event-Ziel](../fundamentals/event-targets.md#realtime-events-fur-ein-ziel) (Berechtigung, Rolle, Gruppe, IDs; nur angemeldete Benutzer, nach dem Commit); Apps können ihn dekorieren, um Nachrichten an eigene Hubs weiterzugeben. `SessionRevoked` (`SessionRevokedPayload`: Grund, `KeptSessionId`, `EndedSessionId`, wenn nur eine [Sitzung](../security/clients.md#sitzungen) endete) läuft pro Sitzungsänderung auf jeder Instanz durch den Publisher, `RealtimePublisher` schickt es aber an keine Gruppe: Das Identity-Modul beendet genau die Hub-Verbindungen dieser Sitzung (siehe [Clients und Sitzungen](../security/clients.md#uberall-abmelden-und-sperren)).
@@ -138,7 +138,7 @@ Ist eine Seite nicht erlaubt, listet `NotAllowed` die anderen Rollen des Benutze
 
 ## Anwesenheit
 
-Ein Benutzer mit mindestens einer Hub-Verbindung ist online, egal wie viele Tabs er offen hat; nach dem Schließen der letzten geht er nach ein paar Sekunden offline, sodass ein Neuladen nicht flackert. Änderungen gehen als `presence.changed` auf `tenant:presence`, `GET /api/v1/realtime/presence` listet, wer aus der Organisation online ist, und `UserAvatar` zeigt einen grünen Punkt (`ShowPresence="false"` blendet ihn aus). Mit mehreren API-Instanzen zählt ein Benutzer je Instanz.
+Ein Benutzer mit mindestens einer Hub-Verbindung ist online, egal wie viele Tabs er offen hat; nach dem Schließen der letzten geht er nach ein paar Sekunden offline, sodass ein Neuladen nicht flackert. Änderungen gehen als `presence.changed` auf `tenant:presence`, `GET /api/v1/realtime/presence` listet, wer aus dem Mandanten online ist, und `UserAvatar` zeigt einen grünen Punkt (`ShowPresence="false"` blendet ihn aus). Mit mehreren API-Instanzen zählt ein Benutzer je Instanz.
 
 ## Chat
 
@@ -152,7 +152,7 @@ Jede Seite kann so eine Zahl an ihrem Navigationslink zeigen: `NavigationBadges.
 await notifier.NotifyAsync([reviewerId], "review.requested", "Review requested", $"{asset.Name} waits for you", link: $"/assets/{asset.Id}", ct);
 ```
 
-Lokalisierbare Benachrichtigungen nehmen die englischen Texte als Schlüssel mit Platzhaltern `{0}` und die Argumente getrennt; jeder Leser sieht sie in seiner Sprache (die Texte gehören in die Übersetzungen der App), auch in der Zusammenfassungsmail, die die `Localization.Culture` des Lesers nimmt (seine eigene, sonst die seiner Organisation, sonst die des Systems):
+Lokalisierbare Benachrichtigungen nehmen die englischen Texte als Schlüssel mit Platzhaltern `{0}` und die Argumente getrennt; jeder Leser sieht sie in seiner Sprache (die Texte gehören in die Übersetzungen der App), auch in der Zusammenfassungsmail, die die `Localization.Culture` des Lesers nimmt (seine eigene, sonst die seines Mandanten, sonst die des Systems):
 
 ```csharp
 await notifier.NotifyLocalizedAsync(adminIds, "account.registration", "New registration", "{0} ({1}) waits for activation.", [name, email], $"/admin/users/{id}", ct);
@@ -235,9 +235,9 @@ Die Prüfung der Verfolger kostet ohne `Audience` eine Abfrage pro Verfolger: Je
 
 Der Eingang listet standardmäßig die offenen Benachrichtigungen; *Erledigt* nimmt eine heraus (und markiert sie als gelesen), die Chips *Zu erledigen*, *Erledigt* und *Alle* wechseln zwischen offenen, erledigten und allen, die Kategorie-Chips filtern nach Kategorie mit ihren offenen Zahlen, die Suche sucht in Titel und Inhalt.
 
-### Mail-Vorlagen pro Typ und Verzögerung pro Organisation
+### Mail-Vorlagen pro Typ und Verzögerung pro Mandant
 
-Ein Typ kann mit einer eigenen Vorlage mailen und die Mail-Verzögerung von der Organisation des Absenders nehmen:
+Ein Typ kann mit einer eigenen Vorlage mailen und die Mail-Verzögerung vom Mandanten des Absenders nehmen:
 
 ```csharp
 services.AddNotificationTypes(n => n
@@ -255,7 +255,7 @@ await notifier.PublishAsync(new NotificationMessage("shipment.eta", "Estimated a
 }, ct);
 ```
 
-`mailTemplate` nennt eine Mail-Vorlage aus [Mailing](mailing.md) (registriert mit einem `IMailTemplateContributor` oder eine eigene Vorlage), Administratoren ändern sie also auf der Seite der Mail-Vorlagen pro Sprache und Organisation. Sie rendert `MailModel` (ein Objekt oder ein Dictionary): Seine Member sind die Namen der obersten Ebene der Vorlage, benannt wie die Member jedes Mail-Modells (`OldValue` wird `old_value`), neben `user` (`first_name`, `email`) und `notification` (`title`, `body` in der Sprache des Lesers, absoluter `link`). Die füllt die Bibliothek, `PublishAsync` weist daher ein Modell zurück, dessen oberste Ebene einen Member `user`, `notification`, eine Variable des Layouts (`subject`, `content`, `unsubscribe_url`) oder den Namen eines Scriban-Builtins (`string`, `html`, `date`, `array`, `math`, `object`, `regex`, `timespan`, ...) hat, in beliebiger Schreibweise und mit oder ohne Unterstriche (`ArgumentException`), ebenso eines, das als JSON größer als 32 KB ist (`NotificationMailModel.MaxBytes`). Das Modell wird als JSON mit der Outbox-Nachricht und der wartenden Mail gespeichert, eine verzögerte Mail rendert also das Modell der neuesten Benachrichtigung ihrer Entität; Werte kommen als Text, Zahlen, Wahrheitswerte, Listen und Objekte an, formatiere Datumswerte also vor dem Veröffentlichen. Verzögerte Mails werden in der Organisation gerendert, die sie gesendet hat (ihre Vorlagenversionen, ihr Mail-Protokoll). Ein Typ ohne Vorlage oder mit einem Namen, den keine Vorlage hat (eine Warnung geht ins Log), und eine Mail ohne Modell (etwa eine, die schon wartete, bevor ihr Typ eine Vorlage bekam) senden wie bisher die allgemeine `Notifications.Notification`; das Modell wird auch ihr übergeben, so dass die Version einer Organisation von der allgemeinen Vorlage es lesen kann. Eine Vorlage, die sich nicht rendern lässt (etwa eine bearbeitete Version, zu der das Modell nicht passt), sendet stattdessen die allgemeine Mail, und scheitert auch die, entfällt die Mail; beides wird geloggt, und keins von beiden lässt den sendenden Befehl oder die anderen Mails des Joblaufs scheitern.
+`mailTemplate` nennt eine Mail-Vorlage aus [Mailing](mailing.md) (registriert mit einem `IMailTemplateContributor` oder eine eigene Vorlage), Administratoren ändern sie also auf der Seite der Mail-Vorlagen pro Sprache und Mandant. Sie rendert `MailModel` (ein Objekt oder ein Dictionary): Seine Member sind die Namen der obersten Ebene der Vorlage, benannt wie die Member jedes Mail-Modells (`OldValue` wird `old_value`), neben `user` (`first_name`, `email`) und `notification` (`title`, `body` in der Sprache des Lesers, absoluter `link`). Die füllt die Bibliothek, `PublishAsync` weist daher ein Modell zurück, dessen oberste Ebene einen Member `user`, `notification`, eine Variable des Layouts (`subject`, `content`, `unsubscribe_url`) oder den Namen eines Scriban-Builtins (`string`, `html`, `date`, `array`, `math`, `object`, `regex`, `timespan`, ...) hat, in beliebiger Schreibweise und mit oder ohne Unterstriche (`ArgumentException`), ebenso eines, das als JSON größer als 32 KB ist (`NotificationMailModel.MaxBytes`). Das Modell wird als JSON mit der Outbox-Nachricht und der wartenden Mail gespeichert, eine verzögerte Mail rendert also das Modell der neuesten Benachrichtigung ihrer Entität; Werte kommen als Text, Zahlen, Wahrheitswerte, Listen und Objekte an, formatiere Datumswerte also vor dem Veröffentlichen. Verzögerte Mails werden im Mandanten gerendert, der sie gesendet hat (seine Vorlagenversionen, sein Mail-Protokoll). Ein Typ ohne Vorlage oder mit einem Namen, den keine Vorlage hat (eine Warnung geht ins Log), und eine Mail ohne Modell (etwa eine, die schon wartete, bevor ihr Typ eine Vorlage bekam) senden wie bisher die allgemeine `Notifications.Notification`; das Modell wird auch ihr übergeben, so dass die Version eines Mandanten von der allgemeinen Vorlage es lesen kann. Eine Vorlage, die sich nicht rendern lässt (etwa eine bearbeitete Version, zu der das Modell nicht passt), sendet stattdessen die allgemeine Mail, und scheitert auch die, entfällt die Mail; beides wird geloggt, und keins von beiden lässt den sendenden Befehl oder die anderen Mails des Joblaufs scheitern.
 
 Gib der Definition der Vorlage `NotificationMailModel.Sample(model)` als Beispiel: Vorschau und Testmail auf der Seite der Mail-Vorlagen zeigen dann das Beispielmodell mit einem Beispiel-`user` und einer Beispiel-`notification`.
 
@@ -265,7 +265,7 @@ context.Add(new MailTemplateDefinition("Shipments.EtaChanged", "Estimated arriva
     EmbeddedTemplates.Load(typeof(ShipmentMails).Assembly, "Shipments.EtaChanged")));
 ```
 
-`resolveEmailDelay` läuft beim Veröffentlichen einer Benachrichtigung, mit den Diensten des Scopes des Absenders (seine Organisation, Features und Einstellungen). Sein Ergebnis ist die Verzögerung für diese Benachrichtigung; `null` behält `emailDelay`, `TimeSpan.Zero` mailt sofort. Ein Resolver, der eine Ausnahme wirft, wird geloggt, und `emailDelay` gilt; er lässt den veröffentlichenden Befehl nie scheitern. Die wartende Mail behält die Fälligkeit, die sie bekam, eine neuere Benachrichtigung derselben Entität setzt eine neue.
+`resolveEmailDelay` läuft beim Veröffentlichen einer Benachrichtigung, mit den Diensten des Scopes des Absenders (sein Mandant, Features und Einstellungen). Sein Ergebnis ist die Verzögerung für diese Benachrichtigung; `null` behält `emailDelay`, `TimeSpan.Zero` mailt sofort. Ein Resolver, der eine Ausnahme wirft, wird geloggt, und `emailDelay` gilt; er lässt den veröffentlichenden Befehl nie scheitern. Die wartende Mail behält die Fälligkeit, die sie bekam, eine neuere Benachrichtigung derselben Entität setzt eine neue.
 
 ### Tägliche Zusammenfassung
 
@@ -277,4 +277,4 @@ Mit einem VAPID-Schlüsselpaar (`options.UsePush()` im AppHost oder `Coworkee:No
 
 ### Aufbewahrung und personenbezogene Daten
 
-Benachrichtigungen bleiben, bis der Benutzer sie löscht; mit dem Modul [Aufbewahrung](retention.md) löscht das Ziel `notifications` sie nach den dort eingestellten Tagen. Der Export personenbezogener Daten hat einen Abschnitt `notifications` (Benachrichtigungen, Push-Geräte, Einstellungen, gefolgte Datensätze und wartende Mails des Benutzers); das Löschen des Benutzers entfernt sie in jeder Organisation.
+Benachrichtigungen bleiben, bis der Benutzer sie löscht; mit dem Modul [Aufbewahrung](retention.md) löscht das Ziel `notifications` sie nach den dort eingestellten Tagen. Der Export personenbezogener Daten hat einen Abschnitt `notifications` (Benachrichtigungen, Push-Geräte, Einstellungen, gefolgte Datensätze und wartende Mails des Benutzers); das Löschen des Benutzers entfernt sie in jedem Mandanten.

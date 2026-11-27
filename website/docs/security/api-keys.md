@@ -43,7 +43,7 @@ Both headers work against the API host; an empty `X-Api-Key` header is ignored. 
 The key's effective permissions are its permissions (with the permissions they imply) intersected with the **current** permissions of its user, evaluated on every request. When an administrator takes a role away from the user, the key loses it too. The key stops working at once when
 
 - it is revoked or expired,
-- its user is deactivated or locked out, or the organisation is deactivated,
+- its user is deactivated or locked out, or the tenant is deactivated,
 - its user loses `ApiKeys.Create`.
 
 A key is never created with more than the creating session has at that moment, active role included. Later, keys ignore the active role the user picks in the app and work within all roles of the user: a key is made for a purpose, its permissions are already the narrowing, and a key that changed with every role switch in the browser would break the scripts using it. Its limits also hold inside code that acts for the caller in its own user scope.
@@ -54,8 +54,8 @@ Keys cannot create or revoke keys, also not with `ApiKeys.Create` among their pe
 
 The list shows when and from which IP address each key was last used (updated at most once a minute). Creating and revoking keys is recorded in the audit trail; the hash of the secret never is. MCP tool calls record the key in the AI tool call audit. Rate limits count per user, whatever key is used.
 
-Administrators with `ApiKeys.Manage` (which includes `ApiKeys.Create`) see the keys of all users of their organisation under *Administration › Identity › API keys* (`/cw/admin/api-keys`, the OData set `ApiKeys` without the hash): owner, permissions, created, expiry, last use and status, with search, filters, export and live updates, and revoke them. Keys of other organisations stay invisible.
+Administrators with `ApiKeys.Manage` (which includes `ApiKeys.Create`) see the keys of all users of their tenant under *Administration › Identity › API keys* (`/cw/admin/api-keys`, the OData set `ApiKeys` without the hash): owner, permissions, created, expiry, last use and status, with search, filters, export and live updates, and revoke them. Keys of other tenants stay invisible.
 
 The personal data export of a user contains the user's keys in the section `apiKeys` (name, prefix, permissions, dates, last address), without secrets; deleting the account deletes them.
 
-![All keys of the organisation for administrators](../assets/screenshots/mcp-admin-api-keys-dark.png){ .shot }
+![All keys of the tenant for administrators](../assets/screenshots/mcp-admin-api-keys-dark.png){ .shot }

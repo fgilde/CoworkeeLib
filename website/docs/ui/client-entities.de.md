@@ -118,7 +118,7 @@ Jedes Set startet mit den Standardwerten, dann wirken das Attribut, die Optionen
 
 ## Zur Laufzeit ändern: die Seite Lokale Kopien
 
-Alles oben entscheidet der Code. Ein Administrator kann es danach ohne Deployment unter *Administration → System → Lokale Kopien* ändern (`/admin/local-copies`, `Settings.Manage`, nur Systemorganisation; sie kommt mit `AddCoworkeeClientEntities`). Die Seite listet **jedes** Set, das eine Kopie haben könnte (jedes OData-Set mit einer `Guid`-`Id`), ob im Code markiert oder nicht, mit:
+Alles oben entscheidet der Code. Ein Administrator kann es danach ohne Deployment unter *Administration → System → Lokale Kopien* ändern (`/admin/local-copies`, `Settings.Manage`, nur System-Mandant; sie kommt mit `AddCoworkeeClientEntities`). Die Seite listet **jedes** Set, das eine Kopie haben könnte (jedes OData-Set mit einer `Guid`-`Id`), ob im Code markiert oder nicht, mit:
 
 | Spalte | |
 |---|---|

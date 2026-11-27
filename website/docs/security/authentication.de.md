@@ -52,7 +52,7 @@ Weitere Schlüssel eines Clients:
 |---|---|
 | `ClientSecret` | macht ihn zu einem vertraulichen Client |
 | `ClientUri`, `LogoUrl`, `Description`, `ShowInLauncher` (Standard `true`) | seine Kachel im [App-Launcher](clients.md#app-launcher) |
-| `SystemAdministratorsOnly` | dort melden sich nur Administratoren der Systemorganisation an, für Werkzeuge, die die Daten jeder Organisation sehen |
+| `SystemAdministratorsOnly` | dort melden sich nur Administratoren des System-Mandanten an, für Werkzeuge, die die Daten jedes Mandanten sehen |
 | `AllowImpersonation` | bedient einen Benutzer, als der sich jemand angemeldet hat ([Anmelden als](../features/identity.md#als-anderer-benutzer-anmelden)); andere Clients antworten `access_denied`. `AddWeb` setzt es für den Web-Client |
 
 Außerhalb der Entwicklung konfigurierst du `SigningCertificate` und `EncryptionCertificate`: eine PKCS#12-Datei (`Path`) oder ihr Inhalt als Base64 (`Base64`, etwa aus einem Secret), jeweils mit `Password`. Alle Instanzen teilen sie.
@@ -116,7 +116,7 @@ Lokal startet `options.UseKeycloak()` im AppHost ein Keycloak mit einem Realm f�
 
 Eine neue Installation braucht einen Mandanten und einen ersten Administrator. Zwei Wege:
 
-**Assistent.** Die API antwortet mit `503 setup_required`, bis das Setup erledigt ist. Der Blazor-Client zeigt die Setup-Seite: Prüfungen, Organisation, Administrator, Theme.
+**Assistent.** Die API antwortet mit `503 setup_required`, bis das Setup erledigt ist. Der Blazor-Client zeigt die Setup-Seite: Prüfungen, Mandant, Administrator, Theme.
 
 Wann erscheint die Setup-Seite? Immer, wenn die Datenbank kein eingerichtetes System enthält: eine leere Datenbank ohne Seed (kein `AddCoworkeeIdentitySeed` oder eine Template-App mit abgeschalteten Demo-Benutzern) und ein Deployment ohne ersten Administrator (`<APP>_ADMIN_EMAIL` und `_ADMIN_PASSWORD` leer). Apps mit Demo-Benutzern richten ihre Migrationen ein; dort erscheint sie nie.
 

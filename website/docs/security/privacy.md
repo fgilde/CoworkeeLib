@@ -23,9 +23,9 @@ services.AddScoped<IPersonalDataContributor, TaskPersonalData>();
 ## The rules of an erase
 
 - **His own data goes**: what exists only because of him and serves only him (profile, settings, notifications, keys, sessions, private reports, his jobs and schedules, his chat messages and comments).
-- **Records of the organisation stay**, with `PersonalDataSubject.ErasedUserId` (`00000000-0000-0000-0000-000000000000`) where his id stood: "a user who was erased", unlike `null`, "nobody". Free text he wrote into them (workflow comments) goes.
+- **Records of the tenant stay**, with `PersonalDataSubject.ErasedUserId` (`00000000-0000-0000-0000-000000000000`) where his id stood: "a user who was erased", unlike `null`, "nobody". Free text he wrote into them (workflow comments) goes.
 - **Nothing runs as him any more**: report subscriptions, scheduled exports and running exports stop, webhook endpoints he owned are switched off, his address leaves the recipients of other schedules, approvals waiting for him move on, his tokens, API keys, links and the cached session stamp go.
-- **Organisations**: a user id belongs to one user of one organisation (`Users.TenantId`), so rows that carry his id are his wherever they are (a host administrator's id on the organisations he created). Rows found by his **e-mail address** count only in his organisation: the same address may belong to another user of another organisation.
+- **Tenants**: a user id belongs to one user of one tenant (`Users.TenantId`), so rows that carry his id are his wherever they are (a host administrator's id on the tenants he created). Rows found by his **e-mail address** count only in his tenant: the same address may belong to another user of another tenant.
 
 After the contributors the library saves once and then runs its own step (`PersonalDataReferences`, Coworkee.Infrastructure) on the whole database:
 
@@ -43,7 +43,7 @@ Then the cached security stamp is dropped on every instance, so tokens of the us
 
 ### The audit trail
 
-The trail answers *what happened to which record, when, and done by a person or by the system*. That stays: it is the organisation's record, and deleting it would let an erase hide changes. *Who* the person was, and what the trail recorded about him, goes: his id becomes the tombstone, and the values of his own records (his user, his memberships, the comments, messages, settings and other records he created that are gone) become `***`. Values of records that stay (an order he edited) stay, with his id and address taken out. Names of the user typed as free text by others are not searched for.
+The trail answers *what happened to which record, when, and done by a person or by the system*. That stays: it is the tenant's record, and deleting it would let an erase hide changes. *Who* the person was, and what the trail recorded about him, goes: his id becomes the tombstone, and the values of his own records (his user, his memberships, the comments, messages, settings and other records he created that are gone) become `***`. Values of records that stay (an order he edited) stay, with his id and address taken out. Names of the user typed as free text by others are not searched for.
 
 ## Built-in sections
 
@@ -54,9 +54,9 @@ The trail answers *what happened to which record, when, and done by a person or 
 | `apiKeys` | Identity | [API keys](api-keys.md) (name, prefix, permissions, dates, last use), never the hash | his keys deleted; keys of others he revoked keep the revocation with the tombstone |
 | `signIns` | Auth server | granted clients | grants and tokens deleted, every session ends |
 | `settings` | Settings | values with user scope (secrets as `***`) | deleted |
-| `clientValues` | Settings | his own [client values](../modules/settings.md#client-values) (key, value, last change) | deleted, in every organisation; global values stay |
-| `notifications` | Notifications | notifications, Web Push devices, preferences, followed records, mails waiting for their delay, last digest | deleted, in every organisation |
-| `mails` | Mailing | mails queued for the address in his organisation, without bodies | deleted with their attachments, in his organisation |
+| `clientValues` | Settings | his own [client values](../modules/settings.md#client-values) (key, value, last change) | deleted, in every tenant; global values stay |
+| `notifications` | Notifications | notifications, Web Push devices, preferences, followed records, mails waiting for their delay, last digest | deleted, in every tenant |
+| `mails` | Mailing | mails queued for the address in his tenant, without bodies | deleted with their attachments, in his tenant |
 | `chat` | Chat | `messages` (sent anywhere, received in direct chats), `memberships`, `reactions`, `attachments` (listed, without content) | sent messages with their files, reactions and memberships deleted; direct chats deleted with both sides; group chats he created stay with the tombstone as creator |
 | `social` | Comments, tags, ratings, reactions | own comments, ratings and reactions | deleted, replies to the comments too |
 | `aiToolCalls`, `aiConversations` | AI | tool calls (tool, channel, input, result), conversations | deleted |
@@ -66,7 +66,7 @@ The trail answers *what happened to which record, when, and done by a person or 
 | `files` | Files | uploaded files (name, type, size) | kept with the tombstone as uploader; his registration documents (`Registrations/{user}`) deleted with their content and folder |
 | `attachments` | Record attachments | files he attached (record, slot, name, type, size) | kept with the tombstone as uploader |
 | `reports` | Reporting | `reports` he owns, `favorites`, `subscriptions` (schedule, filter), `dashboard` | private reports, favourites, subscriptions and the dashboard choice deleted; shared reports stay for their audience, owned by the tombstone (nobody changes them any more) |
-| `dataTransfers` | Import and export | `jobs` (files listed with name and size), `schedules` he owns, `mailedBy` (schedules of others that mail him) | jobs deleted with their files (a running export stops), his schedules deleted, his address removed from the others' recipients in his organisation |
+| `dataTransfers` | Import and export | `jobs` (files listed with name and size), `schedules` he owns, `mailedBy` (schedules of others that mail him) | jobs deleted with their files (a running export stops), his schedules deleted, his address removed from the others' recipients in his tenant |
 | `webhooks` | Webhooks | endpoints he saved last (URL, events, state) | kept, switched off and owned by the tombstone, since deliveries ran with his permissions; saving the endpoint again makes the administrator its owner |
 | `workflows` | Workflows | `steps` he ran (with comments), `decisions`, `requested` approvals | history and decisions kept with the tombstone, his comments removed; he leaves pending approvals, and one then waiting for nobody is overdue at once (the deadline job moves it to its timeout state or adds the escalation roles; one already escalated is cancelled) |
 | none | Retention | | clean-ups he started by hand keep the tombstone as `LastRunBy` |
@@ -77,7 +77,7 @@ The trail answers *what happened to which record, when, and done by a person or 
 
 | Data | Why | Until |
 |---|---|---|
-| The audit trail and snapshots, as described above | integrity of the organisation's records | the [retention](../modules/retention.md) targets `audit` and `snapshots` |
+| The audit trail and snapshots, as described above | integrity of the tenant's records | the [retention](../modules/retention.md) targets `audit` and `snapshots` |
 | Payloads of processed outbox messages (domain events) | delivery log of the event bus | the target `outbox` |
 | Webhook delivery logs (bodies sent to receivers) | what left the system to a third party | the target `webhook-deliveries` |
 | Notifications, chat messages and comments of others that name him in their text | they belong to the other users | the target `notifications`, or as long as the others keep them |
@@ -102,7 +102,7 @@ The trail answers *what happened to which record, when, and done by a person or 
 
 The last active administrator cannot be deleted (`409 identity.last_admin`). None of these requests is offered to the AI assistant. Someone signed in as another user ([Log in as](../features/identity.md#log-in-as-another-user)) can neither export the user's data nor delete the account (`403 auth.impersonating`).
 
-The export is built synchronously: per-user data is small, and nothing is left behind in storage that would need its own expiry and clean-up. Move it into a background job once single users reach many megabytes. Files are listed, not included: uploads and attachments belong to the organisation's records, export files hold the organisation's rows.
+The export is built synchronously: per-user data is small, and nothing is left behind in storage that would need its own expiry and clean-up. Move it into a background job once single users reach many megabytes. Files are listed, not included: uploads and attachments belong to the tenant's records, export files hold the tenant's rows.
 
 ## In the client
 

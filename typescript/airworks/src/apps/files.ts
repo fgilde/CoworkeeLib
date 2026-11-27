@@ -14,7 +14,7 @@ export const uploadFile = (file: File, folderId?: string) =>
   apiRequest<Schemas['StoredFileDto']>(`/api/v1/files?${new URLSearchParams({ name: file.name, ...(folderId ? { folderId } : {}) })}`,
     { method: 'POST', body: file, headers: { 'Content-Type': file.type || 'application/octet-stream' } });
 
-/** The folders and files of the organisation: browse, upload (also by dropping files), rename, delete, download and preview. */
+/** The folders and files of the tenant: browse, upload (also by dropping files), rename, delete, download and preview. */
 export const filesApp = (coworkee: Coworkee): CoworkeeApp => ({
   id: 'coworkee.files',
   title: coworkee.t('Files'),

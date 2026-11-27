@@ -34,7 +34,7 @@ public static class DemoSeed
         seed.Users.AddRange(DemoUsers.All.Select(u => new SeedUser(u.Email, u.Password, u.FirstName, u.LastName, u.IsAdmin) { Roles = u.Roles ?? [] }));
     }
 
-    /// <summary>A deployment: the organisation, its settings and the administrator of the deploy parameters, no demo users.</summary>
+    /// <summary>A deployment: the tenant, its settings and the administrator of the deploy parameters, no demo users.</summary>
     public static void ConfigureDeployment(IdentitySeedOptions seed, SeedUser admin)
     {
         ConfigureSystem(seed);

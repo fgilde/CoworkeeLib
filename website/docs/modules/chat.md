@@ -1,6 +1,6 @@
 # Chat
 
-`Coworkee.Chat` adds direct and group chats between the people of an organisation: formatted messages, mentions of people and records, replies, reactions, files and pictures, edits and deletes, read marks and who is writing. Everything reaches the members over the [realtime hub](realtime.md) on their `user:{id}` topic, so every open tab updates at once.
+`Coworkee.Chat` adds direct and group chats between the people of a tenant: formatted messages, mentions of people and records, replies, reactions, files and pictures, edits and deletes, read marks and who is writing. Everything reaches the members over the [realtime hub](realtime.md) on their `user:{id}` topic, so every open tab updates at once.
 
 ![Chat page](../assets/screenshots/chat-light.webp){ .shot }
 
@@ -11,13 +11,13 @@ public sealed class MyAppDatabaseModule : CoworkeeModule;
 
 The module depends on the identity, realtime, storage and background job modules (files go to the [blob storage](storage.md), a job deletes unsent files). Mentions notify through the notifications module (see [Realtime and notifications](realtime.md#notifications)) when the app has it. The template adds it with the option `chat` (on by default).
 
-Chatting needs the permission `Chat.Use` (*Chat with people of the organisation*); it shows the page *Chat* (`/chat`, `?c={id}` opens a chat) in the navigation. Chats are also found by the [global search](../web/global-search.md) (provider `chats`).
+Chatting needs the permission `Chat.Use` (*Chat with people of the tenant*); it shows the page *Chat* (`/chat`, `?c={id}` opens a chat) in the navigation. Chats are also found by the [global search](../web/global-search.md) (provider `chats`).
 
 ## Writing
 
 - The composer is the library's `RichTextEditor` (TipTap or Quill, as the admin chose in the setting *Rich text editor*, see [Mailing](mailing.md#editing-a-template)) with a short toolbar: bold, italic, strike, code, quote, lists, link. TipTap also takes markdown shortcuts while typing (`**bold**`, `*italic*`, `- ` list, `> ` quote, `` ` `` code).
 - **Enter** sends, **Shift+Enter** breaks the line. While a mention list is open, Enter picks the entry.
-- **`@`** suggests the people of the organisation. A mention is a link to the person's page (`/people/{id}`, library page key `person`) and always shows the person's current name.
+- **`@`** suggests the people of the tenant. A mention is a link to the person's page (`/people/{id}`, library page key `person`) and always shows the person's current name.
 - **`#`** suggests records from the [global search](../web/global-search.md) (every provider the writer may use, except chats). The mention links to the record's page. Each reader sees it only when his own search finds the record; otherwise it shows as *#restricted* with a lock, without label or link. Sending a mention of a record the writer cannot see is refused.
 - **Files**: the clip button, drag and drop onto the composer, or pasting a picture. Uploads show their progress and open in the file viewer once they are up. Pictures show inline as a small WebP the server makes (`/thumbnail`, at most 480 px, turned upright), other files as a chip; a click opens the file in `MudExFileDisplay` (see [Showing files](files.md#showing-files)). Only members of the chat load them (`GET /api/v1/chat/attachments/{id}`), served like the files module (no sniffing, sandboxed inline). Files uploaded but never sent are deleted after `Coworkee:Chat:UnsentAttachmentLifetime` (default `1.00:00:00`, a job checks every hour).
 - **Reply**, **react** (👍 ❤️ 😂 🎉 😮 😢, click a reaction to add or take back your own), **edit** and **delete** are in the menu of each message. Only the sender edits or deletes; an edited message shows *edited*, a deleted one *This message was deleted.* and loses its files and reactions.

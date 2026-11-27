@@ -1,10 +1,10 @@
 # Clients, Sitzungen und Passwortregeln
 
-Der Auth-Server ist ein vollständiger OpenID-Connect-Provider. Neben den Clients aus der Konfiguration verwalten Administratoren der Systemorganisation weitere Clients und Scopes in der App, beenden Sitzungen sofort und legen die Passwortregeln fest.
+Der Auth-Server ist ein vollständiger OpenID-Connect-Provider. Neben den Clients aus der Konfiguration verwalten Administratoren des System-Mandanten weitere Clients und Scopes in der App, beenden Sitzungen sofort und legen die Passwortregeln fest.
 
 ## Clients und Scopes in der App
 
-**Administration › Anwendungen** listet alle OpenID-Connect-Clients, **Administration › Scopes** die Scopes, die sie anfragen dürfen. Beide brauchen die Berechtigung `Identity.Clients.Manage` und funktionieren nur in der Systemorganisation, wie die Mandantenseite.
+**Administration › Anwendungen** listet alle OpenID-Connect-Clients, **Administration › Scopes** die Scopes, die sie anfragen dürfen. Beide brauchen die Berechtigung `Identity.Clients.Manage` und funktionieren nur im System-Mandanten, wie die Mandantenseite.
 
 | Feld | Bedeutung |
 |---|---|
@@ -36,7 +36,7 @@ Die Endpunkte liegen in `CoworkeeAuthStoreModule`, das der API-Host zusammen mit
 
 ## Dienst-Clients
 
-Ein vertraulicher Client mit **Dienst-Client** ruft APIs selbst auf, ohne Benutzer, über den Grant `client_credentials`. Er handelt in der Systemorganisation mit den Berechtigungen der Rollen und der Berechtigungsliste, die in seiner Zeile unter **Administration › Anwendungen** gewählt sind:
+Ein vertraulicher Client mit **Dienst-Client** ruft APIs selbst auf, ohne Benutzer, über den Grant `client_credentials`. Er handelt im System-Mandanten mit den Berechtigungen der Rollen und der Berechtigungsliste, die in seiner Zeile unter **Administration › Anwendungen** gewählt sind:
 
 ```http
 POST /connect/token
@@ -64,7 +64,7 @@ Der Launcher zeigt Clients, die Benutzer anmelden (Authorization Code), eine Sta
 
 ## Branding der Kontoseiten
 
-Die Kontoseiten nehmen den App-Namen aus `Coworkee:Auth:DisplayName` und Logo und Farben aus dem Standard-Theme der Systemorganisation ([Themes](../modules/theming.md)); Änderungen erscheinen innerhalb einer Minute. Ein Theme ohne Logo zeigt `Coworkee:Auth:LogoUrl`, eine absolute Adresse oder einen Pfad auf dem Auth-Server; die Content Security Policy erlaubt den Origin einer absoluten Adresse als Bildquelle. Im AppHost verweist `options.LogoUrl = "/coworkee-icon.svg"` den Auth-Server auf diesen Pfad der Web-App.
+Die Kontoseiten nehmen den App-Namen aus `Coworkee:Auth:DisplayName` und Logo und Farben aus dem Standard-Theme des System-Mandanten ([Themes](../modules/theming.md)); Änderungen erscheinen innerhalb einer Minute. Ein Theme ohne Logo zeigt `Coworkee:Auth:LogoUrl`, eine absolute Adresse oder einen Pfad auf dem Auth-Server; die Content Security Policy erlaubt den Origin einer absoluten Adresse als Bildquelle. Im AppHost verweist `options.LogoUrl = "/coworkee-icon.svg"` den Auth-Server auf diesen Pfad der Web-App.
 
 ## Überall abmelden und sperren
 
@@ -111,7 +111,7 @@ Andere Module klinken sich mit `IUserSessionListener` ein: `SessionsEndedAsync`,
 
 ## Sitzungen
 
-Jede Anmeldung am Auth-Server ist eine Sitzung: ein Browser oder Gerät, egal welche Apps der Installation es danach öffnet (die Web-App, Single-Page-Apps; sie teilen sich die Anmeldung und ihre `sid`). API-Schlüssel und Dienst-Clients haben keine. Die Tabelle `cw.UserSessions` hält eine Zeile je Sitzung: Benutzer, Organisation, die App, für die sie sich angemeldet hat (`ClientId`), Gerät und Browser aus dem User-Agent (der vollständige bleibt auch), IP-Adresse, Beginn, letzte Aktivität (eine Anmeldung oder Token-Erneuerung, höchstens alle fünf Minuten geschrieben), Ablauf (letzte Aktivität plus Lebensdauer des Cookies des Auth-Servers, standardmäßig 14 Tage) und wann, warum und durch wen sie endete. Eine Sitzung von [Anmelden als](../features/identity.md#als-anderer-benutzer-anmelden) nennt den Anmeldenden (`ImpersonatorId`). Sitzungen, die sich vor dieser Tabelle angemeldet haben, haben keine Zeile und laufen weiter wie bisher.
+Jede Anmeldung am Auth-Server ist eine Sitzung: ein Browser oder Gerät, egal welche Apps der Installation es danach öffnet (die Web-App, Single-Page-Apps; sie teilen sich die Anmeldung und ihre `sid`). API-Schlüssel und Dienst-Clients haben keine. Die Tabelle `cw.UserSessions` hält eine Zeile je Sitzung: Benutzer, Mandant, die App, für die sie sich angemeldet hat (`ClientId`), Gerät und Browser aus dem User-Agent (der vollständige bleibt auch), IP-Adresse, Beginn, letzte Aktivität (eine Anmeldung oder Token-Erneuerung, höchstens alle fünf Minuten geschrieben), Ablauf (letzte Aktivität plus Lebensdauer des Cookies des Auth-Servers, standardmäßig 14 Tage) und wann, warum und durch wen sie endete. Eine Sitzung von [Anmelden als](../features/identity.md#als-anderer-benutzer-anmelden) nennt den Anmeldenden (`ImpersonatorId`). Sitzungen, die sich vor dieser Tabelle angemeldet haben, haben keine Zeile und laufen weiter wie bisher.
 
 Eine beendete Sitzung verliert genau ihre Tokens und ihre Anmeldung, sofort:
 
@@ -123,7 +123,7 @@ Eine beendete Sitzung verliert genau ihre Tokens und ihre Anmeldung, sofort:
 
 ### Seiten und API
 
-**Administration › Überwachung › Sitzungen** (`/admin/sessions`, Seitenschlüssel `sessions`) listet die aktiven Sitzungen der Organisation (*Beendete anzeigen* nimmt die beendeten mit Grund dazu): Benutzer mit der Zahl seiner aktiven Sitzungen, Gerät, Browser, IP-Adresse, App, Beginn und letzte Aktivität; *Diese Sitzung* kennzeichnet die, in der du gerade bist, *Abgelaufen* eine, die ohne Ende ausgelaufen ist (mit den beendeten gezeigt). Die Liste aktualisiert sich live. Ihr Menü je Zeile beendet die Sitzung, alle Sitzungen des Benutzers oder setzt sein eigenes Limit. Die Detailseite eines Benutzers zeigt seine Sitzungen mit denselben Aktionen. Benutzer sehen ihre eigenen auf der Kontoseite (*Sicherheit › Sitzungen*) und beenden jede außer der, in der sie gerade sind.
+**Administration › Überwachung › Sitzungen** (`/admin/sessions`, Seitenschlüssel `sessions`) listet die aktiven Sitzungen des Mandanten (*Beendete anzeigen* nimmt die beendeten mit Grund dazu): Benutzer mit der Zahl seiner aktiven Sitzungen, Gerät, Browser, IP-Adresse, App, Beginn und letzte Aktivität; *Diese Sitzung* kennzeichnet die, in der du gerade bist, *Abgelaufen* eine, die ohne Ende ausgelaufen ist (mit den beendeten gezeigt). Die Liste aktualisiert sich live. Ihr Menü je Zeile beendet die Sitzung, alle Sitzungen des Benutzers oder setzt sein eigenes Limit. Die Detailseite eines Benutzers zeigt seine Sitzungen mit denselben Aktionen. Benutzer sehen ihre eigenen auf der Kontoseite (*Sicherheit › Sitzungen*) und beenden jede außer der, in der sie gerade sind.
 
 | Request | Endpunkt | Berechtigung |
 |---|---|---|
@@ -135,11 +135,11 @@ Eine beendete Sitzung verliert genau ihre Tokens und ihre Anmeldung, sofort:
 | `SetSessionLimit(userId, maxSessions)` | `PUT /api/v1/identity/users/{id}/session-limit` | `Identity.Sessions.Manage` |
 | OData-Set `UserSessions` | `GET /odata/UserSessions` | `Identity.Sessions.View` |
 
-`Identity.Sessions.View` schließt `Identity.Users.View` ein, `Identity.Sessions.Manage` schließt `Identity.Sessions.View` ein. Es gelten die Regeln für [andere Konten](permissions.md#andere-konten-und-berechtigungen-weitergeben): Ein Administrator sieht und beendet Sitzungen von Benutzern seiner Organisation in seiner Reichweite, keine eines Benutzers mit einer Berechtigung, die ihm fehlt, und keine eines anderen Administrators, außer er ist selbst einer. Niemand beendet die Sitzung, in der er ist (`409 identity.own_session`, das Benutzermenü meldet ab), API-Schlüssel beenden keine (`403 identity.sessions_from_key`), und niemand beendet Sitzungen, während er als anderer Benutzer angemeldet ist. `EndUserSessions` ist *Überall abmelden* für Inhaber der Sitzungsberechtigung. In Blazor ruft `ISessionsApi` diese Endpunkte.
+`Identity.Sessions.View` schließt `Identity.Users.View` ein, `Identity.Sessions.Manage` schließt `Identity.Sessions.View` ein. Es gelten die Regeln für [andere Konten](permissions.md#andere-konten-und-berechtigungen-weitergeben): Ein Administrator sieht und beendet Sitzungen von Benutzern seines Mandanten in seiner Reichweite, keine eines Benutzers mit einer Berechtigung, die ihm fehlt, und keine eines anderen Administrators, außer er ist selbst einer. Niemand beendet die Sitzung, in der er ist (`409 identity.own_session`, das Benutzermenü meldet ab), API-Schlüssel beenden keine (`403 identity.sessions_from_key`), und niemand beendet Sitzungen, während er als anderer Benutzer angemeldet ist. `EndUserSessions` ist *Überall abmelden* für Inhaber der Sitzungsberechtigung. In Blazor ruft `ISessionsApi` diese Endpunkte.
 
 ### Sitzungslimit
 
-Wie viele Sitzungen ein Benutzer gleichzeitig haben darf, ist die Einstellung `Account.Sessions.MaxPerUser` (**Administration › Einstellungen › Anmeldesicherheit › Sitzungen pro Benutzer**, Bereich Global oder die Organisation, Standard `0` = unbegrenzt). Das eigene Limit eines Benutzers geht vor (`User.MaxSessions`: leer nimmt die Einstellung, `0` ist unbegrenzt, eine Zahl sein Limit), gesetzt auf der Benutzerseite oder der Sitzungsseite. `Account.Sessions.LimitMode` entscheidet, was eine Anmeldung über dem Limit tut:
+Wie viele Sitzungen ein Benutzer gleichzeitig haben darf, ist die Einstellung `Account.Sessions.MaxPerUser` (**Administration › Einstellungen › Anmeldesicherheit › Sitzungen pro Benutzer**, Bereich Global oder der Mandant, Standard `0` = unbegrenzt). Das eigene Limit eines Benutzers geht vor (`User.MaxSessions`: leer nimmt die Einstellung, `0` ist unbegrenzt, eine Zahl sein Limit), gesetzt auf der Benutzerseite oder der Sitzungsseite. `Account.Sessions.LimitMode` entscheidet, was eine Anmeldung über dem Limit tut:
 
 - `EndOldest` (Standard): Die Anmeldung läuft weiter, die ältesten Sitzungen enden (Grund `limit`) und ihre Browser werden sofort abgemeldet. Ein Benutzer mit Limit 1 beendet seine ältere Sitzung immer, wenn er sich anderswo anmeldet.
 - `Refuse`: Die Anmeldung wird mit *Sie sind auf zu vielen Geräten angemeldet* abgelehnt, bis eine Sitzung endet (der Benutzer meldet sich dort ab, die Sitzung läuft ab, oder ein Administrator beendet sie). Ein Browser, der ohne Abmelden geschlossen wird, behält seine Sitzung bis zu ihrem Ablauf.

@@ -13,7 +13,7 @@ The module depends on the settings and background jobs modules and brings the ta
 
 ## Kinds of data
 
-Every kind of data is deleted across all organisations. The library never deletes on its own after an update: everything that was kept forever before is kept forever until someone sets days. Only the webhook delivery log keeps its 30 days, and expired access tokens and attachments of records deleted for good go after a day (they are of no use to anyone).
+Every kind of data is deleted across all tenants. The library never deletes on its own after an update: everything that was kept forever before is kept forever until someone sets days. Only the webhook delivery log keeps its 30 days, and expired access tokens and attachments of records deleted for good go after a day (they are of no use to anyone).
 
 | Key | Module | Data | Age by | Default |
 |---|---|---|---|---|
@@ -67,7 +67,7 @@ The webhook module still reads `Coworkee:Webhooks:LogRetentionDays` as default o
 
 ## The admin page
 
-*Monitoring → Retention*, for users of the system organisation with `Retention.Manage` (administrators get it like every other permission). One row per kind of data:
+*Monitoring → Retention*, for users of the system tenant with `Retention.Manage` (administrators get it like every other permission). One row per kind of data:
 
 - **Keep (days)**: empty keeps everything; while typing, *Affected now* counts what these days would delete. *Save* stores every changed row.
 - **Last run**: when, how many rows, and the error of the last run. A row that is running shows a progress bar; the page asks for the run state every 2 seconds (`?counts=false`, no counting) and counts again once it is done.
@@ -82,7 +82,7 @@ The section *Retention* of the system status page (`/cw/admin/system-status`) sh
 | `PUT /api/v1/retention` | `{ "audit": 365, "mail-log": null }` stores the days (at most 36500; `null` or `0` keeps everything) |
 | `POST /api/v1/retention/{key}/run` | body `{ "days": N }` (1 to 36500): `202` and a background job, `409` while the key runs |
 
-All of them need `Retention.Manage` and the system organisation (`403` with `retention.system_only` otherwise).
+All of them need `Retention.Manage` and the system tenant (`403` with `retention.system_only` otherwise).
 
 ## Your own kind of data
 
@@ -112,7 +112,7 @@ internal sealed class SensorReadingRetention(CoworkeeDbContext db) : IRetentionT
 services.AddRetentionTarget<SensorReadingRetention>();
 ```
 
-- Delete across all organisations: `IgnoreQueryFilters()`.
+- Delete across all tenants: `IgnoreQueryFilters()`.
 - `ExecuteDeleteInBatchesAsync` (`Coworkee.Infrastructure.Persistence`) deletes 1000 rows per statement, so no statement locks a large table for long. Like every `ExecuteDelete` it skips the change tracker: no audit entry, no realtime message.
 - Rows with a blob: delete the row first, then the blob.
 - A soft deleted type that your target cleans up itself is left out of `soft-deleted` with `services.AddRetentionOwnedType<T>()`.
@@ -122,6 +122,6 @@ services.AddRetentionTarget<SensorReadingRetention>();
 
 `coworkee-retention` runs at `Coworkee:Retention:Cron` (default `41 2 * * *`, UTC). It runs the kinds of data with days set one after the other, each in its own scope; an error is written to the run and does not stop the others. A run that crashed with its process is given up after two hours; every claim has its own token, so a late first run never releases the claim of the run that took over.
 
-- Days are system wide: there are no own days per organisation.
+- Days are system wide: there are no own days per tenant.
 - There is no archive: deleted data is gone.
 - The job history of Hangfire and the instances of Elsa have their own expiry and are not on the page; unsent chat attachments keep their hourly cleanup.

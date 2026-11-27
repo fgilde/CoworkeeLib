@@ -43,7 +43,7 @@ Beide Header funktionieren gegen den API-Host; ein leerer `X-Api-Key`-Header wir
 Die wirksamen Berechtigungen eines Schlüssels sind seine Berechtigungen (mit den darin enthaltenen) geschnitten mit den **aktuellen** Berechtigungen seines Benutzers, geprüft bei jeder Anfrage. Nimmt ein Administrator dem Benutzer eine Rolle weg, verliert auch der Schlüssel sie. Der Schlüssel funktioniert sofort nicht mehr, wenn
 
 - er widerrufen oder abgelaufen ist,
-- sein Benutzer deaktiviert oder gesperrt ist oder die Organisation deaktiviert ist,
+- sein Benutzer deaktiviert oder gesperrt ist oder der Mandant deaktiviert ist,
 - sein Benutzer `ApiKeys.Create` verliert.
 
 Ein Schlüssel entsteht nie mit mehr, als die anlegende Sitzung in diesem Moment hat, aktive Rolle eingeschlossen. Danach ignorieren Schlüssel die aktive Rolle, die der Benutzer in der App wählt, und arbeiten mit allen Rollen des Benutzers: ein Schlüssel ist für einen Zweck gemacht, seine Berechtigungen sind schon die Einschränkung, und ein Schlüssel, der sich mit jedem Rollenwechsel im Browser ändert, würde die Skripte brechen, die ihn nutzen. Seine Grenzen gelten auch in Code, der in einem eigenen Benutzer-Scope für den Aufrufer handelt.
@@ -54,8 +54,8 @@ Schlüssel können keine Schlüssel anlegen oder widerrufen, auch nicht mit `Api
 
 Die Liste zeigt, wann und von welcher IP-Adresse jeder Schlüssel zuletzt genutzt wurde (höchstens einmal pro Minute aktualisiert). Anlegen und Widerrufen landen im Audit-Trail, der Hash des Geheimnisses nie. MCP-Werkzeugaufrufe halten den Schlüssel im Audit der KI-Werkzeugaufrufe fest. Rate-Limits zählen pro Benutzer, egal mit welchem Schlüssel.
 
-Administratoren mit `ApiKeys.Manage` (enthält `ApiKeys.Create`) sehen die Schlüssel aller Benutzer ihrer Organisation unter *Administration › Identität › API-Schlüssel* (`/cw/admin/api-keys`, das OData-Set `ApiKeys` ohne den Hash): Besitzer, Berechtigungen, angelegt, Ablauf, letzte Nutzung und Status, mit Suche, Filtern, Export und Live-Aktualisierung, und widerrufen sie. Schlüssel anderer Organisationen bleiben unsichtbar.
+Administratoren mit `ApiKeys.Manage` (enthält `ApiKeys.Create`) sehen die Schlüssel aller Benutzer ihres Mandanten unter *Administration › Identität › API-Schlüssel* (`/cw/admin/api-keys`, das OData-Set `ApiKeys` ohne den Hash): Besitzer, Berechtigungen, angelegt, Ablauf, letzte Nutzung und Status, mit Suche, Filtern, Export und Live-Aktualisierung, und widerrufen sie. Schlüssel anderer Mandanten bleiben unsichtbar.
 
 Der Export der personenbezogenen Daten enthält die Schlüssel des Benutzers im Abschnitt `apiKeys` (Name, Präfix, Berechtigungen, Daten, letzte Adresse), ohne Geheimnisse; das Löschen des Kontos löscht sie.
 
-![Alle Schlüssel der Organisation für Administratoren](../assets/screenshots/mcp-admin-api-keys-dark.png){ .shot }
+![Alle Schlüssel des Mandanten für Administratoren](../assets/screenshots/mcp-admin-api-keys-dark.png){ .shot }

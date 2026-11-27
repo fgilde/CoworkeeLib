@@ -7,7 +7,7 @@ Two development tools run next to the app in the Aspire app host, both on by def
 - **Grafana** with Prometheus, Loki, Tempo and an OpenTelemetry collector: the metrics, logs and traces of every service, the app database and ready dashboards.
 - **WebDataStudio**: the app database in the browser, with tables, SQL, charts and exports.
 
-Both sign in with the app's administrator (the same email and password as in the app, see `LOGIN.md`) and the administrators of the system organisation also at the app's auth server (through [Keycloak](../security/authentication.md) when it is on). They come from the packages `Nextended.Aspire.Hosting.Grafana` and `Nextended.Aspire.Hosting.WebDataStudio`, which `Coworkee.Aspire` brings along.
+Both sign in with the app's administrator (the same email and password as in the app, see `LOGIN.md`) and the administrators of the system tenant also at the app's auth server (through [Keycloak](../security/authentication.md) when it is on). They come from the packages `Nextended.Aspire.Hosting.Grafana` and `Nextended.Aspire.Hosting.WebDataStudio`, which `Coworkee.Aspire` brings along.
 
 ![Grafana overview dashboard](../assets/screenshots/grafana-overview-dark.webp)
 
@@ -54,8 +54,8 @@ Every dashboard filters by service and links to the others. They are provisioned
 
 | | Local login | The app's auth server |
 |---|---|---|
-| Grafana | the administrator's email and password, as Grafana server admin | *Sign in with MyApp*: administrators of the system organisation, as Grafana admins |
-| WebDataStudio | the administrator's email and password, as studio admin | the app's button: administrators of the system organisation, as studio admins |
+| Grafana | the administrator's email and password, as Grafana server admin | *Sign in with MyApp*: administrators of the system tenant, as Grafana admins |
+| WebDataStudio | the administrator's email and password, as studio admin | the app's button: administrators of the system tenant, as studio admins |
 
 The generated app host takes the administrator from `src/MyApp.Migrations/DemoUsers.cs`, the file the seed and the Keycloak realm read too:
 
@@ -66,7 +66,7 @@ options.Administrator = new(administrator.Email, administrator.Password);
 
 Without `options.Administrator` both tools get the user `admin` with a generated password: the parameter `myapp-admin-password` in the Aspire dashboard.
 
-With an auth server in the app host, each tool gets a confidential client of it (`myapp-grafana`, `myapp-webdatastudio`) with its redirect address, not shown in the launcher. The auth server lets only administrators of the system organisation through (`SystemAdministratorsOnly`), everybody else gets `access_denied`, so whoever comes that way is an admin of the tool; a user of the auth server with the administrator's email is the same Grafana user. With Keycloak on, the auth server sends you on to Keycloak as for the app; the tools have no clients in the realm. The containers reach the auth server over the container network and the browser at its own address, see [Tools sign in at the auth server](aspire.md#tools-sign-in-at-the-auth-server).
+With an auth server in the app host, each tool gets a confidential client of it (`myapp-grafana`, `myapp-webdatastudio`) with its redirect address, not shown in the launcher. The auth server lets only administrators of the system tenant through (`SystemAdministratorsOnly`), everybody else gets `access_denied`, so whoever comes that way is an admin of the tool; a user of the auth server with the administrator's email is the same Grafana user. With Keycloak on, the auth server sends you on to Keycloak as for the app; the tools have no clients in the realm. The containers reach the auth server over the container network and the browser at its own address, see [Tools sign in at the auth server](aspire.md#tools-sign-in-at-the-auth-server).
 
 ## Switching them on and off
 
@@ -164,7 +164,7 @@ The services keep sending to the Aspire dashboard and Grafana. The service defau
 
 Dashboards and rules are created when missing. A deleted one comes back on the next start.
 
-**Signing in.** SigNoz's own single sign-on (OIDC, SAML) is part of its enterprise edition. So the app host puts oauth2-proxy in front of it, as it does for Kibana. The browser signs in at the app's auth server (through Keycloak when it is on), only administrators of the system organisation get through, and SigNoz acts as its admin for each of them. SigNoz itself then has no public address.
+**Signing in.** SigNoz's own single sign-on (OIDC, SAML) is part of its enterprise edition. So the app host puts oauth2-proxy in front of it, as it does for Kibana. The browser signs in at the app's auth server (through Keycloak when it is on), only administrators of the system tenant get through, and SigNoz acts as its admin for each of them. SigNoz itself then has no public address.
 
 SigNoz's admin user is the app's administrator when the password meets SigNoz's rule: 12 characters with upper and lower case, a digit and a symbol. The template's password and a deployment's meet it. Otherwise the admin is `admin@signoz.local` with the generated parameter `signoz-password`.
 

@@ -42,9 +42,9 @@ var app = builder.AddCoworkeeApp("shop", options => options.UseGrafana().DeployT
 |---|---|
 | Keycloak | the realm of the app with the client of the auth server (the tools sign in at the auth server, not in the realm), and the first administrator as user with the role `Administrator`; the migrations bring it in line on every deployment. Public address `<app>-keycloak-url`, data in `<app>-keycloak-data` (Keycloak's own file database), its console as `admin` with `KEYCLOAK_PASSWORD`. The demo users and the login theme stay local |
 | Grafana | with Prometheus, Loki, Tempo and the collector; the app's dashboards and the configuration are built into the images (`<app>-grafana`, ...). The administrator signs in with the password or at the auth server. Public address `<app>-grafana-url`, data in `<app>-grafana-data`, `<app>-prometheus-data` and `<app>-loki-data`; Tempo keeps its traces in the container |
-| SigNoz | with its collector and ClickHouse; configuration, dashboards and alert rules are built into the images. Administrators of the system organisation sign in at the auth server through oauth2-proxy (`<app>-signoz-signin-url`), SigNoz itself without an auth server (`<app>-signoz-url`). Data in `<app>-signoz-data` and `<app>-signoz-clickhouse-data`; on Azure ClickHouse gets 1 CPU and 2 GiB and no volume (Azure Files over SMB breaks its inserts, the telemetry is gone after a restart) |
+| SigNoz | with its collector and ClickHouse; configuration, dashboards and alert rules are built into the images. Administrators of the system tenant sign in at the auth server through oauth2-proxy (`<app>-signoz-signin-url`), SigNoz itself without an auth server (`<app>-signoz-url`). Data in `<app>-signoz-data` and `<app>-signoz-clickhouse-data`; on Azure ClickHouse gets 1 CPU and 2 GiB and no volume (Azure Files over SMB breaks its inserts, the telemetry is gone after a restart) |
 | Open WebUI | with Ollama; the administrator signs in with the password or at the auth server. Public address `<app>-openwebui-url`, data in `<app>-openwebui-data`, key `<app>-openwebui-secret-key` |
-| Kibana | behind oauth2-proxy; administrators of the system organisation sign in at the auth server (its public address is the issuer and token endpoint). Public address `<app>-kibana-url`, client secret `<app>-kibana-secret`, cookie secret `<app>-kibana-cookie-secret`, the password of `kibana_system` `<app>-kibana-password` |
+| Kibana | behind oauth2-proxy; administrators of the system tenant sign in at the auth server (its public address is the issuer and token endpoint). Public address `<app>-kibana-url`, client secret `<app>-kibana-secret`, cookie secret `<app>-kibana-cookie-secret`, the password of `kibana_system` `<app>-kibana-password` |
 | WebDataStudio | connected to the app database; the administrator signs in with the password or at the auth server. Public address `<app>-webdatastudio-url`, data in `<app>-webdatastudio-data` |
 | LibreTranslate | the translation service of the app, inside the network only; the models live in `<app>-libretranslate-models`, the first start downloads them |
 | Ollama | the model server of the app, inside the network only, models in `<app>-ollama-data`. It needs a host with enough memory |
@@ -55,9 +55,9 @@ Each tool with a web interface sits behind your reverse proxy like the services;
 
 ## The first administrator
 
-When the database is empty, the migrations create the administrator of `<app>-admin-email` and `<app>-admin-password` with the organisation and the settings of the template, and the realm of a deployed Keycloak gets the same user. `coworkee deploy compose` asks for the email (or takes `--admin-email`, an environment variable `SHOP_ADMIN_EMAIL`, or `admin@<app>.local`), generates the password and prints both at the end of its output, nowhere else. The same email and password sign you in to the app, Keycloak, Grafana, WebDataStudio, Open WebUI, AspireUI and Mailpit.
+When the database is empty, the migrations create the administrator of `<app>-admin-email` and `<app>-admin-password` with the tenant and the settings of the template, and the realm of a deployed Keycloak gets the same user. `coworkee deploy compose` asks for the email (or takes `--admin-email`, an environment variable `SHOP_ADMIN_EMAIL`, or `admin@<app>.local`), generates the password and prints both at the end of its output, nowhere else. The same email and password sign you in to the app, Keycloak, Grafana, WebDataStudio, Open WebUI, AspireUI and Mailpit.
 
-Leave both values empty and nothing is created: the app shows its setup page, where `<app>-setup-token` lets you set up the organisation and the administrator yourself. A database that is set up stays as it is; a changed password in `.env` reaches Keycloak and the tools, not the app's own account.
+Leave both values empty and nothing is created: the app shows its setup page, where `<app>-setup-token` lets you set up the tenant and the administrator yourself. A database that is set up stays as it is; a changed password in `.env` reaches Keycloak and the tools, not the app's own account.
 
 Every run of the migrations (every `docker compose up`, the Container Apps job after each deployment, the Helm hook) also runs the app's [seed contributors](../fundamentals/persistence.md#seed-contributors), so data added to a seed reaches the deployed database; a failing one stops the run with exit code 1 and the services do not start. Roles and grants added to `DeploymentSeed` later reach a deployed database with `options.SyncRolesInDeployments = true`.
 
@@ -121,7 +121,7 @@ Then on the host (copy the folder and load the images there, or build them there
 docker compose up -d
 ```
 
-Open the web address and sign in as the administrator `coworkee deploy` printed. With the administrator left empty the app shows the setup page instead: enter `SHOP_SETUP_TOKEN` from `.env`, the name of your organisation and the first administrator.
+Open the web address and sign in as the administrator `coworkee deploy` printed. With the administrator left empty the app shows the setup page instead: enter `SHOP_SETUP_TOKEN` from `.env`, the name of your tenant and the first administrator.
 
 ### Trying it on your machine
 

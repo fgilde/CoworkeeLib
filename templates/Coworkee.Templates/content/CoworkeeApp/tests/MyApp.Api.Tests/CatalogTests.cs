@@ -128,7 +128,7 @@ public sealed class CatalogTests(ApiFixture api) : IAsyncLifetime
         var secretKey = await BlobKeyAsync(secret.Id);
         (await Admin.DeleteAsync($"/api/v1/identity/users/{ownerId}", Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
-        (await ODataAsync<DocumentDto>(Admin, "/odata/Documents")).Items.Select(d => d.Id).ShouldBe([shared.Id], "public documents belong to the organisation");
+        (await ODataAsync<DocumentDto>(Admin, "/odata/Documents")).Items.Select(d => d.Id).ShouldBe([shared.Id], "public documents belong to the tenant");
         await using var scope = api.Factory.Services.CreateAsyncScope();
         (await scope.ServiceProvider.GetRequiredService<Coworkee.Storage.IBlobStorage>().OpenReadAsync(secretKey!, Ct)).ShouldBeNull();
     }

@@ -11,7 +11,7 @@ const manage = 'Settings.Manage';
 
 function scopes(coworkee: Coworkee): Array<[SettingScope, string]> {
   const result: Array<[SettingScope, string]> = [['User', coworkee.t('My settings')]];
-  if (coworkee.can(manage)) result.push(['Tenant', coworkee.t('Organisation')]);
+  if (coworkee.can(manage)) result.push(['Tenant', coworkee.t('Tenant')]);
   if (coworkee.can(manage) && coworkee.user.systemTenant) result.push(['Global', coworkee.t('System')]);
   return result;
 }
@@ -117,7 +117,7 @@ export function renderSettings(coworkee: Coworkee, host: HTMLElement, tabs: Arra
   if (tabs[0]) show(tabs[0][0]);
 }
 
-/** The user's profile and settings and, for administrators, those of the organisation and the system, built from the setting definitions. */
+/** The user's profile and settings and, for administrators, those of the tenant and the system, built from the setting definitions. */
 export const settingsApp = (coworkee: Coworkee): CoworkeeApp => ({
   id: 'coworkee.settings',
   title: coworkee.t('Settings'),
@@ -131,11 +131,11 @@ export const settingsApp = (coworkee: Coworkee): CoworkeeApp => ({
 
 export type SettingsPageOptions = {
   id: string; title: string; icon: string; accent?: string; page: string; group?: string; hostOnly?: boolean; probe?: string; test?: SettingsTest;
-  /** Scopes the page offers, of those the user may manage (default: organisation and system). */
+  /** Scopes the page offers, of those the user may manage (default: tenant and system). */
   scopes?: SettingScope[];
 };
 
-/** The settings groups that have an own page (AI, mail) as an app for administrators: organisation and, for the system organisation, system values. */
+/** The settings groups that have an own page (AI, mail) as an app for administrators: tenant and, for the system tenant, system values. */
 export const settingsPageApp = (options: SettingsPageOptions) => (coworkee: Coworkee): CoworkeeApp => ({
   id: options.id,
   title: coworkee.t(options.title),

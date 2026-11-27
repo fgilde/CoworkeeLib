@@ -1,8 +1,8 @@
 # Files
 
-`Coworkee.Files` keeps folders and files of an organisation in the [blob storage](storage.md): nested folders, upload, download, preview of nearly every file type, move, rename and delete, with per-folder permissions.
+`Coworkee.Files` keeps folders and files of a tenant in the [blob storage](storage.md): nested folders, upload, download, preview of nearly every file type, move, rename and delete, with per-folder permissions.
 
-Files is the organisation's drive. The *Documents* sample of the app template is something else: a list of typed records, each with an owner and private or public. An app can have both side by side; code that copies a stored file elsewhere reads it with `OpenFile` as the current user, so the folder permissions apply. Files that belong to one record (a certificate, a CV) are [record attachments](attachments.md) instead: no folders, the record decides who sees them.
+Files is the tenant's drive. The *Documents* sample of the app template is something else: a list of typed records, each with an owner and private or public. An app can have both side by side; code that copies a stored file elsewhere reads it with `OpenFile` as the current user, so the folder permissions apply. Files that belong to one record (a certificate, a CV) are [record attachments](attachments.md) instead: no folders, the record decides who sees them.
 
 ```csharp
 [DependsOn(typeof(CoworkeeFilesModule))]
@@ -80,7 +80,7 @@ On the *Files* page the bar above the file manager shares the selected file: *Ma
 
 A file that stays private can still be opened without sign-in for a short time, e.g. by a viewer or a native download that sends no cookie: `POST /api/v1/files/{id}/token` (whoever may open the file) returns `FileTokenDto(Token, Url, ExpiresAt)`. `GET` or `HEAD` on `Url` (`/api/v1/files/token/{token}/{name}`, `FileLinks.Token(token, name)`) serves the file inline, with `?download=true` as attachment, for five minutes and as often as needed (the viewer asks several times). The token says nothing about the file; the database keeps only its hash. On the *Files* page *Copy temporary link* copies such a link; `IFilesApi.CreateTokenAsync` and `FilePublishing.CopyTemporaryLinkAsync` do it in own pages.
 
-The tokens come from `IAccessTokens` (`Coworkee.Infrastructure.Tokens`, table `cw.AccessTokens`; expired ones go with the retention target `access-tokens`, in apps without the Retention module a day after expiry when another token is redeemed): `Issue(purpose, targetId, lifetime, singleUse)` adds a token to the unit of work, `RedeemAsync(purpose, token)` returns the target with the organisation and user that issued it, or null when the token is unknown, expired or, for single use, taken already. Apps use it for their own anonymous links.
+The tokens come from `IAccessTokens` (`Coworkee.Infrastructure.Tokens`, table `cw.AccessTokens`; expired ones go with the retention target `access-tokens`, in apps without the Retention module a day after expiry when another token is redeemed): `Issue(purpose, targetId, lifetime, singleUse)` adds a token to the unit of work, `RedeemAsync(purpose, token)` returns the target with the tenant and user that issued it, or null when the token is unknown, expired or, for single use, taken already. Apps use it for their own anonymous links.
 
 The anonymous routes are rate limited per address (policy `tokens`, 120 per minute). The token never reaches logs or traces, in the API and in the BFF that forwards the links: the logs of ASP.NET Core, HttpClient and YARP (messages, values and scopes such as `RequestPath`) and the activities of incoming, forwarded and outgoing requests (`url.path`, `url.full`, `url.query`, their names) show `/token/***/` and `/downloads/***`. `AddCoworkee` and `AddCoworkeeBff` switch it on; `Coworkee.Core.Diagnostics.SecretPaths` (`Redact(string)`, `Redact(Activity)`, `AddSecretPathRedaction`) serves own hosts and logs. The activities are masked by a listener that the first call registers before the OpenTelemetry provider is built at host start.
 
@@ -90,7 +90,7 @@ The same redaction masks secrets in query strings: the values of `access_token` 
 
 Every `MudExUploadEdit` of the app can also take files from Google Drive, OneDrive and Dropbox: the upload of the file manager (Files page and the side sheet of `CoworkeeFilePicker`), the document upload of the template and the upload fields of your own pages. A picker shows as soon as it has its client id or app key; without one nothing changes.
 
-Administrators enter the ids under **Settings**, tab **System** (system organisation only), section **Cloud file pickers**. Each provider has a switch, so a picker can be turned off without losing its id. Defaults come from configuration like every setting:
+Administrators enter the ids under **Settings**, tab **System** (system tenant only), section **Cloud file pickers**. Each provider has a switch, so a picker can be turned off without losing its id. Defaults come from configuration like every setting:
 
 ```json title="appsettings.json"
 {
@@ -111,7 +111,7 @@ The ids reach every signed in browser with the client settings and are applied w
 | Provider | Where | Steps |
 |---|---|---|
 | Google Drive | [Google Cloud console](https://console.cloud.google.com/apis/credentials) | enable the [Google Picker API](https://console.cloud.google.com/apis/library/picker.googleapis.com) and the Google Drive API, set up the OAuth consent screen, then **Create credentials > OAuth client ID** of type *Web application* with the address of the app (`https://localhost:7300` in development) as authorised JavaScript origin. The client id ends with `.apps.googleusercontent.com`. [Picker guide](https://developers.google.com/drive/picker/guides/overview) |
-| OneDrive | [Microsoft Entra app registrations](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade) | **New registration** for accounts in any organisation and personal Microsoft accounts, platform *Single-page application* with the address of the app as redirect URI (the picker returns to the origin of the page). The *Application (client) ID* is the id. [File picker guide](https://learn.microsoft.com/onedrive/developer/controls/file-pickers/) |
+| OneDrive | [Microsoft Entra app registrations](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade) | **New registration** for accounts in any tenant and personal Microsoft accounts, platform *Single-page application* with the address of the app as redirect URI (the picker returns to the origin of the page). The *Application (client) ID* is the id. [File picker guide](https://learn.microsoft.com/onedrive/developer/controls/file-pickers/) |
 | Dropbox | [Dropbox App Console](https://www.dropbox.com/developers/apps) | **Create app** with scoped access, then add the domain of the app (`localhost` in development) under *Chooser / Saver / Embedder domains*. The *App key* is the key. [Chooser guide](https://www.dropbox.com/developers/chooser) |
 
 The pickers load their scripts from the providers (`apis.google.com`, `accounts.google.com`, `js.live.net`, `login.microsoftonline.com`, `onedrive.live.com`, `www.dropbox.com`). The content security policy of `UseCoworkeeSecurityHeaders` allows none of them: add these hosts for scripts and frames, as in [Security headers of the web app](../security/authentication.md#security-headers-of-the-web-app).

@@ -31,13 +31,13 @@ The administrator signs in with the same email and password to the tools the app
 - *grafana*: dashboards over the metrics, logs and traces of every service and the app database (folder *COWORKEE_APP_TITLE*).
 <!--#endif -->
 <!--#if (signoz) -->
-- *signoz-signin*: SigNoz, with traces, metrics, logs, dashboards and alert rules for every service. It signs in at the auth server of the app through oauth2-proxy: only administrators of the system organisation get in (SigNoz's own single sign-on needs its enterprise license).
+- *signoz-signin*: SigNoz, with traces, metrics, logs, dashboards and alert rules for every service. It signs in at the auth server of the app through oauth2-proxy: only administrators of the system tenant get in (SigNoz's own single sign-on needs its enterprise license).
 <!--#endif -->
 <!--#if (webDataStudio) -->
 - *webdatastudio*: the app database in the browser.
 <!--#endif -->
 <!--#if (elasticsearch && kibana) -->
-- *kibana*: the search indexes in Kibana. It signs in at the auth server of the app: only administrators of the system organisation get in (with Keycloak when it is on).
+- *kibana*: the search indexes in Kibana. It signs in at the auth server of the app: only administrators of the system tenant get in (with Keycloak when it is on).
 <!--#endif -->
 <!--#if (withOpenWebUI) -->
 - *openwebui*: a chat over the local models of Ollama.
@@ -46,7 +46,7 @@ The administrator signs in with the same email and password to the tools the app
 - *aspireui*: host and try more apps and stacks next to COWORKEE_APP_TITLE; what you host there also shows up on the admin page *Services* of the app. Its data lives in the volume `myapp-aspireui-data`.
 <!--#endif -->
 
-They also offer the sign-in at the auth server of the app: only administrators of the system organisation get in, as administrators of the tool.
+They also offer the sign-in at the auth server of the app: only administrators of the system tenant get in, as administrators of the tool.
 
 <!--#endif -->
 The users and passwords come from `src/MyApp.Migrations/DemoUsers.cs` and are seeded on the first start of an empty database, in the Development environment only. A deployment (`coworkee deploy`) starts without users and is set up in the browser with its setup token.

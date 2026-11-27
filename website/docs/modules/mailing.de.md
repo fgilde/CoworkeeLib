@@ -23,7 +23,7 @@ Vorlagen nutzen [Scriban](https://github.com/scriban/scriban). Das Beispielmodel
 
 `QueueAsync` rendert die Mail und fügt sie der Unit of Work des Aufrufers hinzu: In einem Command speichert die Pipeline sie mit den Änderungen des Commands, ein abgelehnter Command versendet also nichts; anderer Code ruft `IUnitOfWork.SaveChangesAsync` auf. Die Überladung mit sechs Parametern nimmt zusätzlich eine Kampagnen-ID.
 
-Ein Modell ist ein Objekt, ein Dictionary (`Dictionary<string, object?>`) oder ein JSON-Objekt (`JsonElement`), etwa eines, das mit einer wartenden Mail gespeichert ist; Namen werden in jedem Fall klein mit Unterstrichen geschrieben (`OrderNumber` wird `order_number`), und Textwerte werden im Inhalt HTML-maskiert. Das Layout verlinkt eine `unsubscribe_url` des Modells nur, wenn sie eine absolute http(s)-Adresse ist. [Benachrichtigungstypen](realtime.md#mail-vorlagen-pro-typ-und-verzogerung-pro-organisation) rendern ihre Vorlage mit einem solchen Modell.
+Ein Modell ist ein Objekt, ein Dictionary (`Dictionary<string, object?>`) oder ein JSON-Objekt (`JsonElement`), etwa eines, das mit einer wartenden Mail gespeichert ist; Namen werden in jedem Fall klein mit Unterstrichen geschrieben (`OrderNumber` wird `order_number`), und Textwerte werden im Inhalt HTML-maskiert. Das Layout verlinkt eine `unsubscribe_url` des Modells nur, wenn sie eine absolute http(s)-Adresse ist. [Benachrichtigungstypen](realtime.md#mail-vorlagen-pro-typ-und-verzogerung-pro-mandant) rendern ihre Vorlage mit einem solchen Modell.
 
 ### Anhänge
 
@@ -48,7 +48,7 @@ Administratoren ändern sie unter *Mail templates* wie ihre eigenen.
 
 ## Zustellung und Mail-Log
 
-Eine eingereihte Mail startet den Hintergrundjob `SendMailJob` in der Queue `mail`. Der Job ermittelt Anbieter und Werte für die Organisation der Mail (siehe [Eigener Server je Organisation](#eigener-server-je-organisation)), prüft die Whitelist und übergibt die Mail dem Transport. Eine Mail durchläuft diese Zustände:
+Eine eingereihte Mail startet den Hintergrundjob `SendMailJob` in der Queue `mail`. Der Job ermittelt Anbieter und Werte für den Mandanten der Mail (siehe [Eigener Server je Mandant](#eigener-server-je-mandant)), prüft die Whitelist und übergibt die Mail dem Transport. Eine Mail durchläuft diese Zustände:
 
 | Status | Bedeutung |
 |---|---|
@@ -69,7 +69,7 @@ Ein Sender, der zwischen der Übergabe an den Anbieter und dem Speichern des Erg
 
 Der Standard sendet keine Mail doppelt, kann aber eine verlieren; suche im Mail-Log nach *Delivery unknown* und sende von Hand neu. Schalte `RetryStuckSending` ein, wo eine verlorene Mail schlimmer ist als eine doppelte (Anmeldecodes, Passwort-Resets). Halte `SendingTimeout` über der längsten Zeit, die dein Anbieter für eine Mail braucht.
 
-**Administration > Communication > Mail log** (`/cw/admin/mail/log`, Berechtigung `Mail.Log.View`) listet die Mails der eigenen Organisation mit Status, Versuchen und Fehler, gefiltert nach Status oder Kampagne (`?campaign=<id>`). API: `GET /api/v1/mail/outgoing?status=Failed&campaignId=...` (seitenweise) und die OData-Menge `Mails` (ohne den Inhalt). Mit dem Modul [Aufbewahrung](retention.md) löscht das Ziel `mail-log` alte Mails (ohne Standard: aufbewahrt, bis Tage gesetzt sind; wartende und sendende Mails bleiben). Der Export persönlicher Daten listet die Mails an die Adresse des Benutzers in seiner Organisation (Abschnitt `mails`); das Löschen entfernt sie dort, Mails einer anderen Organisation an dieselbe Adresse bleiben.
+**Administration > Communication > Mail log** (`/cw/admin/mail/log`, Berechtigung `Mail.Log.View`) listet die Mails des eigenen Mandanten mit Status, Versuchen und Fehler, gefiltert nach Status oder Kampagne (`?campaign=<id>`). API: `GET /api/v1/mail/outgoing?status=Failed&campaignId=...` (seitenweise) und die OData-Menge `Mails` (ohne den Inhalt). Mit dem Modul [Aufbewahrung](retention.md) löscht das Ziel `mail-log` alte Mails (ohne Standard: aufbewahrt, bis Tage gesetzt sind; wartende und sendende Mails bleiben). Der Export persönlicher Daten listet die Mails an die Adresse des Benutzers in seinem Mandanten (Abschnitt `mails`); das Löschen entfernt sie dort, Mails eines anderen Mandanten an dieselbe Adresse bleiben.
 
 ## Anbieter
 
@@ -86,20 +86,20 @@ Die HTTP-Anbieter sprechen ihre REST-API direkt über `IHttpClientFactory` an; e
 
 ## Die Seite Mail-Einstellungen
 
-**Administration > Communication > Mail settings** (`/cw/admin/mail-settings`, Berechtigung `Settings.Manage`) ersetzt den Mail-Tab der Einstellungsseite. Du wählst den Anbieter, füllst seine Felder, trägst Absender und Whitelist ein und speicherst; Änderungen gelten ab der nächsten Mail, ohne Neustart. **Send test mail** schickt eine Mail an deine eigene Adresse mit den Werten, die gerade im Formular stehen, gespeichert oder nicht, und zeigt das Ergebnis: Ein leeres Secret-Feld behält den gespeicherten Schlüssel, du testest also, ohne ihn neu einzutippen. Bei einem Fehler steht die Antwort des Anbieters da; für Organisationen (siehe unten) nur eine kurze Meldung, denn eine Organisation wählt ihren Host selbst und darf die Netzwerkfehler des Servers nicht lesen.
+**Administration > Communication > Mail settings** (`/cw/admin/mail-settings`, Berechtigung `Settings.Manage`) ersetzt den Mail-Tab der Einstellungsseite. Du wählst den Anbieter, füllst seine Felder, trägst Absender und Whitelist ein und speicherst; Änderungen gelten ab der nächsten Mail, ohne Neustart. **Send test mail** schickt eine Mail an deine eigene Adresse mit den Werten, die gerade im Formular stehen, gespeichert oder nicht, und zeigt das Ergebnis: Ein leeres Secret-Feld behält den gespeicherten Schlüssel, du testest also, ohne ihn neu einzutippen. Bei einem Fehler steht die Antwort des Anbieters da; für Mandanten (siehe unten) nur eine kurze Meldung, denn ein Mandant wählt seinen Host selbst und darf die Netzwerkfehler des Servers nicht lesen.
 
-## Eigener Server je Organisation
+## Eigener Server je Mandant
 
-Organisationen versenden standardmäßig über den Server des Systems. Die Einstellung `Mail.UseOwnServer` (Geltungsbereich Organisation, standardmäßig aus) lässt eine Organisation ihren eigenen nutzen: Auf der Seite Mail-Einstellungen sieht der Administrator der Organisation den Schalter und, wenn er an ist, dasselbe Formular für Anbieter und Zugangsdaten.
+Mandanten versenden standardmäßig über den Server des Systems. Die Einstellung `Mail.UseOwnServer` (Geltungsbereich Mandant, standardmäßig aus) lässt einen Mandanten seinen eigenen nutzen: Auf der Seite Mail-Einstellungen sieht der Administrator des Mandanten den Schalter und, wenn er an ist, dasselbe Formular für Anbieter und Zugangsdaten.
 
-- Ist der Schalter **an**, kommen alle Werte aus der Organisation: Anbieter, Zugangsdaten, Absender und Whitelist. Ist er **aus**, kommen alle aus dem System. Es wird nichts gemischt, eine Organisation sendet also nie mit dem Passwort des Systems und einem eigenen Absender.
-- Ausschalten behält die Werte der Organisation; beim erneuten Einschalten gelten sie, ohne sie neu einzugeben.
-- Die Werte, die der Anbieter braucht (SMTP-Host, API-Schlüssel, Mailgun-Domain), müssen in der Organisation selbst gespeichert sein. Ein Standardwert des Deployments wie `Coworkee:Settings:Defaults:Mail.Smtp.Host` zählt nicht, sonst würde eine Organisation über den Server des Systems senden, während sie glaubt, ihren eigenen zu nutzen; die Mail scheitert stattdessen mit *... is not configured.*
-- Die System-Organisation nutzt immer die Einstellungen des Systems.
+- Ist der Schalter **an**, kommen alle Werte aus dem Mandanten: Anbieter, Zugangsdaten, Absender und Whitelist. Ist er **aus**, kommen alle aus dem System. Es wird nichts gemischt, ein Mandant sendet also nie mit dem Passwort des Systems und einem eigenen Absender.
+- Ausschalten behält die Werte des Mandanten; beim erneuten Einschalten gelten sie, ohne sie neu einzugeben.
+- Die Werte, die der Anbieter braucht (SMTP-Host, API-Schlüssel, Mailgun-Domain), müssen im Mandanten selbst gespeichert sein. Ein Standardwert des Deployments wie `Coworkee:Settings:Defaults:Mail.Smtp.Host` zählt nicht, sonst würde ein Mandant über den Server des Systems senden, während er glaubt, seinen eigenen zu nutzen; die Mail scheitert stattdessen mit *... is not configured.*
+- Der System-Mandant nutzt immer die Einstellungen des Systems.
 
 ## Versand und eigene Transporte
 
-Ein Hintergrundjob nimmt die eingereihte Mail, ermittelt die Verbindung (Anbieter und Werte) für die Organisation der Mail und übergibt sie dem `IMailTransport`, dessen `Provider` passt.
+Ein Hintergrundjob nimmt die eingereihte Mail, ermittelt die Verbindung (Anbieter und Werte) für den Mandanten der Mail und übergibt sie dem `IMailTransport`, dessen `Provider` passt.
 
 !!! warning "Breaking Change"
     `ISmtpTransport` entfällt und wird durch `IMailTransport` ersetzt, eine Implementierung je Anbieter. Es gibt keinen Obsolete-Shim. Die Schlüssel `Mail.Smtp.*`, `Mail.From` und `Mail.Whitelist` bleiben unverändert, gespeicherte Werte gelten also weiter. Code, der `ISmtpTransport` implementiert oder ersetzt hat, implementiert stattdessen `IMailTransport`.
@@ -142,7 +142,7 @@ Lokal zeigt der AppHost die SMTP-Einstellungen auf Mailpit (`Coworkee:Settings:D
 
 ## Eigene Vorlagen
 
-Neben den Vorlagen der Module legen Administratoren unter **Administration > Communication > Mail templates** (`/cw/admin/mail/templates`, Berechtigung `Mail.Templates.Manage`) eigene an. **Neue Vorlage** fragt nach einem Namen (Buchstaben, Ziffern, ., _ und -; er lässt sich später nicht ändern und darf keine Vorlage des Systems oder der Organisation wiederholen), einem Anzeigenamen und einer Beschreibung; danach öffnet sich der Editor. Die Kopieren-Schaltfläche neben einer Vorlage legt aus ihrem Text in allen Sprachen eine eigene Vorlage an, unter einem freien Namen wie Identity.Welcome.copy. Eigene Vorlagen tragen die Markierung *custom*; nur sie lassen sich löschen, dabei entfallen auch ihre Texte. Benutzer der Systemorganisation können **Global** ankreuzen: Die Vorlage steht dann jeder Organisation zur Verfügung.
+Neben den Vorlagen der Module legen Administratoren unter **Administration > Communication > Mail templates** (`/cw/admin/mail/templates`, Berechtigung `Mail.Templates.Manage`) eigene an. **Neue Vorlage** fragt nach einem Namen (Buchstaben, Ziffern, ., _ und -; er lässt sich später nicht ändern und darf keine Vorlage des Systems oder des Mandanten wiederholen), einem Anzeigenamen und einer Beschreibung; danach öffnet sich der Editor. Die Kopieren-Schaltfläche neben einer Vorlage legt aus ihrem Text in allen Sprachen eine eigene Vorlage an, unter einem freien Namen wie Identity.Welcome.copy. Eigene Vorlagen tragen die Markierung *custom*; nur sie lassen sich löschen, dabei entfallen auch ihre Texte. Benutzer des System-Mandanten können **Global** ankreuzen: Die Vorlage steht dann jedes Mandanten zur Verfügung.
 
 ### Vorlage bearbeiten
 
@@ -180,11 +180,11 @@ API: `POST /api/v1/mail/templates/{name}/send/preview` und `POST /api/v1/mail/te
 
 Eine Vorlage hat eine Variante pro Sprache; die Spalte *Sprachen* listet sie mit ihren Flaggen (hervorgehoben: hier geändert). Im Editor stehen dieselben Sprachen als Chips neben dem Titel: Ein Klick öffnet die Variante, die Übersetzen-Schaltfläche daneben fügt eine hinzu. Eine später auf der Sprachen-Seite eingeschaltete Sprache bekommt nicht von selbst eine Variante. **Sprache hinzufügen** (die Übersetzen-Schaltfläche einer Vorlage) fragt nach der Sprache, nach der vorhandenen Variante, von der sie ausgeht, und ob maschinell übersetzt werden soll: Ist unter den Übersetzungseinstellungen ein Übersetzungsdienst eingerichtet, werden nur die Texte zwischen den HTML-Tags übersetzt, Tags, Styles und `{{ ... }}`-Platzhalter bleiben, wie sie sind; ohne Dienst beginnt die Variante als Kopie. Danach öffnet sich der Editor der neuen Variante, dort den Text prüfen. Eine hinzugefügte Sprache lässt sich über das Kreuz ihres Chips entfernen; die mitgelieferten Sprachen einer Modulvorlage werden stattdessen im Editor zurückgesetzt, und die letzte Sprache einer eigenen Vorlage bleibt. Die Schaltfläche ist deaktiviert, wenn jede aktive Sprache schon eine Variante hat.
 
-Eine Mail in einer Sprache ohne Variante fällt schrittweise zurück: auf die Sprache (de-AT), ihre Elternsprache (de), die Standardsprache (der Organisation, sonst des Systems, sonst die Standardsprache der Sprachen-Seite) und deren Elternsprache, auf Englisch und bei eigenen Vorlagen auf die älteste Variante. API: `POST /api/v1/mail/templates/{name}/{culture}` mit `{ "from": "en", "translate": true }` fügt eine Variante hinzu, `DELETE` auf denselben Pfad entfernt sie.
+Eine Mail in einer Sprache ohne Variante fällt schrittweise zurück: auf die Sprache (de-AT), ihre Elternsprache (de), die Standardsprache (des Mandanten, sonst des Systems, sonst die Standardsprache der Sprachen-Seite) und deren Elternsprache, auf Englisch und bei eigenen Vorlagen auf die älteste Variante. API: `POST /api/v1/mail/templates/{name}/{culture}` mit `{ "from": "en", "translate": true }` fügt eine Variante hinzu, `DELETE` auf denselben Pfad entfernt sie.
 
 ## Kampagnen
 
-**Administration > Communication > Mail campaigns** (`/cw/admin/mail/campaigns`, Berechtigung `Mail.Campaigns.Send`) versendet eine eigene Vorlage an viele Benutzer deiner Organisation. Eine Kampagne erreicht immer nur Benutzer der Organisation dessen, der sie versendet, auch bei der Systemorganisation. Eingebaute Vorlagen lassen sich nicht versenden, sie brauchen ein eigenes Modell; kopiere eine, um zuerst eine eigene Vorlage zu erhalten.
+**Administration > Communication > Mail campaigns** (`/cw/admin/mail/campaigns`, Berechtigung `Mail.Campaigns.Send`) versendet eine eigene Vorlage an viele Benutzer deines Mandanten. Eine Kampagne erreicht immer nur Benutzer des Mandanten dessen, der sie versendet, auch beim System-Mandanten. Eingebaute Vorlagen lassen sich nicht versenden, sie brauchen ein eigenes Modell; kopiere eine, um zuerst eine eigene Vorlage zu erhalten.
 
 **Neue Kampagne** öffnet einen Assistenten mit drei Schritten:
 
@@ -199,7 +199,7 @@ Empfänger stammen aus einer dieser Quellen:
 
 Eine eigene Abfrage und eine manuelle Auswahl brauchen zusätzlich das Recht, Benutzer anzuzeigen (`Identity.Users.View`), weil sie Personen nach Namen auswählen lassen. Mit nur `Mail.Campaigns.Send` funktionieren die Voreinstellungen, die Vorschau zeigt dann die Zahlen ohne die Namen.
 
-Benutzer ohne E-Mail-Adresse, gesperrte Benutzer und Benutzer, die **Newsletter erhalten** abgeschaltet haben, werden nie angeschrieben; deaktivierte Benutzer nur mit der Voreinstellung *Deaktivierte Benutzer*. Sie werden als ausgeschlossen gezählt. Die Empfänger werden beim Start der Kampagne aufgelöst, nicht bei der Auswahl; eine geplante Kampagne erreicht also die Benutzer dieses Zeitpunkts. Jede Mail wird in der Sprache des Empfängers erzeugt: der des Benutzers, sonst der der Organisation, sonst der Standardsprache.
+Benutzer ohne E-Mail-Adresse, gesperrte Benutzer und Benutzer, die **Newsletter erhalten** abgeschaltet haben, werden nie angeschrieben; deaktivierte Benutzer nur mit der Voreinstellung *Deaktivierte Benutzer*. Sie werden als ausgeschlossen gezählt. Die Empfänger werden beim Start der Kampagne aufgelöst, nicht bei der Auswahl; eine geplante Kampagne erreicht also die Benutzer dieses Zeitpunkts. Jede Mail wird in der Sprache des Empfängers erzeugt: der des Benutzers, sonst der des Mandanten, sonst der Standardsprache.
 
 Jede Kampagnenmail endet mit einem Abmeldelink. Er öffnet ohne Anmeldung eine Bestätigungsseite; die Bestätigung schaltet die Einstellung **Newsletter erhalten** (`Mail.Newsletters`, standardmäßig an) für diesen Benutzer ab. Benutzer können sie in ihren eigenen Einstellungen wieder einschalten. Der Link trägt ein signiertes Token und läuft nicht ab; das Token wird mit dem gemeinsamen Data-Protection-Schlüsselring in der Datenbank geschützt, die Links funktionieren also über Neustarts und Hosts hinweg. Die Bestätigung ist ein einfaches Formular-POST; die Web-App (BFF) lässt es ohne den sonst nötigen `X-CSRF`-Header durch, weil der Pfad in `Coworkee:Bff:CsrfExemptPaths` steht (Standard `/api/v1/mail/unsubscribe` und `/api/v1/reports/subscriptions/unsubscribe`), das Token allein autorisiert es.
 

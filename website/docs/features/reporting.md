@@ -53,7 +53,7 @@ Widget types: KPI with trend and target, charts (bar, line, area, pie, donut, sc
 
 Each group comes back from the server with an OData filter for exactly its rows. Click a bar or a pie slice and that filter narrows the other widgets on the same set; click *Open the data* and it lands on the page you registered with `DrillDown`, already filtered to the rows behind the number.
 
-A report is private, shared with roles, with groups (their members and those of the groups above; a group selection narrows the list) or with the organisation (`Reports.Share`). Others can duplicate it, only the owner changes it, and a saved change reaches everyone who has it open. Export goes to PNG, PDF via the print dialog, or CSV and Excel per widget.
+A report is private, shared with roles, with groups (their members and those of the groups above; a group selection narrows the list) or with the tenant (`Reports.Share`). Others can duplicate it, only the owner changes it, and a saved change reaches everyone who has it open. Export goes to PNG, PDF via the print dialog, or CSV and Excel per widget.
 
 ## Beyond the designer
 
@@ -62,7 +62,7 @@ A report is private, shared with roles, with groups (their members and those of 
 - **[Switches for viewers](../modules/reporting.md#switches-for-viewers):** alternative values and groupings that viewers pick in the widget header, kept per user, without changing the report.
 - **[Create with AI](../modules/reporting.md#create-a-report-with-ai):** *Create with AI* and *Ask AI to change this report* turn a prompt into a definition that is checked like a save and opens unsaved in the designer; the assistant has the same as the tool `generate_report`.
 - **[Own data sources](../modules/reporting.md#own-data-sources):** `AddReportSource<T>` adds rows of a plain type (a database query or a list) next to the entity sets.
-- **[A report as dashboard](../modules/reporting.md#a-report-as-dashboard):** every user can make a report their dashboard, holders of `Reports.Dashboard` the organisation's default.
+- **[A report as dashboard](../modules/reporting.md#a-report-as-dashboard):** every user can make a report their dashboard, holders of `Reports.Dashboard` the tenant's default.
 - A widget can carry `AppData`, JSON an app or a second client keeps with it; reports neither read nor change it.
 
 ## The sales report of the demo, step by step

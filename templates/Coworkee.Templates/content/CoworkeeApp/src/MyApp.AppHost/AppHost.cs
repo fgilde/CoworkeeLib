@@ -70,7 +70,7 @@ var app = builder.AddCoworkeeApp("myapp", options =>
     options.UseWebDataStudio();
 #endif
 #if (elasticsearch && kibana)
-    // Kibana next to the search container; administrators of the system organisation sign in at the auth server (LOGIN.md)
+    // Kibana next to the search container; administrators of the system tenant sign in at the auth server (LOGIN.md)
     options.UseKibana();
 #endif
 #if (translationSource != "en")

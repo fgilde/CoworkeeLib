@@ -1,6 +1,6 @@
 # Webhooks
 
-Mit `Coworkee.Webhooks` erfahren andere Systeme, was in deiner App passiert, ohne ständig nachzufragen. Admins einer Organisation tragen Endpunkte ein; jeder Endpunkt bekommt für die Ereignisse, die er ausgewählt hat, einen signierten `POST`. Ereignisse sind Änderungen an den Entity-Sets, die du freischaltest, Workflow-Übergänge und Ereignisse, die dein eigener Code veröffentlicht.
+Mit `Coworkee.Webhooks` erfahren andere Systeme, was in deiner App passiert, ohne ständig nachzufragen. Admins eines Mandanten tragen Endpunkte ein; jeder Endpunkt bekommt für die Ereignisse, die er ausgewählt hat, einen signierten `POST`. Ereignisse sind Änderungen an den Entity-Sets, die du freischaltest, Workflow-Übergänge und Ereignisse, die dein eigener Code veröffentlicht.
 
 Mit der CLI: `coworkee new Shop --webhooks true` (standardmäßig aus; mit den Beispielen senden Produkte Ereignisse). Von Hand:
 
@@ -62,7 +62,7 @@ webhook-signature: v1,K5oZfzN95Z9UVu1EsfQmfVNQhnkZ2pj9o9NDN/H/pI4=
 {"id":"0199f0c4-6c55-7a1e-9c1a-5a8b3f0e2d11","type":"products.updated","time":"2026-10-16T13:20:00+00:00","tenant":"0199…","data":{"id":"0199…","name":"Lamp","price":19.9}}
 ```
 
-`id` ist das Ereignis; es bleibt bei jeder Wiederholung und bei einer erneuten Zustellung gleich, so kann der Empfänger Doppelte verwerfen. `tenant` ist die Organisation.
+`id` ist das Ereignis; es bleibt bei jeder Wiederholung und bei einer erneuten Zustellung gleich, so kann der Empfänger Doppelte verwerfen. `tenant` ist der Mandant.
 
 **Die Daten sind das, was der Besitzer des Endpunkts lesen darf.** Besitzer ist, wer den Endpunkt zuletzt gespeichert hat. Ein Entity-Ereignis wird als diese Person über das Entity-Set gelesen: Fehlt ihr die Berechtigung des Sets oder blendet ein Zeilenfilter (`IODataEntityFilter<T>`) die Zeile aus, bekommt der Endpunkt dafür nichts; versteckte Properties des Sets und Response-Filter (`ResponseFilter<T>`) wirken wie in der API, Navigation Properties bleiben weg. Eine hart gelöschte Entity kommt nur mit ihrer Id. Daten aus `PublishAsync` gehen unverändert raus, lass also weg, was nicht jeder Admin lesen darf.
 
@@ -83,7 +83,7 @@ Der [Export personenbezogener Daten](../security/privacy.md) hat einen Abschnitt
 
 Zustellungen laufen über die Outbox und die Background Jobs; ein Absturz zwischen Speichern und Senden verliert also nichts. Jeder Versuch wartet höchstens `Timeout` auf eine Antwort; jeder 2xx-Status gilt als zugestellt. Weiterleitungen werden nicht verfolgt.
 
-Ein fehlgeschlagener Versuch wird mit exponentiellem Backoff wiederholt: 30 s, 1 min, 2 min, 4 min, 8 min (ab `FirstRetryDelay` jeweils doppelt so lang, gedeckelt bei `MaxRetryDelay`), insgesamt `MaxAttempts` (sechs) Versuche. Ist eine Zustellung endgültig gescheitert, zählt der Endpunkt mit; nach `DisableAfterFailures` gescheiterten Zustellungen in Folge wird er abgeschaltet, und sein Besitzer sowie die Inhaber der Administratorrolle der Organisation bekommen die Benachrichtigung `webhooks.disabled` (mit `Coworkee.Notifications` in der App; ohne das Modul wird das Abschalten nur geloggt). Eine erfolgreiche Zustellung setzt den Zähler zurück, das Wiedereinschalten auch.
+Ein fehlgeschlagener Versuch wird mit exponentiellem Backoff wiederholt: 30 s, 1 min, 2 min, 4 min, 8 min (ab `FirstRetryDelay` jeweils doppelt so lang, gedeckelt bei `MaxRetryDelay`), insgesamt `MaxAttempts` (sechs) Versuche. Ist eine Zustellung endgültig gescheitert, zählt der Endpunkt mit; nach `DisableAfterFailures` gescheiterten Zustellungen in Folge wird er abgeschaltet, und sein Besitzer sowie die Inhaber der Administratorrolle des Mandanten bekommen die Benachrichtigung `webhooks.disabled` (mit `Coworkee.Notifications` in der App; ohne das Modul wird das Abschalten nur geloggt). Eine erfolgreiche Zustellung setzt den Zähler zurück, das Wiedereinschalten auch.
 
 Das Protokoll behält die Anfrage mit ihren Headern (die Signatur maskiert als `v1,***`) und die Antwort, beide nach `LogBodyLimit` Zeichen gekürzt, für `LogRetentionDays` Tage: Der Job `coworkee-webhooks-log-cleanup` (täglich um 03:17) löscht ältere Zustellungen, `0` behält sie. Mit dem Modul [Aufbewahrung](retention.md) tut dieser Job nichts, und die Einstellung `Retention.webhook-deliveries.Days` entscheidet (Standard `LogRetentionDays`); die Admin-Seite *Aufbewahrung* ändert sie oder löscht sofort.
 
@@ -226,7 +226,7 @@ Ein *IF*-Knoten auf `{{$json.type}}` schickt danach `products.created` in die ei
 
 | Endpunkt | |
 |---|---|
-| `GET /api/v1/webhooks` | Endpunkte der Organisation |
+| `GET /api/v1/webhooks` | Endpunkte des Mandanten |
 | `POST /api/v1/webhooks` | anlegen mit `{ "url", "events", "description", "isActive", "secret"? }`, antwortet mit dem Geheimnis |
 | `PUT/DELETE /api/v1/webhooks/{id}` | ändern (ein `secret` ersetzt es sofort, ohne Übergangsfrist) / mit seinen Zustellungen löschen |
 | `GET /api/v1/webhooks/{id}/secret` | das Signaturgeheimnis |

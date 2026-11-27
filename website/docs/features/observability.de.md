@@ -48,13 +48,13 @@ Optionale Container: `UseLibreTranslate([...])` für die [maschinelle Übersetzu
 
 `UseSigNoz()` fügt SigNoz neben Grafana oder statt Grafana hinzu: Traces, Metriken und Logs in einer Oberfläche, mit Dashboards für HTTP, die .NET-Laufzeit, die Datenbank und Logs sowie Alert-Regeln, alles bei jedem Start angelegt. Optional, weil ClickHouse 1–2 GB Speicher braucht. Siehe [SigNoz](../hosting/observability.md#signoz).
 
-Beide melden sich mit dem Administrator der App an oder am Auth-Server der App als Administrator der Systemorganisation, ebenso AspireUI, Kibana und Open WebUI.
+Beide melden sich mit dem Administrator der App an oder am Auth-Server der App als Administrator des System-Mandanten, ebenso AspireUI, Kibana und Open WebUI.
 
 ## AspireUI und die Seite Dienste
 
 [![AspireUI](../assets/brands/aspireui.svg){ .cw-product-logo }](https://fgilde.github.io/AspireUI/)
 
-AspireUI hostet weitere Apps und Stacks neben deiner. Ein Aufruf lässt den Administrator der App hinein, macht die Administratoren der Systemorganisation über den Auth-Server der App zu AspireUI-Admins und gibt AspireUI im Deployment eine öffentliche Adresse:
+AspireUI hostet weitere Apps und Stacks neben deiner. Ein Aufruf lässt den Administrator der App hinein, macht die Administratoren des System-Mandanten über den Auth-Server der App zu AspireUI-Admins und gibt AspireUI im Deployment eine öffentliche Adresse:
 
 ```csharp
 builder.AddAspireUI().WithCoworkee(app).WithRetrieveApi();

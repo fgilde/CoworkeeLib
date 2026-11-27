@@ -13,7 +13,7 @@ Das Modul hängt von den Modulen Settings und Background Jobs ab und bringt die 
 
 ## Datenarten
 
-Jede Datenart wird über alle Organisationen hinweg gelöscht. Die Bibliothek löscht nach einem Update nie von selbst: Alles, was bisher für immer blieb, bleibt für immer, bis jemand Tage einstellt. Nur das Zustellprotokoll der Webhooks behält seine 30 Tage, und abgelaufene Zugriffstokens sowie Anhänge endgültig gelöschter Datensätze gehen nach einem Tag (sie nützen niemandem mehr).
+Jede Datenart wird über alle Mandanten hinweg gelöscht. Die Bibliothek löscht nach einem Update nie von selbst: Alles, was bisher für immer blieb, bleibt für immer, bis jemand Tage einstellt. Nur das Zustellprotokoll der Webhooks behält seine 30 Tage, und abgelaufene Zugriffstokens sowie Anhänge endgültig gelöschter Datensätze gehen nach einem Tag (sie nützen niemandem mehr).
 
 | Schlüssel | Modul | Daten | Alter nach | Standard |
 |---|---|---|---|---|
@@ -67,7 +67,7 @@ Das Webhook-Modul liest `Coworkee:Webhooks:LogRetentionDays` weiterhin als Stand
 
 ## Die Admin-Seite
 
-*Monitoring → Aufbewahrung*, für Benutzer der Systemorganisation mit `Retention.Manage` (Administratoren bekommen sie wie jede andere Berechtigung). Eine Zeile pro Datenart:
+*Monitoring → Aufbewahrung*, für Benutzer des System-Mandanten mit `Retention.Manage` (Administratoren bekommen sie wie jede andere Berechtigung). Eine Zeile pro Datenart:
 
 - **Behalten (Tage)**: leer behält alles; schon beim Tippen zählt *Betroffen jetzt*, was diese Tage löschen würden. *Speichern* speichert alle geänderten Zeilen.
 - **Letzter Lauf**: wann, wie viele Zeilen und der Fehler des letzten Laufs. Eine laufende Zeile zeigt einen Fortschrittsbalken; die Seite fragt alle 2 Sekunden den Laufzustand ab (`?counts=false`, ohne Zählung) und zählt neu, sobald der Lauf fertig ist.
@@ -82,7 +82,7 @@ Der Abschnitt *Aufbewahrung* der Systemstatus-Seite (`/cw/admin/system-status`) 
 | `PUT /api/v1/retention` | `{ "audit": 365, "mail-log": null }` speichert die Tage (höchstens 36500; `null` oder `0` behält alles) |
 | `POST /api/v1/retention/{key}/run` | Body `{ "days": N }` (1 bis 36500): `202` und ein Hintergrundjob, `409`, solange der Schlüssel läuft |
 
-Alle brauchen `Retention.Manage` und die Systemorganisation (sonst `403` mit `retention.system_only`).
+Alle brauchen `Retention.Manage` und den System-Mandanten (sonst `403` mit `retention.system_only`).
 
 ## Eigene Datenart
 
@@ -112,7 +112,7 @@ internal sealed class SensorReadingRetention(CoworkeeDbContext db) : IRetentionT
 services.AddRetentionTarget<SensorReadingRetention>();
 ```
 
-- Über alle Organisationen löschen: `IgnoreQueryFilters()`.
+- Über alle Mandanten löschen: `IgnoreQueryFilters()`.
 - `ExecuteDeleteInBatchesAsync` (`Coworkee.Infrastructure.Persistence`) löscht 1000 Zeilen pro Anweisung, damit keine Anweisung eine große Tabelle lange sperrt. Wie jedes `ExecuteDelete` umgeht es den Change Tracker: kein Audit-Eintrag, keine Realtime-Nachricht.
 - Zeilen mit Blob: erst die Zeile löschen, dann den Blob.
 - Einen weich gelöschten Typ, den dein Target selbst aufräumt, nimmt `services.AddRetentionOwnedType<T>()` aus `soft-deleted` heraus.
@@ -122,6 +122,6 @@ services.AddRetentionTarget<SensorReadingRetention>();
 
 `coworkee-retention` läuft nach `Coworkee:Retention:Cron` (Standard `41 2 * * *`, UTC). Er arbeitet die Datenarten mit eingestellten Tagen nacheinander ab, jede in einem eigenen Scope; ein Fehler landet im Lauf und hält die anderen nicht auf. Ein Lauf, der mit seinem Prozess abgestürzt ist, gilt nach zwei Stunden als beendet; jeder Anspruch hat sein eigenes Token, so gibt ein verspäteter erster Lauf nie den Anspruch des Laufs frei, der übernommen hat.
 
-- Die Tage gelten systemweit: Eigene Tage pro Organisation gibt es nicht.
+- Die Tage gelten systemweit: Eigene Tage pro Mandant gibt es nicht.
 - Es gibt kein Archiv: Gelöschte Daten sind weg.
 - Die Job-Historie von Hangfire und die Instanzen von Elsa haben ihren eigenen Ablauf und stehen nicht auf der Seite; nie gesendete Chat-Anhänge behalten ihre stündliche Bereinigung.

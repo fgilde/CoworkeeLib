@@ -23,9 +23,9 @@ services.AddScoped<IPersonalDataContributor, TaskPersonalData>();
 ## Die Regeln des Löschens
 
 - **Seine eigenen Daten gehen**: was nur seinetwegen existiert und nur ihm dient (Profil, Einstellungen, Benachrichtigungen, Schlüssel, Sitzungen, private Berichte, seine Jobs und Zeitpläne, seine Chat-Nachrichten und Kommentare).
-- **Datensätze der Organisation bleiben**, mit `PersonalDataSubject.ErasedUserId` (`00000000-0000-0000-0000-000000000000`) an der Stelle seiner ID: „ein gelöschter Benutzer", anders als `null`, „niemand". Freitext, den er hineingeschrieben hat (Workflow-Kommentare), geht.
+- **Datensätze des Mandanten bleiben**, mit `PersonalDataSubject.ErasedUserId` (`00000000-0000-0000-0000-000000000000`) an der Stelle seiner ID: „ein gelöschter Benutzer", anders als `null`, „niemand". Freitext, den er hineingeschrieben hat (Workflow-Kommentare), geht.
 - **Nichts läuft mehr als er**: Berichtsabos, geplante Exporte und laufende Exporte stoppen, Webhook-Endpunkte, die ihm gehörten, werden abgeschaltet, seine Adresse verschwindet aus den Empfängern anderer Zeitpläne, auf ihn wartende Freigaben gehen weiter, seine Tokens, API-Schlüssel, Links und der zwischengespeicherte Sitzungsstempel verschwinden.
-- **Organisationen**: Eine Benutzer-ID gehört zu einem Benutzer einer Organisation (`Users.TenantId`); Zeilen mit seiner ID sind also seine, wo immer sie liegen (die ID eines Host-Administrators an den Organisationen, die er angelegt hat). Zeilen, die über seine **E-Mail-Adresse** gefunden werden, zählen nur in seiner Organisation: Dieselbe Adresse kann einem anderen Benutzer einer anderen Organisation gehören.
+- **Mandanten**: Eine Benutzer-ID gehört zu einem Benutzer eines Mandanten (`Users.TenantId`); Zeilen mit seiner ID sind also seine, wo immer sie liegen (die ID eines Host-Administrators an den Mandanten, die er angelegt hat). Zeilen, die über seine **E-Mail-Adresse** gefunden werden, zählen nur in seinem Mandanten: Dieselbe Adresse kann einem anderen Benutzer eines anderen Mandanten gehören.
 
 Nach den Contributors speichert die Bibliothek einmal und führt dann ihren eigenen Schritt (`PersonalDataReferences`, Coworkee.Infrastructure) über die ganze Datenbank aus:
 
@@ -43,7 +43,7 @@ Danach wird der zwischengespeicherte Sicherheitsstempel auf jeder Instanz verwor
 
 ### Der Audit-Verlauf
 
-Der Verlauf beantwortet, *was mit welchem Datensatz wann geschah, und ob eine Person oder das System es tat*. Das bleibt: Es ist der Nachweis der Organisation, und ihn zu löschen ließe ein Löschen Änderungen verbergen. *Wer* die Person war und was der Verlauf über sie festgehalten hat, geht: Seine ID wird zum Platzhalter, und die Werte seiner eigenen Datensätze (sein Benutzer, seine Mitgliedschaften, die Kommentare, Nachrichten, Einstellungen und andere Datensätze, die er angelegt hat und die nicht mehr existieren) werden `***`. Werte von Datensätzen, die bleiben (ein Auftrag, den er bearbeitet hat), bleiben, ohne seine ID und Adresse. Namen des Benutzers, die andere als Freitext eingegeben haben, werden nicht gesucht.
+Der Verlauf beantwortet, *was mit welchem Datensatz wann geschah, und ob eine Person oder das System es tat*. Das bleibt: Es ist der Nachweis des Mandanten, und ihn zu löschen ließe ein Löschen Änderungen verbergen. *Wer* die Person war und was der Verlauf über sie festgehalten hat, geht: Seine ID wird zum Platzhalter, und die Werte seiner eigenen Datensätze (sein Benutzer, seine Mitgliedschaften, die Kommentare, Nachrichten, Einstellungen und andere Datensätze, die er angelegt hat und die nicht mehr existieren) werden `***`. Werte von Datensätzen, die bleiben (ein Auftrag, den er bearbeitet hat), bleiben, ohne seine ID und Adresse. Namen des Benutzers, die andere als Freitext eingegeben haben, werden nicht gesucht.
 
 ## Eingebaute Abschnitte
 
@@ -54,9 +54,9 @@ Der Verlauf beantwortet, *was mit welchem Datensatz wann geschah, und ob eine Pe
 | `apiKeys` | Identity | [API-Schlüssel](api-keys.md) (Name, Präfix, Berechtigungen, Daten, letzte Nutzung), nie der Hash | seine Schlüssel gelöscht; Schlüssel anderer, die er widerrufen hat, behalten den Widerruf mit dem Platzhalter |
 | `signIns` | Auth-Server | freigegebene Clients | Freigaben und Tokens gelöscht, jede Sitzung endet |
 | `settings` | Einstellungen | Werte mit Benutzerbereich (Geheimnisse als `***`) | gelöscht |
-| `clientValues` | Einstellungen | seine eigenen [Client-Werte](../modules/settings.de.md#client-werte) (Schlüssel, Wert, letzte Änderung) | gelöscht, in jeder Organisation; globale Werte bleiben |
-| `notifications` | Benachrichtigungen | Benachrichtigungen, Geräte mit Web Push, Einstellungen, gefolgte Datensätze, auf ihre Verzögerung wartende Mails, letzter Digest | gelöscht, in jeder Organisation |
-| `mails` | Mailversand | Mails an die Adresse in seiner Organisation, ohne Inhalt | samt Anhängen gelöscht, in seiner Organisation |
+| `clientValues` | Einstellungen | seine eigenen [Client-Werte](../modules/settings.de.md#client-werte) (Schlüssel, Wert, letzte Änderung) | gelöscht, in jedem Mandanten; globale Werte bleiben |
+| `notifications` | Benachrichtigungen | Benachrichtigungen, Geräte mit Web Push, Einstellungen, gefolgte Datensätze, auf ihre Verzögerung wartende Mails, letzter Digest | gelöscht, in jedem Mandanten |
+| `mails` | Mailversand | Mails an die Adresse in seinem Mandanten, ohne Inhalt | samt Anhängen gelöscht, in seinem Mandanten |
 | `chat` | Chat | `messages` (überall gesendet, in Direkt-Chats empfangen), `memberships`, `reactions`, `attachments` (aufgelistet, ohne Inhalt) | gesendete Nachrichten samt Dateien, Reaktionen und Mitgliedschaften gelöscht; Direkt-Chats mit beiden Seiten gelöscht; Gruppen-Chats, die er angelegt hat, bleiben mit dem Platzhalter als Ersteller |
 | `social` | Kommentare, Tags, Bewertungen, Reaktionen | eigene Kommentare, Bewertungen und Reaktionen | gelöscht, Antworten auf die Kommentare ebenso |
 | `aiToolCalls`, `aiConversations` | KI | Tool-Aufrufe (Tool, Kanal, Eingabe, Ergebnis), Unterhaltungen | gelöscht |
@@ -66,7 +66,7 @@ Der Verlauf beantwortet, *was mit welchem Datensatz wann geschah, und ob eine Pe
 | `files` | Dateien | hochgeladene Dateien (Name, Typ, Größe) | bleiben mit dem Platzhalter als hochladender Person; seine Registrierungsunterlagen (`Registrations/{user}`) samt Inhalt und Ordner gelöscht |
 | `attachments` | Anhänge an Datensätzen | angehängte Dateien (Datensatz, Slot, Name, Typ, Größe) | bleiben mit dem Platzhalter als hochladender Person |
 | `reports` | Berichte | eigene `reports`, `favorites`, `subscriptions` (Zeitplan, Filter), `dashboard` | private Berichte, Favoriten, Abos und Dashboard-Wahl gelöscht; geteilte Berichte bleiben für ihr Publikum, Eigentümer ist der Platzhalter (niemand ändert sie mehr) |
-| `dataTransfers` | Import und Export | `jobs` (Dateien mit Name und Größe aufgelistet), eigene `schedules`, `mailedBy` (Zeitpläne anderer, die ihm mailen) | Jobs samt Dateien gelöscht (ein laufender Export stoppt), seine Zeitpläne gelöscht, seine Adresse aus den Empfängern der anderen in seiner Organisation entfernt |
+| `dataTransfers` | Import und Export | `jobs` (Dateien mit Name und Größe aufgelistet), eigene `schedules`, `mailedBy` (Zeitpläne anderer, die ihm mailen) | Jobs samt Dateien gelöscht (ein laufender Export stoppt), seine Zeitpläne gelöscht, seine Adresse aus den Empfängern der anderen in seinem Mandanten entfernt |
 | `webhooks` | Webhooks | Endpunkte, die er zuletzt gespeichert hat (URL, Ereignisse, Zustand) | bleiben, abgeschaltet und im Besitz des Platzhalters, da Zustellungen mit seinen Berechtigungen liefen; erneutes Speichern macht den Administrator zum Eigentümer |
 | `workflows` | Workflows | ausgeführte `steps` (mit Kommentaren), `decisions`, angeforderte Freigaben (`requested`) | Verlauf und Entscheidungen bleiben mit dem Platzhalter, seine Kommentare werden entfernt; er verlässt offene Freigaben, und eine, die danach auf niemanden mehr wartet, ist sofort überfällig (der Fristen-Job setzt sie in ihren Timeout-Zustand oder holt die Eskalationsrollen dazu; eine bereits eskalierte wird abgebrochen) |
 | keiner | Aufbewahrung | | von Hand gestartete Bereinigungen behalten den Platzhalter als `LastRunBy` |
@@ -77,7 +77,7 @@ Der Verlauf beantwortet, *was mit welchem Datensatz wann geschah, und ob eine Pe
 
 | Daten | Warum | Bis |
 |---|---|---|
-| Audit-Verlauf und Snapshots, wie oben beschrieben | Nachweis über die Datensätze der Organisation | die [Aufbewahrungs](../modules/retention.md)-Ziele `audit` und `snapshots` |
+| Audit-Verlauf und Snapshots, wie oben beschrieben | Nachweis über die Datensätze des Mandanten | die [Aufbewahrungs](../modules/retention.md)-Ziele `audit` und `snapshots` |
 | Inhalte verarbeiteter Outbox-Nachrichten (Domain Events) | Zustellprotokoll des Event-Busses | das Ziel `outbox` |
 | Webhook-Zustellprotokolle (an Empfänger gesendete Inhalte) | was das System an Dritte verlassen hat | das Ziel `webhook-deliveries` |
 | Benachrichtigungen, Chat-Nachrichten und Kommentare anderer, die ihn im Text nennen | sie gehören den anderen Benutzern | das Ziel `notifications` bzw. solange die anderen sie behalten |
@@ -102,7 +102,7 @@ Der Verlauf beantwortet, *was mit welchem Datensatz wann geschah, und ob eine Pe
 
 Der letzte aktive Administrator lässt sich nicht löschen (`409 identity.last_admin`). Keiner dieser Requests steht dem KI-Assistenten zur Verfügung. Wer als anderer Benutzer angemeldet ist ([Anmelden als](../features/identity.md#als-anderer-benutzer-anmelden)), kann weder dessen Daten exportieren noch das Konto löschen (`403 auth.impersonating`).
 
-Der Export entsteht synchron: Die Daten eines Benutzers sind klein, und es bleibt nichts im Speicher zurück, das eigenen Ablauf und eigenes Aufräumen bräuchte. Erst wenn einzelne Benutzer viele Megabyte erreichen, lohnt sich ein Hintergrundjob. Dateien werden aufgelistet, nicht mitgeliefert: Uploads und Anhänge gehören zu den Datensätzen der Organisation, Exportdateien enthalten Zeilen der Organisation.
+Der Export entsteht synchron: Die Daten eines Benutzers sind klein, und es bleibt nichts im Speicher zurück, das eigenen Ablauf und eigenes Aufräumen bräuchte. Erst wenn einzelne Benutzer viele Megabyte erreichen, lohnt sich ein Hintergrundjob. Dateien werden aufgelistet, nicht mitgeliefert: Uploads und Anhänge gehören zu den Datensätzen des Mandanten, Exportdateien enthalten Zeilen des Mandanten.
 
 ## Im Client
 

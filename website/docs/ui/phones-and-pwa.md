@@ -36,7 +36,7 @@ The component links the web manifest and colours the browser's title bar like th
 
 | Address | What it is |
 |---|---|
-| `/manifest.webmanifest` | Name of the app, colours and logo of the organisation's theme (the theme's logo, else the app's icon). |
+| `/manifest.webmanifest` | Name of the app, colours and logo of the tenant's theme (the theme's logo, else the app's icon). |
 | `/service-worker.js` | The service worker; its version follows the app's static files, so every deployment brings a new one. |
 | `/bff/pwa/icon` | The icon: the theme's logo or the configured icon. |
 | `/bff/pwa/offline` | The page shown while there is no network, in the theme and the user's language. |

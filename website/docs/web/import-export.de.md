@@ -1,6 +1,6 @@
 # Import und Export
 
-Deine Nutzer holen Zeilen aus CSV-, Excel- oder JSON-Dateien herein und bringen sie wieder hinaus, ohne dass du einen Parser oder eine Upload-Seite schreibst. Jede importierte Zeile läuft durch deinen eigenen Command. Berechtigungen, Organisation, Validierung und Audit-Log gelten also genauso, als hätte jemand das Formular ausgefüllt.
+Deine Nutzer holen Zeilen aus CSV-, Excel- oder JSON-Dateien herein und bringen sie wieder hinaus, ohne dass du einen Parser oder eine Upload-Seite schreibst. Jede importierte Zeile läuft durch deinen eigenen Command. Berechtigungen, Mandant, Validierung und Audit-Log gelten also genauso, als hätte jemand das Formular ausgefüllt.
 
 ## Freischalten pro Entity-Set
 
@@ -104,7 +104,7 @@ Das Export-Menü einer Tabelle bietet Inhabern der Berechtigung *Export planen*;
 
 ## Personenbezogene Daten
 
-Der [Export personenbezogener Daten](../security/privacy.md) hat einen Abschnitt `dataTransfers`: die Jobs des Benutzers (Dateien mit Name und Größe aufgelistet, nicht mitgeliefert), seine geplanten Exporte und die Zeitpläne anderer, die ihm mailen. Das Löschen des Benutzers entfernt seine Jobs samt Dateien (ein laufender Export stoppt) und seine Zeitpläne und nimmt seine Adresse aus den Empfängern der anderen Zeitpläne seiner Organisation.
+Der [Export personenbezogener Daten](../security/privacy.md) hat einen Abschnitt `dataTransfers`: die Jobs des Benutzers (Dateien mit Name und Größe aufgelistet, nicht mitgeliefert), seine geplanten Exporte und die Zeitpläne anderer, die ihm mailen. Das Löschen des Benutzers entfernt seine Jobs samt Dateien (ein laufender Export stoppt) und seine Zeitpläne und nimmt seine Adresse aus den Empfängern der anderen Zeitpläne seines Mandanten.
 
 ## HTTP-API
 

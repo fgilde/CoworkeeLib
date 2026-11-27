@@ -64,7 +64,7 @@ new CoworkeeNavItem("Reports", "/reports", Icons.Material.Outlined.Assessment, F
 
 ## Administration
 
-Both pages belong to the system organisation: every admin holds the permissions, the server also checks that the user belongs to the host.
+Both pages belong to the system tenant: every admin holds the permissions, the server also checks that the user belongs to the host.
 
 - *Administration > Tenants* (`Features.Tenants`): all tenants with their user count; create (optionally with a first administrator) and edit, activate and deactivate, assign an edition, override single features.
 - *Administration > Editions* (`Features.Editions`): create, rename and delete editions and set their feature values. Deleting an edition puts its tenants back on the defaults.

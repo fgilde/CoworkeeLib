@@ -28,7 +28,7 @@ context.Services.AddGlobalSearch<Product>(s => s
     .Icon("ViewCarousel"));
 ```
 
-The search sees exactly what the OData list of the set returns: its permission, the organisation, [row rules](odata.md#row-level-rules) and soft deletion. Searching a hidden property fails at start. It runs in two rounds: values that start with the text (or the record of a typed id) come at once, values that contain every word follow.
+The search sees exactly what the OData list of the set returns: its permission, the tenant, [row rules](odata.md#row-level-rules) and soft deletion. Searching a hidden property fails at start. It runs in two rounds: values that start with the text (or the record of a typed id) come at once, values that contain every word follow.
 
 Fields may read through a navigation (`t => t.Customer!.Name`): they are read in the query and follow the [navigation rules](odata.md#navigations-follow-their-target), so a hidden target neither matches nor shows. `Title`, `Subtitle`, `Url` and `Thumbnail` run on the loaded row, which has no navigations; use fields for values of other rows.
 
@@ -75,7 +75,7 @@ When the set is a [client entity](../ui/client-entities.md) whose copy is comple
 | `users` | name, user name, e-mail; opens the user | `Identity.Users.View` |
 | `roles`, `groups` | name and description | `Identity.Roles.View`, `Identity.Groups.View` |
 | `files` | file names; opens the files page with the preview | `Files.View` |
-| `reports` | reports the user sees (own, organisation, own roles) | `Reports.View` |
+| `reports` | reports the user sees (own, tenant, own roles) | `Reports.View` |
 | `chats` | the user's own conversations whose messages contain the words | `Chat.Use` |
 
 Pages and actions stay in the palette itself (they are known in the browser).
@@ -113,7 +113,7 @@ For [totals](#pages-and-totals) a provider also implements `Task<long?> CountAsy
 
 ## Search index (Elasticsearch)
 
-With the [search module](../modules/search.md) an index alias becomes a provider. The index cannot apply the rules of the database: each document carries its organisation (`tenantId`, set another field with `TenantField`), and `Where` adds the filters a user needs.
+With the [search module](../modules/search.md) an index alias becomes a provider. The index cannot apply the rules of the database: each document carries its tenant (`tenantId`, set another field with `TenantField`), and `Where` adds the filters a user needs.
 
 ```csharp
 services.AddGlobalSearchIndex("myapp-products", s => s
@@ -135,7 +135,7 @@ services.AddGlobalSearchIndex("myapp-products", s => s
 
 ### Pages and totals
 
-A results page that shows a table per type with a pager asks for one type at a time: `skip` leaves out the provider's first hits (at most `Coworkee:GlobalSearch:MaxSkip`, default 1000; each page reads the hits before it), `totals=true` adds how many records match in all, `GlobalSearchProviderStatus.Total` (in the stream `Total` on the provider's last line). Sets searched with `AddGlobalSearch` count the rows the search can find (every word in one of the fields, the same rows and organisations as the hits); an own provider counts by implementing `CountAsync`, without it `Total` stays null.
+A results page that shows a table per type with a pager asks for one type at a time: `skip` leaves out the provider's first hits (at most `Coworkee:GlobalSearch:MaxSkip`, default 1000; each page reads the hits before it), `totals=true` adds how many records match in all, `GlobalSearchProviderStatus.Total` (in the stream `Total` on the provider's last line). Sets searched with `AddGlobalSearch` count the rows the search can find (every word in one of the fields, the same rows and tenants as the hits); an own provider counts by implementing `CountAsync`, without it `Total` stays null.
 
 ```csharp
 // page 3 of the shipments, 5 per page, with the total for "x-y of n"

@@ -8,7 +8,7 @@ Coworkee has two kinds of configuration that administrators change at runtime.
 | Defined by | `ISettingDefinitionContributor` | a C# class, optionally generated from JSON |
 | Stored in | settings table, secrets encrypted | `cw.ConfigurationEntries`, read through `IConfiguration` |
 | Read with | `ISettingProvider` | `IOptionsMonitor<T>` |
-| Admin page | Settings, tabs System and Organisation | Settings, one tab per class (system tenant only) |
+| Admin page | Settings, tabs System and Tenant | Settings, one tab per class (system tenant only) |
 
 ## Settings
 
@@ -33,13 +33,13 @@ var allowed = await settings.GetAsync<bool>(AccountSettings.AllowRegistration, c
 
 Defaults can also come from configuration, `Coworkee:Settings:Defaults:<name>`: the app host sets `Coworkee:Settings:Defaults:Mail.Smtp.Host` and `Mail.Smtp.Port` for Mailpit.
 
-A saved setting reaches every open page at once: global settings on the realtime topic `global:settings` (`SettingTopics.Global`), settings of the organisation on `tenant:settings`, user settings on the user's topic; the events name the setting, never its value. The Blazor client (`SettingsLiveUpdates` in `CoworkeeLayout`) reloads its client settings, and everything that follows `ThemeService.Changed` changes without a reload: the assistant button, the page mode of tables, the theme. Own components do the same with `ThemeService.Changed`, or follow the topics with `<RealtimeSubscription>`.
+A saved setting reaches every open page at once: global settings on the realtime topic `global:settings` (`SettingTopics.Global`), settings of the tenant on `tenant:settings`, user settings on the user's topic; the events name the setting, never its value. The Blazor client (`SettingsLiveUpdates` in `CoworkeeLayout`) reloads its client settings, and everything that follows `ThemeService.Changed` changes without a reload: the assistant button, the page mode of tables, the theme. Own components do the same with `ThemeService.Changed`, or follow the topics with `<RealtimeSubscription>`.
 
 The section **Cloud file pickers** of the System tab holds the ids of Google Drive, OneDrive and Dropbox for every upload field, see [Files](files.md#cloud-file-pickers).
 
 ### Own settings in the admin page
 
-The tabs **System** (scope `Global`) and **Organisation** (scope `Tenant`) and the user's **My settings** (scope `User`) have no form code per setting. They load the definitions and render them with `MudExObjectEditForm`, so a setting of your module appears there as soon as its contributor is registered:
+The tabs **System** (scope `Global`) and **Tenant** (scope `Tenant`) and the user's **My settings** (scope `User`) have no form code per setting. They load the definitions and render them with `MudExObjectEditForm`, so a setting of your module appears there as soon as its contributor is registered:
 
 ```csharp title="Server module"
 internal sealed class BillingSettingDefinitions : ISettingDefinitionContributor
@@ -63,14 +63,14 @@ context.Services.AddSingleton<ISettingDefinitionContributor, BillingSettingDefin
 | `Bool` | a check box, showing the stored value or the default |
 | `Choice` | a select of the `choices`; each value is shown translated when the translations have an entry for it, else as is |
 | `MultiChoice` | a select of the `choices` with several values, stored comma separated (`Reading,Writing`); nothing chosen is stored as an empty value, which unlike no value does not fall back to the default. Read it with `SettingDefinition.SplitChoices(value)` |
-| `Language` | a select of the app's languages; empty means inherit, shown as *Configured default* in the System tab and *Inherited* in Organisation and My settings (labelled *Language* in My settings) |
+| `Language` | a select of the app's languages; empty means inherit, shown as *Configured default* in the System tab and *Inherited* in Tenant and My settings (labelled *Language* in My settings) |
 | `Secret` | a password field that stays empty; the help text says whether a value is stored, and only a typed value is sent |
 | `enabledWhen` | the field is disabled while the other setting's value is not in the condition's values |
 | `fixedValue` | the host fixes the value in its configuration (e.g. `ModeOverride` for `Auth.LoginMode`): the field is disabled and the help text names the fixed value; the stored value applies once the host no longer fixes it |
 | group with a `page` | not shown on the settings tabs; see below |
 | scopes | a setting shows in the tab of each of its scopes |
 
-Saving sends only the changed values; the server checks them (`Expected a whole number.` and so on) and the message shows in the snackbar. Who sees the tabs follows the `Settings.Manage` permission; **System** is shown in the system organisation only.
+Saving sends only the changed values; the server checks them (`Expected a whole number.` and so on) and the message shows in the snackbar. Who sees the tabs follows the `Settings.Manage` permission; **System** is shown in the system tenant only.
 
 Behind the form is a class built at runtime with one property per setting (`Mail.Smtp.Host` becomes `Mail_Smtp_Host`), so the form behaves like every other object form. Fields have no reset of their own: clear a text or number field to return to the default.
 
@@ -103,7 +103,7 @@ The setting then changes only with that permission on top of the scope's own rul
 
 ### Groups on their own page
 
-`context.Group(name, displayName, page: "/admin/ai-settings")` marks a group as maintained on its own admin page. The settings tabs skip it, and the user's **My settings** keep every group that has no page. The AI group works this way: its settings, including the MCP switch, live on `/admin/ai-settings`. So does Mail: provider, credentials and the own-server switch of an organisation live on `/admin/mail-settings`, see [Mailing](mailing.md#the-mail-settings-page). Retention keeps its days on `/admin/retention`, see [Retention](retention.md).
+`context.Group(name, displayName, page: "/admin/ai-settings")` marks a group as maintained on its own admin page. The settings tabs skip it, and the user's **My settings** keep every group that has no page. The AI group works this way: its settings, including the MCP switch, live on `/admin/ai-settings`. So does Mail: provider, credentials and the own-server switch of a tenant live on `/admin/mail-settings`, see [Mailing](mailing.md#the-mail-settings-page). Retention keeps its days on `/admin/retention`, see [Retention](retention.md).
 
 ### One topic on a page of its own
 
@@ -118,7 +118,7 @@ A page that gathers one topic from settings and app configuration uses the same 
 
 ### Language settings
 
-`SettingType.Language` fits settings that hold a culture. `Localization.Culture` (**Default language**) is the language the app starts in: an organisation overrides the system value, and a user overrides both. An empty value inherits.
+`SettingType.Language` fits settings that hold a culture. `Localization.Culture` (**Default language**) is the language the app starts in: a tenant overrides the system value, and a user overrides both. An empty value inherits.
 
 ![Settings page](../assets/screenshots/settings.png){ .shot }
 
@@ -127,30 +127,30 @@ A page that gathers one topic from settings and app configuration uses the same 
 A tag manager or an analytics snippet belongs in the head of every page. The head script is a setting for that, off until the app turns it on in a server module:
 
 ```csharp
-context.Services.AddCoworkeeHeadScript();                         // one script for the installation, set from the system organisation
-context.Services.AddCoworkeeHeadScript(perOrganisation: true);    // every organisation may set its own for its users
+context.Services.AddCoworkeeHeadScript();                         // one script for the installation, set from the system tenant
+context.Services.AddCoworkeeHeadScript(perOrganisation: true);    // every tenant may set its own for its users
 ```
 
 | | |
 |---|---|
 | Settings | `HeadScript.Enabled` (*Head script on*) and `HeadScript.Value` (*Head script*, HTML with `<script>` tags) in the group *Head script*, scopes `Global` (and `Tenant` with `perOrganisation`); a default goes into `Coworkee:Settings:Defaults:HeadScript.Value` |
 | Permission | `Settings.HeadScript` (*Change the head script*). Every change needs it, also through the settings tabs and `PUT /api/v1/settings/{scope}`, where `Settings.Manage` is needed on top |
-| Read | `GET /api/v1/settings/head-script` answers `{ enabled, value }` without sign-in (the installation's script), signed in with the script of the user's organisation, else the installation's. Signed-in clients get both values with the client settings |
-| Change | `PUT /api/v1/settings/head-script` with `{ enabled, value }`: from the system organisation the installation's script, from any other organisation its own (with `perOrganisation`, else `403`); at most 50,000 characters. The AI assistant and MCP cannot call it |
+| Read | `GET /api/v1/settings/head-script` answers `{ enabled, value }` without sign-in (the installation's script), signed in with the script of the user's tenant, else the installation's. Signed-in clients get both values with the client settings |
+| Change | `PUT /api/v1/settings/head-script` with `{ enabled, value }`: from the system tenant the installation's script, from any other tenant its own (with `perOrganisation`, else `403`); at most 50,000 characters. The AI assistant and MCP cannot call it |
 | Blazor app | the layout adds the script once the app has started: inline JavaScript runs in the global scope, `<script src>` loads as a tag, `<noscript>` and `<iframe>` go to the end of the body. A changed script applies after a reload |
 
 The web app's Content-Security-Policy allows no inline scripts. The layout therefore runs inline JavaScript through `eval`, which the policy allows for Blazor already; a script loaded from another host (`https://www.googletagmanager.com` for Google Tag Manager) needs that host in `script-src`, and whatever it sends or shows needs `connect-src`, `img-src` or `frame-src`: `Coworkee:Bff:SecurityHeaders:Sources`, see [Security headers of the web app](../security/authentication.md#security-headers-of-the-web-app). A replaced policy without `'unsafe-eval'` runs no inline head script.
 
 !!! warning "A script setting is stored cross-site scripting by design"
-    The script runs in the browser of every user with the user's session: it can read the pages and call the API as the user. Grant `Settings.HeadScript` to few people (the system role *Admin* has every permission, with `perOrganisation` also in each organisation). Every change is in the audit log (`SettingValue`, with who changed it; the value itself is masked like every setting value). An organisation's script reaches only its own users, never another organisation's or those of the system organisation; a user who signs in as someone else gets the script of that user's organisation until the page is loaded again.
+    The script runs in the browser of every user with the user's session: it can read the pages and call the API as the user. Grant `Settings.HeadScript` to few people (the system role *Admin* has every permission, with `perOrganisation` also in each tenant). Every change is in the audit log (`SettingValue`, with who changed it; the value itself is masked like every setting value). A tenant's script reaches only its own users, never another tenant's or those of the system tenant; a user who signs in as someone else gets the script of that user's tenant until the page is loaded again.
 
 ### Endpoints and permissions
 
 | Route | Who |
 |---|---|
 | `GET /api/v1/settings/definitions` | `Settings.Manage`: the groups and definitions of the tabs |
-| `GET`/`PUT /api/v1/settings/global` | `Settings.Manage`, from the system organisation only |
-| `GET`/`PUT /api/v1/settings/tenant` | `Settings.Manage`: the values of the user's organisation |
+| `GET`/`PUT /api/v1/settings/global` | `Settings.Manage`, from the system tenant only |
+| `GET`/`PUT /api/v1/settings/tenant` | `Settings.Manage`: the values of the user's tenant |
 | `GET /api/v1/settings/definitions/user`, `GET`/`PUT /api/v1/settings/user` | every signed-in user: the definitions and values of scope `User` (*My settings*) |
 | `GET /api/v1/settings/client` | every signed-in user: the values of the settings with `visibleToClient: true`, as they apply to the user |
 | `GET`/`PUT /api/v1/settings/head-script` | see [Head script](#head-script) |
@@ -159,7 +159,7 @@ Reads list every definition of the scope with `hasValue`; secrets never come bac
 
 ## Client values
 
-Some state of a client needs no definition: the layouts of a list, the templates of a form, the presets of a filter. **Client values** store such free text under a key, for the user (`ClientValueScope.User`) or for every user of the organisation (`ClientValueScope.Global`). Reads merge both: the user's own value wins, `isUserValue` tells which one applied. The value is stored as it is, usually JSON.
+Some state of a client needs no definition: the layouts of a list, the templates of a form, the presets of a filter. **Client values** store such free text under a key, for the user (`ClientValueScope.User`) or for every user of the tenant (`ClientValueScope.Global`). Reads merge both: the user's own value wins, `isUserValue` tells which one applied. The value is stored as it is, usually JSON.
 
 ```razor
 @inject IClientValues Values   @* Coworkee.Client.Blazor.Data *@
@@ -192,13 +192,13 @@ Some state of a client needs no definition: the layouts of a list, the templates
 
 | Route | Who |
 |---|---|
-| `GET /api/v1/client-values` | every signed-in user: his values and the organisation's global ones, merged (`key`, `value`, `isUserValue`), ordered by key |
+| `GET /api/v1/client-values` | every signed-in user: his values and the tenant's global ones, merged (`key`, `value`, `isUserValue`), ordered by key |
 | `GET /api/v1/client-values/keys` | the keys of the same list |
 | `GET /api/v1/client-values/value?key=` | one value; `value: null` when there is none |
 | `PUT /api/v1/client-values` | `{ key, value, scope }`: `User` (default) for the caller's own value; `Global` needs `Settings.ClientValues.ManageGlobal` |
 | `DELETE /api/v1/client-values?key=&scope=` | the caller's own value (default), or with `scope=Global` and the permission the global one; nothing to delete is no error |
 
-A key holds up to 256 printable characters (no line breaks or other control characters; spaces, `/` and `&` are fine, so keys go in the query). Limits in `Coworkee:ClientValues`: `MaxValueBytes` (default 65536, UTF-8) and `MaxKeysPerUser` (default 1000 own keys per user and organisation; existing keys still change). A broken rule answers 400. The rows live in `cw.ClientValues` (the app's next migration creates the table), belong to the organisation and are audited; a user's own values are part of his [personal data](../security/privacy.md) (section `clientValues`) and are deleted with him. No other user, not even an administrator, reads them through the API.
+A key holds up to 256 printable characters (no line breaks or other control characters; spaces, `/` and `&` are fine, so keys go in the query). Limits in `Coworkee:ClientValues`: `MaxValueBytes` (default 65536, UTF-8) and `MaxKeysPerUser` (default 1000 own keys per user and tenant; existing keys still change). A broken rule answers 400. The rows live in `cw.ClientValues` (the app's next migration creates the table), belong to the tenant and are audited; a user's own values are part of his [personal data](../security/privacy.md) (section `clientValues`) and are deleted with him. No other user, not even an administrator, reads them through the API.
 
 ```json
 { "Coworkee": { "ClientValues": { "MaxValueBytes": 1048576, "MaxKeysPerUser": 2000 } } }
@@ -274,11 +274,11 @@ builder.Services.AddCoworkeeSettings<ShopSettings>(section: "Shop", title: "Shop
 | `Hide(s => s.A.B)` | the value is neither sent to the browser nor changed |
 | secrets | properties named like password, secret, api key, token or connection string come masked; sending the mask back keeps the stored value |
 | meta | the client `meta` groups, labels, orders or renders properties like any `MudExObjectEditForm`; locks and hides from the server apply on top. The form shows each section under its heading in two columns (lists over the full width); `WrapInMudItem(i => i.md = 12)` widens a single field. Computed properties (no setter) are left out and fields have no reset of their own; a list item opened in its dialog (like a registration document) follows the same rules |
-| scope | typed settings apply to the whole installation and are edited from the system organisation only; per tenant and per user values are settings (above) |
+| scope | typed settings apply to the whole installation and are edited from the system tenant only; per tenant and per user values are settings (above) |
 
 **Restore defaults** drops the values changed in the app; appsettings and environment apply again.
 
-Behind the page: `GET /api/v1/configuration` (the sections), `GET`/`PUT /api/v1/configuration/{section}` and `DELETE /api/v1/configuration/{section}` (restore defaults), all with `Settings.Manage` from the system organisation.
+Behind the page: `GET /api/v1/configuration` (the sections), `GET`/`PUT /api/v1/configuration/{section}` and `DELETE /api/v1/configuration/{section}` (restore defaults), all with `Settings.Manage` from the system tenant.
 
 ### Editors for file types, sizes, schedules and translations
 
@@ -366,7 +366,7 @@ public sealed class Links(IOptionsMonitor<CoworkeeServicesOptions> services)
 }
 ```
 
-**Administration > System > Services** shows them as tiles with icon, address and live state, grouped by source (**App** for `Coworkee:Services`, **AspireUI** for the apps of an AspireUI); a click opens the service in a new tab, services with several addresses list all of them as links. The Aspire dashboard (`dashboard`) is no tile: it stands on top as a highlighted card while it answers ([The Aspire dashboard on the Services page](../hosting/aspire.md#the-aspire-dashboard-on-the-services-page)). A source that could not be asked shows a hint, the other sources still appear. The browser asks the api (`GET /api/v1/services`, settings permission, system organisation, answers `{ services, unavailableSources }`), which probes every service every ten seconds: with `HealthPath` a success status counts as running, without it any answer below 500.
+**Administration > System > Services** shows them as tiles with icon, address and live state, grouped by source (**App** for `Coworkee:Services`, **AspireUI** for the apps of an AspireUI); a click opens the service in a new tab, services with several addresses list all of them as links. The Aspire dashboard (`dashboard`) is no tile: it stands on top as a highlighted card while it answers ([The Aspire dashboard on the Services page](../hosting/aspire.md#the-aspire-dashboard-on-the-services-page)). A source that could not be asked shows a hint, the other sources still appear. The browser asks the api (`GET /api/v1/services`, settings permission, system tenant, answers `{ services, unavailableSources }`), which probes every service every ten seconds: with `HealthPath` a success status counts as running, without it any answer below 500.
 
 Health checks of the api tagged `CoworkeeServicesOptions.HealthCheckTag` (`coworkee-service`) are tiles too, without an address: their state (*Healthy*, *Degraded* in the warning color, *Unhealthy*) and what the check says below it. The virus scanner adds `antivirus` this way ([Virus scan](storage.md#on-the-services-page)); your own checks join with the tag:
 

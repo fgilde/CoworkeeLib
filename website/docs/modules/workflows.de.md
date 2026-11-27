@@ -23,7 +23,7 @@ public sealed class MyAppCatalogModule : CoworkeeModule
 }
 ```
 
-`AddCoworkeeWorkflows` darf von mehreren Modulen aufgerufen werden. Die Entität wird über den `DbContext` geladen, Mandantenfilter gelten also; die Id einer anderen Organisation wird schlicht nicht gefunden.
+`AddCoworkeeWorkflows` darf von mehreren Modulen aufgerufen werden. Die Entität wird über den `DbContext` geladen, Mandantenfilter gelten also; die Id eines anderen Mandanten wird schlicht nicht gefunden.
 
 ## Datenbank
 
@@ -65,7 +65,7 @@ Ein Zustand mit `Approval(approved, rejected, ...)` fordert beim Betreten eine G
 
     `ApprovedTo(...)`/`RejectedTo(...)` zählen jeden Zustand auf, den die Wahl liefern darf; ohne sie startet der Workflow nicht (so kennen Filter, Facetten und der Designer jeden Zustand), und eine Entscheidung, die einen nicht aufgeführten Zustand wählt, schlägt fehl. Der Kontext enthält die Entität, den Kommentar der Entscheidung und wer entschieden hat. Historie, Posteingang, Domain-Events und Elsa-Trigger sehen den gewählten Zustand wie einen festen.
 
-Erinnerungen und Fristen erledigt der wiederkehrende Job `workflow-deadlines` (alle fünf Minuten; `Coworkee:Workflows:DeadlineCron` ändert das). Er läuft über `TenantJobRunner` einmal je aktiver Organisation; ein Fehler in einer Organisation wird protokolliert, die anderen laufen weiter. Genehmigende bekommen In-App-Benachrichtigungen, wenn eine Genehmigung startet, wenn sie überfällig ist und als Erinnerung.
+Erinnerungen und Fristen erledigt der wiederkehrende Job `workflow-deadlines` (alle fünf Minuten; `Coworkee:Workflows:DeadlineCron` ändert das). Er läuft über `TenantJobRunner` einmal je aktiver Mandant; ein Fehler in einem Mandanten wird protokolliert, die anderen laufen weiter. Genehmigende bekommen In-App-Benachrichtigungen, wenn eine Genehmigung startet, wenn sie überfällig ist und als Erinnerung.
 
 ## Historie, Audit und Echtzeit
 
@@ -110,7 +110,7 @@ GET /odata/Products?$filter=WorkflowState eq 'In review'&$orderby=WorkflowState,
 GET /odata/Products?$filter=WorkflowAwaitsMe eq true
 ```
 
-Die Unterabfrage läuft durch die Abfragefilter des `DbContext` der App, ein Zustand einer anderen Organisation passt also nie. Mit Facetten trägt die Antwort die Facette `WorkflowState`: jeden Zustand, den der Workflow nennt (Anfangszustand, deklarierte Zustände, Ziele von Übergängen und Genehmigungen), mit seiner Anzahl, danach *Wartet auf meine Genehmigung*. `WithColor` gibt einem Zustand eine CSS-Farbe für Farbfelder:
+Die Unterabfrage läuft durch die Abfragefilter des `DbContext` der App, ein Zustand eines anderen Mandanten passt also nie. Mit Facetten trägt die Antwort die Facette `WorkflowState`: jeden Zustand, den der Workflow nennt (Anfangszustand, deklarierte Zustände, Ziele von Übergängen und Genehmigungen), mit seiner Anzahl, danach *Wartet auf meine Genehmigung*. `WithColor` gibt einem Zustand eine CSS-Farbe für Farbfelder:
 
 ```csharp
 product.State("Approved").WithColor("var(--mud-palette-success)");
@@ -130,7 +130,7 @@ Ein Übergang mit Pflichtkommentar und jede Ablehnung fragen in einem kleinen Di
 | `Workflows.View` | Zustände, Historien und den eigenen Genehmigungs-Posteingang sehen; Genehmigungen entscheiden, bei denen man genehmigt |
 | `Workflows.Transition` | überhaupt Übergänge ausführen; jeder Übergang kann mehr verlangen |
 
-Darüber hinaus gibt es den Workflow einer Zeile nur für Benutzer, die die Zeile so sehen, wie ihr [OData-Set](../web/odata.md) sie zeigt: Berechtigung des Sets, Organisation, Soft Delete und jeder Zeilenfilter `IODataEntityFilter<T>`. Alle anderen bekommen 404 auf Zustand, Historie, Kommentare, Übergänge und das Echtzeit-Topic, als gäbe es die Zeile nicht. Eine Ausnahme: Wer bei der offenen Genehmigung der Zeile genehmigt, sieht deren Zustand und Historie und entscheidet, auch ohne die Zeile in ihrer Liste zu sehen, denn man muss sehen, worüber man entscheidet; Übergänge sind darüber nicht möglich, und mit der Entscheidung endet die Ausnahme. Der Genehmigungs-Posteingang zeigt immer die eigenen offenen Genehmigungen.
+Darüber hinaus gibt es den Workflow einer Zeile nur für Benutzer, die die Zeile so sehen, wie ihr [OData-Set](../web/odata.md) sie zeigt: Berechtigung des Sets, Mandant, Soft Delete und jeder Zeilenfilter `IODataEntityFilter<T>`. Alle anderen bekommen 404 auf Zustand, Historie, Kommentare, Übergänge und das Echtzeit-Topic, als gäbe es die Zeile nicht. Eine Ausnahme: Wer bei der offenen Genehmigung der Zeile genehmigt, sieht deren Zustand und Historie und entscheidet, auch ohne die Zeile in ihrer Liste zu sehen, denn man muss sehen, worüber man entscheidet; Übergänge sind darüber nicht möglich, und mit der Entscheidung endet die Ausnahme. Der Genehmigungs-Posteingang zeigt immer die eigenen offenen Genehmigungen.
 
 ## Grenzen
 

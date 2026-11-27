@@ -15,7 +15,7 @@ public sealed class MyAppDocumentsModule : CoworkeeModule
 }
 ```
 
-`AddExtendedAttributes<T>(entityType, viewPermission, editPermission)` registers the entity under a name (`"Documents"`) with the permission to read and the one to change its attributes. Attributes belong to a row by its `Guid Id`; an entity keyed otherwise is refused at registration. Attributes live in the table `cw.ExtendedAttributes` (one row per key, unique per organisation, entity type, entity and key); add a migration when you turn the module on.
+`AddExtendedAttributes<T>(entityType, viewPermission, editPermission)` registers the entity under a name (`"Documents"`) with the permission to read and the one to change its attributes. Attributes belong to a row by its `Guid Id`; an entity keyed otherwise is refused at registration. Attributes live in the table `cw.ExtendedAttributes` (one row per key, unique per tenant, entity type, entity and key); add a migration when you turn the module on.
 
 ## In the client
 
@@ -33,7 +33,7 @@ Both take `ReadOnly`; the editor reports the saved list through `Saved`.
 
 ## Rules
 
-- The entity is looked up through its `DbContext`, so tenant filters and soft delete apply: attributes of another organisation's entity are not found (`404`). Row filters of the entity's OData set (`IODataEntityFilter<T>`) are not checked; give the permissions only to users who may see every row of the type.
+- The entity is looked up through its `DbContext`, so tenant filters and soft delete apply: attributes of another tenant's entity are not found (`404`). Row filters of the entity's OData set (`IODataEntityFilter<T>`) are not checked; give the permissions only to users who may see every row of the type.
 - Reading needs the view permission, saving the edit permission (`403` otherwise); an unknown entity type answers `404`.
 - Saving replaces the whole list: keys missing from it are deleted. A key may appear once (case does not count), JSON values must be valid JSON; only the value of the chosen `Type` (`Text`, `Decimal`, `DateTime`, `Json`) is kept.
 

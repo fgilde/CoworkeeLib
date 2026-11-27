@@ -4,7 +4,7 @@
 
 ## Jobs eines Benutzers
 
-Ein Job läuft als der Benutzer, der ihn eingereiht hat, in dessen Organisation und in einem eigenen DI-Scope; Berechtigungen, Mandantenfilter und Audit funktionieren wie in einem Request. Wer als ein anderer Benutzer angemeldet ist (*Anmelden als*), bleibt festgehalten: Der Job behält den Impersonator (`JobEnvelope.ImpersonatorId`), und seine Audit-Einträge nennen ihn wie die des Requests.
+Ein Job läuft als der Benutzer, der ihn eingereiht hat, in dessen Mandant und in einem eigenen DI-Scope; Berechtigungen, Mandantenfilter und Audit funktionieren wie in einem Request. Wer als ein anderer Benutzer angemeldet ist (*Anmelden als*), bleibt festgehalten: Der Job behält den Impersonator (`JobEnvelope.ImpersonatorId`), und seine Audit-Einträge nennen ihn wie die des Requests.
 
 ```csharp
 public sealed record RenderPreview(Guid AssetId);
@@ -36,9 +36,9 @@ services.AddRecurringJob<CleanupJob>("cleanup", "0 3 * * *");
 
 Der Zeitplan (Cron, UTC) wird beim Start in den Job-Speicher geschrieben; solange die Datenbank noch nicht erreichbar ist, versucht es der Host alle fünf Sekunden erneut. Hangfire startet pro fälligem Zeitpunkt einen Lauf über alle Instanzen.
 
-## Jede Organisation
+## Jeden Mandanten
 
-Arbeit in jeder Organisation läuft über `TenantJobRunner`: einmal pro aktiver Organisation, als System dieser Organisation (Mandantenfilter, Audit) und in einem eigenen DI-Scope. Eine fehlschlagende Organisation wird protokolliert und zurückgegeben, die anderen laufen weiter:
+Arbeit in jedem Mandanten läuft über `TenantJobRunner`: einmal pro aktiver Mandant, als System dieses Mandanten (Mandantenfilter, Audit) und in einem eigenen DI-Scope. Ein fehlschlagender Mandant wird protokolliert und zurückgegeben, die anderen laufen weiter:
 
 ```csharp
 internal sealed class ReminderJob(TenantJobRunner tenants) : IRecurringJob
@@ -49,7 +49,7 @@ internal sealed class ReminderJob(TenantJobRunner tenants) : IRecurringJob
 }
 ```
 
-`ForTenantsAsync(tenantIds, ...)` macht dasselbe für die Organisationen, die eine Abfrage gefunden hat (fällige Zeilen nach `TenantId` gruppiert), so kosten Organisationen ohne Arbeit nichts. `ForEachTenantAsync` holt die Organisationen über das Identity-Modul (`ITenantDirectory.GetActiveTenantIdsAsync`). Der Lauf ist sequenziell; bei vielen Organisationen die Arbeit pro Organisation kurz halten.
+`ForTenantsAsync(tenantIds, ...)` macht dasselbe für die Mandanten, die eine Abfrage gefunden hat (fällige Zeilen nach `TenantId` gruppiert), so kosten Mandanten ohne Arbeit nichts. `ForEachTenantAsync` holt die Mandanten über das Identity-Modul (`ITenantDirectory.GetActiveTenantIdsAsync`). Der Lauf ist sequenziell; bei vielen Mandanten die Arbeit pro Mandant kurz halten.
 
 ## Nur eine Instanz gleichzeitig
 

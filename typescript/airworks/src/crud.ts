@@ -31,7 +31,7 @@ export type CrudOptions<T extends Row> = {
   height?: number;
   /** Every one is needed to see the app. */
   permissions?: string[];
-  /** Only for users of the system organisation, like the host-only pages of the Blazor app. */
+  /** Only for users of the system tenant, like the host-only pages of the Blazor app. */
   hostOnly?: boolean;
   /** A GET that must succeed (the module is part of the app). */
   probe?: string;

@@ -1,6 +1,6 @@
 # Import and export
 
-Users bring rows in from CSV, Excel or JSON files and take them out again, without you writing a parser or an upload page. Every imported row runs through your own command, so permissions, the organisation, validation and the audit log apply exactly as when someone fills in the form.
+Users bring rows in from CSV, Excel or JSON files and take them out again, without you writing a parser or an upload page. Every imported row runs through your own command, so permissions, the tenant, validation and the audit log apply exactly as when someone fills in the form.
 
 ## Opt in per entity set
 
@@ -104,7 +104,7 @@ The export menu of a table offers *Schedule export* to holders of the permission
 
 ## Personal data
 
-The [personal data export](../security/privacy.md) has a section `dataTransfers`: the user's jobs (files listed with name and size, not included), his scheduled exports and the schedules of others that mail him. Erasing the user deletes his jobs with their files (a running export stops) and his schedules, and removes his address from the recipients of the other schedules of his organisation.
+The [personal data export](../security/privacy.md) has a section `dataTransfers`: the user's jobs (files listed with name and size, not included), his scheduled exports and the schedules of others that mail him. Erasing the user deletes his jobs with their files (a running export stops) and his schedules, and removes his address from the recipients of the other schedules of his tenant.
 
 ## HTTP API
 

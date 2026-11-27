@@ -21,7 +21,7 @@ The demo's own code is a few entity classes, the create and update requests, one
 
 ## Multi-tenant B2B SaaS
 
-One app, many customer companies. Each organisation sees only its own rows (EF Core adds the tenant filter to every query), has its own administrators and gets the modules its plan includes. Plans are [editions](../modules/features.md), and a feature can carry a limit as well as an on/off switch:
+One app, many customer companies. Each tenant sees only its own rows (EF Core adds the tenant filter to every query), has its own administrators and gets the modules its plan includes. Plans are [editions](../modules/features.md), and a feature can carry a limit as well as an on/off switch:
 
 ```csharp
 public void Define(FeatureDefinitionContext context) =>

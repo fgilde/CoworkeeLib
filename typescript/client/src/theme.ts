@@ -71,5 +71,5 @@ export function applyTheme(theme: Theme | undefined, mode: ColorMode, root: HTML
   root.dataset.cwMode = mode;
 }
 
-/** The theme of the signed-in user's organisation, or the default one (anonymous). */
+/** The theme of the signed-in user's tenant, or the default one (anonymous). */
 export const getCurrentTheme = (options?: CoworkeeClientOptions) => apiRequest<Theme>('/api/v1/themes/current', {}, options);

@@ -21,7 +21,7 @@ The pages below go through it area by area, with code from the real APIs and scr
 
 -   **[Multi-tenancy and settings](multi-tenancy.md)**
 
-    Organisations with separated data, settings per host, organisation and user, features and editions for a SaaS product.
+    Tenants with separated data, settings per host, tenant and user, features and editions for a SaaS product.
 
 -   **[Data and queries](data.md)**
 
@@ -45,7 +45,7 @@ The pages below go through it area by area, with code from the real APIs and scr
 
 -   **[Reporting and dashboards](reporting.md)**
 
-    Dashboards built in the browser on top of your OData sets, aggregated by the database in milliseconds, shared with roles, groups or the organisation and mailed as subscriptions.
+    Dashboards built in the browser on top of your OData sets, aggregated by the database in milliseconds, shared with roles, groups or the tenant and mailed as subscriptions.
 
 -   **[Localization](localization.md)**
 

@@ -27,7 +27,7 @@ The module brings the table `cw.RecordAttachments`: **add a migration** when you
 
 ## Who sees and changes the files
 
-Reading (list, open, download) follows the record: when the type has an [OData set](../web/odata.md), only users who see the row through it (the set's permission, the organisation, soft delete and every `IODataEntityFilter<T>` row filter); without a set, every row of the own organisation. Everyone else gets 404, as if the record did not exist. Writing needs the same, plus `WriteRequires` and the `Authorize` checks when set; without them everyone who sees the record may upload and delete.
+Reading (list, open, download) follows the record: when the type has an [OData set](../web/odata.md), only users who see the row through it (the set's permission, the tenant, soft delete and every `IODataEntityFilter<T>` row filter); without a set, every row of the own tenant. Everyone else gets 404, as if the record did not exist. Writing needs the same, plus `WriteRequires` and the `Authorize` checks when set; without them everyone who sees the record may upload and delete.
 
 ## API
 
@@ -72,7 +72,7 @@ A soft deleted record keeps its files, so a restore brings them back. Once the r
 
 Every added, replaced or deleted attachment is sent on the realtime topic `attachments:{entityType}:{entityId}` (`AttachmentTopics.Record`), after the commit. Following it needs read access to one of the record's slots, the same check as the list endpoint.
 
-The [personal data export](../security/privacy.md) has a section `attachments` with the files the user attached (record, slot, name, type, size, time), without the content. Erasing the user keeps them: like other files they belong to the organisation's records; the uploader becomes the erased-user placeholder (`PersonalDataSubject.ErasedUserId`).
+The [personal data export](../security/privacy.md) has a section `attachments` with the files the user attached (record, slot, name, type, size, time), without the content. Erasing the user keeps them: like other files they belong to the tenant's records; the uploader becomes the erased-user placeholder (`PersonalDataSubject.ErasedUserId`).
 
 ## Client
 

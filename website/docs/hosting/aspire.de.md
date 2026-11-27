@@ -148,7 +148,7 @@ Container entstehen nur, wenn ein Dienst sie braucht. Postgres, SQL Server, Redi
 `options.UseKibana()` stellt Kibana neben den Elasticsearch-Container (nicht bei `UseSearch`: ein eigenes Elasticsearch bringt sein eigenes Kibana mit). Kibanas Single Sign-on (OpenID Connect, SAML) braucht eine kostenpflichtige Elastic-Lizenz, deshalb setzt der AppHost [oauth2-proxy](https://oauth2-proxy.github.io/oauth2-proxy/) davor:
 
 - Die Ressource `kibana` ist der Proxy und die Adresse, die du öffnest. Er meldet dich am Auth-Server der App an (Client `<app>-kibana`); ist Keycloak an, schickt der Auth-Server dich wie bei der App zu Keycloak weiter.
-- Der Auth-Server lässt nur Administratoren der System-Organisation durch (`AuthClientOptions.SystemAdministratorsOnly`). Alle anderen bekommen `access_denied`.
+- Der Auth-Server lässt nur Administratoren des System-Mandanten durch (`AuthClientOptions.SystemAdministratorsOnly`). Alle anderen bekommen `access_denied`.
 - `kibana-server` ist Kibana selbst. Es lässt jede Anfrage als Elasticsearch-Benutzer `elastic` herein (sein Anonymous-Provider, Teil der freien Lizenz), deshalb darf nur der Proxy es erreichen: Das Dashboard zeigt keinen Link darauf, ein Deployment veröffentlicht keinen Port davon (ein lokaler Lauf behält seinen Port auf der Loopback-Adresse). `kibana-setup` setzt das Passwort des eingebauten Benutzers `kibana_system`, sobald Elasticsearch antwortet.
 - Kibana nimmt die Image-Version des Elasticsearch-Containers. Seine gespeicherten Objekte liegen in Elasticsearch und damit in dessen Volume.
 
@@ -305,7 +305,7 @@ Ruf sie nach `UseKeycloak` und `AddAuthServer` (oder `AddProjects`) auf.
 
 [![AspireUI](../assets/brands/aspireui.svg){ .cw-product-logo }](https://fgilde.github.io/AspireUI/)
 
-[AspireUI](https://fgilde.github.io/AspireUI/) meldet sich mit einem Aufruf nach `AddAuthServer` (oder `AddProjects`) am Auth-Server der App an; die Administratoren der Systemorganisation werden AspireUI-Admins:
+[AspireUI](https://fgilde.github.io/AspireUI/) meldet sich mit einem Aufruf nach `AddAuthServer` (oder `AddProjects`) am Auth-Server der App an; die Administratoren des System-Mandanten werden AspireUI-Admins:
 
 ```csharp
 using Nextended.Aspire.Hosting.AspireUI;
@@ -318,7 +318,7 @@ Der Aufruf registriert den Client `{app}-{resource}` am Auth-Server mit der Redi
 
 ### Tools melden sich am Auth-Server an
 
-Grafana, WebDataStudio, AspireUI, Open WebUI und der Proxy von Kibana melden sich am Auth-Server der App an, mit oder ohne Keycloak. Jedes bekommt einen vertraulichen Client `{app}-{tool}`, der nicht im Launcher steht und nur die Administratoren der Systemorganisation hereinlässt (`SystemAdministratorsOnly`); sie sind Admins des Tools. Die lokale Administrator-Anmeldung jedes Tools bleibt. Solange der App-Host läuft, nennt sich der Auth-Server nach der Adresse des Browsers (`Coworkee:Auth:Issuer`) und gibt Containern mit `Coworkee:Auth:DynamicBackchannel` Token, Benutzerinfo und Schlüssel unter der Adresse, unter der sie gefragt haben: Die Container erreichen ihn über das Container-Netz, der Browser über den Host. Ein Deployment nutzt für beides die öffentliche Adresse.
+Grafana, WebDataStudio, AspireUI, Open WebUI und der Proxy von Kibana melden sich am Auth-Server der App an, mit oder ohne Keycloak. Jedes bekommt einen vertraulichen Client `{app}-{tool}`, der nicht im Launcher steht und nur die Administratoren des System-Mandanten hereinlässt (`SystemAdministratorsOnly`); sie sind Admins des Tools. Die lokale Administrator-Anmeldung jedes Tools bleibt. Solange der App-Host läuft, nennt sich der Auth-Server nach der Adresse des Browsers (`Coworkee:Auth:Issuer`) und gibt Containern mit `Coworkee:Auth:DynamicBackchannel` Token, Benutzerinfo und Schlüssel unter der Adresse, unter der sie gefragt haben: Die Container erreichen ihn über das Container-Netz, der Browser über den Host. Ein Deployment nutzt für beides die öffentliche Adresse.
 
 ### Open WebUI
 
@@ -329,7 +329,7 @@ var ollama = builder.AddOllama("ollama");
 app.AddOpenWebUI(ollama);
 ```
 
-Der Administrator der App meldet sich lokal an (`WEBUI_ADMIN_EMAIL`, über das Formular registriert sich niemand), und mit dem Auth-Server melden sich die Administratoren der Systemorganisation darüber an, als Admins von Open WebUI (Client `{app}-openwebui`, PKCE). Die Einstellungen gehören dem App-Host (`ENABLE_PERSISTENT_CONFIG=false`): Sonst behielte Open WebUI die Adressen seines ersten Starts in seiner Datenbank. Daten im Volume `{app}-openwebui-data`. `coworkee new --ai-provider ollama --open-web-ui` (Template-Option `openWebUI`) fügt den Aufruf ein; `coworkee deploy --without openwebui` lässt es im Deployment weg.
+Der Administrator der App meldet sich lokal an (`WEBUI_ADMIN_EMAIL`, über das Formular registriert sich niemand), und mit dem Auth-Server melden sich die Administratoren des System-Mandanten darüber an, als Admins von Open WebUI (Client `{app}-openwebui`, PKCE). Die Einstellungen gehören dem App-Host (`ENABLE_PERSISTENT_CONFIG=false`): Sonst behielte Open WebUI die Adressen seines ersten Starts in seiner Datenbank. Daten im Volume `{app}-openwebui-data`. `coworkee new --ai-provider ollama --open-web-ui` (Template-Option `openWebUI`) fügt den Aufruf ein; `coworkee deploy --without openwebui` lässt es im Deployment weg.
 
 ### AspireUI in einer generierten App
 

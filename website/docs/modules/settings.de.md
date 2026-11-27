@@ -8,7 +8,7 @@ Coworkee kennt zwei Arten von Konfiguration, die Administratoren zur Laufzeit ä
 | Definiert durch | `ISettingDefinitionContributor` | eine C#-Klasse, optional aus JSON erzeugt |
 | Gespeichert in | Einstellungstabelle, Geheimnisse verschlüsselt | `cw.ConfigurationEntries`, gelesen über `IConfiguration` |
 | Gelesen mit | `ISettingProvider` | `IOptionsMonitor<T>` |
-| Admin-Seite | Einstellungen, Tabs System und Organisation | Einstellungen, ein Tab pro Klasse (nur System-Mandant) |
+| Admin-Seite | Einstellungen, Tabs System und Mandant | Einstellungen, ein Tab pro Klasse (nur System-Mandant) |
 
 ## Einstellungen
 
@@ -33,13 +33,13 @@ var allowed = await settings.GetAsync<bool>(AccountSettings.AllowRegistration, c
 
 Standardwerte können auch aus der Konfiguration kommen, `Coworkee:Settings:Defaults:<Name>`: Der AppHost setzt `Coworkee:Settings:Defaults:Mail.Smtp.Host` und `Mail.Smtp.Port` für Mailpit.
 
-Eine gespeicherte Einstellung erreicht jede offene Seite sofort: globale Einstellungen auf dem Realtime-Topic `global:settings` (`SettingTopics.Global`), Einstellungen der Organisation auf `tenant:settings`, Benutzereinstellungen auf dem Topic des Benutzers; die Ereignisse nennen die Einstellung, nie ihren Wert. Der Blazor-Client (`SettingsLiveUpdates` in `CoworkeeLayout`) lädt seine Client-Einstellungen neu, und alles, was `ThemeService.Changed` folgt, ändert sich ohne Neuladen: der Assistant-Knopf, der Seitenmodus von Tabellen, das Theme. Eigene Komponenten tun dasselbe mit `ThemeService.Changed` oder folgen den Topics mit `<RealtimeSubscription>`.
+Eine gespeicherte Einstellung erreicht jede offene Seite sofort: globale Einstellungen auf dem Realtime-Topic `global:settings` (`SettingTopics.Global`), Einstellungen des Mandanten auf `tenant:settings`, Benutzereinstellungen auf dem Topic des Benutzers; die Ereignisse nennen die Einstellung, nie ihren Wert. Der Blazor-Client (`SettingsLiveUpdates` in `CoworkeeLayout`) lädt seine Client-Einstellungen neu, und alles, was `ThemeService.Changed` folgt, ändert sich ohne Neuladen: der Assistant-Knopf, der Seitenmodus von Tabellen, das Theme. Eigene Komponenten tun dasselbe mit `ThemeService.Changed` oder folgen den Topics mit `<RealtimeSubscription>`.
 
 Der Abschnitt **Cloud-Dateiauswahl** im Reiter System enthält die IDs von Google Drive, OneDrive und Dropbox für jedes Upload-Feld, siehe [Dateien](files.md#cloud-dateiauswahl).
 
 ### Eigene Einstellungen auf der Admin-Seite
 
-Die Tabs **System** (Bereich `Global`) und **Organisation** (Bereich `Tenant`) sowie **Meine Einstellungen** des Benutzers (Bereich `User`) haben keinen Formularcode pro Einstellung. Sie laden die Definitionen und zeigen sie mit `MudExObjectEditForm`; eine Einstellung deines Moduls erscheint dort, sobald ihr Contributor registriert ist:
+Die Tabs **System** (Bereich `Global`) und **Mandant** (Bereich `Tenant`) sowie **Meine Einstellungen** des Benutzers (Bereich `User`) haben keinen Formularcode pro Einstellung. Sie laden die Definitionen und zeigen sie mit `MudExObjectEditForm`; eine Einstellung deines Moduls erscheint dort, sobald ihr Contributor registriert ist:
 
 ```csharp title="Server-Modul"
 internal sealed class BillingSettingDefinitions : ISettingDefinitionContributor
@@ -63,14 +63,14 @@ context.Services.AddSingleton<ISettingDefinitionContributor, BillingSettingDefin
 | `Bool` | ein Kontrollkästchen mit dem gespeicherten Wert oder dem Standard |
 | `Choice` | eine Auswahl der `choices`; jeder Wert erscheint übersetzt, wenn die Übersetzungen einen Eintrag dafür haben, sonst unverändert |
 | `MultiChoice` | eine Auswahl der `choices` mit mehreren Werten, kommagetrennt gespeichert (`Reading,Writing`); nichts gewählt wird als leerer Wert gespeichert, der anders als kein Wert nicht auf den Standard zurückfällt. Gelesen mit `SettingDefinition.SplitChoices(value)` |
-| `Language` | eine Auswahl der Sprachen der App; leer heißt erben, angezeigt als *Configured default* im Tab System und *Inherited* in Organisation und Meine Einstellungen (dort beschriftet mit *Language*) |
+| `Language` | eine Auswahl der Sprachen der App; leer heißt erben, angezeigt als *Configured default* im Tab System und *Inherited* in Mandant und Meine Einstellungen (dort beschriftet mit *Language*) |
 | `Secret` | ein Passwortfeld, das leer bleibt; der Hilfetext sagt, ob ein Wert gespeichert ist, und nur ein eingetippter Wert wird gesendet |
 | `enabledWhen` | das Feld ist deaktiviert, solange der Wert der anderen Einstellung nicht in den Werten der Bedingung liegt |
 | `fixedValue` | der Host legt den Wert in seiner Konfiguration fest (z. B. `ModeOverride` für `Auth.LoginMode`): Das Feld ist deaktiviert, der Hilfetext nennt den festen Wert; der gespeicherte Wert gilt, sobald der Host ihn nicht mehr festlegt |
 | Gruppe mit `page` | erscheint nicht in den Einstellungs-Tabs; siehe unten |
 | Bereiche | eine Einstellung erscheint im Tab jedes ihrer Bereiche |
 
-Speichern sendet nur geänderte Werte; der Server prüft sie (`Expected a whole number.` usw.), die Meldung erscheint in der Snackbar. Wer die Tabs sieht, folgt der Berechtigung `Settings.Manage`; **System** erscheint nur in der System-Organisation.
+Speichern sendet nur geänderte Werte; der Server prüft sie (`Expected a whole number.` usw.), die Meldung erscheint in der Snackbar. Wer die Tabs sieht, folgt der Berechtigung `Settings.Manage`; **System** erscheint nur im System-Mandanten.
 
 Hinter dem Formular steht eine zur Laufzeit erzeugte Klasse mit einer Eigenschaft je Einstellung (`Mail.Smtp.Host` wird `Mail_Smtp_Host`), das Formular verhält sich also wie jedes andere Objektformular. Felder haben kein eigenes Zurücksetzen: Ein geleertes Text- oder Zahlenfeld kehrt zum Standard zurück.
 
@@ -103,7 +103,7 @@ Die Einstellung ändert sich dann nur mit dieser Berechtigung zusätzlich zur Re
 
 ### Gruppen auf eigener Seite
 
-`context.Group(name, displayName, page: "/admin/ai-settings")` markiert eine Gruppe als auf einer eigenen Admin-Seite gepflegt. Die Einstellungs-Tabs überspringen sie, **Meine Einstellungen** des Benutzers zeigen weiter jede Gruppe ohne `page`. So arbeitet die KI-Gruppe: Ihre Einstellungen, auch der MCP-Schalter, liegen auf `/admin/ai-settings`. Ebenso Mail: Anbieter, Zugangsdaten und der Schalter für den eigenen Server einer Organisation liegen auf `/admin/mail-settings`, siehe [Mailversand](mailing.md#die-seite-mail-einstellungen). Die Aufbewahrung hält ihre Tage auf `/admin/retention`, siehe [Aufbewahrung](retention.md).
+`context.Group(name, displayName, page: "/admin/ai-settings")` markiert eine Gruppe als auf einer eigenen Admin-Seite gepflegt. Die Einstellungs-Tabs überspringen sie, **Meine Einstellungen** des Benutzers zeigen weiter jede Gruppe ohne `page`. So arbeitet die KI-Gruppe: Ihre Einstellungen, auch der MCP-Schalter, liegen auf `/admin/ai-settings`. Ebenso Mail: Anbieter, Zugangsdaten und der Schalter für den eigenen Server eines Mandanten liegen auf `/admin/mail-settings`, siehe [Mailversand](mailing.md#die-seite-mail-einstellungen). Die Aufbewahrung hält ihre Tage auf `/admin/retention`, siehe [Aufbewahrung](retention.md).
 
 ### Ein Thema auf eigener Seite
 
@@ -118,7 +118,7 @@ Eine Seite, die ein Thema aus Einstellungen und App-Konfiguration bündelt, nutz
 
 ### Spracheinstellungen
 
-`SettingType.Language` passt für Einstellungen, die eine Kultur halten. `Localization.Culture` (**Default language**) ist die Sprache, in der die App startet: Eine Organisation überschreibt den Systemwert, ein Benutzer überschreibt beide. Ein leerer Wert erbt.
+`SettingType.Language` passt für Einstellungen, die eine Kultur halten. `Localization.Culture` (**Default language**) ist die Sprache, in der die App startet: Ein Mandant überschreibt den Systemwert, ein Benutzer überschreibt beide. Ein leerer Wert erbt.
 
 ![Einstellungsseite](../assets/screenshots/settings.png){ .shot }
 
@@ -127,30 +127,30 @@ Eine Seite, die ein Thema aus Einstellungen und App-Konfiguration bündelt, nutz
 Ein Tag-Manager oder ein Analyse-Snippet gehört in den Kopf jeder Seite. Dafür gibt es das Head-Skript, eine Einstellung, die aus ist, bis die App sie in einem Server-Modul einschaltet:
 
 ```csharp
-context.Services.AddCoworkeeHeadScript();                         // ein Skript für die Installation, gesetzt aus der System-Organisation
-context.Services.AddCoworkeeHeadScript(perOrganisation: true);    // jede Organisation darf ein eigenes für ihre Benutzer setzen
+context.Services.AddCoworkeeHeadScript();                         // ein Skript für die Installation, gesetzt aus dem System-Mandanten
+context.Services.AddCoworkeeHeadScript(perOrganisation: true);    // jeder Mandant darf ein eigenes für seine Benutzer setzen
 ```
 
 | | |
 |---|---|
 | Einstellungen | `HeadScript.Enabled` (*Head-Skript an*) und `HeadScript.Value` (*Head-Skript*, HTML mit `<script>`-Tags) in der Gruppe *Head-Skript*, Bereiche `Global` (und `Tenant` mit `perOrganisation`); ein Standardwert kommt nach `Coworkee:Settings:Defaults:HeadScript.Value` |
 | Berechtigung | `Settings.HeadScript` (*Head-Skript ändern*). Jede Änderung braucht sie, auch über die Einstellungs-Tabs und `PUT /api/v1/settings/{scope}`, wo zusätzlich `Settings.Manage` nötig ist |
-| Lesen | `GET /api/v1/settings/head-script` antwortet `{ enabled, value }` ohne Anmeldung (das Skript der Installation), angemeldet mit dem Skript der Organisation des Benutzers, sonst dem der Installation. Angemeldete Clients bekommen beide Werte mit den Client-Einstellungen |
-| Ändern | `PUT /api/v1/settings/head-script` mit `{ enabled, value }`: aus der System-Organisation das Skript der Installation, aus jeder anderen Organisation ihr eigenes (mit `perOrganisation`, sonst `403`); höchstens 50.000 Zeichen. Der KI-Assistent und MCP können es nicht aufrufen |
+| Lesen | `GET /api/v1/settings/head-script` antwortet `{ enabled, value }` ohne Anmeldung (das Skript der Installation), angemeldet mit dem Skript des Mandanten des Benutzers, sonst dem der Installation. Angemeldete Clients bekommen beide Werte mit den Client-Einstellungen |
+| Ändern | `PUT /api/v1/settings/head-script` mit `{ enabled, value }`: aus dem System-Mandanten das Skript der Installation, aus jedem anderen Mandanten sein eigenes (mit `perOrganisation`, sonst `403`); höchstens 50.000 Zeichen. Der KI-Assistent und MCP können es nicht aufrufen |
 | Blazor-App | das Layout fügt das Skript ein, sobald die App gestartet ist: Inline-JavaScript läuft im globalen Bereich, `<script src>` lädt als Tag, `<noscript>` und `<iframe>` kommen ans Ende des Body. Ein geändertes Skript gilt nach dem Neuladen |
 
 Die Content-Security-Policy der Web-App erlaubt keine Inline-Skripte. Das Layout führt Inline-JavaScript deshalb mit `eval` aus, das die Policy für Blazor ohnehin erlaubt; ein Skript von einem anderen Host (`https://www.googletagmanager.com` für den Google Tag Manager) braucht diesen Host in `script-src`, und was es sendet oder zeigt, braucht `connect-src`, `img-src` oder `frame-src`: `Coworkee:Bff:SecurityHeaders:Sources`, siehe [Sicherheits-Header der Web-App](../security/authentication.md#sicherheits-header-der-web-app). Eine ersetzte Policy ohne `'unsafe-eval'` führt kein Inline-Head-Skript aus.
 
 !!! warning "Eine Skript-Einstellung ist gespeichertes Cross-Site-Scripting, mit Absicht"
-    Das Skript läuft im Browser jedes Benutzers mit dessen Sitzung: Es kann die Seiten lesen und die API als dieser Benutzer aufrufen. Vergib `Settings.HeadScript` an wenige (die Systemrolle *Admin* hat jede Berechtigung, mit `perOrganisation` auch in jeder Organisation). Jede Änderung steht im Audit-Log (`SettingValue`, mit dem, der sie gemacht hat; der Wert selbst ist wie jeder Einstellungswert maskiert). Das Skript einer Organisation erreicht nur ihre eigenen Benutzer, nie die einer anderen Organisation oder der System-Organisation; wer sich als jemand anderes anmeldet, bekommt das Skript der Organisation dieses Benutzers, bis die Seite neu geladen wird.
+    Das Skript läuft im Browser jedes Benutzers mit dessen Sitzung: Es kann die Seiten lesen und die API als dieser Benutzer aufrufen. Vergib `Settings.HeadScript` an wenige (die Systemrolle *Admin* hat jede Berechtigung, mit `perOrganisation` auch in jedem Mandanten). Jede Änderung steht im Audit-Log (`SettingValue`, mit dem, der sie gemacht hat; der Wert selbst ist wie jeder Einstellungswert maskiert). Das Skript eines Mandanten erreicht nur seine eigenen Benutzer, nie die eines anderen Mandanten oder des System-Mandanten; wer sich als jemand anderes anmeldet, bekommt das Skript des Mandanten dieses Benutzers, bis die Seite neu geladen wird.
 
 ### Endpunkte und Berechtigungen
 
 | Route | Wer |
 |---|---|
 | `GET /api/v1/settings/definitions` | `Settings.Manage`: die Gruppen und Definitionen der Tabs |
-| `GET`/`PUT /api/v1/settings/global` | `Settings.Manage`, nur aus der System-Organisation |
-| `GET`/`PUT /api/v1/settings/tenant` | `Settings.Manage`: die Werte der Organisation des Benutzers |
+| `GET`/`PUT /api/v1/settings/global` | `Settings.Manage`, nur aus dem System-Mandanten |
+| `GET`/`PUT /api/v1/settings/tenant` | `Settings.Manage`: die Werte des Mandanten des Benutzers |
 | `GET /api/v1/settings/definitions/user`, `GET`/`PUT /api/v1/settings/user` | jeder angemeldete Benutzer: Definitionen und Werte des Bereichs `User` (*Meine Einstellungen*) |
 | `GET /api/v1/settings/client` | jeder angemeldete Benutzer: die Werte der Einstellungen mit `visibleToClient: true`, wie sie für ihn gelten |
 | `GET`/`PUT /api/v1/settings/head-script` | siehe [Head-Skript](#head-skript) |
@@ -159,7 +159,7 @@ Lesende Aufrufe listen jede Definition des Bereichs mit `hasValue`; Geheimnisse 
 
 ## Client-Werte
 
-Mancher Zustand eines Clients braucht keine Definition: die Layouts einer Liste, die Vorlagen eines Formulars, die Voreinstellungen eines Filters. **Client-Werte** speichern solchen freien Text unter einem Schlüssel, für den Benutzer (`ClientValueScope.User`) oder für alle Benutzer der Organisation (`ClientValueScope.Global`). Beim Lesen werden beide zusammengeführt: der eigene Wert des Benutzers gewinnt, `isUserValue` sagt, welcher galt. Der Wert wird unverändert gespeichert, meist JSON.
+Mancher Zustand eines Clients braucht keine Definition: die Layouts einer Liste, die Vorlagen eines Formulars, die Voreinstellungen eines Filters. **Client-Werte** speichern solchen freien Text unter einem Schlüssel, für den Benutzer (`ClientValueScope.User`) oder für alle Benutzer des Mandanten (`ClientValueScope.Global`). Beim Lesen werden beide zusammengeführt: der eigene Wert des Benutzers gewinnt, `isUserValue` sagt, welcher galt. Der Wert wird unverändert gespeichert, meist JSON.
 
 ```razor
 @inject IClientValues Values   @* Coworkee.Client.Blazor.Data *@
@@ -192,13 +192,13 @@ Mancher Zustand eines Clients braucht keine Definition: die Layouts einer Liste,
 
 | Route | Wer |
 |---|---|
-| `GET /api/v1/client-values` | jeder angemeldete Benutzer: seine Werte und die globalen der Organisation, zusammengeführt (`key`, `value`, `isUserValue`), nach Schlüssel sortiert |
+| `GET /api/v1/client-values` | jeder angemeldete Benutzer: seine Werte und die globalen des Mandanten, zusammengeführt (`key`, `value`, `isUserValue`), nach Schlüssel sortiert |
 | `GET /api/v1/client-values/keys` | die Schlüssel derselben Liste |
 | `GET /api/v1/client-values/value?key=` | ein Wert; `value: null`, wenn es keinen gibt |
 | `PUT /api/v1/client-values` | `{ key, value, scope }`: `User` (Standard) für den eigenen Wert des Aufrufers; `Global` braucht `Settings.ClientValues.ManageGlobal` |
 | `DELETE /api/v1/client-values?key=&scope=` | den eigenen Wert des Aufrufers (Standard), oder mit `scope=Global` und der Berechtigung den globalen; nichts zu löschen ist kein Fehler |
 
-Ein Schlüssel hat bis zu 256 druckbare Zeichen (keine Zeilenumbrüche oder anderen Steuerzeichen; Leerzeichen, `/` und `&` sind erlaubt, deshalb stehen Schlüssel in der Query). Grenzen in `Coworkee:ClientValues`: `MaxValueBytes` (Standard 65536, UTF-8) und `MaxKeysPerUser` (Standard 1000 eigene Schlüssel je Benutzer und Organisation; vorhandene Schlüssel ändern sich weiter). Eine verletzte Regel antwortet mit 400. Die Zeilen liegen in `cw.ClientValues` (die nächste Migration der App legt die Tabelle an), gehören der Organisation und werden auditiert; die eigenen Werte eines Benutzers gehören zu seinen [personenbezogenen Daten](../security/privacy.de.md) (Abschnitt `clientValues`) und werden mit ihm gelöscht. Kein anderer Benutzer, auch kein Administrator, liest sie über die API.
+Ein Schlüssel hat bis zu 256 druckbare Zeichen (keine Zeilenumbrüche oder anderen Steuerzeichen; Leerzeichen, `/` und `&` sind erlaubt, deshalb stehen Schlüssel in der Query). Grenzen in `Coworkee:ClientValues`: `MaxValueBytes` (Standard 65536, UTF-8) und `MaxKeysPerUser` (Standard 1000 eigene Schlüssel je Benutzer und Mandant; vorhandene Schlüssel ändern sich weiter). Eine verletzte Regel antwortet mit 400. Die Zeilen liegen in `cw.ClientValues` (die nächste Migration der App legt die Tabelle an), gehören des Mandanten und werden auditiert; die eigenen Werte eines Benutzers gehören zu seinen [personenbezogenen Daten](../security/privacy.de.md) (Abschnitt `clientValues`) und werden mit ihm gelöscht. Kein anderer Benutzer, auch kein Administrator, liest sie über die API.
 
 ```json
 { "Coworkee": { "ClientValues": { "MaxValueBytes": 1048576, "MaxKeysPerUser": 2000 } } }
@@ -274,11 +274,11 @@ builder.Services.AddCoworkeeSettings<ShopSettings>(section: "Shop", title: "Shop
 | `Hide(s => s.A.B)` | der Wert wird weder an den Browser geschickt noch geändert |
 | Geheimnisse | Eigenschaften, die wie Passwort, Secret, API-Key, Token oder Connection String heißen, kommen maskiert; die Maske zurückzuschicken behält den gespeicherten Wert |
 | Meta | das `meta` des Clients gruppiert, beschriftet, sortiert oder rendert Eigenschaften wie in jedem `MudExObjectEditForm`; Sperren und Ausblendungen des Servers gelten zusätzlich. Das Formular zeigt jeden Abschnitt unter seiner Überschrift in zwei Spalten (Listen über die volle Breite); `WrapInMudItem(i => i.md = 12)` verbreitert ein einzelnes Feld. Berechnete Eigenschaften (ohne Setter) entfallen, Felder haben kein eigenes Zurücksetzen; ein Listeneintrag in seinem Dialog (etwa ein Registrierungsdokument) folgt denselben Regeln |
-| Gültigkeit | typisierte Einstellungen gelten für die ganze Installation und werden nur in der System-Organisation bearbeitet; Werte pro Mandant und Benutzer sind Einstellungen (oben) |
+| Gültigkeit | typisierte Einstellungen gelten für die ganze Installation und werden nur im System-Mandanten bearbeitet; Werte pro Mandant und Benutzer sind Einstellungen (oben) |
 
 **Standardwerte wiederherstellen** verwirft die in der App geänderten Werte; appsettings und Umgebung gelten wieder.
 
-Hinter der Seite: `GET /api/v1/configuration` (die Abschnitte), `GET`/`PUT /api/v1/configuration/{section}` und `DELETE /api/v1/configuration/{section}` (Standardwerte wiederherstellen), alle mit `Settings.Manage` aus der System-Organisation.
+Hinter der Seite: `GET /api/v1/configuration` (die Abschnitte), `GET`/`PUT /api/v1/configuration/{section}` und `DELETE /api/v1/configuration/{section}` (Standardwerte wiederherstellen), alle mit `Settings.Manage` aus dem System-Mandanten.
 
 ### Editoren für Dateitypen, Größen, Zeitpläne und Übersetzungen
 
@@ -366,7 +366,7 @@ public sealed class Links(IOptionsMonitor<CoworkeeServicesOptions> services)
 }
 ```
 
-**Administration > System > Dienste** zeigt sie als Kacheln mit Symbol, Adresse und aktuellem Zustand, gruppiert nach Quelle (**App** für `Coworkee:Services`, **AspireUI** für die Apps eines AspireUI); ein Klick öffnet den Dienst in einem neuen Tab, Dienste mit mehreren Adressen listen alle als Links. Das Aspire-Dashboard (`dashboard`) ist keine Kachel: es steht oben als hervorgehobene Karte, solange es antwortet ([Das Aspire-Dashboard auf der Seite Dienste](../hosting/aspire.md#das-aspire-dashboard-auf-der-seite-dienste)). Eine Quelle, die nicht erreichbar war, zeigt einen Hinweis, die anderen Quellen erscheinen trotzdem. Der Browser fragt die API (`GET /api/v1/services`, Einstellungs-Berechtigung, System-Organisation, Antwort `{ services, unavailableSources }`), die jeden Dienst alle zehn Sekunden prüft: Mit `HealthPath` zählt ein Erfolgsstatus als läuft, ohne jede Antwort unter 500.
+**Administration > System > Dienste** zeigt sie als Kacheln mit Symbol, Adresse und aktuellem Zustand, gruppiert nach Quelle (**App** für `Coworkee:Services`, **AspireUI** für die Apps eines AspireUI); ein Klick öffnet den Dienst in einem neuen Tab, Dienste mit mehreren Adressen listen alle als Links. Das Aspire-Dashboard (`dashboard`) ist keine Kachel: es steht oben als hervorgehobene Karte, solange es antwortet ([Das Aspire-Dashboard auf der Seite Dienste](../hosting/aspire.md#das-aspire-dashboard-auf-der-seite-dienste)). Eine Quelle, die nicht erreichbar war, zeigt einen Hinweis, die anderen Quellen erscheinen trotzdem. Der Browser fragt die API (`GET /api/v1/services`, Einstellungs-Berechtigung, System-Mandant, Antwort `{ services, unavailableSources }`), die jeden Dienst alle zehn Sekunden prüft: Mit `HealthPath` zählt ein Erfolgsstatus als läuft, ohne jede Antwort unter 500.
 
 Health Checks der API mit dem Tag `CoworkeeServicesOptions.HealthCheckTag` (`coworkee-service`) sind ebenfalls Kacheln, ohne Adresse: ihr Zustand (*Läuft*, *Eingeschränkt* in der Warnfarbe, *Gestört*) und darunter, was der Check sagt. Der Virenscanner fügt so `antivirus` hinzu ([Virenscan](storage.md#auf-der-seite-dienste)); eigene Checks kommen mit dem Tag dazu:
 

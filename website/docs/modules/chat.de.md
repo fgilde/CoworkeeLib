@@ -1,6 +1,6 @@
 # Chat
 
-`Coworkee.Chat` ergänzt Direkt- und Gruppenchats zwischen den Personen einer Organisation: formatierte Nachrichten, Erwähnungen von Personen und Datensätzen, Antworten, Reaktionen, Dateien und Bilder, Bearbeiten und Löschen, Lesebestätigungen und wer gerade schreibt. Alles erreicht die Mitglieder über den [Realtime-Hub](realtime.md) auf ihrem Topic `user:{id}`, jeder offene Tab aktualisiert sich sofort.
+`Coworkee.Chat` ergänzt Direkt- und Gruppenchats zwischen den Personen eines Mandanten: formatierte Nachrichten, Erwähnungen von Personen und Datensätzen, Antworten, Reaktionen, Dateien und Bilder, Bearbeiten und Löschen, Lesebestätigungen und wer gerade schreibt. Alles erreicht die Mitglieder über den [Realtime-Hub](realtime.md) auf ihrem Topic `user:{id}`, jeder offene Tab aktualisiert sich sofort.
 
 ![Chat-Seite](../assets/screenshots/chat-light.webp){ .shot }
 
@@ -11,13 +11,13 @@ public sealed class MyAppDatabaseModule : CoworkeeModule;
 
 Das Modul hängt von den Modulen Identity, Realtime, Storage und Hintergrundjobs ab (Dateien landen im [Blob-Speicher](storage.md), ein Job löscht nie gesendete Dateien). Erwähnungen benachrichtigen über das Benachrichtigungsmodul (siehe [Realtime und Benachrichtigungen](realtime.md#benachrichtigungen)), wenn die App es hat. Die Vorlage fügt es mit der Option `chat` hinzu (standardmäßig an).
 
-Chatten braucht die Berechtigung `Chat.Use` (*Mit Personen der Organisation chatten*); sie zeigt die Seite *Chat* (`/chat`, `?c={id}` öffnet einen Chat) in der Navigation. Chats findet auch die [globale Suche](../web/global-search.md) (Provider `chats`).
+Chatten braucht die Berechtigung `Chat.Use` (*Mit Personen des Mandanten chatten*); sie zeigt die Seite *Chat* (`/chat`, `?c={id}` öffnet einen Chat) in der Navigation. Chats findet auch die [globale Suche](../web/global-search.md) (Provider `chats`).
 
 ## Schreiben
 
 - Das Eingabefeld ist der `RichTextEditor` der Bibliothek (TipTap oder Quill, wie der Admin es in der Einstellung *Rich-Text-Editor* gewählt hat, siehe [Mailing](mailing.md#vorlage-bearbeiten)) mit kurzer Werkzeugleiste: fett, kursiv, durchgestrichen, Code, Zitat, Listen, Link. TipTap versteht beim Tippen auch Markdown-Kürzel (`**fett**`, `*kursiv*`, `- ` Liste, `> ` Zitat, `` ` `` Code).
 - **Enter** sendet, **Umschalt+Enter** bricht die Zeile um. Ist eine Erwähnungsliste offen, wählt Enter den Eintrag.
-- **`@`** schlägt die Personen der Organisation vor. Eine Erwähnung verlinkt auf die Seite der Person (`/people/{id}`, Seitenschlüssel `person`) und zeigt immer ihren aktuellen Namen.
+- **`@`** schlägt die Personen des Mandanten vor. Eine Erwähnung verlinkt auf die Seite der Person (`/people/{id}`, Seitenschlüssel `person`) und zeigt immer ihren aktuellen Namen.
 - **`#`** schlägt Datensätze aus der [globalen Suche](../web/global-search.md) vor (jeder Provider, den der Schreibende nutzen darf, außer Chats). Die Erwähnung verlinkt auf die Seite des Datensatzes. Jeder Leser sieht sie nur, wenn seine eigene Suche den Datensatz findet; sonst erscheint sie als *#eingeschränkt* mit Schloss, ohne Bezeichnung und Link. Eine Erwähnung eines Datensatzes, den der Schreibende nicht sehen darf, wird abgelehnt.
 - **Dateien**: über die Büroklammer, per Drag-and-drop auf das Eingabefeld oder durch Einfügen eines Bildes. Uploads zeigen ihren Fortschritt und öffnen sich im Datei-Viewer, sobald sie oben sind. Bilder erscheinen direkt als kleines WebP, das der Server erzeugt (`/thumbnail`, höchstens 480 px, aufrecht gedreht), andere Dateien als Chip; ein Klick öffnet die Datei in `MudExFileDisplay` (siehe [Dateien anzeigen](files.md#dateien-anzeigen)). Nur Mitglieder des Chats laden sie (`GET /api/v1/chat/attachments/{id}`), ausgeliefert wie im Dateimodul (kein Sniffing, inline in einer Sandbox). Hochgeladene, aber nie gesendete Dateien werden nach `Coworkee:Chat:UnsentAttachmentLifetime` gelöscht (Standard `1.00:00:00`, ein Job prüft stündlich).
 - **Antworten**, **reagieren** (👍 ❤️ 😂 🎉 😮 😢, ein Klick auf eine Reaktion fügt die eigene hinzu oder nimmt sie zurück), **bearbeiten** und **löschen** stehen im Menü jeder Nachricht. Nur der Absender bearbeitet oder löscht; eine bearbeitete Nachricht zeigt *bearbeitet*, eine gelöschte *Diese Nachricht wurde gelöscht.* und verliert Dateien und Reaktionen.

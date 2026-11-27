@@ -21,7 +21,7 @@ Handlers inject `CoworkeeDbContext` and use `db.Set<T>()`. There are no reposito
 | `Coworkee:Database:Provider` | EF Core provider | Aspire app host | Good for |
 |---|---|---|---|
 | `Postgres` (default) | Npgsql | `AddCoworkeeApp` starts a Postgres container | everything, production |
-| `SqlServer` | Microsoft.EntityFrameworkCore.SqlServer | `options.UseSqlServer()`, a SQL Server container | organisations that run SQL Server or Azure SQL |
+| `SqlServer` | Microsoft.EntityFrameworkCore.SqlServer | `options.UseSqlServer()`, a SQL Server container | companies that run SQL Server or Azure SQL |
 | `Sqlite` | Microsoft.EntityFrameworkCore.Sqlite | `options.UseSqlite()`, the file `.data/<name>.db` | demos, prototypes, one machine |
 
 The app host sets the setting on every service, next to the connection string. Elsewhere (tests, your own hosting) set it like any other configuration value. `coworkee new --database sqlServer` writes the app host call and creates the initial migration for that provider.

@@ -4,7 +4,7 @@
 
 ## Jobs of a user
 
-A job runs as the user who enqueued it, in the user's organisation and in a DI scope of its own, so permissions, tenant filters and audit work as in a request. Someone signed in as another user (*Log in as*) stays on record: the job keeps the impersonator (`JobEnvelope.ImpersonatorId`), and its audit entries name him like those of the request.
+A job runs as the user who enqueued it, in the user's tenant and in a DI scope of its own, so permissions, tenant filters and audit work as in a request. Someone signed in as another user (*Log in as*) stays on record: the job keeps the impersonator (`JobEnvelope.ImpersonatorId`), and its audit entries name him like those of the request.
 
 ```csharp
 public sealed record RenderPreview(Guid AssetId);
@@ -36,9 +36,9 @@ services.AddRecurringJob<CleanupJob>("cleanup", "0 3 * * *");
 
 The schedule (cron, UTC) is written to the job storage at start; while the database is not reachable yet, the host retries every five seconds. Hangfire starts one run per due time across all instances.
 
-## Every organisation
+## Every tenant
 
-Work in every organisation goes through `TenantJobRunner`: once per active organisation, as the system of that organisation (tenant filters, audit) and in a DI scope of its own. A failing organisation is logged and returned, the others still run:
+Work in every tenant goes through `TenantJobRunner`: once per active tenant, as the system of that tenant (tenant filters, audit) and in a DI scope of its own. A failing tenant is logged and returned, the others still run:
 
 ```csharp
 internal sealed class ReminderJob(TenantJobRunner tenants) : IRecurringJob
@@ -49,7 +49,7 @@ internal sealed class ReminderJob(TenantJobRunner tenants) : IRecurringJob
 }
 ```
 
-`ForTenantsAsync(tenantIds, ...)` does the same for the organisations a query found (due rows grouped by `TenantId`), so organisations without work cost nothing. `ForEachTenantAsync` lists the organisations through the Identity module (`ITenantDirectory.GetActiveTenantIdsAsync`). The run is sequential; with many organisations keep the work per organisation short.
+`ForTenantsAsync(tenantIds, ...)` does the same for the tenants a query found (due rows grouped by `TenantId`), so tenants without work cost nothing. `ForEachTenantAsync` lists the tenants through the Identity module (`ITenantDirectory.GetActiveTenantIdsAsync`). The run is sequential; with many tenants keep the work per tenant short.
 
 ## Only one instance at a time
 

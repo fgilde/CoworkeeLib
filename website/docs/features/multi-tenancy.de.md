@@ -13,9 +13,9 @@ public sealed class Brand : AuditedEntity, IMultiTenant
 }
 ```
 
-Ein Marker-Interface, mehr braucht es nicht. Ab jetzt liefert `db.Set<Brand>()` nur noch die Zeilen der Organisation des Aufrufers, denn `CoworkeeDbContext` legt auf jede `IMultiTenant`-Entität einen benannten Query-Filter für den aktuellen Mandanten. Beim Einfügen wird `TenantId` aus dem aktuellen Benutzer gesetzt, und wer eine Zeile in einen fremden Mandanten speichern will, bekommt eine Exception.
+Ein Marker-Interface, mehr braucht es nicht. Ab jetzt liefert `db.Set<Brand>()` nur noch die Zeilen des Mandanten des Aufrufers, denn `CoworkeeDbContext` legt auf jede `IMultiTenant`-Entität einen benannten Query-Filter für den aktuellen Mandanten. Beim Einfügen wird `TenantId` aus dem aktuellen Benutzer gesetzt, und wer eine Zeile in einen fremden Mandanten speichern will, bekommt eine Exception.
 
-Entitäten aus `coworkee entity add` tragen den Marker von Haus aus, und ihre eindeutigen Indizes gelten pro Mandant. Bei den Marken im Template gilt das für den Namen: Zwei Organisationen dürfen also beide eine Marke „Acme“ haben.
+Entitäten aus `coworkee entity add` tragen den Marker von Haus aus, und ihre eindeutigen Indizes gelten pro Mandant. Bei den Marken im Template gilt das für den Namen: Zwei Mandanten dürfen also beide eine Marke „Acme“ haben.
 
 `ICurrentUser` kennt Benutzer, Mandant und Berechtigungen des Requests. Hintergrundjobs und Outbox stellen Benutzer und Mandanten wieder her, die sie angestoßen haben. Muss Code im Namen eines anderen handeln, etwa ein Seed, öffnet er einen Scope:
 
@@ -28,13 +28,13 @@ using (CurrentUserScope.Begin(new ImpersonatedUser(adminId, tenantId)))
 
 Gecachte Queries teilen sich ihre Einträge standardmäßig pro Mandant (`CacheScope.Tenant`).
 
-## Organisationen und der Host
+## Mandanten und der Host
 
-Ein Mandant ist eine Organisation mit Namen, Kennung und Aktiv-Status. Eine davon ist die Systemorganisation, die die Installation verwaltet: Ihre Administratoren legen unter *Administration > Mandanten* Organisationen an, auf Wunsch gleich mit einem ersten Administrator, und deaktivieren sie. Mit einer deaktivierten Organisation sind auch die API-Schlüssel ihrer Benutzer tot.
+Ein Mandant hat einen Namen, eine Kennung und einen Aktiv-Status. Einer davon ist der System-Mandant, der die Installation verwaltet: Seine Administratoren legen unter *Administration > Mandanten* Mandanten an, auf Wunsch gleich mit einem ersten Administrator, und deaktivieren sie. Mit einem deaktivierten Mandanten sind auch die API-Schlüssel seiner Benutzer tot.
 
-Eine neue Organisation bekommt die [Seed-Contributors](../fundamentals/persistence.md#seed-contributors) der Module je Mandant gleich nach dem Anlegen (von der API, im Hintergrund nach dem Commit, `context.IsNew` wahr), und jeder spätere Migrationslauf führt sie für jede Organisation aus, inaktive eingeschlossen. Contributors des Migrationsprojekts erreichen eine neue Organisation mit dem nächsten Migrationslauf.
+Ein neuer Mandant bekommt die [Seed-Contributors](../fundamentals/persistence.md#seed-contributors) der Module je Mandant gleich nach dem Anlegen (von der API, im Hintergrund nach dem Commit, `context.IsNew` wahr), und jeder spätere Migrationslauf führt sie für jeden Mandanten aus, inaktive eingeschlossen. Contributors des Migrationsprojekts erreichen einen neuen Mandanten mit dem nächsten Migrationslauf.
 
-Berechtigungen wie `Features.Tenants` und `Identity.Clients.Manage` gehören dem Host. Jeder Administrator hat sie, nutzen können sie aber nur die Administratoren der Systemorganisation.
+Berechtigungen wie `Features.Tenants` und `Identity.Clients.Manage` gehören dem Host. Jeder Administrator hat sie, nutzen können sie aber nur die Administratoren des System-Mandanten.
 
 ## Einstellungen auf drei Ebenen
 
@@ -44,11 +44,11 @@ context.Group("Billing", "Billing")
     .Add("Billing.ApiKey", "API key", SettingType.Secret, [SettingScope.Global]);
 ```
 
-Es gibt die Ebenen `Global`, `Tenant` und `User`, und der spezifischste Wert gewinnt: Eine Organisation kann die Standardsprache der Installation überschreiben, ein Benutzer beide. Sobald der `ISettingDefinitionContributor` registriert ist, erscheint die Einstellung auf der Admin-Seite im Reiter ihrer Ebene, ganz ohne Formularcode. Geheimnisse werden mit ASP.NET Core Data Protection verschlüsselt und landen nie im Browser. Eine Einstellung kann zusätzlich zur Regel ihrer Ebene eine eigene Berechtigung verlangen (`Add(..., permission: ...)`), geprüft auf der Admin-Seite wie bei `PUT /api/v1/settings/{scope}`.
+Es gibt die Ebenen `Global`, `Tenant` und `User`, und der spezifischste Wert gewinnt: Ein Mandant kann die Standardsprache der Installation überschreiben, ein Benutzer beide. Sobald der `ISettingDefinitionContributor` registriert ist, erscheint die Einstellung auf der Admin-Seite im Reiter ihrer Ebene, ganz ohne Formularcode. Geheimnisse werden mit ASP.NET Core Data Protection verschlüsselt und landen nie im Browser. Eine Einstellung kann zusätzlich zur Regel ihrer Ebene eine eigene Berechtigung verlangen (`Add(..., permission: ...)`), geprüft auf der Admin-Seite wie bei `PUT /api/v1/settings/{scope}`.
 
-`services.AddCoworkeeHeadScript()` bringt eine solche Einstellung mit: HTML mit Script-Tags (etwa ein Tag-Manager), das das Layout, sobald es eingeschaltet ist, in jede Seite einfügt und das nur mit `Settings.HeadScript` geändert wird. Die Systemorganisation setzt es für alle, mit `AddCoworkeeHeadScript(perOrganisation: true)` jede Organisation ihr eigenes; siehe [Head-Skript](../modules/settings.md#head-skript).
+`services.AddCoworkeeHeadScript()` bringt eine solche Einstellung mit: HTML mit Script-Tags (etwa ein Tag-Manager), das das Layout, sobald es eingeschaltet ist, in jede Seite einfügt und das nur mit `Settings.HeadScript` geändert wird. Der System-Mandant setzt es für alle, mit `AddCoworkeeHeadScript(perOrganisation: true)` jeder Mandant sein eigenes; siehe [Head-Skript](../modules/settings.md#head-skript).
 
-![Einstellungsseite mit den Reitern App-Einstellungen, System und Organisation](../assets/screenshots/app-configuration-light.webp){ .shot loading=lazy }
+![Einstellungsseite mit den Reitern App-Einstellungen, System und Mandant](../assets/screenshots/app-configuration-light.webp){ .shot loading=lazy }
 
 Größere Konfigurationsblöcke beschreibst du stattdessen als typisierte Klasse. Die Werte kommen aus appsettings; was Administratoren in der Anwendung ändern, liegt in der Datenbank und wird über `IOptionsMonitor<T>` gelesen. Regeln legen fest, was der Browser anfassen darf:
 

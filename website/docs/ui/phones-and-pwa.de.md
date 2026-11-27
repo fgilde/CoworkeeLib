@@ -36,7 +36,7 @@ Die Komponente verlinkt das Web-Manifest und färbt die Titelleiste des Browsers
 
 | Adresse | Was es ist |
 |---|---|
-| `/manifest.webmanifest` | Name der App, Farben und Logo aus dem Theme der Organisation (das Logo des Themes, sonst das Icon der App). |
+| `/manifest.webmanifest` | Name der App, Farben und Logo aus dem Theme des Mandanten (das Logo des Themes, sonst das Icon der App). |
 | `/service-worker.js` | Der Service Worker; seine Version folgt den statischen Dateien der App, jedes Deployment bringt also einen neuen. |
 | `/bff/pwa/icon` | Das Icon: das Logo des Themes oder das eingestellte Icon. |
 | `/bff/pwa/offline` | Die Seite ohne Netz, im Theme und in der Sprache des Benutzers. |

@@ -379,7 +379,7 @@ builder.AddServiceDefaults();
 builder.Services.AddCoworkeeModules<ShopDatabaseModule>(builder.Configuration);
 builder.AddCoworkeeMigrations<ShopDbContext>(options =>
 {
-    // a local run: the organisation and its first administrator
+    // a local run: the tenant and its first administrator
     options.DevelopmentSeed = seed =>
     {
         seed.TenantName = "Shop";

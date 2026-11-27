@@ -6,7 +6,7 @@
 
 Was sie findet:
 
-- **Seiten** der Navigation, die der Benutzer öffnen darf (dieselben Regeln für Berechtigung, Feature und Organisation wie im Menü).
+- **Seiten** der Navigation, die der Benutzer öffnen darf (dieselben Regeln für Berechtigung, Feature und Mandant wie im Menü).
 - **Datensätze** aus der [globalen Suche](../web/global-search.md) des Servers, sobald zwei Buchstaben dastehen: Benutzer, Dateien, Berichte und die Sets, die deine Module mit `AddGlobalSearch` registrieren. Sie erscheinen Gruppe für Gruppe, sobald die Provider sie finden, der gewählte Eintrag bleibt gewählt, und *Alle Ergebnisse* öffnet `/search?q=` mit einem Filter pro Typ. Datensätze einer [Client-Entity](client-entities.md), deren Kopie im Browser liegt, erscheinen sofort, bevor der Server antwortet, siehe [zuerst die lokalen Kopien](../web/global-search.md#zuerst-die-lokalen-kopien).
 - **Aktionen**: dunkler oder heller Modus, ein anderes Theme, eine andere Sprache, eine andere aktive Rolle und deine eigenen Befehle wie *Neues Produkt*.
 - **Chat**: *Chatten mit…* wählt eine Person und öffnet einen [Mini-Chat](../modules/chat.md#mini-chats); `@name` listet passende Personen, mit denen du sofort chatten kannst (mit dem Chat-Modul und seiner Berechtigung).

@@ -12,7 +12,7 @@ internal static class DocumentErrors
 
     public static readonly Error UnknownType = Error.Validation("DocumentTypeId", "Choose an existing document type.");
 
-    public static readonly Error NoTenant = Error.Forbidden("documents.no_tenant", "Documents belong to an organisation.");
+    public static readonly Error NoTenant = Error.Forbidden("documents.no_tenant", "Documents belong to a tenant.");
 
     public static readonly Error Forbidden = Error.Forbidden("documents.forbidden", "You may not do this.");
 }

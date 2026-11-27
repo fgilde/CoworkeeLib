@@ -16,7 +16,7 @@ For a download link in a mail, `BlobLinks` signs one that expires.
 
 ## The Files page
 
-The Files module puts an organisation's drive on top: folder tree, tiles or details, drag and drop to upload and move, a double-click opens the preview in a side sheet. Roles can be granted per folder, and the grant covers everything below it. Uploads stream to storage, up to 2 GB per file by default. An uploaded HTML or SVG file can be looked at but runs no script. The page is live: a file or folder that someone else uploads, renames, moves or deletes shows up within a moment, and the folder you are in stays open. A refused upload names the reason, for example the virus scanner's.
+The Files module puts a tenant's drive on top: folder tree, tiles or details, drag and drop to upload and move, a double-click opens the preview in a side sheet. Roles can be granted per folder, and the grant covers everything below it. Uploads stream to storage, up to 2 GB per file by default. An uploaded HTML or SVG file can be looked at but runs no script. The page is live: a file or folder that someone else uploads, renames, moves or deletes shows up within a moment, and the folder you are in stays open. A refused upload names the reason, for example the virus scanner's.
 
 Forms pick files with `CoworkeeFilePicker`:
 

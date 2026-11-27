@@ -38,7 +38,7 @@ Die Werkzeuge kommen aus denselben Quellen wie die des Assistenten:
 public sealed record PinProductCommand(Guid Id) : ICommand<Result>;
 ```
 
-Jeder Aufruf läuft als der aufrufende Benutzer durch den Dispatcher: Berechtigungen, Organisation, Validierung und Unit of Work gelten wie in der API, und Response-Filter formen das Ergebnis wie die Antworten der API. Die Antwort wird nach 20.000 Zeichen gekürzt. Jeder Aufruf landet im Audit der KI-Werkzeugaufrufe mit dem Kanal `mcp`, dem Benutzer und dem API-Schlüssel.
+Jeder Aufruf läuft als der aufrufende Benutzer durch den Dispatcher: Berechtigungen, Mandant, Validierung und Unit of Work gelten wie in der API, und Response-Filter formen das Ergebnis wie die Antworten der API. Die Antwort wird nach 20.000 Zeichen gekürzt. Jeder Aufruf landet im Audit der KI-Werkzeugaufrufe mit dem Kanal `mcp`, dem Benutzer und dem API-Schlüssel.
 
 ## Einen Client verbinden
 

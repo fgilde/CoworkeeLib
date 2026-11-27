@@ -57,12 +57,12 @@ document.body.append(document.createElement('air-desktop'));
 | App | Id | Sichtbar, wenn |
 |---|---|---|
 | Eingang: Genehmigungen zum Entscheiden (genehmigen oder ablehnen mit Kommentar, Fälligkeit, öffnet den Datensatz) und Benachrichtigungen (Links öffnen die Seite der Web-App); die Anzahl beider steht auf der Kachel | `coworkee.inbox` | die App hat das Notifications-Modul; Genehmigungen mit `Workflows.View` |
-| Einstellungen: Profil (Name, Telefon, Kontoseiten, Abmelden), die Einstellungen des Benutzers, der Organisation und des Systems | `coworkee.settings` | immer; Organisation und System mit `Settings.Manage` |
+| Einstellungen: Profil (Name, Telefon, Kontoseiten, Abmelden), die Einstellungen des Benutzers, des Mandanten und des Systems | `coworkee.settings` | immer; Mandant und System mit `Settings.Manage` |
 | Dateien: Ordner, Hochladen (auch per Drag & Drop), Umbenennen, Löschen, Herunterladen | `coworkee.files` | `Files.View` |
 | Dateivorschau mit der MudEx-Dateianzeige (PDF, Bilder, Office, Archive, Markdown, Audio, Video) | `coworkee.file-preview` | aus Dateien geöffnet |
 | Datensätze: jedes OData-Entity-Set als blätterbare, sortierbare und durchsuchbare Tabelle; gelöschte Datensätze der Sets mit Soft Delete | `coworkee.data` | die App hat OData |
 | Datensatzfenster: Felder, Verlauf mit Rückgängig, Wiederherstellen des Stands vor oder nach einer Änderung (mit Vorschau), Workflow-Status, Schritte und Genehmigungen; *In der Web-App öffnen* öffnet die Seite des Datensatzes in der Web-App (den Link seines Treffers der globalen Suche) in einem Fenster, oder in einem Browser-Tab, wenn die Seite sich nicht einrahmen lässt; geöffnet aus Datensätzen, Suche, Eingang und Audit-Log | `coworkee.record` | geöffnet mit `{ set, id }` |
-| Chat: Personen der Organisation mit Anwesenheit und ungelesenen Nachrichten, Nachrichten kommen live an; die Zahl der ungelesenen steht auf der Kachel | `coworkee.chat` | `Chat.Use` und das Chat-Modul |
+| Chat: Personen des Mandanten mit Anwesenheit und ungelesenen Nachrichten, Nachrichten kommen live an; die Zahl der ungelesenen steht auf der Kachel | `coworkee.chat` | `Chat.Use` und das Chat-Modul |
 | Berichte: Liste, Favoriten, Duplizieren, Löschen, ein Bericht mit KPIs, Diagrammen und Tabellen und der Berichtsdesigner | `coworkee.reports`, `coworkee.report`, `coworkee.report-designer` | `Reports.View` und das Reporting-Modul |
 | Assistent: Unterhaltungen, Antworten erscheinen beim Schreiben, Bestätigung von Tools, die Daten ändern | `coworkee.assistant` | `Ai.Chat` und das KI-Modul |
 | Webseite: jede Seite der Web-App in einem Fenster, ohne App-Leiste und Menü (`?embed=1`) | `coworkee.web-page` | der BFF kennt die Web-App |
@@ -70,7 +70,7 @@ document.body.append(document.createElement('air-desktop'));
 
 ### Administration (`adminApps`)
 
-Die Administrations-Apps bekommen keine eigene Desktop-Verknüpfung: Die App *Administration* listet sie gruppiert wie das Administrationsmenü der Web-App und erscheint nur, wenn der Benutzer mindestens eine davon öffnen darf. Jede braucht die Berechtigung ihrer Seite in der Blazor-App; Apps mit *System* erscheinen nur für Benutzer der System-Organisation, wie die Host-Seiten.
+Die Administrations-Apps bekommen keine eigene Desktop-Verknüpfung: Die App *Administration* listet sie gruppiert wie das Administrationsmenü der Web-App und erscheint nur, wenn der Benutzer mindestens eine davon öffnen darf. Jede braucht die Berechtigung ihrer Seite in der Blazor-App; Apps mit *System* erscheinen nur für Benutzer des System-Mandanten, wie die Host-Seiten.
 
 | Bereich | Apps (Berechtigung) |
 |---|---|
@@ -95,7 +95,7 @@ await coworkee.register(...defaultApps, ordersApp);
 
 Listen mit Anlegen, Bearbeiten, Löschen und Zeilenaktionen sind ein Aufruf: `crudApp({ id, title, icon, permissions, load, columns, create, edit, remove, actions })` (die Administrations-Apps sind damit gebaut); `formDialog`, `confirmDialog` und `infoDialog` sind die Dialoge dazu.
 
-Neben der App-Definition von AirWorks nimmt eine `CoworkeeApp` `probe`, einen API-Pfad, der für den angemeldeten Benutzer auf ein `GET` antworten muss, bevor die App hinzukommt (so bleibt eine App eines optionalen Moduls weg, wenn das Modul fehlt), `hostOnly` nur für Benutzer der Systemorganisation und die Felder des Starters `group`, `launcherGroup` und `shortcut` (siehe [App-Starter](#app-starter)).
+Neben der App-Definition von AirWorks nimmt eine `CoworkeeApp` `probe`, einen API-Pfad, der für den angemeldeten Benutzer auf ein `GET` antworten muss, bevor die App hinzukommt (so bleibt eine App eines optionalen Moduls weg, wenn das Modul fehlt), `hostOnly` nur für Benutzer des System-Mandanten und die Felder des Starters `group`, `launcherGroup` und `shortcut` (siehe [App-Starter](#app-starter)).
 
 ### Icons
 
@@ -124,7 +124,7 @@ Der Desktop selbst folgt dem Topic des Benutzers (neue Benachrichtigungen ersche
 
 ### Berichtsdesigner
 
-*Neuer Bericht* in Berichte und *Bearbeiten* in einem geöffneten Bericht (für alle, die ihn ändern dürfen, `Reports.Manage`) öffnen den Designer: die Widget-Palette der Web-App (KPI, Balken, horizontal, gestapelt, Linie, Fläche, Kreis, Ring, Streuung, Netz, Treemap, Heatmap, Tabelle, Datentabelle, Pivot, Text, Bild, Webseite), Widgets auf dem 12-Spalten-Raster (Titel ziehen zum Verschieben, Ecke zum Vergrößern), ein Seitenbereich je Widget mit Datenquelle, Gruppierung und Serien (mit Zeiteinheiten), Werten (Anzahl, Summe, Durchschnitt, Minimum, Maximum, Anzahl verschiedener), Spalten und Sortierung, Top, dem Datumsfeld für den Zeitraum des Berichts, einem OData-Filter und der Darstellung (Zahlenformat, Währung, Zielwert, Vergleich, Verlauf, Legende, Werte im Diagramm, Kreuzfilter, Tabellenansicht, Markdown-Text, Adresse von Bildern und Webseiten). Die Berichtseinstellungen enthalten Name, Beschreibung, Symbol, automatische Aktualisierung und Freigabe (nur ich, Rollen, Organisation; mit `Reports.Share`); Rückgängig und Wiederholen gelten für jede Änderung. Ansicht und Designer wenden den Zeitraum des Berichts auf jedes Widget mit Datumsfeld an.
+*Neuer Bericht* in Berichte und *Bearbeiten* in einem geöffneten Bericht (für alle, die ihn ändern dürfen, `Reports.Manage`) öffnen den Designer: die Widget-Palette der Web-App (KPI, Balken, horizontal, gestapelt, Linie, Fläche, Kreis, Ring, Streuung, Netz, Treemap, Heatmap, Tabelle, Datentabelle, Pivot, Text, Bild, Webseite), Widgets auf dem 12-Spalten-Raster (Titel ziehen zum Verschieben, Ecke zum Vergrößern), ein Seitenbereich je Widget mit Datenquelle, Gruppierung und Serien (mit Zeiteinheiten), Werten (Anzahl, Summe, Durchschnitt, Minimum, Maximum, Anzahl verschiedener), Spalten und Sortierung, Top, dem Datumsfeld für den Zeitraum des Berichts, einem OData-Filter und der Darstellung (Zahlenformat, Währung, Zielwert, Vergleich, Verlauf, Legende, Werte im Diagramm, Kreuzfilter, Tabellenansicht, Markdown-Text, Adresse von Bildern und Webseiten). Die Berichtseinstellungen enthalten Name, Beschreibung, Symbol, automatische Aktualisierung und Freigabe (nur ich, Rollen, Mandant; mit `Reports.Share`); Rückgängig und Wiederholen gelten für jede Änderung. Ansicht und Designer wenden den Zeitraum des Berichts auf jedes Widget mit Datumsfeld an.
 
 ### Auswahlfelder
 

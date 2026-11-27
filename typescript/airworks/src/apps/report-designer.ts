@@ -155,7 +155,7 @@ export const reportDesignerApp = (coworkee: Coworkee): CoworkeeApp => ({
         { name: 'icon', label: 'Icon', type: 'select', options: [{ value: '', label: '' }, ...Object.keys(reportIcons).map((key) => ({ value: key, label: humanize(key) }))] },
         { name: 'refreshSeconds', label: 'Refresh automatically', type: 'select', options: refreshes.map(([seconds, label]) => ({ value: String(seconds), label: t(label) })) },
         ...(coworkee.can('Reports.Share') ? [
-          { name: 'visibility', label: 'Shared with', type: 'select', options: [['Private', 'Only me'], ['Roles', 'Roles'], ['Organisation', 'Everybody in the organisation']].map(([value, label]) => ({ value, label: t(label) })) },
+          { name: 'visibility', label: 'Shared with', type: 'select', options: [['Private', 'Only me'], ['Roles', 'Roles'], ['Organisation', 'Everybody in the tenant']].map(([value, label]) => ({ value, label: t(label) })) },
           { name: 'roleIds', label: 'Roles', type: 'multi', options: (await request<Schemas['ReportRoleDto'][]>(`${reports}/roles`).catch(() => [])).map((role) => ({ value: role.id, label: role.name })) },
         ] as const : []),
       ] as never,

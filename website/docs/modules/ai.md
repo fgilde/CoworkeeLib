@@ -170,7 +170,7 @@ Host administrators with `Settings.Manage` set it up under **Administration > Sy
 
 ### Settings
 
-The page writes the AI settings. They are global only, so no organisation switches the assistant on or raises limits on the host's key; they also have defaults in the configuration, e.g. from the app host or environment variables:
+The page writes the AI settings. They are global only, so no tenant switches the assistant on or raises limits on the host's key; they also have defaults in the configuration, e.g. from the app host or environment variables:
 
 | Setting | |
 |---|---|

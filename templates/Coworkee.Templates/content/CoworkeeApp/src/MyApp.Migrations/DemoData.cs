@@ -16,7 +16,7 @@ namespace MyApp.Migrations;
 
 /// <summary>Sample catalog and document types, so a fresh demo shows filled tables, facets and charts. Local runs only, into a new database.</summary>
 #if (reports)
-/// <remarks>The catalog report of the administrator is the organisation's dashboard.</remarks>
+/// <remarks>The catalog report of the administrator is the tenant's dashboard.</remarks>
 #endif
 [RegisterAs(typeof(ISeedContributor))]
 internal sealed class DemoData(MyAppDbContext db) : ISeedContributor

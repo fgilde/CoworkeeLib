@@ -1,6 +1,6 @@
 # Änderungen an Entities
 
-Jedes Speichern wird einmal durchsucht. Jede angelegte, geänderte oder gelöschte Entity wird zu einer `EntityChange`: was (Typ, Id, Aktion, geänderte Werte), wer (`Actor`), wann (`At`), warum (`Reason`), der Trace der Anfrage (`CorrelationId`) und die Organisation (`TenantId`). Audit-Protokoll, Realtime, Webhooks und Elsa-Workflows werden aus diesem einen Durchlauf gespeist, und eigener Code kann ihm ebenfalls zuhören, dauerhaft oder im Prozess.
+Jedes Speichern wird einmal durchsucht. Jede angelegte, geänderte oder gelöschte Entity wird zu einer `EntityChange`: was (Typ, Id, Aktion, geänderte Werte), wer (`Actor`), wann (`At`), warum (`Reason`), der Trace der Anfrage (`CorrelationId`) und der Mandant (`TenantId`). Audit-Protokoll, Realtime, Webhooks und Elsa-Workflows werden aus diesem einen Durchlauf gespeist, und eigener Code kann ihm ebenfalls zuhören, dauerhaft oder im Prozess.
 
 ```csharp
 // die Form (Coworkee.Application.Events)
@@ -19,7 +19,7 @@ public record EntityChange : IDomainEvent
 
 ## Dauerhafte Handler
 
-Die Änderungen eines Typs veröffentlichen, dann behandeln. Jede Änderung eines veröffentlichten Typs schreibt im selben Speichern eine Outbox-Zeile; der Handler läuft nach dem Commit, einmal, bei Fehlern erneut, als der Benutzer und die Organisation, die gespeichert haben, auch auf einer anderen Instanz nach einem Neustart. Nicht veröffentlichte Typen kosten nichts.
+Die Änderungen eines Typs veröffentlichen, dann behandeln. Jede Änderung eines veröffentlichten Typs schreibt im selben Speichern eine Outbox-Zeile; der Handler läuft nach dem Commit, einmal, bei Fehlern erneut, als der Benutzer und der Mandant, die gespeichert haben, auch auf einer anderen Instanz nach einem Neustart. Nicht veröffentlichte Typen kosten nichts.
 
 ```csharp
 // im Modul
@@ -66,7 +66,7 @@ Der Grund landet auf jeder `EntityChange` und jedem Audit-Eintrag (`cw.AuditEntr
 
 ## Senken
 
-Der Sammler läuft dort, wo das Audit-Protokoll schon immer lief (nach den Interceptoren für weiches Löschen, Audit-Felder und Organisation, vor Schnappschüssen und Outbox). Der letzte Interceptor des Speicherns gibt die Änderungen an die `IEntityChangeSink`s: im Speichern (Zeilen, die sie anlegen, werden mit der Änderung gespeichert), nach dem Commit, oder verworfen bei einem Fehler oder Rollback. Die Senken der Bibliothek sind Audit-Protokoll, Realtime (`EntityChanged`-Nutzlasten unverändert), Webhooks (`WebhookEntityChanged` unverändert), Elsa (`Watch<T>` schreibt `Coworkee.Workflows.Elsa.EntityChanged` wie bisher, ein weiches Löschen bleibt dort `Updated`) und die beiden oben. Eine eigene Senke:
+Der Sammler läuft dort, wo das Audit-Protokoll schon immer lief (nach den Interceptoren für weiches Löschen, Audit-Felder und Mandant, vor Schnappschüssen und Outbox). Der letzte Interceptor des Speicherns gibt die Änderungen an die `IEntityChangeSink`s: im Speichern (Zeilen, die sie anlegen, werden mit der Änderung gespeichert), nach dem Commit, oder verworfen bei einem Fehler oder Rollback. Die Senken der Bibliothek sind Audit-Protokoll, Realtime (`EntityChanged`-Nutzlasten unverändert), Webhooks (`WebhookEntityChanged` unverändert), Elsa (`Watch<T>` schreibt `Coworkee.Workflows.Elsa.EntityChanged` wie bisher, ein weiches Löschen bleibt dort `Updated`) und die beiden oben. Eine eigene Senke:
 
 ```csharp
 internal sealed class SearchIndexSink(SearchQueue queue) : IEntityChangeSink

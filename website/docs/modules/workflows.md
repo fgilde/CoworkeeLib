@@ -23,7 +23,7 @@ public sealed class MyAppCatalogModule : CoworkeeModule
 }
 ```
 
-`AddCoworkeeWorkflows` may be called by several modules. The entity is loaded through the `DbContext`, so tenant filters apply; an id of another organisation is simply not found.
+`AddCoworkeeWorkflows` may be called by several modules. The entity is loaded through the `DbContext`, so tenant filters apply; an id of another tenant is simply not found.
 
 ## Database
 
@@ -65,7 +65,7 @@ A state with `Approval(approved, rejected, ...)` asks for an approval when the w
 
     `ApprovedTo(...)`/`RejectedTo(...)` list every state the choice may return; the workflow refuses to start without them (so filters, facets and the designer know every state), and a decision that chooses an unlisted state fails. The context has the entity, the decision's comment and who decided. History, inbox, domain events and Elsa triggers see the chosen state like a fixed one.
 
-The reminders and deadlines are handled by the recurring job `workflow-deadlines` (every five minutes; `Coworkee:Workflows:DeadlineCron` changes it). It runs once per active organisation through `TenantJobRunner`, so an error in one organisation is logged and the others go on. Approvers get in-app notifications when an approval starts, when it is overdue and as a reminder.
+The reminders and deadlines are handled by the recurring job `workflow-deadlines` (every five minutes; `Coworkee:Workflows:DeadlineCron` changes it). It runs once per active tenant through `TenantJobRunner`, so an error in one tenant is logged and the others go on. Approvers get in-app notifications when an approval starts, when it is overdue and as a reminder.
 
 ## History, audit and realtime
 
@@ -110,7 +110,7 @@ GET /odata/Products?$filter=WorkflowState eq 'In review'&$orderby=WorkflowState,
 GET /odata/Products?$filter=WorkflowAwaitsMe eq true
 ```
 
-The subquery runs through the query filters of the app's `DbContext`, so a state of another organisation never matches. With facets on, the response carries the facet `WorkflowState`: every state the workflow names (initial state, declared states, the ends of transitions and approvals) with its count, then *Awaiting my approval*. `WithColor` gives a state a CSS color for swatches:
+The subquery runs through the query filters of the app's `DbContext`, so a state of another tenant never matches. With facets on, the response carries the facet `WorkflowState`: every state the workflow names (initial state, declared states, the ends of transitions and approvals) with its count, then *Awaiting my approval*. `WithColor` gives a state a CSS color for swatches:
 
 ```csharp
 product.State("Approved").WithColor("var(--mud-palette-success)");
@@ -130,7 +130,7 @@ A transition that needs a comment and every rejection ask for it in a small dial
 | `Workflows.View` | see states, histories and the own approvals inbox; decide approvals the user is an approver of |
 | `Workflows.Transition` | run transitions at all; each transition may ask for more |
 
-On top of that, the workflow of a row is only there for users who see the row the way its [OData set](../web/odata.md) shows it: the set's permission, the organisation, soft delete and every `IODataEntityFilter<T>` row filter. Everyone else gets 404 on the state, the history, the comments, transitions and the realtime topic, as if the row did not exist. One exception: the approvers of the row's open approval see its state and history and decide, even without seeing the row in its list, because they have to see what they decide; they cannot run transitions through it, and once the approval is decided the exception ends. The approvals inbox always shows a user's own open approvals.
+On top of that, the workflow of a row is only there for users who see the row the way its [OData set](../web/odata.md) shows it: the set's permission, the tenant, soft delete and every `IODataEntityFilter<T>` row filter. Everyone else gets 404 on the state, the history, the comments, transitions and the realtime topic, as if the row did not exist. One exception: the approvers of the row's open approval see its state and history and decide, even without seeing the row in its list, because they have to see what they decide; they cannot run transitions through it, and once the approval is decided the exception ends. The approvals inbox always shows a user's own open approvals.
 
 ## Limits
 

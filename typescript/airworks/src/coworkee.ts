@@ -12,7 +12,7 @@ export type AirWorksApi = typeof AirWorks;
 
 /**
  * An app of the desktop; with probe it is added only when that GET succeeds for the signed-in user (the module is part of the app),
- * with hostOnly only for users of the system organisation.
+ * with hostOnly only for users of the system tenant.
  */
 export type CoworkeeApp = AppDefinition & {
   probe?: string;

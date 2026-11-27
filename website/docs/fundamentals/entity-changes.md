@@ -1,6 +1,6 @@
 # Entity changes
 
-Every save is scanned once. Each added, changed or deleted entity becomes an `EntityChange`: what (type, id, action, changed values), who (`Actor`), when (`At`), why (`Reason`), the request's trace (`CorrelationId`) and the organisation (`TenantId`). The audit trail, realtime, webhooks and Elsa workflows are fed by this scan, and your code can listen to it too, durably or in-process.
+Every save is scanned once. Each added, changed or deleted entity becomes an `EntityChange`: what (type, id, action, changed values), who (`Actor`), when (`At`), why (`Reason`), the request's trace (`CorrelationId`) and the tenant (`TenantId`). The audit trail, realtime, webhooks and Elsa workflows are fed by this scan, and your code can listen to it too, durably or in-process.
 
 ```csharp
 // the shape (Coworkee.Application.Events)
@@ -19,7 +19,7 @@ public record EntityChange : IDomainEvent
 
 ## Durable handlers
 
-Publish the changes of a type, then handle them. Every change of a published type writes one outbox row in the same save; the handler runs after the commit, once, retried when it fails, as the user and organisation that saved it, also on another instance after a restart. Types that are not published cost nothing.
+Publish the changes of a type, then handle them. Every change of a published type writes one outbox row in the same save; the handler runs after the commit, once, retried when it fails, as the user and tenant that saved it, also on another instance after a restart. Types that are not published cost nothing.
 
 ```csharp
 // in the module

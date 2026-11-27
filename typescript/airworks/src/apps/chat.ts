@@ -10,7 +10,7 @@ type Message = Schemas['ChatMessageDto'];
 const chat = '/api/v1/chat';
 const json = (method: string, body?: unknown): RequestInit => ({ method, body: body === undefined ? undefined : JSON.stringify(body) });
 
-/** Direct messages with the people of the organisation: who is online, unread counts, messages arriving live. */
+/** Direct messages with the people of the tenant: who is online, unread counts, messages arriving live. */
 export const chatApp = (coworkee: Coworkee): CoworkeeApp => ({
   id: 'coworkee.chat', title: coworkee.t('Chat'), icon: icons.chat, accent: '#00897b', width: 860, height: 600,
   requiredPermissions: ['Chat.Use'], probe: `${chat}/unread-count`,

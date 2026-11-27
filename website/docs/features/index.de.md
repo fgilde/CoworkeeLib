@@ -21,7 +21,7 @@ Die Seiten unten gehen Bereich für Bereich durch, mit Code aus den echten APIs 
 
 -   **[Mandanten und Einstellungen](multi-tenancy.md)**
 
-    Organisationen mit getrennten Daten, Einstellungen für Host, Organisation und Benutzer, Features und Editionen für ein SaaS-Produkt.
+    Mandanten mit getrennten Daten, Einstellungen für Host, Mandant und Benutzer, Features und Editionen für ein SaaS-Produkt.
 
 -   **[Daten und Abfragen](data.md)**
 
@@ -45,7 +45,7 @@ Die Seiten unten gehen Bereich für Bereich durch, mit Code aus den echten APIs 
 
 -   **[Berichte und Dashboards](reporting.md)**
 
-    Dashboards, im Browser auf deinen OData-Sets gebaut, von der Datenbank in Millisekunden aggregiert, mit Rollen, Gruppen oder der Organisation geteilt und als Abonnement per Mail verschickt.
+    Dashboards, im Browser auf deinen OData-Sets gebaut, von der Datenbank in Millisekunden aggregiert, mit Rollen, Gruppen oder des Mandanten geteilt und als Abonnement per Mail verschickt.
 
 -   **[Lokalisierung](localization.md)**
 

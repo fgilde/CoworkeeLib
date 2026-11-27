@@ -57,12 +57,12 @@ document.body.append(document.createElement('air-desktop'));
 | App | Id | Shown when |
 |---|---|---|
 | Inbox: approvals to decide (approve or reject with a comment, due date, opens the record) and notifications (links open the page of the web app); the count of both shows on the tile | `coworkee.inbox` | the app has the Notifications module; approvals with `Workflows.View` |
-| Settings: profile (name, phone, account pages, sign out), the user's, the organisation's and the system's settings | `coworkee.settings` | always; organisation and system with `Settings.Manage` |
+| Settings: profile (name, phone, account pages, sign out), the user's, the tenant's and the system's settings | `coworkee.settings` | always; tenant and system with `Settings.Manage` |
 | Files: folders, upload (also by dropping files), rename, delete, download | `coworkee.files` | `Files.View` |
 | File preview with the MudEx file display (pdf, images, office, archives, markdown, audio, video) | `coworkee.file-preview` | opened from Files |
 | Records: every OData entity set as a paged, sortable and searchable table; deleted records of sets with soft delete | `coworkee.data` | the app has OData |
 | Record window: fields, history with undo, restore of a state before or after a change (with a preview), workflow state, steps and approvals; *Open in the web app* opens the record's page of the web app (the link of its global search hit) in a window, or in a browser tab when the page cannot be framed; opened from records, search, inbox and audit log | `coworkee.record` | opened with `{ set, id }` |
-| Chat: people of the organisation with presence and unread counts, messages arrive live; the unread count shows on the tile | `coworkee.chat` | `Chat.Use` and the Chat module |
+| Chat: people of the tenant with presence and unread counts, messages arrive live; the unread count shows on the tile | `coworkee.chat` | `Chat.Use` and the Chat module |
 | Reports: list, favourites, duplicate, delete, a report with its KPIs, charts and tables, and the report designer | `coworkee.reports`, `coworkee.report`, `coworkee.report-designer` | `Reports.View` and the Reporting module |
 | Assistant: conversations, answers streamed as they arrive, confirmation of tools that change data | `coworkee.assistant` | `Ai.Chat` and the AI module |
 | Web page: any page of the web app in a window, without app bar and menu (`?embed=1`) | `coworkee.web-page` | the BFF knows the web app |
@@ -70,7 +70,7 @@ document.body.append(document.createElement('air-desktop'));
 
 ### Administration (`adminApps`)
 
-The administration apps get no desktop shortcut of their own: the app *Administration* lists them grouped like the administration menu of the web app and is only shown when the user may open one of them. Each one needs the permission of its page in the Blazor app; apps marked *system* show only for users of the system organisation, like the host-only pages.
+The administration apps get no desktop shortcut of their own: the app *Administration* lists them grouped like the administration menu of the web app and is only shown when the user may open one of them. Each one needs the permission of its page in the Blazor app; apps marked *system* show only for users of the system tenant, like the host-only pages.
 
 | Section | Apps (permission) |
 |---|---|
@@ -95,7 +95,7 @@ await coworkee.register(...defaultApps, ordersApp);
 
 Lists with create, edit, delete and row actions are one call: `crudApp({ id, title, icon, permissions, load, columns, create, edit, remove, actions })` (the administration apps are built with it); `formDialog`, `confirmDialog` and `infoDialog` are the dialogs it uses.
 
-Besides the AirWorks app definition a `CoworkeeApp` takes `probe`, an API path that must answer a `GET` for the signed-in user before the app is added (so an app of an optional module stays away when the module is not there), `hostOnly` for users of the system organisation only, and the launcher fields `group`, `launcherGroup` and `shortcut` (see [App launcher](#app-launcher)).
+Besides the AirWorks app definition a `CoworkeeApp` takes `probe`, an API path that must answer a `GET` for the signed-in user before the app is added (so an app of an optional module stays away when the module is not there), `hostOnly` for users of the system tenant only, and the launcher fields `group`, `launcherGroup` and `shortcut` (see [App launcher](#app-launcher)).
 
 ### Icons
 
@@ -124,7 +124,7 @@ The desktop itself follows the user's topic (new notifications pop up, a session
 
 ### Report designer
 
-*New report* in Reports and *Edit* in an open report (for those who may change it, `Reports.Manage`) open the designer: the widget palette of the web app (KPI, bar, horizontal, stacked, line, area, pie, donut, scatter, radar, treemap, heatmap, table, data table, pivot, text, image, web page), widgets on the 12 column grid (drag the title to move, the corner to resize), a side panel per widget with data source, grouping and series (with date buckets), values (count, sum, average, min, max, distinct count), columns and sorting, top, the date field of the report's date range, an OData filter, and the display (number format, currency, target, comparison, curve over time, legend, values on the chart, cross filter, table view, markdown text, address of images and web pages). The report settings hold name, description, icon, automatic refresh and sharing (only me, roles, organisation; with `Reports.Share`); undo and redo cover every change. The viewer and the designer apply the report's date range to every widget with a date field.
+*New report* in Reports and *Edit* in an open report (for those who may change it, `Reports.Manage`) open the designer: the widget palette of the web app (KPI, bar, horizontal, stacked, line, area, pie, donut, scatter, radar, treemap, heatmap, table, data table, pivot, text, image, web page), widgets on the 12 column grid (drag the title to move, the corner to resize), a side panel per widget with data source, grouping and series (with date buckets), values (count, sum, average, min, max, distinct count), columns and sorting, top, the date field of the report's date range, an OData filter, and the display (number format, currency, target, comparison, curve over time, legend, values on the chart, cross filter, table view, markdown text, address of images and web pages). The report settings hold name, description, icon, automatic refresh and sharing (only me, roles, tenant; with `Reports.Share`); undo and redo cover every change. The viewer and the designer apply the report's date range to every widget with a date field.
 
 ### Pickers
 

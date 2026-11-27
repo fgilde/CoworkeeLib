@@ -6,7 +6,7 @@
 
 What it finds:
 
-- **Pages** of the navigation the user may open (the same permission, feature and organisation rules as the menu).
+- **Pages** of the navigation the user may open (the same permission, feature and tenant rules as the menu).
 - **Records** from the [global search](../web/global-search.md) of the server once two letters are typed: users, files, reports and the sets your modules register with `AddGlobalSearch`. They show group by group as the providers find them, the entry you chose stays chosen, and *Show all results* opens `/search?q=` with a filter per type. Records of a [client entity](client-entities.md) whose copy is in the browser show at once, before the server answers, see [local copies first](../web/global-search.md#local-copies-first).
 - **Actions**: dark or light mode, another theme, another language, another active role, and your own commands like *New product*.
 - **Chat**: *Chat with…* picks a person and opens a [mini chat](../modules/chat.md#mini-chats); `@name` lists the matching people to chat with right away (with the Chat module and its permission).

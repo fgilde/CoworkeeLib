@@ -9,7 +9,7 @@ public sealed class MyAppDatabaseModule : CoworkeeModule;
 
 ## Live for everyone
 
-What one user saves reaches every other open browser of the organisation at once, without code in your pages. Left the administrator, right John in a second browser, working in German: a new product appears in his list, a role adds the *Sales* menu, another default theme repaints his app, the app bar moves to the bottom, and when German is switched off his app turns English.
+What one user saves reaches every other open browser of the tenant at once, without code in your pages. Left the administrator, right John in a second browser, working in German: a new product appears in his list, a role adds the *Sales* menu, another default theme repaints his app, the app bar moves to the bottom, and when German is switched off his app turns English.
 
 <video class="cw-doc-video" autoplay muted loop playsinline controls preload="metadata" width="1600" height="618" poster="../../assets/videos/realtime-live-poster.webp" aria-label="Two browsers side by side: what the administrator changes on the left appears at once for John on the right">
   <source src="../../assets/videos/realtime-live.webm" type="video/webm">
@@ -32,8 +32,8 @@ Every open tab follows these changes without a reload:
 | Someone changes name or picture | every avatar and user card showing that user updates |
 | A notification arrives or changes | bell, count and notifications page follow |
 | Features, languages, theme lists | feature gates, language menu and theme lists follow |
-| The organisation's default theme changes, or a theme in use is edited | every client repaints with it |
-| A global or organisation setting is saved (also app bars and header items) | every client reloads its settings; theme, layout and assistant follow |
+| The tenant's default theme changes, or a theme in use is edited | every client repaints with it |
+| A global or tenant setting is saved (also app bars and header items) | every client reloads its settings; theme, layout and assistant follow |
 | A language is switched off | its users move to the default language and are told so |
 | A translation is edited, the default language changes | the texts change at once; users without a language of their own move to the new default |
 
@@ -104,7 +104,7 @@ Clients connect to the hub at `/hubs/realtime` (signed in; when its token expire
 | `type:{Entity}`, `entity:{Entity}:{id}` | holders of the permission of the entity's `[Realtime]` attribute; for `entity:` also holders of it on that resource (`[Realtime(permission, ResourceType = ...)]`) | `EntityChanged` |
 | `user:{id}` | that user | his notifications, chat, `SessionRevoked` |
 | `session:{sid}` (`RealtimeTopics.Session`) | connections whose token carries that `sid` | `ImpersonationEnded` (`ImpersonationEndedPayload`) when a *Log in as* ends, see [identity](../features/identity.md#log-in-as-another-user) |
-| `tenant:...` | every signed-in user of the organisation | e.g. `tenant:permissions`, `tenant:presence`; `tenant:events` for `EventTarget.All` |
+| `tenant:...` | every signed-in user of the tenant | e.g. `tenant:permissions`, `tenant:presence`; `tenant:events` for `EventTarget.All` |
 | `global:...` | every signed-in user | e.g. `global:permissions`; `global:events` for `EventTarget.Global` |
 
 Other prefixes are refused unless an app registers its own `IRealtimeTopicAuthorizer` (`Handles(topic)`, `AuthorizeAsync(topic, ct)`), as the social, workflow and record attachment modules do for their topics. `IRealtimePublisher.PublishAsync(tenantId, topic, type, payload)` sends to a topic, `RealtimeEvents.PublishAsync(target, type, payload)` to an [event target](../fundamentals/event-targets.md#realtime-events-for-a-target) (permission, role, group, ids; online users only, after the commit); apps can decorate it to forward messages to hubs of their own. `SessionRevoked` (`SessionRevokedPayload`: reason, `KeptSessionId`, `EndedSessionId` when only one [session](../security/clients.md#sessions) ended) passes the publisher once per session change on every instance, but `RealtimePublisher` sends it to no group: the identity module ends exactly the hub connections of that session (see [Clients and sessions](../security/clients.md#signing-out-everywhere-and-locking)).
@@ -138,7 +138,7 @@ When a page is not allowed, `NotAllowed` lists the user's other roles that grant
 
 ## Presence
 
-A user with at least one hub connection is online, however many tabs he has open; after the last one closes he turns offline after a few seconds, so a reload does not flicker. Changes go as `presence.changed` on `tenant:presence`, `GET /api/v1/realtime/presence` lists who of the organisation is online, and `UserAvatar` shows a green dot (`ShowPresence="false"` hides it). With several API instances a user counts per instance.
+A user with at least one hub connection is online, however many tabs he has open; after the last one closes he turns offline after a few seconds, so a reload does not flicker. Changes go as `presence.changed` on `tenant:presence`, `GET /api/v1/realtime/presence` lists who of the tenant is online, and `UserAvatar` shows a green dot (`ShowPresence="false"` hides it). With several API instances a user counts per instance.
 
 ## Chat
 
@@ -152,7 +152,7 @@ Any page can show a count on its navigation link the same way: `NavigationBadges
 await notifier.NotifyAsync([reviewerId], "review.requested", "Review requested", $"{asset.Name} waits for you", link: $"/assets/{asset.Id}", ct);
 ```
 
-Localizable notifications take the English texts as keys with `{0}` placeholders and the arguments apart; every reader sees them in his language (the texts belong into the app's translations), also in the digest mail, which takes the reader's `Localization.Culture` (his own, else his organisation's, else the system's):
+Localizable notifications take the English texts as keys with `{0}` placeholders and the arguments apart; every reader sees them in his language (the texts belong into the app's translations), also in the digest mail, which takes the reader's `Localization.Culture` (his own, else his tenant's, else the system's):
 
 ```csharp
 await notifier.NotifyLocalizedAsync(adminIds, "account.registration", "New registration", "{0} ({1}) waits for activation.", [name, email], $"/admin/users/{id}", ct);
@@ -255,7 +255,7 @@ await notifier.PublishAsync(new NotificationMessage("shipment.eta", "Estimated a
 }, ct);
 ```
 
-`mailTemplate` names a mail template of [mailing](mailing.md) (registered with an `IMailTemplateContributor`, or an own template), so administrators change it on the mail templates page per language and organisation. It renders `MailModel` (an object or a dictionary): its members are the template's top-level names, named like the members of any mail model (`OldValue` is `old_value`), next to `user` (`first_name`, `email`) and `notification` (`title`, `body` in the reader's language, absolute `link`). The library fills those, so `PublishAsync` refuses a model whose top level has a member `user`, `notification`, a variable of the layout (`subject`, `content`, `unsubscribe_url`) or the name of a Scriban builtin (`string`, `html`, `date`, `array`, `math`, `object`, `regex`, `timespan`, ...), in any case and with or without underscores (`ArgumentException`), and also one larger than 32 KB as JSON (`NotificationMailModel.MaxBytes`). The model is stored as JSON with the outbox message and the waiting mail, so a delayed mail renders the model of the latest notification of its entity; values arrive as text, numbers, booleans, lists and objects, so format dates before publishing. Delayed mails render in the organisation that sent them (its template versions, its mail log). A type without a template, or with a name no template has (a warning goes to the log), and a mail without a model (for example one that waited since before its type got a template) send the generic `Notifications.Notification` as before; its model is passed too, so an organisation's version of the generic template can read it. A template that fails to render (for example an edited version the model does not fit) sends the generic mail instead, and if that fails as well the mail is dropped; both are logged, and neither fails the sending command nor the other mails of the job's run.
+`mailTemplate` names a mail template of [mailing](mailing.md) (registered with an `IMailTemplateContributor`, or an own template), so administrators change it on the mail templates page per language and tenant. It renders `MailModel` (an object or a dictionary): its members are the template's top-level names, named like the members of any mail model (`OldValue` is `old_value`), next to `user` (`first_name`, `email`) and `notification` (`title`, `body` in the reader's language, absolute `link`). The library fills those, so `PublishAsync` refuses a model whose top level has a member `user`, `notification`, a variable of the layout (`subject`, `content`, `unsubscribe_url`) or the name of a Scriban builtin (`string`, `html`, `date`, `array`, `math`, `object`, `regex`, `timespan`, ...), in any case and with or without underscores (`ArgumentException`), and also one larger than 32 KB as JSON (`NotificationMailModel.MaxBytes`). The model is stored as JSON with the outbox message and the waiting mail, so a delayed mail renders the model of the latest notification of its entity; values arrive as text, numbers, booleans, lists and objects, so format dates before publishing. Delayed mails render in the tenant that sent them (its template versions, its mail log). A type without a template, or with a name no template has (a warning goes to the log), and a mail without a model (for example one that waited since before its type got a template) send the generic `Notifications.Notification` as before; its model is passed too, so a tenant's version of the generic template can read it. A template that fails to render (for example an edited version the model does not fit) sends the generic mail instead, and if that fails as well the mail is dropped; both are logged, and neither fails the sending command nor the other mails of the job's run.
 
 Give the template's definition `NotificationMailModel.Sample(model)` as its sample: the preview and the test mail on the mail templates page then show the sample model with a sample `user` and `notification`.
 
@@ -277,4 +277,4 @@ With a VAPID key pair (`options.UsePush()` in the app host, or `Coworkee:Notific
 
 ### Retention and personal data
 
-Notifications are kept until the user deletes them; with the [Retention](retention.md) module the target `notifications` deletes them after the days set there. The personal data export has a section `notifications` (the notifications, push devices, preferences, followed records and waiting mails of the user); erasing the user removes them in every organisation.
+Notifications are kept until the user deletes them; with the [Retention](retention.md) module the target `notifications` deletes them after the days set there. The personal data export has a section `notifications` (the notifications, push devices, preferences, followed records and waiting mails of the user); erasing the user removes them in every tenant.

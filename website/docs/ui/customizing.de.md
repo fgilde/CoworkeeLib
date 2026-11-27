@@ -53,7 +53,7 @@ Für eine App, die gar nicht wie die Admin-App aussehen soll (etwa ein Kundenpor
 | Parameter | |
 |---|---|
 | `ChildContent` | dein Layout; es bekommt die Shell als `context` (`context.Dark`, `context.ToggleDarkAsync()`) |
-| `Theme` | ein festes `MudTheme` statt des Coworkee-Themes der Organisation (Administration, Themes); dessen eigenes CSS und Logo (Favicon) gelten dann nicht |
+| `Theme` | ein festes `MudTheme` statt des Coworkee-Themes des Mandanten (Administration, Themes); dessen eigenes CSS und Logo (Favicon) gelten dann nicht |
 | `DarkMode` | `true`/`false` legt den Farbmodus fest, `null` (Standard) folgt der Wahl des Benutzers oder dem System |
 
 Mehrere Layouts (etwa ein Haupt- und ein Admin-Layout) teilen sich eine Shell, wenn sie dasselbe äußere Layout nennen (`@layout AppLayout`): Beim Wechsel bleiben Theme, Provider und der gestartete Zustand erhalten. Kombiniere es mit `Pages.Only()` (unten), damit in so einer App keine Seite der Bibliothek erreichbar ist.

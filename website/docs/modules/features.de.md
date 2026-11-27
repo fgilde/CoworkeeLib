@@ -64,7 +64,7 @@ new CoworkeeNavItem("Reports", "/reports", Icons.Material.Outlined.Assessment, F
 
 ## Verwaltung
 
-Beide Seiten gehören zur Systemorganisation: Jeder Administrator hat die Berechtigungen, der Server prüft zusätzlich, ob der Benutzer zum Host gehört.
+Beide Seiten gehören zum System-Mandanten: Jeder Administrator hat die Berechtigungen, der Server prüft zusätzlich, ob der Benutzer zum Host gehört.
 
 - *Administration > Mandanten* (`Features.Tenants`): alle Mandanten mit Benutzeranzahl; anlegen (optional mit einem ersten Administrator) und bearbeiten, aktivieren und deaktivieren, eine Edition zuweisen, einzelne Features überschreiben.
 - *Administration > Editionen* (`Features.Editions`): Editionen anlegen, umbenennen und löschen und ihre Feature-Werte festlegen. Wird eine Edition gelöscht, gelten für ihre Mandanten wieder die Standardwerte.

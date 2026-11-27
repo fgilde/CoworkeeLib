@@ -20,7 +20,7 @@ async function reportKeys(): Promise<string[]> {
   return [
     ...presets.map((preset) => preset.name), ...datePresets.map(humanize), ...['Count', 'Sum', 'Average', 'Min', 'Max', 'DistinctCount'].map(humanize),
     ...buckets, ...buckets.map((bucket) => `By ${bucket.toLowerCase()}`), 'Number', 'Integer', 'Compact', 'Currency', 'Percent', 'Table', 'Cards', 'List',
-    'Never', 'Every 30 seconds', 'Every minute', 'Every 5 minutes', 'Every 15 minutes', 'Every hour', 'Only me', 'Everybody in the organisation', 'Category', 'Value',
+    'Never', 'Every 30 seconds', 'Every minute', 'Every 5 minutes', 'Every 15 minutes', 'Every hour', 'Only me', 'Everybody in the tenant', 'Category', 'Value',
   ];
 }
 

@@ -1,10 +1,10 @@
 # Clients, sessions and password rules
 
-The auth server is a full OpenID Connect provider. Besides the clients from the configuration, administrators of the system organisation manage further clients and scopes in the app, end sessions at once and set the password rules.
+The auth server is a full OpenID Connect provider. Besides the clients from the configuration, administrators of the system tenant manage further clients and scopes in the app, end sessions at once and set the password rules.
 
 ## Clients and scopes in the app
 
-**Administration › Applications** lists every OpenID Connect client, **Administration › Scopes** the scopes they may ask for. Both need the permission `Identity.Clients.Manage` and work only in the system organisation, like the tenants page.
+**Administration › Applications** lists every OpenID Connect client, **Administration › Scopes** the scopes they may ask for. Both need the permission `Identity.Clients.Manage` and work only in the system tenant, like the tenants page.
 
 | Field | Meaning |
 |---|---|
@@ -36,7 +36,7 @@ The endpoints live in `CoworkeeAuthStoreModule`, which the API host loads togeth
 
 ## Service clients
 
-A confidential client with **Service client** calls APIs on its own, without a user, through the `client_credentials` grant. It acts in the system organisation with the permissions of the roles and of the permission list picked in its row of **Administration › Applications**:
+A confidential client with **Service client** calls APIs on its own, without a user, through the `client_credentials` grant. It acts in the system tenant with the permissions of the roles and of the permission list picked in its row of **Administration › Applications**:
 
 ```http
 POST /connect/token
@@ -64,7 +64,7 @@ The launcher lists clients that sign users in (authorization code), have a home 
 
 ## Branding of the account pages
 
-The account pages take the app name from `Coworkee:Auth:DisplayName` and logo and colors from the default theme of the system organisation ([Theming](../modules/theming.md)); changes show within a minute. A theme without logo shows `Coworkee:Auth:LogoUrl`, an absolute address or a path on the auth server; the content security policy allows the origin of an absolute address as image source. In the app host, `options.LogoUrl = "/coworkee-icon.svg"` points the auth server at that path of the web app.
+The account pages take the app name from `Coworkee:Auth:DisplayName` and logo and colors from the default theme of the system tenant ([Theming](../modules/theming.md)); changes show within a minute. A theme without logo shows `Coworkee:Auth:LogoUrl`, an absolute address or a path on the auth server; the content security policy allows the origin of an absolute address as image source. In the app host, `options.LogoUrl = "/coworkee-icon.svg"` points the auth server at that path of the web app.
 
 ## Signing out everywhere and locking
 
@@ -111,7 +111,7 @@ Other modules hook in with `IUserSessionListener`: `SessionsEndedAsync` after an
 
 ## Sessions
 
-Every sign-in at the auth server is a session: one browser or device, whichever apps of the installation it then opens (the web app, single-page apps; they share the sign-in and its `sid`). API keys and service clients have none. The table `cw.UserSessions` keeps one row per session: user, organisation, the app it signed in for (`ClientId`), device and browser read from the user agent (the full one is kept too), IP address, start, last activity (a sign-in or token refresh, written at most every five minutes), expiry (the last activity plus the lifetime of the auth server's cookie, 14 days by default), and when, why and by whom it ended. A session of [Log in as](../features/identity.md#log-in-as-another-user) names the impersonator (`ImpersonatorId`). Sessions that signed in before this table existed have no row and go on as before.
+Every sign-in at the auth server is a session: one browser or device, whichever apps of the installation it then opens (the web app, single-page apps; they share the sign-in and its `sid`). API keys and service clients have none. The table `cw.UserSessions` keeps one row per session: user, tenant, the app it signed in for (`ClientId`), device and browser read from the user agent (the full one is kept too), IP address, start, last activity (a sign-in or token refresh, written at most every five minutes), expiry (the last activity plus the lifetime of the auth server's cookie, 14 days by default), and when, why and by whom it ended. A session of [Log in as](../features/identity.md#log-in-as-another-user) names the impersonator (`ImpersonatorId`). Sessions that signed in before this table existed have no row and go on as before.
 
 Ending a session refuses exactly its tokens and its sign-in, at once:
 
@@ -123,7 +123,7 @@ Ending a session refuses exactly its tokens and its sign-in, at once:
 
 ### Pages and API
 
-**Administration › Monitoring › Sessions** (`/admin/sessions`, page key `sessions`) lists the active sessions of the organisation (*Show ended* adds the ended ones with their reason): user with the number of his active sessions, device, browser, IP address, app, start and last activity; *This session* marks the one you are in, *Expired* one that ran out without being ended (shown with the ended ones). It updates live. Its menu per row ends the session, all sessions of the user, or sets his own limit. The user detail page shows the user's sessions with the same actions. Users see their own on the account page (*Security › Sessions*) and end any but the one they are in.
+**Administration › Monitoring › Sessions** (`/admin/sessions`, page key `sessions`) lists the active sessions of the tenant (*Show ended* adds the ended ones with their reason): user with the number of his active sessions, device, browser, IP address, app, start and last activity; *This session* marks the one you are in, *Expired* one that ran out without being ended (shown with the ended ones). It updates live. Its menu per row ends the session, all sessions of the user, or sets his own limit. The user detail page shows the user's sessions with the same actions. Users see their own on the account page (*Security › Sessions*) and end any but the one they are in.
 
 | Request | Endpoint | Permission |
 |---|---|---|
@@ -135,11 +135,11 @@ Ending a session refuses exactly its tokens and its sign-in, at once:
 | `SetSessionLimit(userId, maxSessions)` | `PUT /api/v1/identity/users/{id}/session-limit` | `Identity.Sessions.Manage` |
 | OData set `UserSessions` | `GET /odata/UserSessions` | `Identity.Sessions.View` |
 
-`Identity.Sessions.View` implies `Identity.Users.View`, `Identity.Sessions.Manage` implies `Identity.Sessions.View`. The rules of [other accounts](permissions.md#other-accounts-and-handing-out-permissions) apply: an administrator sees and ends sessions of users of his organisation in his reach, ends none of a user who holds a permission he lacks, and none of another administrator unless he is one. Nobody ends the session he is in (`409 identity.own_session`, the user menu signs out), API keys end none (`403 identity.sessions_from_key`), and nobody ends sessions while signed in as another user. `EndUserSessions` is *Sign out everywhere* for holders of the session permission. In Blazor, `ISessionsApi` calls these endpoints.
+`Identity.Sessions.View` implies `Identity.Users.View`, `Identity.Sessions.Manage` implies `Identity.Sessions.View`. The rules of [other accounts](permissions.md#other-accounts-and-handing-out-permissions) apply: an administrator sees and ends sessions of users of his tenant in his reach, ends none of a user who holds a permission he lacks, and none of another administrator unless he is one. Nobody ends the session he is in (`409 identity.own_session`, the user menu signs out), API keys end none (`403 identity.sessions_from_key`), and nobody ends sessions while signed in as another user. `EndUserSessions` is *Sign out everywhere* for holders of the session permission. In Blazor, `ISessionsApi` calls these endpoints.
 
 ### Session limit
 
-How many sessions a user may have at once is the setting `Account.Sessions.MaxPerUser` (**Administration › Settings › Sign-in security › Sessions per user**, scope Global or the organisation, default `0` = unlimited). A user's own limit wins (`User.MaxSessions`: empty takes the setting, `0` is unlimited, a number its limit), set on the user page or the sessions page. `Account.Sessions.LimitMode` decides what a sign-in beyond the limit does:
+How many sessions a user may have at once is the setting `Account.Sessions.MaxPerUser` (**Administration › Settings › Sign-in security › Sessions per user**, scope Global or the tenant, default `0` = unlimited). A user's own limit wins (`User.MaxSessions`: empty takes the setting, `0` is unlimited, a number its limit), set on the user page or the sessions page. `Account.Sessions.LimitMode` decides what a sign-in beyond the limit does:
 
 - `EndOldest` (default): the sign-in goes on, the oldest sessions end (reason `limit`) and their browsers are signed out at once. A user with a limit of 1 always ends his older session by signing in elsewhere.
 - `Refuse`: the sign-in is refused with *You are signed in on too many devices* until a session ends (the user signs out there, the session expires, or an administrator ends it). A browser that is closed without signing out keeps its session until it expires.

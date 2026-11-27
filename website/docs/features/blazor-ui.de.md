@@ -83,7 +83,7 @@ Dieselben Apps laufen auf Wunsch auch in einem Web-Desktop: `coworkee new Shop -
 
 ## Systemstatus
 
-*Administration → Überwachung → Systemstatus* (`/cw/admin/system-status`, Berechtigung `Settings.Manage`, nur in der Systemorganisation) zeigt die Installation auf einen Blick: Versionen von Bibliothek, App und .NET, die Datenbank mit ausstehenden Migrationen und dem Outbox-Rückstand, Hintergrundjobs mit den letzten Fehlern und einem Link aufs Job-Dashboard, wartende und in den letzten sieben Tagen fehlgeschlagene Mails, Echtzeit-Verbindungen, Redis, Dateispeicher, maschinelle Übersetzung und den KI-Assistenten. Jedes Modul steuert seine eigene Karte über `ISystemStatusContributor` bei (`services.AddSystemStatus<T>()`), deine App kann das auch.
+*Administration → Überwachung → Systemstatus* (`/cw/admin/system-status`, Berechtigung `Settings.Manage`, nur im System-Mandanten) zeigt die Installation auf einen Blick: Versionen von Bibliothek, App und .NET, die Datenbank mit ausstehenden Migrationen und dem Outbox-Rückstand, Hintergrundjobs mit den letzten Fehlern und einem Link aufs Job-Dashboard, wartende und in den letzten sieben Tagen fehlgeschlagene Mails, Echtzeit-Verbindungen, Redis, Dateispeicher, maschinelle Übersetzung und den KI-Assistenten. Jedes Modul steuert seine eigene Karte über `ISystemStatusContributor` bei (`services.AddSystemStatus<T>()`), deine App kann das auch.
 
 **Stand:** Die Admin-Seiten der Bibliothek liegen unter `/cw/admin/...` (siehe [Seiten der Bibliothek](../ui/customizing.md#seiten-der-bibliothek)). Gruppierte Zeilen lassen sich nicht virtualisieren, eine gruppierte Tabelle fällt deshalb auf den Pager zurück.
 

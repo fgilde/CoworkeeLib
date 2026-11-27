@@ -16,7 +16,7 @@ public sealed class MyAppProductsModule : CoworkeeModule
 }
 ```
 
-Mit der Entitätsklasse gibt es die Social-Daten einer Zeile nur für Benutzer, die die Zeile sehen: hat der Typ ein [OData-Set](../web/odata.md), so wie dieses Set sie zeigt (Berechtigung des Sets, Organisation, Soft Delete und jeder Zeilenfilter `IODataEntityFilter<T>`); ohne Set jede Zeile der eigenen Organisation. Alle anderen bekommen 404 auf Kommentare, Tags, Bewertungen und Reaktionen und dürfen den Echtzeit-Topics nicht folgen; Tag-Zähler und `tags/{entityType}/entities` zählen nur sichtbare Zeilen. Ohne die Entitätsklasse (`Comments("Products")`) wird jede Id angenommen. `AddCoworkeeSocial` darf von mehreren Modulen aufgerufen werden.
+Mit der Entitätsklasse gibt es die Social-Daten einer Zeile nur für Benutzer, die die Zeile sehen: hat der Typ ein [OData-Set](../web/odata.md), so wie dieses Set sie zeigt (Berechtigung des Sets, Mandant, Soft Delete und jeder Zeilenfilter `IODataEntityFilter<T>`); ohne Set jede Zeile des eigenen Mandanten. Alle anderen bekommen 404 auf Kommentare, Tags, Bewertungen und Reaktionen und dürfen den Echtzeit-Topics nicht folgen; Tag-Zähler und `tags/{entityType}/entities` zählen nur sichtbare Zeilen. Ohne die Entitätsklasse (`Comments("Products")`) wird jede Id angenommen. `AddCoworkeeSocial` darf von mehreren Modulen aufgerufen werden.
 
 Ein optionaler Hook entscheidet zusätzlich, ob der Benutzer die Daten einer Entität sehen (`Write == false`) oder ändern darf, z. B. für einen Entitätstyp ohne OData-Set:
 
@@ -52,7 +52,7 @@ Jedes Hinzufügen, Bearbeiten, Ändern des Status und Löschen löst das Domain-
 
 ## Tags
 
-Jeder Entitätstyp hat pro Organisation eine eigene Tag-Sammlung. Namen werden ohne Beachtung der Groß-/Kleinschreibung verglichen; Speichern ersetzt die Tags einer Entität. `GET /api/v1/tags/{entityType}/entities?tag=red` liefert die Ids der getaggten Entitäten, für Filter.
+Jeder Entitätstyp hat pro Mandant eine eigene Tag-Sammlung. Namen werden ohne Beachtung der Groß-/Kleinschreibung verglichen; Speichern ersetzt die Tags einer Entität. `GET /api/v1/tags/{entityType}/entities?tag=red` liefert die Ids der getaggten Entitäten, für Filter.
 
 ## Bewertungen
 

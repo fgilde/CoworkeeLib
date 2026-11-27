@@ -1,6 +1,6 @@
 # Sign-in pages and designs
 
-The account pages of the auth server (sign-in, registration, two-step verification, forgotten and new password, consent, sign-out, the app launcher and the account security pages) follow the app's theme: the theme the browser used last, else the default theme of the system organisation, gives them colors for light and dark mode, the font, the border radius, the logo and the sign-in design it names (see [Designs per theme](#designs-per-theme)); the configuration gives the app name. The color mode setting (`Theme.Mode`: system, light or dark, the user's or the installation's) applies as well.
+The account pages of the auth server (sign-in, registration, two-step verification, forgotten and new password, consent, sign-out, the app launcher and the account security pages) follow the app's theme: the theme the browser used last, else the default theme of the system tenant, gives them colors for light and dark mode, the font, the border radius, the logo and the sign-in design it names (see [Designs per theme](#designs-per-theme)); the configuration gives the app name. The color mode setting (`Theme.Mode`: system, light or dark, the user's or the installation's) applies as well.
 
 ## Layouts
 
@@ -142,8 +142,8 @@ builder.Services.Configure<ThemingOptions>(o => o.Themes.Add(new AppTheme("Night
 
 Which design a sign-in page shows:
 
-1. the design the theme this browser used last names: the web app remembers the applied theme in its cookie `coworkee-loading` and names it in the authorization request (`coworkee_theme`); the auth server keeps it in its own cookie `coworkee-theme` (HttpOnly, SameSite Lax, one year) for every account page of that browser. Only a built-in or published theme of the system organisation counts; any other id, or none, falls through. That theme's colors, font and logo apply as well.
-2. else the design the default theme of the system organisation names,
+1. the design the theme this browser used last names: the web app remembers the applied theme in its cookie `coworkee-loading` and names it in the authorization request (`coworkee_theme`); the auth server keeps it in its own cookie `coworkee-theme` (HttpOnly, SameSite Lax, one year) for every account page of that browser. Only a built-in or published theme of the system tenant counts; any other id, or none, falls through. That theme's colors, font and logo apply as well.
+2. else the design the default theme of the system tenant names,
 3. else the default design; also when a theme names a design that no longer exists.
 
 The Keycloak sign-in page cannot know the browser's theme: it shows the design the default theme names. An existing configuration without `Designs` looks exactly as before; nothing needs to change.
@@ -168,7 +168,7 @@ One save bar in the sticky tab bar saves all tabs: it shows *Unsaved changes* wh
 
 The page arranges the settings it knows; any other setting of the two groups (an app's own, *Act within one role*) shows under *More settings* with a control of its type (switch, number, select, text): the component `SettingField`, which pages of an app can use as well. A setting the app does not define does not show: without an external provider there is no setting *Sign-in methods*, and *Methods* says that users sign in with their password. When the operator fixes the mode with `Coworkee:Auth:External:ModeOverride`, the fixed mode shows selected and read-only with a hint (set the variable for the API too, which serves the settings). Locked or hidden parts of the app settings show read-only (*Set in the configuration*) or not at all. The documents need a document store (the Files module or the app's own); while the app defines no file permission, the list is read-only with a hint.
 
-The page needs `Settings.Manage`; the menu shows it to the system organisation. Other organisations get only the tab *Security* with their own session settings and no app configuration. The page follows changes of others at once: a saved setting or configuration value reloads its part, unless that part holds unsaved changes. *Administration > Themes* links to the page.
+The page needs `Settings.Manage`; the menu shows it to the system tenant. Other tenants get only the tab *Security* with their own session settings and no app configuration. The page follows changes of others at once: a saved setting or configuration value reloads its part, unless that part holds unsaved changes. *Administration > Themes* links to the page.
 
 The card *Sign-in designs* shows the default design and the named ones as tiles: a thumbnail of the layout in the current theme's colors, the name, the layout and the themes that show it (for the default design: the themes naming none, or a design that is gone). *Add design* starts a named design (a glass card), *Duplicate* copies the look of the selected design under a new name and key, the field *Name* renames it (the key that themes store stays), *Delete* asks first and names the themes using the design, which then show the default design. The page follows theme changes of others at once. Like every other change on the page, these wait for the save bar.
 
@@ -176,7 +176,7 @@ The card below edits the selected design. It shows a thumbnail per layout to pic
 
 *Preview* opens the real sign-in page of the auth server with the values the card shows now, saved or not, in a full screen dialog; for a named design with the texts of the default design. The dialog frames `/bff/sign-in-preview?design={json}`, which sends the frame on to the auth server's `/Account/Preview`; that address renders the sign-in page with the given design after the same checks as a saved one. It answers only a `GET` that the browser marks as frame load (`Sec-Fetch-Dest: iframe`), and only the origins of registered clients may frame it (`frame-ancestors`), so a link or another site cannot show a crafted design under the auth server's address. The frame runs without forms (`sandbox`), nobody signs in there, and the admin's own session stays as it is. The web app's policy allows the auth server's origin in `frame-src` for this. With Keycloak as sign-in the preview shows the Coworkee auth server's page, which Keycloak does not have; there the Keycloak card applies the design.
 
-The card shows for administrators of the system organisation who may manage settings (`Settings.Manage`), because the section applies to every organisation. It stays hidden for everyone else and while `AllowDesignChanges` is off.
+The card shows for administrators of the system tenant who may manage settings (`Settings.Manage`), because the section applies to every tenant. It stays hidden for everyone else and while `AllowDesignChanges` is off.
 
 **How fast the auth server follows.** The auth server reads the design from its configuration on every request. It sees a change once its database configuration source reloads: `AddCoworkeeDatabaseConfiguration` checks every 15 seconds by default (the auth host of the template adds it). A host in the same process as the API sees the change at once. Colors, font, logo and the design key of the themes the pages may show are cached for one minute.
 

@@ -48,7 +48,7 @@ Administrators change them under *Mail templates* like their own.
 
 ## Delivery and the mail log
 
-A queued mail starts the background job `SendMailJob` on the queue `mail`. The job resolves the provider and its values for the mail's organisation (see [Own server per organisation](#own-server-per-organisation)), checks the whitelist and hands the mail to the transport. A mail goes through these states:
+A queued mail starts the background job `SendMailJob` on the queue `mail`. The job resolves the provider and its values for the mail's tenant (see [Own server per tenant](#own-server-per-tenant)), checks the whitelist and hands the mail to the transport. A mail goes through these states:
 
 | Status | Meaning |
 |---|---|
@@ -69,7 +69,7 @@ A sender that stops between handing the mail to the provider and saving the resu
 
 The default never sends a mail twice but may lose one; check the mail log for *Delivery unknown* and resend by hand. Turn on `RetryStuckSending` where a lost mail is worse than a duplicate (sign-in codes, password resets). Keep `SendingTimeout` above the longest time your provider takes for a mail.
 
-**Administration > Communication > Mail log** (`/cw/admin/mail/log`, permission `Mail.Log.View`) lists the mails of the own organisation with status, attempts and error, filtered by status or campaign (`?campaign=<id>`). API: `GET /api/v1/mail/outgoing?status=Failed&campaignId=...` (paged) and the OData set `Mails` (without the body). With the [Retention](retention.md) module the target `mail-log` deletes old mails (no default: kept until days are set; queued and sending mails stay). The personal data export lists the mails sent to the user's address in his organisation (section `mails`); erasing removes them there, mails of another organisation to the same address stay.
+**Administration > Communication > Mail log** (`/cw/admin/mail/log`, permission `Mail.Log.View`) lists the mails of the own tenant with status, attempts and error, filtered by status or campaign (`?campaign=<id>`). API: `GET /api/v1/mail/outgoing?status=Failed&campaignId=...` (paged) and the OData set `Mails` (without the body). With the [Retention](retention.md) module the target `mail-log` deletes old mails (no default: kept until days are set; queued and sending mails stay). The personal data export lists the mails sent to the user's address in his tenant (section `mails`); erasing removes them there, mails of another tenant to the same address stay.
 
 ## Providers
 
@@ -86,20 +86,20 @@ The HTTP providers talk to their REST API directly with `IHttpClientFactory`; no
 
 ## The mail settings page
 
-**Administration > Communication > Mail settings** (`/cw/admin/mail-settings`, permission `Settings.Manage`) replaces the Mail tab of the settings page. You choose the provider, fill its fields, set sender and whitelist and save; changes apply to the next mail, without a restart. **Send test mail** sends a mail to your own address with the values currently in the form, saved or not, and shows the result: an empty secret field keeps the stored key, so you can test without typing it again. A failure shows the provider's answer; for organisations (see below) it shows only a short message, because an organisation chooses its own host and must not read the network errors of the server.
+**Administration > Communication > Mail settings** (`/cw/admin/mail-settings`, permission `Settings.Manage`) replaces the Mail tab of the settings page. You choose the provider, fill its fields, set sender and whitelist and save; changes apply to the next mail, without a restart. **Send test mail** sends a mail to your own address with the values currently in the form, saved or not, and shows the result: an empty secret field keeps the stored key, so you can test without typing it again. A failure shows the provider's answer; for tenants (see below) it shows only a short message, because a tenant chooses its own host and must not read the network errors of the server.
 
-## Own server per organisation
+## Own server per tenant
 
-Organisations send through the system's server by default. The setting `Mail.UseOwnServer` (scope organisation, off by default) lets an organisation use its own: on the mail settings page an organisation administrator sees the switch, and with it on the same form for provider and credentials.
+Tenants send through the system's server by default. The setting `Mail.UseOwnServer` (scope tenant, off by default) lets a tenant use its own: on the mail settings page a tenant administrator sees the switch, and with it on the same form for provider and credentials.
 
-- With the switch **on**, every value comes from the organisation: provider, credentials, sender and whitelist. With it **off**, every value comes from the system. Nothing is mixed, so an organisation never sends with the system's password and a sender of its own.
-- Switching off keeps the organisation's values; switching on again uses them without typing them in.
-- The values the provider needs (SMTP host, API key, Mailgun domain) must be stored in the organisation itself. A deployment default such as `Coworkee:Settings:Defaults:Mail.Smtp.Host` does not count, otherwise an organisation would send through the system's server while believing it uses its own; the mail fails with *... is not configured.* instead.
-- The system organisation always uses the system settings.
+- With the switch **on**, every value comes from the tenant: provider, credentials, sender and whitelist. With it **off**, every value comes from the system. Nothing is mixed, so a tenant never sends with the system's password and a sender of its own.
+- Switching off keeps the tenant's values; switching on again uses them without typing them in.
+- The values the provider needs (SMTP host, API key, Mailgun domain) must be stored in the tenant itself. A deployment default such as `Coworkee:Settings:Defaults:Mail.Smtp.Host` does not count, otherwise a tenant would send through the system's server while believing it uses its own; the mail fails with *... is not configured.* instead.
+- The system tenant always uses the system settings.
 
 ## Sending and own transports
 
-A background job takes the queued mail, resolves the connection (provider and values) for the mail's organisation and hands it to the `IMailTransport` whose `Provider` matches.
+A background job takes the queued mail, resolves the connection (provider and values) for the mail's tenant and hands it to the `IMailTransport` whose `Provider` matches.
 
 !!! warning "Breaking change"
     `ISmtpTransport` is gone, replaced by `IMailTransport`, one implementation per provider. There is no obsolete shim. The settings keys `Mail.Smtp.*`, `Mail.From` and `Mail.Whitelist` are unchanged, so stored values keep working. Code that implemented or replaced `ISmtpTransport` implements `IMailTransport` instead.
@@ -142,7 +142,7 @@ Locally the app host points the SMTP settings to Mailpit (`Coworkee:Settings:Def
 
 ## Own templates
 
-Besides the templates of the modules, administrators create their own under **Administration > Communication > Mail templates** (`/cw/admin/mail/templates`, permission `Mail.Templates.Manage`). **New template** asks for a name (letters, digits, ., _ and -; it cannot change later and cannot repeat a template of the system or of the organisation), a display name and a description; the editor opens right after. The copy button next to a template creates a custom template from its text in all languages, under a free name like Identity.Welcome.copy. Own templates are marked *custom*; only they can be deleted, which also removes their texts. Users of the system organisation can tick **Global**: the template is then available to every organisation.
+Besides the templates of the modules, administrators create their own under **Administration > Communication > Mail templates** (`/cw/admin/mail/templates`, permission `Mail.Templates.Manage`). **New template** asks for a name (letters, digits, ., _ and -; it cannot change later and cannot repeat a template of the system or of the tenant), a display name and a description; the editor opens right after. The copy button next to a template creates a custom template from its text in all languages, under a free name like Identity.Welcome.copy. Own templates are marked *custom*; only they can be deleted, which also removes their texts. Users of the system tenant can tick **Global**: the template is then available to every tenant.
 
 ### Editing a template
 
@@ -180,11 +180,11 @@ API: `POST /api/v1/mail/templates/{name}/send/preview` and `POST /api/v1/mail/te
 
 A template has one variant per language; the *Languages* column lists them with their flags (highlighted: changed here). In the editor the same languages sit as chips next to the title: a click opens that variant, the translate button next to them adds one. A language switched on later on the Languages page gets no variant by itself. **Add language** (the translate button of a template) asks for the language, from which existing variant to start, and whether to machine translate: with a translation service set up under the translation settings, only the texts between the HTML tags are translated, and tags, styles and `{{ ... }}` placeholders stay as they are; without one the variant starts as a copy. The editor of the new variant opens right after, so check the text there. An added language can be removed with the cross on its chip; the shipped languages of a module template are reset in the editor instead, and the last language of an own template stays. The button is off when every active language already has a variant.
 
-A mail in a language without a variant falls back step by step: the language (de-AT), its parent (de), the default language (of the organisation, else of the system, else the default of the Languages page) and its parent, English, and for own templates the oldest variant. API: `POST /api/v1/mail/templates/{name}/{culture}` with `{ "from": "en", "translate": true }` adds a variant, `DELETE` on the same path removes it.
+A mail in a language without a variant falls back step by step: the language (de-AT), its parent (de), the default language (of the tenant, else of the system, else the default of the Languages page) and its parent, English, and for own templates the oldest variant. API: `POST /api/v1/mail/templates/{name}/{culture}` with `{ "from": "en", "translate": true }` adds a variant, `DELETE` on the same path removes it.
 
 ## Campaigns
 
-**Administration > Communication > Mail campaigns** (`/cw/admin/mail/campaigns`, permission `Mail.Campaigns.Send`) sends one of your own templates to many users of your organisation. A campaign only ever reaches users of the organisation of the person who sends it, also for the system organisation. Built-in templates cannot be sent, they need their own model; copy one to get an own template first.
+**Administration > Communication > Mail campaigns** (`/cw/admin/mail/campaigns`, permission `Mail.Campaigns.Send`) sends one of your own templates to many users of your tenant. A campaign only ever reaches users of the tenant of the person who sends it, also for the system tenant. Built-in templates cannot be sent, they need their own model; copy one to get an own template first.
 
 **New campaign** opens a wizard with three steps:
 
@@ -199,7 +199,7 @@ Recipients come from one of these sources:
 
 A custom query and a manual selection also need the right to view users (`Identity.Users.View`), because they let you pick people by name. With only `Mail.Campaigns.Send` the presets work, and the preview shows the counts without the names.
 
-Users without an e-mail address, locked users and users who turned off **Receive newsletters** are never mailed; deactivated users only with the preset *Deactivated users*. They are counted as excluded. Recipients are resolved when the campaign starts, not when you choose them, so a scheduled campaign reaches the users of that moment. Each mail is rendered in the recipient's language: the user's, else the organisation's, else the default.
+Users without an e-mail address, locked users and users who turned off **Receive newsletters** are never mailed; deactivated users only with the preset *Deactivated users*. They are counted as excluded. Recipients are resolved when the campaign starts, not when you choose them, so a scheduled campaign reaches the users of that moment. Each mail is rendered in the recipient's language: the user's, else the tenant's, else the default.
 
 Every campaign mail ends with an unsubscribe link. It opens a confirmation page without sign-in; confirming turns off the setting **Receive newsletters** (`Mail.Newsletters`, on by default) for that user. Users can switch the setting back on in their own settings. The link carries a signed token and does not expire; the token is protected with the shared Data Protection key ring in the database, so links keep working across redeploys and hosts. The confirmation is a plain form post; the web app (BFF) lets it through without the usual `X-CSRF` header because the path is listed in `Coworkee:Bff:CsrfExemptPaths` (default `/api/v1/mail/unsubscribe` and `/api/v1/reports/subscriptions/unsubscribe`), the token alone authorizes it.
 

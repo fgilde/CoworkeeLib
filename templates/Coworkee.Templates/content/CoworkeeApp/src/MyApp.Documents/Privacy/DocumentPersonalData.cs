@@ -6,7 +6,7 @@ using MyApp.Documents.Domain;
 
 namespace MyApp.Documents.Privacy;
 
-/// <summary>Documents the user owns. Erasing deletes the private ones with their files; public documents belong to the organisation and stay.</summary>
+/// <summary>Documents the user owns. Erasing deletes the private ones with their files; public documents belong to the tenant and stay.</summary>
 internal sealed class DocumentPersonalData(CoworkeeDbContext db, IBlobStorage storage) : IPersonalDataContributor
 {
     public string Section => "documents";

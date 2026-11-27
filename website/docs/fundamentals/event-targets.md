@@ -1,6 +1,6 @@
 # Events and targets
 
-Who gets something that happens, a toast, a notification, a mail or a realtime event, is one value: an `EventTarget`. The same target works in the [notifier](../modules/realtime.md#notifications) and for realtime events, resolved in the current organisation.
+Who gets something that happens, a toast, a notification, a mail or a realtime event, is one value: an `EventTarget`. The same target works in the [notifier](../modules/realtime.md#notifications) and for realtime events, resolved in the current tenant.
 
 ```csharp
 await notifier.SendAsync(new NotificationRequest(EventTarget.Permission(OrderPermissions.View).Except(EventTarget.Current), "Order {0} shipped")
@@ -19,8 +19,8 @@ await notifier.ToastAsync(EventTarget.All, "Maintenance at 18:00", NotificationS
 
 | Target | Who |
 |---|---|
-| `EventTarget.All` | every user of the organisation |
-| `EventTarget.Global` | every user of every organisation: realtime and toasts only (system messages); stored notifications refuse it |
+| `EventTarget.All` | every user of the tenant |
+| `EventTarget.Global` | every user of every tenant: realtime and toasts only (system messages); stored notifications refuse it |
 | `EventTarget.Current` | the current session (all tabs of this sign-in) in realtime and toasts, the current user everywhere else and inside `Except` |
 | `EventTarget.Users(id1, id2)` | these users |
 | `EventTarget.Permission("Orders.View")` | the users who hold the permission |
@@ -75,7 +75,7 @@ await notifier.SendAsync(new NotificationRequest(EventTarget.Users(selection), "
 UserSelection.Of(aliceId, carlId);   // only these users, if the caller may see them
 ```
 
-The server resolves it with the rights of the **current user**, as the Users set shows them: `Identity.Users.View`, the organisation, the set's row filters and the group selection; a filter he may not run (a hidden property, an unknown name) is refused. Ids the browser added only count when the caller sees those users. As a target the selection reaches the active users of the organisation and follows the target rules: the actor is left out (the selection does not name him by id), preferences apply. Without the right to view users `EventTarget.Users(selection)` throws; `IUserSelectionResolver.ResolveAsync(selection)` returns the ids or the error (`Forbidden`, `Validation`) for own code.
+The server resolves it with the rights of the **current user**, as the Users set shows them: `Identity.Users.View`, the tenant, the set's row filters and the group selection; a filter he may not run (a hidden property, an unknown name) is refused. Ids the browser added only count when the caller sees those users. As a target the selection reaches the active users of the tenant and follows the target rules: the actor is left out (the selection does not name him by id), preferences apply. Without the right to view users `EventTarget.Users(selection)` throws; `IUserSelectionResolver.ResolveAsync(selection)` returns the ids or the error (`Forbidden`, `Validation`) for own code.
 
 `POST /api/v1/identity/users/selection/count` (`Identity.Users.View`, body: the selection) answers `{ "users": 12, "active": 11 }` (`ICoworkeeApi.CountUserSelectionAsync`).
 
@@ -108,12 +108,12 @@ The same from code or another client: `POST /api/v1/notifications/send` with a `
 
 ## How targets resolve
 
-`IEventTargetResolver` (Coworkee.Identity implements it) resolves in the current organisation; a target only narrows:
+`IEventTargetResolver` (Coworkee.Identity implements it) resolves in the current tenant; a target only narrows:
 
-- **Realtime and toasts** (`TopicsAsync`): `All` goes once to the organisation's topic `tenant:events`, `Global` to `global:events`, `Current` to the session's topic (`session:{sid}`, the user's own topic without a session, e.g. in a job). Every other target asks [presence](../modules/realtime.md#presence) for the online users of the organisation first and then runs the target only for them; each gets the event on his `user:{id}` topic. A big organisation costs what its online users cost, and users who are offline cost nothing.
-- **Stored notifications and mails** (`UsersAsync`): active users of the organisation in one query. User ids (also with `Current` and `Except` of ids) need no database and are taken as given, as `NotifyAsync` always did.
+- **Realtime and toasts** (`TopicsAsync`): `All` goes once to the tenant's topic `tenant:events`, `Global` to `global:events`, `Current` to the session's topic (`session:{sid}`, the user's own topic without a session, e.g. in a job). Every other target asks [presence](../modules/realtime.md#presence) for the online users of the tenant first and then runs the target only for them; each gets the event on his `user:{id}` topic. A big tenant costs what its online users cost, and users who are offline cost nothing.
+- **Stored notifications and mails** (`UsersAsync`): active users of the tenant in one query. User ids (also with `Current` and `Except` of ids) need no database and are taken as given, as `NotifyAsync` always did.
 
-Users of other organisations and inactive users never resolve, also not from an `IAudienceResolver`. The topics keep their subscribe-time authorization: a client follows only its own user and session topics, `tenant:events` of its own organisation and `global:events`.
+Users of other tenants and inactive users never resolve, also not from an `IAudienceResolver`. The topics keep their subscribe-time authorization: a client follows only its own user and session topics, `tenant:events` of its own tenant and `global:events`.
 
 ## Realtime events for a target
 

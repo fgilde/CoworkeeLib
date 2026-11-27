@@ -42,9 +42,9 @@ var app = builder.AddCoworkeeApp("shop", options => options.UseGrafana().DeployT
 |---|---|
 | Keycloak | der Realm der App mit dem Client des Auth-Servers (die Tools melden sich am Auth-Server an, nicht im Realm), dazu der erste Administrator als Benutzer mit der Rolle `Administrator`; die Migrationen gleichen ihn bei jedem Deployment ab. Öffentliche Adresse `<app>-keycloak-url`, Daten in `<app>-keycloak-data` (Keycloaks eigene Dateidatenbank), seine Konsole als `admin` mit `KEYCLOAK_PASSWORD`. Demo-Benutzer und Login-Theme bleiben lokal |
 | Grafana | mit Prometheus, Loki, Tempo und dem Collector; die Dashboards der App und die Konfiguration stecken in den Images (`<app>-grafana`, ...). Der Administrator meldet sich mit Passwort oder am Auth-Server an. Öffentliche Adresse `<app>-grafana-url`, Daten in `<app>-grafana-data`, `<app>-prometheus-data` und `<app>-loki-data`; Tempo hält seine Traces im Container |
-| SigNoz | mit Collector und ClickHouse; Konfiguration, Dashboards und Alert-Regeln stecken in den Images. Administratoren der System-Organisation melden sich über oauth2-proxy am Auth-Server an (`<app>-signoz-signin-url`), ohne Auth-Server bei SigNoz selbst (`<app>-signoz-url`). Daten in `<app>-signoz-data` und `<app>-signoz-clickhouse-data`; auf Azure bekommt ClickHouse 1 CPU und 2 GiB und kein Volume (Azure Files über SMB bricht seine Inserts, die Telemetrie ist nach einem Neustart weg) |
+| SigNoz | mit Collector und ClickHouse; Konfiguration, Dashboards und Alert-Regeln stecken in den Images. Administratoren des System-Mandanten melden sich über oauth2-proxy am Auth-Server an (`<app>-signoz-signin-url`), ohne Auth-Server bei SigNoz selbst (`<app>-signoz-url`). Daten in `<app>-signoz-data` und `<app>-signoz-clickhouse-data`; auf Azure bekommt ClickHouse 1 CPU und 2 GiB und kein Volume (Azure Files über SMB bricht seine Inserts, die Telemetrie ist nach einem Neustart weg) |
 | Open WebUI | mit Ollama; der Administrator meldet sich mit Passwort oder am Auth-Server an. Öffentliche Adresse `<app>-openwebui-url`, Daten in `<app>-openwebui-data`, Schlüssel `<app>-openwebui-secret-key` |
-| Kibana | hinter oauth2-proxy; Administratoren der System-Organisation melden sich am Auth-Server an (seine öffentliche Adresse ist Issuer und Token-Endpunkt). Öffentliche Adresse `<app>-kibana-url`, Client-Secret `<app>-kibana-secret`, Cookie-Secret `<app>-kibana-cookie-secret`, Passwort von `kibana_system` `<app>-kibana-password` |
+| Kibana | hinter oauth2-proxy; Administratoren des System-Mandanten melden sich am Auth-Server an (seine öffentliche Adresse ist Issuer und Token-Endpunkt). Öffentliche Adresse `<app>-kibana-url`, Client-Secret `<app>-kibana-secret`, Cookie-Secret `<app>-kibana-cookie-secret`, Passwort von `kibana_system` `<app>-kibana-password` |
 | WebDataStudio | mit der App-Datenbank verbunden; der Administrator meldet sich mit Passwort oder am Auth-Server an. Öffentliche Adresse `<app>-webdatastudio-url`, Daten in `<app>-webdatastudio-data` |
 | LibreTranslate | der Übersetzungsdienst der App, nur im internen Netz; die Modelle liegen in `<app>-libretranslate-models`, der erste Start lädt sie herunter |
 | Ollama | der Modellserver der App, nur im internen Netz, Modelle in `<app>-ollama-data`. Er braucht einen Host mit genug Speicher |
@@ -55,9 +55,9 @@ Jedes Tool mit Weboberfläche steht wie die Dienste hinter deinem Reverse Proxy;
 
 ## Der erste Administrator
 
-Ist die Datenbank leer, legen die Migrationen den Administrator aus `<app>-admin-email` und `<app>-admin-password` an, mit der Organisation und den Einstellungen des Templates, und der Realm eines mitdeployten Keycloak bekommt denselben Benutzer. `coworkee deploy compose` fragt nach der E-Mail (oder nimmt `--admin-email`, eine Umgebungsvariable `SHOP_ADMIN_EMAIL` oder `admin@<app>.local`), erzeugt das Passwort und gibt beides am Ende seiner Ausgabe aus, sonst nirgends. Mit derselben E-Mail und demselben Passwort meldest du dich an der App, an Keycloak, Grafana, WebDataStudio, Open WebUI, AspireUI und Mailpit an.
+Ist die Datenbank leer, legen die Migrationen den Administrator aus `<app>-admin-email` und `<app>-admin-password` an, mit dem Mandanten und den Einstellungen des Templates, und der Realm eines mitdeployten Keycloak bekommt denselben Benutzer. `coworkee deploy compose` fragt nach der E-Mail (oder nimmt `--admin-email`, eine Umgebungsvariable `SHOP_ADMIN_EMAIL` oder `admin@<app>.local`), erzeugt das Passwort und gibt beides am Ende seiner Ausgabe aus, sonst nirgends. Mit derselben E-Mail und demselben Passwort meldest du dich an der App, an Keycloak, Grafana, WebDataStudio, Open WebUI, AspireUI und Mailpit an.
 
-Lässt du beide Werte leer, wird nichts angelegt: Die App zeigt ihre Setup-Seite, auf der du mit `<app>-setup-token` Organisation und Administrator selbst einrichtest. Eine eingerichtete Datenbank bleibt, wie sie ist; ein geändertes Passwort in `.env` erreicht Keycloak und die Tools, nicht das Konto in der App.
+Lässt du beide Werte leer, wird nichts angelegt: Die App zeigt ihre Setup-Seite, auf der du mit `<app>-setup-token` Mandant und Administrator selbst einrichtest. Eine eingerichtete Datenbank bleibt, wie sie ist; ein geändertes Passwort in `.env` erreicht Keycloak und die Tools, nicht das Konto in der App.
 
 Jeder Lauf der Migrationen (jedes `docker compose up`, der Container-Apps-Job nach jedem Deployment, der Helm-Hook) führt auch die [Seed-Contributors](../fundamentals/persistence.md#seed-contributors) der App aus, so erreichen Daten, die ein Seed neu bekommt, die deployte Datenbank; ein fehlschlagender beendet den Lauf mit Exit-Code 1, und die Dienste starten nicht. Rollen und Berechtigungen, die später in `DeploymentSeed` dazukommen, erreichen eine deployte Datenbank mit `options.SyncRolesInDeployments = true`.
 
@@ -121,7 +121,7 @@ Dann auf dem Host (kopiere den Ordner und lade die Images dort, oder baue sie do
 docker compose up -d
 ```
 
-Öffne die Web-Adresse und melde dich als der Administrator an, den `coworkee deploy` ausgegeben hat. Hast du den Administrator leer gelassen, zeigt die App stattdessen die Setup-Seite: Gib `SHOP_SETUP_TOKEN` aus `.env` ein, den Namen deiner Organisation und den ersten Administrator.
+Öffne die Web-Adresse und melde dich als der Administrator an, den `coworkee deploy` ausgegeben hat. Hast du den Administrator leer gelassen, zeigt die App stattdessen die Setup-Seite: Gib `SHOP_SETUP_TOKEN` aus `.env` ein, den Namen deines Mandanten und den ersten Administrator.
 
 ### Auf deinem Rechner ausprobieren
 

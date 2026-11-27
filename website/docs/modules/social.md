@@ -16,7 +16,7 @@ public sealed class MyAppProductsModule : CoworkeeModule
 }
 ```
 
-With the entity class, the social data of a row is only there for users who see the row: when the type has an [OData set](../web/odata.md), the way that set shows it (the set's permission, the organisation, soft delete and every `IODataEntityFilter<T>` row filter); without a set, every row of the own organisation. Everyone else gets 404 on comments, tags, ratings and reactions and may not follow the realtime topics; tag counts and `tags/{entityType}/entities` only count visible rows. Without the entity class (`Comments("Products")`) any id is accepted. `AddCoworkeeSocial` may be called by several modules.
+With the entity class, the social data of a row is only there for users who see the row: when the type has an [OData set](../web/odata.md), the way that set shows it (the set's permission, the tenant, soft delete and every `IODataEntityFilter<T>` row filter); without a set, every row of the own tenant. Everyone else gets 404 on comments, tags, ratings and reactions and may not follow the realtime topics; tag counts and `tags/{entityType}/entities` only count visible rows. Without the entity class (`Comments("Products")`) any id is accepted. `AddCoworkeeSocial` may be called by several modules.
 
 An optional hook decides on top of that whether the user may see (`Write == false`) or change the social data of one entity, e.g. for an entity type without an OData set:
 
@@ -52,7 +52,7 @@ Every add, edit, status change and delete raises the domain event `CommentChange
 
 ## Tags
 
-Each entity type has its own tag set per organisation. Names are matched without case; saving replaces the tags of an entity. `GET /api/v1/tags/{entityType}/entities?tag=red` returns the ids of the tagged entities, for filters.
+Each entity type has its own tag set per tenant. Names are matched without case; saving replaces the tags of an entity. `GET /api/v1/tags/{entityType}/entities?tag=red` returns the ids of the tagged entities, for filters.
 
 ## Ratings
 

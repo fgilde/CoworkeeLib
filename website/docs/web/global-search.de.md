@@ -28,7 +28,7 @@ context.Services.AddGlobalSearch<Product>(s => s
     .Icon("ViewCarousel"));
 ```
 
-Die Suche sieht genau das, was die OData-Liste des Sets liefert: ihre Berechtigung, die Organisation, [Zeilenregeln](odata.md#regeln-pro-zeile) und das weiche Löschen. Wer eine versteckte Eigenschaft durchsucht, bekommt beim Start einen Fehler. Gesucht wird in zwei Runden: Werte, die mit dem Text beginnen (oder der Datensatz einer eingegebenen Id), kommen sofort, Werte, die jedes Wort enthalten, folgen.
+Die Suche sieht genau das, was die OData-Liste des Sets liefert: ihre Berechtigung, den Mandanten, [Zeilenregeln](odata.md#regeln-pro-zeile) und das weiche Löschen. Wer eine versteckte Eigenschaft durchsucht, bekommt beim Start einen Fehler. Gesucht wird in zwei Runden: Werte, die mit dem Text beginnen (oder der Datensatz einer eingegebenen Id), kommen sofort, Werte, die jedes Wort enthalten, folgen.
 
 Felder dürfen über eine Navigation lesen (`t => t.Customer!.Name`): sie werden in der Abfrage gelesen und folgen den [Navigationsregeln](odata.md#navigationen-folgen-ihrem-ziel), ein ausgeblendetes Ziel passt also weder noch erscheint es. `Title`, `Subtitle`, `Url` und `Thumbnail` laufen auf der geladenen Zeile, die keine Navigationen hat; Werte anderer Zeilen gehören in Felder.
 
@@ -75,7 +75,7 @@ Ist das Set eine [Client-Entity](../ui/client-entities.md), deren Kopie im Brows
 | `users` | Name, Benutzername, E-Mail; öffnet den Benutzer | `Identity.Users.View` |
 | `roles`, `groups` | Name und Beschreibung | `Identity.Roles.View`, `Identity.Groups.View` |
 | `files` | Dateinamen; öffnet die Dateiseite mit der Vorschau | `Files.View` |
-| `reports` | Berichte, die der Benutzer sieht (eigene, Organisation, eigene Rollen) | `Reports.View` |
+| `reports` | Berichte, die der Benutzer sieht (eigene, Mandant, eigene Rollen) | `Reports.View` |
 | `chats` | die eigenen Unterhaltungen, deren Nachrichten die Wörter enthalten | `Chat.Use` |
 
 Seiten und Aktionen bleiben in der Palette selbst (sie sind im Browser bekannt).
@@ -113,7 +113,7 @@ Für [Gesamtzahlen](#seiten-und-gesamtzahlen) implementiert ein Provider zusätz
 
 ## Suchindex (Elasticsearch)
 
-Mit dem [Suchmodul](../modules/search.md) wird ein Index-Alias zum Provider. Der Index kennt die Regeln der Datenbank nicht: Jedes Dokument trägt seine Organisation (`tenantId`, ein anderes Feld setzt du mit `TenantField`), und `Where` fügt die Filter hinzu, die ein Benutzer braucht.
+Mit dem [Suchmodul](../modules/search.md) wird ein Index-Alias zum Provider. Der Index kennt die Regeln der Datenbank nicht: Jedes Dokument trägt seinen Mandanten (`tenantId`, ein anderes Feld setzt du mit `TenantField`), und `Where` fügt die Filter hinzu, die ein Benutzer braucht.
 
 ```csharp
 services.AddGlobalSearchIndex("myapp-products", s => s
@@ -135,7 +135,7 @@ services.AddGlobalSearchIndex("myapp-products", s => s
 
 ### Seiten und Gesamtzahlen
 
-Eine Ergebnisseite mit einer Tabelle pro Typ und Blätterleiste fragt je einen Typ ab: `skip` lässt die ersten Treffer des Providers aus (höchstens `Coworkee:GlobalSearch:MaxSkip`, Standard 1000; jede Seite liest die Treffer davor mit), `totals=true` ergänzt, wie viele Datensätze insgesamt passen, `GlobalSearchProviderStatus.Total` (im Stream `Total` in der letzten Zeile des Providers). Sets, die mit `AddGlobalSearch` durchsucht werden, zählen die Zeilen, die die Suche finden kann (jedes Wort in einem der Felder, dieselben Zeilen und Organisationen wie die Treffer); ein eigener Provider zählt, indem er `CountAsync` implementiert, sonst bleibt `Total` null.
+Eine Ergebnisseite mit einer Tabelle pro Typ und Blätterleiste fragt je einen Typ ab: `skip` lässt die ersten Treffer des Providers aus (höchstens `Coworkee:GlobalSearch:MaxSkip`, Standard 1000; jede Seite liest die Treffer davor mit), `totals=true` ergänzt, wie viele Datensätze insgesamt passen, `GlobalSearchProviderStatus.Total` (im Stream `Total` in der letzten Zeile des Providers). Sets, die mit `AddGlobalSearch` durchsucht werden, zählen die Zeilen, die die Suche finden kann (jedes Wort in einem der Felder, dieselben Zeilen und Mandanten wie die Treffer); ein eigener Provider zählt, indem er `CountAsync` implementiert, sonst bleibt `Total` null.
 
 ```csharp
 // Seite 3 der Sendungen, 5 pro Seite, mit der Gesamtzahl für "x-y von n"

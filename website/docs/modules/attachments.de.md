@@ -27,7 +27,7 @@ Das Modul bringt die Tabelle `cw.RecordAttachments` mit: **Migration anlegen**, 
 
 ## Wer die Dateien sieht und ändert
 
-Lesen (Liste, Öffnen, Herunterladen) folgt dem Datensatz: Hat der Typ ein [OData-Set](../web/odata.md), nur Benutzer, die die Zeile darüber sehen (Berechtigung des Sets, Organisation, Soft Delete und jeder Zeilenfilter `IODataEntityFilter<T>`); ohne Set jede Zeile der eigenen Organisation. Alle anderen bekommen 404, als gäbe es den Datensatz nicht. Schreiben verlangt dasselbe und zusätzlich `WriteRequires` und die `Authorize`-Prüfungen, wenn gesetzt; ohne sie darf jeder hochladen und löschen, der den Datensatz sieht.
+Lesen (Liste, Öffnen, Herunterladen) folgt dem Datensatz: Hat der Typ ein [OData-Set](../web/odata.md), nur Benutzer, die die Zeile darüber sehen (Berechtigung des Sets, Mandant, Soft Delete und jeder Zeilenfilter `IODataEntityFilter<T>`); ohne Set jede Zeile des eigenen Mandanten. Alle anderen bekommen 404, als gäbe es den Datensatz nicht. Schreiben verlangt dasselbe und zusätzlich `WriteRequires` und die `Authorize`-Prüfungen, wenn gesetzt; ohne sie darf jeder hochladen und löschen, der den Datensatz sieht.
 
 ## API
 
@@ -72,7 +72,7 @@ Ein weich gelöschter Datensatz behält seine Dateien, eine Wiederherstellung br
 
 Jeder hinzugefügte, ersetzte oder gelöschte Anhang geht nach dem Commit über das Echtzeit-Topic `attachments:{entityType}:{entityId}` (`AttachmentTopics.Record`). Folgen darf, wer einen Slot des Datensatzes lesen darf, dieselbe Prüfung wie beim Listen-Endpunkt.
 
-Der [Export personenbezogener Daten](../security/privacy.md) hat einen Abschnitt `attachments` mit den Dateien, die der Benutzer angehängt hat (Datensatz, Slot, Name, Typ, Größe, Zeit), ohne den Inhalt. Das Löschen des Benutzers behält sie: Wie andere Dateien gehören sie zu den Datensätzen der Organisation; als hochladende Person steht danach der Platzhalter für gelöschte Benutzer (`PersonalDataSubject.ErasedUserId`).
+Der [Export personenbezogener Daten](../security/privacy.md) hat einen Abschnitt `attachments` mit den Dateien, die der Benutzer angehängt hat (Datensatz, Slot, Name, Typ, Größe, Zeit), ohne den Inhalt. Das Löschen des Benutzers behält sie: Wie andere Dateien gehören sie zu den Datensätzen des Mandanten; als hochladende Person steht danach der Platzhalter für gelöschte Benutzer (`PersonalDataSubject.ErasedUserId`).
 
 ## Client
 

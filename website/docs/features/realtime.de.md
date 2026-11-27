@@ -48,7 +48,7 @@ await notifier.SendAsync(new NotificationRequest(EventTarget.Permission(OrderPer
 await notifier.ToastAsync(EventTarget.All, "Maintenance at 18:00", NotificationSeverity.Warning, ct);
 ```
 
-`Coworkee.Chat` bringt Direkt- und Gruppenchats innerhalb einer Organisation: formatierte Nachrichten, `@`-Erwähnungen von Personen und `#`-Erwähnungen von Datensätzen, Antworten, Reaktionen, Dateien und Bilder, Lesemarken und eine Tipp-Anzeige. Eine neue Nachricht erscheint als Snackbar, außer der Chat ist schon offen, und Mini-Chats docken unten rechts an ([Chat](../modules/chat.md)).
+`Coworkee.Chat` bringt Direkt- und Gruppenchats innerhalb eines Mandanten: formatierte Nachrichten, `@`-Erwähnungen von Personen und `#`-Erwähnungen von Datensätzen, Antworten, Reaktionen, Dateien und Bilder, Lesemarken und eine Tipp-Anzeige. Eine neue Nachricht erscheint als Snackbar, außer der Chat ist schon offen, und Mini-Chats docken unten rechts an ([Chat](../modules/chat.md)).
 
 ## Kommentare, Tags, Bewertungen und Reaktionen
 

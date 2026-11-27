@@ -53,7 +53,7 @@ For an app that must not look like the admin app at all (a customer portal next 
 | Parameter | |
 |---|---|
 | `ChildContent` | your layout; it gets the shell as `context` (`context.Dark`, `context.ToggleDarkAsync()`) |
-| `Theme` | a fixed `MudTheme` instead of the organisation's Coworkee theme (Administration, Themes); its custom CSS and logo (favicon) then do not apply |
+| `Theme` | a fixed `MudTheme` instead of the tenant's Coworkee theme (Administration, Themes); its custom CSS and logo (favicon) then do not apply |
 | `DarkMode` | `true`/`false` fixes the colour mode, `null` (default) follows the user's choice or the system |
 
 Several layouts (a main layout and an admin layout, say) share one shell when they name the same outer layout (`@layout AppLayout`): switching between them keeps theme, providers and the started state. Combine it with `Pages.Only()` (below) so that none of the library's pages is reachable in such an app.

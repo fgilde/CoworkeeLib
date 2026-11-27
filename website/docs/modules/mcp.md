@@ -38,7 +38,7 @@ The tools come from the same places as the assistant's:
 public sealed record PinProductCommand(Guid Id) : ICommand<Result>;
 ```
 
-Every call runs through the dispatcher as the calling user: permissions, organisation, validation and the unit of work apply as in the API, and response filters shape the result as they shape the API's answers. The answer is cut after 20,000 characters. Each call lands in the AI tool call audit with the channel `mcp`, the user and the API key.
+Every call runs through the dispatcher as the calling user: permissions, tenant, validation and the unit of work apply as in the API, and response filters shape the result as they shape the API's answers. The answer is cut after 20,000 characters. Each call lands in the AI tool call audit with the channel `mcp`, the user and the API key.
 
 ## Connecting a client
 

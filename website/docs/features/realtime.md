@@ -48,7 +48,7 @@ await notifier.SendAsync(new NotificationRequest(EventTarget.Permission(OrderPer
 await notifier.ToastAsync(EventTarget.All, "Maintenance at 18:00", NotificationSeverity.Warning, ct);
 ```
 
-`Coworkee.Chat` adds direct and group chats inside an organisation: formatted messages, `@` mentions of people and `#` mentions of records, replies, reactions, files and pictures, read marks and a typing indicator. A new message pops up as a snackbar unless the chat is already open, and mini chats dock at the bottom right ([chat](../modules/chat.md)).
+`Coworkee.Chat` adds direct and group chats inside a tenant: formatted messages, `@` mentions of people and `#` mentions of records, replies, reactions, files and pictures, read marks and a typing indicator. A new message pops up as a snackbar unless the chat is already open, and mini chats dock at the bottom right ([chat](../modules/chat.md)).
 
 ## Comments, tags, ratings and reactions
 

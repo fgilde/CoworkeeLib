@@ -1,6 +1,6 @@
 # Events und Ziele
 
-Wer etwas bekommt, das passiert, ein Toast, eine Benachrichtigung, eine Mail oder ein Realtime-Event, ist ein Wert: ein `EventTarget`. Dasselbe Ziel gilt im [Notifier](../modules/realtime.md#benachrichtigungen) und für Realtime-Events und wird in der aktuellen Organisation aufgelöst.
+Wer etwas bekommt, das passiert, ein Toast, eine Benachrichtigung, eine Mail oder ein Realtime-Event, ist ein Wert: ein `EventTarget`. Dasselbe Ziel gilt im [Notifier](../modules/realtime.md#benachrichtigungen) und für Realtime-Events und wird im aktuellen Mandanten aufgelöst.
 
 ```csharp
 await notifier.SendAsync(new NotificationRequest(EventTarget.Permission(OrderPermissions.View).Except(EventTarget.Current), "Order {0} shipped")
@@ -19,8 +19,8 @@ await notifier.ToastAsync(EventTarget.All, "Maintenance at 18:00", NotificationS
 
 | Ziel | Wer |
 |---|---|
-| `EventTarget.All` | jeder Benutzer der Organisation |
-| `EventTarget.Global` | jeder Benutzer jeder Organisation: nur Realtime und Toasts (Systemmeldungen); gespeicherte Benachrichtigungen lehnen es ab |
+| `EventTarget.All` | jeder Benutzer des Mandanten |
+| `EventTarget.Global` | jeder Benutzer jedes Mandanten: nur Realtime und Toasts (Systemmeldungen); gespeicherte Benachrichtigungen lehnen es ab |
 | `EventTarget.Current` | die aktuelle Sitzung (alle Tabs dieser Anmeldung) bei Realtime und Toasts, sonst und in `Except` der aktuelle Benutzer |
 | `EventTarget.Users(id1, id2)` | diese Benutzer |
 | `EventTarget.Permission("Orders.View")` | die Benutzer mit der Berechtigung |
@@ -75,7 +75,7 @@ await notifier.SendAsync(new NotificationRequest(EventTarget.Users(selection), "
 UserSelection.Of(aliceId, carlId);   // nur diese Benutzer, wenn der Aufrufer sie sehen darf
 ```
 
-Der Server löst sie mit den Rechten des **aktuellen Benutzers** auf, so wie die Menge Users sie zeigt: `Identity.Users.View`, die Organisation, die Zeilenfilter der Menge und die Gruppenauswahl; einen Filter, den er nicht ausführen darf (eine verborgene Eigenschaft, ein unbekannter Name), lehnt er ab. Vom Browser hinzugefügte IDs zählen nur, wenn der Aufrufer diese Benutzer sieht. Als Ziel erreicht die Auswahl die aktiven Benutzer der Organisation und folgt den Regeln der Ziele: der Handelnde bleibt außen vor (die Auswahl nennt ihn nicht per ID), Einstellungen gelten. Ohne das Recht, Benutzer zu sehen, wirft `EventTarget.Users(selection)`; `IUserSelectionResolver.ResolveAsync(selection)` liefert eigenem Code die IDs oder den Fehler (`Forbidden`, `Validation`).
+Der Server löst sie mit den Rechten des **aktuellen Benutzers** auf, so wie die Menge Users sie zeigt: `Identity.Users.View`, den Mandanten, die Zeilenfilter der Menge und die Gruppenauswahl; einen Filter, den er nicht ausführen darf (eine verborgene Eigenschaft, ein unbekannter Name), lehnt er ab. Vom Browser hinzugefügte IDs zählen nur, wenn der Aufrufer diese Benutzer sieht. Als Ziel erreicht die Auswahl die aktiven Benutzer des Mandanten und folgt den Regeln der Ziele: der Handelnde bleibt außen vor (die Auswahl nennt ihn nicht per ID), Einstellungen gelten. Ohne das Recht, Benutzer zu sehen, wirft `EventTarget.Users(selection)`; `IUserSelectionResolver.ResolveAsync(selection)` liefert eigenem Code die IDs oder den Fehler (`Forbidden`, `Validation`).
 
 `POST /api/v1/identity/users/selection/count` (`Identity.Users.View`, Body: die Auswahl) antwortet `{ "users": 12, "active": 11 }` (`ICoworkeeApi.CountUserSelectionAsync`).
 
@@ -108,12 +108,12 @@ Dasselbe aus Code oder einem anderen Client: `POST /api/v1/notifications/send` m
 
 ## Wie Ziele aufgelöst werden
 
-`IEventTargetResolver` (Coworkee.Identity implementiert ihn) löst in der aktuellen Organisation auf; ein Ziel schränkt nur ein:
+`IEventTargetResolver` (Coworkee.Identity implementiert ihn) löst im aktuellen Mandanten auf; ein Ziel schränkt nur ein:
 
-- **Realtime und Toasts** (`TopicsAsync`): `All` geht einmal an das Thema der Organisation `tenant:events`, `Global` an `global:events`, `Current` an das Thema der Sitzung (`session:{sid}`, ohne Sitzung, etwa in einem Job, das eigene Thema des Benutzers). Jedes andere Ziel fragt zuerst die [Anwesenheit](../modules/realtime.md#anwesenheit) nach den angemeldeten Benutzern der Organisation und führt das Ziel dann nur für sie aus; jeder bekommt das Event auf seinem Thema `user:{id}`. Eine große Organisation kostet, was ihre angemeldeten Benutzer kosten, abgemeldete kosten nichts.
-- **Gespeicherte Benachrichtigungen und Mails** (`UsersAsync`): aktive Benutzer der Organisation in einer Abfrage. Benutzer-IDs (auch mit `Current` und `Except` von IDs) brauchen keine Datenbank und gelten wie angegeben, wie bei `NotifyAsync` schon immer.
+- **Realtime und Toasts** (`TopicsAsync`): `All` geht einmal an das Thema des Mandanten `tenant:events`, `Global` an `global:events`, `Current` an das Thema der Sitzung (`session:{sid}`, ohne Sitzung, etwa in einem Job, das eigene Thema des Benutzers). Jedes andere Ziel fragt zuerst die [Anwesenheit](../modules/realtime.md#anwesenheit) nach den angemeldeten Benutzern des Mandanten und führt das Ziel dann nur für sie aus; jeder bekommt das Event auf seinem Thema `user:{id}`. Ein großer Mandant kostet, was seine angemeldeten Benutzer kosten, abgemeldete kosten nichts.
+- **Gespeicherte Benachrichtigungen und Mails** (`UsersAsync`): aktive Benutzer des Mandanten in einer Abfrage. Benutzer-IDs (auch mit `Current` und `Except` von IDs) brauchen keine Datenbank und gelten wie angegeben, wie bei `NotifyAsync` schon immer.
 
-Benutzer anderer Organisationen und inaktive Benutzer werden nie aufgelöst, auch nicht aus einem `IAudienceResolver`. Die Themen behalten ihre Prüfung beim Abonnieren: Ein Client folgt nur seinem eigenen Benutzer- und Sitzungsthema, `tenant:events` seiner Organisation und `global:events`.
+Benutzer anderer Mandanten und inaktive Benutzer werden nie aufgelöst, auch nicht aus einem `IAudienceResolver`. Die Themen behalten ihre Prüfung beim Abonnieren: Ein Client folgt nur seinem eigenen Benutzer- und Sitzungsthema, `tenant:events` seines Mandanten und `global:events`.
 
 ## Realtime-Events für ein Ziel
 

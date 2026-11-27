@@ -15,7 +15,7 @@ Das Modul hängt vom Speichermodul ab. Die Vorlage fügt es mit der Option `back
 - Eine Wiederherstellung ersetzt alle Tabellen in einer Transaktion. Sie lehnt Backups ab, die auf einer anderen Migration oder mit anderen Tabellen erstellt wurden.
 - Ein heruntergeladenes Zip lässt sich wieder hochladen (auch in eine andere Installation): Es erscheint in der Liste und wird wie jedes Backup wiederhergestellt. Ein Upload ohne Manifest wird abgelehnt; ob es zur Datenbank passt, prüft die Wiederherstellung.
 - Nach einer Wiederherstellung werden die Caches geleert.
-- Backups enthalten alle Organisationen, deshalb sehen sie nur Benutzer der System-Organisation mit `Backups.Manage`; andere Organisationen bekommen `403` (`backup.system_only`). Die Admin-Seite ist *Administration > System > Backups* (`/cw/admin/backups`).
+- Backups enthalten alle Mandanten, deshalb sehen sie nur Benutzer des System-Mandanten mit `Backups.Manage`; andere Mandanten bekommen `403` (`backup.system_only`). Die Admin-Seite ist *Administration > System > Backups* (`/cw/admin/backups`).
 - Eine Wiederherstellung auf eine andere Migration oder andere Tabellen antwortet `409` (`backup.mismatch`); ein hochgeladener Dateiname braucht 1 bis 200 Zeichen, der Upload selbst hat keine Größengrenze.
 - Mit dem Modul [Aufbewahrung](retention.md) löscht das Ziel `backups` alte Backups samt Zip; das neueste Backup bleibt immer.
 

@@ -91,7 +91,7 @@
       "type": "parameter",
       "datatype": "bool",
       "defaultValue": "false",
-      "description": "Folders and files of the organisation with preview (Coworkee.Files)."
+      "description": "Folders and files of the tenant with preview (Coworkee.Files)."
     },
     "features": {
       "type": "parameter",
@@ -310,7 +310,7 @@
       "type": "parameter",
       "datatype": "bool",
       "defaultValue": "false",
-      "description": "Kibana next to the Elasticsearch container (with elasticsearch), behind oauth2-proxy with the sign-in of the auth server for administrators of the system organisation."
+      "description": "Kibana next to the Elasticsearch container (with elasticsearch), behind oauth2-proxy with the sign-in of the auth server for administrators of the system tenant."
     },
     "openWebUI": {
       "type": "parameter",
@@ -322,7 +322,7 @@
       "type": "parameter",
       "datatype": "bool",
       "defaultValue": "false",
-      "description": "AspireUI, a web UI to host and try more apps and stacks next to the app; administrators of the system organisation sign in at the app's auth server (development)."
+      "description": "AspireUI, a web UI to host and try more apps and stacks next to the app; administrators of the system tenant sign in at the app's auth server (development)."
     },
     "airworks": {
       "type": "parameter",

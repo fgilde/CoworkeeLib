@@ -1,6 +1,6 @@
 # Reporting
 
-`Coworkee.Reporting` (server) and `Coworkee.Client.Blazor.Reporting` (client) add dashboards over the OData entity sets of your app. Users arrange widgets on a grid, filter them together, click a bar to narrow the rest and share the result with roles, groups or the whole organisation. Every number is aggregated by the database, so a dashboard over 100,000 rows answers in a few milliseconds.
+`Coworkee.Reporting` (server) and `Coworkee.Client.Blazor.Reporting` (client) add dashboards over the OData entity sets of your app. Users arrange widgets on a grid, filter them together, click a bar to narrow the rest and share the result with roles, groups or the whole tenant. Every number is aggregated by the database, so a dashboard over 100,000 rows answers in a few milliseconds.
 
 ![A sales dashboard with KPIs, charts, a pivot and a table](../assets/screenshots/reporting-dashboard.png){ .shot }
 
@@ -262,11 +262,11 @@ A widget's rows are narrowed by, in this order: its own query builder rules and 
 |---|---|
 | `Reports.View` | open reports shared with you, favorites |
 | `Reports.Manage` | create reports, change and delete your own, duplicate any you can open |
-| `Reports.Share` | share with roles, groups or the organisation |
-| `Reports.Dashboard` | choose the organisation's dashboard |
-| `Reports.Subscriptions` | see and end the report subscriptions of the organisation |
+| `Reports.Share` | share with roles, groups or the tenant |
+| `Reports.Dashboard` | choose the tenant's dashboard |
+| `Reports.Subscriptions` | see and end the report subscriptions of the tenant |
 
-A report is *private*, shared with *roles* (holders of one of them, directly or through groups), with *groups* or with the *organisation*. Shared with groups, it reaches the members of those groups and of the groups above them: the user's active groups (`IGroupScope.ActiveAsync`), so a group selection narrows the report list like it narrows the data. The owner shares only with own groups and the groups below them (`GET /api/v1/reports/groups`, `Reports.Share`), at most 100; another group answers `403` (`reports.foreign_group`). Groups shared before stay when the owner leaves one. The owner always sees the report.
+A report is *private*, shared with *roles* (holders of one of them, directly or through groups), with *groups* or with the *tenant*. Shared with groups, it reaches the members of those groups and of the groups above them: the user's active groups (`IGroupScope.ActiveAsync`), so a group selection narrows the report list like it narrows the data. The owner shares only with own groups and the groups below them (`GET /api/v1/reports/groups`, `Reports.Share`), at most 100; another group answers `403` (`reports.foreign_group`). Groups shared before stay when the owner leaves one. The owner always sees the report.
 
 `SaveReportRequest` carries `Visibility`, `RoleIds` and `GroupIds` (`ReportDto` returns them). `Reports.Share` is checked only when the sharing changes, so an owner without it can still change a shared report. A client that saves a report it read passes `RoleIds` and `GroupIds` along: a report shared with roles or groups saved without them is refused with `400` (*Choose the groups to share with.*). Only the owner changes it; others duplicate it into a private copy. A change reaches everyone who has the report open, over the [realtime hub](realtime.md).
 
@@ -274,15 +274,15 @@ A report is *private*, shared with *roles* (holders of one of them, directly or 
 
 *Subscribe by mail* (envelope icon) on a report mails it on a schedule: every day, every week on a weekday or every month on a day (shorter months take their last day) or on a weekday of a week (`ReportSchedule.Week`, e.g. the last Friday), every n-th day, week or month (`Every`), at a time of a time zone (IANA ids like `Europe/Berlin` or Windows ids; the time follows summer time, a time the clock skips runs right after the gap, a time that happens twice runs the first time). The dialog can replace the report's date range (e.g. *Last month* for a monthly mail) and use the facets chosen at the moment; the Excel attachment can be switched off. A user has at most 50 subscriptions; creating or changing one is refused while signed in as another user.
 
-The mail (template `Reports.Subscription`, in every shipped language, editable under *Mail templates*) shows each KPI with its value, threshold colour, sign and label, and the first ten rows of every chart, pivot and table (a chart over a date bucket shows its latest ten, oldest first), with a link to the report. It is written in the subscriber's language, else in the default language of the organisation (Languages page), like the unsubscribe page. The attached workbook has one sheet per widget with all its rows (tables up to 1,000), written like *Export Excel*. Images of the widgets or a PDF are not rendered on the server.
+The mail (template `Reports.Subscription`, in every shipped language, editable under *Mail templates*) shows each KPI with its value, threshold colour, sign and label, and the first ten rows of every chart, pivot and table (a chart over a date bucket shows its latest ten, oldest first), with a link to the report. It is written in the subscriber's language, else in the default language of the tenant (Languages page), like the unsubscribe page. The attached workbook has one sheet per widget with all its rows (tables up to 1,000), written like *Export Excel*. Images of the widgets or a PDF are not rendered on the server.
 
-The recurring job `coworkee-report-subscriptions` (every five minutes, `Coworkee:Reporting:SubscriptionCron`) runs the due subscriptions organisation by organisation, each **as the subscriber**: the report must still be shared with them, and their permissions, protected fields and row filters decide what the mail shows. When something is in the way (report no longer shared, no active mail address, `Reports.View` gone) nothing is sent and the subscription shows the reason; the next run tries again. Mails need `Coworkee:Notifications:PublicAppUrl` for their links.
+The recurring job `coworkee-report-subscriptions` (every five minutes, `Coworkee:Reporting:SubscriptionCron`) runs the due subscriptions tenant by tenant, each **as the subscriber**: the report must still be shared with them, and their permissions, protected fields and row filters decide what the mail shows. When something is in the way (report no longer shared, no active mail address, `Reports.View` gone) nothing is sent and the subscription shows the reason; the next run tries again. Mails need `Coworkee:Notifications:PublicAppUrl` for their links.
 
-Every mail ends with a link that ends the subscription without signing in (a protected token; opening it asks first, the confirm button posts). *Reports › Subscriptions* (`reports/subscriptions`) lists the user's subscriptions with schedule, next and last mail and the last error, to edit, send now or end them. Holders of `Reports.Subscriptions` switch to *Everybody in the organisation* to see and end all of them. Sent mails and their attachments are part of the mail log and go with its retention.
+Every mail ends with a link that ends the subscription without signing in (a protected token; opening it asks first, the confirm button posts). *Reports › Subscriptions* (`reports/subscriptions`) lists the user's subscriptions with schedule, next and last mail and the last error, to edit, send now or end them. Holders of `Reports.Subscriptions` switch to *Everybody in the tenant* to see and end all of them. Sent mails and their attachments are part of the mail log and go with its retention.
 
 | Endpoint | |
 |---|---|
-| `GET /api/v1/reports/subscriptions`, `GET /api/v1/reports/subscriptions/all` | the user's subscriptions, those of the organisation (`Reports.Subscriptions`) |
+| `GET /api/v1/reports/subscriptions`, `GET /api/v1/reports/subscriptions/all` | the user's subscriptions, those of the tenant (`Reports.Subscriptions`) |
 | `POST /api/v1/reports/subscriptions`, `PUT …/{id}`, `DELETE …/{id}` | subscribe, change, end (others' with `Reports.Subscriptions`) |
 | `POST /api/v1/reports/subscriptions/{id}/send` | mail it now, the schedule stays |
 | `GET`/`POST /api/v1/reports/subscriptions/unsubscribe` | the unsubscribe page of the mail link (anonymous, needs no `X-CSRF`) |
@@ -293,7 +293,7 @@ The [personal data export](../security/privacy.md) has a section `reports`: the 
 
 ## A report as dashboard
 
-Every report you can open can be your dashboard: *Set as my dashboard* in the menu of its card or on the report page. Holders of `Reports.Dashboard` (administrators) also set the organisation's dashboard, which everybody sees who has made no choice of their own. Your own choice wins; a report you cannot open (any more) is skipped, and deleting a report removes it as dashboard.
+Every report you can open can be your dashboard: *Set as my dashboard* in the menu of its card or on the report page. Holders of `Reports.Dashboard` (administrators) also set the tenant's dashboard, which everybody sees who has made no choice of their own. Your own choice wins; a report you cannot open (any more) is skipped, and deleting a report removes it as dashboard.
 
 `ReportDashboard` shows it. Wrap the app's own dashboard in it, so users without a chosen report, or without `Reports.View`, keep seeing that; without child content it shows a hint to choose a report. A change of the choice reaches open tabs at once (realtime topic `type:DashboardReport`).
 
@@ -306,7 +306,7 @@ Every report you can open can be your dashboard: *Set as my dashboard* in the me
 </ReportDashboard>
 ```
 
-The template's dashboard page (*Personal > Dashboard*, above *Reports*) does this, and with samples the setup makes the report *Catalog overview* the organisation's dashboard. The seed adds a `DashboardReport` row (`UserId` null for the organisation) next to the report.
+The template's dashboard page (*Personal > Dashboard*, above *Reports*) does this, and with samples the setup makes the report *Catalog overview* the tenant's dashboard. The seed adds a `DashboardReport` row (`UserId` null for the tenant) next to the report.
 
 ## Export
 
@@ -337,4 +337,4 @@ The template's dashboard page (*Personal > Dashboard*, above *Reports*) does thi
 | `POST /api/v1/reports/rows` | rows of an own source, for tables |
 | `POST /api/v1/reports/sheet` | rows to an Excel workbook |
 | `GET /api/v1/reports/ai`, `POST /api/v1/reports/generate` | whether AI is available, a definition from a prompt (not saved) |
-| `GET /api/v1/reports/dashboard`, `PUT /api/v1/reports/dashboard`, `PUT /api/v1/reports/dashboard/organisation` | the dashboard report shown to you, choose yours or the organisation's (`{ "reportId": null }` clears) |
+| `GET /api/v1/reports/dashboard`, `PUT /api/v1/reports/dashboard`, `PUT /api/v1/reports/dashboard/organisation` | the dashboard report shown to you, choose yours or the tenant's (`{ "reportId": null }` clears) |
