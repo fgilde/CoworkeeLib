@@ -11,6 +11,9 @@ namespace Coworkee.OData.DataFilters;
 /// <summary>Reads a stored filter against the model of its set: when saving (refuse), when listing (report) and when applying it (<see cref="DataFilterResolver"/>).</summary>
 internal static class DataFilterQueries
 {
+    /// <summary>How a filter becomes an expression, for applying it and for previewing it: no null checks of its own (EF gets plain comparisons).</summary>
+    public static ODataQuerySettings ApplySettings() => new() { HandleNullPropagation = HandleNullPropagationOption.False };
+
     /// <returns>What is wrong with the filter, or <c>null</c> when it parses.</returns>
     public static string? Problem(IServiceProvider services, ODataEntityRegistration entity, string queryJson) => Parse(services, entity, queryJson).Problem;
 

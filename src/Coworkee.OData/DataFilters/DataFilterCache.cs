@@ -82,7 +82,7 @@ internal sealed partial class DataFilterCache(HybridCache cache, IMemoryCache pa
                 }
 
                 // what EF gets: no null checks of its own, values as parameters
-                var where = (MethodCallExpression)option.ApplyTo(Enumerable.Empty<TEntity>().AsQueryable(), new ODataQuerySettings { HandleNullPropagation = HandleNullPropagationOption.False }).Expression;
+                var where = (MethodCallExpression)option.ApplyTo(Enumerable.Empty<TEntity>().AsQueryable(), DataFilterQueries.ApplySettings()).Expression;
                 return (Expression<Func<TEntity, bool>>)((UnaryExpression)where.Arguments[1]).Operand;
             }
         }

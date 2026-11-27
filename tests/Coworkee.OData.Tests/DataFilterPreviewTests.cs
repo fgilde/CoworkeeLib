@@ -74,6 +74,25 @@ public sealed class DataFilterPreviewTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Preview_predicts_what_the_saved_filter_does()
+    {
+        var admin = app.As(_setup.AdminUserId, _setup.TenantId);
+        var user = await UserWithAsync(ODataApp.ViewGadgets);
+        var query = Rule("Name", QueryOperator.Contains, "pen");
+        await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            db.Add(new Gadget { Name = "Pencil", Category = "Tools", TenantId = _setup.TenantId });
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        var preview = (await (await admin.PostAsJsonAsync(Root, Request(DataFilterLayer.Tenant, query), CoworkeeJson.Web, Ct)).Content.ReadFromJsonAsync<DataFilterPreviewDto>(CoworkeeJson.Web, Ct))!;
+        (await admin.PutAsJsonAsync("/api/v1/data-filters", new SaveDataFilterRequest("Gadgets", DataFilterLayer.Tenant, null, query), CoworkeeJson.Web, Ct)).EnsureSuccessStatusCode();
+
+        // both paths share DataFilterQueries.ApplySettings; under EF a count cannot show OData's null guards, so this guards equality of the outcome
+        int.Parse(await user.GetStringAsync("/odata/Gadgets/$count", Ct), System.Globalization.CultureInfo.InvariantCulture).ShouldBe((int)preview.Passing!.Value);
+    }
+
+    [Fact]
     public async Task Preview_needs_the_permission_of_its_layer()
     {
         var tenantManager = await UserWithAsync(DataFilterPermissions.ManageTenant, ODataApp.ViewGadgets);

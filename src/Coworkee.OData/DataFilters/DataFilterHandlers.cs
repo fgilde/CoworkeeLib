@@ -163,7 +163,7 @@ internal sealed class DataFilterHandlers(
     {
         var visible = await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken);
         var total = await visible.LongCountAsync(cancellationToken);
-        var passing = filter is null ? total : await ((IQueryable<TEntity>)filter.ApplyTo(visible, new ODataQuerySettings())).LongCountAsync(cancellationToken);
+        var passing = filter is null ? total : await ((IQueryable<TEntity>)filter.ApplyTo(visible, DataFilterQueries.ApplySettings())).LongCountAsync(cancellationToken);
         return new DataFilterPreviewDto(passing, total, false);
     }
 
