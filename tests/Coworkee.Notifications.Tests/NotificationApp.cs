@@ -278,6 +278,7 @@ public sealed class TestNotificationModule : CoworkeeModule
                         : Task.FromResult(MilestoneDelays.TryGetValue(tenant, out var delay) ? delay : (TimeSpan?)null);
                 })
             .Add(Missing, "Shipment", "Template gone", NotificationScope.All, inApp: false, email: true, mailTemplate: "Test.Gone")
-            .Followable<Shipment>("Shipments", id => $"/shipments/{id}"));
+            .Followable<Shipment>("Shipments", id => $"/shipments/{id}")
+            .Followable("Boxes"));
     }
 }

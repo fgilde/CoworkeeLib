@@ -179,6 +179,23 @@ public sealed class PreferenceTests(NotificationApp app) : IAsyncLifetime
         (await InboxAsync(app.As(_carl.Id, _setup.TenantId))).ShouldBeEmpty();
     }
 
+    [Fact]
+    public async Task An_entity_type_without_visibility_source_reaches_no_follower_and_no_audience_but_direct_recipients()
+    {
+        var box = Guid.CreateVersion7();
+        (await app.As(_bob.Id, _setup.TenantId).PutAsJsonAsync($"/api/v1/notifications/follows/Boxes/{box}", new FollowRequest(), Ct)).EnsureSuccessStatusCode();
+
+        await app.PublishAsync(_setup.AdminUserId, _setup.TenantId,
+            Message(TestNotificationModule.Milestone) with { EntityType = "Boxes", EntityId = box, Audience = [_bob.Id, _carl.Id] });
+        (await InboxAsync(Bob)).ShouldBeEmpty();
+        (await InboxAsync(app.As(_carl.Id, _setup.TenantId))).ShouldBeEmpty();
+
+        await app.PublishAsync(_setup.AdminUserId, _setup.TenantId,
+            Message(TestNotificationModule.Milestone) with { EntityType = "Boxes", EntityId = box, Audience = [_bob.Id], Recipients = [_carl.Id] });
+        (await InboxAsync(Bob)).ShouldBeEmpty();
+        (await InboxAsync(app.As(_carl.Id, _setup.TenantId))).ShouldHaveSingleItem();
+    }
+
     private async Task FollowAsync(params UserDto[] users)
     {
         foreach (var user in users)

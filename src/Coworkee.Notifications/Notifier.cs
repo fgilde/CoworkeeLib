@@ -142,6 +142,9 @@ internal sealed partial class Notifier(
         }
     }
 
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The entity type {EntityType} has no visibility source: audience and followers skipped. Register it with Followable<TEntity> or send without an entity.")]
+    private partial void LogNoVisibilitySource(string entityType);
+
     [LoggerMessage(Level = LogLevel.Warning, Message = "The mail delay of the notification type {Type} could not be resolved; its default applies.")]
     private partial void LogDelayFailed(Exception exception, string type);
 
@@ -161,6 +164,11 @@ internal sealed partial class Notifier(
         // followers and audience members must still see the record (each user checked once, as himself); addressed users are not checked
         if (message is { EntityType: { } checkedType, EntityId: { } checkedId } && (followers.Count > 0 || audience is { Count: > 0 }))
         {
+            if (services.GetService<NotificationTypeOptions>()?.FollowTargets.GetValueOrDefault(checkedType)?.VisibleIdsAsync is null)
+            {
+                LogNoVisibilitySource(checkedType);
+            }
+
             var seeing = await services.GetRequiredService<NotificationAudience>().SeeingAsync([.. followers.Concat(audience ?? [])], checkedType, checkedId, cancellationToken);
             followers.IntersectWith(seeing);
             audience?.IntersectWith(seeing);

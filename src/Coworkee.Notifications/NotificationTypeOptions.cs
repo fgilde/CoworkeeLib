@@ -34,8 +34,9 @@ public sealed class NotificationTypeOptions
     }
 
     /// <summary>
-    /// <b>Unchecked:</b> users may follow any id of <paramref name="entityType"/>, nobody checks that they see it. Their notifications therefore reach followers only
-    /// when the message names an <see cref="NotificationMessage.Audience"/>, limited to it; without one followers of such types get nothing. Use
+    /// <b>Unchecked:</b> users may follow any id of <paramref name="entityType"/>, nobody checks that they see it. A notification that names such an entity therefore reaches
+    /// neither followers nor <see cref="NotificationMessage.Audience"/> members, with or without an audience (a warning is logged); only
+    /// <see cref="NotificationMessage.Recipients"/> are notified. Use
     /// <see cref="Followable{TEntity}"/> for records some users must not see.
     /// </summary>
     public NotificationTypeOptions Followable(string entityType, Func<Guid, string>? link = null)

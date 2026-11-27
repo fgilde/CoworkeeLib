@@ -19,8 +19,10 @@ public sealed record NotificationMessage(string Type, string Title, string? Body
     public Guid? EntityId { get; init; }
 
     /// <summary>
-    /// Who may see the entity: users with the preference All get it; followers outside it do not. Null: every follower is checked as himself against the
-    /// entity's set (types registered with <c>Followable&lt;TEntity&gt;</c>); followers of types registered with <c>Followable(string)</c> then get nothing.
+    /// Who may get it besides the followers: members with the preference All, and followers are limited to it. With an <see cref="EntityType"/> and
+    /// <see cref="EntityId"/> every follower and member must still see the entity: each is checked once as himself against the entity's set (types registered with
+    /// <c>Followable&lt;TEntity&gt;</c>), so an audience never replaces that check. Types registered with <c>Followable(string)</c> have no such set: followers and
+    /// audience get nothing (a warning is logged), only <see cref="Recipients"/> do. Recipients are never checked.
     /// </summary>
     public IReadOnlyCollection<Guid>? Audience { get; init; }
 
