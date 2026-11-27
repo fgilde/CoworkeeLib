@@ -35,6 +35,31 @@ public sealed class AggregationTests(ReportingApp app) : ReportingTestBase(app)
     }
 
     [Fact]
+    public async Task Average_with_empty_as_zero_counts_empty_rows()
+    {
+        var result = await QueryAsync(new ReportQueryRequest("Sales", GroupBy: new ReportGroupBy("Region"),
+            Aggregates: [new(AggregateFunction.Average, "Days"), new(AggregateFunction.Average, "Days", EmptyAsZero: true)]));
+
+        var expected = Visible.GroupBy(s => s.Region).OrderBy(g => g.Key, StringComparer.Ordinal).ToList();
+        foreach (var (row, group) in result.Rows.Zip(expected))
+        {
+            row.Values[0]!.Value.ShouldBe(group.Where(s => s.Days is not null).Average(s => s.Days!.Value), 0.001);
+            row.Values[1]!.Value.ShouldBe(group.Sum(s => s.Days ?? 0) / (double)group.Count(), 0.001);
+            row.Values[1]!.Value.ShouldBeLessThan(row.Values[0]!.Value);
+        }
+    }
+
+    [Fact]
+    public async Task EmptyAsZero_is_refused_for_other_functions()
+    {
+        var response = await Admin.PostAsJsonAsync("/api/v1/reports/query",
+            new ReportQueryRequest("Sales", Aggregates: [new(AggregateFunction.Sum, "Days", EmptyAsZero: true)]), Ct);
+
+        response.StatusCode.ShouldBe(System.Net.HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync(Ct)).ShouldContain("Aggregates[0]");
+    }
+
+    [Fact]
     public async Task RequireDate_drops_rows_without_the_chosen_date()
     {
         var query = new WidgetQuery { EntitySet = "Sales", DateField = "ShippedOn", RequireDate = true };

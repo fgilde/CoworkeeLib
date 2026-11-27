@@ -2399,5 +2399,7 @@
   "The first date field is the default; viewers can switch to the others.": "Първото поле за дата е по подразбиране; зрителите могат да превключат към другите.",
   "Filter bar fields": "Полета на лентата с филтри",
   "In this order; empty shows every facet of the data.": "В този ред; празно показва всички фасети на данните.",
-  "Values not available": "Стойностите не са налични"
+  "Values not available": "Стойностите не са налични",
+  "Empty counts as zero": "Празното се брои за нула",
+  "Rows without a value count as 0 in the average": "Редовете без стойност се броят като 0 в средната стойност"
 }

@@ -2399,5 +2399,7 @@
   "The first date field is the default; viewers can switch to the others.": "Prvo polje datuma je zadano; gledatelji mogu prijeći na ostala.",
   "Filter bar fields": "Polja trake filtara",
   "In this order; empty shows every facet of the data.": "Ovim redoslijedom; prazno prikazuje sve fasete podataka.",
-  "Values not available": "Vrijednosti nisu dostupne"
+  "Values not available": "Vrijednosti nisu dostupne",
+  "Empty counts as zero": "Prazno se računa kao nula",
+  "Rows without a value count as 0 in the average": "Retci bez vrijednosti u prosjeku se računaju kao 0"
 }

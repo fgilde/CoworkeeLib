@@ -2399,5 +2399,7 @@
   "The first date field is the default; viewers can switch to the others.": "Det første datofelt er standard; seerne kan skifte til de andre.",
   "Filter bar fields": "Felter i filterlinjen",
   "In this order; empty shows every facet of the data.": "I denne rækkefølge; tom viser alle facetter af data.",
-  "Values not available": "Værdier er ikke tilgængelige"
+  "Values not available": "Værdier er ikke tilgængelige",
+  "Empty counts as zero": "Tom tæller som nul",
+  "Rows without a value count as 0 in the average": "Rækker uden værdi tæller som 0 i gennemsnittet"
 }

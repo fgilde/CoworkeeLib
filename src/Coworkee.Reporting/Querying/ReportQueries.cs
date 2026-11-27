@@ -27,6 +27,10 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
             .ToList();
     }
 
+    /// <summary>The ISO code the source states for the current user (a computed source with a currency resolver), null otherwise.</summary>
+    public Task<string?> CurrencyAsync(ReportSource source, CancellationToken cancellationToken) =>
+        source.Computed?.CurrencyAsync(services, cancellationToken) ?? Task.FromResult<string?>(null);
+
     public async Task<Result<ReportQueryResult>> RunAsync(ReportQueryRequest request, CancellationToken cancellationToken)
     {
         var (source, plan) = await PlanAsync(request, cancellationToken);

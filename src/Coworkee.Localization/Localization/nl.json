@@ -2399,5 +2399,7 @@
   "The first date field is the default; viewers can switch to the others.": "Het eerste datumveld is de standaard; kijkers kunnen naar de andere overschakelen.",
   "Filter bar fields": "Velden van de filterbalk",
   "In this order; empty shows every facet of the data.": "In deze volgorde; leeg toont elke facet van de gegevens.",
-  "Values not available": "Waarden niet beschikbaar"
+  "Values not available": "Waarden niet beschikbaar",
+  "Empty counts as zero": "Leeg telt als nul",
+  "Rows without a value count as 0 in the average": "Rijen zonder waarde tellen als 0 in het gemiddelde"
 }

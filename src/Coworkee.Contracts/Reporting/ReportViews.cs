@@ -86,6 +86,27 @@ public static class ReportViews
         return copy;
     }
 
+    /// <summary>
+    /// A copy of the widget that shows the currency its source states for the user (<paramref name="sourceCurrency"/>) and with <c>{currency}</c> in title and subtitle
+    /// replaced by the effective currency code; the widget itself when there is nothing to change.
+    /// </summary>
+    public static ReportWidget WithSourceCurrency(ReportWidget widget, string? sourceCurrency)
+    {
+        const string Placeholder = "{currency}";
+        var code = string.IsNullOrWhiteSpace(sourceCurrency) ? null : sourceCurrency;
+        if (code is null && widget.Title?.Contains(Placeholder, StringComparison.Ordinal) != true && widget.Subtitle?.Contains(Placeholder, StringComparison.Ordinal) != true)
+        {
+            return widget;
+        }
+
+        var copy = JsonSerializer.Deserialize<ReportWidget>(JsonSerializer.Serialize(widget, Json), Json)!;
+        copy.Options.Currency = code ?? copy.Options.Currency;
+        var effective = ReportNumbers.Currency(copy.Options);
+        copy.Title = copy.Title?.Replace(Placeholder, effective, StringComparison.Ordinal);
+        copy.Subtitle = copy.Subtitle?.Replace(Placeholder, effective, StringComparison.Ordinal);
+        return copy;
+    }
+
     private static bool Is(string? field, string other) => string.Equals(field, other, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>The widget as designed and with every single alternative, e.g. to check that each of them works.</summary>

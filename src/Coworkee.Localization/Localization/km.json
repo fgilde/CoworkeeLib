@@ -2399,5 +2399,7 @@
   "The first date field is the default; viewers can switch to the others.": "វាលកាលបរិច្ឆេទទីមួយជាលំនាំដើម អ្នកមើលអាចប្តូរទៅវាលផ្សេងទៀត។",
   "Filter bar fields": "វាលនៃរបារតម្រង",
   "In this order; empty shows every facet of the data.": "តាមលំដាប់នេះ ទទេនឹងបង្ហាញរាល់ផ្នែកនៃទិន្នន័យ។",
-  "Values not available": "តម្លៃមិនអាចប្រើបាន"
+  "Values not available": "តម្លៃមិនអាចប្រើបាន",
+  "Empty counts as zero": "ទទេរបានរាប់ជាសូន្យ",
+  "Rows without a value count as 0 in the average": "ជួរដែលគ្មានតម្លៃត្រូវបានរាប់ជា 0 ក្នុងមធ្យមភាគ"
 }

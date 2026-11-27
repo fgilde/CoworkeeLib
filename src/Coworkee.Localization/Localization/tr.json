@@ -2399,5 +2399,7 @@
   "The first date field is the default; viewers can switch to the others.": "İlk tarih alanı varsayılandır; görüntüleyenler diğerlerine geçebilir.",
   "Filter bar fields": "Filtre çubuğu alanları",
   "In this order; empty shows every facet of the data.": "Bu sırayla; boş olursa verilerin tüm yönleri gösterilir.",
-  "Values not available": "Değerler kullanılamıyor"
+  "Values not available": "Değerler kullanılamıyor",
+  "Empty counts as zero": "Boş sıfır sayılır",
+  "Rows without a value count as 0 in the average": "Değeri olmayan satırlar ortalamada 0 olarak sayılır"
 }

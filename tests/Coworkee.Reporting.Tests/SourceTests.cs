@@ -25,6 +25,17 @@ public sealed class SourceTests(ReportingApp app) : ReportingTestBase(app)
         numbers.Fields.Single(f => f.Path == "Mood").MemberLabels.ShouldBe(["Calm", "Very busy"]);
     }
 
+    [Fact]
+    public async Task A_source_states_the_currency_of_its_user()
+    {
+        CostRows.Currencies[Setup.AdminUserId] = "CHF";
+
+        var sources = (await Admin.GetFromJsonAsync<List<ReportSourceDto>>("/api/v1/reports/sources", Ct))!;
+
+        sources.Single(s => s.EntitySet == "Costs").Currency.ShouldBe("CHF");
+        sources.Single(s => s.EntitySet == "MonthlyNumbers").Currency.ShouldBeNull();
+    }
+
     [Theory]
     [InlineData("MonthlyNumbers", "Team")]
     [InlineData("Sales", "Region")]

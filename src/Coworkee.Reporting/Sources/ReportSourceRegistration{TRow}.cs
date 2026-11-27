@@ -2,8 +2,9 @@ using Microsoft.AspNetCore.OData.Query;
 
 namespace Coworkee.Reporting.Sources;
 
-internal sealed class ReportSourceRegistration<TRow>(string name, string label, string? permission, Func<ReportSourceContext, CancellationToken, Task<IEnumerable<TRow>>> rows)
-    : ReportSourceRegistration(name, label, permission, typeof(TRow))
+internal sealed class ReportSourceRegistration<TRow>(string name, string label, string? permission, Func<ReportSourceContext, CancellationToken, Task<IEnumerable<TRow>>> rows,
+    Func<IServiceProvider, CancellationToken, Task<string?>>? currency = null)
+    : ReportSourceRegistration(name, label, permission, typeof(TRow), currency)
     where TRow : class
 {
     public override async Task<IQueryable> RowsAsync(IServiceProvider services, string? filter, CancellationToken cancellationToken)

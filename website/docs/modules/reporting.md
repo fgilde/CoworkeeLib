@@ -109,6 +109,16 @@ services.AddReportSource<HeadcountRow>("HeadcountByMonth", "Headcount by month",
 - **Context**: `context.Services` are the services of the request. `DateFrom`/`DateTo` are the bounds a date field gets in the widget's filter (the report's date range sends `Month ge 2026-01-01 and Month lt 2026-04-01`), so the source computes only those months. They are a hint: the filter still applies to the rows the source returns.
 - **Aggregation**: the widget's filter (OData `$filter`, parsed against the row type), group by with date buckets, the values and top work as for sets. A list is aggregated in memory; return an `IQueryable` of the database (the `Task<IEnumerable<T>>` takes it) and the database aggregates it. A synchronous overload `AddReportSource<T>(name, label, permission, context => rows)` exists too.
 - Values that are a stock per month (headcount) add up per quarter; use `Average` or `Max` for them and `Sum` for flows like hires.
+- **Currency**: amounts that are in a currency of the user (the preferred one) need a resolver, the overload with `currency`:
+
+  ```csharp
+  services.AddReportSource<CostRow>("Costs", "Costs", CostPermissions.View,
+      async (context, cancellationToken) => await LoadCostsAsync(context, cancellationToken),
+      async (services, cancellationToken) => await services.GetRequiredService<IPreferredCurrency>().GetAsync(cancellationToken)); // your own service, e.g. "CHF"
+  ```
+
+  `GET /api/v1/reports/sources` states it per user (`ReportSourceDto.Currency`). A widget of the source formats a *Currency* number with it (not with its own `Options.Currency`), and `{currency}` in the title and subtitle becomes the currency code: a KPI titled `Total cost in {currency}` shows "Total cost in CHF". Subscription mails do the same. `{currency}` also works for sources without a resolver (the widget's own currency).
+- **Empty as zero**: `Average` skips rows without a value. With `EmptyAsZero = true` (`new ReportAggregate(AggregateFunction.Average, "TransitDays", EmptyAsZero: true)`) they count as 0: `Sum(field ?? 0) / Count(*)`, e.g. the average transit time over all shipments, also those without one. Other functions refuse the flag. The designer shows the switch "Empty counts as zero" next to the function when it is *Average*, in the widget settings and the value switches.
 - **Shared filters**: report facets and cross filters also narrow a computed source that has a field with the same path and kind as the facet's field (`ReportFilters.Applying`); see [Filters across data sets](../features/reporting.md#filters-across-data-sets).
 - **Widgets**: KPI, charts, pivot and table work; tables read the rows from `POST /api/v1/reports/rows`. The data table widget, facets in the filter bar and realtime refresh need an OData set (use the report's refresh interval instead). *Open the data* shows only when the client registers a page for the source: `ReportingOptions.DrillDown("HeadcountByMonth", "/hr/people")`.
 - **AI**: the reporting tools of the assistant and the MCP server (`get_report_sources`, `run_report`, `read_report_rows`, `generate_report`) see the sources the user may read; `list_data_sets`/`query_data` cover OData sets only.

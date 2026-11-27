@@ -2399,5 +2399,7 @@
   "The first date field is the default; viewers can switch to the others.": "حقل التاريخ الأول هو الافتراضي؛ يمكن للمشاهدين التبديل إلى الباقي.",
   "Filter bar fields": "حقول شريط التصفية",
   "In this order; empty shows every facet of the data.": "بهذا الترتيب؛ إذا تُرك فارغاً تظهر كل جوانب البيانات.",
-  "Values not available": "القيم غير متاحة"
+  "Values not available": "القيم غير متاحة",
+  "Empty counts as zero": "الفراغ يُحتسب صفرًا",
+  "Rows without a value count as 0 in the average": "الصفوف بلا قيمة تُحتسب 0 في المتوسط"
 }

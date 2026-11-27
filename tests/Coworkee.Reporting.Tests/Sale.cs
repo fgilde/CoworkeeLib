@@ -19,6 +19,9 @@ public sealed class Sale : Entity, IMultiTenant
 
     public int Quantity { get; set; }
 
+    /// <summary>Days to ship; empty for some rows.</summary>
+    public int? Days { get; set; }
+
     public DateTimeOffset SoldAt { get; set; }
 
     public DateOnly? ShippedOn { get; set; }

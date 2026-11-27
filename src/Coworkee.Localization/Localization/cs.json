@@ -2399,5 +2399,7 @@
   "The first date field is the default; viewers can switch to the others.": "První datové pole je výchozí; diváci mohou přepnout na ostatní.",
   "Filter bar fields": "Pole lišty filtrů",
   "In this order; empty shows every facet of the data.": "V tomto pořadí; prázdné zobrazí všechny fasety dat.",
-  "Values not available": "Hodnoty nejsou k dispozici"
+  "Values not available": "Hodnoty nejsou k dispozici",
+  "Empty counts as zero": "Prázdné se počítá jako nula",
+  "Rows without a value count as 0 in the average": "Řádky bez hodnoty se v průměru počítají jako 0"
 }

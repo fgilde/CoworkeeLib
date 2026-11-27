@@ -51,7 +51,7 @@ public sealed class QueryAccessTests(ReportingApp app) : ReportingTestBase(app)
 
         var sources = await asSeller.GetFromJsonAsync<List<ReportSourceDto>>("/api/v1/reports/sources", Ct);
         var sales = sources.ShouldHaveSingleItem();
-        sales.Fields.Select(f => f.Path).ShouldBe(["Region", "Status", "Amount", "SoldAt", "ShippedOn", "ShopperId", "Id"], ignoreOrder: true);
+        sales.Fields.Select(f => f.Path).ShouldBe(["Region", "Status", "Amount", "Days", "SoldAt", "ShippedOn", "ShopperId", "Id"], ignoreOrder: true);
         sales.Fields.Single(f => f.Path == "Status").Members.ShouldBe(["Open", "Shipped", "Cancelled"]);
 
         var all = await Admin.GetFromJsonAsync<List<ReportSourceDto>>("/api/v1/reports/sources", Ct);

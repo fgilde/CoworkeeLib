@@ -87,8 +87,9 @@ public partial class WidgetFrame : IDisposable
     {
         var shown = ReportViews.Apply(Widget, choice);
         _dateField = Editing ? null : State.DateField;
-        return _dateField is { } chosen && State.DefaultDateField is { } first && State.Field(shown.Query?.EntitySet, chosen) is not null
+        shown = _dateField is { } chosen && State.DefaultDateField is { } first && State.Field(shown.Query?.EntitySet, chosen) is not null
             ? ReportViews.WithDateField(shown, first, chosen) : shown;
+        return ReportViews.WithSourceCurrency(shown, State.Source(shown.Query?.EntitySet)?.Currency);
     }
 
     private async Task ChooseAsync(ReportViewChoice choice)
@@ -101,7 +102,7 @@ public partial class WidgetFrame : IDisposable
         }
     }
 
-    private string Title => Widget.Title is { Length: > 0 } title ? L.Stored(title) : L[ReportFormat.Humanize(Widget.Type.ToString())];
+    private string Title => _shown.Title is { Length: > 0 } title ? L.Stored(title) : L[ReportFormat.Humanize(Widget.Type.ToString())];
 
     private Task ViewChanged(TableView view)
     {

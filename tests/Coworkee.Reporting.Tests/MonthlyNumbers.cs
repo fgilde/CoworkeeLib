@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using Coworkee.OData;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Reporting.Tests;
 
@@ -54,4 +55,18 @@ public static class MonthlyNumbers
     public static async Task<IEnumerable<SaleRow>> SalesAsync(ReportSourceContext context, CancellationToken cancellationToken) =>
         (await ODataEntityAccess.VisibleAsync<Sale>(context.Services, cancellationToken))
             .Select(s => new SaleRow { Region = s.Region, SoldAt = s.SoldAt, Amount = s.Amount });
+}
+
+/// <summary>A source whose amounts are in the currency of the signed-in user.</summary>
+public sealed record CostRow(string Code, decimal Amount);
+
+public static class CostRows
+{
+    public static readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, string> Currencies = new();
+
+    public static Task<IEnumerable<CostRow>> RowsAsync(ReportSourceContext context, CancellationToken cancellationToken) =>
+        Task.FromResult<IEnumerable<CostRow>>([new("a", 500), new("b", 400), new("c", 600)]);
+
+    public static Task<string?> CurrencyAsync(IServiceProvider services, CancellationToken cancellationToken) =>
+        Task.FromResult(services.GetRequiredService<Coworkee.Core.Security.ICurrentUser>().UserId is { } id && Currencies.TryGetValue(id, out var code) ? code : null);
 }

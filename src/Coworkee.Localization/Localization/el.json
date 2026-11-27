@@ -2399,5 +2399,7 @@
   "The first date field is the default; viewers can switch to the others.": "Το πρώτο πεδίο ημερομηνίας είναι το προεπιλεγμένο· οι θεατές μπορούν να αλλάξουν στα υπόλοιπα.",
   "Filter bar fields": "Πεδία της γραμμής φίλτρων",
   "In this order; empty shows every facet of the data.": "Με αυτή τη σειρά· κενό εμφανίζει όλες τις όψεις των δεδομένων.",
-  "Values not available": "Οι τιμές δεν είναι διαθέσιμες"
+  "Values not available": "Οι τιμές δεν είναι διαθέσιμες",
+  "Empty counts as zero": "Το κενό μετράει ως μηδέν",
+  "Rows without a value count as 0 in the average": "Οι γραμμές χωρίς τιμή μετρούν ως 0 στον μέσο όρο"
 }

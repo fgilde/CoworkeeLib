@@ -2399,5 +2399,7 @@
   "The first date field is the default; viewers can switch to the others.": "最初の日付フィールドが既定です。閲覧者は他のフィールドに切り替えられます。",
   "Filter bar fields": "フィルターバーのフィールド",
   "In this order; empty shows every facet of the data.": "この順序で表示します。空の場合はデータのすべてのファセットを表示します。",
-  "Values not available": "値を取得できません"
+  "Values not available": "値を取得できません",
+  "Empty counts as zero": "空は0として数える",
+  "Rows without a value count as 0 in the average": "値のない行は平均で0として数えます"
 }

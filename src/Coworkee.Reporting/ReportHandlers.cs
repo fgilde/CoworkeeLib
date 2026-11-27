@@ -166,13 +166,21 @@ internal sealed class ReportHandlers(CoworkeeDbContext db, ReportAccess access, 
             .OrderBy(g => g.Code, StringComparer.Ordinal)
             .ToList();
 
-    public async Task<Result<IReadOnlyList<ReportSourceDto>>> HandleAsync(GetReportSourcesQuery query, CancellationToken cancellationToken) =>
-        (await queries.SourcesAsync(cancellationToken))
-            .Select(s => new ReportSourceDto(s.EntitySet, s.Label, [.. s.Fields.Select(f => f.ToDto())],
-                s.Computed is null && s.RowType.IsDefined(typeof(Domain.RealtimeAttribute), false) ? Contracts.Realtime.RealtimeTopics.Type(s.RowType.Name) : null, s.Computed is not null))
+    public async Task<Result<IReadOnlyList<ReportSourceDto>>> HandleAsync(GetReportSourcesQuery query, CancellationToken cancellationToken)
+    {
+        var sources = new List<ReportSourceDto>();
+        foreach (var s in await queries.SourcesAsync(cancellationToken))
+        {
+            sources.Add(new ReportSourceDto(s.EntitySet, s.Label, [.. s.Fields.Select(f => f.ToDto())],
+                s.Computed is null && s.RowType.IsDefined(typeof(Domain.RealtimeAttribute), false) ? Contracts.Realtime.RealtimeTopics.Type(s.RowType.Name) : null, s.Computed is not null,
+                await queries.CurrencyAsync(s, cancellationToken)));
+        }
+
+        return sources
             .OrderBy(s => s.Computed)
             .ThenBy(s => s.Label, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
+    }
 
     public Task<Result<ReportQueryResult>> HandleAsync(RunReportQuery query, CancellationToken cancellationToken) => queries.RunAsync(query.Request, cancellationToken);
 

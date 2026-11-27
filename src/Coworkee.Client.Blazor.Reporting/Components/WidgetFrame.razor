@@ -6,7 +6,7 @@
         }
         <div class="cw-widget-titles">
             <div class="cw-widget-title" title="@Title">@Title</div>
-            @if (Widget.Subtitle is { Length: > 0 } subtitle && Widget.Type != WidgetType.Kpi)
+            @if (_shown.Subtitle is { Length: > 0 } subtitle && Widget.Type != WidgetType.Kpi)
             {
                 <div class="cw-widget-subtitle">@subtitle</div>
             }

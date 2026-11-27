@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Bunit;
+using Coworkee.Client.Blazor.Reporting.State;
 using Coworkee.Client.Blazor.Reporting.Widgets;
 using Coworkee.Contracts.Data;
 using Coworkee.Contracts.Reporting;
@@ -21,6 +22,27 @@ public sealed class WidgetTests : ReportingTestBase
 
         kpi.WaitForAssertion(() => kpi.Find("[data-testid='kpi-value']").TextContent.ShouldBe(1234567d.ToString("N0", System.Globalization.CultureInfo.CurrentCulture)));
         Reports.Received().QueryAsync(Arg.Is<ReportQueryRequest>(r => r.EntitySet == "SalesOrders" && r.Aggregates![0].Function == AggregateFunction.Sum), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public void A_currency_widget_on_a_source_with_a_currency_shows_it_and_fills_the_title()
+    {
+        var costs = Orders with { EntitySet = "Costs", Currency = "CHF" };
+        Reports.GetSourcesAsync(default).ReturnsForAnyArgs([costs]);
+        Reports.QueryAsync(default!, default).ReturnsForAnyArgs(Rows((null, null, 1500)));
+        var widget = new ReportWidget
+        {
+            Type = WidgetType.Kpi, Title = "Total cost in {currency}", Subtitle = "all in {currency}",
+            Query = new WidgetQuery { EntitySet = "Costs", Aggregates = [new(AggregateFunction.Sum, "Total")] }, Options = new() { Format = NumberFormat.Currency },
+        };
+
+        var frame = Render<Components.WidgetFrame>(p => p.Add(x => x.Widget, widget).Add(x => x.State, new ReportState(new ReportDefinition { Widgets = [widget] }, [costs])));
+
+        frame.WaitForAssertion(() => frame.Find("[data-testid='kpi-value']").TextContent.ShouldContain(1500d.ToString("N0", System.Globalization.CultureInfo.CurrentCulture)));
+        frame.Find("[data-testid='kpi-value']").TextContent.ShouldContain("CHF");
+        frame.Find(".cw-widget-title").TextContent.ShouldBe("Total cost in CHF");
+        frame.Markup.ShouldContain("all in CHF");
+        widget.Title.ShouldBe("Total cost in {currency}");
     }
 
     [Fact]

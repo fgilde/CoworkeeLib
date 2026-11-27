@@ -13,7 +13,7 @@
             @if (Widget.Type != WidgetType.Table)
             {
                 <div class="cw-aggregate">
-                    <MudSelect T="AggregateFunction" Value="aggregate.Function" ValueChanged="f => SetAggregate(index, metric, aggregate with { Function = f, Field = f == AggregateFunction.Count ? null : aggregate.Field ?? NumberFields.FirstOrDefault()?.Path })"
+                    <MudSelect T="AggregateFunction" Value="aggregate.Function" ValueChanged="f => SetAggregate(index, metric, aggregate with { Function = f, Field = f == AggregateFunction.Count ? null : aggregate.Field ?? NumberFields.FirstOrDefault()?.Path, EmptyAsZero = f == AggregateFunction.Average && aggregate.EmptyAsZero })"
                                Variant="Variant.Outlined" Margin="Margin.Dense" Class="cw-aggregate-function">
                         @foreach (var function in Enum.GetValues<AggregateFunction>())
                         {
@@ -28,6 +28,12 @@
                                 <MudSelectItem Value="field.Path">@field.Label</MudSelectItem>
                             }
                         </MudSelect>
+                    }
+                    @if (aggregate.Function == AggregateFunction.Average)
+                    {
+                        <MudTooltip Text="@L["Rows without a value count as 0 in the average"]">
+                            <MudSwitch T="bool" Value="aggregate.EmptyAsZero" ValueChanged="v => SetAggregate(index, metric, aggregate with { EmptyAsZero = v })" Color="Color.Primary" Label="@L["Empty counts as zero"]" data-testid="aggregate-empty-as-zero" />
+                        </MudTooltip>
                     }
                 </div>
                 <MudSelect T="NumberFormat?" Value="metric.Format" ValueChanged="f => SetMetric(index, metric with { Format = f })" Label="@L["Number format"]" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">

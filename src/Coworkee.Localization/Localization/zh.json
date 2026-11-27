@@ -2399,5 +2399,7 @@
   "The first date field is the default; viewers can switch to the others.": "第一个日期字段为默认值；查看者可以切换到其他字段。",
   "Filter bar fields": "筛选栏字段",
   "In this order; empty shows every facet of the data.": "按此顺序显示；留空则显示数据的所有分面。",
-  "Values not available": "无法获取值"
+  "Values not available": "无法获取值",
+  "Empty counts as zero": "空值按零计算",
+  "Rows without a value count as 0 in the average": "没有值的行在平均值中按 0 计算"
 }

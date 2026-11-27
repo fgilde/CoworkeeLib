@@ -2399,5 +2399,7 @@
   "The first date field is the default; viewers can switch to the others.": "Il primo campo data è quello predefinito; i lettori possono passare agli altri.",
   "Filter bar fields": "Campi della barra dei filtri",
   "In this order; empty shows every facet of the data.": "In questo ordine; vuoto mostra tutte le faccette dei dati.",
-  "Values not available": "Valori non disponibili"
+  "Values not available": "Valori non disponibili",
+  "Empty counts as zero": "Vuoto vale zero",
+  "Rows without a value count as 0 in the average": "Le righe senza valore contano come 0 nella media"
 }

@@ -21,6 +21,7 @@ internal sealed class ReportMailWidget(
             return (Failed(text("You may not read this data.", culture)), null);
         }
 
+        widget = ReportViews.WithSourceCurrency(widget, await queries.CurrencyAsync(source, cancellationToken));
         var filter = FilterOf(query, definition, sources, today);
         try
         {

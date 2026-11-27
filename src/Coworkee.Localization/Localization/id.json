@@ -2399,5 +2399,7 @@
   "The first date field is the default; viewers can switch to the others.": "Bidang tanggal pertama adalah bawaan; pemirsa dapat beralih ke yang lain.",
   "Filter bar fields": "Bidang bilah filter",
   "In this order; empty shows every facet of the data.": "Dalam urutan ini; kosong menampilkan semua faset data.",
-  "Values not available": "Nilai tidak tersedia"
+  "Values not available": "Nilai tidak tersedia",
+  "Empty counts as zero": "Kosong dihitung sebagai nol",
+  "Rows without a value count as 0 in the average": "Baris tanpa nilai dihitung sebagai 0 dalam rata-rata"
 }

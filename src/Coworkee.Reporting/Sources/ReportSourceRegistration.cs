@@ -6,7 +6,7 @@ using Microsoft.OData.UriParser;
 namespace Coworkee.Reporting.Sources;
 
 /// <summary>A data source an app computes: rows of a plain type, filtered by OData against a model of just that type.</summary>
-internal abstract class ReportSourceRegistration(string name, string label, string? permission, Type rowType)
+internal abstract class ReportSourceRegistration(string name, string label, string? permission, Type rowType, Func<IServiceProvider, CancellationToken, Task<string?>>? currency = null)
 {
     private IEdmModel? _model;
 
@@ -17,6 +17,9 @@ internal abstract class ReportSourceRegistration(string name, string label, stri
     public string? Permission => permission;
 
     public Type RowType => rowType;
+
+    /// <summary>The ISO code of the source's amounts for the user of the scope; null when the source states none.</summary>
+    public Task<string?> CurrencyAsync(IServiceProvider services, CancellationToken cancellationToken) => currency?.Invoke(services, cancellationToken) ?? Task.FromResult<string?>(null);
 
     public IEdmModel Model => _model ??= BuildModel();
 

@@ -154,4 +154,20 @@ public sealed class DesignerTests : ReportingTestBase
         var without = Render<WidgetSettings>(p => p.Add(x => x.Widget, chart).Add(x => x.State, state));
         without.FindComponents<MudSwitch<bool>>().Any(s => s.Instance.UserAttributes.GetValueOrDefault("data-testid") as string == "widget-require-date").ShouldBeFalse();
     }
+
+    [Fact]
+    public void Average_offers_empty_counts_as_zero_and_other_functions_do_not()
+    {
+        var kpi = new ReportWidget { Id = "k", Type = WidgetType.Kpi, Query = new WidgetQuery { EntitySet = "Trips", Aggregates = [new(AggregateFunction.Average, "Weight")] } };
+        var state = new ReportState(new ReportDefinition { Widgets = [kpi] }, [Trips]);
+        var settings = Render<WidgetSettings>(p => p.Add(x => x.Widget, kpi).Add(x => x.State, state));
+        MudSwitch<bool> Toggle() => settings.FindComponents<MudSwitch<bool>>().Single(s => s.Instance.UserAttributes.GetValueOrDefault("data-testid") as string == "aggregate-empty-as-zero").Instance;
+
+        settings.InvokeAsync(() => Toggle().ValueChanged.InvokeAsync(true)).GetAwaiter().GetResult();
+
+        kpi.Query!.Aggregates[0].EmptyAsZero.ShouldBeTrue();
+        kpi.Query.Aggregates[0] = new ReportAggregate(AggregateFunction.Sum, "Weight");
+        var sum = Render<WidgetSettings>(p => p.Add(x => x.Widget, kpi).Add(x => x.State, state));
+        sum.FindComponents<MudSwitch<bool>>().Any(s => s.Instance.UserAttributes.GetValueOrDefault("data-testid") as string == "aggregate-empty-as-zero").ShouldBeFalse();
+    }
 }

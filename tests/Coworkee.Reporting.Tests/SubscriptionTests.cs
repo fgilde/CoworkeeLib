@@ -148,6 +148,26 @@ public sealed partial class SubscriptionTests(ReportingApp app) : ReportingTestB
     }
 
     [Fact]
+    public async Task Mails_use_the_sources_currency()
+    {
+        CostRows.Currencies[Setup.AdminUserId] = "CHF";
+        var report = await CreateReportAsync(Report() with { Definition = new ReportDefinition { Widgets =
+        [
+            new ReportWidget { Id = "cost", Type = WidgetType.Kpi, Title = "Total cost in {currency}",
+                Query = new WidgetQuery { EntitySet = "Costs", Aggregates = [new(AggregateFunction.Sum, "Amount")] }, Options = new WidgetOptions { Format = NumberFormat.Currency } },
+        ] } });
+        var subscription = await SubscribeAsync(Admin, report.Id);
+
+        await RunDueAsync(subscription.Id);
+
+        var html = (await MailsAsync()).Single().Mail.HtmlBody;
+        html.ShouldContain("Total cost in CHF");
+        html.ShouldContain("CHF");
+        html.ShouldContain("1,500");
+        html.ShouldNotContain("€");
+    }
+
+    [Fact]
     public async Task A_report_that_is_no_longer_shared_sends_nothing_and_says_why()
     {
         var report = await CreateReportAsync();

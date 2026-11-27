@@ -164,6 +164,7 @@ public sealed class SalesReportingModule : CoworkeeModule
         context.Services.AddSingleton<Coworkee.Application.Ai.IAiTextGenerator>(provider => provider.GetRequiredService<FakeAi>());
         context.Services.AddReportSource<MonthlyNumber>("MonthlyNumbers", "Monthly numbers", MonthlyNumbers.ViewNumbers, MonthlyNumbers.RowsAsync);
         context.Services.AddReportSource<SaleRow>("SaleRows", "Sale rows", MonthlyNumbers.ViewNumbers, MonthlyNumbers.SalesAsync);
+        context.Services.AddReportSource<CostRow>("Costs", "Costs", MonthlyNumbers.ViewNumbers, CostRows.RowsAsync, CostRows.CurrencyAsync);
     }
 }
 

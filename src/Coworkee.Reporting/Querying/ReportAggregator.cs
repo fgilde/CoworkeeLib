@@ -97,6 +97,15 @@ internal static class ReportAggregator
         }
 
         var number = Expression.Lambda(Expression.Convert(field, typeof(double?)), entity);
+        if (value.EmptyAsZero)
+        {
+            // Sum(field ?? 0) / Count(*): rows without a value count as 0
+            var zeroed = Expression.Lambda(Expression.Coalesce(number.Body, Expression.Constant(0d, typeof(double?))), entity);
+            var sum = Expression.Call(typeof(Enumerable), nameof(Enumerable.Sum), [entityType], group, zeroed);
+            var rows = Expression.Convert(Expression.Call(typeof(Enumerable), nameof(Enumerable.Count), [entityType], group), typeof(double?));
+            return Expression.Divide(sum, rows);
+        }
+
         var method = value.Function switch
         {
             AggregateFunction.Sum => nameof(Enumerable.Sum),

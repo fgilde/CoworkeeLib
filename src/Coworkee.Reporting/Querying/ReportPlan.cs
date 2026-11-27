@@ -83,13 +83,19 @@ internal sealed record ReportPlan(ReportGroup? Group, ReportGroup? Split, IReadO
             return null;
         }
 
+        if (aggregate.EmptyAsZero && aggregate.Function != AggregateFunction.Average)
+        {
+            errors[key] = [$"Empty as zero only applies to Average, not {aggregate.Function}."];
+            return null;
+        }
+
         if (aggregate.Function != AggregateFunction.DistinctCount && !field.IsNumeric)
         {
             errors[key] = [$"{aggregate.Function} needs a number field, {field.Path} is {field.Kind.ToString().ToLowerInvariant()}."];
             return null;
         }
 
-        return new ReportValue(aggregate.Function, field);
+        return new ReportValue(aggregate.Function, field, aggregate.EmptyAsZero);
     }
 
     private static ReportField? Resolve(ReportSource source, string? path, string key, IReadOnlySet<string> granted, Dictionary<string, string[]> errors)

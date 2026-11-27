@@ -2399,5 +2399,7 @@
   "The first date field is the default; viewers can switch to the others.": "Первое поле даты используется по умолчанию; зрители могут переключиться на остальные.",
   "Filter bar fields": "Поля панели фильтров",
   "In this order; empty shows every facet of the data.": "В этом порядке; пусто показывает все фасеты данных.",
-  "Values not available": "Значения недоступны"
+  "Values not available": "Значения недоступны",
+  "Empty counts as zero": "Пустое считать нулём",
+  "Rows without a value count as 0 in the average": "Строки без значения учитываются в среднем как 0"
 }

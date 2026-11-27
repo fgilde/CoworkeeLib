@@ -2399,5 +2399,7 @@
   "The first date field is the default; viewers can switch to the others.": "Det första datumfältet är standard; tittare kan byta till de andra.",
   "Filter bar fields": "Fält i filterfältet",
   "In this order; empty shows every facet of the data.": "I denna ordning; tomt visar alla fasetter av data.",
-  "Values not available": "Värden är inte tillgängliga"
+  "Values not available": "Värden är inte tillgängliga",
+  "Empty counts as zero": "Tomt räknas som noll",
+  "Rows without a value count as 0 in the average": "Rader utan värde räknas som 0 i medelvärdet"
 }
