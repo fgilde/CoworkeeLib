@@ -327,7 +327,12 @@ public partial class CoworkeeDataTable<T> : IDisposable
         if (UrlState)
         {
             var state = CurrentState.Filters();
-            Nav.NavigateTo(Nav.GetUriWithQueryParameter(Key, state.IsEmpty ? null : state.Encode()), replace: true);
+            var next = state.IsEmpty ? null : state.Encode();
+            // nothing of ours to change: a navigation built from a not yet settled address would undo the page's own query parameters
+            if (HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query)[Key] != next)
+            {
+                Nav.NavigateTo(Nav.GetUriWithQueryParameter(Key, next), replace: true);
+            }
         }
     }
 

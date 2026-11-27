@@ -102,7 +102,7 @@ public sealed class DataTableStateTests : ClientTestBase
 
     private static string? Query(NavigationManager nav, string key) => System.Web.HttpUtility.ParseQueryString(new Uri(nav.Uri).Query)[key];
 
-    private static RenderFragment Columns() => builder =>
+    internal static RenderFragment Columns() => builder =>
     {
         builder.OpenComponent<PropertyColumn<Gadget, string>>(0);
         builder.AddComponentParameter(1, nameof(PropertyColumn<Gadget, string>.Property), (System.Linq.Expressions.Expression<Func<Gadget, string>>)(g => g.Name));
