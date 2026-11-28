@@ -34,9 +34,10 @@ internal sealed class SetGroupRolesHandler(CoworkeeDbContext db, ICurrentUser cu
             return restricted;
         }
 
-        // a role an administrator above put on the caller's top group stays
+        // a role an administrator above put on the caller's top group stays; the default group's roles (every new user gets them) need tenant-wide
         if (added.Count + removed.Count > 0
-            && (await reach.CheckMembersAsync([group.Id], cancellationToken) ?? await reach.CheckNotRootAsync(group.Id, cancellationToken)) is { } blocked)
+            && ((group.IsDefault ? await reach.CheckAllAsync(cancellationToken) : null)
+                ?? await reach.CheckMembersAsync([group.Id], cancellationToken) ?? await reach.CheckNotRootAsync(group.Id, cancellationToken)) is { } blocked)
         {
             return blocked;
         }

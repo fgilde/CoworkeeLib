@@ -198,5 +198,22 @@ public sealed class UpgradeTests
         UpgradeRules.Manual(folder.Path, manual).Select(h => h.File).ShouldBe(["src/Shop/ShopNotifications.cs"]);
     }
 
+    [Fact]
+    public void Update_to_0_1_11_points_at_own_query_and_api_implementations_and_layer_keys()
+    {
+        using var folder = new TempFolder();
+        File.WriteAllText(folder.File("tests/Shop.Tests/FakeQueries.cs"), "class FakeQueries : IODataQueries { }");
+        File.WriteAllText(folder.File("tests/Shop.Tests/DoneQueries.cs"), "class DoneQueries : IODataQueries { void GetByKeyAsync() { } }");
+        File.WriteAllText(folder.File("tests/Shop.Tests/FakeApi.cs"), "class FakeApi : ICoworkeeApi { }");
+        File.WriteAllText(folder.File("src/Shop/Seed.cs"), "new DataFilter { LayerKey = Guid.NewGuid() }");
+
+        var rule = UpgradeRules.Between("0.1.10", "0.1.11").ShouldHaveSingleItem();
+
+        rule.Breaking!.ShouldContain(b => b.Contains("GetLockedGroupIdsAsync"));
+        rule.Breaking!.ShouldContain(b => b.Contains("member of every group"));
+        rule.Manual!.SelectMany(m => UpgradeRules.Manual(folder.Path, m)).Select(h => h.File)
+            .ShouldBe(["tests/Shop.Tests/FakeQueries.cs", "src/Shop/Seed.cs", "tests/Shop.Tests/FakeApi.cs"], ignoreOrder: true);
+    }
+
     private static string Read(string root, string path) => File.ReadAllText(Path.Combine(root, path));
 }

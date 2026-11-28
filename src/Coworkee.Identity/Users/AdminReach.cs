@@ -20,14 +20,15 @@ namespace Coworkee.Identity.Users;
 /// <para>
 /// A user is changed (account, roles, grants, groups) only by someone who reaches all his groups (403 <see cref="UserInOtherGroups"/>), so no unit
 /// changes what a user does for another; a user joins a group of the caller only when he belongs to no group outside the caller's reach. The top level
-/// of the tree, the default group and roles (they reach users everywhere) are changed only with the whole organisation (403 <see cref="AllGroupsRequired"/>).
+/// of the tree, the default group and roles (they reach users everywhere) are changed only tenant-wide (403 <see cref="AllGroupsRequired"/>): a member of
+/// every group reaches every group and user, but he does not lift what an administrator above him set up.
 /// <see cref="AccountGuard.CheckUserAsync"/> applies the user rule; the identity requests apply the others.
 /// </para>
 /// </summary>
 public sealed class AdminReach(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionChecker permissions, IGroupScope scope, IOptions<IdentityAdministrationOptions> options)
 {
     public static readonly Error AllGroupsRequired = Error.Forbidden("identity.all_groups_required",
-        "Only an administrator of every group can change the top level of the group tree, the default group or roles.");
+        "Only an administrator of the whole tenant can change the top level of the group tree, the default group or roles.");
 
     public static readonly Error UserInOtherGroups = Error.Forbidden("identity.user_other_groups",
         "The user also belongs to groups you do not administer; an administrator of all his groups can change him.");
@@ -35,7 +36,7 @@ public sealed class AdminReach(CoworkeeDbContext db, ICurrentUser currentUser, I
     /// <summary>
     /// Root rules: a scoped caller's top groups (<see cref="RootsAsync"/>) are set up by an administrator above him, and every group stays below its top group.
     /// Rulings: <c>ImportGroup</c> never moves a group, so it needs no root rule; <c>MoveGroupMembers</c> moves users, not groups (adding users to another
-    /// top group is allowed anyway); <c>SetDefaultGroup</c> and <c>SetGroupOwners</c> do not widen the caller's view.
+    /// top group is allowed anyway); <c>SetGroupOwners</c> does not widen the caller's view. The default group and roles need tenant-wide (<see cref="CheckAllAsync"/>).
     /// </summary>
     public static readonly Error RootGroupLocked = Error.Forbidden("identity.root_group_locked",
         "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.");
@@ -127,15 +128,23 @@ public sealed class AdminReach(CoworkeeDbContext db, ICurrentUser currentUser, I
         return shared ? UserInOtherGroups : null;
     }
 
-    /// <summary>Null when a group may be created under or moved to <paramref name="parentId"/>: a parent in reach (else not found), the top level only with every group.</summary>
-    public async Task<Error?> CheckParentAsync(Guid? parentId, CancellationToken ct) =>
-        await ListAsync(ct) is null ? null
+    /// <summary>
+    /// Null when a group may be created under or moved to <paramref name="parentId"/>: a parent in reach (else not found), the top level only with every
+    /// group. A new group at the top level needs tenant-wide (<paramref name="creating"/>, <see cref="CheckAllAsync"/>); a member of every group who moves a
+    /// group there meets <see cref="CheckMoveAsync"/>.
+    /// </summary>
+    public async Task<Error?> CheckParentAsync(Guid? parentId, CancellationToken ct, bool creating = false) =>
+        creating && parentId is null ? await CheckAllAsync(ct)
+        : await ListAsync(ct) is null ? null
         : parentId is not { } id ? AllGroupsRequired
         : await ReachesGroupAsync(id, ct) ? null
         : GroupErrors.ParentNotFound;
 
-    /// <summary>Null when the caller reaches the whole organisation: for the default group and roles.</summary>
-    public async Task<Error?> CheckAllAsync(CancellationToken ct) => await ListAsync(ct) is null ? null : AllGroupsRequired;
+    /// <summary>
+    /// Null when tenant-wide (the option off, the system, administrators, holders of <c>Identity.Groups.ScopeAll</c>): for the top level of the tree, the
+    /// default group and roles. A member of every group is not tenant-wide: they hold what an administrator above him set up.
+    /// </summary>
+    public async Task<Error?> CheckAllAsync(CancellationToken ct) => (await ReachAsync(ct)).Scoped is null ? null : AllGroupsRequired;
 
     /// <summary>
     /// The groups a scoped caller administers, also when they are every group; null when tenant-wide: the option off, the system, administrators and

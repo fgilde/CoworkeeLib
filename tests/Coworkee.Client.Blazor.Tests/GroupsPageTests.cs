@@ -339,6 +339,8 @@ public sealed class GroupsPageTests : ClientTestBase
         await clicked;
 
         await Api.Received(1).MoveGroupMembersAsync(Customer.Id, Hamburg.Id, Arg.Any<CancellationToken>());
+        // an own change asks again for the locked groups (first load, then the change)
+        page.WaitForAssertion(() => Api.Received(2).GetLockedGroupIdsAsync(Arg.Any<CancellationToken>()));
     }
 
     [Fact]

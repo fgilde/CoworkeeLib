@@ -11,7 +11,7 @@ namespace Coworkee.Identity.Groups;
 internal sealed class CreateGroupHandler(CoworkeeDbContext db, Users.AdminReach reach) : IHandler<CreateGroup, Result<Guid>>
 {
     public async Task<Result<Guid>> HandleAsync(CreateGroup command, CancellationToken cancellationToken) =>
-        await reach.CheckParentAsync(command.Group.ParentId, cancellationToken) is { } refused ? refused : await AddAsync(db, command.Group, cancellationToken);
+        await reach.CheckParentAsync(command.Group.ParentId, cancellationToken, creating: true) is { } refused ? refused : await AddAsync(db, command.Group, cancellationToken);
 
     /// <summary>Adds a group under its parent with the next free code; shared with the group import.</summary>
     internal static async Task<Result<Guid>> AddAsync(CoworkeeDbContext db, GroupRequest request, CancellationToken cancellationToken)

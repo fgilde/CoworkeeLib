@@ -1,8 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Coworkee.Application.Messaging;
 using Coworkee.Contracts;
 using Coworkee.Contracts.Identity;
+using Coworkee.Core.Security;
+using Coworkee.Identity.Groups;
 using Coworkee.Identity.Users;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -17,6 +20,8 @@ namespace Coworkee.Identity.Tests;
 public sealed class RootGroupTests(IdentityApp app) : IAsyncLifetime
 {
     private const string Locked = "identity.root_group_locked";
+
+    private const string AllGroups = "identity.all_groups_required";
 
     private static readonly string[] ManagerPermissions = [IdentityPermissions.Groups.Manage, IdentityPermissions.Groups.View];
 
@@ -116,6 +121,37 @@ public sealed class RootGroupTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Member_of_every_group_does_not_lift_what_is_set_up_above_him()
+    {
+        var everyone = await PostAsync<Guid>(Admin, "/api/v1/identity/groups", new GroupRequest("Everyone", null));
+        (await Admin.PutAsJsonAsync("/api/v1/identity/groups/default", new DefaultGroupDto(everyone), Ct)).EnsureSuccessStatusCode();
+        var groups = (await Admin.GetFromJsonAsync<PagedResult<GroupDto>>("/api/v1/identity/groups?page=1&pageSize=50", Ct))!.Items;
+        var manager = await UserWithAsync("every@p.test", [.. ManagerPermissions, IdentityPermissions.Users.Manage]);
+        foreach (var top in groups.Where(g => g.ParentId is null && g.Id != everyone))
+        {
+            await JoinAsync(top.Id, manager);
+        }
+
+        // no new top group, also not through the import; the default group's roles and which group is the default stay tenant-wide
+        var every = app.As(manager, _setup.TenantId);
+        await RefusedAsync(await every.PostAsJsonAsync("/api/v1/identity/groups", new GroupRequest("Mine", null), Ct), AllGroups);
+        (await ImportAsync(manager, "Mine")).Error!.Code.ShouldBe(AllGroups);
+        await RefusedAsync(await every.PutAsJsonAsync($"/api/v1/identity/groups/{everyone}/roles", new IdListRequest([_role]), Ct), AllGroups);
+        await RefusedAsync(await every.PutAsJsonAsync("/api/v1/identity/groups/default", new DefaultGroupDto(_p2), Ct), AllGroups);
+
+        // tenant-wide callers still can
+        var operatorId = await UserWithAsync("operator@acme.test", [.. ManagerPermissions, IdentityPermissions.Users.Manage, IdentityPermissions.Groups.ScopeAll]);
+        foreach (var (caller, name) in new[] { (_setup.AdminUserId, "Admin's"), (operatorId, "Operator's") })
+        {
+            var client = app.As(caller, _setup.TenantId);
+            await PostAsync<Guid>(client, "/api/v1/identity/groups", new GroupRequest(name, null));
+            (await ImportAsync(caller, name + " import")).IsSuccess.ShouldBeTrue();
+            (await client.PutAsJsonAsync($"/api/v1/identity/groups/{everyone}/roles", new IdListRequest([_role]), Ct)).EnsureSuccessStatusCode();
+            (await client.PutAsJsonAsync($"/api/v1/identity/groups/{everyone}/roles", new IdListRequest([]), Ct)).EnsureSuccessStatusCode();
+        }
+    }
+
+    [Fact]
     public async Task Tenant_wide_admins_keep_moving_top_groups()
     {
         await JoinAsync(_p, _setup.AdminUserId);
@@ -169,10 +205,20 @@ public sealed class RootGroupTests(IdentityApp app) : IAsyncLifetime
         (await Manager.PutAsJsonAsync($"/api/v1/identity/groups/{_s}/parent", new MoveGroupRequest(_c), Ct)).EnsureSuccessStatusCode();
     }
 
-    private static async Task LockedAsync(HttpResponseMessage response)
+    private static Task LockedAsync(HttpResponseMessage response) => RefusedAsync(response, Locked);
+
+    private static async Task RefusedAsync(HttpResponseMessage response, string code)
     {
         response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await response.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("code").GetString().ShouldBe(Locked);
+        (await response.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("code").GetString().ShouldBe(code);
+    }
+
+    // the OData import sends one ImportGroup per row
+    private async Task<Coworkee.Core.Results.Result<Guid>> ImportAsync(Guid userId, string name)
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(userId, _setup.TenantId));
+        await using var scope = app.App.Services.CreateAsyncScope();
+        return await scope.ServiceProvider.GetRequiredService<IDispatcher>().SendAsync(new ImportGroup(new GroupImportRow(name, null, null)), Ct);
     }
 
     private async Task JoinAsync(Guid groupId, params Guid[] userIds) =>

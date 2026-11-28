@@ -388,7 +388,8 @@ public sealed class GroupScopedAdministrationTests(IdentityApp app) : IAsyncLife
 
         (await Manager.GetAsync($"/api/v1/identity/users/{_loose}", Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await RunAsync("update", Manager, _shared)).IsSuccessStatusCode.ShouldBeTrue();
-        (await Manager.PostAsJsonAsync("/api/v1/identity/groups", new GroupRequest("Customer C", null), Ct)).EnsureSuccessStatusCode();
+        // the top level stays tenant-wide (root rules): a member of every group is not
+        (await Manager.PostAsJsonAsync("/api/v1/identity/groups", new GroupRequest("Customer C", null), Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     [Fact]

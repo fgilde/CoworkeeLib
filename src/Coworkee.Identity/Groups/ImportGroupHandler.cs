@@ -25,7 +25,7 @@ internal sealed class ImportGroupHandler(CoworkeeDbContext db, Users.AdminReach 
         }
 
         // a group-scoped administrator imports below the groups of his reach; a parent out of it is as unknown as a missing one (paths start at the roots)
-        if (await reach.CheckParentAsync(parentId, cancellationToken) is { } refused)
+        if (await reach.CheckParentAsync(parentId, cancellationToken, creating: true) is { } refused)
         {
             return parentId is null ? refused : GroupErrors.ParentPathUnknown;
         }

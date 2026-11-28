@@ -227,8 +227,10 @@ public partial class Groups
         }
     }
 
+    // own changes (a move, a joined group) change the caller's top groups too
     private async Task NodeChangedAsync(Guid id)
     {
+        await LoadLockedAsync();
         await ShowAsync(id);
         if (_tree is not null)
         {

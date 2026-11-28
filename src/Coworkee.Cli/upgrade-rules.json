@@ -1026,6 +1026,21 @@
       "manual": [
         { "text": "A notification type registered only with Followable(\"Type\") has no visibility source: messages with its EntityType and EntityId and an Audience now reach no follower and no audience member. Register the type with Followable<TEntity>(...) so its readers are checked, or send such messages without EntityType and EntityId.", "find": "Followable\\(\"", "files": [ "src/**/*.cs" ] }
       ]
+    },
+    {
+      "version": "0.1.11",
+      "breaking": [
+        "OData: IODataQueries has a new member, GetByKeyAsync<T>; own implementations of the interface (fakes in tests included) add it.",
+        "Data filters: saving or previewing a Group or Role filter whose LayerKey names no group or role of the tenant answers 400 (field layerKey), and the seed (DataFilterOrphansSeed) removes Group and Role filters of groups and roles that no longer exist.",
+        "ICoworkeeApi gained GetLockedGroupIdsAsync (GET /api/v1/identity/groups/locked); own implementations add it.",
+        "Identity: with group-scoped administration a member of every group is no longer tenant-wide for the top level of the group tree, the default group and roles: creating or importing a top-level group, setting the default group or changing its roles, creating, changing or deleting roles, their grants and deleting custom permissions answer 403 identity.all_groups_required for him; administrators, Identity.Groups.ScopeAll holders and the system keep them."
+      ],
+      "manual": [
+        { "text": "Own IODataQueries implementations (fakes in tests included) add GetByKeyAsync<T>(route, set, key, query, ct): a record read as GET /{route}/{set}({key}) does, an ODataQueryResult<T> with one row or NotFound.", "find": ":\\s*IODataQueries\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ], "unless": "GetByKeyAsync" },
+        { "text": "Group and Role data filters must name an existing group or role in LayerKey: made-up keys (in seeds and tests) answer 400 on save and preview, and filters of groups and roles that no longer exist are removed by the seed.", "find": "LayerKey", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
+        { "text": "Own ICoworkeeApi implementations add GetLockedGroupIdsAsync (the caller's own top groups under group-scoped administration, empty for tenant-wide callers).", "find": ":\\s*ICoworkeeApi\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ], "unless": "GetLockedGroupIdsAsync" },
+        { "text": "With group-scoped administration on, a user who administers the top level, the default group or roles by being a member of every group needs Identity.Groups.ScopeAll (or the administrator role) now.", "find": "GroupScopedAdministration\\s*=\\s*true", "files": [ "src/**/*.cs" ] }
+      ]
     }
   ]
 }
