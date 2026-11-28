@@ -126,21 +126,22 @@ public sealed class RootGroupTests(IdentityApp app) : IAsyncLifetime
         var everyone = await PostAsync<Guid>(Admin, "/api/v1/identity/groups", new GroupRequest("Everyone", null));
         (await Admin.PutAsJsonAsync("/api/v1/identity/groups/default", new DefaultGroupDto(everyone), Ct)).EnsureSuccessStatusCode();
         var groups = (await Admin.GetFromJsonAsync<PagedResult<GroupDto>>("/api/v1/identity/groups?page=1&pageSize=50", Ct))!.Items;
-        var manager = await UserWithAsync("every@p.test", [.. ManagerPermissions, IdentityPermissions.Users.Manage]);
+        var manager = await UserWithAsync("every@p.test", [.. ManagerPermissions, IdentityPermissions.Users.Manage, IdentityPermissions.Permissions.Manage]);
         foreach (var top in groups.Where(g => g.ParentId is null && g.Id != everyone))
         {
             await JoinAsync(top.Id, manager);
         }
 
-        // no new top group, also not through the import; the default group's roles and which group is the default stay tenant-wide
+        // no new top group, also not through the import; the default group's roles, grants and which group is the default stay tenant-wide
         var every = app.As(manager, _setup.TenantId);
         await RefusedAsync(await every.PostAsJsonAsync("/api/v1/identity/groups", new GroupRequest("Mine", null), Ct), AllGroups);
         (await ImportAsync(manager, "Mine")).Error!.Code.ShouldBe(AllGroups);
         await RefusedAsync(await every.PutAsJsonAsync($"/api/v1/identity/groups/{everyone}/roles", new IdListRequest([_role]), Ct), AllGroups);
         await RefusedAsync(await every.PutAsJsonAsync("/api/v1/identity/groups/default", new DefaultGroupDto(_p2), Ct), AllGroups);
+        await RefusedAsync(await every.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Group/{everyone}", new NameListRequest([IdentityPermissions.Groups.View]), Ct), AllGroups);
 
         // tenant-wide callers still can
-        var operatorId = await UserWithAsync("operator@acme.test", [.. ManagerPermissions, IdentityPermissions.Users.Manage, IdentityPermissions.Groups.ScopeAll]);
+        var operatorId = await UserWithAsync("operator@acme.test", [.. ManagerPermissions, IdentityPermissions.Users.Manage, IdentityPermissions.Permissions.Manage, IdentityPermissions.Groups.ScopeAll]);
         foreach (var (caller, name) in new[] { (_setup.AdminUserId, "Admin's"), (operatorId, "Operator's") })
         {
             var client = app.As(caller, _setup.TenantId);
@@ -148,6 +149,8 @@ public sealed class RootGroupTests(IdentityApp app) : IAsyncLifetime
             (await ImportAsync(caller, name + " import")).IsSuccess.ShouldBeTrue();
             (await client.PutAsJsonAsync($"/api/v1/identity/groups/{everyone}/roles", new IdListRequest([_role]), Ct)).EnsureSuccessStatusCode();
             (await client.PutAsJsonAsync($"/api/v1/identity/groups/{everyone}/roles", new IdListRequest([]), Ct)).EnsureSuccessStatusCode();
+            (await client.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Group/{everyone}", new NameListRequest([IdentityPermissions.Groups.View]), Ct)).EnsureSuccessStatusCode();
+            (await client.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Group/{everyone}", new NameListRequest([]), Ct)).EnsureSuccessStatusCode();
         }
     }
 

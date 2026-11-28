@@ -55,7 +55,9 @@ internal sealed class SetGrantsHandler(
         var outOfReach = type switch
         {
             PermissionProviderType.User => await guard.CheckUserAsync(key, cancellationToken),
-            PermissionProviderType.Group => await reach.CheckMembersAsync([key], cancellationToken),
+            // the default group's grants reach every new user: tenant-wide only, as its roles
+            PermissionProviderType.Group => (await ReachesNewUsersAsync(type, key, cancellationToken) ? await reach.CheckAllAsync(cancellationToken) : null)
+                                            ?? await reach.CheckMembersAsync([key], cancellationToken),
             _ => await reach.CheckAllAsync(cancellationToken),
         };
         if (outOfReach is { } forbidden)

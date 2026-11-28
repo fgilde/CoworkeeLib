@@ -9,7 +9,7 @@
         }
         @if (_refused)
         {
-            <MudAlert Severity="Severity.Info" Dense="true" data-testid="filters-refused">@L["Only an administrator of every group manages these filters."]</MudAlert>
+            <MudAlert Severity="Severity.Info" Dense="true" data-testid="filters-refused">@L["Only an administrator of the whole tenant manages these filters."]</MudAlert>
         }
         else if (ReadOnly)
         {

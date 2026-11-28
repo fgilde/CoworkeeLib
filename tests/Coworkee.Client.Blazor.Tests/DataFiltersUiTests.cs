@@ -215,7 +215,7 @@ public sealed class DataFiltersUiTests : ClientTestBase
 
         var list = Render<DataFilterList>(p => p.Add(l => l.Layer, DataFilterLayer.Role).Add(l => l.LayerKey, RoleId));
 
-        list.WaitForElement("[data-testid='filters-refused']").TextContent.Trim().ShouldBe("Only an administrator of every group manages these filters.");
+        list.WaitForElement("[data-testid='filters-refused']").TextContent.Trim().ShouldBe("Only an administrator of the whole tenant manages these filters.");
         list.FindAll("[data-testid='filter-add-set'], [data-testid='data-filter-editor']").ShouldBeEmpty();
         snackbar.ShownSnackbars.ShouldBeEmpty();
     }

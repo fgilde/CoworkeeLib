@@ -143,7 +143,7 @@ Mit eingeschalteter [gruppenbezogener Verwaltung](../security/permissions.de.md#
 
 - Auf seinen eigenen obersten Gruppen zeigt der Reiter **Datenfilter** die Filter als Text unter dem Hinweis „Von einem übergeordneten Administrator festgelegt“ („Keine Datenfilter.“, wenn es keine gibt), ohne Builder, Speichern, Entfernen und „Filter hinzufügen für“. Auf den Gruppen darunter bearbeitet er Filter wie alle anderen.
 - **Verschieben** (Reiter Allgemein und Knotenmenü) und **Löschen** (Knotenmenü) sind auf seinen eigenen obersten Gruppen deaktiviert, mit dem Tooltip „Deine eigene oberste Gruppe: Ein übergeordneter Administrator verschiebt oder löscht sie.“; der Reiter **Rollen** ist dort schreibgeschützt, mit dem Hinweis warum. Umbenennen bleibt erlaubt. Ein Verschieben oder Löschen, das trotzdem beim Server ankommt (veraltete Seite), zeigt die übersetzte Ablehnung `identity.root_group_locked`.
-- Der Reiter **Datenfilter** einer Rollenseite listet für ihn nichts: Die Listenanfrage antwortet `403`, und der Reiter sagt „Diese Filter verwaltet nur ein Administrator aller Gruppen.“ statt eines Fehlers.
+- Der Reiter **Datenfilter** einer Rollenseite listet für ihn nichts: Die Listenanfrage antwortet `403`, und der Reiter sagt „Nur ein Administrator des ganzen Mandanten verwaltet diese Filter.“ statt eines Fehlers.
 
 `DataFilterList` nimmt denselben Schalter auf eigenen Seiten:
 

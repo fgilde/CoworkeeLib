@@ -143,7 +143,7 @@ With [group-scoped administration](../security/permissions.md#group-scoped-admin
 
 - On his own top groups the **Data filters** tab shows the filters as text under the hint "Set by an administrator above you" ("No data filters." when there are none), without the builder, Save, Remove or "Add a filter for". On the groups below them he edits filters as everyone else.
 - **Move** (General tab and node menu) and **Delete** (node menu) are disabled on his own top groups, with the tooltip "Your own top group: an administrator above you moves or deletes it."; the **Roles** tab is read-only there, with the hint why. Renaming stays allowed. A move or delete that reaches the server anyway (an outdated page) shows the translated refusal `identity.root_group_locked`.
-- The **Data filters** tab of a role page lists nothing for him: the list request answers `403` and the tab says "Only an administrator of every group manages these filters." instead of an error.
+- The **Data filters** tab of a role page lists nothing for him: the list request answers `403` and the tab says "Only an administrator of the whole tenant manages these filters." instead of an error.
 
 `DataFilterList` takes the same switch in your own pages:
 
