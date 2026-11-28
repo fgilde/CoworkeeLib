@@ -4,6 +4,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Added
+
+- Setup: one-time seed steps. `ClaimOnceAsync(tenantId, name, ct)` (extension on `CoworkeeDbContext`, `Coworkee.Settings`) is true the first time per tenant (`null`: host) and adds a marker setting the seed's save stores; false when a marker with any value exists or is still unsaved. See [Seed contributors](../fundamentals/persistence.md#seed-contributors).
+
 ### Changed
 
 - Identity: with group-scoped administration a scoped administrator's own top groups (his memberships without another membership above them) cannot be moved, deleted or given other roles, and groups stay below their top group: `403 identity.root_group_locked` (`AdminReach.RootGroupLocked`). Renaming stays allowed; a member of every group is bound too, `ScopeAll` holders and administrators are not. `AdminReach` gets `RootsAsync`, `RootOfAsync`, `ScopedGroupIdsAsync`, `CheckNotRootAsync` and `CheckMoveAsync`; `GroupDto` gets a trailing `Locked` (positional constructor calls keep working). See [Permissions](../security/permissions.md#group-scoped-administration).

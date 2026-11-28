@@ -165,7 +165,17 @@ internal sealed class StandardTagsSeed(SalesDbContext db, IDispatcher dispatcher
 
 How a call runs: in a DI scope and a database transaction of its own, as the system with every permission (`SystemActor`), in the tenant of the call. Requests with `[RequiresPermission]` pass, `IMultiTenant` rows get the tenant, the audit trail shows "system", `CreatedBy` stays empty. `UserManager`, the dispatcher's commands and what the contributor leaves unsaved are written in the transaction; the runner saves at the end. A seed that wants a person as owner opens `CurrentUserScope.Begin(new ImpersonatedUser(userId, tenantId))` around that part. The system is a member of no group: pass group ids explicitly or read with `IgnoreQueryFilters()`. Other databases (external DbContexts) and blob storage are not in the transaction; writes there must be idempotent on their own.
 
-**Every run, so idempotent.** A contributor runs on every migrations run: read what exists, then add or change only what is missing. Changes to a seed (a new tag, a new grant) reach every database with the next run. What users own (sample records) belongs under `if (!context.IsNew) return;`: `IsNew` is true in the run whose identity seed set the system up and for a tenant just set up, so such records do not come back after a delete. There is no record of which seeds ran.
+**Every run, so idempotent.** A contributor runs on every migrations run: read what exists, then add or change only what is missing. Changes to a seed (a new tag, a new grant) reach every database with the next run. What users own (sample records) belongs under `if (!context.IsNew) return;`: `IsNew` is true in the run whose identity seed set the system up and for a tenant just set up, so such records do not come back after a delete. There is no record of which seeds ran; a step that must run only once claims itself (next paragraph).
+
+**Once only.** A step that must not repeat (a one-time grant, a data migration that users may undo) claims itself with `ClaimOnceAsync` (`Coworkee.Settings`): it is true the first time per tenant (`null`: host) and stores a marker setting that the runner saves with the rest; every later run, and a second claim before the save, gets false. A marker that exists with any value counts as done.
+
+```csharp
+public async Task SeedAsync(SeedContext context, CancellationToken cancellationToken)
+{
+    if (!await db.ClaimOnceAsync(context.TenantId, "MyApp.Seed.Step", cancellationToken)) return;
+    // runs once per tenant
+}
+```
 
 **Errors.** A failing required contributor rolls its transaction back, the log names contributor and tenant, and the run stops with exit code 1, so the services of a deployment do not start against a half-seeded database. Contributors after it do not run, since they may build on it.
 

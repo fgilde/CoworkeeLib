@@ -4,6 +4,10 @@
 
 ## Unveröffentlicht
 
+### Hinzugefügt
+
+- Setup: einmalige Seed-Schritte. `ClaimOnceAsync(tenantId, name, ct)` (Erweiterung auf `CoworkeeDbContext`, `Coworkee.Settings`) liefert beim ersten Mal je Mandant true (`null`: Host) und fügt eine Marker-Einstellung hinzu, die das Speichern des Seeds ablegt; false, wenn ein Marker mit beliebigem Wert existiert oder noch ungespeichert ist. Siehe [Seed-Contributors](../fundamentals/persistence.md#seed-contributors).
+
 ### Geändert
 
 - Identity: Mit gruppenbezogener Verwaltung lassen sich die eigenen obersten Gruppen eines beschränkten Verwalters (seine Mitgliedschaften, über denen keine andere Mitgliedschaft liegt) von ihm nicht verschieben, löschen oder mit anderen Rollen versehen, und Gruppen bleiben unter ihrer obersten Gruppe: `403 identity.root_group_locked` (`AdminReach.RootGroupLocked`). Umbenennen bleibt erlaubt; auch ein Mitglied jeder Gruppe ist gebunden, Inhaber von `ScopeAll` und Administratoren nicht. `AdminReach` bekommt `RootsAsync`, `RootOfAsync`, `ScopedGroupIdsAsync`, `CheckNotRootAsync` und `CheckMoveAsync`; `GroupDto` bekommt ein abschließendes `Locked` (positionelle Konstruktoraufrufe funktionieren weiter). Siehe [Berechtigungen](../security/permissions.md#gruppenbezogene-verwaltung).

@@ -167,6 +167,16 @@ So läuft ein Aufruf: in einem eigenen DI-Scope und einer eigenen Datenbank-Tran
 
 **Jeder Lauf, also idempotent.** Ein Contributor läuft bei jedem Migrationslauf: lesen, was da ist, dann nur das Fehlende ergänzen oder ändern. Änderungen an einem Seed (ein neuer Tag, eine neue Berechtigung) erreichen jede Datenbank mit dem nächsten Lauf. Was Benutzern gehört (Beispieldatensätze), steht unter `if (!context.IsNew) return;`: `IsNew` ist wahr in dem Lauf, dessen Identity-Seed das System eingerichtet hat, und für einen gerade eingerichteten Mandanten; solche Datensätze kommen nach dem Löschen also nicht zurück. Welche Seeds gelaufen sind, wird nicht festgehalten.
 
+**Nur einmal.** Ein Schritt, der sich nicht wiederholen darf (eine einmalige Vergabe, eine Datenmigration, die Nutzer rückgängig machen dürfen), beansprucht sich mit `ClaimOnceAsync` (`Coworkee.Settings`): Es liefert beim ersten Mal je Mandant true (`null`: Host) und legt eine Marker-Einstellung an, die der Runner mit dem Rest speichert; jeder spätere Lauf und ein zweiter Aufruf vor dem Speichern bekommt false. Ein vorhandener Marker mit beliebigem Wert gilt als erledigt.
+
+```csharp
+public async Task SeedAsync(SeedContext context, CancellationToken cancellationToken)
+{
+    if (!await db.ClaimOnceAsync(context.TenantId, "MyApp.Seed.Step", cancellationToken)) return;
+    // läuft einmal je Mandant
+}
+```
+
 **Fehler.** Ein fehlschlagender Pflicht-Contributor rollt seine Transaktion zurück, das Log nennt Contributor und Mandant, und der Lauf endet mit Exit-Code 1, damit die Dienste eines Deployments nicht gegen eine halb befüllte Datenbank starten. Spätere Contributors laufen nicht, weil sie auf ihm aufbauen können.
 
 **Wo sie laufen.**
