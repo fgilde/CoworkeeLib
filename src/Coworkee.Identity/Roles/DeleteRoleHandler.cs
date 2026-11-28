@@ -3,7 +3,9 @@ using Coworkee.Contracts.Identity;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
+using Coworkee.Contracts.DataFilters;
 using Coworkee.Infrastructure.Persistence;
+using Coworkee.OData.DataFilters;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -40,6 +42,7 @@ internal sealed class DeleteRoleHandler(
         }
 
         db.RemoveRange(await db.Set<PermissionGrant>().Where(g => g.ProviderType == PermissionProviderType.Role && g.ProviderKey == role.Id).ToListAsync(cancellationToken));
+        db.RemoveRange(await db.Set<DataFilter>().Where(f => f.Layer == DataFilterLayer.Role && f.LayerKey == role.Id).ToListAsync(cancellationToken));
         db.Remove(role);
         return Result.Success();
     }

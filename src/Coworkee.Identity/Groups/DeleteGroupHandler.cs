@@ -2,7 +2,9 @@ using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Identity;
 using Coworkee.Core.Results;
 using Coworkee.Identity.Domain;
+using Coworkee.Contracts.DataFilters;
 using Coworkee.Infrastructure.Persistence;
+using Coworkee.OData.DataFilters;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,6 +38,8 @@ internal sealed class DeleteGroupHandler(CoworkeeDbContext db, Users.AccountGuar
 
         db.RemoveRange(await db.Set<PermissionGrant>().Where(g => g.ProviderType == PermissionProviderType.Group && EF.Parameter(ids).Contains(g.ProviderKey)).ToListAsync(cancellationToken));
         db.RemoveRange(await db.Set<ResourcePermission>().Where(p => p.PrincipalType == PrincipalType.Group && EF.Parameter(ids).Contains(p.PrincipalId)).ToListAsync(cancellationToken));
+        // their data filters go along (through the change tracker: the realtime signal fires)
+        db.RemoveRange(await db.Set<DataFilter>().Where(f => f.Layer == DataFilterLayer.Group && EF.Parameter(ids).Contains(f.LayerKey!.Value)).ToListAsync(cancellationToken));
         db.RemoveRange(subtree);
         return Result.Success();
     }

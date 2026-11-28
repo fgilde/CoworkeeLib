@@ -123,6 +123,8 @@ Reading and writing needs the permission of the layer; the page and the navigati
 
 The group tree and the roles table show which groups and roles have data filters, so you do not have to open them one by one. A group or role with filters has a coloured filter icon with a badge (the number of filters); the others show nothing, so a tree of thousands of groups stays calm. The icon opens the group's or role's **Data filters** tab (the link `?group={id}&tab=data-filters` on the groups page, `/admin/roles/{id}?tab=data-filters` on the role page). The chip **With data filters only** above the tree lists just the filtered groups, flat and named by their path ("Customer A / Hamburg"); above the roles table it narrows the table to the filtered roles. The page loads the filters once (`GetDataFiltersAsync(layer: Group)` or `Role`, counted by `LayerKey`), not once per node, and reloads them when the realtime topic `DataFilterTopics.TenantChanged` fires; open tree nodes stay open. Icon and chip need `DataFilters.ManageGroups` or `DataFilters.ManageRoles`.
 
+Filters go with their group or role: deleting a group (and the groups below it) or a role deletes its Group or Role filters in the same save, and everyone gets the `TenantChanged` signal. The seed contributor `DataFilterOrphansSeed` removes the orphans older versions left behind (filters whose group or role no longer exists); it runs on every seed run and changes nothing once they are gone.
+
 ## Group-scoped administration
 
 With [group-scoped administration](../security/permissions.md#group-scoped-administration) on, the Group and Role layers follow the administrator's reach (`IDataFilterReach` in `Coworkee.Application.Groups`, built by the identity module from `AdminReach`):
