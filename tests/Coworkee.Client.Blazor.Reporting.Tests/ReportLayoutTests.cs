@@ -151,5 +151,7 @@ public sealed class ReportLayoutTests : ReportingTestBase
         // the same items (same keys) get their saved attributes back; sync (reporting.js) moves GridStack's items to them
         page.WaitForAssertion(() => GridItems(page).ShouldBe([("a", "0", "1", "3", "2"), ("cost", "3", "1", "3", "2"), ("c", "6", "1", "3", "2"), ("d", "9", "1", "3", "2")]));
         Grid.Invocations["sync"].Count.ShouldBeGreaterThan(syncs);
+        // GridStack rewrites gs-* to its own positions; data-pos keeps Blazor's for sync and for the switch back from the phone view
+        page.FindAll(".grid-stack-item").Select(e => e.GetAttribute("data-pos")).ShouldBe(["0,1,3,2", "3,1,3,2", "6,1,3,2", "9,1,3,2"]);
     }
 }

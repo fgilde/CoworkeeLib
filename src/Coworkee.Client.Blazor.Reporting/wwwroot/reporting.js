@@ -48,32 +48,64 @@ export async function init(element, dotnet, editable, columns, cellHeight) {
         resizable: { handles: 'se,e,s,w' },
         columnOpts: { breakpoints: [{ w: 560, c: 1 }] },
     }, element);
-    // layouts of the one column view on phones are not saved
+    element._grid = grid;
+    element._columns = columns;
+    element._column = grid.getColumn();
+    for (const item of gridItems(element)) {
+        item._cwPos = item.dataset.pos;
+    }
     grid.on('change', (_, items) => {
-        if (grid.getColumn() === columns && items?.length) {
+        // layouts of the one column view on phones and of the switch between the views are not saved
+        if (!columnChanged(element) && grid.getColumn() === columns && items?.length) {
             dotnet.invokeMethodAsync('OnLayoutChanged', layout(items));
         }
     });
-    element._grid = grid;
-    element._columns = columns;
+    // GridStack switches the columns on resize, mostly without a change event; this observer runs after its own
+    element._observer = new ResizeObserver(() => columnChanged(element));
+    element._observer.observe(element);
+    // a render during a drag or resize is synced after it
+    grid.on('dragstop resizestop', () => element._pending && setTimeout(() => place(element, false)));
+}
+
+// The phone view (one column) and back: GridStack restores the layout it kept from before, which may predate Blazor's positions
+// (e.g. designing started on the phone). The items go to Blazor's positions once GridStack is done.
+function columnChanged(element) {
+    const column = element._grid?.getColumn();
+    if (column === element._column) {
+        return false;
+    }
+    element._column = column;
+    if (column === element._columns) {
+        setTimeout(() => place(element, true));
+    }
+    return true;
 }
 
 export function setEditable(element, editable) {
     element._grid?.setStatic(!editable);
 }
 
-const gridItems = element => element.querySelectorAll(':scope > .grid-stack-item');
-// GridStack writes its position into the gs-* attributes (gs-w and gs-h left out for 1)
-const attributes = item => [item.getAttribute('gs-x') ?? 0, item.getAttribute('gs-y') ?? 0, item.getAttribute('gs-w') ?? 1, item.getAttribute('gs-h') ?? 1].join(',');
-const position = node => [node.x ?? 0, node.y ?? 0, node.w ?? 1, node.h ?? 1].join(',');
+// the placeholder GridStack shows while dragging is an item too, pointing at the dragged node
+const gridItems = element => element.querySelectorAll(':scope > .grid-stack-item:not(.grid-stack-placeholder)');
+const position = node => `${node.x},${node.y},${node.w},${node.h}`;
+const idle = node => !node._moving && !node._resizing;
 
-/**
- * Takes up items Blazor added, lets go of those it removed and moves those Blazor gave another position (e.g. the reader's layout gives way
- * to the saved one when designing starts): GridStack keeps the gs-* attributes at its own positions, so differing ones are Blazor's.
- */
+/** Takes up items Blazor added, lets go of those it removed and moves those Blazor gave another position. */
 export function sync(element) {
+    place(element, false);
+}
+
+// Blazor's position of an item is its data-pos (GridStack writes the gs-* attributes itself). Items whose data-pos changed since the last
+// sync (all: every item) and that GridStack shows elsewhere are taken out and placed again with the new ones, all in one batch:
+// updated one by one they would push each other around. Not in the phone view, whose positions are GridStack's own.
+function place(element, all) {
     const grid = element._grid;
     if (!grid) {
+        return;
+    }
+    // while an item is dragged or resized its node is the placeholder's, and a batch would report the positions on the way
+    element._pending = grid.engine.nodes.some(n => !idle(n));
+    if (element._pending) {
         return;
     }
     grid.batchUpdate();
@@ -82,22 +114,30 @@ export function sync(element) {
             grid.removeWidget(node.el, false, false);
         }
     }
-    // moved items are taken out first and placed again with the new ones: updated one by one they would push each other around.
-    // Not in the one column view on phones: its positions are GridStack's own and differ anyway
     for (const item of grid.getColumn() === element._columns ? gridItems(element) : []) {
-        if (item.gridstackNode && attributes(item) !== position(item.gridstackNode)) {
-            grid.removeWidget(item, false, false);
+        const node = item.gridstackNode;
+        const pos = item.dataset.pos;
+        if (!node || node.el !== item || !idle(node) || !pos) {
+            continue;
         }
+        if ((all || pos !== item._cwPos) && pos !== position(node)) {
+            grid.removeWidget(item, false, false);
+            const [x, y, w, h] = pos.split(',');
+            Object.entries({ 'gs-x': x, 'gs-y': y, 'gs-w': w, 'gs-h': h }).forEach(([name, value]) => item.setAttribute(name, value));
+        }
+        item._cwPos = pos;
     }
     for (const item of gridItems(element)) {
         if (!item.gridstackNode) {
             grid.makeWidget(item);
+            item._cwPos = item.dataset.pos;
         }
     }
     grid.batchUpdate(false);
 }
 
 export function dispose(element) {
+    element._observer?.disconnect();
     element._grid?.destroy(false);
     element._grid = null;
 }
