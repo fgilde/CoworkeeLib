@@ -206,7 +206,7 @@ POST /api/v1/reports/table
 ```json
 {
   "rows": [
-    { "keys": [ { "value": "North", "label": "North", "filter": "Region eq 'North'" }, { "value": null, "label": "", "filter": "Channel eq null" } ],
+    { "keys": [ { "value": "North", "label": "North", "filter": "Region eq 'North'" }, { "value": null, "label": "", "filter": "(Channel eq null or Channel eq '')" } ],
       "values": [ 120, 3.5, 4200.5 ] }
   ],
   "more": true,
@@ -215,11 +215,11 @@ POST /api/v1/reports/table
 ```
 
 - Each source is grouped by all group fields in the database, through the same rows as the other report queries (row filters, data filters, navigation scope, or the rows of an own source); raw rows never leave it.
-- The rows are the groups of the main set. A join adds its values to the group with the same key: texts match ignoring case and an empty text equals null, like `ISNULL(x, '')` under SQL Server's case-insensitive collation. A group without rows in a join gets null values; groups only a join has are left out.
+- The rows are the groups of the main set. Texts group as `COALESCE(x, '')`: rows with an empty and a missing text are one group (count, sum and average over all of them), shown with a null key whose filter selects both. A join adds its values to the group with the same key: texts match ignoring case and an empty text equals null, like `ISNULL(x, '')` under SQL Server's case-insensitive collation. A group without rows in a join gets null values; groups only a join has are left out.
 - `orderBy` columns count the group fields first (0 to fields - 1), then the main values, then each join's values in order. Ties are broken by every group field ascending. Texts sort ignoring case, nulls first (last when descending), as on SQL Server.
 - `more` says whether rows follow the page.
-- Every joined set needs its read permission (403 otherwise) and every group field (400 otherwise). Limits: 1 to 8 group fields, 8 values per set, 3 joins, `top` 1 to 50,000, at most 50,000 groups per set.
-- Keys that are equal ignoring case but stored apart (Postgres groups "North" and "north" separately) are ordered last by their exact text, so pages never overlap.
+- Every joined set needs its read permission (403 otherwise) and every group field (400 otherwise). Limits: 1 to 8 group fields, 8 values per set, 3 joins, `top` 1 to 50,000, at most 50,000 groups per set (`ReportTables.MaxRows`).
+- Keys that are equal ignoring case but stored apart (Postgres groups "North" and "north" separately) are ordered last by their exact text, so pages never overlap. A join's values go to the first of them by exact text only, the others get null, so nothing is counted twice.
 
 The [grouped table widget](#grouped-table-widget) shows such a table on a report.
 

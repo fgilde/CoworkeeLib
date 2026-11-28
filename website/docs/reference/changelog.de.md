@@ -2,6 +2,16 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Behoben
+
+- Berichte: gruppierte Tabellen fassen leere und fehlende Texte der Hauptmenge zu einer Zeile zusammen (verbundene Werte zählten doppelt): Texte der Hauptmenge gruppieren in der Datenbank als `COALESCE(x, '')`, die Zeile zeigt einen null-Schlüssel, dessen Filter beide wählt (`(Channel eq null or Channel eq '')`). Hauptgruppen, die ohne Rücksicht auf Groß- und Kleinschreibung ein Schlüssel sind (Postgres, SQLite), bekommen einen verbundenen Wert nur einmal, der erste nach genauem Text. Siehe [Reporting](../modules/reporting.md#gruppierte-tabellen).
+
+### Geändert
+
+- Berichte: `ReportTables` und `ReportTables.MaxRows` (höchstens so viele Gruppen je Quelle und größte Seite einer gruppierten Tabelle) sind öffentlich.
+
 ## 0.1.9 (2026-11-27)
 
 ### Behoben

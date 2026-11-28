@@ -206,7 +206,7 @@ POST /api/v1/reports/table
 ```json
 {
   "rows": [
-    { "keys": [ { "value": "North", "label": "North", "filter": "Region eq 'North'" }, { "value": null, "label": "", "filter": "Channel eq null" } ],
+    { "keys": [ { "value": "North", "label": "North", "filter": "Region eq 'North'" }, { "value": null, "label": "", "filter": "(Channel eq null or Channel eq '')" } ],
       "values": [ 120, 3.5, 4200.5 ] }
   ],
   "more": true,
@@ -215,11 +215,11 @@ POST /api/v1/reports/table
 ```
 
 - Jede Quelle wird in der Datenbank nach allen Gruppierungsfeldern gruppiert, über dieselben Zeilen wie die anderen Berichtsabfragen (Zeilenfilter, Datenfilter, Navigationsbereich oder die Zeilen einer eigenen Quelle); Rohzeilen verlassen sie nie.
-- Die Zeilen sind die Gruppen der Hauptmenge. Ein Join hängt seine Werte an die Gruppe mit demselben Schlüssel: Texte gleichen sich ohne Rücksicht auf Groß- und Kleinschreibung, ein leerer Text gleicht null, wie `ISNULL(x, '')` unter der Collation von SQL Server, die Groß- und Kleinschreibung nicht unterscheidet. Eine Gruppe ohne Zeilen in einem Join bekommt null-Werte; Gruppen, die nur ein Join hat, fallen weg.
+- Die Zeilen sind die Gruppen der Hauptmenge. Texte gruppieren als `COALESCE(x, '')`: Zeilen mit leerem und fehlendem Text sind eine Gruppe (Anzahl, Summe und Durchschnitt über alle), gezeigt mit einem null-Schlüssel, dessen Filter beide wählt. Ein Join hängt seine Werte an die Gruppe mit demselben Schlüssel: Texte gleichen sich ohne Rücksicht auf Groß- und Kleinschreibung, ein leerer Text gleicht null, wie `ISNULL(x, '')` unter der Collation von SQL Server, die Groß- und Kleinschreibung nicht unterscheidet. Eine Gruppe ohne Zeilen in einem Join bekommt null-Werte; Gruppen, die nur ein Join hat, fallen weg.
 - `orderBy`-Spalten zählen zuerst die Gruppierungsfelder (0 bis Felder - 1), dann die Werte der Hauptmenge, dann die Werte jedes Joins der Reihe nach. Gleichstände entscheiden alle Gruppierungsfelder aufsteigend. Texte sortieren ohne Rücksicht auf Groß- und Kleinschreibung, null zuerst (absteigend zuletzt), wie auf SQL Server.
 - `more` sagt, ob nach der Seite weitere Zeilen folgen.
-- Jede verbundene Menge braucht ihr Leserecht (sonst 403) und jedes Gruppierungsfeld (sonst 400). Grenzen: 1 bis 8 Gruppierungsfelder, 8 Werte je Menge, 3 Joins, `top` 1 bis 50.000, höchstens 50.000 Gruppen je Menge.
-- Schlüssel, die sich nur in Groß- und Kleinschreibung unterscheiden und getrennt gespeichert sind (Postgres gruppiert „North“ und „north“ getrennt), ordnet zuletzt ihr genauer Text, damit sich Seiten nie überschneiden.
+- Jede verbundene Menge braucht ihr Leserecht (sonst 403) und jedes Gruppierungsfeld (sonst 400). Grenzen: 1 bis 8 Gruppierungsfelder, 8 Werte je Menge, 3 Joins, `top` 1 bis 50.000, höchstens 50.000 Gruppen je Menge (`ReportTables.MaxRows`).
+- Schlüssel, die sich nur in Groß- und Kleinschreibung unterscheiden und getrennt gespeichert sind (Postgres gruppiert „North“ und „north“ getrennt), ordnet zuletzt ihr genauer Text, damit sich Seiten nie überschneiden. Die Werte eines Joins bekommt nur der erste von ihnen nach genauem Text, die anderen null, damit nichts doppelt zählt.
 
 Das [Widget gruppierte Tabelle](#widget-gruppierte-tabelle) zeigt eine solche Tabelle in einem Bericht.
 

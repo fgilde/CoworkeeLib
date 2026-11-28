@@ -2,6 +2,16 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixed
+
+- Reporting: grouped tables merge empty and missing texts of the main data set into one row (joined values were counted twice): texts of the main set group as `COALESCE(x, '')` in the database, the row shows a null key whose filter selects both (`(Channel eq null or Channel eq '')`). Main groups that are one key ignoring case (Postgres, SQLite) take a joined value once, the first by exact text. See [Reporting](../modules/reporting.md#grouped-tables).
+
+### Changed
+
+- Reporting: `ReportTables` and `ReportTables.MaxRows` (most groups per source and largest page of a grouped table) are public.
+
 ## 0.1.9 (2026-11-27)
 
 ### Fixed

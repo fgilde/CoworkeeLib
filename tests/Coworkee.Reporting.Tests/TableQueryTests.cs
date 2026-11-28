@@ -33,7 +33,7 @@ public sealed class TableQueryTests(ReportingApp app) : ReportingTestBase(app)
         }
 
         var empty = result.Rows.First(r => r.Keys[1]!.Value is null);
-        empty.Keys[1]!.Filter.ShouldBe("Channel eq null");
+        empty.Keys[1]!.Filter.ShouldBe("(Channel eq null or Channel eq '')");
         empty.Keys[0]!.Filter.ShouldBe($"Region eq '{empty.Keys[0]!.Value}'");
     }
 
@@ -83,6 +83,47 @@ public sealed class TableQueryTests(ReportingApp app) : ReportingTestBase(app)
             returned.ShouldNotBeEmpty();
             row.Values[1]!.Value.ShouldBe(returned.Sum(s => s.Days ?? 0) / (double)returned.Count, 0.001, $"{group.Key}");
             row.Values[2].ShouldBe(returned.Select(s => s.Quantity).Distinct().Count(), $"{group.Key}");
+        }
+    }
+
+    [Fact]
+    public async Task Empty_and_missing_texts_of_the_main_set_are_one_row_with_the_joined_values_once()
+    {
+        // the returns spell the empty channel as "" (even quantity) and null (odd)
+        var result = await TableAsync(new ReportTableRequest("Returns", null, ["Channel"],
+            [new(), new(AggregateFunction.Sum, "Amount"), new(AggregateFunction.Average, "Days", EmptyAsZero: true)],
+            [new ReportTableJoin("Sales", null, [new()])], Top: 100));
+
+        var returned = Visible.Where(s => s.Quantity > 10).ToList();
+        returned.Where(s => s.Channel == null).Select(s => s.Quantity % 2).Distinct().Count().ShouldBe(2);
+        var expected = returned.GroupBy(s => s.Channel).OrderBy(g => g.Key, Text).ToList();
+        result.Rows.Select(r => r.Keys[0]!.Value).ShouldBe(expected.Select(g => g.Key));
+        foreach (var (row, group) in result.Rows.Zip(expected))
+        {
+            row.Values[0].ShouldBe(group.Count(), $"{group.Key}");
+            row.Values[1]!.Value.ShouldBe((double)group.Sum(s => s.Amount), 0.01);
+            row.Values[2]!.Value.ShouldBe(group.Sum(s => s.Days ?? 0) / (double)group.Count(), 0.001);
+            row.Values[3].ShouldBe(Visible.Count(s => s.Channel == group.Key), $"{group.Key}");
+        }
+
+        var empty = result.Rows[0];
+        (empty.Keys[0]!.Label, empty.Keys[0]!.Filter).ShouldBe((string.Empty, "(Channel eq null or Channel eq '')"));
+    }
+
+    [Fact]
+    public async Task Main_groups_alike_ignoring_case_take_a_joined_value_once()
+    {
+        // the returns spell the region in upper and lower case: one group on SQL Server, two on Postgres and SQLite; the sales' count once either way
+        var result = await TableAsync(new ReportTableRequest("Returns", null, ["Region"], [new()], [new ReportTableJoin("Sales", null, [new()])], Top: 100));
+
+        var returned = Visible.Where(s => s.Quantity > 10).ToList();
+        var regions = result.Rows.GroupBy(r => r.Keys[0]!.Value!, Text).ToList();
+        regions.Select(g => g.Key).Order(Text).ShouldBe(returned.Select(s => s.Region).Distinct().Order(Text), Text);
+        foreach (var region in regions)
+        {
+            region.Sum(r => r.Values[0]).ShouldBe(returned.Count(s => Text.Equals(s.Region, region.Key)), region.Key);
+            region.Count(r => r.Values[1] != null).ShouldBe(1, region.Key);
+            region.Sum(r => r.Values[1]).ShouldBe(Visible.Count(s => Text.Equals(s.Region, region.Key)), region.Key);
         }
     }
 
