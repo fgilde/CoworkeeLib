@@ -3,7 +3,13 @@
     <MudTextField T="string" @bind-Value="_description" Label="@L["Description"]" ReadOnly="!CanManage" Lines="3" Margin="Density.Margin" data-testid="group-description" />
     <div class="d-flex align-center gap-2">
         <MudTextField T="string" Value="@(Parent ?? L["Top level"])" Label="@L["Parent group"]" ReadOnly="true" Margin="Density.Margin" data-testid="group-parent" />
-        @if (CanManage)
+        @if (CanManage && Locked)
+        {
+            <MudTooltip Text="@L["Your own top group: an administrator above you moves or deletes it."]">
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.DriveFileMove" Disabled="true" data-testid="group-move-general">@L["Move"]</MudButton>
+            </MudTooltip>
+        }
+        else if (CanManage)
         {
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.DriveFileMove" OnClick="MoveAsync" data-testid="group-move-general">@L["Move"]</MudButton>
         }

@@ -20,6 +20,9 @@ public partial class GroupNodeMenu
 
     [Parameter, EditorRequired] public GroupNodeDto Node { get; set; } = null!;
 
+    /// <summary>One of the caller's own top groups: move and delete are disabled (the server refuses them with <c>identity.root_group_locked</c>).</summary>
+    [Parameter] public bool Locked { get; set; }
+
     /// <summary>A group was created, renamed or moved; its id.</summary>
     [Parameter] public EventCallback<Guid> Changed { get; set; }
 

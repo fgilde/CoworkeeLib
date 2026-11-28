@@ -2432,5 +2432,8 @@
   "Another column has this name.": "この名前は別の列で使われています。",
   "Like the widget": "ウィジェットと同じ",
   "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "あなた自身の最上位グループは、上位の管理者が設定します。移動、削除、または別のロールの付与はできず、グループは所属する最上位グループの下に留まります。",
-  "There is no such group or role.": "そのようなグループまたはロールはありません。"
+  "There is no such group or role.": "そのようなグループまたはロールはありません。",
+  "Set by an administrator above you": "上位の管理者が設定しました",
+  "Only an administrator of every group manages these filters.": "これらのフィルターを管理できるのは、すべてのグループの管理者だけです。",
+  "Your own top group: an administrator above you moves or deletes it.": "あなた自身の最上位グループです。移動や削除は上位の管理者が行います。"
 }

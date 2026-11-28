@@ -2432,5 +2432,8 @@
   "Another column has this name.": "另一列已使用此名称。",
   "Like the widget": "与小组件相同",
   "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "您自己的顶级用户组由您上级的管理员设置：它们不能被移动、删除或分配其他角色，并且用户组始终位于其所属的顶级用户组之下。",
-  "There is no such group or role.": "不存在这样的组或角色。"
+  "There is no such group or role.": "不存在这样的组或角色。",
+  "Set by an administrator above you": "由您上级的管理员设置",
+  "Only an administrator of every group manages these filters.": "只有所有用户组的管理员才能管理这些筛选器。",
+  "Your own top group: an administrator above you moves or deletes it.": "您自己的顶级用户组：由您上级的管理员移动或删除。"
 }

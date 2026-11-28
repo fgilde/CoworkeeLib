@@ -3,6 +3,7 @@ using Coworkee.Client.Blazor.Components.Groups;
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Data.Admin;
 using Coworkee.Client.Blazor.Pages.Admin;
+using Coworkee.Contracts;
 using Coworkee.Contracts.DataFilters;
 using Coworkee.Contracts.Identity;
 using Microsoft.AspNetCore.Components;
@@ -193,6 +194,33 @@ public sealed class GroupsPageTests : ClientTestBase
         await clicked;
 
         await Api.Received(1).DeleteGroupAsync(Customer.Id, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Locked_group_disables_move_delete_and_roles_but_not_rename()
+    {
+        // a scoped administrator's own top group: an administrator above him moves, deletes and gives it roles
+        const string hint = "Your own top group: an administrator above you moves or deletes it.";
+        Api.GetGroupsAsync(Arg.Any<PageRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new PagedResult<GroupDto>([new GroupDto(Customer.Id, Customer.Name, null, [], [], Code: Customer.Code, Locked: true)], 1, 1, 200));
+        _odata.With("Groups", Row(Customer));
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Customer.Id}");
+        var page = RenderPage();
+        page.WaitForElement("[data-testid='group-title']");
+
+        page.WaitForAssertion(() => page.Find("[data-testid='group-move-general']").HasAttribute("disabled").ShouldBeTrue());
+        page.FindComponents<MudTooltip>().ShouldContain(t => t.Instance.Text == hint);
+        page.Find("input[data-testid='group-name'], [data-testid='group-name'] input").HasAttribute("readonly").ShouldBeFalse();
+        page.Find("[data-testid='group-save']").HasAttribute("disabled").ShouldBeFalse();
+
+        await page.Find($"[data-testid='group-actions-{Customer.Id}'] button, button[data-testid='group-actions-{Customer.Id}']").ClickAsync(new());
+        _popovers.WaitForElement("[data-testid='group-delete']");
+        _popovers.Find("[data-testid='group-move']").GetAttribute("aria-disabled").ShouldBe("true");
+        _popovers.Find("[data-testid='group-delete']").GetAttribute("aria-disabled").ShouldBe("true");
+        _popovers.Find("[data-testid='group-rename']").GetAttribute("aria-disabled").ShouldNotBe("true");
+
+        await Tab(page, "Roles").ClickAsync(new());
+        page.WaitForComponent<MudSelect<Guid>>().Instance.Disabled.ShouldBeTrue();
     }
 
     [Fact]

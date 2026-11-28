@@ -139,6 +139,18 @@ Mit eingeschalteter [gruppenbezogener Verwaltung](../security/permissions.de.md#
 - Ein beschränkter Verwalter, dessen einzige Gruppe die Standardgruppe ist, sieht keine Gruppenfilter (leere Liste) und speichert keine.
 - **Schlüssel müssen existieren:** Ein mandantenweiter Aufrufer, der einen Gruppen- oder Rollenfilter speichert oder in der Vorschau prüft, dessen `LayerKey` keine Gruppe (`IGroupScope.NodesAsync`) oder Rolle des Mandanten bezeichnet, bekommt `400` mit dem Feld `layerKey` („Diese Gruppe oder Rolle gibt es nicht.“).
 
+**Was ein beschränkter Gruppenverwalter auf den Admin-Seiten sieht.** Die Gruppenseite liest für die gewählte Gruppe `GroupDto.Locked` (wahr für eine seiner eigenen obersten Gruppen):
+
+- Auf seinen eigenen obersten Gruppen zeigt der Reiter **Datenfilter** die Filter als Text unter dem Hinweis „Von einem übergeordneten Administrator festgelegt“, ohne Builder, Speichern, Entfernen und „Filter hinzufügen für“. Auf den Gruppen darunter bearbeitet er Filter wie alle anderen.
+- **Verschieben** (Reiter Allgemein und Knotenmenü) und **Löschen** (Knotenmenü) sind auf seinen eigenen obersten Gruppen deaktiviert, mit dem Tooltip „Deine eigene oberste Gruppe: Ein übergeordneter Administrator verschiebt oder löscht sie.“; der Reiter **Rollen** ist dort schreibgeschützt. Umbenennen bleibt erlaubt. Ein Verschieben oder Löschen, das trotzdem beim Server ankommt (anderer Knoten, veraltete Seite), zeigt die übersetzte Ablehnung `identity.root_group_locked`.
+- Der Reiter **Datenfilter** einer Rollenseite listet für ihn nichts: Die Listenanfrage antwortet `403`, und der Reiter sagt „Diese Filter verwaltet nur ein Administrator aller Gruppen.“ statt eines Fehlers.
+
+`DataFilterList` nimmt denselben Schalter auf eigenen Seiten:
+
+```razor
+<DataFilterList Layer="DataFilterLayer.Group" LayerKey="group.Id" ReadOnly="group.Locked" />
+```
+
 Beispiel: der Verwalter der Gruppe P (Untergruppe S, benachbarte oberste Gruppe Q außerhalb seiner Reichweite) mit `DataFilters.ManageGroups`:
 
 ```http

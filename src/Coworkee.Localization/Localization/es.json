@@ -2432,5 +2432,8 @@
   "Another column has this name.": "Otra columna tiene este nombre.",
   "Like the widget": "Como el widget",
   "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "Tus propios grupos superiores los configura un administrador por encima de ti: no se pueden mover, eliminar ni recibir otros roles, y los grupos permanecen bajo el grupo superior al que pertenecen.",
-  "There is no such group or role.": "No existe ese grupo o rol."
+  "There is no such group or role.": "No existe ese grupo o rol.",
+  "Set by an administrator above you": "Establecido por un administrador por encima de ti",
+  "Only an administrator of every group manages these filters.": "Solo un administrador de todos los grupos gestiona estos filtros.",
+  "Your own top group: an administrator above you moves or deletes it.": "Tu propio grupo superior: lo mueve o elimina un administrador por encima de ti."
 }

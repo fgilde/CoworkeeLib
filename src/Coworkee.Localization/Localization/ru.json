@@ -2432,5 +2432,8 @@
   "Another column has this name.": "Другой столбец уже называется так.",
   "Like the widget": "Как у виджета",
   "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "Ваши собственные верхние группы настраивает администратор выше вас: их нельзя перемещать, удалять или назначать им другие роли, а группы остаются под верхней группой, к которой они относятся.",
-  "There is no such group or role.": "Такой группы или роли нет."
+  "There is no such group or role.": "Такой группы или роли нет.",
+  "Set by an administrator above you": "Задано администратором выше вас",
+  "Only an administrator of every group manages these filters.": "Этими фильтрами управляет только администратор всех групп.",
+  "Your own top group: an administrator above you moves or deletes it.": "Ваша собственная верхняя группа: перемещает или удаляет её администратор выше вас."
 }

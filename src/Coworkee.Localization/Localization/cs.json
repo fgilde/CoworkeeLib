@@ -2432,5 +2432,8 @@
   "Another column has this name.": "Tento název už má jiný sloupec.",
   "Like the widget": "Jako widget",
   "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "Vaše vlastní nejvyšší skupiny nastavuje administrátor nad vámi: nelze je přesunout, smazat ani jim přidělit jiné role a skupiny zůstávají pod nejvyšší skupinou, do které patří.",
-  "There is no such group or role.": "Taková skupina ani role neexistuje."
+  "There is no such group or role.": "Taková skupina ani role neexistuje.",
+  "Set by an administrator above you": "Nastaveno administrátorem nad vámi",
+  "Only an administrator of every group manages these filters.": "Tyto filtry spravuje jen administrátor všech skupin.",
+  "Your own top group: an administrator above you moves or deletes it.": "Vaše vlastní nejvyšší skupina: přesouvá nebo maže ji administrátor nad vámi."
 }

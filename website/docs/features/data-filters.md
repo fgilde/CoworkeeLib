@@ -139,6 +139,18 @@ With [group-scoped administration](../security/permissions.md#group-scoped-admin
 - A scoped administrator whose only group is the default group sees no group filters (an empty list) and saves none.
 - **Keys must exist:** a tenant-wide caller who saves or previews a Group or Role filter whose `LayerKey` names no group (`IGroupScope.NodesAsync`) or role of the tenant gets `400` with the field `layerKey` ("There is no such group or role.").
 
+**What a scoped group administrator sees on the admin pages.** The Groups page reads `GroupDto.Locked` (true for one of his own top groups) for the selected group:
+
+- On his own top groups the **Data filters** tab shows the filters as text under the hint "Set by an administrator above you", without the builder, Save, Remove or "Add a filter for". On the groups below them he edits filters as everyone else.
+- **Move** (General tab and node menu) and **Delete** (node menu) are disabled on his own top groups, with the tooltip "Your own top group: an administrator above you moves or deletes it."; the **Roles** tab is read-only there. Renaming stays allowed. A move or delete that reaches the server anyway (another node, an outdated page) shows the translated refusal `identity.root_group_locked`.
+- The **Data filters** tab of a role page lists nothing for him: the list request answers `403` and the tab says "Only an administrator of every group manages these filters." instead of an error.
+
+`DataFilterList` takes the same switch in your own pages:
+
+```razor
+<DataFilterList Layer="DataFilterLayer.Group" LayerKey="group.Id" ReadOnly="group.Locked" />
+```
+
 Example: the manager of group P (sub-group S, sibling top group Q he does not reach) with `DataFilters.ManageGroups`:
 
 ```http

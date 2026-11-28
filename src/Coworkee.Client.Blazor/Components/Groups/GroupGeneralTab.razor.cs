@@ -7,7 +7,7 @@ using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Components.Groups;
 
-/// <summary>Name, description and parent of a group.</summary>
+/// <summary>Name, description and parent of a group; a <see cref="Locked"/> group is renamed but not moved.</summary>
 public partial class GroupGeneralTab
 {
     private GroupRow? _shown;
@@ -28,6 +28,9 @@ public partial class GroupGeneralTab
     [Parameter] public string? Parent { get; set; }
 
     [Parameter] public bool CanManage { get; set; }
+
+    /// <summary>One of the caller's own top groups under group-scoped administration: an administrator above him moves or deletes it.</summary>
+    [Parameter] public bool Locked { get; set; }
 
     [Parameter] public EventCallback Changed { get; set; }
 

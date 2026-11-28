@@ -2432,5 +2432,8 @@
   "Another column has this name.": "Een andere kolom heeft deze naam.",
   "Like the widget": "Zoals de widget",
   "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "Uw eigen bovenste groepen worden ingericht door een beheerder boven u: ze kunnen niet worden verplaatst, verwijderd of andere rollen krijgen, en groepen blijven onder de bovenste groep waartoe ze behoren.",
-  "There is no such group or role.": "Deze groep of rol bestaat niet."
+  "There is no such group or role.": "Deze groep of rol bestaat niet.",
+  "Set by an administrator above you": "Ingesteld door een beheerder boven u",
+  "Only an administrator of every group manages these filters.": "Alleen een beheerder van alle groepen beheert deze filters.",
+  "Your own top group: an administrator above you moves or deletes it.": "Uw eigen bovenste groep: een beheerder boven u verplaatst of verwijdert deze."
 }

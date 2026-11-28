@@ -48,7 +48,7 @@
                         @* the flat list has stand-in nodes (the path as name): no menu that would read them *@
                         @if (_canManage && !_onlyFiltered)
                         {
-                            <GroupNodeMenu Node="node" Changed="NodeChangedAsync" Deleted="DeletedAsync" />
+                            <GroupNodeMenu Node="node" Locked="@(_group is { Locked: true } && _group.Id == node.Id)" Changed="NodeChangedAsync" Deleted="DeletedAsync" />
                         }
                     </NodeActions>
                 </GroupTree>
@@ -70,18 +70,18 @@
                 <MudText Typo="Typo.caption" Class="mud-text-secondary">@GroupPaths.Path(group.Code, group.Name, _ancestors)</MudText>
                 <MudTabs @key="group.Id" @bind-ActivePanelIndex="_tabIndex" Elevation="0" TabPanelsClass="pt-2" data-testid="group-tabs">
                     <MudTabPanel Text="@L["General"]">
-                        <GroupGeneralTab Group="group" Parent="ParentPath" CanManage="_canManage" Changed="ChangedAsync" />
+                        <GroupGeneralTab Group="group" Parent="ParentPath" CanManage="_canManage" Locked="group.Locked" Changed="ChangedAsync" />
                     </MudTabPanel>
                     <MudTabPanel Text="@L["Members"]">
                         <GroupMembersTab Group="group" CanManage="_canManageMembers" Changed="ChangedAsync" />
                     </MudTabPanel>
                     <MudTabPanel Text="@L["Roles"]">
-                        <GroupRolesTab Group="group" CanManage="_canManage" Changed="ChangedAsync" />
+                        <GroupRolesTab Group="group" CanManage="@(_canManage && !group.Locked)" Changed="ChangedAsync" />
                     </MudTabPanel>
                     @if (_canManageDataFilters)
                     {
                         <MudTabPanel Text="@L["Data filters"]">
-                            <DataFilterList Layer="DataFilterLayer.Group" LayerKey="group.Id" />
+                            <DataFilterList Layer="DataFilterLayer.Group" LayerKey="group.Id" ReadOnly="group.Locked" />
                         </MudTabPanel>
                     }
                     @foreach (var tab in _appTabs)

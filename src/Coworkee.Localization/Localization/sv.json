@@ -2432,5 +2432,8 @@
   "Another column has this name.": "En annan kolumn har det här namnet.",
   "Like the widget": "Som widgeten",
   "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "Dina egna översta grupper konfigureras av en administratör ovanför dig: de kan inte flyttas, tas bort eller få andra roller, och grupper stannar under den översta grupp de tillhör.",
-  "There is no such group or role.": "Det finns ingen sådan grupp eller roll."
+  "There is no such group or role.": "Det finns ingen sådan grupp eller roll.",
+  "Set by an administrator above you": "Angivet av en administratör ovanför dig",
+  "Only an administrator of every group manages these filters.": "Endast en administratör för alla grupper hanterar dessa filter.",
+  "Your own top group: an administrator above you moves or deletes it.": "Din egen översta grupp: en administratör ovanför dig flyttar eller tar bort den."
 }

@@ -7,7 +7,22 @@
         {
             <MudText Typo="Typo.subtitle2">@L[Title]</MudText>
         }
-        @if (EntitySet is { } set)
+        @if (_refused)
+        {
+            <MudAlert Severity="Severity.Info" Dense="true" data-testid="filters-refused">@L["Only an administrator of every group manages these filters."]</MudAlert>
+        }
+        else if (ReadOnly)
+        {
+            <MudAlert Severity="Severity.Info" Dense="true" Icon="@Icons.Material.Outlined.Lock" data-testid="filters-read-only">@L["Set by an administrator above you"]</MudAlert>
+            @foreach (var filter in _filters)
+            {
+                <MudPaper Outlined="true" Class="pa-3" data-testid="@($"filter-{filter.EntitySet}")">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">@filter.EntitySet</MudText>
+                    <DataFilterEditor @key="filter.Id" EntitySet="@filter.EntitySet" Layer="Layer" LayerKey="LayerKey" Filter="filter" ReadOnly="true" />
+                </MudPaper>
+            }
+        }
+        else if (EntitySet is { } set)
         {
             <DataFilterEditor EntitySet="@set" Layer="Layer" LayerKey="LayerKey" Filter="_filters.FirstOrDefault()" Changed="ReloadAsync" />
         }

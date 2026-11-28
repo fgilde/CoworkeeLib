@@ -169,6 +169,38 @@ public sealed class DataFiltersUiTests : ClientTestBase
         page.WaitForAssertion(() => Api.ReceivedCalls().Count(c => c.GetMethodInfo().Name == nameof(ICoworkeeApi.GetDataFiltersAsync)).ShouldBe(calls + 2));
     }
 
+    [Fact]
+    public void Read_only_data_filters_show_the_hint_and_no_actions()
+    {
+        // a scoped group administrator's own top group: its filters were set above him
+        Grant(DataFilterPermissions.ManageGroups);
+        Api.GetDataFiltersAsync(Arg.Any<string?>(), DataFilterLayer.Group, Supplier.Id, Arg.Any<CancellationToken>()).Returns([Stored(DataFilterLayer.Group, Supplier.Id)]);
+
+        var list = Render<DataFilterList>(p => p.Add(l => l.Layer, DataFilterLayer.Group).Add(l => l.LayerKey, Supplier.Id).Add(l => l.ReadOnly, true));
+
+        list.WaitForElement("[data-testid='filters-read-only']").TextContent.Trim().ShouldBe("Set by an administrator above you");
+        list.WaitForElement("[data-testid='filter-Gadgets'] [data-testid='filter-text']").TextContent.ShouldContain("Name");
+        list.FindAll("[data-testid='filter-save'], [data-testid='filter-remove'], [data-testid='filter-add-set']").ShouldBeEmpty();
+        list.FindComponents<Coworkee.Client.Blazor.Components.Query.QueryBuilder>().ShouldBeEmpty();
+        list.FindComponent<MudSwitch<bool>>().Instance.Disabled.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Refused_filter_list_shows_the_whole_tenant_hint()
+    {
+        // role filters bind every group: the server refuses the list to a scoped group administrator
+        var snackbar = Services.GetRequiredService<ISnackbar>();
+        Grant(DataFilterPermissions.ManageRoles);
+        Api.GetDataFiltersAsync(Arg.Any<string?>(), DataFilterLayer.Role, RoleId, Arg.Any<CancellationToken>())
+            .Returns<IReadOnlyList<DataFilterDto>>(_ => throw new ApiException(403, "data_filters.forbidden", null, "Forbidden"));
+
+        var list = Render<DataFilterList>(p => p.Add(l => l.Layer, DataFilterLayer.Role).Add(l => l.LayerKey, RoleId));
+
+        list.WaitForElement("[data-testid='filters-refused']").TextContent.Trim().ShouldBe("Only an administrator of every group manages these filters.");
+        list.FindAll("[data-testid='filter-add-set'], [data-testid='data-filter-editor']").ShouldBeEmpty();
+        snackbar.ShownSnackbars.ShouldBeEmpty();
+    }
+
     private IRenderedComponent<DataFilterEditor> Editor(DataFilterLayer layer, DataFilterDto? filter = null) =>
         Render<DataFilterEditor>(p => p.Add(e => e.EntitySet, "Gadgets").Add(e => e.Layer, layer).Add(e => e.Filter, filter));
 

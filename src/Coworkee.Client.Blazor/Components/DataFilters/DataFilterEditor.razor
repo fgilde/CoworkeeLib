@@ -12,7 +12,14 @@
     {
         <MudAlert Severity="Severity.Info" Dense="true" data-testid="filter-protected">@L["This filter uses a property only some users may see. It still hides rows from everyone it applies to."]</MudAlert>
     }
-    <QueryBuilder Fields="_fields" Value="_query" ValueChanged="QueryChanged" Localize="s => L[s]" ShowImportExport="false" MaxDepth="3" />
+    @if (ReadOnly)
+    {
+        <MudText Typo="Typo.body2" Style="white-space:pre-wrap" data-testid="filter-text">@(QueryDescriber.Describe(_query, _fields, s => L[s]) is { Length: > 0 } text ? text : L["Everything"])</MudText>
+    }
+    else
+    {
+        <QueryBuilder Fields="_fields" Value="_query" ValueChanged="QueryChanged" Localize="s => L[s]" ShowImportExport="false" MaxDepth="3" />
+    }
     @if (_preview is { TimedOut: true })
     {
         <MudText Typo="Typo.caption" Color="Color.Secondary" data-testid="filter-preview">@L["Preview not available: counting took too long."]</MudText>
@@ -21,12 +28,15 @@
     {
         <MudText Typo="Typo.caption" Color="Color.Secondary" data-testid="filter-preview">@L["{0} of {1} rows you can see pass this filter", passing.ToString("N0"), total.ToString("N0")]</MudText>
     }
-    <MudSwitch T="bool" @bind-Value="_appliesToDetails" Color="Color.Primary" Label="@L["Applies to single rows too"]" data-testid="filter-details" />
-    <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="1">
-        @if (Filter is not null)
-        {
-            <MudButton Variant="Variant.Text" Color="Color.Error" Disabled="_busy" OnClick="RemoveAsync" data-testid="filter-remove">@L["Remove filter"]</MudButton>
-        }
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_busy" OnClick="SaveAsync" data-testid="filter-save">@L["Save"]</MudButton>
-    </MudStack>
+    <MudSwitch T="bool" @bind-Value="_appliesToDetails" Color="Color.Primary" Disabled="ReadOnly" Label="@L["Applies to single rows too"]" data-testid="filter-details" />
+    @if (!ReadOnly)
+    {
+        <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="1">
+            @if (Filter is not null)
+            {
+                <MudButton Variant="Variant.Text" Color="Color.Error" Disabled="_busy" OnClick="RemoveAsync" data-testid="filter-remove">@L["Remove filter"]</MudButton>
+            }
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_busy" OnClick="SaveAsync" data-testid="filter-save">@L["Save"]</MudButton>
+        </MudStack>
+    }
 </div>

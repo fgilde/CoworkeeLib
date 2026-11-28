@@ -45,6 +45,9 @@ public partial class DataFilterEditor : IDisposable
     /// <summary>The stored filter; null while none exists (saving creates it).</summary>
     [Parameter] public DataFilterDto? Filter { get; set; }
 
+    /// <summary>Shows the filter as text, without saving or removing it.</summary>
+    [Parameter] public bool ReadOnly { get; set; }
+
     /// <summary>Raised after a filter was saved or removed.</summary>
     [Parameter] public EventCallback Changed { get; set; }
 

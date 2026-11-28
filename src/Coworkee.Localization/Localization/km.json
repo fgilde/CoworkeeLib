@@ -2432,5 +2432,8 @@
   "Another column has this name.": "ជួរឈរផ្សេងទៀតមានឈ្មោះនេះរួចហើយ។",
   "Like the widget": "ដូច Widget",
   "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "ក្រុមកំពូលផ្ទាល់ខ្លួនរបស់អ្នកត្រូវបានរៀបចំដោយអ្នកគ្រប់គ្រងដែលនៅខាងលើអ្នក៖ ពួកវាមិនអាចផ្លាស់ទី លុប ឬផ្តល់តួនាទីផ្សេងទៀតបានទេ ហើយក្រុមនានានៅតែស្ថិតនៅក្រោមក្រុមកំពូលដែលពួកវាជាកម្មសិទ្ធិ។",
-  "There is no such group or role.": "មិនមានក្រុម ឬតួនាទីបែបនេះទេ។"
+  "There is no such group or role.": "មិនមានក្រុម ឬតួនាទីបែបនេះទេ។",
+  "Set by an administrator above you": "កំណត់ដោយអ្នកគ្រប់គ្រងដែលនៅខាងលើអ្នក",
+  "Only an administrator of every group manages these filters.": "មានតែអ្នកគ្រប់គ្រងនៃក្រុមទាំងអស់ប៉ុណ្ណោះដែលគ្រប់គ្រងតម្រងទាំងនេះ។",
+  "Your own top group: an administrator above you moves or deletes it.": "ក្រុមកំពូលផ្ទាល់ខ្លួនរបស់អ្នក៖ អ្នកគ្រប់គ្រងដែលនៅខាងលើអ្នកជាអ្នកផ្លាស់ទី ឬលុបវា។"
 }

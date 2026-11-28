@@ -2432,5 +2432,8 @@
   "Another column has this name.": "عمود آخر يحمل هذا الاسم.",
   "Like the widget": "مثل عنصر الواجهة",
   "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "مجموعاتك العليا يُعدّها مسؤول أعلى منك: لا يمكن نقلها أو حذفها أو منحها أدوارًا أخرى، وتبقى المجموعات تحت المجموعة العليا التي تنتمي إليها.",
-  "There is no such group or role.": "لا توجد مجموعة أو دور كهذا."
+  "There is no such group or role.": "لا توجد مجموعة أو دور كهذا.",
+  "Set by an administrator above you": "حدّده مسؤول أعلى منك",
+  "Only an administrator of every group manages these filters.": "لا يدير هذه المرشحات إلا مسؤول عن جميع المجموعات.",
+  "Your own top group: an administrator above you moves or deletes it.": "مجموعتك العليا: ينقلها أو يحذفها مسؤول أعلى منك."
 }

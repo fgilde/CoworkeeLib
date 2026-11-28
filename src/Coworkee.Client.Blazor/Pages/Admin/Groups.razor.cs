@@ -5,6 +5,7 @@ using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Data.Admin;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Security;
+using Coworkee.Contracts;
 using Coworkee.Contracts.Data;
 using Coworkee.Contracts.DataFilters;
 using Coworkee.Contracts.Identity;
@@ -113,6 +114,11 @@ public partial class Groups
                 _requested = id;
                 var query = new ODataQuery { Filter = $"Id eq {id}", Top = 1, Count = false };
                 var group = (await OData.QueryAsync<GroupRow>("Groups", query)).Items.FirstOrDefault(g => g.Id == id);
+                if (group is not null && (_canManage || _canManageDataFilters))
+                {
+                    group = group with { Locked = await LockedAsync(group) };
+                }
+
                 _ancestors = group?.Code is { } code && code.Contains('.') ? await AncestorsAsync(code) : [];
                 (_group, _notFound) = (group, group is null);
             });
@@ -122,6 +128,11 @@ public partial class Groups
             _loadingGroup = false;
         }
     }
+
+    // a group-scoped administrator's own top group (the OData set does not know the caller): moved, deleted, given roles and filtered above him
+    // ponytail: found by its name among the first 200 matches; a name shared by more groups than that shows it unlocked and the server still refuses
+    private async Task<bool> LockedAsync(GroupRow group) =>
+        (await Api.GetGroupsAsync(new PageRequest(1, 200, group.Name)))?.Items.FirstOrDefault(g => g.Id == group.Id)?.Locked ?? false;
 
     private async Task<List<(string? Code, string Name)>> AncestorsAsync(string code)
     {

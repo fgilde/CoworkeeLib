@@ -12,7 +12,8 @@ namespace Coworkee.Client.Blazor.Components.DataFilters;
 /// The data filters of one layer: of a group or role across every set (<see cref="EntitySet"/> unset: each filter and a picker for the next set), or
 /// of one set (the Data types page: System or Tenant). Shows nothing to users without the layer's manage permission (System: nor outside the system
 /// organisation) and loads again when
-/// the filters change anywhere (<see cref="DataFilterTopics"/>).
+/// the filters change anywhere (<see cref="DataFilterTopics"/>). <see cref="ReadOnly"/> shows them without editing; a list the server refuses (403: role filters
+/// for a group-scoped administrator) shows a hint instead of an error.
 /// </summary>
 public partial class DataFilterList
 {
@@ -21,6 +22,7 @@ public partial class DataFilterList
     private string? _adding;
     private bool _allowed;
     private bool _loaded;
+    private bool _refused;
     private Guid? _key;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
@@ -40,6 +42,9 @@ public partial class DataFilterList
 
     /// <summary>Limits the list to one set and always offers its editor.</summary>
     [Parameter] public string? EntitySet { get; set; }
+
+    /// <summary>Shows the filters without editing them, under the hint that an administrator above set them (a scoped administrator's own top group).</summary>
+    [Parameter] public bool ReadOnly { get; set; }
 
     /// <summary>A heading (English; translated here).</summary>
     [Parameter] public string? Title { get; set; }
@@ -86,10 +91,20 @@ public partial class DataFilterList
     private async Task LoadAsync()
     {
         _adding = null;
-        await Snackbar.RunAsync(async () =>
+        _refused = false;
+        try
         {
             _filters = await Api.GetDataFiltersAsync(EntitySet, Layer, LayerKey);
-            _sets = EntitySet is null ? await Api.GetDataFilterSetsAsync() : [];
-        });
+            _sets = EntitySet is null && !ReadOnly ? await Api.GetDataFilterSetsAsync() : [];
+        }
+        catch (ApiException exception) when (exception.Status == 403)
+        {
+            // role filters bind every group: a group-scoped administrator holds the permission but not the reach
+            (_refused, _filters, _sets) = (true, [], []);
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(SnackbarApiExtensions.Describe(exception), Severity.Error);
+        }
     }
 }
