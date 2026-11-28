@@ -133,7 +133,29 @@ public sealed class RootGroupTests(IdentityApp app) : IAsyncLifetime
         mine.Single(g => g.Id == _p).Locked.ShouldBeTrue();
         mine.Single(g => g.Id == _s).Locked.ShouldBeFalse();
 
-        (await Admin.GetFromJsonAsync<PagedResult<GroupDto>>("/api/v1/identity/groups?page=1&pageSize=50", Ct))!.Items.ShouldAllBe(g => !g.Locked);
+        var all = (await Admin.GetFromJsonAsync<PagedResult<GroupDto>>("/api/v1/identity/groups?page=1&pageSize=50", Ct))!.Items;
+        all.ShouldAllBe(g => !g.Locked);
+
+        // a member of every group: all his top groups, nothing below them
+        foreach (var top in all.Where(g => g.ParentId is null && g.Id != _p))
+        {
+            await JoinAsync(top.Id, _manager);
+        }
+
+        var every = (await Manager.GetFromJsonAsync<PagedResult<GroupDto>>("/api/v1/identity/groups?page=1&pageSize=50", Ct))!.Items;
+        every.Count.ShouldBe(all.Count);
+        every.Where(g => g.Locked).Select(g => g.Id).ShouldBe(all.Where(g => g.ParentId is null).Select(g => g.Id), ignoreOrder: true);
+    }
+
+    [Fact]
+    public async Task A_sub_group_does_not_move_deep_into_another_top_group()
+    {
+        await JoinAsync(_p2, _manager);
+        var mid = await PostAsync<Guid>(Admin, "/api/v1/identity/groups", new GroupRequest("Mid", null, _p2));
+        var deep = await PostAsync<Guid>(Admin, "/api/v1/identity/groups", new GroupRequest("Deep", null, mid));
+
+        await LockedAsync(await Manager.PutAsJsonAsync($"/api/v1/identity/groups/{_s}/parent", new MoveGroupRequest(deep), Ct));
+        (await Manager.PutAsJsonAsync($"/api/v1/identity/groups/{_s}/parent", new MoveGroupRequest(_c), Ct)).EnsureSuccessStatusCode();
     }
 
     private static async Task LockedAsync(HttpResponseMessage response)

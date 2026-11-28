@@ -41,7 +41,7 @@ public sealed class AdminReach(CoworkeeDbContext db, ICurrentUser currentUser, I
         "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.");
 
     // keyed by the acting user: a CurrentUserScope inside the same DI scope must not reuse another user's reach
-    private readonly Dictionary<(Guid?, Guid?), (List<Guid>? Scoped, List<Guid>? Listed)> _groups = [];
+    private readonly Dictionary<(Guid?, Guid?), (List<Guid>? Scoped, List<Guid>? Listed, Guid? DefaultId)> _groups = [];
     private readonly Dictionary<(Guid?, Guid?), List<GroupNode>> _roots = [];
 
     /// <summary>The groups the caller administers; null for every group and user of the organisation.</summary>
@@ -146,7 +146,8 @@ public sealed class AdminReach(CoworkeeDbContext db, ICurrentUser currentUser, I
     /// <summary>The caller's top groups: his memberships (the default group aside) without another membership above them; null when tenant-wide.</summary>
     public async Task<IReadOnlyList<GroupNode>?> RootsAsync(CancellationToken ct)
     {
-        if ((await ReachAsync(ct)).Scoped is null)
+        var (scoped, _, defaultId) = await ReachAsync(ct);
+        if (scoped is null)
         {
             return null;
         }
@@ -154,7 +155,6 @@ public sealed class AdminReach(CoworkeeDbContext db, ICurrentUser currentUser, I
         var actor = (currentUser.UserId, currentUser.TenantId);
         if (!_roots.TryGetValue(actor, out var roots))
         {
-            var defaultId = await scope.DefaultGroupIdAsync(ct);
             var nodes = await scope.NodesAsync((await scope.MembershipsAsync(ct)).Where(id => id != defaultId), ct);
             _roots[actor] = roots = [.. nodes.Where(n => !nodes.Any(a => a.Code.Length > 0 && GroupCodes.IsDescendant(n.Code, a.Code)))];
         }
@@ -201,32 +201,28 @@ public sealed class AdminReach(CoworkeeDbContext db, ICurrentUser currentUser, I
 
     private async Task<List<Guid>?> ListAsync(CancellationToken ct) => (await ReachAsync(ct)).Listed;
 
-    private async Task<(List<Guid>? Scoped, List<Guid>? Listed)> ReachAsync(CancellationToken ct)
+    private async Task<(List<Guid>? Scoped, List<Guid>? Listed, Guid? DefaultId)> ReachAsync(CancellationToken ct)
     {
         // the system (ISystemDispatcher, CurrentUserScope.BeginSystem) acts for app code that decided the caller may cause the change
         if (!options.Value.GroupScopedAdministration || CurrentUserScope.Current is SystemActor)
         {
-            return (null, null);
+            return (null, null, null);
         }
 
         var actor = (currentUser.UserId, currentUser.TenantId);
         if (!_groups.TryGetValue(actor, out var reach))
         {
-            var scoped = await LoadAsync(ct);
-            var defaultId = await scope.DefaultGroupIdAsync(ct);
-            // an administrator of every group (also of an organisation without groups) is one of the whole organisation
-            var listed = scoped is null || scoped.Count == await db.Set<UserGroup>().CountAsync(g => g.Id != defaultId, ct) ? null : scoped;
-            _groups[actor] = reach = (scoped, listed);
+            _groups[actor] = reach = await LoadAsync(ct);
         }
 
         return reach;
     }
 
-    private async Task<List<Guid>?> LoadAsync(CancellationToken ct)
+    private async Task<(List<Guid>? Scoped, List<Guid>? Listed, Guid? DefaultId)> LoadAsync(CancellationToken ct)
     {
         if (await permissions.IsGrantedAsync(IdentityPermissions.Groups.ScopeAll, ct) || await AdminGuard.IsAdminAsync(db, currentUser.UserId, ct))
         {
-            return null;
+            return (null, null, null);
         }
 
         var defaultId = await scope.DefaultGroupIdAsync(ct);
@@ -246,7 +242,10 @@ public sealed class AdminReach(CoworkeeDbContext db, ICurrentUser currentUser, I
         }
 
         groups.Remove(defaultId ?? Guid.Empty);
-        return groups;
+
+        // an administrator of every group (also of an organisation without groups) is one of the whole organisation
+        var listed = groups.Count == await db.Set<UserGroup>().CountAsync(g => g.Id != defaultId, ct) ? null : groups;
+        return (groups, listed, defaultId);
     }
 
     private async Task<List<Guid>> MembershipsAsync(Guid userId, CancellationToken ct)
