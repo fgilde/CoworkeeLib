@@ -6,6 +6,7 @@
 
 ### Hinzugefügt
 
+- OData: `IODataQueries.GetByKeyAsync<T>(route, set, key, query, ct)` liest einen Datensatz im Prozess wie `GET /{route}/{set}({key})`: Datenfilter, die nicht für Details gelten, entfallen für den Datensatz, die Sets, die er erweitert, behalten ihre Listenfilter; er liefert die Entity mit gefüllten erweiterten Navigationen, `NotFound` für eine fehlende oder verborgene Zeile. Eigene Implementierungen von `IODataQueries` ergänzen den Member. Siehe [OData](../web/odata.md#abfragen-im-code).
 - Reporting: `NumberFormat.Decimal` („Zwei Nachkommastellen“) zeigt immer zwei Nachkommastellen; `WidgetOptions.ColumnOrder` ordnet die Wertspalten (eigene und Join-Werte) gruppierter Tabellen, in Tabelle, Mails und Arbeitsmappen, mit Nach-oben/unten im Widget-Panel. Siehe [Reporting](../modules/reporting.md).
 - Setup: einmalige Seed-Schritte. `ClaimOnceAsync(tenantId, name, ct)` (Erweiterung auf `CoworkeeDbContext`, `Coworkee.Settings`) liefert beim ersten Mal je Mandant true (`null`: Host) und fügt eine Marker-Einstellung hinzu, die das Speichern des Seeds ablegt; false, wenn ein Marker mit beliebigem Wert existiert oder noch ungespeichert ist. Siehe [Seed-Contributors](../fundamentals/persistence.md#seed-contributors).
 

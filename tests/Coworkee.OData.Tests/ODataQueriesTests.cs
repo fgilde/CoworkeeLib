@@ -2,9 +2,14 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Coworkee.Contracts.Data;
+using Coworkee.Contracts.DataFilters;
 using Coworkee.Contracts.Identity;
+using Coworkee.Contracts.Query;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
+using Coworkee.Infrastructure.Persistence;
+using Coworkee.OData.DataFilters;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.OData.Tests;
@@ -142,6 +147,11 @@ public sealed class ODataQueriesTests(ODataApp app) : IAsyncLifetime
         page.Shaped!.Single()["name"].ShouldBe("Books");
         page.Shaped!.Single().Keys.ShouldNotContain("summary");
         page.Shaped!.Single().Keys.ShouldNotContain("Summary");
+
+        // a key read hands out entities only: it refuses, typed or shaped
+        var books = await IdAsync<Ledger>("Books");
+        (await KeyReadAsync<Ledger>(_setup.AdminUserId, "rt/odata", "Ledgers", books.ToString(), null)).Error!.Kind.ShouldBe(ErrorKind.Forbidden);
+        (await KeyReadAsync<Ledger>(_setup.AdminUserId, "rt/odata", "Ledgers", books.ToString(), "$select=name")).Error!.Kind.ShouldBe(ErrorKind.Forbidden);
     }
 
     [Fact]
@@ -223,6 +233,81 @@ public sealed class ODataQueriesTests(ODataApp app) : IAsyncLifetime
         LightCount(page.Facets!).ShouldBe(1);
         LightCount(without.Facets!).ShouldBe(0);
     }
+
+    [Fact]
+    public async Task Key_reads_skip_filters_that_do_not_apply_to_details()
+    {
+        await FilterAsync("Gadgets", Rule("Category", QueryOperator.Equal, "Tools"), appliesToDetails: false);
+        var lamp = await IdAsync<Gadget>("Lamp");
+
+        // the list hides it, the key read opens it, as GET /odata/Gadgets(key) does
+        (await InProcessAsync<Gadget>(_viewer, "odata", "Gadgets", null)).Ok().Rows.Select(g => g.Name).ShouldBe(["Drill", "Hammer"], ignoreOrder: true);
+        var read = (await KeyReadAsync<Gadget>(_viewer, "odata", "Gadgets", lamp.ToString(), null)).Ok();
+        var http = await app.As(_viewer, _setup.TenantId).GetFromJsonAsync<JsonElement>($"/odata/Gadgets({lamp})", Ct);
+
+        read.Name.ShouldBe(http.GetProperty("Name").GetString());
+        read.Id.ShouldBe(lamp);
+        read.SerialCode.ShouldBeNull("hidden for everyone");
+        read.Category.ShouldBeNull("protected: left at its default");
+    }
+
+    [Fact]
+    public async Task Key_reads_keep_list_filters_on_expanded_sets()
+    {
+        // the root's details-off filter skips, the expanded bins keep theirs
+        await FilterAsync("Shelves", Rule("Name", QueryOperator.NotEqual, "Open"), appliesToDetails: false);
+        await FilterAsync("Bins", Rule("Size", QueryOperator.LessThan, "5"), appliesToDetails: false);
+        var open = await IdAsync<Shelf>("Open");
+
+        var shelf = (await KeyReadAsync<Shelf>(_binViewer, "rt/odata", "Shelves", open.ToString(), "$expand=bins($select=name),featured")).Ok();
+        var http = await app.As(_binViewer, _setup.TenantId).GetFromJsonAsync<JsonElement>($"/rt/odata/Shelves({open})?$expand=bins($select=name),featured", Ct);
+
+        shelf.Name.ShouldBe("Open");
+        shelf.Bins.Select(b => b.Name).ShouldBe(["Plain"]);
+        http.GetProperty("bins").EnumerateArray().Select(b => b.GetProperty("name").GetString()).ShouldBe(["Plain"]);
+        shelf.Featured!.Name.ShouldBe("Plain");
+        shelf.Featured.Size.ShouldBe(0, "protected for the bin viewer: left at its default");
+    }
+
+    [Fact]
+    public async Task Key_read_of_a_hidden_row_is_not_found()
+    {
+        await FilterAsync("Gadgets", Rule("Price", QueryOperator.GreaterThan, "50"));
+
+        // a filter that applies to details too, a row filter, a missing row
+        (await KeyReadAsync<Gadget>(_viewer, "odata", "Gadgets", (await IdAsync<Gadget>("Lamp")).ToString(), null)).Error!.Kind.ShouldBe(ErrorKind.NotFound);
+        (await KeyReadAsync<Gadget>(_viewer, "odata", "Gadgets", (await IdAsync<Gadget>("Vault")).ToString(), null)).Error!.Kind.ShouldBe(ErrorKind.NotFound);
+        (await KeyReadAsync<Gadget>(_viewer, "odata", "Gadgets", Guid.NewGuid().ToString(), null)).Error!.Kind.ShouldBe(ErrorKind.NotFound);
+        (await KeyReadAsync<Gadget>(_viewer, "odata", "Gadgets", (await IdAsync<Gadget>("Drill")).ToString(), null)).Ok().Name.ShouldBe("Drill");
+
+        // and what the key route refuses
+        (await KeyReadAsync<Gadget>(_viewer, "odata", "Gadgets", "not-a-guid", null)).Error!.Kind.ShouldBe(ErrorKind.Validation);
+        (await KeyReadAsync<Bin>(_viewer, "odata", "Bins", Guid.NewGuid().ToString(), null)).Error!.Kind.ShouldBe(ErrorKind.Forbidden);
+        (await KeyReadAsync<Shelf>(_viewer, "odata", "Shelves", (await IdAsync<Shelf>("Open")).ToString(), "$expand=Featured")).Error!.Kind.ShouldBe(ErrorKind.Forbidden);
+    }
+
+    private async Task<Result<T>> KeyReadAsync<T>(Guid user, string route, string set, string key, string? query)
+        where T : class
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(user, _setup.TenantId));
+        await using var scope = app.App.Services.CreateAsyncScope();
+        return await scope.ServiceProvider.GetRequiredService<IODataQueries>().GetByKeyAsync<T>(route, set, key, query, Ct);
+    }
+
+    private Task<Guid> IdAsync<T>(string name)
+        where T : Coworkee.Domain.Entity =>
+        app.InDbAsync(_setup.TenantId, db => db.Set<T>().Where(e => EF.Property<string>(e, "Name") == name).Select(e => e.Id).SingleAsync(Ct));
+
+    private async Task FilterAsync(string set, string query, bool appliesToDetails = true)
+    {
+        await using var scope = app.App.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<CoworkeeDbContext>();
+        db.Add(new DataFilter { TenantId = _setup.TenantId, EntitySet = set, Layer = DataFilterLayer.Tenant, Query = query, AppliesToDetails = appliesToDetails, Version = 1 });
+        await db.SaveChangesAsync(Ct);
+    }
+
+    private static string Rule(string field, QueryOperator op, string value) =>
+        QueryJson.Serialize(new QueryGroup { Children = [new QueryRule { Field = field, Operator = op, Value = value }] });
 
     private static int LightCount(IReadOnlyList<FacetGroupDto> facets) =>
         facets.Single(f => f.Key == "category").Options.Where(o => o.Label == "Light").Sum(o => o.Count);

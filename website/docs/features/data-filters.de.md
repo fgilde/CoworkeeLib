@@ -40,7 +40,7 @@ Die Gruppenebene entfällt für Benutzer mit `Identity.Groups.ScopeAll`, für Be
 
 ## Details und Zugriff über den Schlüssel
 
-Jeder Filter hat den Schalter **Gilt auch für Details**, standardmäßig an. An: Ein Link oder Schlüsselzugriff auf einen herausgefilterten Datensatz antwortet „nicht gefunden“. Aus: Die Liste blendet den Datensatz aus, der Schlüsselzugriff liefert ihn aber noch. Code, der einen einzelnen Datensatz über den Schlüssel liest, läuft in `DataFilterScope.ByKey()`; die OData-Pipeline macht das für Schlüsselanfragen, und was ein Datensatz expandiert, ist weiter eine Liste und bleibt gefiltert.
+Jeder Filter hat den Schalter **Gilt auch für Details**, standardmäßig an. An: Ein Link oder Schlüsselzugriff auf einen herausgefilterten Datensatz antwortet „nicht gefunden“. Aus: Die Liste blendet den Datensatz aus, der Schlüsselzugriff liefert ihn aber noch. Code, der einen einzelnen Datensatz über den Schlüssel liest, läuft in `DataFilterScope.ByKey()`; die OData-Pipeline macht das für Schlüsselanfragen und `IODataQueries.GetByKeyAsync` für Schlüsselzugriffe im Prozess, und was ein Datensatz expandiert, ist weiter eine Liste und bleibt gefiltert.
 
 ```csharp
 using (DataFilterScope.ByKey())

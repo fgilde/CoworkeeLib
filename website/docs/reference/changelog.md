@@ -6,6 +6,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Added
 
+- OData: `IODataQueries.GetByKeyAsync<T>(route, set, key, query, ct)` reads a record in process as `GET /{route}/{set}({key})` does: data filters that do not apply to details skip the record, the sets it expands keep their list filters; it returns the entity with its expanded navigations filled in, `NotFound` for a missing or hidden row. Own implementations of `IODataQueries` add the member. See [OData](../web/odata.md#queries-in-code).
 - Reporting: `NumberFormat.Decimal` ("Two decimals") always shows two decimals; `WidgetOptions.ColumnOrder` orders the value columns (own and joined) of grouped tables, in the table, mails and workbooks, with move up/down in the widget panel. See [Reporting](../modules/reporting.md).
 - Setup: one-time seed steps. `ClaimOnceAsync(tenantId, name, ct)` (extension on `CoworkeeDbContext`, `Coworkee.Settings`) is true the first time per tenant (`null`: host) and adds a marker setting the seed's save stores; false when a marker with any value exists or is still unsaved. See [Seed contributors](../fundamentals/persistence.md#seed-contributors).
 

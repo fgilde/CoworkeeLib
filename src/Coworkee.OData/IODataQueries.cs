@@ -25,4 +25,18 @@ public interface IODataQueries
     Task<Result<ODataQueryResult<T>>> QueryAsync<T>(string route, string entitySet, string? query, bool facets, FacetContextDto? facetContext,
         CancellationToken cancellationToken = default)
         where T : class;
+
+    /// <summary>
+    /// A key read in process: what <c>GET /{route}/{set}({key})?{query}</c> answers the current user. The record itself is read as the key route reads it
+    /// (the group selection does not narrow it, data filters that do not apply to details skip it); what it expands is a list with its list filters.
+    /// </summary>
+    /// <param name="route">The route prefix whose names the query uses, e.g. <c>odata</c> or <c>rt/odata</c>.</param>
+    /// <param name="key">The key's value as text, e.g. a Guid or <c>DE</c> (no OData quotes).</param>
+    /// <param name="query"><c>$select</c> and <c>$expand</c> only, e.g. <c>$expand=Lines($select=Name),Customer</c>.</param>
+    /// <returns>
+    /// The entity with its expanded navigations filled; members not selected, hidden or protected keep their default. NotFound when the row does not exist
+    /// or the user may not see it; Forbidden or Validation errors where the route answers 403 or 400.
+    /// </returns>
+    Task<Result<T>> GetByKeyAsync<T>(string route, string entitySet, string key, string? query = null, CancellationToken cancellationToken = default)
+        where T : class;
 }

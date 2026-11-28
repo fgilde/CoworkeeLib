@@ -65,6 +65,16 @@ var (rows, shaped, count, facets) = page.Value;
 
 `Rows` are the entities when the query does not shape them; what the route would not write (hidden or protected properties, members outside the model) is cleared to its default, through the setter, the field EF reads the member from, or the field of an auto-property. With `$select`, `$expand`, `$apply` or an `[AutoExpand]` navigation the rows are in `Shaped` instead: dictionaries by the route's names, expanded navigations nested, members the user may not read left out. A hidden or protected member, or one EF maps, that can be cleared none of these ways (a getter over a field EF does not know) puts the whole page into `Shaped` too: no entity is handed out with it. `Count` is set with `$count=true`, `Facets` when asked for, in the route's names; a page size of the model (`[Page(PageSize = 50)]`) cuts the rows as on the route. A query the route refuses comes back as a `Forbidden` or `Validation` error, a user who is not signed in as `Unauthorized`; a query the database cannot run is logged and comes back as a `Validation` error without its message, which could quote row filters.
 
+`GetByKeyAsync` is the key read, as `GET /{route}/{set}({key})`: the record opens as on the route (the group selection does not narrow it, [data filters](../features/data-filters.md) that do not apply to details skip it), while every set it expands is a list and keeps its list filters. It returns the entity, expanded navigations filled in; `$select` and `$expand` are its only options:
+
+```csharp
+var read = await odata.GetByKeyAsync<Shipment>("rt/odata", "Shipments", id.ToString(), "$expand=containers($select=number),customer", ct);
+if (!read.IsSuccess) return read.Error.ToHttpResult(); // NotFound: no such row, or hidden from the user
+var shipment = read.Value; // shipment.Containers holds the containers the user's list filters let through
+```
+
+The key is the key's value as text (a Guid, `DE`; no OData quotes). Members not selected, hidden or protected keep their default, as on `Rows`; an entity with such a member that cannot be cleared is not handed out (`Forbidden`), read it with `QueryAsync` and `Shaped`. `NotFound` stands for a missing row and a row the user may not see alike; a key that does not parse, another option than `$select`/`$expand`, or an expand the route refuses come back as `Validation` or `Forbidden`.
+
 An endpoint that answers a `CoworkeeDataTable` (its `DataSource`) passes the table's facet choice on, so each facet group counts without its own choice as on the route: `ODataQuery.FacetContext` on the client, the `Coworkee-Facets` header on the request, `FacetContextDto.Decode(header)` and `odata.QueryAsync<T>(route, set, query, facets: true, facetContext, ct)` on the server. Without it every group counts with the whole filter. The table asks for its facets in a request of their own (`Top = 0`, `Facets = true`, no count) and for its rows without facets, so the endpoint answers both kinds.
 
 ### The model from EF

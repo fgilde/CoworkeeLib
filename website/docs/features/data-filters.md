@@ -40,7 +40,7 @@ The group layer is skipped for users with `Identity.Groups.ScopeAll`, for users 
 
 ## Details and key reads
 
-Every filter has an **Applies to details too** switch, on by default. On, a link or key access to a filtered-out record answers "not found". Off, the list hides the record but key access still returns it. Code that reads a single record by key runs inside `DataFilterScope.ByKey()`; the OData pipeline does this for key requests, and what a record expands is still a list and stays filtered.
+Every filter has an **Applies to details too** switch, on by default. On, a link or key access to a filtered-out record answers "not found". Off, the list hides the record but key access still returns it. Code that reads a single record by key runs inside `DataFilterScope.ByKey()`; the OData pipeline does this for key requests and `IODataQueries.GetByKeyAsync` for key reads in process, and what a record expands is still a list and stays filtered.
 
 ```csharp
 using (DataFilterScope.ByKey())
