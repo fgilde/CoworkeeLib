@@ -4,6 +4,7 @@ using Coworkee.Client.Blazor.Reporting.Components;
 using Coworkee.Client.Blazor.Reporting.State;
 using Coworkee.Client.Blazor.Reporting.Widgets;
 using Coworkee.Contracts.Reporting;
+using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 using NSubstitute;
 
@@ -22,6 +23,27 @@ public sealed class ComputedSourceTests : ReportingTestBase
     public ComputedSourceTests() => Reports.GetSourcesAsync(default).ReturnsForAnyArgs([Orders, Headcount]);
 
     private ReportState Both(params ReportWidget[] widgets) => new(new ReportDefinition { Widgets = [.. widgets] }, [Orders, Headcount]);
+
+    private async Task GermanAsync(params (string, string)[] texts)
+    {
+        var api = Services.GetRequiredService<Blazor.Localization.ILocalizationApi>();
+        api.GetLanguagesAsync(default).ReturnsForAnyArgs([new Contracts.Localization.LanguageDto(null, "de", "Deutsch", true, true)]);
+        api.GetTextsAsync(default!, default).ReturnsForAnyArgs(new Contracts.Localization.TextsDto("de", texts.ToDictionary(t => t.Item1, t => t.Item2)));
+        await Services.GetRequiredService<Blazor.Localization.CoworkeeLocalizer>().InitializeAsync("de");
+    }
+
+    [Fact]
+    public async Task Currency_titles_are_translated_before_the_currency_is_filled()
+    {
+        await GermanAsync(("Total cost in {currency}", "Gesamtkosten in {currency}"), ("Costs of {currency}", "Kosten in {currency}"));
+        var widget = new ReportWidget { Type = WidgetType.Table, Title = "Total cost in {currency}", Subtitle = "Costs of {currency}", Query = new WidgetQuery { EntitySet = "HeadcountByMonth", Columns = ["Headcount"] } };
+        Reports.RowsAsync(default!, default).ReturnsForAnyArgs(new ReportRowsResult([], 0));
+
+        var frame = Render<WidgetFrame>(p => p.Add(x => x.Widget, widget).Add(x => x.State, new ReportState(new ReportDefinition { Widgets = [widget] }, [Orders, Headcount with { Currency = "USD" }])));
+
+        frame.Find(".cw-widget-title").TextContent.ShouldBe("Gesamtkosten in USD");
+        frame.Find(".cw-widget-subtitle").TextContent.ShouldBe("Kosten in USD");
+    }
 
     [Fact]
     public void A_chart_groups_a_computed_source_by_month_within_the_reports_date_range()

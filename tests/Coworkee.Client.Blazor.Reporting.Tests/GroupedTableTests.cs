@@ -197,6 +197,28 @@ public sealed class GroupedTableTests : ReportingTestBase
     }
 
     [Fact]
+    public async Task Report_page_reloads_when_data_filters_change()
+    {
+        var connection = Substitute.For<Realtime.IRealtimeConnection>();
+        Action<Contracts.Realtime.RealtimeEnvelope>? push = null;
+        connection.When(c => c.OnEvent(Arg.Any<Action<Contracts.Realtime.RealtimeEnvelope>>())).Do(call => push = call.Arg<Action<Contracts.Realtime.RealtimeEnvelope>>());
+        Services.AddSingleton(connection);
+        var id = Guid.NewGuid();
+        Reports.GetReportAsync(id, default).ReturnsForAnyArgs(new ReportDto(id, "Lanes", null, null, ReportVisibility.Private, [], "Ada", true, false,
+            new ReportDefinition { Widgets = [Lanes()] }, DateTimeOffset.UtcNow));
+        Reports.TableAsync(default!, default).ReturnsForAnyArgs(Page(false));
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"reports/{id}");
+        var page = Render<Pages.ReportPage>(p => p.Add(x => x.Id, id));
+        page.WaitForAssertion(() => Reports.ReceivedWithAnyArgs().TableAsync(default!, default));
+        var before = Reports.ReceivedCalls().Count(c => c.GetMethodInfo().Name == "TableAsync");
+
+        push!(new Contracts.Realtime.RealtimeEnvelope(Contracts.DataFilters.DataFilterTopics.TenantChanged, Contracts.Realtime.RealtimeEventTypes.EntityChanged, default));
+
+        page.WaitForAssertion(() => Reports.ReceivedCalls().Count(c => c.GetMethodInfo().Name == "TableAsync").ShouldBeGreaterThan(before), TimeSpan.FromSeconds(6));
+        await Task.CompletedTask;
+    }
+
+    [Fact]
     public void Values_show_their_own_format_and_unit_and_the_currency_of_their_own_set()
     {
         Reports.TableAsync(default!, default).ReturnsForAnyArgs(Page(false, Row("North", "Open", 3, 1200.5, 400.25, 70)));
@@ -216,6 +238,24 @@ public sealed class GroupedTableTests : ReportingTestBase
             ReportNumbers.Format(400.25, new WidgetOptions { Format = NumberFormat.Integer }, CultureInfo.CurrentCulture) + " kg",
             ReportNumbers.Format(70, new WidgetOptions { Format = NumberFormat.Currency, Currency = "USD" }, CultureInfo.CurrentCulture),
         ]);
+    }
+
+    [Fact]
+    public async Task Units_are_translated()
+    {
+        var api = Services.GetRequiredService<Blazor.Localization.ILocalizationApi>();
+        api.GetLanguagesAsync(default).ReturnsForAnyArgs([new Contracts.Localization.LanguageDto(null, "de", "Deutsch", true, true)]);
+        api.GetTextsAsync(default!, default).ReturnsForAnyArgs(new Contracts.Localization.TextsDto("de", new Dictionary<string, string> { ["days"] = "Tage" }));
+        await Services.GetRequiredService<Blazor.Localization.CoworkeeLocalizer>().InitializeAsync("de");
+        Reports.TableAsync(default!, default).ReturnsForAnyArgs(Page(false, Row("North", "Open", 3, 1200.5, 400.25, null)));
+        var widget = Lanes();
+        widget.Query!.Aggregates = [new(), new(AggregateFunction.Sum, "Total", "Revenue", Unit: "days")];
+        widget.Query.Joins[0].Aggregates = [];
+        widget.Options.Format = NumberFormat.Integer;
+
+        var frame = Render<WidgetFrame>(p => p.Add(x => x.Widget, widget).Add(x => x.State, StateOf(widget)));
+
+        frame.WaitForAssertion(() => frame.FindAll("[data-testid='grouped-row'] td").Skip(2).Select(c => c.TextContent.Trim()).ShouldContain(t => t.EndsWith(" Tage")));
     }
 
     [Fact]

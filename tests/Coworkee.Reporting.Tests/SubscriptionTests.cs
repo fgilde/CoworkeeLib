@@ -218,6 +218,35 @@ public sealed partial class SubscriptionTests(ReportingApp app) : ReportingTestB
     }
 
     [Fact]
+    public async Task Mails_translate_currency_titles_and_units()
+    {
+        var language = App.App.Services.GetRequiredService<TestDefaultLanguage>();
+        language.Culture = "de";
+        try
+        {
+            CostRows.Currencies[Setup.AdminUserId] = "CHF";
+            var report = await CreateReportAsync(Report() with { Definition = new ReportDefinition { Widgets =
+            [
+                new ReportWidget { Id = "costs", Type = WidgetType.GroupedTable, Title = "Translated cost in {currency}", Query = new WidgetQuery
+                {
+                    EntitySet = "PlainCosts", GroupFields = ["Code"], Aggregates = [new(AggregateFunction.Average, "Amount", "Weight", Unit: "days")], OrderBy = "Code",
+                } },
+            ] } });
+            var subscription = await SubscribeAsync(Admin, report.Id);
+
+            await RunDueAsync(subscription.Id);
+
+            var html = (await MailsAsync()).Single().Mail.HtmlBody;
+            html.ShouldContain("Kosten in");
+            html.ShouldContain(" Tage<");
+        }
+        finally
+        {
+            language.Culture = null;
+        }
+    }
+
+    [Fact]
     public async Task A_failing_currency_resolver_does_not_stop_the_mail()
     {
         var report = await CreateReportAsync(Report() with { Definition = new ReportDefinition { Widgets =

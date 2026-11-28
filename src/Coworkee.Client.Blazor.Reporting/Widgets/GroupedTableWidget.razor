@@ -27,7 +27,7 @@
                         {
                             @if (column.Aggregate is { } aggregate)
                             {
-                                <td class="number">@ReportTableColumns.Format(row.Values.ElementAtOrDefault(column.Index - Keys), aggregate, Widget.Options, currency: Currency(column))</td>
+                                <td class="number">@ReportTableColumns.Format(row.Values.ElementAtOrDefault(column.Index - Keys), aggregate, Widget.Options, currency: Currency(column), translate: L.Stored)</td>
                             }
                             else
                             {

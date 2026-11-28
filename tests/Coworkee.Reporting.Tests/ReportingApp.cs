@@ -160,6 +160,7 @@ public sealed class SalesReportingModule : CoworkeeModule
         context.Services.AddScoped<IODataEntityFilter<Shopper>, HideShopperSeven>();
         context.Services.AddSingleton<TestDefaultLanguage>();
         context.Services.AddScoped<Coworkee.Application.Localization.IDefaultLanguage>(sp => sp.GetRequiredService<TestDefaultLanguage>());
+        context.Services.AddSingleton<Coworkee.Application.Localization.ITextTranslator, TestGerman>();
         context.Services.AddSingleton<FakeAi>();
         context.Services.AddSingleton<Coworkee.Application.Ai.IAiTextGenerator>(provider => provider.GetRequiredService<FakeAi>());
         context.Services.AddReportSource<MonthlyNumber>("MonthlyNumbers", "Monthly numbers", MonthlyNumbers.ViewNumbers, MonthlyNumbers.RowsAsync);
@@ -170,6 +171,14 @@ public sealed class SalesReportingModule : CoworkeeModule
             (_, _) => throw new InvalidOperationException("preferences are down"));
         context.Services.AddReportSource<CostRow>("PlainCosts", "Plain costs", MonthlyNumbers.ViewNumbers, CostRows.RowsAsync);
     }
+}
+
+/// <summary>A few German texts of the report mails.</summary>
+public sealed class TestGerman : Coworkee.Application.Localization.ITextTranslator
+{
+    private static readonly Dictionary<string, string> Texts = new() { ["Translated cost in {currency}"] = "Kosten in {currency}", ["days"] = "Tage" };
+
+    public string? Translate(string text, System.Globalization.CultureInfo culture) => culture.Name == "de" && Texts.TryGetValue(text, out var found) ? found : null;
 }
 
 /// <summary>The organisation's default language of the tests; null like an app without one.</summary>

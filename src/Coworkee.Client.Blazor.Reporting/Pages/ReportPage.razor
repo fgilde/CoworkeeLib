@@ -3,6 +3,8 @@
 <ReportStyles />
 <PageTitle>@(L.Stored(_report?.Name) ?? L["Reports"])</PageTitle>
 <RealtimeSubscription Topic="@($"entity:Report:{Id}")" OnEvent="_ => ReportChangedAsync()" />
+<RealtimeSubscription Topic="@Coworkee.Contracts.DataFilters.DataFilterTopics.TenantChanged" OnEvent="_ => DataChanged()" />
+<RealtimeSubscription Topic="@Coworkee.Contracts.DataFilters.DataFilterTopics.Changed" OnEvent="_ => DataChanged()" />
 @foreach (var topic in DataTopics)
 {
     <RealtimeSubscription @key="topic" Topic="@topic" OnEvent="_ => DataChanged()" />

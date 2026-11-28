@@ -11,7 +11,9 @@ internal sealed class ReportMailWidget(
 {
     private const string Ink = "#16140f";
 
-    private string Title => widget.Title is { Length: > 0 } title ? text(title, culture) : text(Querying.ReportSchema.Humanize(widget.Type.ToString()), culture);
+    private bool _translated;
+
+    private string Title => widget.Title is { Length: > 0 } title ? (_translated ? title : text(title, culture)) : text(Querying.ReportSchema.Humanize(widget.Type.ToString()), culture);
 
     public async Task<(object Model, ReportSheetRequest? Sheet)> BuildAsync(CancellationToken cancellationToken)
     {
@@ -21,7 +23,8 @@ internal sealed class ReportMailWidget(
             return (Failed(text("You may not read this data.", culture)), null);
         }
 
-        widget = ReportViews.WithSourceCurrency(widget, await queries.CurrencyAsync(source, cancellationToken));
+        widget = ReportViews.WithSourceCurrency(widget, await queries.CurrencyAsync(source, cancellationToken), t => text(t, culture));
+        _translated = true;
         var filter = FilterOf(query, definition, sources, today);
         try
         {
@@ -159,7 +162,7 @@ internal sealed class ReportMailWidget(
         List<string> headers = [.. shown.Select(c => c.Aggregate is { } aggregate ? Header(c, aggregate, source) : FieldLabel(source, c.Field))];
         var rows = result.Value.Rows.Select(r => (IReadOnlyList<object?>)[.. shown.Select(c => c.Index < keys ? Key(r.Keys[c.Index]) : (object?)r.Values[c.Index - keys])]).ToList();
         var cells = rows.Select(r => (IReadOnlyList<object?>)[.. r.Select((cell, i) => shown[i].Aggregate is { } aggregate
-            ? ReportTableColumns.Format((double?)cell, aggregate, widget.Options, culture, shown[i].Join is null ? null : currencies.GetValueOrDefault(shown[i].EntitySet))
+            ? ReportTableColumns.Format((double?)cell, aggregate, widget.Options, culture, shown[i].Join is null ? null : currencies.GetValueOrDefault(shown[i].EntitySet), t => text(t, culture))
             : cell)]).ToList();
         return (Table(headers, cells, cell => cell?.ToString() ?? string.Empty, shown: ReportTableColumns.PageSize, more: result.Value.More), Sheet(headers, rows));
     }

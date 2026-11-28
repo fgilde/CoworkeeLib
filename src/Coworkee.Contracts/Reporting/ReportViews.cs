@@ -129,13 +129,13 @@ public static class ReportViews
 
     /// <summary>
     /// A copy of the widget that shows the currency its source states for the user (<paramref name="sourceCurrency"/>) and with <c>{currency}</c> in title and subtitle
-    /// replaced by the effective currency code; the widget itself when there is nothing to change.
+    /// replaced by the effective currency code (title and subtitle are translated first when <paramref name="translate"/> is given); the widget itself when there is nothing to change.
     /// </summary>
-    public static ReportWidget WithSourceCurrency(ReportWidget widget, string? sourceCurrency)
+    public static ReportWidget WithSourceCurrency(ReportWidget widget, string? sourceCurrency, Func<string, string>? translate = null)
     {
         const string Placeholder = "{currency}";
         var code = string.IsNullOrWhiteSpace(sourceCurrency) ? null : sourceCurrency;
-        if (code is null && widget.Title?.Contains(Placeholder, StringComparison.Ordinal) != true && widget.Subtitle?.Contains(Placeholder, StringComparison.Ordinal) != true)
+        if (translate is null && code is null && widget.Title?.Contains(Placeholder, StringComparison.Ordinal) != true && widget.Subtitle?.Contains(Placeholder, StringComparison.Ordinal) != true)
         {
             return widget;
         }
@@ -143,9 +143,12 @@ public static class ReportViews
         var copy = JsonSerializer.Deserialize<ReportWidget>(JsonSerializer.Serialize(widget, Json), Json)!;
         copy.Options.Currency = code ?? copy.Options.Currency;
         var effective = ReportNumbers.Currency(copy.Options);
-        copy.Title = copy.Title?.Replace(Placeholder, effective, StringComparison.Ordinal);
-        copy.Subtitle = copy.Subtitle?.Replace(Placeholder, effective, StringComparison.Ordinal);
+        // translated first: the stored texts carry the literal {currency}
+        copy.Title = Fill(copy.Title);
+        copy.Subtitle = Fill(copy.Subtitle);
         return copy;
+
+        string? Fill(string? text) => text is { Length: > 0 } ? (translate?.Invoke(text) ?? text).Replace(Placeholder, effective, StringComparison.Ordinal) : text;
     }
 
     private static bool Is(string? field, string other) => string.Equals(field, other, StringComparison.OrdinalIgnoreCase);

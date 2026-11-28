@@ -72,13 +72,13 @@ public static class ReportTableColumns
 
     /// <summary>
     /// A value as the table shows it: in its own <see cref="ReportAggregate.Format"/>, else counts as whole numbers and other values in the widget's format, with its
-    /// <see cref="ReportAggregate.Unit"/>; "–" for none. <paramref name="currency"/> is the currency of the value's own set (null: the widget's).
+    /// <see cref="ReportAggregate.Unit"/>; "–" for none. <paramref name="currency"/> is the currency of the value's own set (null: the widget's); <paramref name="translate"/> translates the unit.
     /// </summary>
-    public static string Format(double? value, ReportAggregate aggregate, WidgetOptions options, CultureInfo? culture = null, string? currency = null)
+    public static string Format(double? value, ReportAggregate aggregate, WidgetOptions options, CultureInfo? culture = null, string? currency = null, Func<string, string>? translate = null)
     {
         var format = aggregate.Format ?? (aggregate.Function is AggregateFunction.Count or AggregateFunction.DistinctCount ? NumberFormat.Integer : options.Format);
         var text = ReportNumbers.Format(value, new WidgetOptions { Format = format, Currency = string.IsNullOrWhiteSpace(currency) ? options.Currency : currency }, culture);
-        return value is null || string.IsNullOrWhiteSpace(aggregate.Unit) ? text : $"{text} {aggregate.Unit.Trim()}";
+        return value is null || string.IsNullOrWhiteSpace(aggregate.Unit) ? text : $"{text} {(translate is null ? aggregate.Unit.Trim() : translate(aggregate.Unit.Trim()))}";
     }
 
     private static bool Names(Column column, string name) => string.Equals(column.Name, name.Trim(), StringComparison.OrdinalIgnoreCase);
