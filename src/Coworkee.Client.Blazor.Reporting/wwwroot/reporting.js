@@ -55,13 +55,22 @@ export async function init(element, dotnet, editable, columns, cellHeight) {
         }
     });
     element._grid = grid;
+    element._columns = columns;
 }
 
 export function setEditable(element, editable) {
     element._grid?.setStatic(!editable);
 }
 
-/** Takes up items Blazor added and lets go of those it removed. */
+const gridItems = element => element.querySelectorAll(':scope > .grid-stack-item');
+// GridStack writes its position into the gs-* attributes (gs-w and gs-h left out for 1)
+const attributes = item => [item.getAttribute('gs-x') ?? 0, item.getAttribute('gs-y') ?? 0, item.getAttribute('gs-w') ?? 1, item.getAttribute('gs-h') ?? 1].join(',');
+const position = node => [node.x ?? 0, node.y ?? 0, node.w ?? 1, node.h ?? 1].join(',');
+
+/**
+ * Takes up items Blazor added, lets go of those it removed and moves those Blazor gave another position (e.g. the reader's layout gives way
+ * to the saved one when designing starts): GridStack keeps the gs-* attributes at its own positions, so differing ones are Blazor's.
+ */
 export function sync(element) {
     const grid = element._grid;
     if (!grid) {
@@ -73,7 +82,14 @@ export function sync(element) {
             grid.removeWidget(node.el, false, false);
         }
     }
-    for (const item of element.querySelectorAll(':scope > .grid-stack-item')) {
+    // moved items are taken out first and placed again with the new ones: updated one by one they would push each other around.
+    // Not in the one column view on phones: its positions are GridStack's own and differ anyway
+    for (const item of grid.getColumn() === element._columns ? gridItems(element) : []) {
+        if (item.gridstackNode && attributes(item) !== position(item.gridstackNode)) {
+            grid.removeWidget(item, false, false);
+        }
+    }
+    for (const item of gridItems(element)) {
         if (!item.gridstackNode) {
             grid.makeWidget(item);
         }

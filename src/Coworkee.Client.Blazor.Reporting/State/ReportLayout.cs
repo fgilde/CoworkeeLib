@@ -23,8 +23,8 @@ public static class ReportLayout
         {
             var shown = row.Where(boxes.ContainsKey).OrderBy(w => w.X).ToList();
             var (from, to) = (row.Min(w => w.X), row.Max(w => w.X + w.W));
-            // another widget inside the span (e.g. a taller one between the tiles) keeps the row as it is
-            if (shown.Count == 0 || visible.Except(shown).Any(w => w.X < to && w.X + w.W > from && w.Y < row.Key.Y + row.Key.H && w.Y + w.H > row.Key.Y))
+            // another widget inside the span (e.g. a taller one between the tiles, or a row widened before) keeps the row as it is
+            if (shown.Count == 0 || visible.Except(shown).Select(w => boxes[w]).Any(b => b.X < to && b.X + b.W > from && b.Y < row.Key.Y + row.Key.H && b.Y + b.H > row.Key.Y))
             {
                 continue;
             }
@@ -44,11 +44,14 @@ public static class ReportLayout
         {
             var (x, y, w, h) = boxes[widget];
             y -= Enumerable.Range(0, y).Count(r => !used.Contains(r));
-            return (x, y, w, h) == (widget.X, widget.Y, widget.W, widget.H) ? widget : new ReportWidget
-            {
-                Id = widget.Id, Type = widget.Type, Title = widget.Title, Subtitle = widget.Subtitle, Query = widget.Query, Options = widget.Options, AppData = widget.AppData,
-                X = x, Y = y, W = w, H = h,
-            };
+            return (x, y, w, h) == (widget.X, widget.Y, widget.W, widget.H) ? widget : At(widget, x, y, w, h);
         })];
     }
+
+    // a test checks that every settable property of ReportWidget is copied
+    internal static ReportWidget At(ReportWidget widget, int x, int y, int w, int h) => new()
+    {
+        Id = widget.Id, Type = widget.Type, Title = widget.Title, Subtitle = widget.Subtitle, Query = widget.Query, Options = widget.Options, AppData = widget.AppData,
+        X = x, Y = y, W = w, H = h,
+    };
 }

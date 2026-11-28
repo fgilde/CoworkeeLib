@@ -65,6 +65,39 @@ public sealed class ReportLayoutTests : ReportingTestBase
     }
 
     [Fact]
+    public void Staggered_rows_do_not_widen_over_each_other()
+    {
+        // row Y0: a and a hidden tile at X6; row Y1 (overlapping rows 1-2): a hidden tile at X3 and b
+        ReportWidget[] all = [Tile("a", 0, 0, 3, 2), Tile("hidden1", 6, 0, 3, 2), Tile("hidden2", 3, 1, 3, 2), Tile("b", 9, 1, 3, 2)];
+
+        var laid = ReportLayout.ForReader(all, [all[0], all[3]]);
+
+        Positions(laid).ShouldBe([(0, 0, 9, 2), (9, 1, 3, 2)]);
+    }
+
+    [Fact]
+    public void A_moved_widget_copies_every_property_but_its_position()
+    {
+        var widget = new ReportWidget();
+        var properties = typeof(ReportWidget).GetProperties().Where(p => p.CanWrite && p.Name is not ("X" or "Y" or "W" or "H")).ToList();
+        foreach (var property in properties)
+        {
+            var type = property.PropertyType;
+            property.SetValue(widget, type == typeof(string) ? "value" : type.IsEnum ? Enum.GetValues(type).Cast<object>().Last()
+                : type == typeof(bool) ? true : type == typeof(int) ? 7 : Activator.CreateInstance(type));
+        }
+
+        var moved = ReportLayout.At(widget, 1, 2, 3, 4);
+
+        foreach (var property in properties)
+        {
+            (property.GetValue(moved), property.Name).ShouldBe((property.GetValue(widget), property.Name));
+        }
+
+        (moved.X, moved.Y, moved.W, moved.H).ShouldBe((1, 2, 3, 4));
+    }
+
+    [Fact]
     public void Nothing_hidden_keeps_the_saved_widgets()
     {
         var all = KpiRow();
@@ -104,5 +137,19 @@ public sealed class ReportLayoutTests : ReportingTestBase
         var page = Open(true, KpiRow());
 
         GridItems(page).ShouldBe([("a", "0", "1", "3", "2"), ("cost", "3", "1", "3", "2"), ("c", "6", "1", "3", "2"), ("d", "9", "1", "3", "2")]);
+    }
+
+    [Fact]
+    public void Designing_after_reading_hands_the_saved_positions_to_the_grid()
+    {
+        var page = Open(false, KpiRow());
+        page.WaitForAssertion(() => Grid.Invocations["init"].ShouldNotBeEmpty());
+        var syncs = Grid.Invocations["sync"].Count;
+
+        page.Find("[data-testid='report-edit']").Click();
+
+        // the same items (same keys) get their saved attributes back; sync (reporting.js) moves GridStack's items to them
+        page.WaitForAssertion(() => GridItems(page).ShouldBe([("a", "0", "1", "3", "2"), ("cost", "3", "1", "3", "2"), ("c", "6", "1", "3", "2"), ("d", "9", "1", "3", "2")]));
+        Grid.Invocations["sync"].Count.ShouldBeGreaterThan(syncs);
     }
 }
