@@ -18,6 +18,10 @@
 - Identity: `GET /api/v1/identity/groups/locked` (`GetLockedGroups`, `Identity.Groups.View`; Client `ICoworkeeApi.GetLockedGroupIdsAsync`) listet die eigenen obersten Gruppen des Aufrufers unter gruppenbezogener Verwaltung, leer für mandantenweite Aufrufer.
 - Admin-Oberfläche: Ein beschränkter Gruppenverwalter sieht die Datenfilter seiner eigenen obersten Gruppen auf der Gruppenseite schreibgeschützt (als Text unter „Von einem übergeordneten Administrator festgelegt“; `DataFilterList` bekommt `ReadOnly`, `DataFilterEditor` ebenso) und bearbeitet die der Gruppen darunter. Verschieben und Löschen seiner eigenen obersten Gruppen sind auf jedem Knoten mit Tooltip deaktiviert, ihr Reiter Rollen ist schreibgeschützt und nennt den Grund, Umbenennen bleibt (`GroupGeneralTab` und `GroupNodeMenu` bekommen `Locked`). Der Reiter Datenfilter einer Rollenseite zeigt „Diese Filter verwaltet nur ein Administrator aller Gruppen.“, wenn die Liste abgelehnt wird (`403`), statt eines Fehlers. Siehe [Datenfilter](../features/data-filters.de.md#gruppenbezogene-verwaltung).
 
+### Behoben
+
+- Reporting: Widgets, die ein Leser nicht bekommt, hinterlassen keine Lücke im Board (nicht im Designer; das gespeicherte Layout bleibt): Die anderen Widgets ihrer Zeile (gleiches `Y` und `H`) teilen sich deren Breite, auf ganze Spalten skaliert, und leere Zeilen rücken nach oben (`ReportLayout.ForReader`). Eine gemerkte Wertauswahl auf einer gruppierten Tabelle bringt keine Joins auf Mengen mehr zurück, die der Leser nicht lesen darf (vorher ein Fehlerblock). Apps können CSS entfernen, das solche Zeilen gestreckt hat. Siehe [Reporting](../modules/reporting.md#umschalter-fur-betrachter).
+
 ## 0.1.10 (2026-11-28)
 
 ### Behoben

@@ -18,6 +18,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 - Identity: `GET /api/v1/identity/groups/locked` (`GetLockedGroups`, `Identity.Groups.View`; client `ICoworkeeApi.GetLockedGroupIdsAsync`) lists the caller's own top groups under group-scoped administration, empty for tenant-wide callers.
 - Admin UI: a scoped group administrator sees the data filters of his own top groups read-only on the Groups page (as text under "Set by an administrator above you"; `DataFilterList` gets `ReadOnly`, `DataFilterEditor` too) and edits those of the groups below. Move and Delete of his own top groups are disabled with a tooltip on every node, their Roles tab is read-only with the reason, renaming stays (`GroupGeneralTab` and `GroupNodeMenu` get `Locked`). A role page's Data filters tab shows "Only an administrator of every group manages these filters." when the list is refused (`403`) instead of an error. See [Data filters](../features/data-filters.md#group-scoped-administration).
 
+### Fixed
+
+- Reporting: widgets a reader does not get leave no gap on the board (not while designing; the saved layout stays): the other widgets of their row (same `Y` and `H`) share its width, scaled to whole columns, and empty rows close upward (`ReportLayout.ForReader`). A remembered value choice on a grouped table no longer brings back joins on sets the reader may not read (error block before). Apps can drop CSS that stretched such rows. See [Reporting](../modules/reporting.md#switches-for-viewers).
+
 ## 0.1.10 (2026-11-28)
 
 ### Fixed

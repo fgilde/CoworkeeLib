@@ -208,6 +208,33 @@ public sealed class ViewSwitchTests : ReportingTestBase
     }
 
     [Fact]
+    public void Grouped_table_with_a_stored_value_choice_drops_unreadable_joins()
+    {
+        var widget = new ReportWidget
+        {
+            Id = "c", Type = WidgetType.GroupedTable, Title = "Lanes",
+            Query = new WidgetQuery
+            {
+                EntitySet = "SalesOrders", GroupFields = ["Region"], Aggregates = [new()],
+                Joins = [new WidgetJoin { EntitySet = "InsightCosts", Aggregates = [new(AggregateFunction.Sum, "TotalCost", "Cost")] }],
+            },
+            Options = new WidgetOptions { Metrics = [new MetricView("Orders", [new()])] },
+        };
+        Settings.GetSettingsAsync(SettingScope.User, default).ReturnsForAnyArgs([new SettingValueDto(TableSettings.ReportViews, "{\"" + ReportId.ToString("N") + ":c\":{\"metric\":0}}", true)]);
+        // the server refuses a join on a set the reader may not read
+        Reports.TableAsync(default!, default).ReturnsForAnyArgs(call => call.Arg<ReportTableRequest>().Joins is { Count: > 0 }
+            ? throw new ApiException(403, "forbidden", null)
+            : new ReportTableResult([new([new ReportKey("North", "North", "Region eq 'North'")], [3])], false, 1));
+
+        var frame = Render<WidgetFrame>(p => p.Add(x => x.Widget, widget).Add(x => x.State, State(widget)).Add(x => x.ReportId, ReportId));
+
+        frame.WaitForAssertion(() => frame.FindAll("[data-testid='grouped-row']").Count.ShouldBe(1));
+        frame.FindAll("[data-testid='widget-error']").ShouldBeEmpty();
+        frame.FindAll("[data-testid='grouped-table'] th").Select(h => h.TextContent.Trim()).ShouldNotContain("Cost");
+        Reports.DidNotReceive().TableAsync(Arg.Is<ReportTableRequest>(r => r.Joins != null && r.Joins.Count > 0), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public void A_report_leaves_out_widgets_without_a_readable_metric()
     {
         var id = Guid.NewGuid();

@@ -311,7 +311,21 @@ A widget can offer viewers other values and groupings without a second widget: *
 - **Values** (`WidgetOptions.Metrics`, a list of `MetricView`): label, aggregates, number format and an extra OData filter that is and-ed to the widget's own. KPIs, charts and pivots switch their values; tables only take the filter (e.g. *Open orders* next to *All*). `EntitySet` shows the value from another data set, e.g. costs of `InsightCosts` next to counts of the shipments; field, filter and the widget's grouping then refer to that set, and saving checks them against it.
 - **Groupings** (`WidgetOptions.Buckets`, a list of `BucketView`): label, group-by field and date bucket, and optionally another date field for the report's date range. Charts and pivots regroup; KPIs change the bucket of their curve. `SplitBy` splits the series by another field, `NoSplit = true` shows no series (e.g. *Year* split by transport mode, *Month* without a split).
 
-**Rights:** the source list only holds data sets the user may read. A choice on an unreadable set is not offered (the indices stay the author's); a widget whose own set is unreadable shows its first readable value instead, and one without any is left out of the report (`ReportViews.ForReader`). A viewer without the financial permission therefore sees neither cost values nor cost widgets and gets no error. The report also reloads when the user's group selection changes (`GroupScopeState.Changed`).
+**Rights:** the source list only holds data sets the user may read. A choice on an unreadable set is not offered (the indices stay the author's); a widget whose own set is unreadable shows its first readable value instead, and one without any is left out of the report (`ReportViews.ForReader`). A viewer without the financial permission therefore sees neither cost values nor cost widgets and gets no error. A widget left out leaves no gap (`ReportLayout.ForReader`, not while designing; the saved layout stays): the other widgets of its row (same `Y` and `H`) share the row's width, scaled to whole columns with the rest to the last, and rows nobody fills close upward. A remembered value choice keeps the reader's joins, so a grouped table never shows the columns of a joined set he may not read.
+
+```csharp
+// KPI row: four tiles of width 3; without the cost permission the cost tile is left out
+Widgets =
+[
+    new() { Type = WidgetType.Kpi, X = 0, Y = 1, W = 3, H = 2, Query = new() { EntitySet = "Shipments" } },
+    new() { Type = WidgetType.Kpi, X = 3, Y = 1, W = 3, H = 2, Query = new() { EntitySet = "InsightCosts" } },
+    new() { Type = WidgetType.Kpi, X = 6, Y = 1, W = 3, H = 2, Query = new() { EntitySet = "Shipments" } },
+    new() { Type = WidgetType.Kpi, X = 9, Y = 1, W = 3, H = 2, Query = new() { EntitySet = "Containers" } },
+],
+// such a reader sees three tiles of width 4 at X 0, 4 and 8
+```
+
+The report also reloads when the user's group selection changes (`GroupScopeState.Changed`).
 
 Viewers pick them from dropdowns in the widget's header; the widget's own entry comes first. The choice runs the widget again with the alternative (the report is not changed), works with facets, the date range and cross filters, and is what *Export CSV/Excel* writes. It is remembered per user, report and widget in the user setting `Reports.Views`. Saving a report checks every alternative like the widget itself, so one with an unknown field or a broken filter is refused (`400`, key `Widgets[{id}].Metrics[{i}]...`).
 

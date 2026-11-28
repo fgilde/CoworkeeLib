@@ -311,7 +311,21 @@ Ein Widget kann Betrachtern andere Werte und Gruppierungen anbieten, ohne ein zw
 - **Werte** (`WidgetOptions.Metrics`, eine Liste von `MetricView`): Bezeichnung, Aggregate, Zahlenformat und ein zusätzlicher OData-Filter, der mit dem eigenen Filter des Widgets und-verknüpft wird. Kennzahlen, Diagramme und Pivots wechseln ihre Werte; Tabellen übernehmen nur den Filter (z. B. *Offene Aufträge* neben *Alle*). `EntitySet` zeigt den Wert aus einer anderen Datenmenge, z. B. Kosten aus `InsightCosts` neben der Anzahl der Sendungen; Feld, Filter und die Gruppierung des Widgets beziehen sich dann auf diese Menge, und das Speichern prüft sie gegen sie.
 - **Gruppierungen** (`WidgetOptions.Buckets`, eine Liste von `BucketView`): Bezeichnung, Gruppierungsfeld und Datumsstufe, optional ein anderes Datumsfeld für den Zeitraum des Berichts. Diagramme und Pivots gruppieren neu; Kennzahlen ändern die Stufe ihrer Kurve. `SplitBy` teilt die Serien nach einem anderen Feld, `NoSplit = true` zeigt keine Serien (z. B. *Jahr* nach Transportart aufgeteilt, *Monat* ohne Aufteilung).
 
-**Rechte:** Die Quellenliste enthält nur Datenmengen, die der Benutzer lesen darf. Eine Wahl auf einer nicht lesbaren Menge wird nicht angeboten (die Indizes bleiben die des Autors); ein Widget, dessen eigene Menge nicht lesbar ist, zeigt stattdessen seinen ersten lesbaren Wert, und eines ohne einen solchen wird im Bericht weggelassen (`ReportViews.ForReader`). Wer das Finanzrecht nicht hat, sieht daher weder Kostenwerte noch Kosten-Widgets und bekommt keinen Fehler. Der Bericht lädt außerdem neu, wenn sich die Gruppenauswahl des Benutzers ändert (`GroupScopeState.Changed`).
+**Rechte:** Die Quellenliste enthält nur Datenmengen, die der Benutzer lesen darf. Eine Wahl auf einer nicht lesbaren Menge wird nicht angeboten (die Indizes bleiben die des Autors); ein Widget, dessen eigene Menge nicht lesbar ist, zeigt stattdessen seinen ersten lesbaren Wert, und eines ohne einen solchen wird im Bericht weggelassen (`ReportViews.ForReader`). Wer das Finanzrecht nicht hat, sieht daher weder Kostenwerte noch Kosten-Widgets und bekommt keinen Fehler. Ein weggelassenes Widget hinterlässt keine Lücke (`ReportLayout.ForReader`, nicht im Designer; das gespeicherte Layout bleibt): Die anderen Widgets seiner Zeile (gleiches `Y` und `H`) teilen sich die Breite der Zeile, auf ganze Spalten skaliert, der Rest an das letzte, und Zeilen, die niemand füllt, rücken nach oben. Eine gemerkte Wertauswahl behält die Joins des Lesers, sodass eine gruppierte Tabelle nie die Spalten einer verbundenen Menge zeigt, die er nicht lesen darf.
+
+```csharp
+// KPI-Zeile: vier Kacheln der Breite 3; ohne das Kostenrecht fällt die Kostenkachel weg
+Widgets =
+[
+    new() { Type = WidgetType.Kpi, X = 0, Y = 1, W = 3, H = 2, Query = new() { EntitySet = "Shipments" } },
+    new() { Type = WidgetType.Kpi, X = 3, Y = 1, W = 3, H = 2, Query = new() { EntitySet = "InsightCosts" } },
+    new() { Type = WidgetType.Kpi, X = 6, Y = 1, W = 3, H = 2, Query = new() { EntitySet = "Shipments" } },
+    new() { Type = WidgetType.Kpi, X = 9, Y = 1, W = 3, H = 2, Query = new() { EntitySet = "Containers" } },
+],
+// ein solcher Leser sieht drei Kacheln der Breite 4 bei X 0, 4 und 8
+```
+
+Der Bericht lädt außerdem neu, wenn sich die Gruppenauswahl des Benutzers ändert (`GroupScopeState.Changed`).
 
 Betrachter wählen sie in Auswahllisten im Kopf des Widgets; der eigene Eintrag des Widgets steht zuerst. Die Wahl lädt das Widget mit der Alternative neu (der Bericht bleibt unverändert), wirkt mit Facetten, Zeitraum und Kreuzfiltern zusammen und ist das, was *CSV/Excel exportieren* schreibt. Sie bleibt je Benutzer, Bericht und Widget in der Benutzereinstellung `Reports.Views` erhalten. Beim Speichern wird jede Alternative wie das Widget selbst geprüft; eine mit unbekanntem Feld oder kaputtem Filter wird abgelehnt (`400`, Schlüssel `Widgets[{id}].Metrics[{i}]...`).
 

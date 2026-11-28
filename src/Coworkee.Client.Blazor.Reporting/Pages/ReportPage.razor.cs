@@ -66,9 +66,9 @@ public partial class ReportPage : IAsyncDisposable
     /// <summary>False shows the report read-only, also to its owner (e.g. while a feature of the host app keeps editing off).</summary>
     [Parameter] public bool AllowEdit { get; set; } = true;
 
-    // the widgets this user sees: those on a source they may not read and without a value on another one are left out (not while designing)
+    // the widgets this user sees: those on a source they may not read and without a value on another one are left out and leave no gap (not while designing)
     private List<ReportWidget> Visible => _editing || _state is null ? _definition!.Widgets
-        : [.. _definition!.Widgets.Where(w => ReportViews.ForReader(w, _state.CanRead) is not null)];
+        : [.. ReportLayout.ForReader(_definition!.Widgets, [.. _definition.Widgets.Where(w => ReportViews.ForReader(w, _state.CanRead) is not null)])];
 
     private bool CanEdit => AllowEdit && _report?.CanEdit == true;
 
