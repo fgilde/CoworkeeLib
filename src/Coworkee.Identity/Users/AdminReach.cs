@@ -32,8 +32,17 @@ public sealed class AdminReach(CoworkeeDbContext db, ICurrentUser currentUser, I
     public static readonly Error UserInOtherGroups = Error.Forbidden("identity.user_other_groups",
         "The user also belongs to groups you do not administer; an administrator of all his groups can change him.");
 
+    /// <summary>
+    /// Root rules: a scoped caller's top groups (<see cref="RootsAsync"/>) are set up by an administrator above him, and every group stays below its top group.
+    /// Rulings: <c>ImportGroup</c> never moves a group, so it needs no root rule; <c>MoveGroupMembers</c> moves users, not groups (adding users to another
+    /// top group is allowed anyway); <c>SetDefaultGroup</c> and <c>SetGroupOwners</c> do not widen the caller's view.
+    /// </summary>
+    public static readonly Error RootGroupLocked = Error.Forbidden("identity.root_group_locked",
+        "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.");
+
     // keyed by the acting user: a CurrentUserScope inside the same DI scope must not reuse another user's reach
-    private readonly Dictionary<(Guid?, Guid?), List<Guid>?> _groups = [];
+    private readonly Dictionary<(Guid?, Guid?), (List<Guid>? Scoped, List<Guid>? Listed)> _groups = [];
+    private readonly Dictionary<(Guid?, Guid?), List<GroupNode>> _roots = [];
 
     /// <summary>The groups the caller administers; null for every group and user of the organisation.</summary>
     public async Task<IReadOnlyList<Guid>?> GroupIdsAsync(CancellationToken ct) => await ListAsync(ct);
@@ -128,21 +137,89 @@ public sealed class AdminReach(CoworkeeDbContext db, ICurrentUser currentUser, I
     /// <summary>Null when the caller reaches the whole organisation: for the default group and roles.</summary>
     public async Task<Error?> CheckAllAsync(CancellationToken ct) => await ListAsync(ct) is null ? null : AllGroupsRequired;
 
-    private async Task<List<Guid>?> ListAsync(CancellationToken ct)
+    /// <summary>
+    /// The groups a scoped caller administers, also when they are every group; null when tenant-wide: the option off, the system, administrators and
+    /// holders of <c>Identity.Groups.ScopeAll</c>.
+    /// </summary>
+    public async Task<IReadOnlyList<Guid>?> ScopedGroupIdsAsync(CancellationToken ct) => (await ReachAsync(ct)).Scoped;
+
+    /// <summary>The caller's top groups: his memberships (the default group aside) without another membership above them; null when tenant-wide.</summary>
+    public async Task<IReadOnlyList<GroupNode>?> RootsAsync(CancellationToken ct)
     {
-        // the system (ISystemDispatcher, CurrentUserScope.BeginSystem) acts for app code that decided the caller may cause the change
-        if (!options.Value.GroupScopedAdministration || CurrentUserScope.Current is SystemActor)
+        if ((await ReachAsync(ct)).Scoped is null)
         {
             return null;
         }
 
         var actor = (currentUser.UserId, currentUser.TenantId);
-        if (!_groups.TryGetValue(actor, out var groups))
+        if (!_roots.TryGetValue(actor, out var roots))
         {
-            _groups[actor] = groups = await LoadAsync(ct);
+            var defaultId = await scope.DefaultGroupIdAsync(ct);
+            var nodes = await scope.NodesAsync((await scope.MembershipsAsync(ct)).Where(id => id != defaultId), ct);
+            _roots[actor] = roots = [.. nodes.Where(n => !nodes.Any(a => a.Code.Length > 0 && GroupCodes.IsDescendant(n.Code, a.Code)))];
         }
 
-        return groups;
+        return roots;
+    }
+
+    /// <summary>The top group of the caller whose subtree (itself included) holds <paramref name="groupId"/>; null when tenant-wide or below none.</summary>
+    public async Task<GroupNode?> RootOfAsync(Guid groupId, CancellationToken ct) =>
+        await RootsAsync(ct) is { } roots && (await scope.NodesAsync([groupId], ct)).SingleOrDefault() is { } node ? RootOf(roots, node) : null;
+
+    /// <summary><see cref="RootGroupLocked"/> for a top group of a scoped caller: it is not deleted and gets no other roles.</summary>
+    public async Task<Error?> CheckNotRootAsync(Guid groupId, CancellationToken ct) =>
+        await RootsAsync(ct) is { } roots && roots.Any(r => r.Id == groupId) ? RootGroupLocked : null;
+
+    /// <summary>
+    /// Null when a scoped caller may move <paramref name="groupId"/> under <paramref name="parentId"/>: it is no top group of his and the parent lies in
+    /// the subtree of its top group. An unknown parent passes: the caller answers it as not found.
+    /// </summary>
+    public async Task<Error?> CheckMoveAsync(Guid groupId, Guid? parentId, CancellationToken ct)
+    {
+        if (await RootsAsync(ct) is not { } roots)
+        {
+            return null;
+        }
+
+        if (roots.Any(r => r.Id == groupId) || parentId is not { } id)
+        {
+            return RootGroupLocked;
+        }
+
+        var nodes = await scope.NodesAsync([groupId, id], ct);
+        if (nodes.SingleOrDefault(n => n.Id == id) is not { } parent)
+        {
+            return null;
+        }
+
+        var root = nodes.SingleOrDefault(n => n.Id == groupId) is { } group ? RootOf(roots, group) : null;
+        return root is not null && RootOf(roots, parent)?.Id == root.Id ? null : RootGroupLocked;
+    }
+
+    private static GroupNode? RootOf(IEnumerable<GroupNode> roots, GroupNode node) =>
+        roots.FirstOrDefault(r => r.Id == node.Id || (r.Code.Length > 0 && GroupCodes.IsDescendant(node.Code, r.Code)));
+
+    private async Task<List<Guid>?> ListAsync(CancellationToken ct) => (await ReachAsync(ct)).Listed;
+
+    private async Task<(List<Guid>? Scoped, List<Guid>? Listed)> ReachAsync(CancellationToken ct)
+    {
+        // the system (ISystemDispatcher, CurrentUserScope.BeginSystem) acts for app code that decided the caller may cause the change
+        if (!options.Value.GroupScopedAdministration || CurrentUserScope.Current is SystemActor)
+        {
+            return (null, null);
+        }
+
+        var actor = (currentUser.UserId, currentUser.TenantId);
+        if (!_groups.TryGetValue(actor, out var reach))
+        {
+            var scoped = await LoadAsync(ct);
+            var defaultId = await scope.DefaultGroupIdAsync(ct);
+            // an administrator of every group (also of an organisation without groups) is one of the whole organisation
+            var listed = scoped is null || scoped.Count == await db.Set<UserGroup>().CountAsync(g => g.Id != defaultId, ct) ? null : scoped;
+            _groups[actor] = reach = (scoped, listed);
+        }
+
+        return reach;
     }
 
     private async Task<List<Guid>?> LoadAsync(CancellationToken ct)
@@ -169,9 +246,7 @@ public sealed class AdminReach(CoworkeeDbContext db, ICurrentUser currentUser, I
         }
 
         groups.Remove(defaultId ?? Guid.Empty);
-
-        // an administrator of every group (also of an organisation without groups) is one of the whole organisation
-        return groups.Count == await db.Set<UserGroup>().CountAsync(g => g.Id != defaultId, ct) ? null : groups;
+        return groups;
     }
 
     private async Task<List<Guid>> MembershipsAsync(Guid userId, CancellationToken ct)

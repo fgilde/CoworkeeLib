@@ -26,9 +26,10 @@ internal sealed class DeleteGroupHandler(CoworkeeDbContext db, Users.AccountGuar
         var ids = subtree.Select(g => g.Id).ToList();
 
         // the members lose what the groups grant
-        // the default group, also below a group in reach, belongs to the whole organisation
+        // the default group, also below a group in reach, belongs to the whole organisation; the caller's top groups to an administrator above him
         if ((await guard.CheckGroupsAsync(ids, cancellationToken) ?? await reach.CheckMembersAsync(ids, cancellationToken)
-                ?? (subtree.Any(g => g.IsDefault) ? await reach.CheckAllAsync(cancellationToken) : null)) is { } restricted)
+                ?? (subtree.Any(g => g.IsDefault) ? await reach.CheckAllAsync(cancellationToken) : null)
+                ?? await reach.CheckNotRootAsync(group.Id, cancellationToken)) is { } restricted)
         {
             return restricted;
         }

@@ -2430,5 +2430,6 @@
   "Still grouped by, just not shown": "Nadal grupują, tylko nie są wyświetlane",
   "Add sort column": "Dodaj kolumnę sortowania",
   "Another column has this name.": "Inna kolumna ma już tę nazwę.",
-  "Like the widget": "Jak w widżecie"
+  "Like the widget": "Jak w widżecie",
+  "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "Twoje własne grupy najwyższego poziomu konfiguruje administrator nad Tobą: nie można ich przenieść, usunąć ani nadać im innych ról, a grupy pozostają pod grupą najwyższego poziomu, do której należą."
 }

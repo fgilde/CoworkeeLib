@@ -2430,5 +2430,6 @@
   "Still grouped by, just not shown": "グループ化には使われますが、表示されません",
   "Add sort column": "並べ替え列を追加",
   "Another column has this name.": "この名前は別の列で使われています。",
-  "Like the widget": "ウィジェットと同じ"
+  "Like the widget": "ウィジェットと同じ",
+  "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "あなた自身の最上位グループは、上位の管理者が設定します。移動、削除、または別のロールの付与はできず、グループは所属する最上位グループの下に留まります。"
 }

@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Geändert
+
+- Identity: Mit gruppenbezogener Verwaltung lassen sich die eigenen obersten Gruppen eines beschränkten Verwalters (seine Mitgliedschaften, über denen keine andere Mitgliedschaft liegt) von ihm nicht verschieben, löschen oder mit anderen Rollen versehen, und Gruppen bleiben unter ihrer obersten Gruppe: `403 identity.root_group_locked` (`AdminReach.RootGroupLocked`). Umbenennen bleibt erlaubt; auch ein Mitglied jeder Gruppe ist gebunden, Inhaber von `ScopeAll` und Administratoren nicht. `AdminReach` bekommt `RootsAsync`, `RootOfAsync`, `ScopedGroupIdsAsync`, `CheckNotRootAsync` und `CheckMoveAsync`; `GroupDto` bekommt ein abschließendes `Locked` (positionelle Konstruktoraufrufe funktionieren weiter). Siehe [Berechtigungen](../security/permissions.md#gruppenbezogene-verwaltung).
+
 ## 0.1.10 (2026-11-28)
 
 ### Behoben

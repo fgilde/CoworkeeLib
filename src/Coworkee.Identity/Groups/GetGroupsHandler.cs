@@ -26,6 +26,11 @@ internal sealed class GetGroupsHandler(CoworkeeDbContext db, Users.AdminReach re
             .Select(g => new GroupDto(g.Id, g.Name, g.Description, g.Members.Select(m => m.UserId).ToList(), g.Roles.Select(r => r.RoleId).ToList(), g.ParentId, g.Code,
                 g.Members.Where(m => m.IsOwner).Select(m => m.UserId).ToList(), g.IsDefault))
             .ToListAsync(cancellationToken);
+        if (await reach.RootsAsync(cancellationToken) is { Count: > 0 } roots)
+        {
+            items = [.. items.Select(g => g with { Locked = roots.Any(r => r.Id == g.Id) })];
+        }
+
         return new PagedResult<GroupDto>(items, total, page.Page, page.PageSize);
     }
 }

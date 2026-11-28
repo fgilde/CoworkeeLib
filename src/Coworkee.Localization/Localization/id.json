@@ -2430,5 +2430,6 @@
   "Still grouped by, just not shown": "Tetap dikelompokkan, hanya tidak ditampilkan",
   "Add sort column": "Tambah kolom pengurutan",
   "Another column has this name.": "Kolom lain sudah memakai nama ini.",
-  "Like the widget": "Seperti widget"
+  "Like the widget": "Seperti widget",
+  "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "Grup teratas Anda sendiri diatur oleh administrator di atas Anda: grup tersebut tidak dapat dipindahkan, dihapus, atau diberi peran lain, dan grup tetap berada di bawah grup teratas tempatnya berada."
 }

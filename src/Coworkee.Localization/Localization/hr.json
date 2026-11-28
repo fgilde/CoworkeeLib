@@ -2430,5 +2430,6 @@
   "Still grouped by, just not shown": "I dalje se po njima grupira, samo se ne prikazuju",
   "Add sort column": "Dodaj stupac sortiranja",
   "Another column has this name.": "Drugi stupac ima ovaj naziv.",
-  "Like the widget": "Kao widget"
+  "Like the widget": "Kao widget",
+  "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "Vaše vlastite najviše grupe postavlja administrator iznad vas: ne mogu se premjestiti, izbrisati niti dobiti druge uloge, a grupe ostaju ispod najviše grupe kojoj pripadaju."
 }

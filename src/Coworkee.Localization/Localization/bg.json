@@ -2430,5 +2430,6 @@
   "Still grouped by, just not shown": "Групира се по тях, но не се показват",
   "Add sort column": "Добавяне на колона за сортиране",
   "Another column has this name.": "Друга колона има това име.",
-  "Like the widget": "Като уиджета"
+  "Like the widget": "Като уиджета",
+  "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "Вашите собствени горни групи се настройват от администратор над вас: те не могат да бъдат премествани, изтривани или да получават други роли, а групите остават под горната група, към която принадлежат."
 }

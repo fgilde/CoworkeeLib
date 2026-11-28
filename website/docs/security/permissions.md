@@ -187,6 +187,7 @@ With it on, an administrator reaches the groups he is a member of and their sub-
 - **Changing a user** (everything `AccountGuard.CheckUserAsync` guards, see above) needs all his groups in reach; a user who also belongs to a group outside answers `403 identity.user_other_groups`. Joining or leaving one of the caller's groups is such a change.
 - **Adding members and owners:** only users in reach or users of no group outside the reach (a new registration in the default group), so adding never takes in another customer's user; others are unknown (`400 Unknown user.`).
 - **Groups:** creating, renaming, moving and deleting groups, their members, roles and grants work inside the reach; a parent or group outside answers 404. A group at the top level (created, moved or imported there), the default group and roles (create, change, delete, their grants: they reach users everywhere) need the whole tenant, `403 identity.all_groups_required`. Group roles and grants and deleting a group are refused while a member also belongs to a group outside the reach (`identity.user_other_groups`): they change what he may do there.
+- **Top groups:** the caller's own top groups (his memberships, the default group aside, without another membership above them) are set up by an administrator above him: he renames them, but moving or deleting one and changing its roles answer `403 identity.root_group_locked`, so he cannot widen what he sees (moving his group out from under a filtered parent, dropping a role put on it). Every other group stays below the top group it belongs to: a move to another of his top groups or to the top level answers the same code. A membership below one of his top groups (e.g. a group he created and joined) is an ordinary sub-group. This holds also for a member of every group, who otherwise reaches the whole tenant; only `ScopeAll` holders, administrators and the system are unbound. `GroupDto.Locked` marks these groups in `GetGroups`. Moving members (users) between groups, owners, the default group and the import (it never moves a group) have no root rule.
 - **New users:** a scoped administrator names at least one of his groups (`CreateUserRequest.GroupIds`, needs `Identity.Groups.ManageMembers`; the *New user* dialog offers the groups), otherwise the user would be out of his reach at once.
 - **Resource grants** name users and groups in reach; grants to others are not listed and cannot be revoked by him.
 - **Log in as** a user out of reach answers 404; the [impersonation rule](#log-in-as-another-user) (each of the target's groups lies in the caller's) holds with or without the setting.
@@ -200,6 +201,8 @@ var users = await reach.FilterUsersAsync(db.Set<User>(), ct);              // th
 if (!await reach.ReachesGroupAsync(groupId, ct)) return GroupNotFound;     // a group out of reach is unknown
 if (await guard.CheckUserAsync(userId, ct) is { } refused) return refused; // reach, superset and admin rule
 if (await reach.CheckAllAsync(ct) is { } restricted) return restricted;    // tenant-wide changes
+if (await reach.CheckMoveAsync(groupId, parentId, ct) is { } locked) return locked; // top groups stay, the others below them
+var roots = await reach.RootsAsync(ct);                                    // the caller's top groups; null when tenant-wide
 ```
 
 ## Log in as another user

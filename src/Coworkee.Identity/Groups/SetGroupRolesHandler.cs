@@ -34,9 +34,11 @@ internal sealed class SetGroupRolesHandler(CoworkeeDbContext db, ICurrentUser cu
             return restricted;
         }
 
-        if (added.Count + removed.Count > 0 && await reach.CheckMembersAsync([group.Id], cancellationToken) is { } shared)
+        // a role an administrator above put on the caller's top group stays
+        if (added.Count + removed.Count > 0
+            && (await reach.CheckMembersAsync([group.Id], cancellationToken) ?? await reach.CheckNotRootAsync(group.Id, cancellationToken)) is { } blocked)
         {
-            return shared;
+            return blocked;
         }
 
         // new users join the default group and get its roles

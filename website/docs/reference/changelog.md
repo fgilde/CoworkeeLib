@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Changed
+
+- Identity: with group-scoped administration a scoped administrator's own top groups (his memberships without another membership above them) cannot be moved, deleted or given other roles, and groups stay below their top group: `403 identity.root_group_locked` (`AdminReach.RootGroupLocked`). Renaming stays allowed; a member of every group is bound too, `ScopeAll` holders and administrators are not. `AdminReach` gets `RootsAsync`, `RootOfAsync`, `ScopedGroupIdsAsync`, `CheckNotRootAsync` and `CheckMoveAsync`; `GroupDto` gets a trailing `Locked` (positional constructor calls keep working). See [Permissions](../security/permissions.md#group-scoped-administration).
+
 ## 0.1.10 (2026-11-28)
 
 ### Fixed

@@ -20,8 +20,8 @@ internal sealed class MoveGroupHandler(CoworkeeDbContext db, Users.AdminReach re
             return GroupErrors.NotFound;
         }
 
-        // also when it stays where it is: a group-scoped administrator learns nothing about parents out of his reach
-        if (await reach.CheckParentAsync(command.ParentId, cancellationToken) is { } refused)
+        // also when it stays where it is: a group-scoped administrator learns nothing about parents out of his reach; his top groups stay, the others below them
+        if ((await reach.CheckParentAsync(command.ParentId, cancellationToken) ?? await reach.CheckMoveAsync(group.Id, command.ParentId, cancellationToken)) is { } refused)
         {
             return refused;
         }

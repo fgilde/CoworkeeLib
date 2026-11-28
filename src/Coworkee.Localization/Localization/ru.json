@@ -2430,5 +2430,6 @@
   "Still grouped by, just not shown": "Группировка по ним сохраняется, они просто не показываются",
   "Add sort column": "Добавить столбец сортировки",
   "Another column has this name.": "Другой столбец уже называется так.",
-  "Like the widget": "Как у виджета"
+  "Like the widget": "Как у виджета",
+  "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "Ваши собственные верхние группы настраивает администратор выше вас: их нельзя перемещать, удалять или назначать им другие роли, а группы остаются под верхней группой, к которой они относятся."
 }
