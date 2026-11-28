@@ -162,6 +162,9 @@ public interface ICoworkeeApi
 
     Task SetGroupRolesAsync(Guid id, IReadOnlyList<Guid> roleIds, CancellationToken cancellationToken = default);
 
+    /// <summary>The caller's own top groups under group-scoped administration (not moved, deleted or given roles by him); empty when tenant-wide.</summary>
+    Task<IReadOnlyList<Guid>> GetLockedGroupIdsAsync(CancellationToken cancellationToken = default);
+
     /// <summary>The direct children of a group ordered by name, the roots for <c>null</c>.</summary>
     Task<IReadOnlyList<GroupNodeDto>> GetGroupChildrenAsync(Guid? parentId, CancellationToken cancellationToken = default);
 

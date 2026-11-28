@@ -14,6 +14,10 @@
         else if (ReadOnly)
         {
             <MudAlert Severity="Severity.Info" Dense="true" Icon="@Icons.Material.Outlined.Lock" data-testid="filters-read-only">@L["Set by an administrator above you"]</MudAlert>
+            @if (_filters.Count == 0)
+            {
+                <MudText Typo="Typo.body2" Class="mud-text-secondary" data-testid="filters-none">@L["No data filters."]</MudText>
+            }
             @foreach (var filter in _filters)
             {
                 <MudPaper Outlined="true" Class="pa-3" data-testid="@($"filter-{filter.EntitySet}")">

@@ -183,6 +183,25 @@ public sealed class DataFiltersUiTests : ClientTestBase
         list.FindAll("[data-testid='filter-save'], [data-testid='filter-remove'], [data-testid='filter-add-set']").ShouldBeEmpty();
         list.FindComponents<Coworkee.Client.Blazor.Components.Query.QueryBuilder>().ShouldBeEmpty();
         list.FindComponent<MudSwitch<bool>>().Instance.Disabled.ShouldBeTrue();
+        Api.DidNotReceive().GetDataFilterSetsAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task A_read_only_list_without_filters_says_so_and_loads_the_sets_once_it_becomes_editable()
+    {
+        Grant(DataFilterPermissions.ManageGroups);
+        Api.GetDataFiltersAsync(Arg.Any<string?>(), DataFilterLayer.Group, Supplier.Id, Arg.Any<CancellationToken>()).Returns([]);
+        var list = Render<DataFilterList>(p => p.Add(l => l.Layer, DataFilterLayer.Group).Add(l => l.LayerKey, Supplier.Id).Add(l => l.ReadOnly, true));
+
+        list.WaitForElement("[data-testid='filters-none']").TextContent.Trim().ShouldBe("No data filters.");
+        await Api.DidNotReceive().GetDataFilterSetsAsync(Arg.Any<CancellationToken>());
+
+        // an administrator above made him leave the group: the same tab turns editable
+        list.Render(p => p.Add(l => l.ReadOnly, false));
+
+        list.WaitForElement("[data-testid='filter-add-set']");
+        list.FindAll("[data-testid='filters-read-only'], [data-testid='filters-none']").ShouldBeEmpty();
+        await Api.Received(1).GetDataFilterSetsAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]

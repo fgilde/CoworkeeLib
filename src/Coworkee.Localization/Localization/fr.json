@@ -2435,5 +2435,6 @@
   "There is no such group or role.": "Ce groupe ou ce rôle n'existe pas.",
   "Set by an administrator above you": "Défini par un administrateur au-dessus de vous",
   "Only an administrator of every group manages these filters.": "Seul un administrateur de tous les groupes gère ces filtres.",
-  "Your own top group: an administrator above you moves or deletes it.": "Votre propre groupe de premier niveau : un administrateur au-dessus de vous le déplace ou le supprime."
+  "Your own top group: an administrator above you moves or deletes it.": "Votre propre groupe de premier niveau : un administrateur au-dessus de vous le déplace ou le supprime.",
+  "No data filters.": "Aucun filtre de données."
 }

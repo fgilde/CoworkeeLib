@@ -18,6 +18,7 @@ internal static partial class IdentityEndpoints
         api.MapGet("/groups/children", (Guid? parentId, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetGroupChildren(parentId), ct).ToHttpResult());
         api.MapGet("/groups/tree", (string? search, IDispatcher d, CancellationToken ct) => d.SendAsync(new SearchGroupTree(search ?? ""), ct).ToHttpResult());
         api.MapGet("/groups/default", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetDefaultGroup(), ct).ToHttpResult());
+        api.MapGet("/groups/locked", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetLockedGroups(), ct).ToHttpResult());
         api.MapPut("/groups/default", (DefaultGroupDto body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetDefaultGroup(body.GroupId), ct).ToHttpResult());
         api.MapGet("/groups/mine", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetMyGroups(), ct).ToHttpResult());
         api.MapPut("/groups/mine/selection", (IdListRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SelectGroups(body.Ids), ct).ToHttpResult());

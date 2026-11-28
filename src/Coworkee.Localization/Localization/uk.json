@@ -2435,5 +2435,6 @@
   "There is no such group or role.": "Такої групи чи ролі немає.",
   "Set by an administrator above you": "Задано адміністратором вище за вас",
   "Only an administrator of every group manages these filters.": "Цими фільтрами керує лише адміністратор усіх груп.",
-  "Your own top group: an administrator above you moves or deletes it.": "Ваша власна верхня група: переміщує або видаляє її адміністратор вище за вас."
+  "Your own top group: an administrator above you moves or deletes it.": "Ваша власна верхня група: переміщує або видаляє її адміністратор вище за вас.",
+  "No data filters.": "Немає фільтрів даних."
 }

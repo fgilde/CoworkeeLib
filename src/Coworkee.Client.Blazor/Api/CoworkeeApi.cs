@@ -215,6 +215,9 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public Task SetGroupRolesAsync(Guid id, IReadOnlyList<Guid> roleIds, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Put, $"{Identity}/groups/{id}/roles", new IdListRequest(roleIds), cancellationToken);
 
+    public async Task<IReadOnlyList<Guid>> GetLockedGroupIdsAsync(CancellationToken cancellationToken = default) =>
+        await GetAsync<Guid[]>($"{Identity}/groups/locked", cancellationToken);
+
     public async Task<IReadOnlyList<GroupNodeDto>> GetGroupChildrenAsync(Guid? parentId, CancellationToken cancellationToken = default) =>
         await GetAsync<GroupNodeDto[]>($"{Identity}/groups/children{(parentId is { } id ? $"?parentId={id}" : string.Empty)}", cancellationToken);
 

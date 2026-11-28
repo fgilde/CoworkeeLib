@@ -2435,5 +2435,6 @@
   "There is no such group or role.": "해당 그룹 또는 역할이 없습니다.",
   "Set by an administrator above you": "상위 관리자가 설정함",
   "Only an administrator of every group manages these filters.": "이 필터는 모든 그룹의 관리자만 관리합니다.",
-  "Your own top group: an administrator above you moves or deletes it.": "회원님의 최상위 그룹입니다. 이동이나 삭제는 상위 관리자가 합니다."
+  "Your own top group: an administrator above you moves or deletes it.": "회원님의 최상위 그룹입니다. 이동이나 삭제는 상위 관리자가 합니다.",
+  "No data filters.": "데이터 필터가 없습니다."
 }

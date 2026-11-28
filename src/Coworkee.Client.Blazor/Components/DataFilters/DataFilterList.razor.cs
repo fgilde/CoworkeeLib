@@ -24,6 +24,7 @@ public partial class DataFilterList
     private bool _loaded;
     private bool _refused;
     private Guid? _key;
+    private bool _readOnly;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
@@ -68,16 +69,16 @@ public partial class DataFilterList
             _allowed = await Permissions.HasAsync(PermissionOf(Layer))
                 && (Layer != DataFilterLayer.System || AuthenticationState is null || !SystemTenant.IsOutside((await AuthenticationState).User));
             _loaded = true;
-            _key = LayerKey;
+            (_key, _readOnly) = (LayerKey, ReadOnly);
             if (_allowed)
             {
                 await LoadAsync();
             }
         }
-        else if (_allowed && _key != LayerKey)
+        else if (_allowed && (_key != LayerKey || _readOnly != ReadOnly))
         {
-            // the group or role of the tab changed
-            _key = LayerKey;
+            // the group or role of the tab changed, or it became editable (the picker needs the sets)
+            (_key, _readOnly) = (LayerKey, ReadOnly);
             await LoadAsync();
         }
     }

@@ -148,6 +148,17 @@ public sealed class RootGroupTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Locked_groups_are_the_callers_top_groups()
+    {
+        // the admin pages ask once for the groups they show locked
+        (await Manager.GetFromJsonAsync<Guid[]>("/api/v1/identity/groups/locked", Ct)).ShouldBe([_p]);
+        (await Admin.GetFromJsonAsync<Guid[]>("/api/v1/identity/groups/locked", Ct)).ShouldBeEmpty();
+
+        var viewer = await UserWithAsync("viewer@p.test", []);
+        (await app.As(viewer, _setup.TenantId).GetAsync("/api/v1/identity/groups/locked", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
     public async Task A_sub_group_does_not_move_deep_into_another_top_group()
     {
         await JoinAsync(_p2, _manager);

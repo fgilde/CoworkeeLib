@@ -2435,5 +2435,6 @@
   "There is no such group or role.": "Taková skupina ani role neexistuje.",
   "Set by an administrator above you": "Nastaveno administrátorem nad vámi",
   "Only an administrator of every group manages these filters.": "Tyto filtry spravuje jen administrátor všech skupin.",
-  "Your own top group: an administrator above you moves or deletes it.": "Vaše vlastní nejvyšší skupina: přesouvá nebo maže ji administrátor nad vámi."
+  "Your own top group: an administrator above you moves or deletes it.": "Vaše vlastní nejvyšší skupina: přesouvá nebo maže ji administrátor nad vámi.",
+  "No data filters.": "Žádné datové filtry."
 }

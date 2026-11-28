@@ -2435,5 +2435,6 @@
   "There is no such group or role.": "Δεν υπάρχει τέτοια ομάδα ή ρόλος.",
   "Set by an administrator above you": "Ορίστηκε από διαχειριστή πάνω από εσάς",
   "Only an administrator of every group manages these filters.": "Μόνο ένας διαχειριστής όλων των ομάδων διαχειρίζεται αυτά τα φίλτρα.",
-  "Your own top group: an administrator above you moves or deletes it.": "Η δική σας κορυφαία ομάδα: τη μετακινεί ή τη διαγράφει ένας διαχειριστής πάνω από εσάς."
+  "Your own top group: an administrator above you moves or deletes it.": "Η δική σας κορυφαία ομάδα: τη μετακινεί ή τη διαγράφει ένας διαχειριστής πάνω από εσάς.",
+  "No data filters.": "Δεν υπάρχουν φίλτρα δεδομένων."
 }

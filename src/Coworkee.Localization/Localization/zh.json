@@ -2435,5 +2435,6 @@
   "There is no such group or role.": "不存在这样的组或角色。",
   "Set by an administrator above you": "由您上级的管理员设置",
   "Only an administrator of every group manages these filters.": "只有所有用户组的管理员才能管理这些筛选器。",
-  "Your own top group: an administrator above you moves or deletes it.": "您自己的顶级用户组：由您上级的管理员移动或删除。"
+  "Your own top group: an administrator above you moves or deletes it.": "您自己的顶级用户组：由您上级的管理员移动或删除。",
+  "No data filters.": "没有数据筛选器。"
 }

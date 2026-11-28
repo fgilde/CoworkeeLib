@@ -199,10 +199,14 @@ public sealed class GroupsPageTests : ClientTestBase
     [Fact]
     public async Task Locked_group_disables_move_delete_and_roles_but_not_rename()
     {
-        // a scoped administrator's own top group: an administrator above him moves, deletes and gives it roles
+        // a scoped administrator's own top group: an administrator above him moves, deletes, gives it roles and sets its filters.
+        // The lock goes by id: a second top group of the same name stays his to change.
         const string hint = "Your own top group: an administrator above you moves or deletes it.";
-        Api.GetGroupsAsync(Arg.Any<PageRequest>(), Arg.Any<CancellationToken>())
-            .Returns(new PagedResult<GroupDto>([new GroupDto(Customer.Id, Customer.Name, null, [], [], Code: Customer.Code, Locked: true)], 1, 1, 200));
+        var twin = new GroupNodeDto(Guid.CreateVersion7(), null, "00003", Customer.Name, null, 0, 0);
+        Grant(IdentityPermissions.Groups.View, IdentityPermissions.Groups.Manage, DataFilterPermissions.ManageGroups);
+        Filtered();
+        Api.GetGroupChildrenAsync(null, Arg.Any<CancellationToken>()).Returns([Customer, twin]);
+        Api.GetLockedGroupIdsAsync(Arg.Any<CancellationToken>()).Returns([Customer.Id]);
         _odata.With("Groups", Row(Customer));
         Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Customer.Id}");
         var page = RenderPage();
@@ -218,9 +222,15 @@ public sealed class GroupsPageTests : ClientTestBase
         _popovers.Find("[data-testid='group-move']").GetAttribute("aria-disabled").ShouldBe("true");
         _popovers.Find("[data-testid='group-delete']").GetAttribute("aria-disabled").ShouldBe("true");
         _popovers.Find("[data-testid='group-rename']").GetAttribute("aria-disabled").ShouldNotBe("true");
+        page.FindComponents<GroupNodeMenu>().Select(m => (m.Instance.Node.Id, m.Instance.Locked)).ShouldBe([(Customer.Id, true), (twin.Id, false)], ignoreOrder: true);
 
         await Tab(page, "Roles").ClickAsync(new());
         page.WaitForComponent<MudSelect<Guid>>().Instance.Disabled.ShouldBeTrue();
+        page.Find("[data-testid='group-roles-locked']").TextContent.ShouldContain("Your own top groups are set up by an administrator above you");
+
+        await Tab(page, "Data filters").ClickAsync(new());
+        page.WaitForElement("[data-testid='filters-read-only']");
+        page.FindAll("[data-testid='filter-add-set']").ShouldBeEmpty();
     }
 
     [Fact]

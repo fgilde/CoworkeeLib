@@ -5,7 +5,6 @@ using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Data.Admin;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Security;
-using Coworkee.Contracts;
 using Coworkee.Contracts.Data;
 using Coworkee.Contracts.DataFilters;
 using Coworkee.Contracts.Identity;
@@ -30,6 +29,7 @@ public partial class Groups
     private bool _ready;
     private bool _loadingGroup;
     private Dictionary<Guid, int> _counts = [];
+    private HashSet<Guid> _locked = [];
     private bool _onlyFiltered;
     private IReadOnlyList<GroupNodeDto>? _filtered;
     private int _tabIndex;
@@ -79,6 +79,7 @@ public partial class Groups
             await LoadCountsAsync();
         }
 
+        await LoadLockedAsync();
         if (GroupId is { } id)
         {
             await LoadAsync(id);
@@ -114,13 +115,15 @@ public partial class Groups
                 _requested = id;
                 var query = new ODataQuery { Filter = $"Id eq {id}", Top = 1, Count = false };
                 var group = (await OData.QueryAsync<GroupRow>("Groups", query)).Items.FirstOrDefault(g => g.Id == id);
-                if (group is not null && (_canManage || _canManageDataFilters))
+                var ancestors = group?.Code is { } code && code.Contains('.') ? await AncestorsAsync(code) : [];
+
+                // another group was chosen meanwhile: its load shows it
+                if (_requested != id)
                 {
-                    group = group with { Locked = await LockedAsync(group) };
+                    return;
                 }
 
-                _ancestors = group?.Code is { } code && code.Contains('.') ? await AncestorsAsync(code) : [];
-                (_group, _notFound) = (group, group is null);
+                (_group, _notFound, _ancestors) = (group, group is null, ancestors);
             });
         }
         finally
@@ -129,10 +132,12 @@ public partial class Groups
         }
     }
 
-    // a group-scoped administrator's own top group (the OData set does not know the caller): moved, deleted, given roles and filtered above him
-    // ponytail: found by its name among the first 200 matches; a name shared by more groups than that shows it unlocked and the server still refuses
-    private async Task<bool> LockedAsync(GroupRow group) =>
-        (await Api.GetGroupsAsync(new PageRequest(1, 200, group.Name)))?.Items.FirstOrDefault(g => g.Id == group.Id)?.Locked ?? false;
+    /// <summary>One of the caller's own top groups under group-scoped administration: moved, deleted, given roles and filtered by an administrator above him.</summary>
+    private bool IsLocked(Guid id) => _locked.Contains(id);
+
+    // one request for the whole tree: empty for tenant-wide callers
+    private async Task LoadLockedAsync() =>
+        await Snackbar.RunAsync(async () => _locked = [.. await Api.GetLockedGroupIdsAsync() ?? []]);
 
     private async Task<List<(string? Code, string Name)>> AncestorsAsync(string code)
     {
@@ -243,6 +248,7 @@ public partial class Groups
     // someone else changed groups, members or roles: reload what is shown, keep the selection
     private async Task RefreshAsync()
     {
+        await LoadLockedAsync();
         if (_requested is { } id)
         {
             await LoadAsync(id);

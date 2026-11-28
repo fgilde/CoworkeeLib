@@ -2435,5 +2435,6 @@
   "There is no such group or role.": "Der findes ingen sådan gruppe eller rolle.",
   "Set by an administrator above you": "Angivet af en administrator over dig",
   "Only an administrator of every group manages these filters.": "Kun en administrator af alle grupper administrerer disse filtre.",
-  "Your own top group: an administrator above you moves or deletes it.": "Din egen øverste gruppe: en administrator over dig flytter eller sletter den."
+  "Your own top group: an administrator above you moves or deletes it.": "Din egen øverste gruppe: en administrator over dig flytter eller sletter den.",
+  "No data filters.": "Ingen datafiltre."
 }
