@@ -34,9 +34,11 @@ public interface IODataQueries
     /// <param name="key">The key's value as text, e.g. a Guid or <c>DE</c> (no OData quotes).</param>
     /// <param name="query"><c>$select</c> and <c>$expand</c> only, e.g. <c>$expand=Lines($select=Name),Customer</c>.</param>
     /// <returns>
-    /// The entity with its expanded navigations filled; members not selected, hidden or protected keep their default. NotFound when the row does not exist
-    /// or the user may not see it; Forbidden or Validation errors where the route answers 403 or 400.
+    /// The record as <see cref="QueryAsync{T}(string, string, string?, bool, CancellationToken)"/> returns a row for the same options: in <c>Rows</c>
+    /// (typed, cleared) or, when <c>$select</c>/<c>$expand</c> shape it, in <c>Shaped</c> by the route's names; <c>Count</c> and <c>Facets</c> are null.
+    /// NotFound when the row does not exist or the user may not see it (a key that does not parse is a Validation error of <c>key</c>); Forbidden or
+    /// Validation errors where the route answers 403 or 400.
     /// </returns>
-    Task<Result<T>> GetByKeyAsync<T>(string route, string entitySet, string key, string? query = null, CancellationToken cancellationToken = default)
+    Task<Result<ODataQueryResult<T>>> GetByKeyAsync<T>(string route, string entitySet, string key, string? query = null, CancellationToken cancellationToken = default)
         where T : class;
 }

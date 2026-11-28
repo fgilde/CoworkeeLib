@@ -148,10 +148,11 @@ public sealed class ODataQueriesTests(ODataApp app) : IAsyncLifetime
         page.Shaped!.Single().Keys.ShouldNotContain("summary");
         page.Shaped!.Single().Keys.ShouldNotContain("Summary");
 
-        // a key read hands out entities only: it refuses, typed or shaped
-        var books = await IdAsync<Ledger>("Books");
-        (await KeyReadAsync<Ledger>(_setup.AdminUserId, "rt/odata", "Ledgers", books.ToString(), null)).Error!.Kind.ShouldBe(ErrorKind.Forbidden);
-        (await KeyReadAsync<Ledger>(_setup.AdminUserId, "rt/odata", "Ledgers", books.ToString(), "$select=name")).Error!.Kind.ShouldBe(ErrorKind.Forbidden);
+        // a key read answers alike
+        var read = (await KeyReadAsync<Ledger>(_setup.AdminUserId, "rt/odata", "Ledgers", (await IdAsync<Ledger>("Books")).ToString(), null)).Ok();
+        read.Rows.ShouldBeEmpty();
+        read.Shaped!.Single()["name"].ShouldBe("Books");
+        read.Shaped!.Single().Keys.ShouldNotContain("summary");
     }
 
     [Fact]
@@ -245,10 +246,14 @@ public sealed class ODataQueriesTests(ODataApp app) : IAsyncLifetime
         var read = (await KeyReadAsync<Gadget>(_viewer, "odata", "Gadgets", lamp.ToString(), null)).Ok();
         var http = await app.As(_viewer, _setup.TenantId).GetFromJsonAsync<JsonElement>($"/odata/Gadgets({lamp})", Ct);
 
-        read.Name.ShouldBe(http.GetProperty("Name").GetString());
-        read.Id.ShouldBe(lamp);
-        read.SerialCode.ShouldBeNull("hidden for everyone");
-        read.Category.ShouldBeNull("protected: left at its default");
+        // one typed row, cleared like a list row; no count, no facets
+        read.Shaped.ShouldBeNull();
+        read.Count.ShouldBeNull();
+        read.Facets.ShouldBeNull();
+        var row = read.Rows.Single();
+        (row.Id, row.Name).ShouldBe((lamp, http.GetProperty("Name").GetString()));
+        row.SerialCode.ShouldBeNull("hidden for everyone");
+        row.Category.ShouldBeNull("protected: left at its default");
     }
 
     [Fact]
@@ -259,14 +264,21 @@ public sealed class ODataQueriesTests(ODataApp app) : IAsyncLifetime
         await FilterAsync("Bins", Rule("Size", QueryOperator.LessThan, "5"), appliesToDetails: false);
         var open = await IdAsync<Shelf>("Open");
 
-        var shelf = (await KeyReadAsync<Shelf>(_binViewer, "rt/odata", "Shelves", open.ToString(), "$expand=bins($select=name),featured")).Ok();
-        var http = await app.As(_binViewer, _setup.TenantId).GetFromJsonAsync<JsonElement>($"/rt/odata/Shelves({open})?$expand=bins($select=name),featured", Ct);
+        foreach (var query in new[] { "$expand=bins($select=name),featured", "$expand=bins&$select=name" })
+        {
+            var read = (await KeyReadAsync<Shelf>(_binViewer, "rt/odata", "Shelves", open.ToString(), query)).Ok();
+            var http = await app.As(_binViewer, _setup.TenantId).GetFromJsonAsync<JsonElement>($"/rt/odata/Shelves({open})?{query}", Ct);
 
-        shelf.Name.ShouldBe("Open");
-        shelf.Bins.Select(b => b.Name).ShouldBe(["Plain"]);
-        http.GetProperty("bins").EnumerateArray().Select(b => b.GetProperty("name").GetString()).ShouldBe(["Plain"]);
-        shelf.Featured!.Name.ShouldBe("Plain");
-        shelf.Featured.Size.ShouldBe(0, "protected for the bin viewer: left at its default");
+            // the row as the key route writes it: its names, the expanded bins the list filters let through, without what the user may not read
+            read.Rows.ShouldBeEmpty();
+            var row = read.Shaped!.Single();
+            row.Keys.ShouldBe(Names(http), ignoreOrder: true, query);
+            row["name"].ShouldBe("Open");
+            var bins = ((IEnumerable<object?>)row["bins"]!).Cast<IReadOnlyDictionary<string, object?>>().ToList();
+            bins.Select(b => b["name"]).ShouldBe(["Plain"], query);
+            bins.Single().Keys.ShouldBe(Names(http.GetProperty("bins")[0]), ignoreOrder: true, query);
+            bins.Single().Keys.ShouldNotContain("size", "protected for the bin viewer");
+        }
     }
 
     [Fact]
@@ -278,15 +290,46 @@ public sealed class ODataQueriesTests(ODataApp app) : IAsyncLifetime
         (await KeyReadAsync<Gadget>(_viewer, "odata", "Gadgets", (await IdAsync<Gadget>("Lamp")).ToString(), null)).Error!.Kind.ShouldBe(ErrorKind.NotFound);
         (await KeyReadAsync<Gadget>(_viewer, "odata", "Gadgets", (await IdAsync<Gadget>("Vault")).ToString(), null)).Error!.Kind.ShouldBe(ErrorKind.NotFound);
         (await KeyReadAsync<Gadget>(_viewer, "odata", "Gadgets", Guid.NewGuid().ToString(), null)).Error!.Kind.ShouldBe(ErrorKind.NotFound);
-        (await KeyReadAsync<Gadget>(_viewer, "odata", "Gadgets", (await IdAsync<Gadget>("Drill")).ToString(), null)).Ok().Name.ShouldBe("Drill");
+        (await KeyReadAsync<Gadget>(_viewer, "odata", "Gadgets", (await IdAsync<Gadget>("Drill")).ToString(), null)).Ok().Rows.Single().Name.ShouldBe("Drill");
 
         // and what the key route refuses
-        (await KeyReadAsync<Gadget>(_viewer, "odata", "Gadgets", "not-a-guid", null)).Error!.Kind.ShouldBe(ErrorKind.Validation);
         (await KeyReadAsync<Bin>(_viewer, "odata", "Bins", Guid.NewGuid().ToString(), null)).Error!.Kind.ShouldBe(ErrorKind.Forbidden);
         (await KeyReadAsync<Shelf>(_viewer, "odata", "Shelves", (await IdAsync<Shelf>("Open")).ToString(), "$expand=Featured")).Error!.Kind.ShouldBe(ErrorKind.Forbidden);
     }
 
-    private async Task<Result<T>> KeyReadAsync<T>(Guid user, string route, string set, string key, string? query)
+    [Fact]
+    public async Task Key_reads_take_the_sets_key_and_select_and_expand_only()
+    {
+        await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            db.AddRange(new Rank { Number = 2, Title = "Silver" }, new Country { IsoCode = "DE", Name = "Germany", Continent = "Europe" });
+            return await db.SaveChangesAsync();
+        });
+
+        (await KeyReadAsync<Rank>(_viewer, "odata", "Ranks", "2", null)).Ok().Rows.Single().Title.ShouldBe("Silver");
+        (await KeyReadAsync<Country>(_viewer, "odata", "Countries", "DE", null)).Ok().Rows.Single().Name.ShouldBe("Germany");
+        (await KeyReadAsync<Rank>(_viewer, "odata", "Ranks", "3", null)).Error!.Kind.ShouldBe(ErrorKind.NotFound);
+
+        // a key that does not parse is an error of the key
+        foreach (var (set, key) in new[] { ("Ranks", "two"), ("Gadgets", "not-a-guid") })
+        {
+            var error = (set == "Ranks" ? (await KeyReadAsync<Rank>(_viewer, "odata", set, key, null)).Error : (await KeyReadAsync<Gadget>(_viewer, "odata", set, key, null)).Error)!;
+            error.Kind.ShouldBe(ErrorKind.Validation);
+            error.Details!.Keys.ShouldBe(["key"]);
+        }
+
+        // list options are not a key read's
+        foreach (var query in new[] { "$filter=Title eq 'Silver'", "$top=1", "$orderby=Title", "$count=true" })
+        {
+            var error = (await KeyReadAsync<Rank>(_viewer, "odata", "Ranks", "2", query)).Error!;
+            error.Kind.ShouldBe(ErrorKind.Validation, query);
+            error.Details!.Keys.ShouldBe(["query"]);
+        }
+    }
+
+    private static string[] Names(JsonElement row) => [.. row.EnumerateObject().Select(p => p.Name).Where(n => !n.Contains('@'))];
+
+    private async Task<Result<ODataQueryResult<T>>> KeyReadAsync<T>(Guid user, string route, string set, string key, string? query)
         where T : class
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(user, _setup.TenantId));
