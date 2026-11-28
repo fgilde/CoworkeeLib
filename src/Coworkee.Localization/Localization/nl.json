@@ -2436,5 +2436,7 @@
   "Set by an administrator above you": "Ingesteld door een beheerder boven u",
   "Only an administrator of every group manages these filters.": "Alleen een beheerder van alle groepen beheert deze filters.",
   "Your own top group: an administrator above you moves or deletes it.": "Uw eigen bovenste groep: een beheerder boven u verplaatst of verwijdert deze.",
-  "No data filters.": "Geen gegevensfilters."
+  "No data filters.": "Geen gegevensfilters.",
+  "Two decimals": "Twee decimalen",
+  "Column order": "Volgorde van kolommen"
 }

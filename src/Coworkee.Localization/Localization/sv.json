@@ -2436,5 +2436,7 @@
   "Set by an administrator above you": "Angivet av en administratör ovanför dig",
   "Only an administrator of every group manages these filters.": "Endast en administratör för alla grupper hanterar dessa filter.",
   "Your own top group: an administrator above you moves or deletes it.": "Din egen översta grupp: en administratör ovanför dig flyttar eller tar bort den.",
-  "No data filters.": "Inga datafilter."
+  "No data filters.": "Inga datafilter.",
+  "Two decimals": "Två decimaler",
+  "Column order": "Kolumnordning"
 }

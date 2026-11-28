@@ -17,6 +17,7 @@ public static partial class ReportNumbers
         return options.Format switch
         {
             NumberFormat.Integer => Math.Round(number).ToString("N0", culture),
+            NumberFormat.Decimal => number.ToString("N2", culture),
             NumberFormat.Percent => (number / 100).ToString("P1", culture),
             NumberFormat.Currency => Compact(number, culture, WithCurrency(culture, options).NumberFormat.CurrencySymbol) ?? number.ToString("C" + (Math.Abs(number) >= 1000 ? "0" : "2"), WithCurrency(culture, options)),
             NumberFormat.Compact => Compact(number, culture, null) ?? number.ToString("N0", culture),

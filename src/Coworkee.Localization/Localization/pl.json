@@ -2436,5 +2436,7 @@
   "Set by an administrator above you": "Ustawione przez administratora nad Tobą",
   "Only an administrator of every group manages these filters.": "Tymi filtrami zarządza tylko administrator wszystkich grup.",
   "Your own top group: an administrator above you moves or deletes it.": "Twoja własna grupa najwyższego poziomu: przenosi ją lub usuwa administrator nad Tobą.",
-  "No data filters.": "Brak filtrów danych."
+  "No data filters.": "Brak filtrów danych.",
+  "Two decimals": "Dwa miejsca po przecinku",
+  "Column order": "Kolejność kolumn"
 }

@@ -23,13 +23,22 @@ public static class ReportTableColumns
     /// <param name="Join">The join the value comes from; null for group fields and the widget's own values.</param>
     public sealed record Column(int Index, string Name, string EntitySet, string? Field, ReportAggregate? Aggregate, string Key, int? Join);
 
-    public static IReadOnlyList<Column> Of(WidgetQuery query)
+    /// <param name="options">With <see cref="WidgetOptions.ColumnOrder"/> the value columns are listed in that order (unlisted ones after, in query order); <see cref="Column.Index"/> stays the data position.</param>
+    public static IReadOnlyList<Column> Of(WidgetQuery query, WidgetOptions? options = null)
     {
         var columns = query.GroupFields.Select((f, i) => (Name: f, Set: query.EntitySet, Field: (string?)f, Aggregate: (ReportAggregate?)null, Key: $"GroupFields[{i}]", Join: (int?)null))
             .Concat(query.Aggregates.Select((a, i) => (Name: Name(a), Set: query.EntitySet, Field: (string?)null, Aggregate: (ReportAggregate?)a, Key: $"Aggregates[{i}]", Join: (int?)null)))
             .Concat(query.Joins.SelectMany((j, n) => j.Aggregates.Select((a, i) =>
                 (Name: Name(a, j.EntitySet), Set: j.EntitySet, Field: (string?)null, Aggregate: (ReportAggregate?)a, Key: $"Joins[{n}].Aggregates[{i}]", Join: (int?)n))));
-        return [.. columns.Select((c, i) => new Column(i, c.Name, c.Set, c.Field, c.Aggregate, c.Key, c.Join))];
+        var all = columns.Select((c, i) => new Column(i, c.Name, c.Set, c.Field, c.Aggregate, c.Key, c.Join)).ToList();
+        if (options?.ColumnOrder is not { Count: > 0 } order)
+        {
+            return all;
+        }
+
+        // stable: values named earlier in the order first, unlisted ones (rank = order.Count) keep their place; group fields stay in front
+        int Rank(Column c) => c.Aggregate is null ? -1 : order.FindIndex(name => Names(c, name)) is var i and >= 0 ? i : order.Count;
+        return [.. all.OrderBy(Rank)];
     }
 
     /// <param name="joinedSet">The set of a join: a value without a label is named with it, so it does not clash with the widget's own.</param>

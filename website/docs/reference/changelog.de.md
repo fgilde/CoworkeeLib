@@ -6,6 +6,7 @@
 
 ### Hinzugefügt
 
+- Reporting: `NumberFormat.Decimal` („Zwei Nachkommastellen“) zeigt immer zwei Nachkommastellen; `WidgetOptions.ColumnOrder` ordnet die Wertspalten (eigene und Join-Werte) gruppierter Tabellen, in Tabelle, Mails und Arbeitsmappen, mit Nach-oben/unten im Widget-Panel. Siehe [Reporting](../modules/reporting.md).
 - Setup: einmalige Seed-Schritte. `ClaimOnceAsync(tenantId, name, ct)` (Erweiterung auf `CoworkeeDbContext`, `Coworkee.Settings`) liefert beim ersten Mal je Mandant true (`null`: Host) und fügt eine Marker-Einstellung hinzu, die das Speichern des Seeds ablegt; false, wenn ein Marker mit beliebigem Wert existiert oder noch ungespeichert ist. Siehe [Seed-Contributors](../fundamentals/persistence.md#seed-contributors).
 
 ### Geändert

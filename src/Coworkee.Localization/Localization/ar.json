@@ -2436,5 +2436,7 @@
   "Set by an administrator above you": "حدّده مسؤول أعلى منك",
   "Only an administrator of every group manages these filters.": "لا يدير هذه المرشحات إلا مسؤول عن جميع المجموعات.",
   "Your own top group: an administrator above you moves or deletes it.": "مجموعتك العليا: ينقلها أو يحذفها مسؤول أعلى منك.",
-  "No data filters.": "لا توجد مرشحات بيانات."
+  "No data filters.": "لا توجد مرشحات بيانات.",
+  "Two decimals": "رقمان عشريان",
+  "Column order": "ترتيب الأعمدة"
 }

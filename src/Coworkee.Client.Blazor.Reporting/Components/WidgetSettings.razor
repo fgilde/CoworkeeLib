@@ -118,7 +118,7 @@
                                        Placeholder="@L["Like the widget"]" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" data-testid="aggregate-format">
                                 @foreach (var format in Enum.GetValues<NumberFormat>())
                                 {
-                                    <MudSelectItem T="NumberFormat?" Value="format">@L[format.ToString()]</MudSelectItem>
+                                    <MudSelectItem T="NumberFormat?" Value="format">@L[format == NumberFormat.Decimal ? "Two decimals" : format.ToString()]</MudSelectItem>
                                 }
                             </MudSelect>
                             <MudTextField T="string" Value="aggregate.Unit" ValueChanged="v => SetAggregate(index, aggregate with { Unit = string.IsNullOrWhiteSpace(v) ? null : v.Trim() })"
@@ -156,6 +156,19 @@
                         <MudSelectItem Value="column.Name">@ColumnLabel(column.Name)</MudSelectItem>
                     }
                 </MudSelect>
+
+                @if (ValueColumns is { Count: > 1 } valueColumns)
+                {
+                    <div class="cw-settings-label">@L["Column order"]</div>
+                    @foreach (var (column, index) in valueColumns.Select((c, i) => (c, i)))
+                    {
+                        <div class="cw-settings-row cw-list-row" data-testid="column-order">
+                            <span class="cw-grow">@ColumnLabel(column.Name)</span>
+                            <MudIconButton Icon="@Icons.Material.Outlined.ArrowUpward" Size="Size.Small" Disabled="index == 0" aria-label="@L["Move up"]" OnClick="() => MoveColumn(index, index - 1)" />
+                            <MudIconButton Icon="@Icons.Material.Outlined.ArrowDownward" Size="Size.Small" Disabled="index >= valueColumns.Count - 1" aria-label="@L["Move down"]" OnClick="() => MoveColumn(index, index + 1)" />
+                        </div>
+                    }
+                }
 
                 <div class="cw-settings-label">@L["Sort by"]</div>
                 @foreach (var (entry, index) in SortEntries.Select((e, i) => (e, i)).ToList())
@@ -240,7 +253,7 @@
                 <MudSelect T="NumberFormat" Value="Widget.Options.Format" ValueChanged="v => Change(() => Widget.Options.Format = v)" Label="@L["Number format"]" Variant="Variant.Outlined" Margin="Margin.Dense">
                     @foreach (var format in Enum.GetValues<NumberFormat>())
                     {
-                        <MudSelectItem Value="format">@L[format.ToString()]</MudSelectItem>
+                        <MudSelectItem Value="format">@L[format == NumberFormat.Decimal ? "Two decimals" : format.ToString()]</MudSelectItem>
                     }
                 </MudSelect>
                 @if (Widget.Options.Format == NumberFormat.Currency)

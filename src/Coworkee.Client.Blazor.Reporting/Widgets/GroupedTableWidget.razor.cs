@@ -25,7 +25,7 @@ public partial class GroupedTableWidget
 
     [Inject] private IJSRuntime JS { get; set; } = null!;
 
-    private IReadOnlyList<Column> Columns => Query is { } query ? ReportTableColumns.Of(query) : [];
+    private IReadOnlyList<Column> Columns => Query is { } query ? ReportTableColumns.Of(query, Widget.Options) : [];
 
     private List<Column> Shown => [.. Columns.Where(c => !ReportTableColumns.Hidden(c, Widget.Options))];
 

@@ -52,6 +52,19 @@ public sealed class GroupedTableTests : ReportingTestBase
     private static string N(double value) => ReportNumbers.Format(value, new WidgetOptions(), CultureInfo.CurrentCulture);
 
     [Fact]
+    public void Column_order_interleaves_values_and_joins()
+    {
+        Reports.TableAsync(default!, default).ReturnsForAnyArgs(Page(false, Row("North", "Open", 3, 1200.5, 400.25, 12)));
+        var widget = Lanes();
+        widget.Options.ColumnOrder = ["Returned", "Average Total", "Count"];
+
+        var table = Show(widget);
+
+        table.FindAll("[data-testid='grouped-table'] th").Select(h => h.TextContent.Trim()).ShouldBe(["Region", "Status", "Returned", "Average Total", "Count", "Revenue"]);
+        table.FindAll("[data-testid='grouped-table'] tbody tr")[0].QuerySelectorAll("td").Select(c => c.TextContent.Trim()).ShouldBe(["North", "Open", N(12), N(400.25), "3", N(1200.5)]);
+    }
+
+    [Fact]
     public void A_grouped_table_shows_keys_and_values_of_the_main_and_joined_sources()
     {
         Reports.TableAsync(default!, default).ReturnsForAnyArgs(Page(false, Row("North", "Open", 3, 1200.5, 400.25, null), Row("South", null, 1, 80, 80, 12)));

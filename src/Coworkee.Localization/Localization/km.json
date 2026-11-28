@@ -2436,5 +2436,7 @@
   "Set by an administrator above you": "កំណត់ដោយអ្នកគ្រប់គ្រងដែលនៅខាងលើអ្នក",
   "Only an administrator of every group manages these filters.": "មានតែអ្នកគ្រប់គ្រងនៃក្រុមទាំងអស់ប៉ុណ្ណោះដែលគ្រប់គ្រងតម្រងទាំងនេះ។",
   "Your own top group: an administrator above you moves or deletes it.": "ក្រុមកំពូលផ្ទាល់ខ្លួនរបស់អ្នក៖ អ្នកគ្រប់គ្រងដែលនៅខាងលើអ្នកជាអ្នកផ្លាស់ទី ឬលុបវា។",
-  "No data filters.": "គ្មានតម្រងទិន្នន័យទេ។"
+  "No data filters.": "គ្មានតម្រងទិន្នន័យទេ។",
+  "Two decimals": "ទសភាគពីរខ្ទង់",
+  "Column order": "លំដាប់ជួរឈរ"
 }

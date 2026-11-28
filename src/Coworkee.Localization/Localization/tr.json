@@ -2436,5 +2436,7 @@
   "Set by an administrator above you": "Üstünüzdeki bir yönetici tarafından belirlendi",
   "Only an administrator of every group manages these filters.": "Bu filtreleri yalnızca tüm grupların yöneticisi yönetir.",
   "Your own top group: an administrator above you moves or deletes it.": "Kendi üst grubunuz: onu üstünüzdeki bir yönetici taşır veya siler.",
-  "No data filters.": "Veri filtresi yok."
+  "No data filters.": "Veri filtresi yok.",
+  "Two decimals": "İki ondalık",
+  "Column order": "Sütun sırası"
 }

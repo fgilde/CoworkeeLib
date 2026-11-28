@@ -381,6 +381,27 @@ public sealed partial class SubscriptionTests(ReportingApp app) : ReportingTestB
     }
 
     [Fact]
+    public async Task A_mail_orders_the_value_columns_by_the_column_order()
+    {
+        var report = await CreateReportAsync(Report() with { Definition = new ReportDefinition { Widgets =
+        [
+            new ReportWidget { Id = "lanes", Type = WidgetType.GroupedTable, Title = "Lanes", Query = new WidgetQuery
+            {
+                EntitySet = "Sales", GroupFields = ["Region"], Aggregates = [new(AggregateFunction.Sum, "Amount", "Revenue"), new(AggregateFunction.Count, Label: "Orders")],
+                Joins = [new WidgetJoin { EntitySet = "Sales", Aggregates = [new(AggregateFunction.Sum, "Quantity", "Pieces")] }], OrderBy = "Region",
+            }, Options = new WidgetOptions { ColumnOrder = ["Orders", "Pieces"] } },
+        ] } });
+        var subscription = await SubscribeAsync(Admin, report.Id);
+
+        await RunDueAsync(subscription.Id);
+
+        var html = (await MailsAsync()).Single().Mail.HtmlBody;
+        var order = new[] { ">Region<", ">Orders<", ">Pieces<", ">Revenue<" }.Select(h => html.IndexOf(h, StringComparison.Ordinal)).ToList();
+        order.ShouldAllBe(i => i >= 0);
+        order.ShouldBe([.. order.Order()]);
+    }
+
+    [Fact]
     public async Task A_mail_formats_each_value_with_its_own_format_unit_and_set_currency()
     {
         CostRows.Currencies[Setup.AdminUserId] = "CHF";

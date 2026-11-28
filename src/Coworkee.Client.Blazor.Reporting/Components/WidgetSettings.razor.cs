@@ -59,6 +59,7 @@ public partial class WidgetSettings
 
         query.OrderBy = ReportTableColumns.OrderBy(ReportTableColumns.Entries(query.OrderBy).Select(e => Same(e.Name, from) ? (to, e.Descending) : e));
         Widget.Options.HiddenColumns = [.. Widget.Options.HiddenColumns.Select(h => Same(h, from) ? to : h)];
+        Widget.Options.ColumnOrder = Widget.Options.ColumnOrder?.ConvertAll(h => Same(h, from) ? to : h);
     }
 
     private static bool Same(string a, string b) => string.Equals(a.Trim(), b.Trim(), StringComparison.OrdinalIgnoreCase);
@@ -79,6 +80,11 @@ public partial class WidgetSettings
     private ReportFieldDto? NextGroupField => GroupFieldChoices(null).FirstOrDefault();
 
     private List<ReportTableColumns.Column> TableColumns => [.. ReportTableColumns.Of(Widget.Query!).DistinctBy(c => c.Name, StringComparer.OrdinalIgnoreCase)];
+
+    // the value columns in the order the table shows them
+    private List<ReportTableColumns.Column> ValueColumns => [.. ReportTableColumns.Of(Widget.Query!, Widget.Options).Where(c => c.Aggregate is not null).DistinctBy(c => c.Name, StringComparer.OrdinalIgnoreCase)];
+
+    private Task MoveColumn(int from, int to) => Change(() => Widget.Options.ColumnOrder = [.. Moved(ValueColumns.ConvertAll(c => c.Name), from, to)]);
 
     private string ColumnLabel(string name) =>
         TableColumns.FirstOrDefault(c => Same(c.Name, name)) is { } column ? ReportFormat.ColumnLabel(column, State, L) : name;

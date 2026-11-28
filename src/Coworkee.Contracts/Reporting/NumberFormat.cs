@@ -10,4 +10,5 @@ public enum NumberFormat
     Compact,
     Currency,
     Percent,
+    Decimal,
 }

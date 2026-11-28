@@ -2436,5 +2436,7 @@
   "Set by an administrator above you": "Postavio administrator iznad vas",
   "Only an administrator of every group manages these filters.": "Ovim filtrima upravlja samo administrator svih grupa.",
   "Your own top group: an administrator above you moves or deletes it.": "Vaša vlastita najviša grupa: premješta je ili briše administrator iznad vas.",
-  "No data filters.": "Nema filtara podataka."
+  "No data filters.": "Nema filtara podataka.",
+  "Two decimals": "Dvije decimale",
+  "Column order": "Redoslijed stupaca"
 }

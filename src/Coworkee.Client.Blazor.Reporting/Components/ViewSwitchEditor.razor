@@ -49,7 +49,7 @@
                 <MudSelect T="NumberFormat?" Value="metric.Format" ValueChanged="f => SetMetric(index, metric with { Format = f })" Label="@L["Number format"]" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">
                     @foreach (var format in Enum.GetValues<NumberFormat>())
                     {
-                        <MudSelectItem T="NumberFormat?" Value="format">@L[format.ToString()]</MudSelectItem>
+                        <MudSelectItem T="NumberFormat?" Value="format">@L[format == NumberFormat.Decimal ? "Two decimals" : format.ToString()]</MudSelectItem>
                     }
                 </MudSelect>
             }

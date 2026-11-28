@@ -141,7 +141,7 @@ internal sealed class ReportMailWidget(
     private async Task<(object, ReportSheetRequest?)> GroupedTableAsync(ReportSource source, CancellationToken cancellationToken)
     {
         var query = widget.Query!;
-        var columns = ReportTableColumns.Of(query);
+        var columns = ReportTableColumns.Of(query, widget.Options);
         var request = ReportTableColumns.Request(query, q => FilterOf(q, definition, sources, today), ReportTableColumns.Sorts(query.OrderBy, columns), 0, ReportSubscriptionMail.SheetRows);
         var result = await queries.TableAsync(request, cancellationToken);
         if (!result.IsSuccess)

@@ -59,4 +59,7 @@ public sealed class WidgetOptions
 
     /// <summary>Grouped tables: columns that still group or count but are not shown, by group field path or value label (<see cref="ReportTableColumns"/>).</summary>
     public List<string> HiddenColumns { get; set; } = [];
+
+    /// <summary>Grouped tables: the order of the value columns (own and joined), by value label as <see cref="HiddenColumns"/> names them; group fields stay first, unlisted values follow in query order.</summary>
+    public List<string>? ColumnOrder { get; set; }
 }

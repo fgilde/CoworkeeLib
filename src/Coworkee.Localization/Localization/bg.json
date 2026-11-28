@@ -2436,5 +2436,7 @@
   "Set by an administrator above you": "Зададено от администратор над вас",
   "Only an administrator of every group manages these filters.": "Само администратор на всички групи управлява тези филтри.",
   "Your own top group: an administrator above you moves or deletes it.": "Вашата собствена горна група: администратор над вас я премества или изтрива.",
-  "No data filters.": "Няма филтри за данни."
+  "No data filters.": "Няма филтри за данни.",
+  "Two decimals": "Два знака след десетичната запетая",
+  "Column order": "Ред на колоните"
 }

@@ -19,6 +19,7 @@ public static partial class ReportFormat
             NumberFormat.Percent => "{style:'percent',maximumFractionDigits:1}",
             NumberFormat.Compact => "{notation:'compact',maximumFractionDigits:1}",
             NumberFormat.Integer => "{maximumFractionDigits:0}",
+            NumberFormat.Decimal => "{minimumFractionDigits:2,maximumFractionDigits:2}",
             _ => "{maximumFractionDigits:2}",
         };
         if (compact && options.Format != NumberFormat.Percent)
