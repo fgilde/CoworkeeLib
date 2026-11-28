@@ -66,6 +66,8 @@ internal sealed class SaveReportValidator : AbstractValidator<SaveReportRequest>
                     .WithMessage($"Group by 1 to {Querying.ReportTables.MaxGroupFields} fields.");
                 widget.RuleFor(w => w.Query!.Joins).Must(j => j.Count <= Querying.ReportTables.MaxJoins).WithMessage($"At most {Querying.ReportTables.MaxJoins} joined data sets.");
                 widget.RuleFor(w => w.Options.HiddenColumns).Must(h => h.Count <= ReportLimits.HiddenColumns).WithMessage($"At most {ReportLimits.HiddenColumns} hidden columns.");
+                widget.RuleFor(w => w.Options.ColumnOrder).Must(o => o is null || o.Count <= ReportLimits.HiddenColumns).WithMessage($"At most {ReportLimits.HiddenColumns} ordered columns.");
+                widget.RuleForEach(w => w.Options.ColumnOrder).MaximumLength(ReportViews.LabelLength);
             });
         });
     }

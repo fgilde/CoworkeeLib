@@ -55,4 +55,22 @@ public sealed class ReportValidatorCapTests
 
         result.IsValid.ShouldBeTrue(string.Join("; ", result.Errors.Select(e => e.ErrorMessage)));
     }
+
+    [Theory]
+    [InlineData(41, 1, false)]
+    [InlineData(1, 101, false)]
+    [InlineData(40, 100, true)]
+    [InlineData(-1, 0, true)]
+    public void Saving_caps_the_column_order(int count, int length, bool valid)
+    {
+        var request = Request(d =>
+        {
+            var widget = Widget(d);
+            widget.Type = WidgetType.GroupedTable;
+            widget.Query = new WidgetQuery { EntitySet = "Sales", GroupFields = ["Region"] };
+            widget.Options.ColumnOrder = count < 0 ? null : [.. Enumerable.Range(0, count).Select(i => new string('c', length))];
+        });
+
+        new SaveReportValidator().Validate(request).IsValid.ShouldBe(valid);
+    }
 }

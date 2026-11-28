@@ -152,6 +152,20 @@ public sealed class GroupedTableTests : ReportingTestBase
     }
 
     [Fact]
+    public void The_designer_moves_value_columns()
+    {
+        var widget = Lanes();
+        Render<MudPopoverProvider>();
+        var settings = Render<WidgetSettings>(p => p.Add(x => x.Widget, widget).Add(x => x.State, StateOf(widget)));
+
+        settings.FindAll("[data-testid='column-order']").Count.ShouldBe(4);
+        settings.FindAll("[data-testid='column-order'] button[aria-label='Move up']")[3].Click();
+        widget.Options.ColumnOrder.ShouldBe(["Count", "Revenue", "Returned", "Average Total"]);
+        settings.FindAll("[data-testid='column-order'] button[aria-label='Move down']")[0].Click();
+        widget.Options.ColumnOrder.ShouldBe(["Revenue", "Count", "Returned", "Average Total"]);
+    }
+
+    [Fact]
     public void The_designer_edits_group_fields_and_hidden_columns()
     {
         var widget = Lanes("Revenue desc");

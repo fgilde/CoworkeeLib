@@ -399,6 +399,13 @@ public sealed partial class SubscriptionTests(ReportingApp app) : ReportingTestB
         var order = new[] { ">Region<", ">Orders<", ">Pieces<", ">Revenue<" }.Select(h => html.IndexOf(h, StringComparison.Ordinal)).ToList();
         order.ShouldAllBe(i => i >= 0);
         order.ShouldBe([.. order.Order()]);
+
+        // the cells follow the headers: region, orders, pieces, revenue of the first region
+        var first = Visible.GroupBy(x => x.Region).OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase).First();
+        var en = System.Globalization.CultureInfo.GetCultureInfo("en");
+        var table = html[html.IndexOf(">Lanes<", StringComparison.Ordinal)..];
+        var row = Regex.Matches(table[..table.IndexOf("</table>", StringComparison.Ordinal)], "<tr>.*?</tr>", RegexOptions.Singleline)[1].Value;
+        Regex.Matches(row, ">([^<]+)</td>").Select(m => m.Groups[1].Value).ShouldBe([first.Key, ((double)first.Count()).ToString("N0", en), ((double)first.Sum(x => x.Quantity)).ToString("N0", en), ((double)first.Sum(x => x.Amount)).ToString("N0", en)]);
     }
 
     [Fact]
