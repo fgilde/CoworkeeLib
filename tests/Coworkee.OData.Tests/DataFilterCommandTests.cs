@@ -19,8 +19,16 @@ public sealed class DataFilterCommandTests(ODataApp app) : IAsyncLifetime
     private const string Root = "/api/v1/data-filters";
 
     private SetupResultDto _setup = null!;
+    private Guid _role;
 
-    public async ValueTask InitializeAsync() => _setup = await app.SetupAsync();
+    // Group and Role filters name a group or role of the tenant
+    public async ValueTask InitializeAsync()
+    {
+        _setup = await app.SetupAsync();
+        app.App.Services.GetRequiredService<FakeGroupScope>().Nodes = [new(FakeGroupScope.A, null, "", "A")];
+        var role = await Admin().PostAsJsonAsync("/api/v1/identity/roles", new RoleRequest("Filtered", null), Ct);
+        _role = await role.Content.ReadFromJsonAsync<Guid>(Ct);
+    }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
@@ -29,8 +37,8 @@ public sealed class DataFilterCommandTests(ODataApp app) : IAsyncLifetime
     private static string Query(string field = "Name") =>
         QueryJson.Serialize(new QueryGroup { Children = [new QueryRule { Field = field, Operator = QueryOperator.Equal, Value = "x" }] });
 
-    private static SaveDataFilterRequest Request(DataFilterLayer layer, string field = "Name") =>
-        new("Gadgets", layer, layer is DataFilterLayer.Group or DataFilterLayer.Role ? Guid.NewGuid() : null, Query(field));
+    private SaveDataFilterRequest Request(DataFilterLayer layer, string field = "Name") =>
+        new("Gadgets", layer, layer switch { DataFilterLayer.Group => FakeGroupScope.A, DataFilterLayer.Role => _role, _ => null }, Query(field));
 
     private HttpClient Admin() => app.As(_setup.AdminUserId, _setup.TenantId);
 

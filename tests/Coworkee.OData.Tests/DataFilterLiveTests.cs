@@ -264,6 +264,7 @@ public sealed class DataFilterLiveTests(ODataApp app) : IAsyncLifetime
         new[] { plain, bothRoles, asTools, asDear }.Distinct().Count().ShouldBe(4);
 
         // a group filter: the user's groups (here all he reaches, nothing selected) are part of the partition too
+        app.App.Services.GetRequiredService<FakeGroupScope>().Nodes = [new(FakeGroupScope.A, null, "", "A")];
         (await Admin.PutAsJsonAsync(Root, new SaveDataFilterRequest("Gadgets", DataFilterLayer.Group, FakeGroupScope.A, Price(QueryOperator.GreaterThan, "1")), CoworkeeJson.Web, Ct)).EnsureSuccessStatusCode();
         var inAandB = await PartitionAsync(client);
         app.App.Services.GetRequiredService<FakeGroupScope>().Accessible = [FakeGroupScope.B];

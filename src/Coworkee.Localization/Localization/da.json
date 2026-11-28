@@ -2431,5 +2431,6 @@
   "Add sort column": "Tilføj sorteringskolonne",
   "Another column has this name.": "En anden kolonne har dette navn.",
   "Like the widget": "Som widgetten",
-  "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "Dine egne øverste grupper sættes op af en administrator over dig: de kan ikke flyttes, slettes eller få andre roller, og grupper bliver under den øverste gruppe, de hører til."
+  "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "Dine egne øverste grupper sættes op af en administrator over dig: de kan ikke flyttes, slettes eller få andre roller, og grupper bliver under den øverste gruppe, de hører til.",
+  "There is no such group or role.": "Der findes ingen sådan gruppe eller rolle."
 }

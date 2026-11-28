@@ -15,7 +15,7 @@ namespace Coworkee.OData.DataFilters;
 
 internal sealed class DataFilterHandlers(
     CoworkeeDbContext db, ICurrentUser currentUser, IPermissionChecker permissions, ODataEntityRegistry registry, IServiceProvider services,
-    IOptions<CoworkeeODataOptions> options)
+    IOptions<CoworkeeODataOptions> options, IDataFilterReach reach)
     : IHandler<SaveDataFilterCommand, Result<DataFilterDto>>,
       IHandler<DeleteDataFilterCommand, Result>,
       IHandler<GetDataFiltersQuery, Result<IReadOnlyList<DataFilterDto>>>,
@@ -49,6 +49,25 @@ internal sealed class DataFilterHandlers(
     private async Task<bool> IsSystemTenantAsync(CancellationToken cancellationToken) =>
         currentUser.TenantId is { } tenantId && services.GetService<ITenantDirectory>() is { } tenants && await tenants.IsSystemTenantAsync(tenantId, cancellationToken);
 
+    /// <summary>
+    /// Null when the caller may write Group or Role filters with this key: a scoped administrator only those of the groups below his own top groups and
+    /// no Role filters; an unknown key answers like an unreached group for him (no existence oracle) and as a validation error for tenant-wide callers.
+    /// </summary>
+    private async Task<Error?> CheckReachAsync(DataFilterLayer layer, Guid? key, CancellationToken cancellationToken)
+    {
+        if (layer is not (DataFilterLayer.Group or DataFilterLayer.Role))
+        {
+            return null;
+        }
+
+        if (await reach.GetAsync(cancellationToken) is { TenantWide: false } scoped)
+        {
+            return layer == DataFilterLayer.Group && key is { } group && scoped.Editable.Contains(group) ? null : Forbidden;
+        }
+
+        return key is { } id && !await reach.ExistsAsync(layer, id, cancellationToken) ? Error.Validation("layerKey", "There is no such group or role.") : null;
+    }
+
     private async Task<List<DataFilterLayer>> ManageableAsync(CancellationToken cancellationToken)
     {
         var layers = new List<DataFilterLayer>();
@@ -69,6 +88,11 @@ internal sealed class DataFilterHandlers(
         if (!await MayManageAsync(request.Layer, cancellationToken))
         {
             return Forbidden;
+        }
+
+        if (await CheckReachAsync(request.Layer, request.LayerKey, cancellationToken) is { } outOfReach)
+        {
+            return outOfReach;
         }
 
         var (entity, filterOption, error) = await ParseDraftAsync(request.EntitySet, request.Query, cancellationToken);
@@ -127,6 +151,11 @@ internal sealed class DataFilterHandlers(
         if (!await MayManageAsync(request.Layer, cancellationToken))
         {
             return Forbidden;
+        }
+
+        if (await CheckReachAsync(request.Layer, request.LayerKey, cancellationToken) is { } outOfReach)
+        {
+            return outOfReach;
         }
 
         var (entity, filter, error) = await ParseDraftAsync(request.EntitySet, request.Query, cancellationToken);
@@ -207,6 +236,20 @@ internal sealed class DataFilterHandlers(
             return Forbidden;
         }
 
+        // a scoped administrator: Group filters outside his reach are unknown to him, those of his own top groups are set above him
+        if (filter.Layer is DataFilterLayer.Group or DataFilterLayer.Role && await reach.GetAsync(cancellationToken) is { TenantWide: false } scoped)
+        {
+            if (filter.Layer == DataFilterLayer.Group && (filter.LayerKey is not { } key || !scoped.Readable.Contains(key)))
+            {
+                return NotFound;
+            }
+
+            if (filter.Layer == DataFilterLayer.Role || !scoped.Editable.Contains(filter.LayerKey!.Value))
+            {
+                return Forbidden;
+            }
+        }
+
         db.Remove(filter);
         return Result.Success();
     }
@@ -214,6 +257,13 @@ internal sealed class DataFilterHandlers(
     public async Task<Result<IReadOnlyList<DataFilterDto>>> HandleAsync(GetDataFiltersQuery query, CancellationToken cancellationToken)
     {
         var layers = await ManageableAsync(cancellationToken);
+        var reached = layers.Any(l => l is DataFilterLayer.Group or DataFilterLayer.Role) ? await reach.GetAsync(cancellationToken) : DataFilterReach.All;
+        if (!reached.TenantWide)
+        {
+            // Role filters need the whole tenant
+            layers.Remove(DataFilterLayer.Role);
+        }
+
         if (layers.Count == 0)
         {
             return Forbidden;
@@ -221,6 +271,12 @@ internal sealed class DataFilterHandlers(
 
         var tenantId = currentUser.TenantId;
         var rows = db.Set<DataFilter>().AsNoTracking().Where(f => layers.Contains(f.Layer) && (f.TenantId == tenantId || f.TenantId == null && f.Layer == DataFilterLayer.System));
+        if (!reached.TenantWide)
+        {
+            var readable = reached.Readable.Select(id => (Guid?)id).ToList();
+            rows = rows.Where(f => f.Layer != DataFilterLayer.Group || readable.Contains(f.LayerKey));
+        }
+
         if (query.EntitySet is { } set)
         {
             rows = rows.Where(f => f.EntitySet == set);

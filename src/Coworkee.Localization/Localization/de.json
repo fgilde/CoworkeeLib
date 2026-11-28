@@ -2431,5 +2431,6 @@
   "Add sort column": "Sortierspalte hinzufügen",
   "Another column has this name.": "Eine andere Spalte hat diesen Namen.",
   "Like the widget": "Wie das Widget",
-  "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "Deine eigenen obersten Gruppen richtet ein übergeordneter Administrator ein: Sie können nicht verschoben, gelöscht oder mit anderen Rollen versehen werden, und Gruppen bleiben unter der obersten Gruppe, zu der sie gehören."
+  "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "Deine eigenen obersten Gruppen richtet ein übergeordneter Administrator ein: Sie können nicht verschoben, gelöscht oder mit anderen Rollen versehen werden, und Gruppen bleiben unter der obersten Gruppe, zu der sie gehören.",
+  "There is no such group or role.": "Diese Gruppe oder Rolle gibt es nicht."
 }

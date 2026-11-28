@@ -57,6 +57,8 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
         services.AddScoped<ImpersonationRules>();
         services.AddScoped<Users.AccountGuard>();
         services.AddScoped<Users.AdminReach>();
+        // wins over the OData module's tenant-wide default in either module order
+        services.Replace(ServiceDescriptor.Scoped<Application.Groups.IDataFilterReach, Users.IdentityDataFilterReach>());
         services.Configure<Users.IdentityAdministrationOptions>(context.Configuration.GetSection(Users.IdentityAdministrationOptions.Section));
         services.AddSingleton<ImpersonationTickets>();
         services.AddScoped<Users.Profile.UserChanges>();

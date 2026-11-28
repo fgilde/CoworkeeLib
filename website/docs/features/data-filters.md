@@ -123,6 +123,38 @@ Reading and writing needs the permission of the layer; the page and the navigati
 
 The group tree and the roles table show which groups and roles have data filters, so you do not have to open them one by one. A group or role with filters has a coloured filter icon with a badge (the number of filters); the others show nothing, so a tree of thousands of groups stays calm. The icon opens the group's or role's **Data filters** tab (the link `?group={id}&tab=data-filters` on the groups page, `/admin/roles/{id}?tab=data-filters` on the role page). The chip **With data filters only** above the tree lists just the filtered groups, flat and named by their path ("Customer A / Hamburg"); above the roles table it narrows the table to the filtered roles. The page loads the filters once (`GetDataFiltersAsync(layer: Group)` or `Role`, counted by `LayerKey`), not once per node, and reloads them when the realtime topic `DataFilterTopics.TenantChanged` fires; open tree nodes stay open. Icon and chip need `DataFilters.ManageGroups` or `DataFilters.ManageRoles`.
 
+## Group-scoped administration
+
+With [group-scoped administration](../security/permissions.md#group-scoped-administration) on, the Group and Role layers follow the administrator's reach (`IDataFilterReach` in `Coworkee.Application.Groups`, built by the identity module from `AdminReach`):
+
+| Caller | Group filters | Role filters |
+|---|---|---|
+| tenant-wide: administrators, holders of `Identity.Groups.ScopeAll`, the system, or the setting off | every group of the tenant | every role of the tenant |
+| scoped, with `DataFilters.ManageGroups` or `DataFilters.ManageRoles` | lists those of the groups he reaches; saves, previews and deletes those of the groups **below** his own top groups | none: `403 data_filters.forbidden` |
+
+- **Filters of your own top groups are set above you.** Your top groups are your memberships (the default group aside) without another membership above them. Their filters narrow what you see, so you read them but cannot save, preview or delete them (`403 data_filters.forbidden`); otherwise you could widen your own view. A group you are a member of below one of your top groups (e.g. one you created and joined) is an ordinary sub-group. A member of every group is scoped here too; only the callers in the first row are tenant-wide.
+- Groups out of reach are absent from `GET /api/v1/data-filters`; saving or previewing one answers `403 data_filters.forbidden`, the same code and message as for an id that names no group, so ids cannot be probed. Deleting a filter of such a group answers `404 data_filters.not_found`.
+- A scoped administrator whose only group is the default group sees no group filters (an empty list) and saves none.
+- **Keys must exist:** a tenant-wide caller who saves or previews a Group or Role filter whose `LayerKey` names no group (`IGroupScope.NodesAsync`) or role of the tenant gets `400` with the field `layerKey` ("There is no such group or role.").
+
+Example: the manager of group P (sub-group S, sibling top group Q he does not reach) with `DataFilters.ManageGroups`:
+
+```http
+PUT /api/v1/data-filters  { "entitySet": "Shipments", "layer": "Group", "layerKey": "<S>", "query": "…" }  → 200
+PUT /api/v1/data-filters  { "entitySet": "Shipments", "layer": "Group", "layerKey": "<P>", "query": "…" }  → 403 data_filters.forbidden (set above him)
+PUT /api/v1/data-filters  { "entitySet": "Shipments", "layer": "Group", "layerKey": "<Q>", "query": "…" }  → 403 data_filters.forbidden (same answer as an unknown id)
+GET /api/v1/data-filters?layer=Group                                                                       → the filters of P and S
+GET /api/v1/data-filters?layer=Role                                                                        → 403 (with ManageRoles only)
+```
+
+Without the identity module `IDataFilterReach` is tenant-wide (the OData module registers the default with `TryAdd`, the identity module replaces it). Own requests that write Group filters ask it the same way:
+
+```csharp
+var reach = await dataFilterReach.GetAsync(ct);                               // read once per request
+if (!reach.TenantWide && !reach.Editable.Contains(groupId)) return Forbidden; // not a group below his top groups
+var visible = reach.TenantWide ? filters : filters.Where(f => reach.Readable.Contains(f.GroupId));
+```
+
 ## Moving to a version with data filters
 
 The tables `cw.DataFilters` and `cw.DataFilterLinks` must exist before the app starts: every entity-set read looks them up on a cold cache. Add and apply an app migration (`coworkee migrations add AddDataFilters`) first; the library ships no migration of its own. The query model moved to `Coworkee.Contracts.Query`; see the [changelog](../reference/changelog.md).

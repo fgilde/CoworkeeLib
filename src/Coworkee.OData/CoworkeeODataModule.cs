@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.OData;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.OData.Edm;
 using Nextended.Core.Facets;
 
@@ -48,6 +49,8 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         services.AddSingleton<Coworkee.Application.Authorization.IPermissionDefinitionContributor, DataFilters.DataFilterPermissionDefinitions>();
         services.AddSingleton<DataFilters.DataFilterCache>();
         services.AddScoped<DataFilters.DataFilterResolver>();
+        // the identity module replaces it with the administrator's reach
+        services.TryAddSingleton<Coworkee.Application.Groups.IDataFilterReach, DataFilters.TenantWideDataFilterReach>();
         services.AddScoped<ClientEntities.IClientEntityPartitionPart, DataFilters.DataFilterPartitionPart>();
         services.AddScoped(typeof(IODataEntityFilter<>), typeof(DataFilters.DataFilterEntityFilter<>));
         services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, DataFilters.DataFilterCacheInterceptor>();

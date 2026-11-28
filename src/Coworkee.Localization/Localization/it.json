@@ -2431,5 +2431,6 @@
   "Add sort column": "Aggiungi colonna di ordinamento",
   "Another column has this name.": "Un'altra colonna ha questo nome.",
   "Like the widget": "Come il widget",
-  "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "I tuoi gruppi di primo livello sono configurati da un amministratore sopra di te: non possono essere spostati, eliminati né ricevere altri ruoli, e i gruppi restano sotto il gruppo di primo livello a cui appartengono."
+  "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "I tuoi gruppi di primo livello sono configurati da un amministratore sopra di te: non possono essere spostati, eliminati né ricevere altri ruoli, e i gruppi restano sotto il gruppo di primo livello a cui appartengono.",
+  "There is no such group or role.": "Questo gruppo o ruolo non esiste."
 }

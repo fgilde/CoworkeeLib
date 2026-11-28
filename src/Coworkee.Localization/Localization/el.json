@@ -2431,5 +2431,6 @@
   "Add sort column": "Προσθήκη στήλης ταξινόμησης",
   "Another column has this name.": "Άλλη στήλη έχει αυτό το όνομα.",
   "Like the widget": "Όπως το widget",
-  "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "Τις δικές σας κορυφαίες ομάδες τις ρυθμίζει ένας διαχειριστής πάνω από εσάς: δεν μπορούν να μετακινηθούν, να διαγραφούν ή να λάβουν άλλους ρόλους, και οι ομάδες παραμένουν κάτω από την κορυφαία ομάδα στην οποία ανήκουν."
+  "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "Τις δικές σας κορυφαίες ομάδες τις ρυθμίζει ένας διαχειριστής πάνω από εσάς: δεν μπορούν να μετακινηθούν, να διαγραφούν ή να λάβουν άλλους ρόλους, και οι ομάδες παραμένουν κάτω από την κορυφαία ομάδα στην οποία ανήκουν.",
+  "There is no such group or role.": "Δεν υπάρχει τέτοια ομάδα ή ρόλος."
 }

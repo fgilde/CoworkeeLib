@@ -2431,5 +2431,6 @@
   "Add sort column": "정렬 열 추가",
   "Another column has this name.": "다른 열이 이 이름을 사용하고 있습니다.",
   "Like the widget": "위젯과 같게",
-  "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "회원님의 최상위 그룹은 상위 관리자가 설정합니다. 이동하거나 삭제하거나 다른 역할을 부여할 수 없으며, 그룹은 소속된 최상위 그룹 아래에 남습니다."
+  "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "회원님의 최상위 그룹은 상위 관리자가 설정합니다. 이동하거나 삭제하거나 다른 역할을 부여할 수 없으며, 그룹은 소속된 최상위 그룹 아래에 남습니다.",
+  "There is no such group or role.": "해당 그룹 또는 역할이 없습니다."
 }

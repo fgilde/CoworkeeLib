@@ -123,6 +123,38 @@ Lesen und Schreiben braucht die Berechtigung der Ebene; die Seite und der Naviga
 
 Der Gruppenbaum und die Rollentabelle zeigen, welche Gruppen und Rollen Datenfilter haben, man muss sie nicht einzeln öffnen. Eine Gruppe oder Rolle mit Filtern hat ein eingefärbtes Filter-Symbol mit Marke (Anzahl der Filter); die anderen zeigen nichts, ein Baum mit Tausenden Gruppen bleibt also ruhig. Das Symbol öffnet den Reiter **Datenfilter** der Gruppe oder Rolle (der Link `?group={id}&tab=data-filters` auf der Gruppenseite, `/admin/roles/{id}?tab=data-filters` auf der Rollenseite). Der Chip **Nur mit Datenfiltern** über dem Baum listet nur die gefilterten Gruppen, flach und mit ihrem Pfad benannt („Kunde A / Hamburg“); über der Rollentabelle grenzt er die Tabelle auf die gefilterten Rollen ein. Die Seite lädt die Filter einmal (`GetDataFiltersAsync(layer: Group)` oder `Role`, gezählt nach `LayerKey`), nicht einmal pro Knoten, und lädt sie neu, wenn das Echtzeit-Thema `DataFilterTopics.TenantChanged` feuert; geöffnete Baumknoten bleiben offen. Symbol und Chip brauchen `DataFilters.ManageGroups` oder `DataFilters.ManageRoles`.
 
+## Gruppenbezogene Verwaltung
+
+Mit eingeschalteter [gruppenbezogener Verwaltung](../security/permissions.de.md#gruppenbezogene-verwaltung) folgen die Gruppen- und die Rollenebene der Reichweite des Verwalters (`IDataFilterReach` in `Coworkee.Application.Groups`, vom Identity-Modul aus `AdminReach` gebildet):
+
+| Aufrufer | Gruppenfilter | Rollenfilter |
+|---|---|---|
+| mandantenweit: Administratoren, Inhaber von `Identity.Groups.ScopeAll`, das System oder die Einstellung aus | jede Gruppe des Mandanten | jede Rolle des Mandanten |
+| beschränkt, mit `DataFilters.ManageGroups` oder `DataFilters.ManageRoles` | listet die der Gruppen in seiner Reichweite; speichert, prüft in der Vorschau und löscht die der Gruppen **unter** seinen eigenen obersten Gruppen | keine: `403 data_filters.forbidden` |
+
+- **Filter Ihrer eigenen obersten Gruppen legt ein übergeordneter Administrator fest.** Ihre obersten Gruppen sind Ihre Mitgliedschaften (ohne die Standardgruppe), über denen keine andere Mitgliedschaft liegt. Ihre Filter grenzen ein, was Sie sehen; Sie lesen sie also, können sie aber weder speichern noch in der Vorschau prüfen noch löschen (`403 data_filters.forbidden`), sonst könnten Sie Ihre eigene Sicht erweitern. Eine Gruppe unter einer Ihrer obersten Gruppen, in der Sie Mitglied sind (etwa eine selbst angelegte), ist eine gewöhnliche Untergruppe. Auch ein Mitglied jeder Gruppe ist hier beschränkt; mandantenweit sind nur die Aufrufer der ersten Zeile.
+- Gruppen außerhalb der Reichweite fehlen in `GET /api/v1/data-filters`; Speichern oder Vorschau für eine davon antwortet `403 data_filters.forbidden`, mit demselben Code und derselben Meldung wie für eine Id, die keine Gruppe bezeichnet, Ids lassen sich also nicht ausprobieren. Das Löschen eines Filters einer solchen Gruppe antwortet `404 data_filters.not_found`.
+- Ein beschränkter Verwalter, dessen einzige Gruppe die Standardgruppe ist, sieht keine Gruppenfilter (leere Liste) und speichert keine.
+- **Schlüssel müssen existieren:** Ein mandantenweiter Aufrufer, der einen Gruppen- oder Rollenfilter speichert oder in der Vorschau prüft, dessen `LayerKey` keine Gruppe (`IGroupScope.NodesAsync`) oder Rolle des Mandanten bezeichnet, bekommt `400` mit dem Feld `layerKey` („Diese Gruppe oder Rolle gibt es nicht.“).
+
+Beispiel: der Verwalter der Gruppe P (Untergruppe S, benachbarte oberste Gruppe Q außerhalb seiner Reichweite) mit `DataFilters.ManageGroups`:
+
+```http
+PUT /api/v1/data-filters  { "entitySet": "Shipments", "layer": "Group", "layerKey": "<S>", "query": "…" }  → 200
+PUT /api/v1/data-filters  { "entitySet": "Shipments", "layer": "Group", "layerKey": "<P>", "query": "…" }  → 403 data_filters.forbidden (über ihm festgelegt)
+PUT /api/v1/data-filters  { "entitySet": "Shipments", "layer": "Group", "layerKey": "<Q>", "query": "…" }  → 403 data_filters.forbidden (dieselbe Antwort wie für eine unbekannte Id)
+GET /api/v1/data-filters?layer=Group                                                                       → die Filter von P und S
+GET /api/v1/data-filters?layer=Role                                                                        → 403 (nur mit ManageRoles)
+```
+
+Ohne das Identity-Modul ist `IDataFilterReach` mandantenweit (das OData-Modul registriert die Vorgabe mit `TryAdd`, das Identity-Modul ersetzt sie). Eigene Anfragen, die Gruppenfilter schreiben, fragen sie genauso:
+
+```csharp
+var reach = await dataFilterReach.GetAsync(ct);                               // einmal pro Anfrage lesen
+if (!reach.TenantWide && !reach.Editable.Contains(groupId)) return Forbidden; // keine Gruppe unter seinen obersten Gruppen
+var visible = reach.TenantWide ? filters : filters.Where(f => reach.Readable.Contains(f.GroupId));
+```
+
 ## Umstieg auf eine Version mit Datenfiltern
 
 Die Tabellen `cw.DataFilters` und `cw.DataFilterLinks` müssen existieren, bevor die App startet: Jede Abfrage eines Entity-Sets schlägt sie bei kaltem Cache nach. Zuerst eine App-Migration anlegen und anwenden (`coworkee migrations add AddDataFilters`); die Bibliothek bringt keine eigene Migration mit. Das Abfragemodell ist nach `Coworkee.Contracts.Query` umgezogen; siehe das [Änderungsprotokoll](../reference/changelog.de.md).

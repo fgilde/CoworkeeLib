@@ -2431,5 +2431,6 @@
   "Add sort column": "Sıralama sütunu ekle",
   "Another column has this name.": "Başka bir sütun bu adı kullanıyor.",
   "Like the widget": "Widget'taki gibi",
-  "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "Kendi üst gruplarınızı sizin üstünüzdeki bir yönetici ayarlar: bunlar taşınamaz, silinemez veya başka roller verilemez ve gruplar ait oldukları üst grubun altında kalır."
+  "Your own top groups are set up by an administrator above you: they cannot be moved, deleted or given other roles, and groups stay below the top group they belong to.": "Kendi üst gruplarınızı sizin üstünüzdeki bir yönetici ayarlar: bunlar taşınamaz, silinemez veya başka roller verilemez ve gruplar ait oldukları üst grubun altında kalır.",
+  "There is no such group or role.": "Böyle bir grup veya rol yok."
 }
